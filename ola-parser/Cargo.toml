@@ -1,0 +1,19 @@
+[package]
+name = "ola-parser"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lalrpop-util = "0.19.8"
+
+
+[build-dependencies]
+lalrpop = "0.19.8"
+
+
+[dev-dependencies]
+regex = "1.7.0"
