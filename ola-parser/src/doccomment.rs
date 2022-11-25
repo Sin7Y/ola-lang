@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::pt::Comment;
+use crate::program::Comment;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DocComment {

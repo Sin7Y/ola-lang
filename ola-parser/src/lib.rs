@@ -3,15 +3,15 @@
 //! ola file parser
 use crate::lexer::LexicalError;
 use crate::lexer::Token;
-use crate::pt::CodeLocation;
-use crate::pt::Loc;
+use crate::program::CodeLocation;
+use crate::program::Loc;
 use diagnostics::Diagnostic;
 use lalrpop_util::ParseError;
 
 pub mod diagnostics;
 pub mod doccomment;
 pub mod lexer;
-pub mod pt;
+pub mod program;
 #[cfg(test)]
 mod test;
 
@@ -24,7 +24,7 @@ mod ola {
 pub fn parse(
     src: &str,
     file_no: usize,
-) -> Result<(pt::SourceUnitPart, Vec<pt::Comment>), Vec<Diagnostic>> {
+) -> Result<(program::SourceUnitPart, Vec<program::Comment>), Vec<Diagnostic>> {
     // parse phase
     let mut comments = Vec::new();
     let mut lexer_errors = Vec::new();

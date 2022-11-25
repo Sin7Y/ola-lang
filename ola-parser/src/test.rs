@@ -2,7 +2,7 @@
 
 use crate::diagnostics::{Diagnostic, ErrorType::ParserError, Level::Error};
 use crate::lexer::Lexer;
-use crate::pt::*;
+use crate::program::*;
 use crate::solidity;
 use crate::Loc::File;
 use pretty_assertions::assert_eq;

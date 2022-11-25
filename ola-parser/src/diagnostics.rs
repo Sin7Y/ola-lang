@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::pt;
-use crate::pt::Loc;
+use crate::program;
+use crate::program::Loc;
 
 #[derive(Clone, Debug, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub enum Level {
@@ -35,13 +35,13 @@ pub enum ErrorType {
 
 #[derive(Clone, Debug, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Note {
-    pub loc: pt::Loc,
+    pub loc: program::Loc,
     pub message: String,
 }
 
 #[derive(Clone, Debug, Hash, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Diagnostic {
-    pub loc: pt::Loc,
+    pub loc: program::Loc,
     pub level: Level,
     pub ty: ErrorType,
     pub message: String,

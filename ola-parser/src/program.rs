@@ -189,13 +189,8 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum Type {
     Bool,
-    String,
-    Uint(u16),
-    Bytes(u8),
-    Function {
-        params: Vec<(Loc, Option<Parameter>)>,
-        returns: Option<(ParameterList)>,
-    },
+    Field,
+    U32,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -374,8 +369,9 @@ pub enum Expression {
     AssignDivide(Loc, Box<Expression>, Box<Expression>),
     AssignModulo(Loc, Box<Expression>, Box<Expression>),
     BoolLiteral(Loc, bool),
-    NumberLiteral(Loc, String, String),
-    RationalNumberLiteral(Loc, String, String, String),
+    U32Literal(Loc, String, String),
+    U64Literal(Loc, String, String),
+    U256Literal(Loc, String, String),
     HexNumberLiteral(Loc, String),
     StringLiteral(Vec<StringLiteral>),
     Type(Loc, Type),

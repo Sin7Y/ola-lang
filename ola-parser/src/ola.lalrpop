@@ -1,8 +1,7 @@
 use lalrpop_util::ParseError;
 use super::pt::*;
-use super::lexer::{Token, LexicalError};
 use lalrpop_util::ErrorRecovery;
-grammar<'input, 'err>(input: &'input str, file_no: usize , parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, LexicalError>> );
+grammar<'err>(file_no: usize , parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, LexicalError>> );
 
 
 pub SourceUnitPart: SourceUnitPart = {
@@ -19,12 +18,14 @@ ImportDirective: SourceUnitPart = {
 Type: Type = {
     "bool" => Type::Bool,
     "field" => Type::Field,
-    Uint => Type::Uint(<>)
+    "u32" => Type::U32,
+    "u64" => Type::U64,
+    "u256" => Type::U256,
 }
 
 Identifier: Identifier = {
-    <l:@L> <n:identifier> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: n.to_string()}
-}
+    <l:@L> r"[$_]*[a-zA-Z][a-zA-Z$_0-9]*" <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: String::from(<>)}
+};
 
 IdentifierOrError: Option<Identifier> = {
     Identifier => Some(<>),
@@ -227,19 +228,23 @@ Precedence0: Expression = {
 LiteralExpression: Expression = {
     <a:@L> "true" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), true),
     <a:@L> "false" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), false),
-    <l:@L> <n:number> <r:@R> => {
-        let integer: String = n.0.chars().filter(|v| *v != '_').collect();
-         // remove exp
-        Expression::NumberLiteral(Loc::File(file_no, l, r), integer, exp)
+    <l:@L> r"[[1-9][0-9]*|0]{1,78}" <r:@R> => {
+        Expression::U256Literal(Loc::File(file_no, l, r), <>)
     },
-    <l:@L> <n:hexnumber> <r:@R> => {
-        Expression::HexNumberLiteral(Loc::File(file_no, l, r), n.to_owned())
+    <l:@L> r"[[1-9][0-9]*|0]{1,20}" <r:@R> => {
+        Expression::U64Literal(Loc::File(file_no, l, r), <>)
+    },
+    <l:@L> r"[[1-9][0-9]*|0]{1,10}" <r:@R> => {
+        Expression::U32Literal(Loc::File(file_no, l, r),<>)
+    },
+    <l:@L> r"0x[0-9A-Fa-f]*" <r:@R> => {
+        Expression::HexNumberLiteral(Loc::File(file_no, l, r), <>)
     }
 }
 
 StringLiteral: StringLiteral = {
-    <l:@L> <s:string> <r:@R> => {
-        StringLiteral{ loc: Loc::File(file_no, l, r), unicode: s.0, string: s.1.to_string() }
+    <l:@L> <s:String> <r:@R> => {
+        StringLiteral{ loc: Loc::File(file_no, l, r), s}
     }
 }
 
@@ -380,84 +385,3 @@ CommaTwo<T>: Vec<T> = {
         v
     }
 };
-
-extern {
-    type Location = usize;
-    type Error = LexicalError;
-
-    enum Token<'input> {
-        identifier => Token::Identifier(<&'input str>),
-        string => Token::StringLiteral(<&'input str>),
-        number => Token::Number(<&'input str>, <&'input str>),
-        hexnumber => Token::HexNumber(<&'input str>),
-        Uint => Token::Uint(<u16>),
-        ";" => Token::Semicolon,
-        "{" => Token::OpenCurlyBrace,
-        "}" => Token::CloseCurlyBrace,
-        "(" => Token::OpenParenthesis,
-        ")" => Token::CloseParenthesis,
-        "=" => Token::Assign,
-        "==" => Token::Equal,
-        "|=" => Token::BitwiseOrAssign,
-        "^=" => Token::BitwiseXorAssign,
-        "&=" => Token::BitwiseAndAssign,
-        "<<=" => Token::ShiftLeftAssign,
-        ">>=" => Token::ShiftRightAssign,
-        "+=" => Token::AddAssign,
-        "-=" => Token::SubtractAssign,
-        "*=" => Token::MulAssign,
-        "/=" => Token::DivideAssign,
-        "%=" => Token::ModuloAssign,
-        "?" => Token::Question,
-        ":" => Token::Colon,
-        ":=" => Token::ColonAssign,
-        "||" => Token::Or,
-        "&&" => Token::And,
-        "!=" => Token::NotEqual,
-        "<" => Token::Less,
-        "<=" => Token::LessEqual,
-        ">" => Token::More,
-        ">=" => Token::MoreEqual,
-        "|" => Token::BitwiseOr,
-        "&" => Token::BitwiseAnd,
-        "^" => Token::BitwiseXor,
-        "<<" => Token::ShiftLeft,
-        ">>" => Token::ShiftRight,
-        "+" => Token::Add,
-        "-" => Token::Subtract,
-        "*" => Token::Mul,
-        "/" => Token::Divide,
-        "%" => Token::Modulo,
-        "**" => Token::Power,
-        "!" => Token::Not,
-        "~" => Token::Complement,
-        "++" => Token::Increment,
-        "--" => Token::Decrement,
-        "[" => Token::OpenBracket,
-        "]" => Token::CloseBracket,
-        "." => Token::Member,
-        "," => Token::Comma,
-        "struct" => Token::Struct,
-        "import" => Token::Import,
-        "contract" => Token::Contract,
-        "bool" => Token::Bool,
-        "address" => Token::Address,
-        "enum" => Token::Enum,
-        "type" => Token::Type,
-        "const" => Token::Constant,
-        "true" => Token::True,
-        "false" => Token::False,
-        "fn" => Token::Function,
-        "->" => Token::Returns,
-        "return" => Token::Return,
-        "if" => Token::If,
-        "for" => Token::For,
-        "else" => Token::Else,
-        "continue" => Token::Continue,
-        "break" => Token::Break,
-	    "field" => Token::Field,
-        "as" => Token::As,
-        "is" => Token::Is,
-        "mut" => Token::Mutable,
-    }
-}
