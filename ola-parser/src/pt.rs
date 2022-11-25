@@ -1,464 +1,927 @@
-use lalrpop_util::ParseError;
-use super::pt::*;
-use super::lexer::{Token, LexicalError};
-use lalrpop_util::ErrorRecovery;
-grammar<'input, 'err>(input: &'input str, file_no: usize , parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, LexicalError>> );
+// SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "pt-serde")]
+use serde::{Deserialize, Serialize};
 
-pub SourceUnitPart: SourceUnitPart = {
-    ContractDefinition => SourceUnitPart::ContractDefinition(<>),
-    ImportDirective => <>,
+use std::fmt::{self, Display};
+
+/// file no, start offset, end offset (in bytes)
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Loc {
+    Builtin,
+    CommandLine,
+    Implicit,
+    Codegen,
+    File(usize, usize, usize),
 }
 
-ImportDirective: SourceUnitPart = {
-    <l:@L> "import" <s:StringLiteral> <r:@R> ";" => SourceUnitPart::ImportDirective(Import::Plain(s, Loc::File(file_no, l, r))),
-    // TODO: global modify
-    <l:@L> "import" <s:StringLiteral> "as" <id:Identifier> <r:@R> ";" => SourceUnitPart::ImportDirective(Import::GlobalSymbol(s, id, Loc::File(file_no, l, r))),
+/// Structs can implement this trait to easily return their loc
+pub trait CodeLocation {
+    fn loc(&self) -> Loc;
 }
 
-Type: Type = {
-    "bool" => Type::Bool,
-    // TODO 
-    "field" => Type::Field,
-    Uint => Type::Uint(<>)
+/// Structs should implement this trait to return an optional location
+pub trait OptionalCodeLocation {
+    fn loc(&self) -> Option<Loc>;
 }
 
-Identifier: Identifier = {
-    <l:@L> <n:identifier> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: n.to_string()}
-}
-
-IdentifierOrError: Option<Identifier> = {
-    Identifier => Some(<>),
-    ! => {
-        parser_errors.push(<>);
-        None
-    }
-}
-
-VariableDeclaration: VariableDeclaration = {
-    <l:@L> <ty:Precedence0>  <name:IdentifierOrError> <r:@R> => VariableDeclaration {
-        loc: Loc::File(file_no, l, r), ty, storage, name
-    },
-}
-
-StructDefinition: Box<StructDefinition> = {
-    <l:@L> "struct" <name:IdentifierOrError> "{" <fields:(<VariableDeclaration> ";")*> "}" <r:@R> => {
-        Box::new(StructDefinition{loc: Loc::File(file_no, l, r), name, fields})
-    }
-}
-
-ContractPart: ContractPart = {
-    StructDefinition => ContractPart::StructDefinition(<>),
-    EnumDefinition => ContractPart::EnumDefinition(<>),
-    VariableDefinition => ContractPart::VariableDefinition(<>),
-    FunctionDefinition => ContractPart::FunctionDefinition(<>),
-    TypeDefinition => ContractPart::TypeDefinition(<>),
-}
-
-ContractDefinition: Box<ContractDefinition> = {
-    <l:@L> "contract" <name:IdentifierOrError> 
-    "{" <parts:(<ContractPart>)*> "}" <r:@R> => {
-       // TODO; rm ty base
-        Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), ty, name, base, parts})
-    }
-}
-
-
-EnumDefinition: Box<EnumDefinition> = {
-    <l:@L> "enum" <name:IdentifierOrError> "{" <values:Comma<IdentifierOrError>> "}" <r:@R> => {
-        Box::new(EnumDefinition{loc: Loc::File(file_no, l, r), name, values})
-    }
-}
-
-VariableDefinition: Box<VariableDefinition> = {
-    // add mut
-    <l:@L> <ty:Precedence0>  <name:IdentifierOrError> <e:("=" <Expression>)?> <r:@R> ";" => {
-        Box::new(VariableDefinition{
-            loc: Loc::File(file_no, l, r), ty, attrs, name, initializer: e,
-        })
-    },
-    <l:@L> <ty:Precedence0> <name:Identifier> <false_token:!> <r:@R> ";" => {
-        parser_errors.push (false_token);
-        Box::new(VariableDefinition{
-            loc: Loc::File(file_no, l, r), ty, attrs, name: Some(name), initializer: None,
-        })
-    }
-}
-
-TypeDefinition: Box<TypeDefinition> = {
-    <l:@L> "type" <name:Identifier> "=" <ty:Precedence0> <r:@R> ";" => {
-        Box::new(TypeDefinition{
-            loc: Loc::File(file_no, l, r), name, ty
-        })
-    },
-}
-
-
-Expression: Expression = {
-    Precedence14,
-}
-
-Precedence14: Expression = {
-    <a:@L> <l:Precedence13> "=" <r:Precedence14> <b:@R> => Expression::Assign(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "|=" <r:Precedence14> <b:@R> => Expression::AssignOr(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "^=" <r:Precedence14> <b:@R> => Expression::AssignXor(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "&=" <r:Precedence14> <b:@R> => Expression::AssignAnd(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "<<=" <r:Precedence14> <b:@R> => Expression::AssignShiftLeft(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> ">>=" <r:Precedence14> <b:@R> => Expression::AssignShiftRight(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "+=" <r:Precedence14> <b:@R> => Expression::AssignAdd(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "-=" <r:Precedence14> <b:@R> => Expression::AssignSubtract(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "*=" <r:Precedence14> <b:@R> => Expression::AssignMultiply(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "/=" <r:Precedence14> <b:@R> => Expression::AssignDivide(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence13> "%=" <r:Precedence14> <b:@R> => Expression::AssignModulo(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <c:Precedence13> "?" <l:Precedence14> ":" <r:Precedence14> <b:@R> => {
-        Expression::ConditionalOperator(Loc::File(file_no, a, b), Box::new(c), Box::new(l), Box::new(r))
-    },
-    Precedence13,
-}
-
-Precedence13: Expression = {
-    <a:@L> <l:Precedence13> "||" <r:Precedence12> <b:@R> => Expression::Or(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence12,
-}
-
-Precedence12: Expression = {
-    <a:@L> <l:Precedence12> "&&" <r:Precedence11> <b:@R> => Expression::And(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence11,
-}
-
-Precedence11: Expression = {
-    <a:@L> <l:Precedence11> "==" <r:Precedence10> <b:@R> => Expression::Equal(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence11> "!=" <r:Precedence10> <b:@R> => Expression::NotEqual(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence10,
-}
-
-Precedence10: Expression = {
-    <a:@L> <l:Precedence10> "<" <r:Precedence9> <b:@R> => Expression::Less(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence10> ">" <r:Precedence9> <b:@R> => Expression::More(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence10> "<=" <r:Precedence9> <b:@R> => Expression::LessEqual(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence10> ">=" <r:Precedence9> <b:@R> => Expression::MoreEqual(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence9,
-}
-
-Precedence9: Expression = {
-    <a:@L> <l:Precedence9> "|" <r:Precedence8> <b:@R> => Expression::BitwiseOr(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence8,
-}
-
-Precedence8: Expression = {
-    <a:@L> <l:Precedence8> "^" <r:Precedence7> <b:@R> => Expression::BitwiseXor(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence7,
-}
-
-Precedence7: Expression = {
-    <a:@L> <l:Precedence7> "&" <r:Precedence6> <b:@R> => Expression::BitwiseAnd(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence6,
-}
-
-Precedence6: Expression = {
-    <a:@L> <l:Precedence6> "<<" <r:Precedence5> <b:@R> => Expression::ShiftLeft(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence6> ">>" <r:Precedence5> <b:@R> => Expression::ShiftRight(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence5,
-}
-
-Precedence5: Expression = {
-    <a:@L> <l:Precedence5> "+" <r:Precedence4> <b:@R> => Expression::Add(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence5> "-" <r:Precedence4> <b:@R> => Expression::Subtract(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence4,
-}
-
-Precedence4: Expression = {
-    <a:@L> <l:Precedence4> "*" <r:Precedence3> <b:@R> => Expression::Multiply(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence4> "/" <r:Precedence3> <b:@R> => Expression::Divide(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    <a:@L> <l:Precedence4> "%" <r:Precedence3> <b:@R> => Expression::Modulo(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence3,
-}
-
-Precedence3: Expression = {
-    <a:@L> <l:Precedence2> "**" <r:Precedence3> <b:@R> => Expression::Power(Loc::File(file_no, a, b), Box::new(l), Box::new(r)),
-    Precedence2,
-}
-
-Precedence2: Expression = {
-    <a:@L> "!" <e:Precedence2> <b:@R> => Expression::Not(Loc::File(file_no, a, b), Box::new(e)),
-    <a:@L> "~" <e:Precedence2> <b:@R> => Expression::Complement(Loc::File(file_no, a, b), Box::new(e)),
-    Precedence0,
-}
-
-NamedArgument: NamedArgument = {
-    <l:@L> <name:SolIdentifier> ":" <expr:Expression> <r:@R> => {
-        NamedArgument{ loc: Loc::File(file_no, l, r), name, expr }
-    }
-}
-
-FunctionCall: Expression = {
-    <a:@L> <i:Precedence0> "(" <v:Comma<Expression>> ")" <b:@R> => {
-        Expression::FunctionCall(Loc::File(file_no, a, b), Box::new(i), v)
-    },
-    <a:@L> <i:FunctionCallPrecedence> "(" "{" <v:Comma<NamedArgument>> "}" ")" <b:@R> => {
-        Expression::NamedFunctionCall(Loc::File(file_no, a, b), Box::new(i), v)
-    },
-}
-
-Precedence0: Expression = {
-    <a:@L> <e:Precedence0> "++" <b:@R> => Expression::Increment(Loc::File(file_no, a, b), Box::new(e)),
-    <a:@L> <e:Precedence0> "--" <b:@R> => Expression::Decrement(Loc::File(file_no, a, b), Box::new(e)),
-    <FunctionCall> => <>,
-    <a:@L> <e:Precedence0> "[" <i:Expression?> "]" <b:@R> => Expression::ArraySubscript(Loc::File(file_no, a, b), Box::new(e), i.map(Box::new)),
-    <a:@L> <e:Precedence0> "[" <l:Expression?> ":" <r:Expression?> "]" <b:@R> => Expression::ArraySlice(Loc::File(file_no, a, b), Box::new(e), l.map(Box::new), r.map(Box::new)),
-    <a:@L> <e:Precedence0> "." <i:Identifier> <b:@R> => Expression::MemberAccess(Loc::File(file_no, a, b), Box::new(e), i),
-    <l:@L> <ty:Type> <r:@R> => Expression::Type(Loc::File(file_no, l, r), ty),
-    <a:@L> "[" <v:CommaOne<Expression>> "]" <b:@R> => {
-        Expression::ArrayLiteral(Loc::File(file_no, a, b), v)
-    },
-    <Identifier> => Expression::Variable(<>),
-    <l:@L> <a:ParameterList> <r:@R> => {
-        if a.len() == 1 {
-            if let Some(Parameter{ ty, storage: None, name: None, .. }) = &a[0].1 {
-                // this means "(" Expression ")"
-                return Expression::Parenthesis(ty.loc(), Box::new(ty.clone()));
-            }
+impl Loc {
+    #[must_use]
+    pub fn begin_range(&self) -> Self {
+        match self {
+            Loc::File(file_no, start, _) => Loc::File(*file_no, *start, *start),
+            loc => *loc,
         }
+    }
 
-        Expression::List(Loc::File(file_no, l, r), a)
-    },
-    LiteralExpression
-}
+    #[must_use]
+    pub fn end_range(&self) -> Self {
+        match self {
+            Loc::File(file_no, _, end) => Loc::File(*file_no, *end, *end),
+            loc => *loc,
+        }
+    }
 
-LiteralExpression: Expression = {
-    <a:@L> "true" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), true),
-    <a:@L> "false" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), false),
-    <l:@L> <n:number> <r:@R> => {
-        let integer: String = n.0.chars().filter(|v| *v != '_').collect();
-         // remove exp
-        Expression::NumberLiteral(Loc::File(file_no, l, r), integer, exp)
-    },
-    <l:@L> <n:hexnumber> <r:@R> => {
-        Expression::HexNumberLiteral(Loc::File(file_no, l, r), n.to_owned())
+    pub fn file_no(&self) -> usize {
+        match self {
+            Loc::File(file_no, _, _) => *file_no,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Return the file_no if the location is in a file
+    pub fn try_file_no(&self) -> Option<usize> {
+        match self {
+            Loc::File(file_no, _, _) => Some(*file_no),
+            _ => None,
+        }
+    }
+
+    pub fn start(&self) -> usize {
+        match self {
+            Loc::File(_, start, _) => *start,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn end(&self) -> usize {
+        match self {
+            Loc::File(_, _, end) => *end,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn use_end_from(&mut self, other: &Loc) {
+        match (self, other) {
+            (Loc::File(_, _, end), Loc::File(_, _, other_end)) => {
+                *end = *other_end;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn use_start_from(&mut self, other: &Loc) {
+        match (self, other) {
+            (Loc::File(_, start, _), Loc::File(_, other_start, _)) => {
+                *start = *other_start;
+            }
+            _ => unreachable!(),
+        }
     }
 }
 
-StringLiteral: StringLiteral = {
-    <l:@L> <s:string> <r:@R> => {
-        StringLiteral{ loc: Loc::File(file_no, l, r), unicode: s.0, string: s.1.to_string() }
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct Identifier {
+    pub loc: Loc,
+    pub name: String,
+}
+
+impl Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.name)
     }
 }
 
-// A parameter list is used for function arguments, returns, and destructuring statements.
-// In destructuring statements, parameters can be optional. So, we make parameters optional
-// and as an added bonus we can generate error messages about missing parameters/returns
-// to functions
-Parameter: Parameter = {
-    <l:@L> <ty:Expression> <name:Identifier?> <r:@R> => {
-        let loc = Loc::File(file_no, l, r);
-        Parameter{loc, ty, storage, name}
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct IdentifierPath {
+    pub loc: Loc,
+    pub identifiers: Vec<Identifier>,
+}
+
+impl Display for IdentifierPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(ident) = self.identifiers.get(0) {
+            ident.fmt(f)?;
+        } else {
+            return Ok(());
+        }
+        for ident in self.identifiers[1..].iter() {
+            f.write_str(".")?;
+            ident.fmt(f)?;
+        }
+        Ok(())
     }
 }
 
-OptParameter: (Loc, Option<Parameter>) = {
-    <l:@L> <p:Parameter?> <r:@R> => (Loc::File(file_no, l, r), p),
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Comment {
+    Line(Loc, String),
+    Block(Loc, String),
+    DocLine(Loc, String),
+    DocBlock(Loc, String),
 }
 
-ParameterList: Vec<(Loc, Option<Parameter>)> = {
-    "(" ")" => Vec::new(),
-    "(" <l:@L> <p:Parameter> <r:@R> ")" => vec!((Loc::File(file_no, l, r), Some(p))),
-    "(" <CommaTwo<OptParameter>> ")" => <>,
-    "(" <false_token:!> ")"=> {
-        parser_errors.push(<>);
-        Vec::new()
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct SourceUnit(pub Vec<SourceUnitPart>);
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum SourceUnitPart {
+    ContractDefinition(Box<ContractDefinition>),
+    PragmaDirective(Loc, Option<Identifier>, Option<StringLiteral>),
+    ImportDirective(Import),
+    EnumDefinition(Box<EnumDefinition>),
+    StructDefinition(Box<StructDefinition>),
+    EventDefinition(Box<EventDefinition>),
+    ErrorDefinition(Box<ErrorDefinition>),
+    FunctionDefinition(Box<FunctionDefinition>),
+    VariableDefinition(Box<VariableDefinition>),
+    TypeDefinition(Box<TypeDefinition>),
+    Using(Box<Using>),
+    StraySemicolon(Loc),
+}
+
+impl SourceUnitPart {
+    pub fn loc(&self) -> &Loc {
+        match self {
+            SourceUnitPart::ContractDefinition(def) => &def.loc,
+            SourceUnitPart::PragmaDirective(loc, _, _) => loc,
+            SourceUnitPart::ImportDirective(import) => import.loc(),
+            SourceUnitPart::EnumDefinition(def) => &def.loc,
+            SourceUnitPart::StructDefinition(def) => &def.loc,
+            SourceUnitPart::EventDefinition(def) => &def.loc,
+            SourceUnitPart::ErrorDefinition(def) => &def.loc,
+            SourceUnitPart::FunctionDefinition(def) => &def.loc,
+            SourceUnitPart::VariableDefinition(def) => &def.loc,
+            SourceUnitPart::TypeDefinition(def) => &def.loc,
+            SourceUnitPart::Using(def) => &def.loc,
+            SourceUnitPart::StraySemicolon(loc) => loc,
+        }
     }
 }
 
-returns: Option<Loc> = {
-    "returns" => None,
-    <l:@L> "return" <r:@R> => Some(Loc::File(file_no, l, r)),
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Import {
+    Plain(StringLiteral, Loc),
+    GlobalSymbol(StringLiteral, Identifier, Loc),
+    Rename(StringLiteral, Vec<(Identifier, Option<Identifier>)>, Loc),
 }
 
-FunctionDefinition: Box<FunctionDefinition> = {
-    <l:@L> "fn" <nl:@L> <name:IdentifierOrError> <nr:@R> <params:ParameterList>
-    <returns:(returns ParameterList)?> <r:@R> <body:BlockStatement> => {
-        let (return_not_returns, returns) = returns.unwrap_or((None, Vec::new()));
-
-        Box::new(FunctionDefinition{
-            loc: Loc::File(file_no, l, r),
-            ty: FunctionTy::Function,
-            name,
-            name_loc: Loc::File(file_no, nl, nr),
-            params,
-            attributes,
-            return_not_returns,
-            returns,
-            body,
-        })
+impl Import {
+    pub fn loc(&self) -> &Loc {
+        match self {
+            Import::Plain(_, loc) => loc,
+            Import::GlobalSymbol(_, _, loc) => loc,
+            Import::Rename(_, _, loc) => loc,
+        }
     }
 }
 
+pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 
-BlockStatement: Statement = {
-    <l:@L> "{" <statements:Statement*> "}" <r:@R> => {
-        Statement::Block { loc: Loc::File(file_no, l, r), statements }
-    }
-}
-
-OpenStatement: Statement = {
-    <l:@L> "if" "(" <cond:Expression> ")" <body:Statement> <r:@R> => {
-        Statement::If(Loc::File(file_no, l, r), cond, Box::new(body), None)
-    },
-    <l:@L> "if" "(" <cond:Expression> ")" <body:ClosedStatement> "else" <o:OpenStatement> <r:@R> => {
-        Statement::If(Loc::File(file_no, l, r), cond, Box::new(body), Some(Box::new(o)))
-    },
-    <l:@L> "for" "(" <b:SimpleStatement?> ";" <c:Expression?> ";" <n:SimpleStatement?> ")" <block:OpenStatement> <r:@R> => {
-        Statement::For(Loc::File(file_no, l, r), b.map(Box::new), c.map(Box::new), n.map(Box::new), Some(Box::new(block)))
-    },
-}
-
-ClosedStatement: Statement = {
-    NonIfStatement,
-    <l:@L> "if" "(" <cond:Expression> ")" <body:ClosedStatement> "else" <o:ClosedStatement> <r:@R> => {
-        Statement::If(Loc::File(file_no, l, r), cond, Box::new(body), Some(Box::new(o)))
-    },
-    <l:@L> "for" "(" <b:SimpleStatement?> ";" <c:Expression?> ";" <n:SimpleStatement?> ")" <block:ClosedStatement> <r:@R> => {
-        Statement::For(Loc::File(file_no, l, r), b.map(Box::new), c.map(Box::new), n.map(Box::new), Some(Box::new(block)))
-    },
-    <l:@L> "for" "(" <b:SimpleStatement?> ";" <c:Expression?> ";" <n:SimpleStatement?> ")" <r:@R> ";" => {
-        Statement::For(Loc::File(file_no, l, r), b.map(Box::new), c.map(Box::new), n.map(Box::new), None)
-    }
-}
-
-Statement: Statement = {
-    OpenStatement,
-    ClosedStatement,
-    <l:@L> <false_token:!> <r:@R> => {
-        parser_errors.push(false_token);
-        Statement::Error(Loc::File(file_no, l, r))
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Type {
+    Address,
+    AddressPayable,
+    Payable,
+    Bool,
+    String,
+    Int(u16),
+    Uint(u16),
+    Bytes(u8),
+    Rational,
+    DynamicBytes,
+    Mapping(Loc, Box<Expression>, Box<Expression>),
+    Function {
+        params: Vec<(Loc, Option<Parameter>)>,
+        attributes: Vec<FunctionAttribute>,
+        returns: Option<(ParameterList, Vec<FunctionAttribute>)>,
     },
 }
 
-SimpleStatement: Statement = {
-    <l:@L> <v:VariableDeclaration> <e:("=" <Expression>)?> <r:@R> => {
-        Statement::VariableDefinition(Loc::File(file_no, l, r), v, e)
-    },
-    <l:@L> <e:Expression> <r:@R> => {
-        Statement::Expression(Loc::File(file_no, l, r), e)
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum StorageLocation {
+    Memory(Loc),
+    Storage(Loc),
+    Calldata(Loc),
+}
+
+impl CodeLocation for StorageLocation {
+    fn loc(&self) -> Loc {
+        match self {
+            StorageLocation::Memory(l)
+            | StorageLocation::Storage(l)
+            | StorageLocation::Calldata(l) => *l,
+        }
     }
 }
 
-NonIfStatement: Statement = {
-    BlockStatement => <>,
-    <SimpleStatement> ";" => <>,
-    <l:@L> "continue" <r:@R> ";" => {
-        Statement::Continue(Loc::File(file_no, l, r))
-    },
-    <l:@L> "break" <r:@R> ";" => {
-        Statement::Break(Loc::File(file_no, l, r))
-    },
-    <l:@L> "return" <r:@R> ";" => {
-        Statement::Return(Loc::File(file_no, l, r), None)
-    },
-    <l:@L> "return" <e:Expression> <r:@R> ";" => {
-        Statement::Return(Loc::File(file_no, l, r), Some(e))
+impl fmt::Display for StorageLocation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            StorageLocation::Memory(_) => write!(f, "memory"),
+            StorageLocation::Storage(_) => write!(f, "storage"),
+            StorageLocation::Calldata(_) => write!(f, "calldata"),
+        }
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct VariableDeclaration {
+    pub loc: Loc,
+    pub ty: Expression,
+    pub storage: Option<StorageLocation>,
+    pub name: Option<Identifier>,
+}
 
-Comma<T>: Vec<T> = {
-    => Vec::new(),
-    CommaOne<T> => <>,
-};
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+#[allow(clippy::vec_box)]
+pub struct StructDefinition {
+    pub loc: Loc,
+    pub name: Option<Identifier>,
+    pub fields: Vec<VariableDeclaration>,
+}
 
-CommaOne<T>: Vec<T> = {
-    <e:T> <v:("," <T>)*> => {
-        let mut v = v;
-        v.insert(0, e);
-        v
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum ContractPart {
+    StructDefinition(Box<StructDefinition>),
+    EventDefinition(Box<EventDefinition>),
+    EnumDefinition(Box<EnumDefinition>),
+    ErrorDefinition(Box<ErrorDefinition>),
+    VariableDefinition(Box<VariableDefinition>),
+    FunctionDefinition(Box<FunctionDefinition>),
+    TypeDefinition(Box<TypeDefinition>),
+    StraySemicolon(Loc),
+    Using(Box<Using>),
+}
+
+impl ContractPart {
+    // Return the location of the part. Note that this excluded the body of the function
+    pub fn loc(&self) -> &Loc {
+        match self {
+            ContractPart::StructDefinition(def) => &def.loc,
+            ContractPart::EventDefinition(def) => &def.loc,
+            ContractPart::EnumDefinition(def) => &def.loc,
+            ContractPart::ErrorDefinition(def) => &def.loc,
+            ContractPart::VariableDefinition(def) => &def.loc,
+            ContractPart::FunctionDefinition(def) => &def.loc,
+            ContractPart::TypeDefinition(def) => &def.loc,
+            ContractPart::StraySemicolon(loc) => loc,
+            ContractPart::Using(def) => &def.loc,
+        }
     }
-};
+}
 
-CommaTwo<T>: Vec<T> = {
-    <e:T> <v:("," <T>)+> => {
-        let mut v = v;
-        v.insert(0, e);
-        v
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum UsingList {
+    Library(IdentifierPath),
+    Functions(Vec<IdentifierPath>),
+    Error(),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct Using {
+    pub loc: Loc,
+    pub list: UsingList,
+    pub ty: Option<Expression>,
+    pub global: Option<Identifier>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum ContractTy {
+    Abstract(Loc),
+    Contract(Loc),
+    Interface(Loc),
+    Library(Loc),
+}
+
+impl fmt::Display for ContractTy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ContractTy::Abstract(_) => write!(f, "abstract contract"),
+            ContractTy::Contract(_) => write!(f, "contract"),
+            ContractTy::Interface(_) => write!(f, "interface"),
+            ContractTy::Library(_) => write!(f, "library"),
+        }
     }
-};
+}
 
-extern {
-    type Location = usize;
-    type Error = LexicalError;
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct Base {
+    pub loc: Loc,
+    pub name: IdentifierPath,
+    pub args: Option<Vec<Expression>>,
+}
 
-    enum Token<'input> {
-        identifier => Token::Identifier(<&'input str>),
-        string => Token::StringLiteral(<&'input str>),
-        number => Token::Number(<&'input str>, <&'input str>),
-        hexnumber => Token::HexNumber(<&'input str>),
-        Uint => Token::Uint(<u16>),
-        ";" => Token::Semicolon,
-        "{" => Token::OpenCurlyBrace,
-        "}" => Token::CloseCurlyBrace,
-        "(" => Token::OpenParenthesis,
-        ")" => Token::CloseParenthesis,
-        "=" => Token::Assign,
-        "==" => Token::Equal,
-        "|=" => Token::BitwiseOrAssign,
-        "^=" => Token::BitwiseXorAssign,
-        "&=" => Token::BitwiseAndAssign,
-        "<<=" => Token::ShiftLeftAssign,
-        ">>=" => Token::ShiftRightAssign,
-        "+=" => Token::AddAssign,
-        "-=" => Token::SubtractAssign,
-        "*=" => Token::MulAssign,
-        "/=" => Token::DivideAssign,
-        "%=" => Token::ModuloAssign,
-        "?" => Token::Question,
-        ":" => Token::Colon,
-        ":=" => Token::ColonAssign,
-        "||" => Token::Or,
-        "&&" => Token::And,
-        "!=" => Token::NotEqual,
-        "<" => Token::Less,
-        "<=" => Token::LessEqual,
-        ">" => Token::More,
-        ">=" => Token::MoreEqual,
-        "|" => Token::BitwiseOr,
-        "&" => Token::BitwiseAnd,
-        "^" => Token::BitwiseXor,
-        "<<" => Token::ShiftLeft,
-        ">>" => Token::ShiftRight,
-        "+" => Token::Add,
-        "-" => Token::Subtract,
-        "*" => Token::Mul,
-        "/" => Token::Divide,
-        "%" => Token::Modulo,
-        "**" => Token::Power,
-        "!" => Token::Not,
-        "~" => Token::Complement,
-        "++" => Token::Increment,
-        "--" => Token::Decrement,
-        "[" => Token::OpenBracket,
-        "]" => Token::CloseBracket,
-        "." => Token::Member,
-        "," => Token::Comma,
-        "struct" => Token::Struct,
-        "import" => Token::Import,
-        "contract" => Token::Contract,
-        "bool" => Token::Bool,
-        "address" => Token::Address,
-        "enum" => Token::Enum,
-        "type" => Token::Type,
-        "const" => Token::Constant,
-        "true" => Token::True,
-        "false" => Token::False,
-        "fn" => Token::Function,
-        "->" => Token::Returns,
-        "return" => Token::Return,
-        "if" => Token::If,
-        "for" => Token::For,
-        "else" => Token::Else,
-        "continue" => Token::Continue,
-        "break" => Token::Break,
-        "field" => Token::Field;
-        "as" => Token::As,
-        "is" => Token::Is,
-        "mut" => Token::Mutable,
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct ContractDefinition {
+    pub loc: Loc,
+    pub ty: ContractTy,
+    pub name: Option<Identifier>,
+    pub base: Vec<Base>,
+    pub parts: Vec<ContractPart>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct EventParameter {
+    pub ty: Expression,
+    pub loc: Loc,
+    pub indexed: bool,
+    pub name: Option<Identifier>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct EventDefinition {
+    pub loc: Loc,
+    pub name: Option<Identifier>,
+    pub fields: Vec<EventParameter>,
+    pub anonymous: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct ErrorParameter {
+    pub ty: Expression,
+    pub loc: Loc,
+    pub name: Option<Identifier>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct ErrorDefinition {
+    pub loc: Loc,
+    pub name: Option<Identifier>,
+    pub fields: Vec<ErrorParameter>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct EnumDefinition {
+    pub loc: Loc,
+    pub name: Option<Identifier>,
+    pub values: Vec<Option<Identifier>>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum VariableAttribute {
+    Visibility(Visibility),
+    Constant(Loc),
+    Immutable(Loc),
+    Override(Loc, Vec<IdentifierPath>),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct VariableDefinition {
+    pub loc: Loc,
+    pub ty: Expression,
+    pub attrs: Vec<VariableAttribute>,
+    pub name: Option<Identifier>,
+    pub initializer: Option<Expression>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct TypeDefinition {
+    pub loc: Loc,
+    pub name: Identifier,
+    pub ty: Expression,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct StringLiteral {
+    pub loc: Loc,
+    pub unicode: bool,
+    pub string: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct HexLiteral {
+    pub loc: Loc,
+    pub hex: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct NamedArgument {
+    pub loc: Loc,
+    pub name: Identifier,
+    pub expr: Expression,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Unit {
+    Seconds(Loc),
+    Minutes(Loc),
+    Hours(Loc),
+    Days(Loc),
+    Weeks(Loc),
+    Wei(Loc),
+    Gwei(Loc),
+    Ether(Loc),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Expression {
+    PostIncrement(Loc, Box<Expression>),
+    PostDecrement(Loc, Box<Expression>),
+    New(Loc, Box<Expression>),
+    ArraySubscript(Loc, Box<Expression>, Option<Box<Expression>>),
+    ArraySlice(
+        Loc,
+        Box<Expression>,
+        Option<Box<Expression>>,
+        Option<Box<Expression>>,
+    ),
+    Parenthesis(Loc, Box<Expression>),
+    MemberAccess(Loc, Box<Expression>, Identifier),
+    FunctionCall(Loc, Box<Expression>, Vec<Expression>),
+    FunctionCallBlock(Loc, Box<Expression>, Box<Statement>),
+    NamedFunctionCall(Loc, Box<Expression>, Vec<NamedArgument>),
+    Not(Loc, Box<Expression>),
+    Complement(Loc, Box<Expression>),
+    Delete(Loc, Box<Expression>),
+    PreIncrement(Loc, Box<Expression>),
+    PreDecrement(Loc, Box<Expression>),
+    UnaryPlus(Loc, Box<Expression>),
+    UnaryMinus(Loc, Box<Expression>),
+    Power(Loc, Box<Expression>, Box<Expression>),
+    Multiply(Loc, Box<Expression>, Box<Expression>),
+    Divide(Loc, Box<Expression>, Box<Expression>),
+    Modulo(Loc, Box<Expression>, Box<Expression>),
+    Add(Loc, Box<Expression>, Box<Expression>),
+    Subtract(Loc, Box<Expression>, Box<Expression>),
+    ShiftLeft(Loc, Box<Expression>, Box<Expression>),
+    ShiftRight(Loc, Box<Expression>, Box<Expression>),
+    BitwiseAnd(Loc, Box<Expression>, Box<Expression>),
+    BitwiseXor(Loc, Box<Expression>, Box<Expression>),
+    BitwiseOr(Loc, Box<Expression>, Box<Expression>),
+    Less(Loc, Box<Expression>, Box<Expression>),
+    More(Loc, Box<Expression>, Box<Expression>),
+    LessEqual(Loc, Box<Expression>, Box<Expression>),
+    MoreEqual(Loc, Box<Expression>, Box<Expression>),
+    Equal(Loc, Box<Expression>, Box<Expression>),
+    NotEqual(Loc, Box<Expression>, Box<Expression>),
+    And(Loc, Box<Expression>, Box<Expression>),
+    Or(Loc, Box<Expression>, Box<Expression>),
+    ConditionalOperator(Loc, Box<Expression>, Box<Expression>, Box<Expression>),
+    Assign(Loc, Box<Expression>, Box<Expression>),
+    AssignOr(Loc, Box<Expression>, Box<Expression>),
+    AssignAnd(Loc, Box<Expression>, Box<Expression>),
+    AssignXor(Loc, Box<Expression>, Box<Expression>),
+    AssignShiftLeft(Loc, Box<Expression>, Box<Expression>),
+    AssignShiftRight(Loc, Box<Expression>, Box<Expression>),
+    AssignAdd(Loc, Box<Expression>, Box<Expression>),
+    AssignSubtract(Loc, Box<Expression>, Box<Expression>),
+    AssignMultiply(Loc, Box<Expression>, Box<Expression>),
+    AssignDivide(Loc, Box<Expression>, Box<Expression>),
+    AssignModulo(Loc, Box<Expression>, Box<Expression>),
+    BoolLiteral(Loc, bool),
+    NumberLiteral(Loc, String, String),
+    RationalNumberLiteral(Loc, String, String, String),
+    HexNumberLiteral(Loc, String),
+    StringLiteral(Vec<StringLiteral>),
+    Type(Loc, Type),
+    HexLiteral(Vec<HexLiteral>),
+    AddressLiteral(Loc, String),
+    Variable(Identifier),
+    List(Loc, ParameterList),
+    ArrayLiteral(Loc, Vec<Expression>),
+    Unit(Loc, Box<Expression>, Unit),
+    This(Loc),
+}
+
+impl CodeLocation for Expression {
+    fn loc(&self) -> Loc {
+        match self {
+            Expression::PostIncrement(loc, _)
+            | Expression::PostDecrement(loc, _)
+            | Expression::New(loc, _)
+            | Expression::Parenthesis(loc, _)
+            | Expression::ArraySubscript(loc, ..)
+            | Expression::ArraySlice(loc, ..)
+            | Expression::MemberAccess(loc, ..)
+            | Expression::FunctionCall(loc, ..)
+            | Expression::FunctionCallBlock(loc, ..)
+            | Expression::NamedFunctionCall(loc, ..)
+            | Expression::Not(loc, _)
+            | Expression::Complement(loc, _)
+            | Expression::Delete(loc, _)
+            | Expression::PreIncrement(loc, _)
+            | Expression::PreDecrement(loc, _)
+            | Expression::UnaryPlus(loc, _)
+            | Expression::UnaryMinus(loc, _)
+            | Expression::Power(loc, ..)
+            | Expression::Multiply(loc, ..)
+            | Expression::Divide(loc, ..)
+            | Expression::Modulo(loc, ..)
+            | Expression::Add(loc, ..)
+            | Expression::Subtract(loc, ..)
+            | Expression::ShiftLeft(loc, ..)
+            | Expression::ShiftRight(loc, ..)
+            | Expression::BitwiseAnd(loc, ..)
+            | Expression::BitwiseXor(loc, ..)
+            | Expression::BitwiseOr(loc, ..)
+            | Expression::Less(loc, ..)
+            | Expression::More(loc, ..)
+            | Expression::LessEqual(loc, ..)
+            | Expression::MoreEqual(loc, ..)
+            | Expression::Equal(loc, ..)
+            | Expression::NotEqual(loc, ..)
+            | Expression::And(loc, ..)
+            | Expression::Or(loc, ..)
+            | Expression::ConditionalOperator(loc, ..)
+            | Expression::Assign(loc, ..)
+            | Expression::AssignOr(loc, ..)
+            | Expression::AssignAnd(loc, ..)
+            | Expression::AssignXor(loc, ..)
+            | Expression::AssignShiftLeft(loc, ..)
+            | Expression::AssignShiftRight(loc, ..)
+            | Expression::AssignAdd(loc, ..)
+            | Expression::AssignSubtract(loc, ..)
+            | Expression::AssignMultiply(loc, ..)
+            | Expression::AssignDivide(loc, ..)
+            | Expression::AssignModulo(loc, ..)
+            | Expression::BoolLiteral(loc, _)
+            | Expression::NumberLiteral(loc, ..)
+            | Expression::RationalNumberLiteral(loc, ..)
+            | Expression::HexNumberLiteral(loc, _)
+            | Expression::ArrayLiteral(loc, _)
+            | Expression::List(loc, _)
+            | Expression::Type(loc, _)
+            | Expression::Unit(loc, ..)
+            | Expression::This(loc)
+            | Expression::Variable(Identifier { loc, .. })
+            | Expression::AddressLiteral(loc, _) => *loc,
+            Expression::StringLiteral(v) => v[0].loc,
+            Expression::HexLiteral(v) => v[0].loc,
+        }
+    }
+}
+
+impl Display for Expression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expression::Variable(id) => write!(f, "{}", id.name),
+            Expression::MemberAccess(_, e, id) => write!(f, "{}.{}", e, id.name),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl Expression {
+    pub fn remove_parenthesis(&self) -> &Expression {
+        if let Expression::Parenthesis(_, expr) = self {
+            expr
+        } else {
+            self
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct Parameter {
+    pub loc: Loc,
+    pub ty: Expression,
+    pub storage: Option<StorageLocation>,
+    pub name: Option<Identifier>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Mutability {
+    Pure(Loc),
+    View(Loc),
+    Constant(Loc),
+    Payable(Loc),
+}
+
+impl fmt::Display for Mutability {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Mutability::Pure(_) => write!(f, "pure"),
+            Mutability::Constant(_) | Mutability::View(_) => write!(f, "view"),
+            Mutability::Payable(_) => write!(f, "payable"),
+        }
+    }
+}
+
+impl CodeLocation for Mutability {
+    fn loc(&self) -> Loc {
+        match self {
+            Mutability::Pure(loc)
+            | Mutability::Constant(loc)
+            | Mutability::View(loc)
+            | Mutability::Payable(loc) => *loc,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum Visibility {
+    External(Option<Loc>),
+    Public(Option<Loc>),
+    Internal(Option<Loc>),
+    Private(Option<Loc>),
+}
+
+impl fmt::Display for Visibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Visibility::Public(_) => write!(f, "public"),
+            Visibility::External(_) => write!(f, "external"),
+            Visibility::Internal(_) => write!(f, "internal"),
+            Visibility::Private(_) => write!(f, "private"),
+        }
+    }
+}
+
+impl OptionalCodeLocation for Visibility {
+    fn loc(&self) -> Option<Loc> {
+        match self {
+            Visibility::Public(loc)
+            | Visibility::External(loc)
+            | Visibility::Internal(loc)
+            | Visibility::Private(loc) => *loc,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+
+pub enum FunctionAttribute {
+    Mutability(Mutability),
+    Visibility(Visibility),
+    Virtual(Loc),
+    Immutable(Loc),
+    Override(Loc, Vec<IdentifierPath>),
+    BaseOrModifier(Loc, Base),
+    NameValue(Loc, Identifier, Expression),
+    Error(Loc),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum FunctionTy {
+    Constructor,
+    Function,
+    Fallback,
+    Receive,
+    Modifier,
+}
+
+impl fmt::Display for FunctionTy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FunctionTy::Constructor => write!(f, "constructor"),
+            FunctionTy::Function => write!(f, "function"),
+            FunctionTy::Fallback => write!(f, "fallback"),
+            FunctionTy::Receive => write!(f, "receive"),
+            FunctionTy::Modifier => write!(f, "modifier"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct FunctionDefinition {
+    pub loc: Loc,
+    pub ty: FunctionTy,
+    pub name: Option<Identifier>,
+    pub name_loc: Loc,
+    pub params: ParameterList,
+    pub attributes: Vec<FunctionAttribute>,
+    pub return_not_returns: Option<Loc>,
+    pub returns: ParameterList,
+    pub body: Option<Statement>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+#[allow(clippy::large_enum_variant, clippy::type_complexity)]
+pub enum Statement {
+    Block {
+        loc: Loc,
+        unchecked: bool,
+        statements: Vec<Statement>,
+    },
+    Assembly {
+        loc: Loc,
+        dialect: Option<StringLiteral>,
+        flags: Option<Vec<StringLiteral>>,
+        block: YulBlock,
+    },
+    Args(Loc, Vec<NamedArgument>),
+    If(Loc, Expression, Box<Statement>, Option<Box<Statement>>),
+    While(Loc, Expression, Box<Statement>),
+    Expression(Loc, Expression),
+    VariableDefinition(Loc, VariableDeclaration, Option<Expression>),
+    For(
+        Loc,
+        Option<Box<Statement>>,
+        Option<Box<Expression>>,
+        Option<Box<Statement>>,
+        Option<Box<Statement>>,
+    ),
+    DoWhile(Loc, Box<Statement>, Expression),
+    Continue(Loc),
+    Break(Loc),
+    Return(Loc, Option<Expression>),
+    Revert(Loc, Option<IdentifierPath>, Vec<Expression>),
+    RevertNamedArgs(Loc, Option<IdentifierPath>, Vec<NamedArgument>),
+    Emit(Loc, Expression),
+    Try(
+        Loc,
+        Expression,
+        Option<(ParameterList, Box<Statement>)>,
+        Vec<CatchClause>,
+    ),
+    Error(Loc),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum CatchClause {
+    Simple(Loc, Option<Parameter>, Statement),
+    Named(Loc, Identifier, Parameter, Statement),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum YulStatement {
+    Assign(Loc, Vec<YulExpression>, YulExpression),
+    VariableDeclaration(Loc, Vec<YulTypedIdentifier>, Option<YulExpression>),
+    If(Loc, YulExpression, YulBlock),
+    For(YulFor),
+    Switch(YulSwitch),
+    Leave(Loc),
+    Break(Loc),
+    Continue(Loc),
+    Block(YulBlock),
+    FunctionDefinition(Box<YulFunctionDefinition>),
+    FunctionCall(Box<YulFunctionCall>),
+    Error(Loc),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct YulSwitch {
+    pub loc: Loc,
+    pub condition: YulExpression,
+    pub cases: Vec<YulSwitchOptions>,
+    pub default: Option<YulSwitchOptions>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct YulFor {
+    pub loc: Loc,
+    pub init_block: YulBlock,
+    pub condition: YulExpression,
+    pub post_block: YulBlock,
+    pub execution_block: YulBlock,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct YulBlock {
+    pub loc: Loc,
+    pub statements: Vec<YulStatement>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum YulExpression {
+    BoolLiteral(Loc, bool, Option<Identifier>),
+    NumberLiteral(Loc, String, String, Option<Identifier>),
+    HexNumberLiteral(Loc, String, Option<Identifier>),
+    HexStringLiteral(HexLiteral, Option<Identifier>),
+    StringLiteral(StringLiteral, Option<Identifier>),
+    Variable(Identifier),
+    FunctionCall(Box<YulFunctionCall>),
+    SuffixAccess(Loc, Box<YulExpression>, Identifier),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct YulTypedIdentifier {
+    pub loc: Loc,
+    pub id: Identifier,
+    pub ty: Option<Identifier>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct YulFunctionDefinition {
+    pub loc: Loc,
+    pub id: Identifier,
+    pub params: Vec<YulTypedIdentifier>,
+    pub returns: Vec<YulTypedIdentifier>,
+    pub body: YulBlock,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct YulFunctionCall {
+    pub loc: Loc,
+    pub id: Identifier,
+    pub arguments: Vec<YulExpression>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum YulSwitchOptions {
+    Case(Loc, YulExpression, YulBlock),
+    Default(Loc, YulBlock),
+}
+
+impl CodeLocation for YulSwitchOptions {
+    fn loc(&self) -> Loc {
+        match self {
+            YulSwitchOptions::Case(loc, ..) | YulSwitchOptions::Default(loc, ..) => *loc,
+        }
+    }
+}
+
+impl CodeLocation for Statement {
+    fn loc(&self) -> Loc {
+        match self {
+            Statement::Block { loc, .. }
+            | Statement::Assembly { loc, .. }
+            | Statement::Args(loc, ..)
+            | Statement::If(loc, ..)
+            | Statement::While(loc, ..)
+            | Statement::Expression(loc, ..)
+            | Statement::VariableDefinition(loc, ..)
+            | Statement::For(loc, ..)
+            | Statement::DoWhile(loc, ..)
+            | Statement::Continue(loc)
+            | Statement::Break(loc)
+            | Statement::Return(loc, ..)
+            | Statement::Revert(loc, ..)
+            | Statement::RevertNamedArgs(loc, ..)
+            | Statement::Emit(loc, ..)
+            | Statement::Try(loc, ..)
+            | Statement::Error(loc) => *loc,
+        }
+    }
+}
+
+impl YulStatement {
+    pub fn loc(&self) -> Loc {
+        match self {
+            YulStatement::Assign(loc, ..)
+            | YulStatement::VariableDeclaration(loc, ..)
+            | YulStatement::If(loc, ..)
+            | YulStatement::Leave(loc, ..)
+            | YulStatement::Break(loc, ..)
+            | YulStatement::Continue(loc, ..) => *loc,
+
+            YulStatement::Block(block) => block.loc,
+
+            YulStatement::FunctionDefinition(func_def) => func_def.loc,
+
+            YulStatement::FunctionCall(func_call) => func_call.loc,
+
+            YulStatement::For(for_struct) => for_struct.loc,
+            YulStatement::Switch(switch_struct) => switch_struct.loc,
+            YulStatement::Error(loc) => *loc,
+        }
     }
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-//! Solidity file parser
+//! ola file parser
 use crate::lexer::LexicalError;
 use crate::lexer::Token;
 use crate::pt::CodeLocation;
@@ -16,11 +16,11 @@ pub mod pt;
 mod test;
 
 #[allow(clippy::all)]
-mod solidity {
-    include!(concat!(env!("OUT_DIR"), "/solidity.rs"));
+mod ola {
+    include!(concat!(env!("OUT_DIR"), "/ola.rs"));
 }
 
-/// Parse solidity file
+/// Parse ola file
 pub fn parse(
     src: &str,
     file_no: usize,
