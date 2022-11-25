@@ -456,7 +456,7 @@ extern {
         "else" => Token::Else,
         "continue" => Token::Continue,
         "break" => Token::Break,
-	"field" => Token::Field;
+        "field" => Token::Field;
         "as" => Token::As,
         "is" => Token::Is,
         "mut" => Token::Mutable,
