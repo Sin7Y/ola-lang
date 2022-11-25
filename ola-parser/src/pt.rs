@@ -143,34 +143,24 @@ pub struct SourceUnit(pub Vec<SourceUnitPart>);
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum SourceUnitPart {
     ContractDefinition(Box<ContractDefinition>),
-    PragmaDirective(Loc, Option<Identifier>, Option<StringLiteral>),
     ImportDirective(Import),
     EnumDefinition(Box<EnumDefinition>),
     StructDefinition(Box<StructDefinition>),
-    EventDefinition(Box<EventDefinition>),
-    ErrorDefinition(Box<ErrorDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
     VariableDefinition(Box<VariableDefinition>),
     TypeDefinition(Box<TypeDefinition>),
-    Using(Box<Using>),
-    StraySemicolon(Loc),
 }
 
 impl SourceUnitPart {
     pub fn loc(&self) -> &Loc {
         match self {
             SourceUnitPart::ContractDefinition(def) => &def.loc,
-            SourceUnitPart::PragmaDirective(loc, _, _) => loc,
             SourceUnitPart::ImportDirective(import) => import.loc(),
             SourceUnitPart::EnumDefinition(def) => &def.loc,
             SourceUnitPart::StructDefinition(def) => &def.loc,
-            SourceUnitPart::EventDefinition(def) => &def.loc,
-            SourceUnitPart::ErrorDefinition(def) => &def.loc,
             SourceUnitPart::FunctionDefinition(def) => &def.loc,
             SourceUnitPart::VariableDefinition(def) => &def.loc,
             SourceUnitPart::TypeDefinition(def) => &def.loc,
-            SourceUnitPart::Using(def) => &def.loc,
-            SourceUnitPart::StraySemicolon(loc) => loc,
         }
     }
 }
@@ -198,50 +188,14 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum Type {
-    Address,
-    AddressPayable,
-    Payable,
     Bool,
     String,
-    Int(u16),
     Uint(u16),
     Bytes(u8),
-    Rational,
-    DynamicBytes,
-    Mapping(Loc, Box<Expression>, Box<Expression>),
     Function {
         params: Vec<(Loc, Option<Parameter>)>,
-        attributes: Vec<FunctionAttribute>,
-        returns: Option<(ParameterList, Vec<FunctionAttribute>)>,
+        returns: Option<(ParameterList)>,
     },
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum StorageLocation {
-    Memory(Loc),
-    Storage(Loc),
-    Calldata(Loc),
-}
-
-impl CodeLocation for StorageLocation {
-    fn loc(&self) -> Loc {
-        match self {
-            StorageLocation::Memory(l)
-            | StorageLocation::Storage(l)
-            | StorageLocation::Calldata(l) => *l,
-        }
-    }
-}
-
-impl fmt::Display for StorageLocation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            StorageLocation::Memory(_) => write!(f, "memory"),
-            StorageLocation::Storage(_) => write!(f, "storage"),
-            StorageLocation::Calldata(_) => write!(f, "calldata"),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -249,7 +203,6 @@ impl fmt::Display for StorageLocation {
 pub struct VariableDeclaration {
     pub loc: Loc,
     pub ty: Expression,
-    pub storage: Option<StorageLocation>,
     pub name: Option<Identifier>,
 }
 
@@ -266,14 +219,10 @@ pub struct StructDefinition {
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum ContractPart {
     StructDefinition(Box<StructDefinition>),
-    EventDefinition(Box<EventDefinition>),
     EnumDefinition(Box<EnumDefinition>),
-    ErrorDefinition(Box<ErrorDefinition>),
     VariableDefinition(Box<VariableDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
-    StraySemicolon(Loc),
-    Using(Box<Using>),
 }
 
 impl ContractPart {
@@ -281,89 +230,20 @@ impl ContractPart {
     pub fn loc(&self) -> &Loc {
         match self {
             ContractPart::StructDefinition(def) => &def.loc,
-            ContractPart::EventDefinition(def) => &def.loc,
             ContractPart::EnumDefinition(def) => &def.loc,
-            ContractPart::ErrorDefinition(def) => &def.loc,
             ContractPart::VariableDefinition(def) => &def.loc,
             ContractPart::FunctionDefinition(def) => &def.loc,
             ContractPart::TypeDefinition(def) => &def.loc,
-            ContractPart::StraySemicolon(loc) => loc,
-            ContractPart::Using(def) => &def.loc,
         }
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum UsingList {
-    Library(IdentifierPath),
-    Functions(Vec<IdentifierPath>),
-    Error(),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct Using {
-    pub loc: Loc,
-    pub list: UsingList,
-    pub ty: Option<Expression>,
-    pub global: Option<Identifier>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum ContractTy {
-    Abstract(Loc),
-    Contract(Loc),
-    Interface(Loc),
-    Library(Loc),
-}
-
-impl fmt::Display for ContractTy {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ContractTy::Abstract(_) => write!(f, "abstract contract"),
-            ContractTy::Contract(_) => write!(f, "contract"),
-            ContractTy::Interface(_) => write!(f, "interface"),
-            ContractTy::Library(_) => write!(f, "library"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct Base {
-    pub loc: Loc,
-    pub name: IdentifierPath,
-    pub args: Option<Vec<Expression>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct ContractDefinition {
     pub loc: Loc,
-    pub ty: ContractTy,
     pub name: Option<Identifier>,
-    pub base: Vec<Base>,
     pub parts: Vec<ContractPart>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct EventParameter {
-    pub ty: Expression,
-    pub loc: Loc,
-    pub indexed: bool,
-    pub name: Option<Identifier>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct EventDefinition {
-    pub loc: Loc,
-    pub name: Option<Identifier>,
-    pub fields: Vec<EventParameter>,
-    pub anonymous: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -393,10 +273,7 @@ pub struct EnumDefinition {
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum VariableAttribute {
-    Visibility(Visibility),
-    Constant(Loc),
     Immutable(Loc),
-    Override(Loc, Vec<IdentifierPath>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -438,19 +315,6 @@ pub struct NamedArgument {
     pub loc: Loc,
     pub name: Identifier,
     pub expr: Expression,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum Unit {
-    Seconds(Loc),
-    Minutes(Loc),
-    Hours(Loc),
-    Days(Loc),
-    Weeks(Loc),
-    Wei(Loc),
-    Gwei(Loc),
-    Ether(Loc),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -520,8 +384,6 @@ pub enum Expression {
     Variable(Identifier),
     List(Loc, ParameterList),
     ArrayLiteral(Loc, Vec<Expression>),
-    Unit(Loc, Box<Expression>, Unit),
-    This(Loc),
 }
 
 impl CodeLocation for Expression {
@@ -582,8 +444,6 @@ impl CodeLocation for Expression {
             | Expression::ArrayLiteral(loc, _)
             | Expression::List(loc, _)
             | Expression::Type(loc, _)
-            | Expression::Unit(loc, ..)
-            | Expression::This(loc)
             | Expression::Variable(Identifier { loc, .. })
             | Expression::AddressLiteral(loc, _) => *loc,
             Expression::StringLiteral(v) => v[0].loc,
@@ -617,7 +477,6 @@ impl Expression {
 pub struct Parameter {
     pub loc: Loc,
     pub ty: Expression,
-    pub storage: Option<StorageLocation>,
     pub name: Option<Identifier>,
 }
 
@@ -653,45 +512,10 @@ impl CodeLocation for Mutability {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum Visibility {
-    External(Option<Loc>),
-    Public(Option<Loc>),
-    Internal(Option<Loc>),
-    Private(Option<Loc>),
-}
-
-impl fmt::Display for Visibility {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Visibility::Public(_) => write!(f, "public"),
-            Visibility::External(_) => write!(f, "external"),
-            Visibility::Internal(_) => write!(f, "internal"),
-            Visibility::Private(_) => write!(f, "private"),
-        }
-    }
-}
-
-impl OptionalCodeLocation for Visibility {
-    fn loc(&self) -> Option<Loc> {
-        match self {
-            Visibility::Public(loc)
-            | Visibility::External(loc)
-            | Visibility::Internal(loc)
-            | Visibility::Private(loc) => *loc,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 
 pub enum FunctionAttribute {
     Mutability(Mutability),
-    Visibility(Visibility),
-    Virtual(Loc),
     Immutable(Loc),
-    Override(Loc, Vec<IdentifierPath>),
-    BaseOrModifier(Loc, Base),
     NameValue(Loc, Identifier, Expression),
     Error(Loc),
 }
@@ -699,21 +523,13 @@ pub enum FunctionAttribute {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum FunctionTy {
-    Constructor,
     Function,
-    Fallback,
-    Receive,
-    Modifier,
 }
 
 impl fmt::Display for FunctionTy {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FunctionTy::Constructor => write!(f, "constructor"),
-            FunctionTy::Function => write!(f, "function"),
-            FunctionTy::Fallback => write!(f, "fallback"),
-            FunctionTy::Receive => write!(f, "receive"),
-            FunctionTy::Modifier => write!(f, "modifier"),
+            FunctionTy::Function => write!(f, "fn"),
         }
     }
 }
@@ -741,15 +557,8 @@ pub enum Statement {
         unchecked: bool,
         statements: Vec<Statement>,
     },
-    Assembly {
-        loc: Loc,
-        dialect: Option<StringLiteral>,
-        flags: Option<Vec<StringLiteral>>,
-        block: YulBlock,
-    },
     Args(Loc, Vec<NamedArgument>),
     If(Loc, Expression, Box<Statement>, Option<Box<Statement>>),
-    While(Loc, Expression, Box<Statement>),
     Expression(Loc, Expression),
     VariableDefinition(Loc, VariableDeclaration, Option<Expression>),
     For(
@@ -759,169 +568,25 @@ pub enum Statement {
         Option<Box<Statement>>,
         Option<Box<Statement>>,
     ),
-    DoWhile(Loc, Box<Statement>, Expression),
     Continue(Loc),
     Break(Loc),
     Return(Loc, Option<Expression>),
-    Revert(Loc, Option<IdentifierPath>, Vec<Expression>),
-    RevertNamedArgs(Loc, Option<IdentifierPath>, Vec<NamedArgument>),
-    Emit(Loc, Expression),
-    Try(
-        Loc,
-        Expression,
-        Option<(ParameterList, Box<Statement>)>,
-        Vec<CatchClause>,
-    ),
     Error(Loc),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum CatchClause {
-    Simple(Loc, Option<Parameter>, Statement),
-    Named(Loc, Identifier, Parameter, Statement),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum YulStatement {
-    Assign(Loc, Vec<YulExpression>, YulExpression),
-    VariableDeclaration(Loc, Vec<YulTypedIdentifier>, Option<YulExpression>),
-    If(Loc, YulExpression, YulBlock),
-    For(YulFor),
-    Switch(YulSwitch),
-    Leave(Loc),
-    Break(Loc),
-    Continue(Loc),
-    Block(YulBlock),
-    FunctionDefinition(Box<YulFunctionDefinition>),
-    FunctionCall(Box<YulFunctionCall>),
-    Error(Loc),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct YulSwitch {
-    pub loc: Loc,
-    pub condition: YulExpression,
-    pub cases: Vec<YulSwitchOptions>,
-    pub default: Option<YulSwitchOptions>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct YulFor {
-    pub loc: Loc,
-    pub init_block: YulBlock,
-    pub condition: YulExpression,
-    pub post_block: YulBlock,
-    pub execution_block: YulBlock,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct YulBlock {
-    pub loc: Loc,
-    pub statements: Vec<YulStatement>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum YulExpression {
-    BoolLiteral(Loc, bool, Option<Identifier>),
-    NumberLiteral(Loc, String, String, Option<Identifier>),
-    HexNumberLiteral(Loc, String, Option<Identifier>),
-    HexStringLiteral(HexLiteral, Option<Identifier>),
-    StringLiteral(StringLiteral, Option<Identifier>),
-    Variable(Identifier),
-    FunctionCall(Box<YulFunctionCall>),
-    SuffixAccess(Loc, Box<YulExpression>, Identifier),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct YulTypedIdentifier {
-    pub loc: Loc,
-    pub id: Identifier,
-    pub ty: Option<Identifier>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct YulFunctionDefinition {
-    pub loc: Loc,
-    pub id: Identifier,
-    pub params: Vec<YulTypedIdentifier>,
-    pub returns: Vec<YulTypedIdentifier>,
-    pub body: YulBlock,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct YulFunctionCall {
-    pub loc: Loc,
-    pub id: Identifier,
-    pub arguments: Vec<YulExpression>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum YulSwitchOptions {
-    Case(Loc, YulExpression, YulBlock),
-    Default(Loc, YulBlock),
-}
-
-impl CodeLocation for YulSwitchOptions {
-    fn loc(&self) -> Loc {
-        match self {
-            YulSwitchOptions::Case(loc, ..) | YulSwitchOptions::Default(loc, ..) => *loc,
-        }
-    }
 }
 
 impl CodeLocation for Statement {
     fn loc(&self) -> Loc {
         match self {
             Statement::Block { loc, .. }
-            | Statement::Assembly { loc, .. }
             | Statement::Args(loc, ..)
             | Statement::If(loc, ..)
-            | Statement::While(loc, ..)
             | Statement::Expression(loc, ..)
             | Statement::VariableDefinition(loc, ..)
             | Statement::For(loc, ..)
-            | Statement::DoWhile(loc, ..)
             | Statement::Continue(loc)
             | Statement::Break(loc)
             | Statement::Return(loc, ..)
-            | Statement::Revert(loc, ..)
-            | Statement::RevertNamedArgs(loc, ..)
-            | Statement::Emit(loc, ..)
-            | Statement::Try(loc, ..)
             | Statement::Error(loc) => *loc,
-        }
-    }
-}
-
-impl YulStatement {
-    pub fn loc(&self) -> Loc {
-        match self {
-            YulStatement::Assign(loc, ..)
-            | YulStatement::VariableDeclaration(loc, ..)
-            | YulStatement::If(loc, ..)
-            | YulStatement::Leave(loc, ..)
-            | YulStatement::Break(loc, ..)
-            | YulStatement::Continue(loc, ..) => *loc,
-
-            YulStatement::Block(block) => block.loc,
-
-            YulStatement::FunctionDefinition(func_def) => func_def.loc,
-
-            YulStatement::FunctionCall(func_call) => func_call.loc,
-
-            YulStatement::For(for_struct) => for_struct.loc,
-            YulStatement::Switch(switch_struct) => switch_struct.loc,
-            YulStatement::Error(loc) => *loc,
         }
     }
 }

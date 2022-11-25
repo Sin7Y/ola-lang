@@ -33,7 +33,7 @@ pub fn parse(
     let parser_errors = &mut Vec::new();
     let errors = &mut Vec::new();
 
-    let s = solidity::SourceUnitParser::new().parse(src, file_no, parser_errors, &mut lex);
+    let s = ola::SourceUnitPartParser::new().parse(src, file_no, parser_errors, &mut lex);
 
     for lexical_error in lex.errors {
         errors.push(Diagnostic::parser_error(
