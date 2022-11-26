@@ -9,8 +9,6 @@ use diagnostics::Diagnostic;
 use lalrpop_util::ParseError;
 
 pub mod diagnostics;
-pub mod doccomment;
-pub mod lexer;
 pub mod program;
 #[cfg(test)]
 mod test;

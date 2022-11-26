@@ -1,11 +1,15 @@
 use lalrpop_util::ParseError;
-use super::pt::*;
+use super::program::*;
 use lalrpop_util::ErrorRecovery;
-grammar<'err>(file_no: usize , parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, LexicalError>> );
+grammar<'err>(file_no: usize , parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, &'static str>> );
+
+pub SourceUnit: SourceUnit = {
+    SourceUnitPart* => SourceUnit(<>)
+}
 
 
 pub SourceUnitPart: SourceUnitPart = {
-    ContractDefinition => SourceUnitPart::ContractDefinition(<>),
+    ContractDefinition => SourceUnit::ContractDefinition(<>),
     ImportDirective => <>,
 }
 
@@ -17,10 +21,10 @@ ImportDirective: SourceUnitPart = {
 
 Type: Type = {
     "bool" => Type::Bool,
-    "field" => Type::Field,
-    "u32" => Type::U32,
-    "u64" => Type::U64,
-    "u256" => Type::U256,
+    "field" => ype::NumberType::Field,
+    "u32" => Type::NumberType::U32,
+    "u64" => Type::NumberType::U64,
+    "u256" => Type::NumberType::U256,
 }
 
 Identifier: Identifier = {
@@ -228,17 +232,29 @@ Precedence0: Expression = {
 LiteralExpression: Expression = {
     <a:@L> "true" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), true),
     <a:@L> "false" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), false),
-    <l:@L> r"[[1-9][0-9]*|0]{1,78}" <r:@R> => {
-        Expression::U256Literal(Loc::File(file_no, l, r), <>)
+    <l:@L> <n: Number> "ll" <r:@R> =>  {
+        if n.end_with("ll") {
+            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U256)
+        } else if n.end_with("l") {
+            Expression::NumberLiteral(Loc::File(file_no, l, r), n,  NumberType::U64)
+        } else if n.end_with("u") {
+            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
+        } else if n.end_with("f") {
+            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::Field)
+        } else {
+            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
+        }  
     },
-    <l:@L> r"[[1-9][0-9]*|0]{1,20}" <r:@R> => {
-        Expression::U64Literal(Loc::File(file_no, l, r), <>)
-    },
-    <l:@L> r"[[1-9][0-9]*|0]{1,10}" <r:@R> => {
-        Expression::U32Literal(Loc::File(file_no, l, r),<>)
-    },
-    <l:@L> r"0x[0-9A-Fa-f]*" <r:@R> => {
-        Expression::HexNumberLiteral(Loc::File(file_no, l, r), <>)
+    <l:@L> <n: HexNumber> "l" <r:@R> => {
+        if n.end_with("ll") {
+            Expression:HexNumberLiteral(Loc::File(file_no, l, r), n, NumberType::U256)
+        } else if n.end_with("l") {
+            Expression::HexNumberLiteral(Loc::File(file_no, l, r), n, NumberType::U64)
+        } else if n.end_with("u") {
+            Expression::HexNumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
+        } else {
+            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
+        }  
     }
 }
 
@@ -384,4 +400,12 @@ CommaTwo<T>: Vec<T> = {
         v.insert(0, e);
         v
     }
+};
+
+Number: String = {
+    r"[1-9][0-9]*|0]" => <> 
+}
+
+HexNumber: String = {
+    r"0x[0-9A-Fa-f]*" => <> 
 };

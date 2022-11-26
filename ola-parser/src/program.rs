@@ -106,37 +106,6 @@ impl Display for Identifier {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct IdentifierPath {
-    pub loc: Loc,
-    pub identifiers: Vec<Identifier>,
-}
-
-impl Display for IdentifierPath {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ident) = self.identifiers.get(0) {
-            ident.fmt(f)?;
-        } else {
-            return Ok(());
-        }
-        for ident in self.identifiers[1..].iter() {
-            f.write_str(".")?;
-            ident.fmt(f)?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum Comment {
-    Line(Loc, String),
-    Block(Loc, String),
-    DocLine(Loc, String),
-    DocBlock(Loc, String),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct SourceUnit(pub Vec<SourceUnitPart>);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -144,11 +113,6 @@ pub struct SourceUnit(pub Vec<SourceUnitPart>);
 pub enum SourceUnitPart {
     ContractDefinition(Box<ContractDefinition>),
     ImportDirective(Import),
-    EnumDefinition(Box<EnumDefinition>),
-    StructDefinition(Box<StructDefinition>),
-    FunctionDefinition(Box<FunctionDefinition>),
-    VariableDefinition(Box<VariableDefinition>),
-    TypeDefinition(Box<TypeDefinition>),
 }
 
 impl SourceUnitPart {
@@ -156,11 +120,6 @@ impl SourceUnitPart {
         match self {
             SourceUnitPart::ContractDefinition(def) => &def.loc,
             SourceUnitPart::ImportDirective(import) => import.loc(),
-            SourceUnitPart::EnumDefinition(def) => &def.loc,
-            SourceUnitPart::StructDefinition(def) => &def.loc,
-            SourceUnitPart::FunctionDefinition(def) => &def.loc,
-            SourceUnitPart::VariableDefinition(def) => &def.loc,
-            SourceUnitPart::TypeDefinition(def) => &def.loc,
         }
     }
 }
@@ -170,7 +129,6 @@ impl SourceUnitPart {
 pub enum Import {
     Plain(StringLiteral, Loc),
     GlobalSymbol(StringLiteral, Identifier, Loc),
-    Rename(StringLiteral, Vec<(Identifier, Option<Identifier>)>, Loc),
 }
 
 impl Import {
@@ -178,7 +136,6 @@ impl Import {
         match self {
             Import::Plain(_, loc) => loc,
             Import::GlobalSymbol(_, _, loc) => loc,
-            Import::Rename(_, _, loc) => loc,
         }
     }
 }
@@ -189,8 +146,14 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum Type {
     Bool,
-    Field,
+    NumberType,
+}
+
+pub enum NumberType {
     U32,
+    U64,
+    U256,
+    Field,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -291,21 +254,6 @@ pub struct TypeDefinition {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct StringLiteral {
-    pub loc: Loc,
-    pub unicode: bool,
-    pub string: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct HexLiteral {
-    pub loc: Loc,
-    pub hex: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct NamedArgument {
     pub loc: Loc,
     pub name: Identifier,
@@ -315,9 +263,8 @@ pub struct NamedArgument {
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum Expression {
-    PostIncrement(Loc, Box<Expression>),
-    PostDecrement(Loc, Box<Expression>),
-    New(Loc, Box<Expression>),
+    Increment(Loc, Box<Expression>),
+    Decrement(Loc, Box<Expression>),
     ArraySubscript(Loc, Box<Expression>, Option<Box<Expression>>),
     ArraySlice(
         Loc,
@@ -328,13 +275,9 @@ pub enum Expression {
     Parenthesis(Loc, Box<Expression>),
     MemberAccess(Loc, Box<Expression>, Identifier),
     FunctionCall(Loc, Box<Expression>, Vec<Expression>),
-    FunctionCallBlock(Loc, Box<Expression>, Box<Statement>),
     NamedFunctionCall(Loc, Box<Expression>, Vec<NamedArgument>),
     Not(Loc, Box<Expression>),
     Complement(Loc, Box<Expression>),
-    Delete(Loc, Box<Expression>),
-    PreIncrement(Loc, Box<Expression>),
-    PreDecrement(Loc, Box<Expression>),
     UnaryPlus(Loc, Box<Expression>),
     UnaryMinus(Loc, Box<Expression>),
     Power(Loc, Box<Expression>, Box<Expression>),
@@ -369,14 +312,9 @@ pub enum Expression {
     AssignDivide(Loc, Box<Expression>, Box<Expression>),
     AssignModulo(Loc, Box<Expression>, Box<Expression>),
     BoolLiteral(Loc, bool),
-    U32Literal(Loc, String, String),
-    U64Literal(Loc, String, String),
-    U256Literal(Loc, String, String),
-    HexNumberLiteral(Loc, String),
-    StringLiteral(Vec<StringLiteral>),
+    NumberLiteral(Loc, String, NumberType),
+    HexNumberLiteral(Loc, String, NumberType),
     Type(Loc, Type),
-    HexLiteral(Vec<HexLiteral>),
-    AddressLiteral(Loc, String),
     Variable(Identifier),
     List(Loc, ParameterList),
     ArrayLiteral(Loc, Vec<Expression>),
@@ -385,21 +323,16 @@ pub enum Expression {
 impl CodeLocation for Expression {
     fn loc(&self) -> Loc {
         match self {
-            Expression::PostIncrement(loc, _)
-            | Expression::PostDecrement(loc, _)
-            | Expression::New(loc, _)
+            Expression::Increment(loc, _)
+            | Expression::Decrement(loc, _)
             | Expression::Parenthesis(loc, _)
             | Expression::ArraySubscript(loc, ..)
             | Expression::ArraySlice(loc, ..)
             | Expression::MemberAccess(loc, ..)
             | Expression::FunctionCall(loc, ..)
-            | Expression::FunctionCallBlock(loc, ..)
             | Expression::NamedFunctionCall(loc, ..)
             | Expression::Not(loc, _)
             | Expression::Complement(loc, _)
-            | Expression::Delete(loc, _)
-            | Expression::PreIncrement(loc, _)
-            | Expression::PreDecrement(loc, _)
             | Expression::UnaryPlus(loc, _)
             | Expression::UnaryMinus(loc, _)
             | Expression::Power(loc, ..)
@@ -435,15 +368,11 @@ impl CodeLocation for Expression {
             | Expression::AssignModulo(loc, ..)
             | Expression::BoolLiteral(loc, _)
             | Expression::NumberLiteral(loc, ..)
-            | Expression::RationalNumberLiteral(loc, ..)
             | Expression::HexNumberLiteral(loc, _)
             | Expression::ArrayLiteral(loc, _)
             | Expression::List(loc, _)
             | Expression::Type(loc, _)
-            | Expression::Variable(Identifier { loc, .. })
-            | Expression::AddressLiteral(loc, _) => *loc,
-            Expression::StringLiteral(v) => v[0].loc,
-            Expression::HexLiteral(v) => v[0].loc,
+            | Expression::Variable(Identifier { loc, .. }) => *loc,
         }
     }
 }
@@ -478,67 +407,12 @@ pub struct Parameter {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum Mutability {
-    Pure(Loc),
-    View(Loc),
-    Constant(Loc),
-    Payable(Loc),
-}
-
-impl fmt::Display for Mutability {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Mutability::Pure(_) => write!(f, "pure"),
-            Mutability::Constant(_) | Mutability::View(_) => write!(f, "view"),
-            Mutability::Payable(_) => write!(f, "payable"),
-        }
-    }
-}
-
-impl CodeLocation for Mutability {
-    fn loc(&self) -> Loc {
-        match self {
-            Mutability::Pure(loc)
-            | Mutability::Constant(loc)
-            | Mutability::View(loc)
-            | Mutability::Payable(loc) => *loc,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-
-pub enum FunctionAttribute {
-    Mutability(Mutability),
-    Immutable(Loc),
-    NameValue(Loc, Identifier, Expression),
-    Error(Loc),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum FunctionTy {
-    Function,
-}
-
-impl fmt::Display for FunctionTy {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            FunctionTy::Function => write!(f, "fn"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct FunctionDefinition {
     pub loc: Loc,
     pub ty: FunctionTy,
     pub name: Option<Identifier>,
     pub name_loc: Loc,
     pub params: ParameterList,
-    pub attributes: Vec<FunctionAttribute>,
     pub return_not_returns: Option<Loc>,
     pub returns: ParameterList,
     pub body: Option<Statement>,
@@ -550,7 +424,7 @@ pub struct FunctionDefinition {
 pub enum Statement {
     Block {
         loc: Loc,
-        unchecked: bool,
+
         statements: Vec<Statement>,
     },
     Args(Loc, Vec<NamedArgument>),
@@ -567,7 +441,6 @@ pub enum Statement {
     Continue(Loc),
     Break(Loc),
     Return(Loc, Option<Expression>),
-    Error(Loc),
 }
 
 impl CodeLocation for Statement {
@@ -581,8 +454,7 @@ impl CodeLocation for Statement {
             | Statement::For(loc, ..)
             | Statement::Continue(loc)
             | Statement::Break(loc)
-            | Statement::Return(loc, ..)
-            | Statement::Error(loc) => *loc,
+            | Statement::Return(loc, ..) => *loc,
         }
     }
 }
