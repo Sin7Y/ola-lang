@@ -16,4 +16,6 @@ lalrpop = "0.19.8"
 
 
 [dev-dependencies]
+walkdir = "2.3.2"
+pretty_assertions = "1.2"
 regex = "1.7.0"

@@ -1,52 +1,41 @@
-use lalrpop_util::ParseError;
+
 use super::program::*;
-use lalrpop_util::ErrorRecovery;
-grammar<'err>(file_no: usize , parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, &'static str>> );
+grammar(file_no:usize);
 
 pub SourceUnit: SourceUnit = {
     SourceUnitPart* => SourceUnit(<>)
 }
 
-
-pub SourceUnitPart: SourceUnitPart = {
-    ContractDefinition => SourceUnit::ContractDefinition(<>),
+SourceUnitPart: SourceUnitPart = {
+    ContractDefinition => SourceUnitPart::ContractDefinition(<>),
     ImportDirective => <>,
 }
 
 ImportDirective: SourceUnitPart = {
     <l:@L> "import" <s:StringLiteral> <r:@R> ";" => SourceUnitPart::ImportDirective(Import::Plain(s, Loc::File(file_no, l, r))),
-    // TODO: global modify
     <l:@L> "import" <s:StringLiteral> "as" <id:Identifier> <r:@R> ";" => SourceUnitPart::ImportDirective(Import::GlobalSymbol(s, id, Loc::File(file_no, l, r))),
 }
 
 Type: Type = {
     "bool" => Type::Bool,
-    "field" => ype::NumberType::Field,
-    "u32" => Type::NumberType::U32,
-    "u64" => Type::NumberType::U64,
-    "u256" => Type::NumberType::U256,
+    "field" => Type::Field,
+    "u32" => Type::U32,
+    "u64" => Type::U64,
+    "u256" => Type::U256,
 }
 
 Identifier: Identifier = {
-    <l:@L> r"[$_]*[a-zA-Z][a-zA-Z$_0-9]*" <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: String::from(<>)}
+    <l:@L> <s: BasicLabel> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: s}
 };
 
-IdentifierOrError: Option<Identifier> = {
-    Identifier => Some(<>),
-    ! => {
-        parser_errors.push(<>);
-        None
-    }
-}
-
 VariableDeclaration: VariableDeclaration = {
-    <l:@L> <ty:Precedence0>  <name:IdentifierOrError> <r:@R> => VariableDeclaration {
-        loc: Loc::File(file_no, l, r), ty, storage, name
+    <l:@L> <ty:Precedence0>  <name:Identifier> <r:@R> => VariableDeclaration {
+        loc: Loc::File(file_no, l, r), ty, name
     },
 }
 
 StructDefinition: Box<StructDefinition> = {
-    <l:@L> "struct" <name:IdentifierOrError> "{" <fields:(<VariableDeclaration> ";")*> "}" <r:@R> => {
+    <l:@L> "struct" <name:Identifier> "{" <fields:(<VariableDeclaration> ";")*> "}" <r:@R> => {
         Box::new(StructDefinition{loc: Loc::File(file_no, l, r), name, fields})
     }
 }
@@ -60,31 +49,28 @@ ContractPart: ContractPart = {
 }
 
 ContractDefinition: Box<ContractDefinition> = {
-    <l:@L> "contract" <name:IdentifierOrError> 
+    <l:@L> "contract" <name:Identifier> 
     "{" <parts:(<ContractPart>)*> "}" <r:@R> => {
-       // TODO; rm ty base
-        Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), ty, name, base, parts})
+        Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), name,  parts})
     }
 }
 
 
 EnumDefinition: Box<EnumDefinition> = {
-    <l:@L> "enum" <name:IdentifierOrError> "{" <values:Comma<IdentifierOrError>> "}" <r:@R> => {
+    <l:@L> "enum" <name:Identifier> "{" <values:Comma<Identifier>> "}" <r:@R> => {
         Box::new(EnumDefinition{loc: Loc::File(file_no, l, r), name, values})
     }
 }
 
 VariableDefinition: Box<VariableDefinition> = {
-    // add mut
-    <l:@L> <ty:Precedence0>  <name:IdentifierOrError> <e:("=" <Expression>)?> <r:@R> ";" => {
+    <l:@L> <ty:Precedence0>  <name:Identifier> <e:("=" <Expression>)?> <r:@R> ";" => {
         Box::new(VariableDefinition{
-            loc: Loc::File(file_no, l, r), ty, attrs, name, initializer: e,
+            loc: Loc::File(file_no, l, r), ty, name, initializer: e,
         })
     },
-    <l:@L> <ty:Precedence0> <name:Identifier> <false_token:!> <r:@R> ";" => {
-        parser_errors.push (false_token);
+    <l:@L> <ty:Precedence0> <name:Identifier> <r:@R> ";" => {
         Box::new(VariableDefinition{
-            loc: Loc::File(file_no, l, r), ty, attrs, name: Some(name), initializer: None,
+            loc: Loc::File(file_no, l, r), ty, name: Some(name), initializer: None,
         })
     }
 }
@@ -218,7 +204,7 @@ Precedence0: Expression = {
     <Identifier> => Expression::Variable(<>),
     <l:@L> <a:ParameterList> <r:@R> => {
         if a.len() == 1 {
-            if let Some(Parameter{ ty, storage: None, name: None, .. }) = &a[0].1 {
+            if let Some(Parameter{ ty, name: None, .. }) = &a[0].1 {
                 // this means "(" Expression ")"
                 return Expression::Parenthesis(ty.loc(), Box::new(ty.clone()));
             }
@@ -232,35 +218,24 @@ Precedence0: Expression = {
 LiteralExpression: Expression = {
     <a:@L> "true" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), true),
     <a:@L> "false" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), false),
-    <l:@L> <n: Number> "ll" <r:@R> =>  {
-        if n.end_with("ll") {
-            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U256)
-        } else if n.end_with("l") {
-            Expression::NumberLiteral(Loc::File(file_no, l, r), n,  NumberType::U64)
-        } else if n.end_with("u") {
-            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
-        } else if n.end_with("f") {
-            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::Field)
+    <l:@L> <n: Number> <r:@R> =>  {
+        if n.ends_with("ll") {
+            Expression::U256Literal(Loc::File(file_no, l, r), n)
+        } else if n.ends_with("l") {
+            Expression::U64Literal(Loc::File(file_no, l, r), n)
+        } else if n.ends_with("u") {
+            Expression::U32iteral(Loc::File(file_no, l, r), n)
+        } else if n.ends_with("f") {
+            Expression::FieldLiteral(Loc::File(file_no, l, r), n)
         } else {
-            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
+            Expression::FieldLiteral(Loc::File(file_no, l, r), n)
         }  
     },
-    <l:@L> <n: HexNumber> "l" <r:@R> => {
-        if n.end_with("ll") {
-            Expression:HexNumberLiteral(Loc::File(file_no, l, r), n, NumberType::U256)
-        } else if n.end_with("l") {
-            Expression::HexNumberLiteral(Loc::File(file_no, l, r), n, NumberType::U64)
-        } else if n.end_with("u") {
-            Expression::HexNumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
-        } else {
-            Expression::NumberLiteral(Loc::File(file_no, l, r), n, NumberType::U32)
-        }  
-    }
 }
 
 StringLiteral: StringLiteral = {
-    <l:@L> <s:String> <r:@R> => {
-        StringLiteral{ loc: Loc::File(file_no, l, r), s}
+    <l:@L> <s: BasicLabel> <r:@R> => {
+        StringLiteral{ loc: Loc::File(file_no, l, r), string:s }
     }
 }
 
@@ -271,7 +246,7 @@ StringLiteral: StringLiteral = {
 Parameter: Parameter = {
     <l:@L> <ty:Expression> <name:Identifier?> <r:@R> => {
         let loc = Loc::File(file_no, l, r);
-        Parameter{loc, ty, storage, name}
+        Parameter{loc, ty, name}
     }
 }
 
@@ -283,32 +258,20 @@ ParameterList: Vec<(Loc, Option<Parameter>)> = {
     "(" ")" => Vec::new(),
     "(" <l:@L> <p:Parameter> <r:@R> ")" => vec!((Loc::File(file_no, l, r), Some(p))),
     "(" <CommaTwo<OptParameter>> ")" => <>,
-    "(" <false_token:!> ")"=> {
-        parser_errors.push(<>);
-        Vec::new()
-    }
 }
 
-returns: Option<Loc> = {
-    "->" => None,
-    <l:@L> "return" <r:@R> => Some(Loc::File(file_no, l, r)),
-}
 
 FunctionDefinition: Box<FunctionDefinition> = {
-    <l:@L> "fn" <nl:@L> <name:IdentifierOrError> <nr:@R> <params:ParameterList>
-    <returns:(returns ParameterList)?> <r:@R> <body:BlockStatement> => {
-        let (return_not_returns, returns) = returns.unwrap_or((None, Vec::new()));
+    <l:@L> "fn" <nl:@L> <name:Identifier> <nr:@R> <params:ParameterList> "->"?
+    <returns: ParameterList?> <r:@R> <body:BlockStatement> => {
 
         Box::new(FunctionDefinition{
             loc: Loc::File(file_no, l, r),
-            ty: FunctionTy::Function,
             name,
             name_loc: Loc::File(file_no, nl, nr),
             params,
-            attributes,
-            return_not_returns,
             returns,
-            body,
+            body: Some(body),
         })
     }
 }
@@ -348,10 +311,6 @@ ClosedStatement: Statement = {
 Statement: Statement = {
     OpenStatement,
     ClosedStatement,
-    <l:@L> <false_token:!> <r:@R> => {
-        parser_errors.push(false_token);
-        Statement::Error(Loc::File(file_no, l, r))
-    },
 }
 
 SimpleStatement: Statement = {
@@ -403,9 +362,9 @@ CommaTwo<T>: Vec<T> = {
 };
 
 Number: String = {
-    r"[1-9][0-9]*|0]" => <> 
+    r"/(0x)?[1-9][0-9]*|0" => <> 
 }
 
-HexNumber: String = {
-    r"0x[0-9A-Fa-f]*" => <> 
-};
+BasicLabel: String = {
+    r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"# => <>,
+}

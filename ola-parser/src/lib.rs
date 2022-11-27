@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! ola file parser
-use crate::lexer::LexicalError;
-use crate::lexer::Token;
-use crate::program::CodeLocation;
 use crate::program::Loc;
 use diagnostics::Diagnostic;
 use lalrpop_util::ParseError;
@@ -19,68 +16,35 @@ mod ola {
 }
 
 /// Parse ola file
-pub fn parse(
-    src: &str,
-    file_no: usize,
-) -> Result<(program::SourceUnitPart, Vec<program::Comment>), Vec<Diagnostic>> {
-    // parse phase
-    let mut comments = Vec::new();
-    let mut lexer_errors = Vec::new();
-    let mut lex = lexer::Lexer::new(src, file_no, &mut comments, &mut lexer_errors);
-
-    let parser_errors = &mut Vec::new();
-    let errors = &mut Vec::new();
-
-    let s = ola::SourceUnitPartParser::new().parse(src, file_no, parser_errors, &mut lex);
-
-    for lexical_error in lex.errors {
-        errors.push(Diagnostic::parser_error(
-            lexical_error.loc(),
-            lexical_error.to_string(),
-        ))
-    }
-
-    for e in parser_errors {
-        errors.push(parser_error(&e.error, file_no));
-    }
-
-    if let Err(e) = s {
-        errors.push(parser_error(&e, file_no));
-        return Err(errors.to_vec());
-    }
-
-    if !errors.is_empty() {
-        Err(errors.to_vec())
-    } else {
-        Ok((s.unwrap(), comments))
-    }
-}
-
-fn parser_error(error: &ParseError<usize, Token, LexicalError>, file_no: usize) -> Diagnostic {
-    match &error {
-        ParseError::InvalidToken { location } => Diagnostic::parser_error(
-            Loc::File(file_no, *location, *location),
-            "invalid token".to_string(),
-        ),
-        ParseError::UnrecognizedToken {
-            token: (l, token, r),
-            expected,
-        } => Diagnostic::parser_error(
-            Loc::File(file_no, *l, *r),
-            format!(
-                "unrecognised token '{}', expected {}",
-                token,
-                expected.join(", ")
+pub fn parse(src: &str, file_no: usize) -> Result<program::SourceUnit, Diagnostic> {
+    ola::SourceUnitParser::new()
+    
+        .parse(file_no, src)
+        .map_err(|parse_error| match parse_error {
+            ParseError::InvalidToken { location } => Diagnostic::parser_error(
+                Loc::File(file_no, *location, *location),
+                "invalid token".to_string(),
             ),
-        ),
-        ParseError::User { error } => Diagnostic::parser_error(error.loc(), error.to_string()),
-        ParseError::ExtraToken { token } => Diagnostic::parser_error(
-            Loc::File(file_no, token.0, token.2),
-            format!("extra token '{}' encountered", token.0),
-        ),
-        ParseError::UnrecognizedEOF { expected, location } => Diagnostic::parser_error(
-            Loc::File(file_no, *location, *location),
-            format!("unexpected end of file, expecting {}", expected.join(", ")),
-        ),
-    }
+            ParseError::UnrecognizedToken {
+                token: (l, token, r),
+                expected,
+            } => Diagnostic::parser_error(
+                Loc::File(file_no, *l, *r),
+                format!(
+                    "unrecognised token '{}', expected {}",
+                    token,
+                    expected.join(", ")
+                ),
+            ),
+            ParseError::ExtraToken { token } => Diagnostic::parser_error(
+                Loc::File(file_no, token.0, token.2),
+                format!("extra token '{}' encountered", token.0),
+            ),
+            ParseError::UnrecognizedEOF { expected, location } => Diagnostic::parser_error(
+                Loc::File(file_no, *location, *location),
+                format!("unexpected end of file, expecting {}", expected.join(", ")),
+            ),
+            // _ => Diagnostic::parser_error(Loc::File(file_no, 0, 0), format!("{:?}", parse_error)),
+            _ => panic!(),
+        })
 }
