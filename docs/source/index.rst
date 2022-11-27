@@ -8,7 +8,7 @@ O-lang语言说明
 
 .. toctree::
    :maxdepth: 2
-   :caption: CONTENTS:
+   :caption: O-lang语言说明
 
    简介
    快速入门
