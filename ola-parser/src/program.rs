@@ -126,6 +126,13 @@ impl SourceUnitPart {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub struct StringLiteral {
+    pub loc: Loc,
+    pub string: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum Import {
     Plain(StringLiteral, Loc),
     GlobalSymbol(StringLiteral, Identifier, Loc),
@@ -146,16 +153,11 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub enum Type {
     Bool,
-    NumberType,
-}
-
-pub enum NumberType {
     U32,
     U64,
     U256,
     Field,
 }
-
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct VariableDeclaration {
@@ -181,6 +183,7 @@ pub enum ContractPart {
     VariableDefinition(Box<VariableDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
+    StraySemicolon(Loc),
 }
 
 impl ContractPart {
@@ -192,6 +195,7 @@ impl ContractPart {
             ContractPart::VariableDefinition(def) => &def.loc,
             ContractPart::FunctionDefinition(def) => &def.loc,
             ContractPart::TypeDefinition(def) => &def.loc,
+            ContractPart::StraySemicolon(loc) => loc,
         }
     }
 }
@@ -206,22 +210,6 @@ pub struct ContractDefinition {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct ErrorParameter {
-    pub ty: Expression,
-    pub loc: Loc,
-    pub name: Option<Identifier>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub struct ErrorDefinition {
-    pub loc: Loc,
-    pub name: Option<Identifier>,
-    pub fields: Vec<ErrorParameter>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct EnumDefinition {
     pub loc: Loc,
     pub name: Option<Identifier>,
@@ -230,16 +218,9 @@ pub struct EnumDefinition {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
-pub enum VariableAttribute {
-    Immutable(Loc),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct VariableDefinition {
     pub loc: Loc,
     pub ty: Expression,
-    pub attrs: Vec<VariableAttribute>,
     pub name: Option<Identifier>,
     pub initializer: Option<Expression>,
 }
@@ -312,8 +293,10 @@ pub enum Expression {
     AssignDivide(Loc, Box<Expression>, Box<Expression>),
     AssignModulo(Loc, Box<Expression>, Box<Expression>),
     BoolLiteral(Loc, bool),
-    NumberLiteral(Loc, String, NumberType),
-    HexNumberLiteral(Loc, String, NumberType),
+    U32Literal(Loc, String),
+    U64Literal(Loc, String),
+    U256Literal(Loc, String),
+    FieldLiteral(Loc, String),
     Type(Loc, Type),
     Variable(Identifier),
     List(Loc, ParameterList),
@@ -367,8 +350,10 @@ impl CodeLocation for Expression {
             | Expression::AssignDivide(loc, ..)
             | Expression::AssignModulo(loc, ..)
             | Expression::BoolLiteral(loc, _)
-            | Expression::NumberLiteral(loc, ..)
-            | Expression::HexNumberLiteral(loc, _)
+            | Expression::U32Literal(loc, ..)
+            | Expression::U64Literal(loc, ..)
+            | Expression::U256Literal(loc, ..)
+            | Expression::FieldLiteral(loc, ..)
             | Expression::ArrayLiteral(loc, _)
             | Expression::List(loc, _)
             | Expression::Type(loc, _)
@@ -409,12 +394,10 @@ pub struct Parameter {
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct FunctionDefinition {
     pub loc: Loc,
-    pub ty: FunctionTy,
     pub name: Option<Identifier>,
     pub name_loc: Loc,
     pub params: ParameterList,
-    pub return_not_returns: Option<Loc>,
-    pub returns: ParameterList,
+    pub returns: Option<ParameterList>,
     pub body: Option<Statement>,
 }
 
@@ -440,6 +423,7 @@ pub enum Statement {
     ),
     Continue(Loc),
     Break(Loc),
+    Error(Loc),
     Return(Loc, Option<Expression>),
 }
 
@@ -454,6 +438,7 @@ impl CodeLocation for Statement {
             | Statement::For(loc, ..)
             | Statement::Continue(loc)
             | Statement::Break(loc)
+            | Statement::Error(loc)
             | Statement::Return(loc, ..) => *loc,
         }
     }

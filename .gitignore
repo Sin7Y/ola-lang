@@ -14,7 +14,10 @@ Cargo.lock
 
 /target
 
-# ignore docs auto-build files
-/docs/*/build/
 
 .DS_Store
+
+/.vscode
+
+# ignore docs auto-build files
+/docs/*/build/

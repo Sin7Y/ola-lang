@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! ola file parser
-use crate::lexer::LexicalError;
-use crate::lexer::Token;
-use crate::program::CodeLocation;
-use crate::program::Loc;
-use diagnostics::Diagnostic;
-use lalrpop_util::ParseError;
 
 pub mod diagnostics;
 pub mod program;
+use diagnostics::Diagnostic;
+use lalrpop_util::{lexer::Token, ParseError};
+use program::{Loc, SourceUnit};
 #[cfg(test)]
 mod test;
 
@@ -18,27 +15,19 @@ mod ola {
     include!(concat!(env!("OUT_DIR"), "/ola.rs"));
 }
 
-/// Parse ola file
-pub fn parse(
-    src: &str,
-    file_no: usize,
-) -> Result<(program::SourceUnitPart, Vec<program::Comment>), Vec<Diagnostic>> {
-    // parse phase
-    let mut comments = Vec::new();
-    let mut lexer_errors = Vec::new();
-    let mut lex = lexer::Lexer::new(src, file_no, &mut comments, &mut lexer_errors);
+// /// Parse ola file
+// pub fn parse(src: &str, file_no: usize) -> Result<SourceUnit, ParseError<usize, Token, &str>> {
+//     let mut errors = Vec::new();
+//     let s = ola::SourceUnitParser::new().parse(file_no, &mut errors, src);
+//     s
+// }
 
+/// Parse solidity file
+pub fn parse(src: &str, file_no: usize) -> Result<program::SourceUnit, Vec<Diagnostic>> {
     let parser_errors = &mut Vec::new();
     let errors = &mut Vec::new();
 
-    let s = ola::SourceUnitPartParser::new().parse(src, file_no, parser_errors, &mut lex);
-
-    for lexical_error in lex.errors {
-        errors.push(Diagnostic::parser_error(
-            lexical_error.loc(),
-            lexical_error.to_string(),
-        ))
-    }
+    let s = ola::SourceUnitParser::new().parse(file_no, parser_errors, src);
 
     for e in parser_errors {
         errors.push(parser_error(&e.error, file_no));
@@ -52,11 +41,11 @@ pub fn parse(
     if !errors.is_empty() {
         Err(errors.to_vec())
     } else {
-        Ok((s.unwrap(), comments))
+        Ok(s.unwrap())
     }
 }
 
-fn parser_error(error: &ParseError<usize, Token, LexicalError>, file_no: usize) -> Diagnostic {
+fn parser_error(error: &ParseError<usize, Token, &str>, file_no: usize) -> Diagnostic {
     match &error {
         ParseError::InvalidToken { location } => Diagnostic::parser_error(
             Loc::File(file_no, *location, *location),
@@ -73,7 +62,9 @@ fn parser_error(error: &ParseError<usize, Token, LexicalError>, file_no: usize) 
                 expected.join(", ")
             ),
         ),
-        ParseError::User { error } => Diagnostic::parser_error(error.loc(), error.to_string()),
+        ParseError::User { error } => {
+            Diagnostic::parser_error(Loc::File(file_no, 0, 0), error.to_string())
+        }
         ParseError::ExtraToken { token } => Diagnostic::parser_error(
             Loc::File(file_no, token.0, token.2),
             format!("extra token '{}' encountered", token.0),
