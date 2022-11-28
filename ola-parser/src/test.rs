@@ -2,7 +2,6 @@
 
 use crate::diagnostics::{Diagnostic, ErrorType::ParserError, Level::Error};
 use crate::program::*;
-use crate::Loc::File;
 use pretty_assertions::assert_eq;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -12,12 +11,31 @@ use walkdir::WalkDir;
 #[test]
 fn parse_no_parameters_yul_function() {
     let src = r#"
-contract C {
-	
+contract C{
+    fn a() {
+        u64 a = 2ll;
+        u64 b = 200;
+        u32 c = 2u;
+        u32 d = 2l;
+        u32 e = 2;
+        field e = 2;
+        /** 
+         * 12
+         *  
+         * */
+        // 3242 
+
+        //
+        u128 b = 2;  //q3e32
+        field e = 0x1;
+        field e = 0x1u;
+        field e = 0x1l;
+        field e = 0x1ll;
+    }
 }
     "#;
 
-    let actual_parse_tree = crate::parse(src, 0).unwrap_or();
+    let actual_parse_tree = crate::parse(src, 0).unwrap();
     assert_eq!(actual_parse_tree.0.len(), 1);
 }
 

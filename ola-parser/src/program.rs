@@ -183,6 +183,7 @@ pub enum ContractPart {
     VariableDefinition(Box<VariableDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
+    StraySemicolon(Loc),
 }
 
 impl ContractPart {
@@ -194,6 +195,7 @@ impl ContractPart {
             ContractPart::VariableDefinition(def) => &def.loc,
             ContractPart::FunctionDefinition(def) => &def.loc,
             ContractPart::TypeDefinition(def) => &def.loc,
+            ContractPart::StraySemicolon(loc) => loc,
         }
     }
 }
@@ -395,7 +397,7 @@ pub struct FunctionDefinition {
     pub name: Option<Identifier>,
     pub name_loc: Loc,
     pub params: ParameterList,
-    pub returns: ParameterList,
+    pub returns: Option<ParameterList>,
     pub body: Option<Statement>,
 }
 
@@ -421,6 +423,7 @@ pub enum Statement {
     ),
     Continue(Loc),
     Break(Loc),
+    Error(Loc),
     Return(Loc, Option<Expression>),
 }
 
@@ -435,6 +438,7 @@ impl CodeLocation for Statement {
             | Statement::For(loc, ..)
             | Statement::Continue(loc)
             | Statement::Break(loc)
+            | Statement::Error(loc)
             | Statement::Return(loc, ..) => *loc,
         }
     }

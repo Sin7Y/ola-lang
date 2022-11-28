@@ -1,6 +1,7 @@
 
 use super::program::*;
-grammar(file_no:usize);
+use lalrpop_util::ErrorRecovery;
+grammar<'err>(file_no: usize, parser_errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, &'static str>>);
 
 pub SourceUnit: SourceUnit = {
     SourceUnitPart* => SourceUnit(<>)
@@ -26,16 +27,24 @@ Type: Type = {
 
 Identifier: Identifier = {
     <l:@L> <s: BasicLabel> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: s}
-};
+}
+
+
+IdentifierOrError: Option<Identifier> = {
+    Identifier => Some(<>),
+    ! => {
+        parser_errors.push(<>);
+        None
+    }
+}
 
 VariableDeclaration: VariableDeclaration = {
-    <l:@L> <ty:Precedence0>  <name:Identifier> <r:@R> => VariableDeclaration {
+    <l:@L> <ty:Precedence0> <name:IdentifierOrError> <r:@R> => VariableDeclaration {
         loc: Loc::File(file_no, l, r), ty, name
     },
 }
-
 StructDefinition: Box<StructDefinition> = {
-    <l:@L> "struct" <name:Identifier> "{" <fields:(<VariableDeclaration> ";")*> "}" <r:@R> => {
+    <l:@L> "struct" <name:IdentifierOrError> "{" <fields:(<VariableDeclaration> ";")*> "}" <r:@R> => {
         Box::new(StructDefinition{loc: Loc::File(file_no, l, r), name, fields})
     }
 }
@@ -46,10 +55,11 @@ ContractPart: ContractPart = {
     VariableDefinition => ContractPart::VariableDefinition(<>),
     FunctionDefinition => ContractPart::FunctionDefinition(<>),
     TypeDefinition => ContractPart::TypeDefinition(<>),
+    <l:@L> ";" <r:@R> => ContractPart::StraySemicolon(Loc::File(file_no, l, r)),
 }
 
 ContractDefinition: Box<ContractDefinition> = {
-    <l:@L> "contract" <name:Identifier> 
+    <l:@L> "contract" <name:IdentifierOrError> 
     "{" <parts:(<ContractPart>)*> "}" <r:@R> => {
         Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), name,  parts})
     }
@@ -57,22 +67,23 @@ ContractDefinition: Box<ContractDefinition> = {
 
 
 EnumDefinition: Box<EnumDefinition> = {
-    <l:@L> "enum" <name:Identifier> "{" <values:Comma<Identifier>> "}" <r:@R> => {
+    <l:@L> "enum" <name:IdentifierOrError> "{" <values:Comma<IdentifierOrError>> "}" <r:@R> => {
         Box::new(EnumDefinition{loc: Loc::File(file_no, l, r), name, values})
     }
 }
 
 VariableDefinition: Box<VariableDefinition> = {
-    <l:@L> <ty:Precedence0>  <name:Identifier> <e:("=" <Expression>)?> <r:@R> ";" => {
+    <l:@L> <ty:Precedence0>  <name:IdentifierOrError> <e:("=" <Expression>)?> <r:@R> ";" => {
         Box::new(VariableDefinition{
             loc: Loc::File(file_no, l, r), ty, name, initializer: e,
         })
     },
-    <l:@L> <ty:Precedence0> <name:Identifier> <r:@R> ";" => {
+    <l:@L> <ty:Precedence0> <name:Identifier> <false_token:!>  <r:@R> ";" => {
+        parser_errors.push (false_token);
         Box::new(VariableDefinition{
             loc: Loc::File(file_no, l, r), ty, name: Some(name), initializer: None,
         })
-    }
+    },
 }
 
 TypeDefinition: Box<TypeDefinition> = {
@@ -224,9 +235,7 @@ LiteralExpression: Expression = {
         } else if n.ends_with("l") {
             Expression::U64Literal(Loc::File(file_no, l, r), n)
         } else if n.ends_with("u") {
-            Expression::U32iteral(Loc::File(file_no, l, r), n)
-        } else if n.ends_with("f") {
-            Expression::FieldLiteral(Loc::File(file_no, l, r), n)
+            Expression::U32Literal(Loc::File(file_no, l, r), n)
         } else {
             Expression::FieldLiteral(Loc::File(file_no, l, r), n)
         }  
@@ -258,29 +267,34 @@ ParameterList: Vec<(Loc, Option<Parameter>)> = {
     "(" ")" => Vec::new(),
     "(" <l:@L> <p:Parameter> <r:@R> ")" => vec!((Loc::File(file_no, l, r), Some(p))),
     "(" <CommaTwo<OptParameter>> ")" => <>,
+    "(" <false_token:!> ")"=> {
+        parser_errors.push(<>);
+        Vec::new()
+    }
 }
-
-
+BlockStatementOrSemiColon: Option<Statement> = {
+    <@L> <@R> ";" => None,
+    BlockStatement => Some(<>),
+}
 FunctionDefinition: Box<FunctionDefinition> = {
-    <l:@L> "fn" <nl:@L> <name:Identifier> <nr:@R> <params:ParameterList> "->"?
-    <returns: ParameterList?> <r:@R> <body:BlockStatement> => {
-
+    <l:@L> "fn" <nl:@L> <name: IdentifierOrError> <nr:@R> <params:ParameterList> 
+    <returns: ("->" <ParameterList>)?> <r:@R> <body:BlockStatementOrSemiColon> => {
         Box::new(FunctionDefinition{
             loc: Loc::File(file_no, l, r),
             name,
             name_loc: Loc::File(file_no, nl, nr),
             params,
             returns,
-            body: Some(body),
+            body,
         })
-    }
+    },
 }
 
 
 BlockStatement: Statement = {
     <l:@L> "{" <statements:Statement*> "}" <r:@R> => {
         Statement::Block { loc: Loc::File(file_no, l, r), statements }
-    }
+    },
 }
 
 OpenStatement: Statement = {
@@ -311,6 +325,10 @@ ClosedStatement: Statement = {
 Statement: Statement = {
     OpenStatement,
     ClosedStatement,
+    <l:@L> <false_token:!> <r:@R> => {
+        parser_errors.push(false_token);
+        Statement::Error(Loc::File(file_no, l, r))
+    },
 }
 
 SimpleStatement: Statement = {
@@ -336,7 +354,7 @@ NonIfStatement: Statement = {
     },
     <l:@L> "return" <e:Expression> <r:@R> ";" => {
         Statement::Return(Loc::File(file_no, l, r), Some(e))
-    }
+    },
 }
 
 
@@ -362,9 +380,17 @@ CommaTwo<T>: Vec<T> = {
 };
 
 Number: String = {
-    r"/(0x)?[1-9][0-9]*|0" => <> 
+    r#"([1-9][0-9]*|0)(u|ll|l)?"# => <>.to_string(),
+    r#"0x[0-9A-Fa-f]*(u|ll|l)?"# => <>.to_string(),
 }
 
 BasicLabel: String = {
-    r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"# => <>,
+    r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"# => <>.to_string(),
+}
+
+match {
+    r"\s*" => {},
+    r"//[^\n\r]*[\n\r]" => {},
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => { },  
+    _,
 }
