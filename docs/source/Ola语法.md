@@ -1,4 +1,4 @@
-# Ola语法
+# Olang语法
 
 ### Variables
 

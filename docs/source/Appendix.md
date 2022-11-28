@@ -1,10 +1,10 @@
 # Appendix
 
-### grammar说明
+## grammar说明
 
 TODO
 
-### keywords
+## keywords
 
 下面列表展示了Ola的关键字和保留字：
 
@@ -31,7 +31,7 @@ TODO
 | log    | 函数运行时打印日志           |
 | import | 导入其他文件                 |
 
-保留字列表
+## reservation keywords
 
 ```rust
 pub
