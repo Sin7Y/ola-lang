@@ -12,7 +12,7 @@ O-lang语言说明
 
    简介
    快速入门
-   Ola语法
+   Olang语法
    智能合约
    IR设计
    ABI
