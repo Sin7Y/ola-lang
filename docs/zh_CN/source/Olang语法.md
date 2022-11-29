@@ -231,7 +231,7 @@ type balance = uint256;
 
 fn main() -> balance {
     balance mut a = 32ll;
-    a -= 2
+    a -= 2;
     return a;
 }
 ```
@@ -370,6 +370,16 @@ fn foo() -> u32 {
 - 当函数调用发生时，程序执行控制从调用函数传递到被调用函数，通过值将参数传递给被调用函数。
 - 被调用函数通过`return`语句执行返回控制到调用函数，且将返回值返回给调用函数。
 
+基本语法形式为：
+
+```
+fn function_name(parameter_declaration_list) -> return_parameter_list {
+    // compound-statement
+    statements
+    return_statement
+}
+```
+示例：
 ```
 fn foo() -> u32 {
     return sum(1u, 2u)
@@ -384,20 +394,31 @@ fn sum(u32 a, u32 b) -> u32 {
 }
 ```
 
-### Imports 
+### 导入(Imports) 
 
-为了使用其他文件中的代码，我们可以使用关键字 `import` 将它们导入到我们的程序中，并带有相应的文件名称。使用`import` 可以方便我们导入一些libs，从而无需重复开发。
+为了使用其他文件中的代码，可以使用关键字 `import` 及 `as` 将其导入到该源程序中，并带有相应的文件名称。
+
+使用`import` 便于导入一些模块化libs，从而无需重复开发。
+
+基本语法形式如下，其中`path-spec`可以为绝对路径(源文件全路径)及相对路径(以 `./` 或 `../` 开始的相对文件路径)。
+```
+import "path-spec"
+import "path-spec" as alias_name
+```
+示例：
 
 ```
 import "./math/uint256.ola";
-import "./crypto/sha256.ola";
+import "crypto/sha256.ola" as sha256;
 ```
 
 ### 注释(Comment Lines)
 
-类似C/C++风格
+为代码内文档，注释插入到代码中编译器直接忽略，仅作为辅助理解代码。
 
-单行采用` // `:
+支持单行注释以 `//` 开头，及多行块注释以 `/*` 开头、以 `*/` 结尾两种方式。
+
+单行采用`//`:
 ```
 // Using this, we can comment a line.
 fn main(field a) -> field {
@@ -412,18 +433,21 @@ fn sum(u32 a, u32 b) -> u32 {
 /* 
  *  Unlike rust, the return value of 
  *  a function must be a combination of return and return value
- */
+*/
     return a + b;  
 }
 ```
 
-### Log
+### 日志(Log)
 
-Ola 支持在OlaVM执行期间记录对应的执行日志。日志采用log关键字记录，第一个参数是格式字符串，其中每个`{}`占位符都替换为其余参数中的相应值,占位符的数量必须等于参数的数量。示例如下：
+Olang 支持在 OlaVM 执行期间记录对应的执行日志。
 
+采用 `log` 关键字记录，第一个参数是格式字符串，其中每个 `{}` 占位符都替换为剩余参数中的相应值,占位符的数量必须等于参数的数量。
+
+示例如下：
 ```
-fn main(u32 a, field b) {
+fn foo(u32 a, field b) {
     log("a is {}, b is {}", a, b);
 }
 ```
-默认情况下，日志在编译期间被删除。为了将它们包含在已编译的程序中，必须启用--debug标志.
+默认日志在编译期被删除。可使用 `--debug` 编译选项打开便于调试程序。
