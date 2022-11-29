@@ -1,0 +1,12 @@
+contract C {
+    fn f()  -> (u256) {
+        u256 x = 1;
+        (x) = 2;
+        return x;
+    }
+}
+// ====
+// compileToEwasm: also
+// compileViaYul: also
+// ----
+// f() -> 2

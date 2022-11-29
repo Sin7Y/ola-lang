@@ -1,0 +1,18 @@
+pragma abicoder               v2;
+
+
+contract C {
+    fn f(u256[2] calldata s)
+        external
+        pure
+        -> (u256 a, u256 b)
+    {
+        a = s[0];
+        b = s[1];
+    }
+}
+// ====
+// compileToEwasm: also
+// compileViaYul: also
+// ----
+// f(u256[2]): 42, 23 -> 42, 23

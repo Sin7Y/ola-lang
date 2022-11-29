@@ -1,0 +1,34 @@
+contract D { constructor() payable {} }
+contract C {
+	uint public x;
+	constructor() payable {}
+	fn f(uint amount) public -> (D) {
+		x++;
+		return (new D){value: amount}();
+	}
+	fn stack(uint depth) public payable -> (address) {
+		if (depth > 0)
+			return this.stack(depth - 1);
+		else
+			return address(f(0));
+	}
+}
+// ====
+// EVMVersion: >=byzantium
+// compileViaYul: also
+// ----
+// constructor(), 20 wei
+// gas irOptimized: 212583
+// gas legacy: 294335
+// gas legacyOptimized: 174279
+// f(u256): 20 -> 1370859564726510389319704988634906228201275401179
+// x() -> 1
+// f(u256): 20 -> FAILURE
+// x() -> 1
+// stack(u256): 1023 -> FAILURE
+// gas irOptimized: 314884
+// gas legacy: 483942
+// gas legacyOptimized: 298807
+// x() -> 1
+// stack(u256): 10 -> 693016686122178122849713379390321835634789309880
+// x() -> 2

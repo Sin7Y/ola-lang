@@ -1,0 +1,8 @@
+contract C {
+    fn f() public {
+        address(this).transfer(10);
+    }
+}
+
+// ----
+// TypeError 9862: (47-69): "send" and "transfer" are only available for objects of type "address payable", not "address".

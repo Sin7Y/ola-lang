@@ -1,0 +1,11 @@
+contract test {
+    fn f(bool cond)  -> (u256, u256) {
+        return cond ? (1, 2) : (3, 4);
+    }
+}
+// ====
+// compileToEwasm: also
+// compileViaYul: also
+// ----
+// f(bool): true -> 1, 2
+// f(bool): false -> 3, 4

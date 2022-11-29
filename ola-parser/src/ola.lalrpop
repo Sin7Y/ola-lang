@@ -25,10 +25,6 @@ Type: Type = {
     "u256" => Type::U256,
 }
 
-Identifier: Identifier = {
-    <l:@L> <s: BasicLabel> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: s}
-}
-
 
 IdentifierOrError: Option<Identifier> = {
     Identifier => Some(<>),
@@ -73,15 +69,15 @@ EnumDefinition: Box<EnumDefinition> = {
 }
 
 VariableDefinition: Box<VariableDefinition> = {
-    <l:@L> <ty:Precedence0>  <name:IdentifierOrError> <e:("=" <Expression>)?> <r:@R> ";" => {
+    <l:@L> <ty:Precedence0>  <attrs:VariableAttribute*> <name:IdentifierOrError> <e:("=" <Expression>)?> <r:@R> ";" => {
         Box::new(VariableDefinition{
-            loc: Loc::File(file_no, l, r), ty, name, initializer: e,
+            loc: Loc::File(file_no, l, r), ty, attrs, name, initializer: e,
         })
     },
-    <l:@L> <ty:Precedence0> <name:Identifier> <false_token:!>  <r:@R> ";" => {
+    <l:@L> <ty:Precedence0> <attrs:VariableAttribute*> <name:Identifier> <false_token:!>  <r:@R> ";" => {
         parser_errors.push (false_token);
         Box::new(VariableDefinition{
-            loc: Loc::File(file_no, l, r), ty, name: Some(name), initializer: None,
+            loc: Loc::File(file_no, l, r), ty, attrs, name: Some(name), initializer: None,
         })
     },
 }
@@ -94,6 +90,10 @@ TypeDefinition: Box<TypeDefinition> = {
     },
 }
 
+VariableAttribute: VariableAttribute = {
+    <l:@L> "const" <r:@R> => VariableAttribute::Constant(Loc::File(file_no, l, r)),
+    <l:@L> "mut" <r:@R> => VariableAttribute::Mutable(Loc::File(file_no, l, r)),
+}
 
 Expression: Expression = {
     Precedence14,
@@ -242,11 +242,7 @@ LiteralExpression: Expression = {
     },
 }
 
-StringLiteral: StringLiteral = {
-    <l:@L> <s: BasicLabel> <r:@R> => {
-        StringLiteral{ loc: Loc::File(file_no, l, r), string:s }
-    }
-}
+
 
 // A parameter list is used for function arguments, returns, and destructuring statements.
 // In destructuring statements, parameters can be optional. So, we make parameters optional
@@ -384,8 +380,15 @@ Number: String = {
     r#"0x[0-9A-Fa-f]*(u|ll|l)?"# => <>.to_string(),
 }
 
-BasicLabel: String = {
-    r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"# => <>.to_string(),
+Identifier: Identifier = {
+    <l:@L> <s: r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"#> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: s.to_string()}
+}
+
+
+StringLiteral: StringLiteral = {
+    <l:@L> <s:r#""[^"]*""#> <r:@R> => {
+        StringLiteral{ loc: Loc::File(file_no, l, r), string: String::from(&s[1..s.len()-1])}
+    }
 }
 
 match {

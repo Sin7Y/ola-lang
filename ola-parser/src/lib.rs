@@ -6,7 +6,7 @@ pub mod diagnostics;
 pub mod program;
 use diagnostics::Diagnostic;
 use lalrpop_util::{lexer::Token, ParseError};
-use program::{Loc, SourceUnit};
+use program::Loc;
 #[cfg(test)]
 mod test;
 

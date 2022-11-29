@@ -1,0 +1,10 @@
+contract test {
+    fn f()  ->(u256 d) {
+        return false ? 5 : 10;
+    }
+}
+// ====
+// compileToEwasm: also
+// compileViaYul: also
+// ----
+// f() -> 10

@@ -218,9 +218,17 @@ pub struct EnumDefinition {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
+pub enum VariableAttribute {
+    Constant(Loc),
+    Mutable(Loc),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "pt-serde", derive(Serialize, Deserialize))]
 pub struct VariableDefinition {
     pub loc: Loc,
     pub ty: Expression,
+    pub attrs: Vec<VariableAttribute>,
     pub name: Option<Identifier>,
     pub initializer: Option<Expression>,
 }

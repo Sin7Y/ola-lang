@@ -1,0 +1,11 @@
+// This caused a failure since the type was not converted to its mobile type.
+contract C {
+    fn f() public -> (u256) {
+        return [4][0];
+    }
+}
+// ====
+// compileToEwasm: also
+// compileViaYul: also
+// ----
+// f() -> 4
