@@ -3,11 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Olang's documentation!
+Welcome to Olang's specs documentation!
 =================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: O-lang语言说明
+   :caption: Olang specs
 
    简介
