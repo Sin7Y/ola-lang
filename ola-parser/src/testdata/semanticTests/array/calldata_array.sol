@@ -1,10 +1,10 @@
-pragma abicoder               v2;
+
 
 
 contract C {
-    fn f(u256[2] calldata s)
-        external
-        pure
+    fn f(u256[2]  s)
+
+
         -> (u256 a, u256 b)
     {
         a = s[0];

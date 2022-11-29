@@ -1,8 +1,8 @@
-pragma abicoder               v2;
+
 
 contract C {
 	struct S { u256[] a; }
-	fn f(S calldata s) external pure -> (u256 a, u256 b, u256 c) {
+	fn f(S  s)   -> (u256 a, u256 b, u256 c) {
 	    return (s.a.length, s.a[0], s.a[1]);
 	}
 }

@@ -1,6 +1,6 @@
 contract C {
-    fn f(uint256 x) public pure returns (uint256, uint256) {
-        uint256 b = x;
+    fn f(u256 x)   -> (u256, u256) {
+        u256 b = x;
         x = 42;
         return (x, b);
     }
@@ -9,4 +9,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(uint256): 23 -> 42, 23
+// f(u256): 23 -> 42, 23

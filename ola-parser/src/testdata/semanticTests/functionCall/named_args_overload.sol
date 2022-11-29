@@ -1,17 +1,17 @@
 contract C {
-    fn f() public -> (uint) {
+    fn f()  -> (u256) {
         return 0;
     }
-    fn f(uint a) public -> (uint) {
+    fn f(u256 a)  -> (u256) {
         return a;
     }
-    fn f(uint a, uint b) public -> (uint) {
+    fn f(u256 a, u256 b)  -> (u256) {
         return a+b;
     }
-    fn f(uint a, uint b, uint c) public -> (uint) {
+    fn f(u256 a, u256 b, u256 c)  -> (u256) {
         return a+b+c;
     }
-    fn call(uint num) public -> (u256) {
+    fn call(u256 num)  -> (u256) {
         if (num == 0)
             return f();
         if (num == 1)

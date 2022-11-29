@@ -1,5 +1,5 @@
 contract test {
-    fn f(uint x) public ->(uint d) {
+    fn f(u256 x)  ->(u256 d) {
         return x > 100 ?
                     x > 1000 ? 1000 : 100
                     :

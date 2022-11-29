@@ -1,4 +1,4 @@
-==== ExternalSource: ExtSource.sol=_external/external.sol ====
+==== ExternalSource: ExtSource.sol=_external/.sol ====
 ==== ExternalSource: /ExtSource.sol=_external/other_external.sol ====
 import "ExtSource.sol";
 import "/ExtSource.sol";
@@ -9,4 +9,4 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// constructor()
+// fn c()

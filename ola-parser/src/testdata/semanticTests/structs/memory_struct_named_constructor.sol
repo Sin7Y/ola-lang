@@ -1,4 +1,4 @@
-pragma abicoder               v2;
+
 
 contract C {
     struct S {
@@ -6,7 +6,7 @@ contract C {
         bool x;
     }
 
-    fn s() public ->(S memory)
+    fn s()  ->(S )
     {
         return S({x: true, a: 8});
     }

@@ -1,21 +1,21 @@
-pragma abicoder               v2;
+
 
 contract C {
     struct S {
-        uint32 a;
-        uint128 b;
+        u32 a;
+        u256 b;
         u256 c;
     }
     struct X {
-        uint32 a;
+        u32 a;
         S s;
     }
 
-    uint[79] arr;
+    u256[79] arr;
     X x = X(12, S(42, 23, 34));
 
-    fn f() external -> (uint32, uint128, u256) {
-        X memory m = x;
+    fn f()  -> (u32, u256, u256) {
+        X  m = x;
         return (m.s.a, m.s.b, m.s.c);
     }
 }

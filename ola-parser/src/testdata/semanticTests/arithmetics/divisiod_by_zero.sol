@@ -1,9 +1,9 @@
 contract C {
-    fn div(u256 a, u256 b) public -> (u256) {
+    fn div(u256 a, u256 b)  -> (u256) {
         return a / b;
     }
 
-    fn mod(u256 a, u256 b) public -> (u256) {
+    fn mod(u256 a, u256 b)  -> (u256) {
         return a % b;
     }
 }

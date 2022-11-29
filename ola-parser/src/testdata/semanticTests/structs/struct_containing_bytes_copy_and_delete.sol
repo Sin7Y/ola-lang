@@ -1,22 +1,22 @@
 contract c {
-    struct Struct { uint a; bytes data; uint b; }
+    struct Struct { u256 a; bytes data; u256 b; }
     Struct data1;
     Struct data2;
-    fn set(uint _a, bytes calldata _data, uint _b) external -> (bool) {
+    fn set(u256 _a, bytes  _data, u256 _b) u32 -> (bool) {
         data1.a = _a;
         data1.b = _b;
         data1.data = _data;
         return true;
     }
-    fn copy() public -> (bool) {
+    fn copy()  -> (bool) {
         data1 = data2;
         return true;
     }
-    fn del() public -> (bool) {
+    fn del()  -> (bool) {
         delete data1;
         return true;
     }
-    fn test(u256 i) public -> (bytes1) {
+    fn test(u256 i)  -> (bytes1) {
         return data1.data[i];
     }
 }

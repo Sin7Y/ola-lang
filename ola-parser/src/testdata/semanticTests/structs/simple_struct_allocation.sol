@@ -3,8 +3,8 @@ contract C {
     u256 a;
   }
 
-  fn f() external -> (u256) {
-    S memory s = S(1);
+  fn f()  -> (u256) {
+    S  s = S(1);
     return s.a;
   }
 }

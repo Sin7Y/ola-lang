@@ -11,7 +11,7 @@ contract test {
     }
 
     fn assign()
-        public
+        
         -> (
             u256 ret_local,
             u256 ret_global,

@@ -1,29 +1,29 @@
 contract C {
-    fn f(int[] calldata b, uint256 start, uint256 end) public returns (int) {
-        int[] memory m = b[start:end];
-        uint len = end - start;
+    fn f(u32[]  b, u256 start, u256 end)  -> (u32) {
+        u32[]  m = b[start:end];
+        u256 len = end - start;
         assert(len == m.length);
-        for (uint i = 0; i < len; i++) {
+        for (u256 i = 0; i < len; i++) {
             assert(b[start:end][i] == m[i]);
         }
         return [b[start:end]][0][0];
     }
 
-    fn g(int[] calldata b, uint256 start, uint256 end) public returns (int[] memory) {
+    fn g(u32[]  b, u256 start, u256 end)  -> (u32[] ) {
         return b[start:end];
     }
 
-    fn h1(int[] memory b) internal returns (int[] memory) {
+    fn h1(u32[]  b)  -> (u32[] ) {
         return b;
     }
 
-    fn h(int[] calldata b, uint256 start, uint256 end) public returns (int[] memory) {
+    fn h(u32[]  b, u256 start, u256 end)  -> (u32[] ) {
         return h1(b[start:end]);
     }
 }
 // ====
 // compileViaYul: also
 // ----
-// f(int256[],uint256,uint256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 2
-// g(int256[],uint256,uint256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 0x20, 2, 2, 3
-// h(int256[],uint256,uint256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 0x20, 2, 2, 3
+// f(int256[],u256,u256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 2
+// g(int256[],u256,u256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 0x20, 2, 2, 3
+// h(int256[],u256,u256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 0x20, 2, 2, 3

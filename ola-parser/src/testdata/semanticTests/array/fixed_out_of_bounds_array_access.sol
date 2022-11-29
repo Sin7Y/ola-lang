@@ -1,16 +1,16 @@
 contract c {
     u256[4] data;
 
-    fn set(u256 index, u256 value) public -> (bool) {
+    fn set(u256 index, u256 value)  -> (bool) {
         data[index] = value;
         return true;
     }
 
-    fn get(u256 index) public -> (u256) {
+    fn get(u256 index)  -> (u256) {
         return data[index];
     }
 
-    fn length() public -> (u256) {
+    fn length()  -> (u256) {
         return data.length;
     }
 }

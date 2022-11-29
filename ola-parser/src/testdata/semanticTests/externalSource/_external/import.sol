@@ -1,2 +1,2 @@
-import "external.sol";
+import ".sol";
 import "other_external.sol";

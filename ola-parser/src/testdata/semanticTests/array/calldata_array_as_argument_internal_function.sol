@@ -1,14 +1,14 @@
-pragma abicoder v2;
+
 contract Test {
-    fn f(u256[] calldata c) internal -> (uint a, uint b) {
+    fn f(u256[]  c)  -> (u256 a, u256 b) {
         return (c.length, c[0]);
     }
 
-    fn g(u256[] calldata c) external -> (uint a, uint b) {
+    fn g(u256[]  c)  -> (u256 a, u256 b) {
         return f(c);
     }
 
-    fn h(u256[] calldata c, uint start, uint end) external -> (uint a, uint b) {
+    fn h(u256[]  c, u256 start, u256 end)  -> (u256 a, u256 b) {
         return f(c[start: end]);
     }
 }

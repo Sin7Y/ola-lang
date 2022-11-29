@@ -1,4 +1,4 @@
-pragma abicoder               v2;
+
 
 
 contract C {
@@ -7,9 +7,9 @@ contract C {
         u256 b;
     }
 
-    fn f(u256 a, S calldata s, u256 b)
-        external
-        pure
+    fn f(u256 a, S  s, u256 b)
+
+
         -> (u256, u256, u256, u256)
     {
         return (a, s.a, s.b, b);

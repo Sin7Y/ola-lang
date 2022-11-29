@@ -1,5 +1,5 @@
 contract C {
-    fn f(uint32 a, uint32 b) public returns (uint256) {
+    fn f(u32 a, u32 b)  -> (u256) {
         return a << b;
     }
 }
@@ -8,8 +8,8 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(uint32,uint32): 0x4266, 0x0 -> 0x4266
-// f(uint32,uint32): 0x4266, 0x8 -> 0x426600
-// f(uint32,uint32): 0x4266, 0x10 -> 0x42660000
-// f(uint32,uint32): 0x4266, 0x11 -> 0x84cc0000
-// f(uint32,uint32): 0x4266, 0x20 -> 0
+// f(u32,u32): 0x4266, 0x0 -> 0x4266
+// f(u32,u32): 0x4266, 0x8 -> 0x426600
+// f(u32,u32): 0x4266, 0x10 -> 0x42660000
+// f(u32,u32): 0x4266, 0x11 -> 0x84cc0000
+// f(u32,u32): 0x4266, 0x20 -> 0

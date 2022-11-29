@@ -1,19 +1,16 @@
 contract C {
-    fn leftU(uint8 x, uint8 y) public returns (uint8) {
+    fn leftU(u32 x, u32 y)  -> (u32) {
         return x << y;
     }
 
-    fn leftS(int8 x, uint8 y) public returns (int8) {
-        return x << y;
-    }
 }
 
 // ====
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// leftU(uint8,uint8): 255, 8 -> 0
-// leftU(uint8,uint8): 255, 1 -> 254
-// leftU(uint8,uint8): 255, 0 -> 255
-// leftS(int8,uint8): 1, 7 -> -128 # Result is -128 and output is sign-extended, not zero-padded. #
-// leftS(int8,uint8): 1, 6 -> 64
+// leftU(u32,u32): 255, 8 -> 0
+// leftU(u32,u32): 255, 1 -> 254
+// leftU(u32,u32): 255, 0 -> 255
+// leftS(int8,u32): 1, 7 -> -128 # Result is -128 and output is sign-extended, not zero-padded. #
+// leftS(int8,u32): 1, 6 -> 64

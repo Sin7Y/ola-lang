@@ -1,8 +1,8 @@
 contract C {
-    fn test() public -> (u256, u256) {
-        uint32 a = 0xffffffff;
-        uint16 x = uint16(a);
-        uint16 y = x;
+    fn test()  -> (u256, u256) {
+        u32 a = 0xffffffff;
+        u32 x = u32(a);
+        u32 y = x;
         x /= 0x100;
         y = y / 0x100;
         return (x, y);

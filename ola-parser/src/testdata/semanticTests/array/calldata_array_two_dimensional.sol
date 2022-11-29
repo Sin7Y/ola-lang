@@ -1,15 +1,15 @@
-pragma abicoder               v2;
+
 contract C {
-    fn test(u256[][2] calldata a) external -> (u256) {
+    fn test(u256[][2]  a) u32 -> (u256) {
         return a.length;
     }
-    fn test(u256[][2] calldata a, u256 i) external -> (u256) {
+    fn test(u256[][2]  a, u256 i) u32 -> (u256) {
         return a[i].length;
     }
-    fn test(u256[][2] calldata a, u256 i, u256 j) external -> (u256) {
+    fn test(u256[][2]  a, u256 i, u256 j) u32 -> (u256) {
         return a[i][j];
     }
-    fn reenc(u256[][2] calldata a, u256 i, u256 j) external -> (u256) {
+    fn reenc(u256[][2]  a, u256 i, u256 j) u32 -> (u256) {
         return this.test(a, i, j);
     }
 }

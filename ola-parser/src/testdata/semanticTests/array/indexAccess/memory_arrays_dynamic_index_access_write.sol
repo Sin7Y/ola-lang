@@ -1,17 +1,16 @@
 contract Test {
-    uint24[3][][4] data;
+    u32[3][][4] data;
 
-    fn set(uint24[3][][4] memory x)
-        internal
-        returns (uint24[3][][4] memory)
+    fn set(u32[3][][4]  x)
+
+        -> (u32[3][][4] )
     {
         x[1][2][2] = 1;
         x[1][3][2] = 7;
         return x;
     }
 
-    fn f() public returns (uint24[3][] memory) {
-        while (data[1].length < 4) data[1].push();
+    fn f()  -> (u32[3][] ) {
         return set(data)[1];
     }
 }

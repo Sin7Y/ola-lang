@@ -1,14 +1,14 @@
-pragma abicoder v2;
+
 
 contract Test {
     struct shouldBug {
-        uint256[][2] deadly;
+        u256[][2] deadly;
     }
-    fn killer(uint256[][2] calldata weapon) pure external returns (shouldBug memory) {
+    fn killer(u256[][2]  weapon)   -> (shouldBug ) {
         return shouldBug(weapon);
     }
 }
 // ====
 // compileViaYul: also
 // ----
-// killer(uint256[][2]): 0x20, 0x40, 0x40, 2, 1, 2 -> 0x20, 0x20, 0x40, 0xa0, 2, 1, 2, 2, 1, 2
+// killer(u256[][2]): 0x20, 0x40, 0x40, 2, 1, 2 -> 0x20, 0x20, 0x40, 0xa0, 2, 1, 2, 2, 1, 2

@@ -1,12 +1,12 @@
-pragma abicoder               v2;
+
 
 
 contract C {
-    fn f(u256[][] calldata a) external -> (u256) {
+    fn f(u256[][]  a) u32 -> (u256) {
         return 42;
     }
 
-    fn g(u256[][] calldata a) external -> (u256) {
+    fn g(u256[][]  a) u32 -> (u256) {
         a[0];
         return 42;
     }

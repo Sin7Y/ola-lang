@@ -1,6 +1,6 @@
 contract c {
-    fn test(u256[8] calldata a, u256[] calldata b, u256[5] calldata c, u256 a_index, u256 b_index, u256 c_index)
-            external -> (u256 av, u256 bv, u256 cv) {
+    fn test(u256[8]  a, u256[]  b, u256[5]  c, u256 a_index, u256 b_index, u256 c_index)
+             -> (u256 av, u256 bv, u256 cv) {
         av = a[a_index];
         bv = b[b_index];
         cv = c[c_index];

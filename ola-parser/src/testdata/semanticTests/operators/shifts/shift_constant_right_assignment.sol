@@ -1,5 +1,5 @@
 contract C {
-    fn f() public returns (uint256 a) {
+    fn f()  -> (u256 a) {
         a = 0x4200;
         a >>= 8;
     }

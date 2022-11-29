@@ -1,5 +1,5 @@
 contract C {
-    u256 constant x = 0x123 + 0x456;
+    u256 const x = 0x123 + 0x456;
 
     fn f()  -> (u256) {
         return x + 1;

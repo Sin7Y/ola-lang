@@ -1,8 +1,0 @@
-contract C {
-    fn f() public returns (uint) {
-        uint8[4] memory z = [1,2,3,5];
-        return (z[0]);
-    }
-}
-// ----
-// Warning 2018: (17-121): fn state mutability can be restricted to pure

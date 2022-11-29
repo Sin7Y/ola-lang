@@ -1,6 +1,6 @@
 contract C {
-    fn f(uint256[2] calldata c) public returns (uint256, uint256) {
-        uint256[2] memory m1 = c;
+    fn f(u256[2]  c)  -> (u256, u256) {
+        u256[2]  m1 = c;
         return (m1[0], m1[1]);
     }
 }
@@ -8,4 +8,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(uint256[2]): 43, 57 -> 43, 57
+// f(u256[2]): 43, 57 -> 43, 57

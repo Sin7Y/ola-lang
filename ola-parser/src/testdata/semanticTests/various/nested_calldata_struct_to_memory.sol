@@ -1,4 +1,4 @@
-pragma abicoder               v2;
+
 
 
 contract C {
@@ -13,12 +13,12 @@ contract C {
         u256 c;
     }
 
-    fn f(S2 calldata s)
-        external
-        pure
+    fn f(S2  s)
+        u32
+        u32
         -> (u256 a, u256 b, u256 sa, u256 sb, u256 c)
     {
-        S2 memory m = s;
+        S2  m = s;
         return (m.a, m.b, m.s.a, m.s.b, m.c);
     }
 }

@@ -3,14 +3,14 @@ contract c {
         u256 a;
         u256 b;
     }
-    uint[75] r;
+    u256[75] r;
     Struct data1;
     Struct data2;
 
-    fn test() public -> (bool) {
+    fn test()  -> (bool) {
         data1.a = 1;
         data1.b = 2;
-        Struct memory x = data1;
+        Struct  x = data1;
         data2 = x;
         return data2.a == data1.a && data2.b == data1.b;
     }

@@ -6,29 +6,29 @@ contract c {
     Data[2**10] data;
     u256[2**10 + 3] ids;
 
-    fn setIDStatic(u256 id) public {
+    fn setIDStatic(u256 id)  {
         ids[2] = id;
     }
 
-    fn setID(u256 index, u256 id) public {
+    fn setID(u256 index, u256 id)  {
         ids[index] = id;
     }
 
-    fn setData(u256 index, u256 x, u256 y) public {
+    fn setData(u256 index, u256 x, u256 y)  {
         data[index].x = x;
         data[index].y = y;
     }
 
-    fn getID(u256 index) public -> (u256) {
+    fn getID(u256 index)  -> (u256) {
         return ids[index];
     }
 
-    fn getData(u256 index) public -> (u256 x, u256 y) {
+    fn getData(u256 index)  -> (u256 x, u256 y) {
         x = data[index].x;
         y = data[index].y;
     }
 
-    fn getLengths() public -> (u256 l1, u256 l2) {
+    fn getLengths()  -> (u256 l1, u256 l2) {
         l1 = data.length;
         l2 = ids.length;
     }

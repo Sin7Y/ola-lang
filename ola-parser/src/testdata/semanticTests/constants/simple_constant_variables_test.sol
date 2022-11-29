@@ -3,7 +3,7 @@ contract Foo {
         return x;
     }
 
-    u256 constant x = 56;
+    u256 const x = 56;
 }
 
 // ====

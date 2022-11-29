@@ -1,5 +1,5 @@
 contract test {
-    fn f(bool cond, uint v) public -> (uint a, uint b) {
+    fn f(bool cond, u256 v)  -> (u256 a, u256 b) {
         cond ? a = v : b = v;
     }
 }

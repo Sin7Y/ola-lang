@@ -7,8 +7,8 @@ contract C {
     I a;
   }
 
-  fn f() external -> (u256) {
-    S memory s = S(I(1,2));
+  fn f()  -> (u256) {
+    S  s = S(I(1,2));
     return s.a.b;
   }
 }

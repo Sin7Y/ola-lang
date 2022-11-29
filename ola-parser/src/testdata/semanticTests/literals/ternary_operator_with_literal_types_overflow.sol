@@ -1,11 +1,11 @@
 contract TestTernary
 {
-    fn h()   -> (uint16 b)
+    fn h()   -> (u32 b)
     {
         b = (true ? 63 : 255) + (false ? 63 : 255);
     }
 
-    fn g()   -> (uint16 a)
+    fn g()   -> (u32 a)
     {
         bool t = true;
         bool f = false;

@@ -1,7 +1,7 @@
 contract test {
     fn f(bool cond)  -> (u256) {
-        uint8 x = 0xcd;
-        uint16 y = 0xabab;
+        u32 x = 0xcd;
+        u32 y = 0xabab;
         return cond ? x : y;
     }
 }

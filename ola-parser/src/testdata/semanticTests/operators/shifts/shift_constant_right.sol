@@ -1,5 +1,5 @@
 contract C {
-    u256 public a = 0x4200 >> 8;
+    u256  a = 0x4200 >> 8;
 }
 // ====
 // compileToEwasm: also

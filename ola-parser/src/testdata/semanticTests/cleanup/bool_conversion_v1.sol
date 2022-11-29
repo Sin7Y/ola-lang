@@ -1,11 +1,11 @@
-pragma abicoder v1;
+
 contract C {
-    fn f(bool _b) public -> (u256) {
+    fn f(bool _b)  -> (u256) {
         if (_b) return 1;
         else return 0;
     }
 
-    fn g(bool _in) public -> (bool _out) {
+    fn g(bool _in)  -> (bool _out) {
         _out = _in;
     }
 }

@@ -1,9 +1,9 @@
 contract C {
-    u256 constant a = 12;
-    u256 constant b = 10;
+    u256 const a = 12;
+    u256 const b = 10;
 
     fn f()  -> (u256, u256) {
-        u256[(a / b) * b] memory x;
+        u256[(a / b) * b]  x;
         return (x.length, (a / b) * b);
     }
 }
@@ -11,5 +11,5 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: true
 // ----
-// constructor() ->
+// fn c() ->
 // f() -> 0x0a, 0x0a

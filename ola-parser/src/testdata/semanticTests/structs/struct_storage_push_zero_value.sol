@@ -1,15 +1,15 @@
 contract C {
     struct S {
         u256 x;
-        uint128 y;
-        uint32 z;
-        uint128[3] a1;
-        uint128[] a2;
+        u256 y;
+        u32 z;
+        u256[3] a1;
+        u256[] a2;
     }
-    uint8 b = 23;
+    u32 b = 23;
     S[] s;
-    uint8 a = 17;
-    fn f() public {
+    u32 a = 17;
+    fn f()  {
         s.push();
         assert(s[0].x == 0);
         assert(s[0].y == 0);

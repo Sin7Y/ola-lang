@@ -1,8 +1,8 @@
 contract C {
-    fn f(u256[] calldata x, u256 start, u256 end) external pure {
+    fn f(u256[]  x, u256 start, u256 end)   {
         x[start:end];
     }
-    fn g(u256[] calldata x, u256 start, u256 end, u256 index) external pure -> (u256, u256, u256) {
+    fn g(u256[]  x, u256 start, u256 end, u256 index)   -> (u256, u256, u256) {
         return (x[start:end][index], x[start:][0:end-start][index], x[:end][start:][index]);
     }
 }

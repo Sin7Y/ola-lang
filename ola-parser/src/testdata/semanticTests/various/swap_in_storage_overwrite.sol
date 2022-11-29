@@ -1,5 +1,5 @@
-// This tests a swap in storage which does not work as one
-// might expect because we do not have temporary storage.
+// This tests a swap in  which does not work as one
+// might expect because we do not have temporary .
 // (x, y) = (y, x) is the same as
 // y = x;
 // x = y;

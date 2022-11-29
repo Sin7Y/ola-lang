@@ -1,5 +1,5 @@
 contract C {
-    fn test() public -> (u256) {
+    fn test()  -> (u256) {
         // Note that this only works because computation on literals is done using
         // unbounded integers.
         if ((2**255 + 2**255) % 7 != addmod(2**255, 2**255, 7)) return 1;

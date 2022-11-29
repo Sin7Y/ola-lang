@@ -1,12 +1,12 @@
-pragma abicoder               v2;
+
 
 
 contract C {
-    fn f(uint256[][] calldata a)
-        external
-        returns (uint256, uint256[] memory)
+    fn f(u256[][]  a)
+
+        -> (u256, u256[] )
     {
-        uint256[] memory m = a[0];
+        u256[]  m = a[0];
         return (a.length, m);
     }
 }
@@ -14,4 +14,4 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// f(uint256[][]): 0x20, 0x1, 0x20, 0x2, 0x17, 0x2a -> 0x1, 0x40, 0x2, 0x17, 0x2a
+// f(u256[][]): 0x20, 0x1, 0x20, 0x2, 0x17, 0x2a -> 0x1, 0x40, 0x2, 0x17, 0x2a

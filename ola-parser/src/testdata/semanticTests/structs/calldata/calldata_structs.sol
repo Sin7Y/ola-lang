@@ -1,4 +1,4 @@
-pragma abicoder               v2;
+
 
 
 contract C {
@@ -10,9 +10,9 @@ contract C {
         u256 a;
     }
 
-    fn f(S1 calldata s1, S2 calldata s2, S1 calldata s3)
-        external
-        pure
+    fn f(S1  s1, S2  s2, S1  s3)
+
+
         -> (u256 a, u256 b, u256 c, u256 d, u256 e)
     {
         a = s1.a;

@@ -1,5 +1,5 @@
 contract test {
-    constructor() {
+    fn c() {
         m_b = 6;
         m_c = 8;
     }

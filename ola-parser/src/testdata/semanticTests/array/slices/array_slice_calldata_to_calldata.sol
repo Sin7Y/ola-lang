@@ -1,27 +1,27 @@
-pragma abicoder v2;
+
 
 contract C {
     struct S {
-        uint128 p1;
-        uint256[3] a;
-        uint32 p2;
+        u256 p1;
+        u256[3] a;
+        u32 p2;
     }
-    fn f(S[] calldata c) internal returns (S[] memory) {
+    fn f(S[]  c)  -> (S[] ) {
         return c;
     }
-    fn g(S[] calldata c, uint256 s, uint256 e) public returns (S[] memory) {
+    fn g(S[]  c, u256 s, u256 e)  -> (S[] ) {
         return f(c[s:e]);
     }
 
-    fn f1(uint256[3][] calldata c) internal returns (uint256[3][] memory) {
+    fn f1(u256[3][]  c)  -> (u256[3][] ) {
         return c;
     }
-    fn g1(uint256[3][] calldata c, uint256 s, uint256 e) public returns (uint256[3][] memory) {
+    fn g1(u256[3][]  c, u256 s, u256 e)  -> (u256[3][] ) {
         return f1(c[s:e]);
     }
 }
 // ====
 // compileViaYul: also
 // ----
-// g((uint128,uint256[3],uint32)[],uint256,uint256): 0x60, 1, 3, 4, 55, 1, 2, 3, 66, 66, 2, 3, 4, 77, 77, 3, 4, 5, 88, 88, 4, 5, 6, 99 -> 0x20, 2, 66, 2, 3, 4, 77, 77, 3, 4, 5, 88
-// g1(uint256[3][],uint256,uint256): 0x60, 1, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 -> 0x20, 2, 4, 5, 6, 7, 8, 9
+// g((u256,u256[3],u32)[],u256,u256): 0x60, 1, 3, 4, 55, 1, 2, 3, 66, 66, 2, 3, 4, 77, 77, 3, 4, 5, 88, 88, 4, 5, 6, 99 -> 0x20, 2, 66, 2, 3, 4, 77, 77, 3, 4, 5, 88
+// g1(u256[3][],u256,u256): 0x60, 1, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 -> 0x20, 2, 4, 5, 6, 7, 8, 9

@@ -1,11 +1,11 @@
 contract Test {
-    fn set(uint24[3][4] memory x) public {
+    fn set(u32[3][4]  x)  {
         x[2][2] = 1;
         x[3][2] = 7;
     }
 
-    fn f() public returns (uint24[3][4] memory) {
-        uint24[3][4] memory data;
+    fn f()  -> (u32[3][4] ) {
+        u32[3][4]  data;
         set(data);
         return data;
     }

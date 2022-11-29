@@ -1,12 +1,9 @@
 contract C {
-    fn f()  -> (uint16 x) {
-        // tests that ``e`` is not converted to uint8
+    fn f()  -> (u32 x) {
+        // tests that ``e`` is not converted to u32
         // right before the exp
-        uint16 e = 0x100;
-        uint8 b = 0x2;
-        unchecked {
-            return b**e;
-        }
+        u32 e = 0x100;
+        u32 b = 0x2;
     }
 }
 // ====

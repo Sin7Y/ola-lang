@@ -1,8 +1,8 @@
 contract C {
-    fn g(int x, int y)  -> (int) { return x - y; }
-    fn h(int y, int x)  -> (int) { return y - x; }
+    fn g(u32 x, u32 y)  -> (u32) { return x - y; }
+    fn h(u32 y, u32 x)  -> (u32) { return y - x; }
 
-    fn f()  -> (int) {
+    fn f()  -> (u32) {
         return (false ? g : h)(2, 1);
     }
 }

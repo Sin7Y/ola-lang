@@ -1,10 +1,10 @@
 contract c {
-    fn f(u256 a) public -> (u256) {
+    fn f(u256 a)  -> (u256) {
         return a;
     }
 
     fn test(u256 a, u256 b)
-        external
+
         -> (u256 r_a, u256 r_b)
     {
         r_a = f(a + 7);

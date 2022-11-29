@@ -3,9 +3,9 @@ contract C {
         u256 a;
         bool x;
     }
-    S public s;
+    S  s;
 
-    constructor() {
+    fn c() {
         s = S({x: true, a: 1});
     }
 }

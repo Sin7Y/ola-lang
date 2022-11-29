@@ -1,8 +1,8 @@
-pragma abicoder               v2;
+
 
 contract C {
-  uint256[] s;
-  fn f(uint256[] calldata data) external returns (uint) {
+  u256[] s;
+  fn f(u256[]  data) u32 -> (u256) {
     s = data;
     return s[0];
   }
@@ -10,7 +10,7 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// f(uint256[]): 0x20, 0x03, 0x1, 0x2, 0x3 -> 0x1
+// f(u256[]): 0x20, 0x03, 0x1, 0x2, 0x3 -> 0x1
 // gas irOptimized: 111159
 // gas legacy: 111565
 // gas legacyOptimized: 111347

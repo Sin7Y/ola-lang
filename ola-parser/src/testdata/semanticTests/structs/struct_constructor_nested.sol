@@ -10,15 +10,15 @@ contract C {
     }
     S s;
 
-    constructor() {
-        u256[3] memory s2;
+    fn c() {
+        u256[3]  s2;
         s2[1] = 9;
         s = S(1, s2, X(4, 5));
     }
 
     fn get()
-        public
-        -> (u256 s1, u256[3] memory s2, u256 x1, u256 x2)
+
+        -> (u256 s1, u256[3]  s2, u256 x1, u256 x2)
     {
         s1 = s.s1;
         s2 = s.s2;

@@ -1,18 +1,18 @@
 contract Test {
     struct S {
-        uint8 x;
-        uint16 y;
+        u32 x;
+        u32 y;
         u256 z;
     }
     struct X {
-        uint8 x;
+        u32 x;
         S s;
-        uint8[2] a;
+        u32[2] a;
     }
     X m_x;
 
     fn load()
-        public
+
         -> (
             u256 a,
             u256 x,
@@ -28,7 +28,7 @@ contract Test {
         m_x.s.z = 4;
         m_x.a[0] = 5;
         m_x.a[1] = 6;
-        X memory d = m_x;
+        X  d = m_x;
         a = d.x;
         x = d.s.x;
         y = d.s.y;
@@ -38,7 +38,7 @@ contract Test {
     }
 
     fn store()
-        public
+
         -> (
             u256 a,
             u256 x,
@@ -48,7 +48,7 @@ contract Test {
             u256 a2
         )
     {
-        X memory d;
+        X  d;
         d.x = 1;
         d.s.x = 2;
         d.s.y = 3;

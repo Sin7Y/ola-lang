@@ -1,4 +1,7 @@
-pragma abicoder v2;
+
+
+contract C {
+
 enum E {
     E000, E001, E002, E003, E004, E005, E006, E007, E008, E009,
     E010, E011, E012, E013, E014, E015, E016, E017, E018, E019,
@@ -28,33 +31,19 @@ enum E {
     E250, E251, E252, E253, E254, E255
 }
 
-contract C {
     fn getMinMax()  -> (E, E) {
         return (E.E000, E.E255);
-    }
-
-    fn intToEnum(uint8 _i)  -> (E) {
-        return E(_i);
-    }
-
-    fn enumToInt(E _e)  -> (uint8) {
-        return uint8(_e);
-    }
-
-    fn decodeEnum(bytes memory data)  -> (E) {
-        (E e) = abi.decode(data, (E));
-        return e;
     }
 }
 // ====
 // compileViaYul: also
 // ----
 // getMinMax() -> 0, 255
-// intToEnum(uint8): 0 -> 0
-// intToEnum(uint8): 255 -> 255
-// enumToInt(uint8): 0 -> 0
-// enumToInt(uint8): 255 -> 255
-// enumToInt(uint8): 256 -> FAILURE
+// intToEnum(u32): 0 -> 0
+// intToEnum(u32): 255 -> 255
+// enumToInt(u32): 0 -> 0
+// enumToInt(u32): 255 -> 255
+// enumToInt(u32): 256 -> FAILURE
 // decodeEnum(bytes): 0x20, 32, 0 -> 0
 // decodeEnum(bytes): 0x20, 32, 255 -> 255
 // decodeEnum(bytes): 0x20, 32, 256 -> FAILURE

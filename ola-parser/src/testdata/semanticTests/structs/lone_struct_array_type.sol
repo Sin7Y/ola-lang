@@ -4,7 +4,7 @@ contract C {
         u256 b;
     }
 
-    fn f() public -> (u256) {
+    fn f()  -> (u256) {
         s[7][]; // This is only the type, should not have any effect
         return 3;
     }

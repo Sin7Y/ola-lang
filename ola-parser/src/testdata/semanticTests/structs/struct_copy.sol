@@ -10,7 +10,7 @@ contract c {
     }
     mapping(u256 => Struct) data;
 
-    fn set(u256 k) public -> (bool) {
+    fn set(u256 k)  -> (bool) {
         data[k].a = 1;
         data[k].nested.x = 3;
         data[k].nested.y = 4;
@@ -18,13 +18,13 @@ contract c {
         return true;
     }
 
-    fn copy(u256 from, u256 to) public -> (bool) {
+    fn copy(u256 from, u256 to)  -> (bool) {
         data[to] = data[from];
         return true;
     }
 
     fn retrieve(u256 k)
-        public
+        
         -> (u256 a, u256 x, u256 y, u256 c)
     {
         a = data[k].a;

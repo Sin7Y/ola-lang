@@ -1,17 +1,17 @@
 contract Test {
     struct S {
-        uint8 x;
-        uint16 y;
+        u32 x;
+        u32 y;
         u256 z;
-        uint8[2] a;
+        u32[2] a;
     }
     S[5] data;
 
     fn testInit()
-        public
-        -> (uint8 x, uint16 y, u256 z, uint8 a, bool flag)
+
+        -> (u32 x, u32 y, u256 z, u32 a, bool flag)
     {
-        S[2] memory d;
+        S[2]  d;
         x = d[0].x;
         y = d[0].y;
         z = d[0].z;
@@ -20,14 +20,14 @@ contract Test {
     }
 
     fn testCopyRead()
-        public
-        -> (uint8 x, uint16 y, u256 z, uint8 a)
+
+        -> (u32 x, u32 y, u256 z, u32 a)
     {
         data[2].x = 1;
         data[2].y = 2;
         data[2].z = 3;
         data[2].a[1] = 4;
-        S memory s = data[2];
+        S  s = data[2];
         x = s.x;
         y = s.y;
         z = s.z;
@@ -35,10 +35,10 @@ contract Test {
     }
 
     fn testAssign()
-        public
-        -> (uint8 x, uint16 y, u256 z, uint8 a)
+
+        -> (u32 x, u32 y, u256 z, u32 a)
     {
-        S memory s;
+        S  s;
         s.x = 1;
         s.y = 2;
         s.z = 3;

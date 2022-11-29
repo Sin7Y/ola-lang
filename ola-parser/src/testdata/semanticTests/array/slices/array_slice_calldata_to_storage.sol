@@ -1,10 +1,10 @@
 contract C {
-    int[] s;
-    fn f(int[] calldata b, uint256 start, uint256 end) public returns (int) {
+    u32[] s;
+    fn f(u32[]  b, u256 start, u256 end)  -> (u32) {
         s = b[start:end];
-        uint len = end - start;
+        u256 len = end - start;
         assert(len == s.length);
-        for (uint i = 0; i < len; i++) {
+        for (u256 i = 0; i < len; i++) {
             assert(b[start:end][i] == s[i]);
         }
         return s[0];
@@ -13,4 +13,4 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// f(int256[],uint256,uint256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 2
+// f(int256[],u256,u256): 0x60, 1, 3, 4, 1, 2, 3, 4 -> 2

@@ -1,8 +1,8 @@
 contract C {
-    u256 constant LEN = 3;
+    u256 const LEN = 3;
     u256[LEN] a;
 
-    constructor(u256[LEN] memory _a) {
+    fn c(u256[LEN]  _a) {
         a = _a;
     }
 }
@@ -10,7 +10,7 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// constructor(): 1, 2, 3 ->
+// fn c(): 1, 2, 3 ->
 // gas irOptimized: 142640
 // gas legacy: 183490
 // gas legacyOptimized: 151938

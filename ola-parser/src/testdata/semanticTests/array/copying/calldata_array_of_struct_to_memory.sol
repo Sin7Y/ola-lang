@@ -1,18 +1,18 @@
-pragma abicoder               v2;
+
 
 
 contract C {
     struct S {
-        uint256 a;
-        uint256 b;
+        u256 a;
+        u256 b;
     }
 
-    fn f(S[] calldata s)
-        external
-        pure
-        returns (uint256 l, uint256 a, uint256 b, uint256 c, uint256 d)
+    fn f(S[]  s)
+        u32
+
+        -> (u256 l, u256 a, u256 b, u256 c, u256 d)
     {
-        S[] memory m = s;
+        S[]  m = s;
         l = m.length;
         a = m[0].a;
         b = m[0].b;
@@ -24,4 +24,4 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// f((uint256,uint256)[]): 0x20, 0x2, 0x1, 0x2, 0x3, 0x4 -> 2, 1, 2, 3, 4
+// f((u256,u256)[]): 0x20, 0x2, 0x1, 0x2, 0x3, 0x4 -> 2, 1, 2, 3, 4

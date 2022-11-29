@@ -1,14 +1,14 @@
-pragma abicoder               v2;
+
 
 contract C {
     struct S {
-        uint128 a;
-        uint64 b;
-        uint128 c;
+        u256 a;
+        u64 b;
+        u256 c;
     }
-    uint128[137] unused;
+    u256[137] unused;
     S[] s;
-    fn f(S[] calldata c) public returns (uint128, uint64, uint128) {
+    fn f(S[]  c)  -> (u256, u64, u256) {
         s = c;
         return (s[2].a, s[1].b, s[0].c);
     }
@@ -16,5 +16,5 @@ contract C {
 // ====
 // compileViaYul: true
 // ----
-// f((uint128,uint64,uint128)[]): 0x20, 3, 0, 0, 12, 0, 11, 0, 10, 0, 0 -> 10, 11, 12
+// f((u256,u64,u256)[]): 0x20, 3, 0, 0, 12, 0, 11, 0, 10, 0, 0 -> 10, 11, 12
 // gas irOptimized: 121019

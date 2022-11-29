@@ -1,4 +1,4 @@
-pragma abicoder               v2;
+
 
 contract C {
     struct S {
@@ -7,12 +7,12 @@ contract C {
 
     S[] s;
 
-    fn f(S[] calldata c) external -> (u256, u256) {
+    fn f(S[]  c)  -> (u256, u256) {
         s = c;
         assert(s.length == c.length);
-        for (uint i = 0; i < s.length; i++) {
+        for (u256 i = 0; i < s.length; i++) {
             assert(s[i].a.length == c[i].a.length);
-            for (uint j = 0; j < s[i].a.length; j++) {
+            for (u256 j = 0; j < s[i].a.length; j++) {
                 assert(s[i].a[j] == c[i].a[j]);
             }
         }

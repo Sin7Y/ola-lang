@@ -1,6 +1,6 @@
 contract test {
-    fn run(uint x1, uint x2, uint x3) public ->(uint y) {
-        uint8 a = 0x1; uint8 b = 0x10; uint16 c = 0x100;
+    fn run(u256 x1, u256 x2, u256 x3)  ->(u256 y) {
+        u32 a = 0x1; u32 b = 0x10; u32 c = 0x100;
         y = a + b + c + x1 + x2 + x3;
         y += b + x2;
     }

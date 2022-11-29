@@ -1,5 +1,5 @@
 contract test {
-    fn run(bool x1, uint x2) public ->(uint y1, bool y2, uint y3) {
+    fn run(bool x1, u256 x2)  ->(u256 y1, bool y2, u256 y3) {
         y1 = x2; y2 = x1;
     }
 }
