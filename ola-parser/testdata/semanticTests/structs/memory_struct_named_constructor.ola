@@ -6,7 +6,7 @@ contract C {
         bool x;
     }
 
-    fn s()  ->(S )
+    fn s() ->(S )
     {
         return S({x: true, a: 8});
     }
@@ -16,4 +16,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// s() -> 8, true
+// s()  -> 8, true

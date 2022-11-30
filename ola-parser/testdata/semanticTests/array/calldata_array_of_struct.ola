@@ -10,7 +10,7 @@ contract C {
     fn f(S[]  s)
 
 
-        -> (u256 l, u256 a, u256 b, u256 c, u256 d)
+    -> (u256 l, u256 a, u256 b, u256 c, u256 d)
     {
         l = s.length;
         a = s[0].a;
@@ -24,4 +24,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f((u256,u256)[]): 0x20, 0x2, 0x1, 0x2, 0x3, 0x4 -> 2, 1, 2, 3, 4
+// f((u256,u256)[]): 0x20, 0x2, 0x1, 0x2, 0x3, 0x4  -> 2, 1, 2, 3, 4

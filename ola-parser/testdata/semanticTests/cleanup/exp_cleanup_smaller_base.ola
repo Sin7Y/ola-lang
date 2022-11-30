@@ -1,5 +1,5 @@
 contract C {
-    fn f()  -> (u32 x) {
+    fn f() -> (u32 x) {
         // tests that ``e`` is not converted to u32
         // right before the exp
         u32 e = 0x100;
@@ -10,4 +10,4 @@ contract C {
 // compileViaYul: also
 // compileToEwasm: also
 // ----
-// f() -> 0x00
+// f()  -> 0x00

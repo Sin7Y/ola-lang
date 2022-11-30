@@ -1,5 +1,5 @@
 contract C {
-    fn test()  -> (u256, u256) {
+    fn test() -> (u256, u256) {
         u32 a = 0xffffffff;
         u32 x = u32(a);
         u32 y = x;
@@ -12,4 +12,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// test() -> 0xff, 0xff
+// test()  -> 0xff, 0xff

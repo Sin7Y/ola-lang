@@ -4,12 +4,12 @@ contract C {
     }
     S s;
 
-    fn g()  -> (u256, S , u256) {
+    fn g() -> (u256, S , u256) {
         s.x = 7;
         return (1, s, 2);
     }
 
-    fn f()  -> (bool) {
+    fn f() -> (bool) {
         (u256 x1, S  y1, u256 z1) = g();
         if (x1 != 1 || y1.x != 7 || z1 != 2) return false;
         (, S  y2, ) = g();
@@ -26,4 +26,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f() -> true
+// f()  -> true

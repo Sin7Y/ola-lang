@@ -5,7 +5,7 @@ contract C {
     fn f(u256[2]  s)
 
 
-        -> (u256 a, u256 b)
+    -> (u256 a, u256 b)
     {
         a = s[0];
         b = s[1];
@@ -15,4 +15,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(u256[2]): 42, 23 -> 42, 23
+// f(u256[2]): 42, 23  -> 42, 23

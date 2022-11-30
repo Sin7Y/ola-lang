@@ -1,5 +1,5 @@
 contract test {
-    fn f(u256 k)  -> (u256) {
+    fn f(u256 k) -> (u256) {
         return k;
     }
 }
@@ -8,4 +8,4 @@ contract test {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(u256): 9 -> 9
+// f(u256): 9  -> 9

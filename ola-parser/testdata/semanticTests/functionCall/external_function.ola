@@ -1,11 +1,13 @@
 contract c {
-    fn f(u256 a)  -> (u256) {
+    fn f(u256 a) -> (u256) {
         return a;
     }
 
+    f f
+
     fn test(u256 a, u256 b)
 
-        -> (u256 r_a, u256 r_b)
+    -> (u256 r_a, u256 r_b)
     {
         r_a = f(a + 7);
         r_b = b;
@@ -16,4 +18,4 @@ contract c {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// test(u256,u256): 2, 3 -> 9, 3
+// test(u256,u256): 2, 3  -> 9, 3

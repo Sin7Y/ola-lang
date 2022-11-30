@@ -9,7 +9,7 @@ contract Test {
 
     fn testInit()
 
-        -> (u32 x, u32 y, u256 z, u32 a, bool flag)
+    -> (u32 x, u32 y, u256 z, u32 a, bool flag)
     {
         S[2]  d;
         x = d[0].x;
@@ -21,7 +21,7 @@ contract Test {
 
     fn testCopyRead()
 
-        -> (u32 x, u32 y, u256 z, u32 a)
+    -> (u32 x, u32 y, u256 z, u32 a)
     {
         data[2].x = 1;
         data[2].y = 2;
@@ -36,7 +36,7 @@ contract Test {
 
     fn testAssign()
 
-        -> (u32 x, u32 y, u256 z, u32 a)
+    -> (u32 x, u32 y, u256 z, u32 a)
     {
         S  s;
         s.x = 1;
@@ -54,6 +54,6 @@ contract Test {
 // compileViaYul: also
 // compileToEwasm: also
 // ----
-// testInit() -> 0, 0, 0, 0, true
-// testCopyRead() -> 1, 2, 3, 4
-// testAssign() -> 1, 2, 3, 4
+// testInit()  -> 0, 0, 0, 0, true
+// testCopyRead()  -> 1, 2, 3, 4
+// testAssign()  -> 1, 2, 3, 4

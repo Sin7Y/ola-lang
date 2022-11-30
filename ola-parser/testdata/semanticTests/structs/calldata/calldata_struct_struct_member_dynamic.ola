@@ -14,7 +14,7 @@ contract C {
     fn f(S1  s1)
 
 
-        -> (u256 a, u64 b0, bytes1 b1, u256 c)
+    -> (u256 a, u64 b0, bytes1 b1, u256 c)
     {
         a = s1.a;
         b0 = s1.s.a;
@@ -25,4 +25,4 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// f((u256,(u64,bytes),u256)): 0x20, 42, 0x60, 23, 1, 0x40, 2, "ab" -> 42, 1, "a", 23
+// f((u256,(u64,bytes),u256)): 0x20, 42, 0x60, 23, 1, 0x40, 2, "ab"  -> 42, 1, "a", 23

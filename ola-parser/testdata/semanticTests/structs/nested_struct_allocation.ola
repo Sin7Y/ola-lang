@@ -7,7 +7,7 @@ contract C {
     I a;
   }
 
-  fn f()  -> (u256) {
+  fn f() -> (u256) {
     S  s = S(I(1,2));
     return s.a.b;
   }
@@ -16,4 +16,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f() -> 1
+// f()  -> 1

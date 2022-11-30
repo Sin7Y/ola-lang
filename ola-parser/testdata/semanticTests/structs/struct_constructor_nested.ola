@@ -18,7 +18,7 @@ contract C {
 
     fn get()
 
-        -> (u256 s1, u256[3]  s2, u256 x1, u256 x2)
+    -> (u256 s1, u256[3]  s2, u256 x1, u256 x2)
     {
         s1 = s.s1;
         s2 = s.s2;
@@ -29,4 +29,4 @@ contract C {
 // ====
 // compileViaYul: also
 // ----
-// get() -> 0x01, 0x00, 0x09, 0x00, 0x04, 0x05
+// get()  -> 0x01, 0x00, 0x09, 0x00, 0x04, 0x05

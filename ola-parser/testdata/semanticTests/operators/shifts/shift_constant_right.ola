@@ -5,4 +5,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// a() -> 0x42
+// a()  -> 0x42

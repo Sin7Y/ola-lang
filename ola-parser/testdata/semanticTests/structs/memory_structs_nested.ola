@@ -11,7 +11,7 @@ contract Test {
 
     fn test()
 
-        -> (u256 a, u256 x, u256 y, u256 z)
+    -> (u256 a, u256 x, u256 y, u256 z)
     {
         X  d = combine(1, 2, 3, 4);
         a = extract(d, 0);
@@ -20,7 +20,7 @@ contract Test {
         z = extract(d, 3);
     }
 
-    fn extract(X  s, u256 which)  -> (u256 x) {
+    fn extract(X  s, u256 which) -> (u256 x) {
         if (which == 0) return s.x;
         else if (which == 1) return s.s.x;
         else if (which == 2) return s.s.y;
@@ -29,7 +29,7 @@ contract Test {
 
     fn combine(u32 a, u32 x, u32 y, u256 z)
 
-        -> (X  s)
+    -> (X  s)
     {
         s.x = a;
         s.s.x = x;
@@ -42,4 +42,4 @@ contract Test {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// test() -> 1, 2, 3, 4
+// test()  -> 1, 2, 3, 4

@@ -1,5 +1,5 @@
 contract Foo {
-    fn getX()  -> (u256 r) {
+    fn getX() -> (u256 r) {
         return x;
     }
 
@@ -10,4 +10,4 @@ contract Foo {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// getX() -> 56
+// getX()  -> 56

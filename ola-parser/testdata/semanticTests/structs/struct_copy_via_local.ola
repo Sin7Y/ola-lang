@@ -7,7 +7,7 @@ contract c {
     Struct data1;
     Struct data2;
 
-    fn test()  -> (bool) {
+    fn test() -> (bool) {
         data1.a = 1;
         data1.b = 2;
         Struct  x = data1;
@@ -20,7 +20,7 @@ contract c {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// test() -> true
+// test()  -> true
 // gas irOptimized: 110177
 // gas legacy: 110627
 // gas legacyOptimized: 109706

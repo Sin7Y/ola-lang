@@ -13,4 +13,4 @@ contract Foo {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// fn c() ->
+// fn c()  ->

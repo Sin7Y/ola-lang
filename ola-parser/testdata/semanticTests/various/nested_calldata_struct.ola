@@ -14,7 +14,7 @@ contract C {
     }
 
     fn f(S2  s)
-        -> (u256 a, u256 b, u256 sa, u256 sb, u256 c)
+    -> (u256 a, u256 b, u256 sa, u256 sb, u256 c)
     {
         return (s.a, s.b, s.s.a, s.s.b, s.c);
     }
@@ -24,4 +24,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f((u256,u256,(u256,u256),u256)): 1, 2, 3, 4, 5 -> 1, 2, 3, 4, 5
+// f((u256,u256,(u256,u256),u256)): 1, 2, 3, 4, 5  -> 1, 2, 3, 4, 5

@@ -7,7 +7,7 @@ contract C {
 
     S[] s;
 
-    fn f(S[]  c)  -> (u256, u256) {
+    fn f(S[]  c) -> (u256, u256) {
         s = c;
         assert(s.length == c.length);
         for (u256 i = 0; i < s.length; i++) {
@@ -22,5 +22,5 @@ contract C {
 // ====
 // compileViaYul: true
 // ----
-// f((u256[])[]): 0x20, 3, 0x60, 0x60, 0x60, 0x20, 3, 1, 2, 3 -> 3, 1
+// f((u256[])[]): 0x20, 3, 0x60, 0x60, 0x60, 0x20, 3, 1, 2, 3  -> 3, 1
 // gas irOptimized: 328592

@@ -13,7 +13,7 @@ contract Test {
 
     fn load()
 
-        -> (
+    -> (
             u256 a,
             u256 x,
             u256 y,
@@ -39,7 +39,7 @@ contract Test {
 
     fn store()
 
-        -> (
+    -> (
             u256 a,
             u256 x,
             u256 y,
@@ -68,8 +68,8 @@ contract Test {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// load() -> 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+// load()  -> 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
 // gas irOptimized: 111425
 // gas legacy: 112999
 // gas legacyOptimized: 110881
-// store() -> 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+// store()  -> 0x01, 0x02, 0x03, 0x04, 0x05, 0x06

@@ -1,5 +1,5 @@
 contract test {
-    fn f(bool cond, u256 v)  -> (u256 a, u256 b) {
+    fn f(bool cond, u256 v) -> (u256 a, u256 b) {
         cond ? a = v : b = v;
     }
 }
@@ -7,5 +7,5 @@ contract test {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(bool,u256): true, 20 -> 20, 0
-// f(bool,u256): false, 20 -> 0, 20
+// f(bool,u256): true, 20  -> 20, 0
+// f(bool,u256): false, 20  -> 0, 20

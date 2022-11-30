@@ -1,5 +1,5 @@
 contract C {
-    fn f(u256 x)   -> (u256, u256) {
+    fn f(u256 x) -> (u256, u256) {
         u256 b = x;
         x = 42;
         return (x, b);
@@ -9,4 +9,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f(u256): 23 -> 42, 23
+// f(u256): 23  -> 42, 23

@@ -1,18 +1,18 @@
 contract C {
-    fn g()  -> (u256 a, u256 b, u256 c) {
+    fn g() -> (u256 a, u256 b, u256 c) {
         a = 1;
         b = 2;
         c = 3;
     }
 
-    fn h()  -> (u256 a, u256 b, u256 c, u256 d) {
+    fn h() -> (u256 a, u256 b, u256 c, u256 d) {
         a = 1;
         b = 2;
         c = 3;
         d = 4;
     }
 
-    fn f1()  -> (bool) {
+    fn f1() -> (bool) {
         (u256 x, u256 y, u256 z) = g();
         if (x != 1 || y != 2 || z != 3) return false;
         (, u256 a, ) = g();
@@ -24,7 +24,7 @@ contract C {
         return true;
     }
 
-    fn f2()  -> (bool) {
+    fn f2() -> (bool) {
         (u256 a1, , u256 a3, ) = h();
         if (a1 != 1 || a3 != 3) return false;
         (u256 b1, u256 b2, , ) = h();
@@ -38,7 +38,7 @@ contract C {
         return true;
     }
 
-    fn f()  -> (bool) {
+    fn f() -> (bool) {
         return f1() && f2();
     }
 }
@@ -46,4 +46,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f() -> true
+// f()  -> true

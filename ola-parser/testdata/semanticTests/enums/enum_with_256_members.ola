@@ -31,19 +31,19 @@ enum E {
     E250, E251, E252, E253, E254, E255
 }
 
-    fn getMinMax()  -> (E, E) {
+    fn getMinMax() -> (E, E) {
         return (E.E000, E.E255);
     }
 }
 // ====
 // compileViaYul: also
 // ----
-// getMinMax() -> 0, 255
-// intToEnum(u32): 0 -> 0
-// intToEnum(u32): 255 -> 255
-// enumToInt(u32): 0 -> 0
-// enumToInt(u32): 255 -> 255
-// enumToInt(u32): 256 -> FAILURE
-// decodeEnum(bytes): 0x20, 32, 0 -> 0
-// decodeEnum(bytes): 0x20, 32, 255 -> 255
-// decodeEnum(bytes): 0x20, 32, 256 -> FAILURE
+// getMinMax()  -> 0, 255
+// intToEnum(u32): 0  -> 0
+// intToEnum(u32): 255  -> 255
+// enumToInt(u32): 0  -> 0
+// enumToInt(u32): 255  -> 255
+// enumToInt(u32): 256  -> FAILURE
+// decodeEnum(bytes): 0x20, 32, 0  -> 0
+// decodeEnum(bytes): 0x20, 32, 255  -> 255
+// decodeEnum(bytes): 0x20, 32, 256  -> FAILURE

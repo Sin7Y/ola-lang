@@ -1,6 +1,6 @@
 # Appendix
 
-## grammar说明
+## Language Grammar
 
 TODO
 
@@ -8,8 +8,8 @@ TODO
 
 下面列表展示了Ola的关键字和保留字：
 
-| 关键字 | 解释                         |
-| ------ | ---------------------------- |
+| 关键字    | 解释                         |
+|--------| ---------------------------- |
 | mut    | 可变变量声明                 |
 | const  | 常量声明                     |
 | type   | 类型别名声明                 |
@@ -28,7 +28,7 @@ TODO
 | field  | 在`p` 范围内的域元素         |
 | true   | boolean  ture                |
 | false  | boolean  false               |
-| log    | 函数运行时打印日志           |
+| assert | 函数运行时打印日志           |
 | import | 导入其他文件                 |
 
 ## reservation keywords

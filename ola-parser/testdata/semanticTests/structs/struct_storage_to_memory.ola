@@ -14,7 +14,7 @@ contract C {
     u256[79] arr;
     X x = X(12, S(42, 23, 34));
 
-    fn f()  -> (u32, u256, u256) {
+    fn f() -> (u32, u256, u256) {
         X  m = x;
         return (m.s.a, m.s.b, m.s.c);
     }
@@ -24,4 +24,4 @@ contract C {
 // compileToEwasm: also
 // compileViaYul: also
 // ----
-// f() -> 42, 23, 34
+// f()  -> 42, 23, 34
