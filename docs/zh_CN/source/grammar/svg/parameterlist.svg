@@ -1,0 +1,151 @@
+<svg class="railroad" viewBox="0 0 404 184" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style type="text/css">
+
+svg.railroad {
+  background-color: rgba(238, 238, 238, .91);
+  background-size: 15px 15px;
+  background-image: linear-gradient(to right, rgba(25, 25, 225, .65) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(25, 25, 225, .65) 1px, transparent 1px);
+}
+
+svg.railroad path {
+  stroke-width: 3px;
+  stroke: black;
+  fill: transparent;
+}
+
+svg.railroad .debug {
+  stroke-width: 1px;
+  stroke: red;
+}
+
+svg.railroad text {
+  font: 14px monospace;
+  text-anchor: middle;
+}
+
+svg.railroad .nonterminal text {
+  font-weight: bold;
+}
+
+svg.railroad text.comment {
+  font: italic 12px monospace;
+}
+
+svg.railroad rect {
+  stroke-width: 3px;
+  stroke: black;
+  fill:rgba(0, 0, 90, 0%);
+}
+
+svg.railroad .terminal rect {
+  fill: aquamarine;  
+}
+
+svg.railroad .nonterminal rect {
+  fill: orange;  
+}
+
+svg.railroad g.labeledbox &gt; rect {
+  border-radius: 25px;
+  border: 2px solid #73AD21;
+  stroke-width: 1.5px;
+  stroke: grey;
+  stroke-dasharray: 5px;
+  fill:rgba(150, 150, 150, 25%);
+}
+
+</style>
+<g class="sequence">
+<path d=" M 10 21 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
+<g class="choice">
+<path d=" M 35 21 h 24 m 98 0 h 207 m -100 0 l -5 -5 m 0 10 l 5 -5 m 100 0"/>
+<g class="sequence">
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="59" y="10"/>
+<text x="81" y="26">
+&quot;(&quot;</text>
+</g>
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="113" y="10"/>
+<text x="135" y="26">
+&quot;)&quot;</text>
+</g>
+<path d=" M 103 21 h 10"/>
+</g>
+<path d=" M 35 21 a 12 12 0 0 1 12 12 v 9 m 305 0 v -9 a 12 12 0 0 1 12 -12"/>
+<path d=" M 47 42 v 33 m 305 0 v -33"/>
+<path d=" M 47 110 v 41 m 305 0 v -41"/>
+<path d=" M 47 42 v 0 a 12 12 0 0 0 12 12 m 200 0 h 81 m -37 0 l -5 -5 m 0 10 l 5 -5 m 37 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="59" y="43"/>
+<text x="81" y="59">
+&quot;(&quot;</text>
+</g>
+<g class="nonterminal">
+<rect height="22" width="92" x="113" y="43"/>
+<text x="159" y="59">
+Parameter</text>
+</g>
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="215" y="43"/>
+<text x="237" y="59">
+&quot;)&quot;</text>
+</g>
+<path d=" M 103 54 h 10"/>
+<path d=" M 205 54 h 10"/>
+</g>
+<path d=" M 47 75 v 35 a 12 12 0 0 0 12 12 m 281 0 h 0 a 12 12 0 0 0 12 -12 v -35"/>
+<g class="sequence">
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="59" y="111"/>
+<text x="81" y="127">
+&quot;(&quot;</text>
+</g>
+<g class="choice">
+<path d=" M 113 122 h 0 m 173 0 h 0"/>
+<g class="labeledbox">
+<rect height="66" width="173" x="113" y="75"/>
+<path d=" M 113 122 h 8 m 116 0 h 49"/>
+<text class="comment" x="199" y="98">
+Macro Rule: CommaTwo</text>
+<g class="sequence">
+<g class="sequence">
+<g class="nonterminal">
+<rect height="22" width="116" x="121" y="111"/>
+<text x="179" y="127">
+OptParameter</text>
+</g>
+</g>
+</g>
+</g>
+</g>
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="296" y="111"/>
+<text x="318" y="127">
+&quot;)&quot;</text>
+</g>
+<path d=" M 103 122 h 10"/>
+<path d=" M 286 122 h 10"/>
+</g>
+<path d=" M 47 151 v 0 a 12 12 0 0 0 12 12 m 98 0 h 183 m -88 0 l -5 -5 m 0 10 l 5 -5 m 88 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="59" y="152"/>
+<text x="81" y="168">
+&quot;(&quot;</text>
+</g>
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="113" y="152"/>
+<text x="135" y="168">
+&quot;)&quot;</text>
+</g>
+<path d=" M 103 163 h 10"/>
+</g>
+</g>
+<path d=" M 374 21 h 20 m -10 -10 v 20 m 10 -20 v 20"/>
+<path d=" M 25 21 h 10"/>
+<path d=" M 364 21 h 10"/>
+</g>
+</svg>

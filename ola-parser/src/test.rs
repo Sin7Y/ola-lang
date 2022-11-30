@@ -15,17 +15,17 @@ fn parse_function() {
     let src = r#"
 contract C{
     fn a() {
-        u64 a = 2ll;
+        u64 _a = 2ll;
         u64 b = 200;
         u32 c = 2u;
         u32 d = 2l;
         u32 e = 2;
         field e = 2;
-        /** 
+        /**
          * 12
-         *  
+         *
          * */
-        // 3242 
+        // 3242
 
         //
         u128 b = 2;  //q3e32
@@ -33,7 +33,6 @@ contract C{
         field e = 0x1u;
         field e = 0x1l;
         field e = 0x1ll;
-        9s sesa = 4;
     }
 }
     "#;
@@ -77,13 +76,13 @@ fn parser_struct() {
                         .to_string(),
                     notes: vec![]
                 },
-                Diagnostic { loc: File(0, 87, 88), level: Error, ty: ParserError, message: "unrecognised token '0', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
-                Diagnostic { loc: File(0, 110, 113), level: Error, ty: ParserError, message: "unrecognised token '256', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 87, 88), level: Error, ty: ParserError, message: "unrecognised token '0', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"const\", \"mut\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 110, 113), level: Error, ty: ParserError, message: "unrecognised token '256', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"const\", \"mut\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 151, 153), level: Error, ty: ParserError, message: r#"unrecognised token 'id', expected ";""#.to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 167, 168), level: Error, ty: ParserError, message: "unrecognised token '2', expected r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
-                Diagnostic { loc: File(0, 195, 196), level: Error, ty: ParserError, message: "unrecognised token '3', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
-                Diagnostic { loc: File(0, 228, 229), level: Error, ty: ParserError, message: "unrecognised token '4', expected r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },                
-                Diagnostic { loc: File(0, 255, 256), level: Error, ty: ParserError, message: "unrecognised token '3', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 195, 196), level: Error, ty: ParserError, message: "unrecognised token '3', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"const\", \"mut\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 228, 229), level: Error, ty: ParserError, message: "unrecognised token '4', expected r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 255, 256), level: Error, ty: ParserError, message: "unrecognised token '3', expected \"!=\", \"%\", \"%=\", \"&\", \"&&\", \"&=\", \"(\", \")\", \"*\", \"**\", \"*=\", \"+\", \"++\", \"+=\", \",\", \"-\", \"--\", \"-=\", \".\", \"/\", \"/=\", \":\", \";\", \"<\", \"<<\", \"<<=\", \"<=\", \"=\", \"==\", \">\", \">=\", \">>\", \">>=\", \"?\", \"[\", \"]\", \"^\", \"^=\", \"const\", \"mut\", \"|\", \"|=\", \"||\", \"}\", r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 268, 275), level: Error, ty: ParserError, message: r#"unrecognised token 'sesa_id', expected ")", ";""#.to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 296, 300), level: Error, ty: ParserError, message: "unrecognised token 'sesa', expected \"(\", \")\", \",\", \";\", \"=\", \"{\", \"}\"".to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 303, 304), level: Error, ty: ParserError, message: "unrecognised token 'b', expected \")\", \";\"".to_string(), notes: vec![] },

@@ -3,11 +3,12 @@ contract c {
         return a;
     }
 
-    f f
+// TODO support function type
+//    f b() -> (u256, u256) {
+//        return test(f(1), 2);
+//    }
 
-    fn test(u256 a, u256 b)
-
-    -> (u256 r_a, u256 r_b)
+    fn test(u256 a, u256 b)-> (u256 r_a, u256 r_b)
     {
         r_a = f(a + 7);
         r_b = b;

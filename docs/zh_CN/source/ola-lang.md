@@ -1,4 +1,4 @@
-# Olang语法
+# Ola Language
 
 ### Variables
 
@@ -11,8 +11,8 @@
 ```
 fn foo() {
     // declare and ine `_variable`
-    u32 mut _aBC123 = 2u;   // identifiers start with "_"
-    // u32 mut 0a = 2u;  define error, identifiers can't start with number
+    u32 _aBC123 = 2u;   // identifiers start with "_"
+    // u32 0a = 2u;  define error, identifiers can't start with number
 }
 ```
 
@@ -23,24 +23,9 @@ fn foo() {
 ```
 fn foo() {
     // declare and define `a`
-    field mut a = 2f;
+    field a = 2f;
     // redefine `a`
     a = 3f;
-}
-```
-
-#### 可变性
-变量默认不可变的，即一旦定义，后续不能更改变量的值。
-
-若需要定义可变变量，需使用 `mut` 关键字修饰变量。
-
-```
-fn foo() {
-    u32 a = 0u;    
-    a = 42u; // compile error: mutating an immutable variable
-
-    u32 mut b = 0u;
-    b = 42u; // ok
 }
 ```
 
@@ -52,7 +37,7 @@ fn foo() {
 
 ```
 fn foo() {
-    field mut a = 5;
+    field a = 5;
     {        
         field a = 25; // compile error: redeclared variable 'a'
     };    
@@ -79,8 +64,8 @@ fn bar() -> field {
 
 ```
 fn foo() -> u32 {
-    u32 mut a = 0;
-    for u32 i in 0..5 {
+    u32 a = 0;
+    for (u32 i = 0; i < 5; i++) {
         a = a + i;
     }
     // return i; <- not allowed
@@ -110,6 +95,7 @@ Olang提供基于field实现的上述的各种整数类型基础libs，便于开
 
 ```
 u32 a = 2u; // u8
+field b = 2;
 u64 b  = 0xffffl; // u64
 u256 d = 102411ll  // u256
 ```
@@ -185,7 +171,7 @@ field[3] b = a[2..4];   // initialize an array copying a slice from `a`
 
 ```
 fn main() -> bool {
-    (field[2], bool) mut v = ([1, 2], true);
+    (field[2], bool) v = ([1, 2], true);
     v.0 = [2, 3];
     return v.1;
 }
@@ -204,7 +190,7 @@ struct Person {
 }
 
 fn foo() {
-   Person mut person = Person {
+   Person person = Person {
         age: 18,
         id: 123456789,
     };
@@ -214,7 +200,20 @@ fn foo() {
 
 ##### Enumerations
 
-TODO
+The enumeration type is defined by the keyword `enum`.
+
+````
+contract Foo {
+    u256 const x = 56;
+    enum ActionChoices {
+        GoLeft,
+        GoRight,
+        GoStraight,
+        Sit
+    }
+    ActionChoices const choices = ActionChoices.GoLeft;
+}
+````
 
 ##### Map
 
@@ -230,7 +229,7 @@ TODO
 type balance = uint256;
 
 fn main() -> balance {
-    balance mut a = 32ll;
+    balance a = 32ll;
     a -= 2;
     return a;
 }
@@ -252,25 +251,26 @@ fn hash_size() -> field {
 }
 ```
 
-### 运算符(Operators)
+### Operators
 
 提供算术、逻辑、关系、位等运算符。除作用于数值的算术运算为模p，其他均为标准语义。
 
-#### 算术运算符(Arithmetic operators)
+#### Arithmetic operators
 
 所有算术运算符均为模p。
 
 算术运算符与赋值运算符`=`组合后，可以组成新的复合运算符 `+=`、`-=`、`*=`、`/=`、`%=`, 算术运算符优先级高于复合运算符。
 
-|运算符|示例|解释|
-| :---:| :---:| :---: |
-| + | a + b |算术加法模p |
-|-| a-b |算术减法模p |
-| * | a * b |算术乘法模p |
-| / | a / b |算术乘逆模p |
-|%| a%b |算术整数除法的模|
+| 运算符 |示例|解释|
+|:---:| :--:| :---: |
+|  +  | a + b |算术加法模p |
+|  -  | a-b |算术减法模p |
+|  *  | a * b |算术乘法模p |
+|  /  | a / b |算术乘逆模p |
+|  %  | a%b |算术整数除法的模|
+| **  | a**b |Power modulo p|
 
-#### 逻辑运算符(Logical operators)
+## Boolean operators
 
 支持与(`&&`)及或(`||`)，且后者优先级高。
 
@@ -278,8 +278,9 @@ fn hash_size() -> field {
 | :--- | :--- | :--- |
 | && | a && b | 布尔运算符与(AND) |
 | \|\| | a \|\| b | 布尔运算符或(OR) |
+| ! | ! a | Boolean operator NEGATION |
 
-#### 关系运算符(Relational operators)
+#### Relational operators
 
 关系运算符的返回结果为`bool`类型
 
@@ -292,7 +293,7 @@ fn hash_size() -> field {
 |<= | a <= b  |小于等于 |
 | >= | a >= b | 大于等于 | 
 
-#### 位运算符(Bitwise operators)
+#### Bitwise operators
 
 所有位运算符均为模p，包含位或与非及移位操作。
 
@@ -300,9 +301,10 @@ fn hash_size() -> field {
 | :--- | :--- | :--- |
 | & | a & b |位与|
 | \| | a \| b |位或|
-| ^ | a ^ b |位异或(254位)|
+| ^ | a ^ b |XOR 32 bits|
 |<<| a << 3 | 左移 |
-| >> | a >> 3 | 右移 | 
+| >> | a >> 3 | 右移 |
+| ~ | ~a | Complement 32  bits |
 
 位运算符与赋值运算符`=`组合后，可以组成新的复合运算符`&=`、`|=`、`^=`、`<<=`、`>>=`, 位运算符优先级高于复合运算符。
 
@@ -349,7 +351,7 @@ fn foo(field a) -> field {
 
 ```
 fn foo() -> u32 {
-    u32 mut res = 0u;
+    u32 res = 0u;
     for (u32 i = 0u; i <= 10u; i++) {
         res = res + i;
     }
@@ -363,7 +365,7 @@ fn foo() -> u32 {
 
 使用`fn`关键字声明，须明确提供函数的名称、特性、参数、返回类型。
 
-特性、参数及返回值可选，参数都是按值传递的。注意函数参数如果声明为`mut`类型，仍然是按值传递，只是在函数作用域内内可以改变此值。
+特性、参数及返回值可选，参数都是按值传递的。
 
 函数返回类型必须在`->` 之后指定。
 
@@ -437,17 +439,3 @@ fn sum(u32 a, u32 b) -> u32 {
     return a + b;  
 }
 ```
-
-### 日志(Log)
-
-Olang 支持在 OlaVM 执行期间记录对应的执行日志。
-
-采用 `log` 关键字记录，第一个参数是格式字符串，其中每个 `{}` 占位符都替换为剩余参数中的相应值,占位符的数量必须等于参数的数量。
-
-示例如下：
-```
-fn foo(u32 a, field b) {
-    log("a is {}, b is {}", a, b);
-}
-```
-默认日志在编译期被删除。可使用 `--debug` 编译选项打开便于调试程序。
