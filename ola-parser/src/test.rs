@@ -287,35 +287,18 @@ fn test_ext_source() {
             Err(_) => Err(format!("Thread timeout-ed after {d:?}")),
         }
     }
-
     let source_delimiter = regex::Regex::new(r"====.*====").unwrap();
-    let error_matcher = regex::Regex::new(r"// ----\r?\n// \w+( \d+)?:").unwrap();
 
-    let semantic_tests = WalkDir::new(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("testdata/solidity/test/libsolidity/semanticTests"),
-    )
-    .into_iter()
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap()
-    .into_iter()
-    .map(|entry| (false, entry));
-
-    let syntax_tests = WalkDir::new(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("testdata/solidity/test/libsolidity/syntaxTests"),
-    )
-    .into_iter()
-    .collect::<Result<Vec<_>, _>>()
-    .unwrap()
-    .into_iter()
-    .map(|entry| (true, entry));
+    let semantic_tests =
+        WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("testdata/semanticTests"))
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap()
+            .into_iter();
 
     let errors = semantic_tests
-        .into_iter()
-        .chain(syntax_tests)
-        .map::<Result<_, String>, _>(|(syntax_test, entry)| {
-            if entry.file_name().to_string_lossy().ends_with(".sol") {
+        .map::<Result<_, String>, _>(|entry| {
+            if entry.file_name().to_string_lossy().ends_with(".ola") {
                 let source = match fs::read_to_string(entry.path()) {
                     Ok(source) => source,
                     Err(err) if matches!(err.kind(), std::io::ErrorKind::InvalidData) => {
@@ -323,19 +306,10 @@ fn test_ext_source() {
                     }
                     Err(err) => return Err(err.to_string()),
                 };
-
-                let expect_error = syntax_test && error_matcher.is_match(&source);
-
                 Ok(source_delimiter
                     .split(&source)
                     .filter(|source_part| !source_part.is_empty())
-                    .map(|part| {
-                        (
-                            entry.path().to_string_lossy().to_string(),
-                            expect_error,
-                            part.to_string(),
-                        )
-                    })
+                    .map(|part| (entry.path().to_string_lossy().to_string(), part.to_string()))
                     .collect::<Vec<_>>())
             } else {
                 Ok(vec![])
@@ -345,7 +319,7 @@ fn test_ext_source() {
         .unwrap()
         .into_iter()
         .flatten()
-        .filter_map(|(path, expect_error, source_part)| {
+        .filter_map(|(path, source_part)| {
             let result = match timeout_after(Duration::from_secs(5), move || {
                 crate::parse(&source_part, 0)
             }) {
@@ -353,20 +327,17 @@ fn test_ext_source() {
                 Err(err) => return Some(format!("{:?}: \n\t{}", path, err)),
             };
 
-            if let (Err(err), false) = (
-                result.map_err(|diags| {
-                    format!(
-                        "{:?}:\n\t{}",
-                        path,
-                        diags
-                            .iter()
-                            .map(|diag| format!("{diag:?}"))
-                            .collect::<Vec<_>>()
-                            .join("\n\t")
-                    )
-                }),
-                expect_error,
-            ) {
+            if let Err(err) = result.map_err(|diags| {
+                format!(
+                    "{:?}:\n\t{}",
+                    path,
+                    diags
+                        .iter()
+                        .map(|diag| format!("{diag:?}"))
+                        .collect::<Vec<_>>()
+                        .join("\n\t")
+                )
+            }) {
                 return Some(err);
             }
 
