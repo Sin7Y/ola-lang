@@ -33,9 +33,9 @@ Contents
 
 .. toctree::
    :maxdepth: 3
-   :caption: Ola Language
+   :caption: Ola Syntax
 
-   ola-lang
+   ola-syntax
 
 .. toctree::
    :maxdepth: 3
