@@ -4,7 +4,7 @@
 
 ## 编译流程
 
-```mermaid
+```{mermaid}
 graph TB
 
 Ola-program -- Lexer ---> Tokens 
@@ -228,7 +228,7 @@ pub struct ControlFlowGraph {
 考虑如下两种方案，分别为两级IR及一级IR 
 
 ### LIR为通用化的LLVM IR
-```mermaid
+```{mermaid}
 graph TB
 
 opt-HIR -- CodeGen --->  LLVM-IR
@@ -236,7 +236,7 @@ LLVM-IR -- CodeGen --->  Ola-ByteCode
 ```
 
 ### 一级IR直接生成Ola-ByteCode
-```mermaid
+```{mermaid}
 graph TB
 
 opt-IR -- CodeGen --->  Ola-ByteCode
