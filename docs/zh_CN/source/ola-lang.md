@@ -270,7 +270,7 @@ fn hash_size() -> field {
 |  %  | a%b |算术整数除法的模|
 | **  | a**b |Power modulo p|
 
-## Boolean operators
+#### Boolean operators
 
 支持与(`&&`)及或(`||`)，且后者优先级高。
 
