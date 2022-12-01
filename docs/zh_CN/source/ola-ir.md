@@ -1,4 +1,4 @@
-# IR设计
+# IR Design
 
 整体原则：保持 Olang 高层语言的操作与类型抽象，同时方便lower映射到 OlaVM 指令集。
 

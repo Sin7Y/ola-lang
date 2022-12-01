@@ -1,4 +1,4 @@
-# 函数调用约定
+# Procedure Call Conventions
 
 `fp` 寄存器加载程序后初始化指向frame堆栈的首地址。
 

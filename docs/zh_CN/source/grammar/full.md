@@ -1,4 +1,4 @@
-# Language Grammar
+# Ola Grammar
 
 ## Rule SourceUnit
 

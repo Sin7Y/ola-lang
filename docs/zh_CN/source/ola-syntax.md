@@ -1,4 +1,4 @@
-# Ola Language
+# Ola Syntax
 
 ### Variables
 

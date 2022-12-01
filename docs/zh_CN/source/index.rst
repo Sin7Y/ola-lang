@@ -35,12 +35,14 @@ Contents
    :maxdepth: 3
    :caption: Ola Syntax
 
+   grammar/full
    ola-syntax
 
 .. toctree::
    :maxdepth: 3
    :caption: Compiler
 
+   ola-abi
    ola-ir
 
 .. toctree::
