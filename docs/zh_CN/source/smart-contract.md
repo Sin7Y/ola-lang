@@ -3,9 +3,8 @@
 Ola contracts allow users to write complex business logic that will be deployed to ola's l2 network, 
 and cross-contract calls can be written between different contracts just like solidity
 
-## Examples 
+## Examples
 
-### 
 The following example shows a recursive and non-recursive ola smart contract implementation of Fibonacci numbers
 
 ````javascript
@@ -73,9 +72,6 @@ contract Person {
 
 ````
 
-
-
-###
 
 ## Multiple files
 
