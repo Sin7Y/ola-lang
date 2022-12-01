@@ -1,0 +1,28 @@
+import "./RectangularCalculator";
+import "./SquareCalculator";
+
+contract Calculator {
+
+    fn rectangle(u32 w, u32 h) -> (u32 s, u32 p) {
+        s = w * h;
+        p = 2 * (w + h);
+        return (s, p);
+    }
+
+    fn rectangle1(u32 w, u32 h) -> (u32 s, u32 p) {
+        s = w * h;
+        p = 2 * (w + h);
+    }
+
+    fn square(u32 w) -> (u32 s, u32 p) {
+        s = w * w;
+        p = 4 * w;
+        return (s, p);
+    }
+
+   fn sum(u32 w, u32 h) -> (u32 s, u32 p) {
+        (u32 rectangle_s, u32 rectangle_p) = rectangle(w, h);
+        (u32 square_s, u32 square_p) = square(w);
+        return (rectangle_s + square_s, rectangle_p + square_p);
+    }
+}
