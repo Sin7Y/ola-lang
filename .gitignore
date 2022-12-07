@@ -21,3 +21,5 @@ Cargo.lock
 
 # ignore docs auto-build files
 /docs/*/build/
+
+/.idea/

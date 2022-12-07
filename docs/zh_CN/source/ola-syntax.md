@@ -181,7 +181,7 @@ fn main() -> bool {
 
 多种数据类型的组合，构成一个新的自定义组合类型。
 
-stuct成员通过`.` (`struct_name.struct_filed`)访问。
+struct成员通过`.` (`struct_name.struct_field`)访问。
 
 ```
 struct Person {
