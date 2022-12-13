@@ -1,0 +1,217 @@
+// SPDX-License-Identifier: Apache-2.0
+
+use num_bigint::BigInt;
+use num_traits::Zero;
+use ola_parser::{program::{self, CodeLocation, Statement}, };
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::convert::TryInto;
+use tiny_keccak::{Hasher, Keccak};
+
+use super::{
+    ast,
+    diagnostics::Diagnostics,
+    expression::{compatible_mutability, match_constructor_to_args, ExprContext},
+    functions, statements,
+    symtable::Symtable,
+    variables
+};
+#[cfg(feature = "llvm")]
+use crate::emit;
+use crate::sema::unused_variable::emit_warning_local_variable;
+
+impl ast::Contract {
+    /// Create a new contract, abstract contract, interface or library
+    pub fn new(name: &str,  loc: program::Loc) -> Self {
+        ast::Contract {
+            loc,
+            name: name.to_owned(),
+            functions: Vec::new(),
+            all_functions: BTreeMap::new(),
+            variables: Vec::new(),
+            creates: Vec::new(),
+            initializer: None,
+            cfg: Vec::new(),
+            code: Vec::new(),
+            dispatch_no: 0,
+        }
+    }
+
+    /// Generate contract code for this contract
+    #[cfg(feature = "llvm")]
+    pub fn emit<'a>(
+        &'a self,
+        ns: &'a ast::Namespace,
+        context: &'a inkwell::context::Context,
+        filename: &'a str,
+        opt: inkwell::OptimizationLevel,
+        math_overflow_check: bool,
+        generate_debug_info: bool,
+        log_api_return_codes: bool,
+    ) -> emit::binary::Binary {
+        emit::binary::Binary::build(
+            context,
+            self,
+            ns,
+            filename,
+            opt,
+            math_overflow_check,
+            generate_debug_info,
+            log_api_return_codes,
+        )
+    }
+
+    /// Selector for this contract. This is used by Solana contract bundle
+    pub fn selector(&self) -> u32 {
+        let mut hasher = Keccak::v256();
+        let mut hash = [0u8; 32];
+        hasher.update(self.name.as_bytes());
+        hasher.finalize(&mut hash);
+
+        u32::from_le_bytes(hash[0..4].try_into().unwrap())
+    }
+}
+
+/// Resolve the following contract
+pub fn resolve(
+    contracts: &[(usize, &program::ContractDefinition)],
+    file_no: usize,
+    ns: &mut ast::Namespace,
+) {
+
+    // we need to resolve declarations first, so we call functions/constructors of
+    // contracts before they are declared
+    let mut delayed: ResolveLater = Default::default();
+
+    for (contract_no, def) in contracts {
+        resolve_declarations(def, file_no, *contract_no, ns, &mut delayed);
+    }
+
+    // Now we can resolve the initializers
+    variables::resolve_initializers(&delayed.initializers, file_no, ns);
+
+    // Now we can resolve the bodies
+     resolve_bodies(delayed.function_bodies, file_no, ns);
+}
+
+
+impl ast::Namespace {
+
+}
+
+
+/// Function body which should be resolved.
+/// List of function_no, contract_no, and function parse tree
+struct DelayedResolveFunction<'a> {
+    function_no: usize,
+    contract_no: usize,
+    function: &'a program::FunctionDefinition,
+}
+
+#[derive(Default)]
+
+/// Function bodies and state variable initializers can only be resolved once
+/// all function prototypes, bases contracts and state variables are resolved.
+struct ResolveLater<'a> {
+    function_bodies: Vec<DelayedResolveFunction<'a>>,
+    initializers: Vec<variables::DelayedResolveInitializer<'a>>,
+}
+
+/// Resolve functions declarations, constructor declarations, and contract variables
+/// This returns a list of function bodies to resolve
+fn resolve_declarations<'a>(
+    def: &'a program::ContractDefinition,
+    file_no: usize,
+    contract_no: usize,
+    ns: &mut ast::Namespace,
+    delayed: &mut ResolveLater<'a>,
+) {
+    ns.diagnostics.push(ast::Diagnostic::debug(
+        def.loc,
+        format!("found {} ", def.name.as_ref().unwrap().name),
+    ));
+
+    let mut function_no_bodies = Vec::new();
+
+    // resolve state variables. We may need a constant to resolve the array
+    // dimension of a function argument.
+    delayed.initializers.extend(variables::contract_variables(
+        def,
+        file_no,
+        contract_no,
+        ns,
+    ));
+
+    // resolve function signatures
+    let mut doc_comment_start = def.loc.start();
+
+    for part in &def.parts {
+        if let program::ContractPart::FunctionDefinition(ref f) = part {
+
+            if let Some(function_no) =
+                functions::contract_function(def, f,  file_no, contract_no, ns)
+            {
+                if f.body.is_some() {
+                    delayed.function_bodies.push(DelayedResolveFunction {
+                        contract_no,
+                        function_no,
+                        function: f.as_ref(),
+                    });
+                } else {
+                    function_no_bodies.push(function_no);
+                }
+            }
+
+            if let Some(Statement::Block { loc, .. }) = &f.body {
+                doc_comment_start = loc.end();
+                continue;
+            }
+        }
+
+        doc_comment_start = part.loc().end();
+    }
+
+        if !function_no_bodies.is_empty() {
+            function_no_bodies.into_iter()
+                .map(|function_no| ast::Note {
+                    loc: ns.functions[function_no].loc,
+                    message: format!(
+                        "location of function '{}' with no body",
+                        ns.functions[function_no].name
+                    ),
+                })
+                .collect::<Vec<ast::Note>>();
+
+
+    }
+}
+
+
+/// Resolve contract functions bodies
+fn resolve_bodies(
+    bodies: Vec<DelayedResolveFunction>,
+    file_no: usize,
+    ns: &mut ast::Namespace,
+) -> bool {
+    let mut broken = false;
+
+    for DelayedResolveFunction {
+        contract_no,
+        function_no,
+        function,
+    } in bodies
+    {
+        if statements::resolve_function_body(function, file_no, Some(contract_no), function_no, ns)
+            .is_err()
+        {
+            broken = true;
+        } else if !ns.diagnostics.any_errors() {
+            for variable in ns.functions[function_no].symtable.vars.values() {
+                if let Some(warning) = emit_warning_local_variable(variable) {
+                    ns.diagnostics.push(warning);
+                }
+            }
+        }
+    }
+
+    broken
+}

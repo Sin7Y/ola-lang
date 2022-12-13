@@ -2,13 +2,13 @@
 
 extern crate core;
 
-pub mod abi;
+// pub mod abi;
 pub mod codegen;
 #[cfg(feature = "llvm")]
 pub mod emit;
 pub mod file_resolver;
-#[cfg(feature = "llvm")]
-mod linker;
+
+
 pub mod standard_json;
 
 // In Sema, we use result unit for returning early
@@ -19,90 +19,10 @@ pub mod sema;
 
 use file_resolver::FileResolver;
 use sema::diagnostics;
-use solang_parser::pt;
+use ola_parser::program;
 use std::{ffi::OsStr, fmt};
 
-/// The target chain you want to compile Solidity for.
-#[derive(Clone, Copy)]
-pub enum Target {
-    /// Solana, see <https://solana.com/>
-    Solana,
-    /// Parity Substrate, see <https://substrate.io/>
-    Substrate {
-        address_length: usize,
-        value_length: usize,
-    },
-    /// Ethereum EVM, see <https://ethereum.org/en/developers/docs/evm/>
-    EVM,
-}
 
-impl fmt::Display for Target {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Target::Solana => write!(f, "solana"),
-            Target::Substrate { .. } => write!(f, "substrate"),
-            Target::EVM => write!(f, "evm"),
-        }
-    }
-}
-
-impl PartialEq for Target {
-    // Equality should check if it the same chain, not compare parameters. This
-    // is needed for builtins for example
-    fn eq(&self, other: &Self) -> bool {
-        match self {
-            Target::Solana => matches!(other, Target::Solana),
-            Target::Substrate { .. } => matches!(other, Target::Substrate { .. }),
-            Target::EVM => matches!(other, Target::EVM),
-        }
-    }
-}
-
-impl Target {
-    /// Short-hand for checking for Substrate target
-    pub fn is_substrate(&self) -> bool {
-        matches!(self, Target::Substrate { .. })
-    }
-
-    /// Create the target Substrate with default parameters
-    pub const fn default_substrate() -> Self {
-        Target::Substrate {
-            address_length: 32,
-            value_length: 16,
-        }
-    }
-
-    /// Creates a target from a string
-    pub fn from(name: &str) -> Option<Self> {
-        match name {
-            "solana" => Some(Target::Solana),
-            "substrate" => Some(Target::default_substrate()),
-            "evm" => Some(Target::EVM),
-            _ => None,
-        }
-    }
-
-    /// File extension
-    pub fn file_extension(&self) -> &'static str {
-        match self {
-            // Solana uses ELF dynamic shared object (BPF)
-            Target::Solana => "so",
-            // Everything else generates webassembly
-            _ => "wasm",
-        }
-    }
-
-    /// Size of a pointer in bits
-    pub fn ptr_size(&self) -> u16 {
-        if *self == Target::Solana {
-            // Solana is BPF, which is 64 bit
-            64
-        } else {
-            // All others are WebAssembly in 32 bit mode
-            32
-        }
-    }
-}
 
 /// Compile a solidity file to list of wasm files and their ABIs. The filename is only used for error messages;
 /// the contents of the file is provided in the `src` argument.
@@ -193,7 +113,7 @@ pub fn parse_and_resolve(
                 ty: sema::ast::ErrorType::ParserError,
                 level: sema::ast::Level::Error,
                 message,
-                loc: pt::Loc::CommandLine,
+                loc: program::Loc::CommandLine,
                 notes: Vec::new(),
             });
         }
@@ -206,5 +126,3 @@ pub fn parse_and_resolve(
 
     ns
 }
-
-fn main() {}

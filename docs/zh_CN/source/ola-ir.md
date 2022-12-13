@@ -207,7 +207,7 @@ pub struct ControlFlowGraph {
     pub blocks: Vec<BasicBlock>,
     pub nonpayable: bool,
     pub public: bool,
-    pub ty: pt::FunctionTy,
+    pub ty: program::FunctionTy,
     pub selector: Vec<u8>,
     current: usize,
     pub array_lengths_temps: ArrayLengthVars,

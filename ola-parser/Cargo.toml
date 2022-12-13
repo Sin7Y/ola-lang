@@ -13,9 +13,15 @@ lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 
 [build-dependencies]
 lalrpop = "0.19.8"
+serde = { version = "1.0.145", features = ["derive"], optional = true }
 
 
 [dev-dependencies]
 walkdir = "2.3.2"
 pretty_assertions = "1.2"
 regex = "1.7.0"
+
+
+[features]
+default = []
+program-serde = ["serde"]
