@@ -20,7 +20,6 @@ pub struct Variable {
     pub read: bool,
     pub usage_type: VariableUsage,
     pub initializer: VariableInitializer,
-    pub storage_location: Option<program::StorageLocation>,
 }
 
 #[derive(Clone, Debug)]
@@ -38,30 +37,7 @@ impl VariableInitializer {
     }
 }
 
-impl Variable {
-    pub fn is_reference(&self) -> bool {
-        // If the variable has the memory or storage keyword, it can be a reference to another variable.
-        // In this case, an assigment may change the value of the variable it is referencing.
-        if matches!(
-            self.storage_location,
-            Some(program::StorageLocation::Memory(_)) | Some(program::StorageLocation::Storage(_))
-        ) {
-            if let VariableInitializer::Solidity(Some(expr)) = &self.initializer {
-                // If the initializer is an array allocation, a constructor or a struct literal,
-                // the variable is not a reference to another.
-                return !matches!(
-                    **expr,
-                    Expression::AllocDynamicBytes(..)
-                        | Expression::ArrayLiteral(..)
-                        | Expression::Constructor { .. }
-                        | Expression::StructLiteral(..)
-                );
-            }
-        }
-
-        false
-    }
-}
+impl Variable {}
 
 #[derive(Clone, Debug)]
 pub enum VariableUsage {
@@ -106,7 +82,6 @@ impl Symtable {
         ns: &mut Namespace,
         initializer: VariableInitializer,
         usage_type: VariableUsage,
-        storage_location: Option<program::StorageLocation>,
     ) -> Option<usize> {
         let pos = ns.next_id;
         ns.next_id += 1;
@@ -122,7 +97,6 @@ impl Symtable {
                 assigned: false,
                 usage_type,
                 read: false,
-                storage_location,
             },
         );
 
@@ -155,7 +129,6 @@ impl Symtable {
         ns: &mut Namespace,
         initializer: VariableInitializer,
         usage_type: VariableUsage,
-        storage_location: Option<program::StorageLocation>,
     ) -> Option<usize> {
         if let Some(var) = self.find(&id.name) {
             ns.diagnostics.push(Diagnostic {
@@ -171,7 +144,7 @@ impl Symtable {
             return None;
         }
 
-        self.add(id, ty, ns, initializer, usage_type, storage_location)
+        self.add(id, ty, ns, initializer, usage_type)
     }
 
     pub fn find(&self, name: &str) -> Option<&Variable> {

@@ -3,15 +3,12 @@
 use crate::sema::ast::{Builtin, Diagnostic,  Expression, Namespace};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
-use ola_parser::program::{ContractTy, Loc};
+use ola_parser::program::Loc;
 
 /// Mark variables as assigned, either in the symbol table (for local variables) or in the
 /// Namespace (for storage variables)
 pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::StorageVariable(_, _, contract_no, offset) => {
-            ns.contracts[*contract_no].variables[*offset].assigned = true;
-        }
 
         Expression::Variable(_, _, offset) => {
             let var = symtable.vars.get_mut(offset).unwrap();
@@ -27,14 +24,6 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
             used_variable(ns, index, symtable);
         }
 
-        Expression::StorageLoad(_, _, expr)
-        | Expression::Load(_, _, expr)
-        | Expression::Trunc { expr, .. }
-        | Expression::Cast { expr, .. }
-        | Expression::BytesCast { expr, .. } => {
-            assigned_variable(ns, expr, symtable);
-        }
-
         _ => {}
     }
 }
@@ -45,9 +34,7 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
 /// assign expressions and array subscripts.
 pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::StorageVariable(_, _, contract_no, offset) => {
-            ns.contracts[*contract_no].variables[*offset].read = true;
-        }
+
 
         Expression::Variable(_, _, offset) => {
             let var = symtable.vars.get_mut(offset).unwrap();
@@ -71,12 +58,6 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, index, symtable);
         }
 
-        Expression::Builtin(_, _, Builtin::ArrayLength, args) => {
-            //We should not eliminate an array from the code when 'length' is called
-            //So the variable is also assigned
-            assigned_variable(ns, &args[0], symtable);
-            used_variable(ns, &args[0], symtable);
-        }
         Expression::StorageArrayLength {
             loc: _,
             ty: _,
@@ -89,17 +70,8 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, array, symtable);
         }
 
-        Expression::StorageLoad(_, _, expr)
-        | Expression::Load(_, _, expr)
-        | Expression::SignExt { expr, .. }
-        | Expression::ZeroExt { expr, .. }
-        | Expression::Trunc { expr, .. }
-        | Expression::Cast { expr, .. }
-        | Expression::BytesCast { expr, .. } => {
-            used_variable(ns, expr, symtable);
-        }
 
-        Expression::InternalFunctionCall { .. } | Expression::ExternalFunctionCall { .. } => {
+        Expression::FunctionCall { .. }  => {
             check_function_call(ns, exp, symtable);
         }
 
@@ -111,11 +83,8 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
 /// usage of the latter as well
 pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::Load(..) | Expression::StorageLoad(..) | Expression::Variable(..) => {
-            used_variable(ns, exp, symtable);
-        }
 
-        Expression::InternalFunctionCall {
+        Expression::FunctionCall {
             loc: _,
             returns: _,
             function,
@@ -125,94 +94,12 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
                 used_variable(ns, arg, symtable);
             }
             check_function_call(ns, function, symtable);
-        }
-
-        Expression::ExternalFunctionCall {
-            loc: _,
-            returns: _,
-            function,
-            args,
-            call_args,
-        } => {
-            for arg in args {
-                used_variable(ns, arg, symtable);
-            }
-            check_call_args(ns, call_args, symtable);
-            check_function_call(ns, function, symtable);
-        }
-
-        Expression::Constructor {
-            loc: _,
-            contract_no: _,
-            constructor_no: _,
-            args,
-            call_args,
-        } => {
-            for arg in args {
-                used_variable(ns, arg, symtable);
-            }
-            check_call_args(ns, call_args, symtable);
-        }
-
-        Expression::ExternalFunctionCallRaw {
-            loc: _,
-            ty: _,
-            address,
-            args,
-            call_args,
-        } => {
-            used_variable(ns, args, symtable);
-            used_variable(ns, address, symtable);
-            check_call_args(ns, call_args, symtable);
-        }
-
-        Expression::ExternalFunction { address, .. } => {
-            used_variable(ns, address, symtable);
-        }
-
-        Expression::Builtin(_, _, expr_type, args) => match expr_type {
-            Builtin::ArrayPush => {
-                assigned_variable(ns, &args[0], symtable);
-                if args.len() > 1 {
-                    used_variable(ns, &args[1], symtable);
-                }
-            }
-
-            _ => {
-                for arg in args {
-                    used_variable(ns, arg, symtable);
-                }
-            }
-        },
-
-        Expression::FormatString(_, args) => {
-            for (_, expr) in args {
-                used_variable(ns, expr, symtable);
-            }
         }
 
         _ => {}
     }
 }
 
-/// Mark function call arguments as used
-fn check_call_args(ns: &mut Namespace, call_args: &CallArgs, symtable: &mut Symtable) {
-    if let Some(gas) = &call_args.gas {
-        used_variable(ns, gas.as_ref(), symtable);
-    }
-    if let Some(salt) = &call_args.salt {
-        used_variable(ns, salt.as_ref(), symtable);
-    }
-    if let Some(value) = &call_args.value {
-        used_variable(ns, value.as_ref(), symtable);
-    }
-    if let Some(space) = &call_args.space {
-        used_variable(ns, space.as_ref(), symtable);
-    }
-    if let Some(accounts) = &call_args.accounts {
-        used_variable(ns, accounts.as_ref(), symtable);
-    }
-}
 
 /// Marks as used variables that appear in an expression with right and left hand side.
 pub fn check_var_usage_expression(
@@ -264,7 +151,7 @@ pub fn emit_warning_local_variable(variable: &symtable::Variable) -> Option<Diag
                         variable.id.name
                     ),
                 ));
-            } else if assigned && !variable.read && !variable.is_reference() {
+            } else if assigned && !variable.read  {
                 // Values assigned to variables that reference others change the value of its reference
                 // No warning needed in this case
                 return Some(Diagnostic::warning(
@@ -399,80 +286,3 @@ pub fn check_unused_namespace_variables(ns: &mut Namespace) {
     }
 }
 
-/// Find shadowing events
-fn shadowing_events(
-    event_no: usize,
-    event: &EventDecl,
-    shadows: &mut Vec<usize>,
-    events: &[(Loc, usize)],
-    ns: &Namespace,
-) {
-    for e in events {
-        let other_no = e.1;
-        if event_no != other_no && ns.events[other_no].signature == event.signature {
-            shadows.push(other_no);
-        }
-    }
-}
-
-/// Check for unused events
-pub fn check_unused_events(ns: &mut Namespace) {
-    // first we need to calculate which event shadows which
-    // an event can be declare on the global scope and re-declared in a contract,
-    // and then again redeclared in as base contract. In this case all of the events
-    // should be marked as used
-    for event_no in 0..ns.events.len() {
-        let event = &ns.events[event_no];
-
-        if !event.used {
-            continue;
-        }
-
-        let mut shadows = Vec::new();
-
-        if let Some(contract_no) = event.contract {
-            // is there a global event with the same name
-            if let Some(ast::Symbol::Event(events)) =
-                ns.variable_symbols
-                    .get(&(event.loc.file_no(), None, event.name.to_owned()))
-            {
-                shadowing_events(event_no, event, &mut shadows, events, ns);
-            }
-
-            // is there a base contract with the same name
-            for base_no in ns.contract_bases(contract_no) {
-                let base_file_no = ns.contracts[base_no].loc.file_no();
-
-                if let Some(ast::Symbol::Event(events)) =
-                    ns.variable_symbols
-                        .get(&(base_file_no, Some(base_no), event.name.to_owned()))
-                {
-                    shadowing_events(event_no, event, &mut shadows, events, ns);
-                }
-            }
-        }
-
-        for shadow in shadows {
-            ns.events[shadow].used = true;
-        }
-    }
-
-    for event in &ns.events {
-        if !event.used {
-            if let Some(contract_no) = event.contract {
-                // don't complain about events in interfaces or abstract contracts
-                if matches!(
-                    ns.contracts[contract_no].ty,
-                    ContractTy::Interface(_) | ContractTy::Abstract(_)
-                ) {
-                    continue;
-                }
-            }
-
-            ns.diagnostics.push(Diagnostic::warning(
-                event.loc,
-                format!("event '{}' has never been emitted", event.name),
-            ));
-        }
-    }
-}

@@ -262,19 +262,6 @@ pub fn resolve_namespace_call(
 
     for arg in args_iter {
         let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
-        let ty = expr.ty();
-
-        if ty.is_mapping() {
-            diagnostics.push(Diagnostic::error(
-                arg.loc(),
-                "mapping type not permitted".to_string(),
-            ));
-
-            return Err(());
-        }
-
-        expr = expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics)?;
-
 
         resolved_args.push(expr);
     }

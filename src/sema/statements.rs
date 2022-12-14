@@ -215,7 +215,6 @@ pub fn resolve_function_body(
                 ns,
                 VariableInitializer::Solidity(None),
                 VariableUsage::ReturnVariable,
-                None,
             ) {
                 ns.check_shadowing(file_no, contract_no, name);
                 symtable.returns.push(pos);

@@ -115,7 +115,6 @@ pub fn variable_decl<'a>(
                 function_no: None,
                 constant,
                 lvalue: false,
-                yul_function: false,
             };
             match expression(
                 initializer,
@@ -163,6 +162,7 @@ pub fn variable_decl<'a>(
         constant,
         assigned: def.initializer.is_some(),
         initializer,
+        read: true
     };
 
     let var_no = if let Some(contract_no) = contract_no {
@@ -200,68 +200,6 @@ pub fn variable_decl<'a>(
     ret
 }
 
-/// For accessor functions, create the parameter list and the return expression
-fn collect_parameters<'a>(
-    ty: &'a Type,
-    symtable: &mut Symtable,
-    params: &mut Vec<Parameter>,
-    expr: &mut Expression,
-    ns: &mut Namespace,
-) -> &'a Type {
-    match ty {
-        Type::Array(elem_ty, dims) => {
-            let mut ty = Type::StorageRef(false, Box::new(ty.clone()));
-            for _ in 0..dims.len() {
-                let map = (*expr).clone();
-
-                let id = program::Identifier {
-                    loc: program::Loc::Implicit,
-                    name: "".to_owned(),
-                };
-                let arg_ty = Type::Uint(256);
-
-                let var_no = symtable
-                    .add(
-                        &id,
-                        arg_ty.clone(),
-                        ns,
-                        VariableInitializer::Solidity(None),
-                        VariableUsage::Parameter,
-                        None,
-                    )
-                    .unwrap();
-
-                symtable.arguments.push(Some(var_no));
-
-                *expr = Expression::Subscript(
-                    program::Loc::Implicit,
-                    ty.storage_array_elem(),
-                    ty.clone(),
-                    Box::new(map),
-                    Box::new(Expression::Variable(
-                        program::Loc::Implicit,
-                        Type::Uint(256),
-                        var_no,
-                    )),
-                );
-
-                ty = ty.storage_array_elem();
-
-                params.push(Parameter {
-                    id: Some(id),
-                    loc: program::Loc::Implicit,
-                    ty: arg_ty,
-                    ty_loc: None,
-                    recursive: false,
-                });
-            }
-
-            collect_parameters(elem_ty, symtable, params, expr, ns)
-        }
-        _ => ty,
-    }
-}
-
 pub fn resolve_initializers(
     initializers: &[DelayedResolveInitializer],
     file_no: usize,
@@ -286,7 +224,6 @@ pub fn resolve_initializers(
             function_no: None,
             constant: false,
             lvalue: false,
-            yul_function: false,
         };
 
         if let Ok(res) = expression(

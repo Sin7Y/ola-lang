@@ -1,6 +1,6 @@
 # Quick start
 
-## installation
+## Installation
 
 TODO
 

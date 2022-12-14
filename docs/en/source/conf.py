@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'O-lang'
+project = u'Olang'
 copyright = u'2022, Sin7Y'
 author = u'Sin7Y'
 
@@ -110,7 +110,7 @@ html_static_path = ['_staticstatic']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'O-langdoc'
+htmlhelp_basename = 'Olangdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -137,7 +137,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'O-lang.tex', u'O-lang Documentation',
+    (master_doc, 'Olang.tex', u'Olang Documentation',
      u'Sin7Y', 'manual'),
 ]
 
@@ -147,7 +147,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'o-lang', u'O-lang Documentation',
+    (master_doc, 'Olang', u'Olang Documentation',
      [author], 1)
 ]
 
@@ -158,8 +158,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'O-lang', u'O-lang Documentation',
-     author, 'O-lang', 'One line description of project.',
+    (master_doc, 'Olang', u'Olang Documentation',
+     author, 'Olang', 'One line description of project.',
      'Miscellaneous'),
 ]
 

@@ -1,4 +1,4 @@
-# Ola Syntax
+# Olang Syntax
 
 ### Variables
 

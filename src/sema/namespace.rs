@@ -12,12 +12,11 @@ use super::{
     symtable::Symtable,
     ArrayDimension,
 };
-use crate::Target;
 use num_bigint::BigInt;
 use num_traits::Signed;
 use num_traits::Zero;
 use ola_parser::{
-    pt,
+    program,
     program::{CodeLocation, OptionalCodeLocation},
 };
 use std::collections::HashMap;

@@ -30,7 +30,7 @@ pub enum Type {
     /// The usize is an index into enums in the namespace
     Enum(usize),
     /// The usize is an index into contracts in the namespace
-    Struct,
+    Struct(usize),
     /// The usize is an index into contracts in the namespace
     Contract(usize),
     Function {
@@ -39,7 +39,7 @@ pub enum Type {
     },
 
     /// User type definitions, e.g. `type Foo is int128;`. The usize
-    /// is an index into user_types in the namespace.
+    /// is an index into user_tyxzzzzzpes in the namespace.
     UserType(usize),
 
 
@@ -312,6 +312,7 @@ pub struct Variable {
     pub constant: bool,
     pub initializer: Option<Expression>,
     pub assigned: bool,
+    pub read: bool,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -455,19 +456,14 @@ pub enum Expression {
 
     Or(program::Loc, Box<Expression>, Box<Expression>),
     And(program::Loc, Box<Expression>, Box<Expression>),
-    InternalFunction {
+    Function {
         loc: program::Loc,
         ty: Type,
         function_no: usize,
         signature: Option<String>,
     },
-    ExternalFunction {
-        loc: program::Loc,
-        ty: Type,
-        address: Box<Expression>,
-        function_no: usize,
-    },
-    InternalFunctionCall {
+
+    FunctionCall {
         loc: program::Loc,
         returns: Vec<Type>,
         function: Box<Expression>,
@@ -535,15 +531,12 @@ impl Recurse for Expression {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
-                Expression::InternalFunctionCall { function, args, .. } => {
+                Expression::FunctionCall { function, args, .. } => {
                     function.recurse(cx, f);
 
                     for e in args {
                         e.recurse(cx, f);
                     }
-                }
-                Expression::ExternalFunction { address, .. } => {
-                    address.recurse(cx, f);
                 }
                 Expression::Builtin(_, _, _, exprs) | Expression::List(_, exprs) => {
                     for e in exprs {
@@ -591,9 +584,8 @@ impl CodeLocation for Expression {
             | Expression::StructMember(loc, ..)
             | Expression::Or(loc, ..)
             | Expression::StorageArrayLength { loc, .. }
-            | Expression::InternalFunction { loc, .. }
-            | Expression::ExternalFunction { loc, .. }
-            | Expression::InternalFunctionCall { loc, .. }
+            | Expression::Function { loc, .. }
+            | Expression::FunctionCall { loc, .. }
             | Expression::Increment(loc, ..)
             | Expression::Decrement(loc, ..)
             | Expression::Builtin(loc, ..)

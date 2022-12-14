@@ -671,7 +671,7 @@ impl Dot {
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
 
-            Expression::InternalFunction {
+            Expression::Function {
                 loc,
                 ty,
                 function_no,
@@ -700,29 +700,7 @@ impl Dot {
                     Some(parent_rel),
                 );
             }
-            Expression::ExternalFunction {
-                loc,
-                ty,
-                function_no,
-                address,
-            } => {
-                let mut labels = vec![ty.to_string(ns), ns.loc_to_string(loc)];
-
-                let f = &ns.functions[*function_no];
-
-                if let Some(contract_no) = f.contract_no {
-                    labels.insert(1, format!("{}.{}", ns.contracts[contract_no].name, f.name))
-                }
-
-                let node = self.add_node(
-                    Node::new("external_function", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(address, func, ns, node, String::from("address"));
-            }
-            Expression::InternalFunctionCall {
+            Expression::FunctionCall {
                 loc,
                 function,
                 args,
