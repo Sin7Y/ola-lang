@@ -6,7 +6,7 @@
 
 |Code Repo|Doc Entry|Current Status|
 |:----|:-----|:-----|
-|[Code Repo](https://github.com/Sin7Y/ola-lang.git)|[Doc](https://olang-specs.readthedocs.io/en/latest/)|[![Documentation Status](https://readthedocs.org/projects/code-blocks/badge/?version=latest)](https://readthedocs.org/projects/olang-specs-en/)|
+|[Code Repo](https://github.com/Sin7Y/ola-lang.git)|[Doc](https://olang.readthedocs.io/en/latest/)|[![Documentation Status](https://readthedocs.org/projects/code-blocks/badge/?version=latest)](https://readthedocs.org/projects/olang/)|
 
 
 ### Contact us
