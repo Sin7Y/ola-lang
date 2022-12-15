@@ -10,7 +10,7 @@ use tiny_keccak::{Hasher, Keccak};
 use super::{
     ast,
     diagnostics::Diagnostics,
-    expression::{compatible_mutability, match_constructor_to_args, ExprContext},
+    expression::{ ExprContext},
     functions, statements,
     symtable::Symtable,
     variables

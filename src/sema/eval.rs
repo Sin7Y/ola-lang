@@ -16,15 +16,15 @@ pub fn eval_const_number(
     ns: &Namespace,
 ) -> Result<(program::Loc, BigInt), Diagnostic> {
     match expr {
-        Expression::Add(loc, _, _, l, r) => Ok((
+        Expression::Add(loc, _, l, r) => Ok((
             *loc,
             eval_const_number(l, ns)?.1 + eval_const_number(r, ns)?.1,
         )),
-        Expression::Subtract(loc, _, _, l, r) => Ok((
+        Expression::Subtract(loc, _, l, r) => Ok((
             *loc,
             eval_const_number(l, ns)?.1 - eval_const_number(r, ns)?.1,
         )),
-        Expression::Multiply(loc, _, _, l, r) => Ok((
+        Expression::Multiply(loc, _, l, r) => Ok((
             *loc,
             eval_const_number(l, ns)?.1 * eval_const_number(r, ns)?.1,
         )),
@@ -58,7 +58,7 @@ pub fn eval_const_number(
             *loc,
             eval_const_number(l, ns)?.1 ^ eval_const_number(r, ns)?.1,
         )),
-        Expression::Power(loc, _, _, base, exp) => {
+        Expression::Power(loc, _, base, exp) => {
             let b = eval_const_number(base, ns)?.1;
             let mut e = eval_const_number(exp, ns)?.1;
 
@@ -174,7 +174,7 @@ fn eval_constants_in_expression(
     ns: &mut Namespace,
 ) -> (Option<Expression>, bool) {
     match expr {
-        Expression::Add(loc, ty, _, left, right) => {
+        Expression::Add(loc, ty, left, right) => {
             let left = eval_constants_in_expression(left, ns).0;
             let right = eval_constants_in_expression(right, ns).0;
 
@@ -191,7 +191,7 @@ fn eval_constants_in_expression(
                 (None, true)
             }
         }
-        Expression::Subtract(loc, ty, _, left, right) => {
+        Expression::Subtract(loc, ty, left, right) => {
             let left = eval_constants_in_expression(left, ns).0;
             let right = eval_constants_in_expression(right, ns).0;
 
@@ -209,7 +209,7 @@ fn eval_constants_in_expression(
             }
         }
 
-        Expression::Multiply(loc, ty, _, left, right) => {
+        Expression::Multiply(loc, ty, left, right) => {
             let left = eval_constants_in_expression(left, ns).0;
             let right = eval_constants_in_expression(right, ns).0;
 
@@ -273,7 +273,7 @@ fn eval_constants_in_expression(
                 (None, true)
             }
         }
-        Expression::Power(loc, ty, _, left, right) => {
+        Expression::Power(loc, ty, left, right) => {
             let left = eval_constants_in_expression(left, ns).0;
             let right = eval_constants_in_expression(right, ns).0;
 

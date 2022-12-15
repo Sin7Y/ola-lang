@@ -1166,154 +1166,31 @@ impl Expression {
     // }
 }
 
-/// Unescape a string literal
-pub(crate) fn unescape(
-    literal: &str,
-    start: usize,
-    file_no: usize,
-    diagnostics: &mut Diagnostics,
-) -> Vec<u8> {
-    let mut s: Vec<u8> = Vec::new();
-    let mut indeces = literal.char_indices();
 
-    while let Some((_, ch)) = indeces.next() {
-        if ch != '\\' {
-            let mut buffer = [0; 4];
-            s.extend_from_slice(ch.encode_utf8(&mut buffer).as_bytes());
-            continue;
-        }
 
-        match indeces.next() {
-            Some((_, '\n')) => (),
-            Some((_, '\\')) => s.push(b'\\'),
-            Some((_, '\'')) => s.push(b'\''),
-            Some((_, '"')) => s.push(b'"'),
-            Some((_, 'b')) => s.push(b'\x08'),
-            Some((_, 'f')) => s.push(b'\x0c'),
-            Some((_, 'n')) => s.push(b'\n'),
-            Some((_, 'r')) => s.push(b'\r'),
-            Some((_, 't')) => s.push(b'\t'),
-            Some((_, 'v')) => s.push(b'\x0b'),
-            Some((i, 'x')) => match get_digits(&mut indeces, 2) {
-                Ok(ch) => s.push(ch as u8),
-                Err(offset) => {
-                    diagnostics.push(Diagnostic::error(
-                        program::Loc::File(
-                            file_no,
-                            start + i,
-                            start + std::cmp::min(literal.len(), offset),
-                        ),
-                        "\\x escape should be followed by two hex digits".to_string(),
-                    ));
-                }
-            },
-            Some((i, 'u')) => match get_digits(&mut indeces, 4) {
-                Ok(codepoint) => match char::from_u32(codepoint) {
-                    Some(ch) => {
-                        let mut buffer = [0; 4];
-                        s.extend_from_slice(ch.encode_utf8(&mut buffer).as_bytes());
-                    }
-                    None => {
-                        diagnostics.push(Diagnostic::error(
-                            program::Loc::File(file_no, start + i, start + i + 6),
-                            "Found an invalid unicode character".to_string(),
-                        ));
-                    }
-                },
-                Err(offset) => {
-                    diagnostics.push(Diagnostic::error(
-                        program::Loc::File(
-                            file_no,
-                            start + i,
-                            start + std::cmp::min(literal.len(), offset),
-                        ),
-                        "\\u escape should be followed by four hex digits".to_string(),
-                    ));
-                }
-            },
-            Some((i, ch)) => {
-                diagnostics.push(Diagnostic::error(
-                    program::Loc::File(file_no, start + i, start + i + ch.len_utf8()),
-                    format!("unknown escape character '{}'", ch),
-                ));
-            }
-            None => unreachable!(),
-        }
-    }
-    s
-}
-
-/// Get the hex digits for an escaped \x or \u. Returns either the value or
-/// or the offset of the last character
-fn get_digits(input: &mut std::str::CharIndices, len: usize) -> Result<u32, usize> {
-    let mut n: u32 = 0;
-    let offset;
-
-    for _ in 0..len {
-        if let Some((_, ch)) = input.next() {
-            if let Some(v) = ch.to_digit(16) {
-                n = (n << 4) + v;
-                continue;
-            }
-            offset = match input.next() {
-                Some((i, _)) => i,
-                None => std::usize::MAX,
-            };
-        } else {
-            offset = std::usize::MAX;
-        }
-
-        return Err(offset);
-    }
-
-    Ok(n)
-}
 
 fn coerce(
     l: &Type,
-    l_loc: &program::Loc,
     r: &Type,
-    r_loc: &program::Loc,
-    ns: &Namespace,
-    diagnostics: &mut Diagnostics,
 ) -> Result<Type, ()> {
-    let l = match l {
-        Type::Ref(ty) => ty,
-        Type::StorageRef(_, ty) => ty,
-        _ => l,
-    };
-    let r = match r {
-        Type::Ref(ty) => ty,
-        Type::StorageRef(_, ty) => ty,
-        _ => r,
-    };
 
     if *l == *r {
         return Ok(l.clone());
     }
-
-    // Address payable is implicitly convertible to address, so we can compare these
-    if *l == Type::Address(false) && *r == Type::Address(true)
-        || *l == Type::Address(true) && *r == Type::Address(false)
-    {
-        return Ok(Type::Address(false));
-    }
-
-    coerce_number(l, l_loc, r, r_loc, true, false, ns, diagnostics)
+    coerce_number(l, r, true)
 }
 
 fn get_int_length(
     l: &Type,
     l_loc: &program::Loc,
-    allow_bytes: bool,
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
-) -> Result<(u16, bool), ()> {
+) -> Result<u16, ()> {
     match l {
-        Type::Uint(n) => Ok((*n, false)),
-        Type::Int(n) => Ok((*n, true)),
-        Type::Value => Ok((ns.value_length as u16 * 8, false)),
-        Type::Bytes(n) if allow_bytes => Ok((*n as u16 * 8, false)),
+        Type::U32 => Ok(32),
+        Type::U64 => Ok(64),
+        Type::Field => Ok(64),
+        Type::U256 => Ok(256),
         Type::Enum(n) => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
@@ -1321,10 +1198,10 @@ fn get_int_length(
             ));
             Err(())
         }
-        Type::Struct(str_ty) => {
+        Type::Struct(n) => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
-                format!("type struct {} not allowed", str_ty.definition(ns)),
+                format!("type struct {} not allowed", ns.structs[*n]),
             ));
             Err(())
         }
@@ -1335,8 +1212,6 @@ fn get_int_length(
             ));
             Err(())
         }
-        Type::Ref(n) => get_int_length(n, l_loc, allow_bytes, ns, diagnostics),
-        Type::StorageRef(_, n) => get_int_length(n, l_loc, allow_bytes, ns, diagnostics),
         _ => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
@@ -1349,214 +1224,43 @@ fn get_int_length(
 
 pub fn coerce_number(
     l: &Type,
-    l_loc: &program::Loc,
     r: &Type,
-    r_loc: &program::Loc,
-    allow_bytes: bool,
     for_compare: bool,
-    ns: &Namespace,
-    diagnostics: &mut Diagnostics,
 ) -> Result<Type, ()> {
-    let l = match l {
-        Type::Ref(ty) => ty,
-        Type::StorageRef(_, ty) => ty,
-        _ => l,
-    };
-    let r = match r {
-        Type::Ref(ty) => ty,
-        Type::StorageRef(_, ty) => ty,
-        _ => r,
-    };
 
     match (l, r) {
-        (Type::Address(false), Type::Address(false)) if for_compare => {
-            return Ok(Type::Address(false));
-        }
-        (Type::Address(true), Type::Address(true)) if for_compare => {
-            return Ok(Type::Address(true));
-        }
         (Type::Contract(left), Type::Contract(right)) if left == right && for_compare => {
             return Ok(Type::Contract(*left));
         }
-        (Type::Bytes(left_length), Type::Bytes(right_length)) if allow_bytes => {
-            return Ok(Type::Bytes(std::cmp::max(*left_length, *right_length)));
+
+        (Type::U32,  Type::U64 | Type::Field) => {
+            return Ok(Type::U64);
         }
-        (Type::Bytes(_), _) if allow_bytes => {
-            return Ok(l.clone());
+        (Type::U32 , Type::U256) => {
+            return Ok(Type::U256);
         }
-        (_, Type::Bytes(_)) if allow_bytes => {
-            return Ok(r.clone());
+        (Type::U64 , Type::U32 | Type::Field) => {
+            return Ok(Type::U64);
         }
-        (Type::Rational, Type::Int(_)) => {
-            return Ok(Type::Rational);
+        (Type::U256, Type::U32 | Type::U64 | Type::Field | Type::U256) => {
+            return Ok(Type::U256);
         }
-        (Type::Rational, Type::Rational) => {
-            return Ok(Type::Rational);
-        }
-        (Type::Rational, Type::Uint(_)) => {
-            return Ok(Type::Rational);
-        }
-        (Type::Uint(_), Type::Rational) => {
-            return Ok(Type::Rational);
-        }
-        (Type::Int(_), Type::Rational) => {
-            return Ok(Type::Rational);
-        }
-        (Type::Bool, Type::Int(_) | Type::Uint(_)) => {
-            return Ok(r.clone());
-        }
-        (Type::Int(_) | Type::Uint(_), Type::Bool) => {
-            return Ok(l.clone());
-        }
-        _ => (),
     }
 
-    let (left_len, left_signed) = get_int_length(l, l_loc, false, ns, diagnostics)?;
-
-    let (right_len, right_signed) = get_int_length(r, r_loc, false, ns, diagnostics)?;
-
-    Ok(match (left_signed, right_signed) {
-        (true, true) => Type::Int(cmp::max(left_len, right_len)),
-        (false, false) => Type::Uint(cmp::max(left_len, right_len)),
-        (true, false) => Type::Int(cmp::max(left_len, cmp::min(right_len + 8, 256))),
-        (false, true) => Type::Int(cmp::max(cmp::min(left_len + 8, 256), right_len)),
-    })
 }
 
+// TODO Resolve u32、u64、u256、field number
 /// Resolve the given number literal, multiplied by value of unit
 fn number_literal(
     loc: &program::Loc,
     integer: &str,
-    exp: &str,
     ns: &Namespace,
-    unit: &BigInt,
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     let integer = BigInt::from_str(integer).unwrap();
 
-    let n = if exp.is_empty() {
-        integer
-    } else {
-        let base10 = BigInt::from_str("10").unwrap();
-
-        if let Some(abs_exp) = exp.strip_prefix('-') {
-            if let Ok(exp) = u8::from_str(abs_exp) {
-                let res = BigRational::new(integer, base10.pow(exp));
-
-                if res.is_integer() {
-                    res.to_integer()
-                } else {
-                    return Ok(Expression::RationalNumberLiteral(*loc, Type::Rational, res));
-                }
-            } else {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!("exponent '{}' too large", exp),
-                ));
-                return Err(());
-            }
-        } else if let Ok(exp) = u8::from_str(exp) {
-            integer.mul(base10.pow(exp))
-        } else {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("exponent '{}' too large", exp),
-            ));
-            return Err(());
-        }
-    };
-
-    bigint_to_expression(loc, &n.mul(unit), ns, diagnostics, resolve_to)
-}
-
-/// Resolve the given rational number literal, multiplied by value of unit
-fn rational_number_literal(
-    loc: &program::Loc,
-    integer: &str,
-    fraction: &str,
-    exp: &str,
-    unit: &BigInt,
-    ns: &Namespace,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    let mut integer = integer.to_owned();
-    let len = fraction.len();
-    let exp_negative = exp.starts_with('-');
-
-    let denominator = BigInt::from_str("10").unwrap().pow(len);
-    let zero_index = fraction
-        .chars()
-        .position(|c| c != '0')
-        .unwrap_or(usize::MAX);
-    let n = if exp.is_empty() {
-        if integer.is_empty() || integer == "0" {
-            if zero_index < usize::MAX {
-                BigRational::new(
-                    BigInt::from_str(&fraction[zero_index..]).unwrap(),
-                    denominator,
-                )
-            } else {
-                BigRational::from(BigInt::zero())
-            }
-        } else {
-            integer.push_str(fraction);
-            BigRational::new(BigInt::from_str(&integer).unwrap(), denominator)
-        }
-    } else {
-        let exp = if let Ok(exp) = u8::from_str(if exp_negative { &exp[1..] } else { exp }) {
-            exp
-        } else {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("exponent '{}' too large", exp),
-            ));
-            return Err(());
-        };
-        let exp_result = BigInt::from_str("10").unwrap().pow(exp);
-
-        if integer.is_empty() || integer == "0" {
-            if zero_index < usize::MAX {
-                if exp_negative {
-                    BigRational::new(
-                        BigInt::from_str(&fraction[zero_index..]).unwrap(),
-                        denominator.mul(exp_result),
-                    )
-                } else {
-                    BigRational::new(
-                        BigInt::from_str(&fraction[zero_index..])
-                            .unwrap()
-                            .mul(exp_result),
-                        denominator,
-                    )
-                }
-            } else {
-                BigRational::from(BigInt::zero())
-            }
-        } else {
-            integer.push_str(fraction);
-            if exp_negative {
-                BigRational::new(
-                    BigInt::from_str(&integer).unwrap(),
-                    denominator.mul(exp_result),
-                )
-            } else {
-                BigRational::new(
-                    BigInt::from_str(&integer).unwrap().mul(exp_result),
-                    denominator,
-                )
-            }
-        }
-    };
-
-    let res = n.mul(unit);
-
-    if res.is_integer() {
-        bigint_to_expression(loc, &res.to_integer(), ns, diagnostics, resolve_to)
-    } else {
-        Ok(Expression::RationalNumberLiteral(*loc, Type::Rational, res))
-    }
+    bigint_to_expression(loc, &integer, ns, diagnostics, resolve_to)
 }
 
 /// Try to convert a BigInt into a Expression::NumberLiteral.
@@ -1591,42 +1295,16 @@ pub fn bigint_to_expression(
 
     let int_size = if bits < 7 { 8 } else { (bits + 7) & !7 } as u16;
 
-    if n.sign() == Sign::Minus {
-        if bits > 255 {
-            diagnostics.push(Diagnostic::error(*loc, format!("{} is too large", n)));
-            Err(())
-        } else {
-            Ok(Expression::NumberLiteral(
-                *loc,
-                Type::Int(int_size),
-                n.clone(),
-            ))
-        }
-    } else if bits > 256 {
+     if bits > 256 {
         diagnostics.push(Diagnostic::error(*loc, format!("{} is too large", n)));
         Err(())
     } else {
         Ok(Expression::NumberLiteral(
             *loc,
-            Type::Uint(int_size),
+            Type::Field,
             n.clone(),
         ))
     }
-}
-
-/// Compare two mutability levels
-pub fn compatible_mutability(left: &Mutability, right: &Mutability) -> bool {
-    matches!(
-        (left, right),
-        // only payable is compatible with payable
-        (Mutability::Payable(_), Mutability::Payable(_))
-            // default is compatible with anything but pure and view
-            | (Mutability::Nonpayable(_), Mutability::Nonpayable(_) | Mutability::Payable(_))
-            // view is compatible with anything but pure
-            | (Mutability::View(_), Mutability::View(_) | Mutability::Nonpayable(_) | Mutability::Payable(_))
-            // pure is compatible with anything
-            | (Mutability::Pure(_), _) // everything else is not compatible
-    )
 }
 
 /// When resolving an expression, what type are we looking for
@@ -1646,8 +1324,6 @@ pub struct ExprContext {
     pub contract_no: Option<usize>,
     /// Are resolving the body of a function, and if so, which one
     pub function_no: Option<usize>,
-    /// Are we currently in an unchecked block
-    pub unchecked: bool,
     /// Are we evaluating a constant expression
     pub constant: bool,
     /// Are we resolving an l-value
@@ -1678,37 +1354,35 @@ pub fn expression(
             res
         }
         program::Expression::BoolLiteral(loc, v) => Ok(Expression::BoolLiteral(*loc, *v)),
-        program::Expression::StringLiteral(v) => {
-            Ok(string_literal(v, context.file_no, diagnostics, resolve_to))
-        }
-        program::Expression::HexLiteral(v) => hex_literal(v, diagnostics, resolve_to),
-        program::Expression::NumberLiteral(loc, integer, exp) => number_literal(
+        program::Expression::U32Literal(loc, integer) => number_literal(
             loc,
             integer,
-            exp,
             ns,
-            &BigInt::one(),
             diagnostics,
             resolve_to,
         ),
-        program::Expression::RationalNumberLiteral(loc, integer, fraction, exp) => {
-            rational_number_literal(
-                loc,
-                integer,
-                fraction,
-                exp,
-                &BigInt::one(),
-                ns,
-                diagnostics,
-                resolve_to,
-            )
-        }
-        program::Expression::HexNumberLiteral(loc, n) => {
-            hex_number_literal(loc, n, ns, diagnostics, resolve_to)
-        }
-        program::Expression::AddressLiteral(loc, address) => {
-            address_literal(loc, address, ns, diagnostics)
-        }
+        program::Expression::U64Literal(loc, integer) => number_literal(
+            loc,
+            integer,
+            ns,
+            diagnostics,
+            resolve_to,
+        ),
+        program::Expression::FieldLiteral(loc, integer) => number_literal(
+            loc,
+            integer,
+            ns,
+            diagnostics,
+            resolve_to,
+        ),
+        program::Expression::U256Literal(loc, integer) => number_literal(
+            loc,
+            integer,
+            ns,
+            diagnostics,
+            resolve_to,
+        ),
+
         program::Expression::Variable(id) => {
             variable(id, context, ns, symtable, diagnostics, resolve_to)
         }
@@ -1751,21 +1425,11 @@ pub fn expression(
             let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
 
             check_var_usage_expression(ns, &left, &right, symtable);
-            let ty = coerce_number(
-                &left.ty(),
-                &l.loc(),
-                &right.ty(),
-                &r.loc(),
-                true,
-                true,
-                ns,
-                diagnostics,
-            )?;
 
             Ok(Expression::More(
                 *loc,
-                Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
-                Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
+                Box::new(left),
+                Box::new(right),
             ))
         }
         program::Expression::Less(loc, l, r) => {
@@ -1774,21 +1438,10 @@ pub fn expression(
 
             check_var_usage_expression(ns, &left, &right, symtable);
 
-            let ty = coerce_number(
-                &left.ty(),
-                &l.loc(),
-                &right.ty(),
-                &r.loc(),
-                true,
-                true,
-                ns,
-                diagnostics,
-            )?;
-
             Ok(Expression::Less(
                 *loc,
-                Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
-                Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
+                Box::new(left),
+                Box::new(right),
             ))
         }
         program::Expression::MoreEqual(loc, l, r) => {
@@ -1796,21 +1449,10 @@ pub fn expression(
             let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
             check_var_usage_expression(ns, &left, &right, symtable);
 
-            let ty = coerce_number(
-                &left.ty(),
-                &l.loc(),
-                &right.ty(),
-                &r.loc(),
-                true,
-                true,
-                ns,
-                diagnostics,
-            )?;
-
             Ok(Expression::MoreEqual(
                 *loc,
-                Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
-                Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
+                Box::new(left),
+                Box::new(right),
             ))
         }
         program::Expression::LessEqual(loc, l, r) => {
@@ -1818,21 +1460,11 @@ pub fn expression(
             let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
             check_var_usage_expression(ns, &left, &right, symtable);
 
-            let ty = coerce_number(
-                &left.ty(),
-                &l.loc(),
-                &right.ty(),
-                &r.loc(),
-                true,
-                true,
-                ns,
-                diagnostics,
-            )?;
 
             Ok(Expression::LessEqual(
                 *loc,
-                Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
-                Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
+                Box::new(left),
+                Box::new(right),
             ))
         }
         program::Expression::Equal(loc, l, r) => equal(loc, l, r, context, ns, symtable, diagnostics),
@@ -1857,65 +1489,9 @@ pub fn expression(
             used_variable(ns, &expr, symtable);
             let expr_ty = expr.ty();
 
-            get_int_length(&expr_ty, loc, true, ns, diagnostics)?;
+            get_int_length(&expr_ty, loc, ns, diagnostics)?;
 
             Ok(Expression::Complement(*loc, expr_ty, Box::new(expr)))
-        }
-        program::Expression::UnaryMinus(loc, e) => match e.as_ref() {
-            program::Expression::NumberLiteral(_, integer, exp) => number_literal(
-                loc,
-                integer,
-                exp,
-                ns,
-                &BigInt::from(-1),
-                diagnostics,
-                resolve_to,
-            ),
-            program::Expression::HexNumberLiteral(_, v) => {
-                // a hex literal with a minus before it cannot be an address literal or a bytesN value
-                let s: String = v.chars().skip(2).filter(|v| *v != '_').collect();
-
-                let n = BigInt::from_str_radix(&s, 16).unwrap();
-
-                bigint_to_expression(loc, &-n, ns, diagnostics, resolve_to)
-            }
-            program::Expression::RationalNumberLiteral(loc, integer, fraction, exp) => {
-                rational_number_literal(
-                    loc,
-                    integer,
-                    fraction,
-                    exp,
-                    &BigInt::from(-1),
-                    ns,
-                    diagnostics,
-                    resolve_to,
-                )
-            }
-            e => {
-                let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
-
-                used_variable(ns, &expr, symtable);
-                let expr_type = expr.ty();
-
-                if let Expression::NumberLiteral(_, _, n) = expr {
-                    bigint_to_expression(loc, &-n, ns, diagnostics, resolve_to)
-                } else if let Expression::RationalNumberLiteral(_, ty, r) = expr {
-                    Ok(Expression::RationalNumberLiteral(*loc, ty, -r))
-                } else {
-                    get_int_length(&expr_type, loc, false, ns, diagnostics)?;
-
-                    Ok(Expression::UnaryMinus(*loc, expr_type, Box::new(expr)))
-                }
-            }
-        },
-        program::Expression::UnaryPlus(loc, e) => {
-            let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
-            used_variable(ns, &expr, symtable);
-            let expr_type = expr.ty();
-
-            get_int_length(&expr_type, loc, false, ns, diagnostics)?;
-
-            Ok(expr)
         }
 
         program::Expression::ConditionalOperator(loc, c, l, r) => {
@@ -1927,7 +1503,7 @@ pub fn expression(
 
             let cond = cond.cast(&c.loc(), &Type::Bool, true, ns, diagnostics)?;
 
-            let ty = coerce(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+            let ty = coerce(&left.ty(),  &right.ty())?;
             let left = left.cast(&l.loc(), &ty, true, ns, diagnostics)?;
             let right = right.cast(&r.loc(), &ty, true, ns, diagnostics)?;
 
@@ -1941,10 +1517,8 @@ pub fn expression(
         }
 
         // pre/post decrement/increment
-        program::Expression::PostIncrement(loc, var)
-        | program::Expression::PreIncrement(loc, var)
-        | program::Expression::PostDecrement(loc, var)
-        | program::Expression::PreDecrement(loc, var) => {
+        program::Expression::Increment(loc, var)
+        | program::Expression::Decrement(loc, var) => {
             if context.constant {
                 diagnostics.push(Diagnostic::error(
                     *loc,
@@ -2003,44 +1577,6 @@ pub fn expression(
             diagnostics,
             resolve_to,
         ),
-        program::Expression::New(loc, call) => {
-            if context.constant {
-                diagnostics.push(Diagnostic::error(
-                    expr.loc(),
-                    "new not allowed in constant expression".to_string(),
-                ));
-                return Err(());
-            }
-
-            match call.remove_parenthesis() {
-                program::Expression::FunctionCall(_, ty, args) => {
-                    let res = new(loc, ty, args, context, ns, symtable, diagnostics);
-
-                    if let Ok(exp) = &res {
-                        check_function_call(ns, exp, symtable);
-                    }
-                    res
-                }
-                program::Expression::NamedFunctionCall(_, ty, args) => {
-                    let res =
-                        constructor_named_args(loc, ty, args, context, ns, symtable, diagnostics);
-
-                    if let Ok(exp) = &res {
-                        check_function_call(ns, exp, symtable);
-                    }
-
-                    res
-                }
-                _ => unreachable!(),
-            }
-        }
-        program::Expression::Delete(loc, _) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "delete not allowed in expression".to_string(),
-            ));
-            Err(())
-        }
         program::Expression::FunctionCall(loc, ty, args) => call_expr(
             loc,
             ty,
@@ -2141,187 +1677,6 @@ pub fn expression(
             ));
             Err(())
         }
-        program::Expression::FunctionCallBlock(loc, ..) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "unexpect block encountered".to_owned(),
-            ));
-            Err(())
-        }
-        program::Expression::Unit(loc, expr, unit) => {
-            match unit {
-                program::Unit::Wei(loc) | program::Unit::Gwei(loc) | program::Unit::Ether(loc)
-                    if ns.target != crate::Target::EVM =>
-                {
-                    diagnostics.push(Diagnostic::warning(
-                        *loc,
-                        "ethereum currency unit used while not targetting ethereum".to_owned(),
-                    ));
-                }
-                _ => (),
-            }
-
-            let unit = match unit {
-                program::Unit::Seconds(_) => BigInt::from(1),
-                program::Unit::Minutes(_) => BigInt::from(60),
-                program::Unit::Hours(_) => BigInt::from(60 * 60),
-                program::Unit::Days(_) => BigInt::from(60 * 60 * 24),
-                program::Unit::Weeks(_) => BigInt::from(60 * 60 * 24 * 7),
-                program::Unit::Wei(_) => BigInt::from(1),
-                program::Unit::Gwei(_) => BigInt::from(10).pow(9u32),
-                program::Unit::Ether(_) => BigInt::from(10).pow(18u32),
-            };
-
-            match expr.as_ref() {
-                program::Expression::NumberLiteral(_, integer, exp) => {
-                    number_literal(loc, integer, exp, ns, &unit, diagnostics, resolve_to)
-                }
-                program::Expression::RationalNumberLiteral(_, significant, mantissa, exp) => {
-                    rational_number_literal(
-                        loc,
-                        significant,
-                        mantissa,
-                        exp,
-                        &unit,
-                        ns,
-                        diagnostics,
-                        resolve_to,
-                    )
-                }
-                program::Expression::HexNumberLiteral(loc, _) => {
-                    diagnostics.push(Diagnostic::error(
-                        *loc,
-                        "hexadecimal numbers cannot be used with unit denominations".to_owned(),
-                    ));
-                    Err(())
-                }
-                _ => {
-                    diagnostics.push(Diagnostic::error(
-                        *loc,
-                        "unit denominations can only be used with number literals".to_owned(),
-                    ));
-                    Err(())
-                }
-            }
-        }
-        program::Expression::This(loc) => match context.contract_no {
-            Some(contract_no) => Ok(Expression::Builtin(
-                *loc,
-                vec![Type::Contract(contract_no)],
-                Builtin::GetAddress,
-                Vec::new(),
-            )),
-            None => {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "this not allowed outside contract".to_owned(),
-                ));
-                Err(())
-            }
-        },
-    }
-}
-
-fn string_literal(
-    v: &[program::StringLiteral],
-    file_no: usize,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Expression {
-    // Concatenate the strings
-    let mut result = Vec::new();
-    let mut loc = v[0].loc;
-
-    for s in v {
-        result.append(&mut unescape(
-            &s.string,
-            s.loc.start(),
-            file_no,
-            diagnostics,
-        ));
-        loc.use_end_from(&s.loc);
-    }
-
-    let length = result.len();
-
-    match resolve_to {
-        ResolveTo::Type(Type::String) => Expression::AllocDynamicBytes(
-            loc,
-            Type::String,
-            Box::new(Expression::NumberLiteral(
-                loc,
-                Type::Uint(32),
-                BigInt::from(length),
-            )),
-            Some(result),
-        ),
-        ResolveTo::Type(Type::Slice(ty)) if ty.as_ref() == &Type::Bytes(1) => {
-            Expression::AllocDynamicBytes(
-                loc,
-                Type::Slice(ty.clone()),
-                Box::new(Expression::NumberLiteral(
-                    loc,
-                    Type::Uint(32),
-                    BigInt::from(length),
-                )),
-                Some(result),
-            )
-        }
-        _ => Expression::BytesLiteral(loc, Type::Bytes(length as u8), result),
-    }
-}
-
-fn hex_literal(
-    v: &[program::HexLiteral],
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    let mut result = Vec::new();
-    let mut loc = v[0].loc;
-
-    for s in v {
-        if (s.hex.len() % 2) != 0 {
-            diagnostics.push(Diagnostic::error(
-                s.loc,
-                format!("hex string \"{}\" has odd number of characters", s.hex),
-            ));
-            return Err(());
-        } else {
-            result.extend_from_slice(&hex::decode(&s.hex).unwrap());
-            loc.use_end_from(&s.loc);
-        }
-    }
-
-    let length = result.len();
-
-    match resolve_to {
-        ResolveTo::Type(Type::Slice(ty)) if ty.as_ref() == &Type::Bytes(1) => {
-            Ok(Expression::AllocDynamicBytes(
-                loc,
-                Type::Slice(ty.clone()),
-                Box::new(Expression::NumberLiteral(
-                    loc,
-                    Type::Uint(32),
-                    BigInt::from(length),
-                )),
-                Some(result),
-            ))
-        }
-        ResolveTo::Type(Type::DynamicBytes) => Ok(Expression::AllocDynamicBytes(
-            loc,
-            Type::DynamicBytes,
-            Box::new(Expression::NumberLiteral(
-                loc,
-                Type::Uint(32),
-                BigInt::from(length),
-            )),
-            Some(result),
-        )),
-        _ => Ok(Expression::BytesLiteral(
-            loc,
-            Type::Bytes(length as u8),
-            result,
-        )),
     }
 }
 
@@ -2332,41 +1687,6 @@ fn hex_number_literal(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    // ns.address_length is in bytes; double for hex and two for the leading 0x
-    if n.starts_with("0x") && !n.chars().any(|c| c == '_') && n.len() == 42 {
-        let address = to_hexstr_eip55(n);
-
-        if ns.target == Target::EVM {
-            return if address == *n {
-                let s: String = address.chars().skip(2).collect();
-
-                Ok(Expression::NumberLiteral(
-                    *loc,
-                    Type::Address(false),
-                    BigInt::from_str_radix(&s, 16).unwrap(),
-                ))
-            } else {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!(
-                        "address literal has incorrect checksum, expected '{}'",
-                        address
-                    ),
-                ));
-                Err(())
-            };
-        } else if address == *n {
-            // looks like ethereum address
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                format!(
-                    "ethereum address literal '{}' not supported on target {}",
-                    n, ns.target
-                ),
-            ));
-            return Err(());
-        }
-    }
 
     // from_str_radix does not like the 0x prefix
     let s: String = n.chars().skip(2).filter(|v| *v != '_').collect();
@@ -2399,119 +1719,6 @@ fn hex_number_literal(
     )
 }
 
-fn address_literal(
-    loc: &program::Loc,
-    address: &str,
-    ns: &mut Namespace,
-    diagnostics: &mut Diagnostics,
-) -> Result<Expression, ()> {
-    if ns.target.is_substrate() {
-        match address.from_base58() {
-            Ok(v) => {
-                if v.len() != ns.address_length + 3 {
-                    diagnostics.push(Diagnostic::error(
-                        *loc,
-                        format!(
-                            "address literal {} incorrect length of {}",
-                            address,
-                            v.len()
-                        ),
-                    ));
-                    return Err(());
-                }
-
-                let hash_data: Vec<u8> = b"SS58PRE"
-                    .iter()
-                    .chain(v[..=ns.address_length].iter())
-                    .cloned()
-                    .collect();
-
-                let hash = blake2_rfc::blake2b::blake2b(64, &[], &hash_data);
-                let hash = hash.as_bytes();
-
-                if v[ns.address_length + 1] != hash[0] || v[ns.address_length + 2] != hash[1] {
-                    diagnostics.push(Diagnostic::error(
-                        *loc,
-                        format!("address literal {} hash incorrect checksum", address,),
-                    ));
-                    return Err(());
-                }
-
-                Ok(Expression::NumberLiteral(
-                    *loc,
-                    Type::Address(false),
-                    BigInt::from_bytes_be(Sign::Plus, &v[1..ns.address_length + 1]),
-                ))
-            }
-            Err(FromBase58Error::InvalidBase58Length) => {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!("address literal {} invalid base58 length", address),
-                ));
-                Err(())
-            }
-            Err(FromBase58Error::InvalidBase58Character(ch, pos)) => {
-                let mut loc = *loc;
-                if let program::Loc::File(_, start, end) = &mut loc {
-                    *start += pos;
-                    *end = *start;
-                }
-                diagnostics.push(Diagnostic::error(
-                    loc,
-                    format!("address literal {} invalid character '{}'", address, ch),
-                ));
-                Err(())
-            }
-        }
-    } else if ns.target == Target::Solana {
-        match address.from_base58() {
-            Ok(v) => {
-                if v.len() != ns.address_length {
-                    diagnostics.push(Diagnostic::error(
-                        *loc,
-                        format!(
-                            "address literal {} incorrect length of {}",
-                            address,
-                            v.len()
-                        ),
-                    ));
-                    Err(())
-                } else {
-                    Ok(Expression::NumberLiteral(
-                        *loc,
-                        Type::Address(false),
-                        BigInt::from_bytes_be(Sign::Plus, &v),
-                    ))
-                }
-            }
-            Err(FromBase58Error::InvalidBase58Length) => {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!("address literal {} invalid base58 length", address),
-                ));
-                Err(())
-            }
-            Err(FromBase58Error::InvalidBase58Character(ch, pos)) => {
-                let mut loc = *loc;
-                if let program::Loc::File(_, start, end) = &mut loc {
-                    *start += pos;
-                    *end = *start;
-                }
-                diagnostics.push(Diagnostic::error(
-                    loc,
-                    format!("address literal {} invalid character '{}'", address, ch),
-                ));
-                Err(())
-            }
-        }
-    } else {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            format!("address literal {} not supported on {}", address, ns.target),
-        ));
-        Err(())
-    }
-}
 
 fn variable(
     id: &program::Identifier,
@@ -2670,31 +1877,13 @@ fn subtract(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         false,
-        false,
-        ns,
-        diagnostics,
     )?;
-
-    if ty.is_rational() {
-        let expr = Expression::Subtract(*loc, ty, false, Box::new(left), Box::new(right));
-
-        return match eval_const_rational(&expr, ns) {
-            Ok(_) => Ok(expr),
-            Err(diag) => {
-                diagnostics.push(diag);
-                Err(())
-            }
-        };
-    }
 
     Ok(Expression::Subtract(
         *loc,
         ty.clone(),
-        context.unchecked,
         Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
         Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
     ))
@@ -2717,13 +1906,8 @@ fn bitwise_or(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         true,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     Ok(Expression::BitwiseOr(
@@ -2751,13 +1935,8 @@ fn bitwise_and(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         true,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     Ok(Expression::BitwiseAnd(
@@ -2785,13 +1964,8 @@ fn bitwise_xor(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         true,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     Ok(Expression::BitwiseXor(
@@ -2818,8 +1992,8 @@ fn shift_left(
     check_var_usage_expression(ns, &left, &right, symtable);
     // left hand side may be bytes/int/uint
     // right hand size may be int/uint
-    let _ = get_int_length(&left.ty(), &l.loc(), true, ns, diagnostics)?;
-    let (right_length, _) = get_int_length(&right.ty(), &r.loc(), false, ns, diagnostics)?;
+    let _ = get_int_length(&left.ty(), &l.loc(),  ns, diagnostics)?;
+    let (right_length, _) = get_int_length(&right.ty(), &r.loc(),  ns, diagnostics)?;
 
     let left_type = left.ty();
 
@@ -2849,8 +2023,8 @@ fn shift_right(
     let left_type = left.ty();
     // left hand side may be bytes/int/uint
     // right hand size may be int/uint
-    let _ = get_int_length(&left_type, &l.loc(), true, ns, diagnostics)?;
-    let (right_length, _) = get_int_length(&right.ty(), &r.loc(), false, ns, diagnostics)?;
+    let _ = get_int_length(&left_type, &l.loc(), ns, diagnostics)?;
+    let (right_length, _) = get_int_length(&right.ty(), &r.loc(),ns, diagnostics)?;
 
     Ok(Expression::ShiftRight(
         *loc,
@@ -2878,17 +2052,12 @@ fn multiply(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         false,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     if ty.is_rational() {
-        let expr = Expression::Multiply(*loc, ty, false, Box::new(left), Box::new(right));
+        let expr = Expression::Multiply(*loc, ty, Box::new(left), Box::new(right));
 
         return match eval_const_rational(&expr, ns) {
             Ok(_) => Ok(expr),
@@ -2930,9 +2099,8 @@ fn multiply(
         Ok(Expression::Multiply(
             *loc,
             ty.clone(),
-            context.unchecked,
-            Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
-            Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
+            Box::new(left),
+            Box::new(right),
         ))
     }
 }
@@ -2954,13 +2122,8 @@ fn divide(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         false,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     Ok(Expression::Divide(
@@ -2988,13 +2151,8 @@ fn modulo(
 
     let ty = coerce_number(
         &left.ty(),
-        &l.loc(),
         &right.ty(),
-        &r.loc(),
         false,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     Ok(Expression::Modulo(
@@ -3059,21 +2217,15 @@ fn power(
 
     let ty = coerce_number(
         &base_type,
-        &b.loc(),
         &exp_type,
-        &e.loc(),
         false,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     Ok(Expression::Power(
         *loc,
         ty.clone(),
-        context.unchecked,
-        Box::new(base.cast(&b.loc(), &ty, true, ns, diagnostics)?),
-        Box::new(exp.cast(&e.loc(), &ty, true, ns, diagnostics)?),
+        Box::new(base),
+        Box::new(exp),
     ))
 }
 
@@ -3274,9 +2426,9 @@ pub fn constructor_named_args(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-    let (ty, call_args, _) = collect_call_args(ty, diagnostics)?;
-
-    let call_args = parse_call_args(&call_args, false, context, ns, symtable, diagnostics)?;
+    let mut named_arguments = Vec::new();
+    named_arguments.extend(args);
+    let call_args = parse_call_args(&named_arguments, false, context, ns, symtable, diagnostics)?;
 
     let no = match ns.resolve_type(context.file_no, context.contract_no, false, ty, diagnostics)? {
         Type::Contract(n) => n,
@@ -3814,7 +2966,7 @@ fn equal(
         _ => {}
     }
 
-    let ty = coerce(&left_type, &l.loc(), &right_type, &r.loc(), ns, diagnostics)?;
+    let ty = coerce(&left_type, &right_type)?;
 
     Ok(Expression::Equal(
         *loc,
@@ -3893,17 +3045,12 @@ fn addition(
 
     let ty = coerce_number(
         &left_type,
-        &l.loc(),
         &right_type,
-        &r.loc(),
         false,
-        false,
-        ns,
-        diagnostics,
     )?;
 
     if ty.is_rational() {
-        let expr = Expression::Add(*loc, ty, false, Box::new(left), Box::new(right));
+        let expr = Expression::Add(*loc, ty, Box::new(left), Box::new(right));
 
         return match eval_const_rational(&expr, ns) {
             Ok(_) => Ok(expr),
@@ -3944,9 +3091,8 @@ fn addition(
     Ok(Expression::Add(
         *loc,
         ty.clone(),
-        context.unchecked,
-        Box::new(left.cast(&l.loc(), &ty, true, ns, diagnostics)?),
-        Box::new(right.cast(&r.loc(), &ty, true, ns, diagnostics)?),
+        Box::new(left),
+        Box::new(right),
     ))
 }
 
@@ -4118,8 +3264,8 @@ fn assign_expr(
      -> Result<Expression, ()> {
         let set = match expr {
             program::Expression::AssignShiftLeft(..) | program::Expression::AssignShiftRight(..) => {
-                let left_length = get_int_length(ty, loc, true, ns, diagnostics)?;
-                let right_length = get_int_length(&set_type, &left.loc(), false, ns, diagnostics)?;
+                let left_length = get_int_length(ty, loc, ns, diagnostics)?;
+                let right_length = get_int_length(&set_type, &left.loc(), ns, diagnostics)?;
 
                 // TODO: does shifting by negative value need compiletime/runtime check?
                 if left_length == right_length {
@@ -4151,21 +3297,18 @@ fn assign_expr(
             program::Expression::AssignAdd(..) => Expression::Add(
                 *loc,
                 ty.clone(),
-                context.unchecked,
                 Box::new(assign),
                 Box::new(set),
             ),
             program::Expression::AssignSubtract(..) => Expression::Subtract(
                 *loc,
                 ty.clone(),
-                context.unchecked,
                 Box::new(assign),
                 Box::new(set),
             ),
             program::Expression::AssignMultiply(..) => Expression::Multiply(
                 *loc,
                 ty.clone(),
-                context.unchecked,
                 Box::new(assign),
                 Box::new(set),
             ),
@@ -4725,99 +3868,7 @@ fn member_access(
                 ));
             }
         }
-        Type::StorageRef(immutable, r) => match *r {
-            Type::Struct(str_ty) => {
-                return if let Some((field_no, field)) = str_ty
-                    .definition(ns)
-                    .fields
-                    .iter()
-                    .enumerate()
-                    .find(|(_, field)| id.name == field.name_as_str())
-                {
-                    Ok(Expression::StructMember(
-                        id.loc,
-                        Type::StorageRef(immutable, Box::new(field.ty.clone())),
-                        Box::new(expr),
-                        field_no,
-                    ))
-                } else {
-                    diagnostics.push(Diagnostic::error(
-                        id.loc,
-                        format!(
-                            "struct '{}' does not have a field called '{}'",
-                            str_ty.definition(ns).name,
-                            id.name
-                        ),
-                    ));
-                    Err(())
-                }
-            }
-            Type::Array(_, dim) => {
-                if id.name == "length" {
-                    let elem_ty = expr.ty().storage_array_elem().deref_into();
 
-                    if let Some(ArrayLength::Fixed(dim)) = dim.last() {
-                        // sparse array could be large than ns.storage_type() on Solana
-                        if dim.bits() > ns.storage_type().bits(ns) as u64 {
-                            return Ok(Expression::StorageArrayLength {
-                                loc: id.loc,
-                                ty: Type::Uint(256),
-                                array: Box::new(expr),
-                                elem_ty,
-                            });
-                        }
-                    }
-
-                    return Ok(Expression::StorageArrayLength {
-                        loc: id.loc,
-                        ty: ns.storage_type(),
-                        array: Box::new(expr),
-                        elem_ty,
-                    });
-                }
-            }
-            Type::Bytes(_) | Type::DynamicBytes | Type::String => {
-                if id.name == "length" {
-                    let elem_ty = expr.ty().storage_array_elem().deref_into();
-
-                    return Ok(Expression::StorageArrayLength {
-                        loc: id.loc,
-                        ty: Type::Uint(32),
-                        array: Box::new(expr),
-                        elem_ty,
-                    });
-                }
-            }
-            _ => {}
-        },
-        Type::Address(_) => {
-            if id.name == "balance" {
-                if ns.target.is_substrate() {
-                    let mut is_this = false;
-
-                    if let Expression::Cast { expr: this, .. } = &expr {
-                        if let Expression::Builtin(_, _, Builtin::GetAddress, _) = this.as_ref() {
-                            is_this = true;
-                        }
-                    }
-
-                    if !is_this {
-                        diagnostics.push(Diagnostic::error(
-                            expr.loc(),
-                            "substrate can only retrieve balance of this, like 'address(this).balance'".to_string(),
-                        ));
-                        return Err(());
-                    }
-                }
-                used_variable(ns, &expr, symtable);
-                return Ok(Expression::Builtin(
-                    *loc,
-                    vec![Type::Value],
-                    Builtin::Balance,
-                    vec![expr],
-                ));
-            }
-        }
         Type::Contract(ref_contract_no) => {
             let mut name_matches = 0;
             let mut ext_expr = Err(());
@@ -6023,272 +5074,6 @@ fn method_call_pos_args(
         };
     }
 
-    if let Type::StorageRef(immutable, ty) = &var_ty {
-        match ty.as_ref() {
-            Type::Array(_, dim) => {
-                if *immutable {
-                    if let Some(function_no) = context.function_no {
-                        if !ns.functions[function_no].is_constructor() {
-                            diagnostics.push(Diagnostic::error(
-                                *loc,
-                                "cannot call method on immutable array outside of constructor"
-                                    .to_string(),
-                            ));
-                            return Err(());
-                        }
-                    }
-                }
-
-                if let Some(loc) = call_args_loc {
-                    diagnostics.push(Diagnostic::error(
-                        loc,
-                        "call arguments not allowed on arrays".to_string(),
-                    ));
-                    return Err(());
-                }
-
-                if func.name == "push" {
-                    if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
-                        diagnostics.push(Diagnostic::error(
-                            func.loc,
-                            "method 'push()' not allowed on fixed length array".to_string(),
-                        ));
-                        return Err(());
-                    }
-
-                    let elem_ty = ty.array_elem();
-                    let mut builtin_args = vec![var_expr];
-
-                    let ret_ty = match args.len() {
-                        1 => {
-                            let expr = expression(
-                                &args[0],
-                                context,
-                                ns,
-                                symtable,
-                                diagnostics,
-                                ResolveTo::Type(&elem_ty),
-                            )?;
-
-                            builtin_args.push(expr.cast(
-                                &args[0].loc(),
-                                &elem_ty,
-                                true,
-                                ns,
-                                diagnostics,
-                            )?);
-
-                            Type::Void
-                        }
-                        0 => {
-                            if elem_ty.is_reference_type(ns) {
-                                Type::StorageRef(false, Box::new(elem_ty))
-                            } else {
-                                elem_ty
-                            }
-                        }
-                        _ => {
-                            diagnostics.push(Diagnostic::error(
-                                func.loc,
-                                "method 'push()' takes at most 1 argument".to_string(),
-                            ));
-                            return Err(());
-                        }
-                    };
-
-                    return Ok(Expression::Builtin(
-                        func.loc,
-                        vec![ret_ty],
-                        Builtin::ArrayPush,
-                        builtin_args,
-                    ));
-                }
-                if func.name == "pop" {
-                    if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
-                        diagnostics.push(Diagnostic::error(
-                            func.loc,
-                            "method 'pop()' not allowed on fixed length array".to_string(),
-                        ));
-
-                        return Err(());
-                    }
-
-                    if !args.is_empty() {
-                        diagnostics.push(Diagnostic::error(
-                            func.loc,
-                            "method 'pop()' does not take any arguments".to_string(),
-                        ));
-                        return Err(());
-                    }
-
-                    let storage_elem = ty.storage_array_elem();
-                    let elem_ty = storage_elem.deref_any();
-
-                    let return_ty = if resolve_to == ResolveTo::Discard {
-                        Type::Void
-                    } else {
-                        elem_ty.clone()
-                    };
-
-                    return Ok(Expression::Builtin(
-                        func.loc,
-                        vec![return_ty],
-                        Builtin::ArrayPop,
-                        vec![var_expr],
-                    ));
-                }
-            }
-            Type::DynamicBytes => {
-                if *immutable {
-                    if let Some(function_no) = context.function_no {
-                        if !ns.functions[function_no].is_constructor() {
-                            diagnostics.push(Diagnostic::error(
-                                *loc,
-                                "cannot call method on immutable bytes outside of constructor"
-                                    .to_string(),
-                            ));
-                            return Err(());
-                        }
-                    }
-                }
-
-                if let Some(loc) = call_args_loc {
-                    diagnostics.push(Diagnostic::error(
-                        loc,
-                        "call arguments not allowed on bytes".to_string(),
-                    ));
-                    return Err(());
-                }
-
-                if func.name == "push" {
-                    let mut builtin_args = vec![var_expr];
-
-                    let elem_ty = Type::Bytes(1);
-
-                    let ret_ty = match args.len() {
-                        1 => {
-                            let expr = expression(
-                                &args[0],
-                                context,
-                                ns,
-                                symtable,
-                                diagnostics,
-                                ResolveTo::Type(&elem_ty),
-                            )?;
-
-                            builtin_args.push(expr.cast(
-                                &args[0].loc(),
-                                &elem_ty,
-                                true,
-                                ns,
-                                diagnostics,
-                            )?);
-
-                            Type::Void
-                        }
-                        0 => elem_ty,
-                        _ => {
-                            diagnostics.push(Diagnostic::error(
-                                func.loc,
-                                "method 'push()' takes at most 1 argument".to_string(),
-                            ));
-                            return Err(());
-                        }
-                    };
-                    return Ok(Expression::Builtin(
-                        func.loc,
-                        vec![ret_ty],
-                        Builtin::ArrayPush,
-                        builtin_args,
-                    ));
-                }
-
-                if func.name == "pop" {
-                    if !args.is_empty() {
-                        diagnostics.push(Diagnostic::error(
-                            func.loc,
-                            "method 'pop()' does not take any arguments".to_string(),
-                        ));
-                        return Err(());
-                    }
-
-                    return Ok(Expression::Builtin(
-                        func.loc,
-                        vec![Type::Bytes(1)],
-                        Builtin::ArrayPop,
-                        vec![var_expr],
-                    ));
-                }
-            }
-            _ => {}
-        }
-    }
-
-    if matches!(var_ty, Type::Array(..) | Type::DynamicBytes) {
-        if func.name == "push" {
-            let elem_ty = var_ty.array_elem();
-
-            let val = match args.len() {
-                0 => {
-                    return Ok(Expression::Builtin(
-                        *loc,
-                        vec![elem_ty.clone()],
-                        Builtin::ArrayPush,
-                        vec![var_expr],
-                    ));
-                }
-                1 => {
-                    let val_expr = expression(
-                        &args[0],
-                        context,
-                        ns,
-                        symtable,
-                        diagnostics,
-                        ResolveTo::Type(&elem_ty),
-                    )?;
-
-                    val_expr.cast(&args[0].loc(), &elem_ty, true, ns, diagnostics)?
-                }
-                _ => {
-                    diagnostics.push(Diagnostic::error(
-                        func.loc,
-                        "method 'push()' takes at most 1 argument".to_string(),
-                    ));
-                    return Err(());
-                }
-            };
-
-            return Ok(Expression::Builtin(
-                *loc,
-                vec![elem_ty.clone()],
-                Builtin::ArrayPush,
-                vec![var_expr, val],
-            ));
-        }
-        if func.name == "pop" {
-            if !args.is_empty() {
-                diagnostics.push(Diagnostic::error(
-                    func.loc,
-                    "method 'pop()' does not take any arguments".to_string(),
-                ));
-                return Err(());
-            }
-
-            let elem_ty = match &var_ty {
-                Type::Array(ty, _) => ty,
-                Type::DynamicBytes => &Type::Uint(8),
-                _ => unreachable!(),
-            };
-
-            return Ok(Expression::Builtin(
-                *loc,
-                vec![elem_ty.clone()],
-                Builtin::ArrayPop,
-                vec![var_expr],
-            ));
-        }
-    }
-
     if let Type::Contract(ext_contract_no) = &var_ty.deref_any() {
         let call_args = parse_call_args(call_args, true, context, ns, symtable, diagnostics)?;
 
@@ -7187,57 +5972,6 @@ fn check_subarrays<'a>(
     }
 
     Ok(())
-}
-
-/// Function call arguments
-pub fn collect_call_args<'a>(
-    expr: &'a program::Expression,
-    diagnostics: &mut Diagnostics,
-) -> Result<
-    (
-        &'a program::Expression,
-        Vec<&'a program::NamedArgument>,
-        Option<program::Loc>,
-    ),
-    (),
-> {
-    let mut named_arguments = Vec::new();
-    let mut expr = expr;
-    let mut loc: Option<program::Loc> = None;
-
-    while let program::Expression::FunctionCallBlock(_, e, block) = expr {
-        match block.as_ref() {
-            program::Statement::Args(_, args) => {
-                if let Some(program::Loc::File(file_no, start, _)) = loc {
-                    loc = Some(program::Loc::File(file_no, start, block.loc().end()));
-                } else {
-                    loc = Some(block.loc());
-                }
-
-                named_arguments.extend(args);
-            }
-            program::Statement::Block { statements, .. } if statements.is_empty() => {
-                // {}
-                diagnostics.push(Diagnostic::error(
-                    block.loc(),
-                    "missing call arguments".to_string(),
-                ));
-                return Err(());
-            }
-            _ => {
-                diagnostics.push(Diagnostic::error(
-                    block.loc(),
-                    "code block found where list of call arguments expected, like '{gas: 5000}'"
-                        .to_string(),
-                ));
-                return Err(());
-            }
-        }
-
-        expr = e;
-    }
-
-    Ok((expr, named_arguments, loc))
 }
 
 /// Parse call arguments for external calls

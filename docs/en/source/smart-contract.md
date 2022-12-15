@@ -1,11 +1,11 @@
 # Smart contracts
 
-Ola contracts allow users to write complex business logic that will be deployed to ola's l2 network, 
-and cross-contract calls can be written between different contracts just like solidity
+Ola contracts allow users to write complex business logic that will be deployed to Ola's l2 network, 
+and cross-contract calls can be written between different contracts just like solidity.
 
 ## Examples
 
-The following example shows a recursive and non-recursive ola smart contract implementation of Fibonacci numbers
+The following example shows a recursive and non-recursive ola smart contract implementation of Fibonacci numbers.
 
 ````javascript
 
@@ -37,7 +37,7 @@ contract Fibonacci {
 ````
 
 The following shows a simple Person contract that contains a person structure, 
-assigns a value to the person structure and reads the status of the person
+assigns a value to the person structure and reads the status of the person.
 
 ````javascript
 
@@ -77,12 +77,12 @@ contract Person {
 
 For better project organisation and clearer logic, 
 it is common to split the contents of a file into multiple files.
-ola language supports the import of another contract within a contract through the `import` keyword
+ola language supports the import of another contract within a contract through the `import` keyword.
 
-An example of a multi-file contract is shown below
+An example of a multi-file contract is shown below.
 
 
-**contract RectangularCalculator**
+**Contract RectangularCalculator**
 ````javascript
 
 contract RectangularCalculator {
@@ -97,7 +97,7 @@ contract RectangularCalculator {
 
 ````
 
-**contract ShapeCalculator**
+**Contract ShapeCalculator**
 ````javascript
 
 contract SquareCalculator {
@@ -111,7 +111,7 @@ contract SquareCalculator {
 
 ````
 
-**contract Calculator**
+**Contract Calculator**
 ```javascript
 
 import "./RectangularCalculator";
@@ -131,7 +131,7 @@ contract Calculator {
 
 ## More Features
 
-* String and Mapping Support - More data types can be combined
-* Library functions  - Support for native fields and cryptography-related library functions
-* Cross-contract calls - Support for more complex business logic
-* ... - Coming soon
+* String and Mapping Support - More data types can be combined.
+* Library functions  - Support for native fields and cryptography-related library functions.
+* Cross-contract calls - Support for more complex business logic.
+* ... - Coming soon.

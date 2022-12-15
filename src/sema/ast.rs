@@ -409,12 +409,12 @@ pub enum Expression {
     StructLiteral(program::Loc, Type, Vec<Expression>),
     ArrayLiteral(program::Loc, Type, Vec<u32>, Vec<Expression>),
     ConstArrayLiteral(program::Loc, Type, Vec<u32>, Vec<Expression>),
-    Add(program::Loc, Type, bool, Box<Expression>, Box<Expression>),
-    Subtract(program::Loc, Type, bool, Box<Expression>, Box<Expression>),
-    Multiply(program::Loc, Type, bool, Box<Expression>, Box<Expression>),
+    Add(program::Loc, Type, Box<Expression>, Box<Expression>),
+    Subtract(program::Loc, Type, Box<Expression>, Box<Expression>),
+    Multiply(program::Loc, Type,  Box<Expression>, Box<Expression>),
     Divide(program::Loc, Type, Box<Expression>, Box<Expression>),
     Modulo(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Power(program::Loc, Type, bool, Box<Expression>, Box<Expression>),
+    Power(program::Loc, Type, Box<Expression>, Box<Expression>),
     BitwiseOr(program::Loc, Type, Box<Expression>, Box<Expression>),
     BitwiseAnd(program::Loc, Type, Box<Expression>, Box<Expression>),
     BitwiseXor(program::Loc, Type, Box<Expression>, Box<Expression>),
@@ -422,8 +422,8 @@ pub enum Expression {
     ShiftRight(program::Loc, Type, Box<Expression>, Box<Expression>, bool),
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
-    Increment(program::Loc, Type, bool, Box<Expression>),
-    Decrement(program::Loc, Type, bool, Box<Expression>),
+    Increment(program::Loc, Type, Box<Expression>),
+    Decrement(program::Loc, Type, Box<Expression>),
     Assign(program::Loc, Type, Box<Expression>, Box<Expression>),
 
     More(program::Loc, Box<Expression>, Box<Expression>),
@@ -487,12 +487,12 @@ impl Recurse for Expression {
                         e.recurse(cx, f);
                     }
                 }
-                Expression::Add(_, _, _, left, right)
-                | Expression::Subtract(_, _, _, left, right)
-                | Expression::Multiply(_, _, _, left, right)
+                Expression::Add(_, _, left, right)
+                | Expression::Subtract(_, _, left, right)
+                | Expression::Multiply(_, _,  left, right)
                 | Expression::Divide(_, _, left, right)
                 | Expression::Modulo(_, _, left, right)
-                | Expression::Power(_, _, _, left, right)
+                | Expression::Power(_, _,  left, right)
                 | Expression::BitwiseOr(_, _, left, right)
                 | Expression::BitwiseAnd(_, _, left, right)
                 | Expression::BitwiseXor(_, _, left, right)

@@ -267,8 +267,6 @@ pub enum Expression {
     NamedFunctionCall(Loc, Box<Expression>, Vec<NamedArgument>),
     Not(Loc, Box<Expression>),
     Complement(Loc, Box<Expression>),
-    UnaryPlus(Loc, Box<Expression>),
-    UnaryMinus(Loc, Box<Expression>),
     Power(Loc, Box<Expression>, Box<Expression>),
     Multiply(Loc, Box<Expression>, Box<Expression>),
     Divide(Loc, Box<Expression>, Box<Expression>),

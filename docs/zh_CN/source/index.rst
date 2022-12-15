@@ -18,13 +18,13 @@ The current ola language is unstable and has many features that need to be impro
 Contents
 ========
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Introduction
 
    introduction
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Quick Start
 
    quick-start
@@ -32,21 +32,21 @@ Contents
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Ola Syntax
 
    grammar/full
    ola-syntax
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Compiler
 
    ola-abi
    ola-ir
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Appendix
 
    ola-libs

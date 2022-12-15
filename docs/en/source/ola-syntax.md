@@ -29,7 +29,7 @@ fn foo() {
 }
 ```
 
-#### scope
+#### Scope
 
 For security reasons, variable definitions do not support Shadowing. 
 If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
@@ -95,7 +95,7 @@ u64 b  = 0xffffl; // u64
 u256 d = 102411ll  // u256
 ```
 
-##### field
+##### Field
 `Field` is the most basic type of Olang, and the data range of the `field` variable is `[0, p-1]`.
 The olaVM uses plonky2 as its back-end proof system, so the `field` of prime is selected as `$p=2^{64}-2^{32}+1$`. 
 For Olang developers, `field` type operations, like integer types, require special attention when overflowing.
@@ -105,7 +105,7 @@ field a = 0xff; // field
 field b = 0; // field
 ```
 
-##### boolean
+##### Boolean
 
 Bool indicates that the value of `field` is `0` or `1`, which is declared using the keyword `bool`.
 ```

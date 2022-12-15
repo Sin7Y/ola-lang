@@ -256,7 +256,7 @@ impl Dot {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));
                 }
             }
-            Expression::Add(loc, ty, unchecked, left, right) => {
+            Expression::Add(loc, ty, left, right) => {
                 let mut labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
                 if *unchecked {
                     labels.push(String::from("unchecked"));
@@ -266,7 +266,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::Subtract(loc, ty, unchecked, left, right) => {
+            Expression::Subtract(loc, ty, left, right) => {
                 let mut labels = vec![
                     String::from("subtract"),
                     ty.to_string(ns),
@@ -284,7 +284,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::Multiply(loc, ty, unchecked, left, right) => {
+            Expression::Multiply(loc, ty, left, right) => {
                 let mut labels = vec![
                     String::from("multiply"),
                     ty.to_string(ns),
@@ -326,7 +326,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::Power(loc, ty, unchecked, left, right) => {
+            Expression::Power(loc, ty, left, right) => {
                 let mut labels = vec![
                     String::from("power"),
                     ty.to_string(ns),
@@ -433,7 +433,7 @@ impl Dot {
                 );
             }
 
-            Expression::Increment(loc, ty, unchecked, expr) => {
+            Expression::Increment(loc, ty, expr) => {
                 let mut labels = vec![
                     String::from("pre increment"),
                     ty.to_string(ns),
@@ -450,7 +450,7 @@ impl Dot {
 
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
-            Expression::Decrement(loc, ty, unchecked, expr) => {
+            Expression::Decrement(loc, ty, expr) => {
                 let mut labels = vec![
                     String::from("pre decrement"),
                     ty.to_string(ns),
