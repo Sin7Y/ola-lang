@@ -1245,6 +1245,7 @@ pub fn coerce_number(
         (Type::U256, Type::U32 | Type::U64 | Type::Field | Type::U256) => {
             return Ok(Type::U256);
         }
+        _ => todo!()
     }
 
 }

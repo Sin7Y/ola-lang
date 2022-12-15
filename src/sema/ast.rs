@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::symtable::Symtable;
-use crate::codegen::cfg::{ControlFlowGraph, Instr};
 use crate::diagnostics::Diagnostics;
 use crate::sema::Recurse;
-use crate::{codegen};
 use indexmap::IndexMap;
 use num_bigint::BigInt;
 pub use ola_parser::diagnostics::*;
@@ -378,7 +376,8 @@ pub struct Namespace {
     pub next_id: usize,
     /// For a variable reference at a location, give the constant value
     /// This for use by the language server to show the value of a variable at a location
-    pub var_constants: HashMap<program::Loc, codegen::Expression>,
+    /// TODO add it after sema build successful
+    // pub var_constants: HashMap<program::Loc, codegen::Expression>,
     /// Overrides for hover in the language server
     pub hover_overrides: HashMap<program::Loc, String>,
 }
@@ -395,7 +394,8 @@ pub struct Contract {
     /// List of contracts this contract instantiates
     pub creates: Vec<usize>,
     pub initializer: Option<usize>,
-    pub cfg: Vec<ControlFlowGraph>,
+    // TODO add cfg after build sema successful
+    // pub cfg: Vec<ControlFlowGraph>,
     pub code: Vec<u8>,
     /// CFG number of this contract's dispatch function
     pub dispatch_no: usize,
@@ -612,53 +612,53 @@ impl CodeLocation for Statement {
     }
 }
 
-impl CodeLocation for Instr {
-    fn loc(&self) -> program::Loc {
-        match self {
-            Instr::Set { loc, expr, .. } => match loc {
-                program::Loc::File(_, _, _) => *loc,
-                _ => expr.loc(),
-            },
-            Instr::Call { args, .. } if args.is_empty() => program::Loc::Codegen,
-            Instr::Call { args, .. } => args[0].loc(),
-            Instr::Return { value } if value.is_empty() => program::Loc::Codegen,
-            Instr::Return { value } => value[0].loc(),
-            Instr::EmitEvent { data, .. } if data.is_empty() => program::Loc::Codegen,
-            Instr::EmitEvent { data, .. } => data[0].loc(),
-            Instr::BranchCond { cond, .. } => cond.loc(),
-            Instr::Store { dest, .. } => dest.loc(),
-            Instr::SetStorageBytes { storage, .. }
-            | Instr::PushStorage { storage, .. }
-            | Instr::PopStorage { storage, .. }
-            | Instr::LoadStorage { storage, .. }
-            | Instr::ClearStorage { storage, .. } => storage.loc(),
-            Instr::ExternalCall { value, .. } | Instr::SetStorage { value, .. } => value.loc(),
-            Instr::PushMemory { value, .. } => value.loc(),
-            Instr::Constructor { gas, .. } => gas.loc(),
-            Instr::ValueTransfer { address, .. } => address.loc(),
-            Instr::AbiDecode { data, .. } => data.loc(),
-            Instr::SelfDestruct { recipient } => recipient.loc(),
-            Instr::WriteBuffer { buf, .. } => buf.loc(),
-            Instr::Print { expr } => expr.loc(),
-            Instr::MemCopy {
-                source,
-                destination,
-                ..
-            } => match source.loc() {
-                program::Loc::File(_, _, _) => source.loc(),
-                _ => destination.loc(),
-            },
-            Instr::Switch { cond, .. } => cond.loc(),
-            Instr::ReturnData { data, .. } => data.loc(),
-            Instr::Branch { .. }
-            | Instr::Unreachable
-            | Instr::ReturnCode { .. }
-            | Instr::Nop
-            | Instr::AssertFailure { .. }
-            | Instr::PopMemory { .. } => program::Loc::Codegen,
-        }
-    }
-}
+// impl CodeLocation for Instr {
+//     fn loc(&self) -> program::Loc {
+//         match self {
+//             Instr::Set { loc, expr, .. } => match loc {
+//                 program::Loc::File(_, _, _) => *loc,
+//                 _ => expr.loc(),
+//             },
+//             Instr::Call { args, .. } if args.is_empty() => program::Loc::Codegen,
+//             Instr::Call { args, .. } => args[0].loc(),
+//             Instr::Return { value } if value.is_empty() => program::Loc::Codegen,
+//             Instr::Return { value } => value[0].loc(),
+//             Instr::EmitEvent { data, .. } if data.is_empty() => program::Loc::Codegen,
+//             Instr::EmitEvent { data, .. } => data[0].loc(),
+//             Instr::BranchCond { cond, .. } => cond.loc(),
+//             Instr::Store { dest, .. } => dest.loc(),
+//             Instr::SetStorageBytes { storage, .. }
+//             | Instr::PushStorage { storage, .. }
+//             | Instr::PopStorage { storage, .. }
+//             | Instr::LoadStorage { storage, .. }
+//             | Instr::ClearStorage { storage, .. } => storage.loc(),
+//             Instr::ExternalCall { value, .. } | Instr::SetStorage { value, .. } => value.loc(),
+//             Instr::PushMemory { value, .. } => value.loc(),
+//             Instr::Constructor { gas, .. } => gas.loc(),
+//             Instr::ValueTransfer { address, .. } => address.loc(),
+//             Instr::AbiDecode { data, .. } => data.loc(),
+//             Instr::SelfDestruct { recipient } => recipient.loc(),
+//             Instr::WriteBuffer { buf, .. } => buf.loc(),
+//             Instr::Print { expr } => expr.loc(),
+//             Instr::MemCopy {
+//                 source,
+//                 destination,
+//                 ..
+//             } => match source.loc() {
+//                 program::Loc::File(_, _, _) => source.loc(),
+//                 _ => destination.loc(),
+//             },
+//             Instr::Switch { cond, .. } => cond.loc(),
+//             Instr::ReturnData { data, .. } => data.loc(),
+//             Instr::Branch { .. }
+//             | Instr::Unreachable
+//             | Instr::ReturnCode { .. }
+//             | Instr::Nop
+//             | Instr::AssertFailure { .. }
+//             | Instr::PopMemory { .. } => program::Loc::Codegen,
+//         }
+//     }
+// }
 
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]

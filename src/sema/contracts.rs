@@ -30,7 +30,6 @@ impl ast::Contract {
             variables: Vec::new(),
             creates: Vec::new(),
             initializer: None,
-            cfg: Vec::new(),
             code: Vec::new(),
             dispatch_no: 0,
         }
