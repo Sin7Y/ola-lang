@@ -322,8 +322,6 @@ impl CodeLocation for Expression {
             | Expression::NamedFunctionCall(loc, ..)
             | Expression::Not(loc, _)
             | Expression::Complement(loc, _)
-            | Expression::UnaryPlus(loc, _)
-            | Expression::UnaryMinus(loc, _)
             | Expression::Power(loc, ..)
             | Expression::Multiply(loc, ..)
             | Expression::Divide(loc, ..)
@@ -403,7 +401,7 @@ pub struct FunctionDefinition {
     pub name: Option<Identifier>,
     pub name_loc: Loc,
     pub params: ParameterList,
-    pub returns: Option<ParameterList>,
+    pub returns: ParameterList,
     pub body: Option<Statement>,
 }
 

@@ -274,7 +274,8 @@ BlockStatementOrSemiColon: Option<Statement> = {
 }
 FunctionDefinition: Box<FunctionDefinition> = {
     <l:@L> "fn" <nl:@L> <name: IdentifierOrError> <nr:@R> <params:ParameterList> 
-    <returns: ("->" <ParameterList>)?> <r:@R> <body:BlockStatementOrSemiColon> => {
+    <returns: ("->" ParameterList)?> <r:@R> <body:BlockStatementOrSemiColon> => {
+        let (_, returns) = returns.unwrap_or(("", Vec::new()));
         Box::new(FunctionDefinition{
             loc: Loc::File(file_no, l, r),
             name,

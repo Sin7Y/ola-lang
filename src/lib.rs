@@ -103,9 +103,8 @@ pub fn compile_many<'a>(
 pub fn parse_and_resolve(
     filename: &OsStr,
     resolver: &mut FileResolver,
-    target: Target,
 ) -> sema::ast::Namespace {
-    let mut ns = sema::ast::Namespace::new(target);
+    let mut ns = sema::ast::Namespace::new();
 
     match resolver.resolve_file(None, filename) {
         Err(message) => {

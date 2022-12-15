@@ -110,7 +110,6 @@ pub fn variable_decl<'a>(
             let mut diagnostics = Diagnostics::default();
             let context = ExprContext {
                 file_no,
-                unchecked: false,
                 contract_no,
                 function_no: None,
                 constant,
@@ -125,17 +124,8 @@ pub fn variable_decl<'a>(
                 ResolveTo::Type(&ty),
             ) {
                 Ok(res) => {
-                    // implicitly conversion to correct ty
-                    match res.cast(&def.loc, &ty, true, ns, &mut diagnostics) {
-                        Ok(res) => {
-                            res.recurse(ns, check_term_for_constant_overflow);
-                            Some(res)
-                        }
-                        Err(_) => {
-                            ns.diagnostics.extend(diagnostics);
-                            None
-                        }
-                    }
+                    res.recurse(ns, check_term_for_constant_overflow);
+                    Some(res)
                 }
                 Err(()) => {
                     ns.diagnostics.extend(diagnostics);
@@ -219,7 +209,6 @@ pub fn resolve_initializers(
 
         let context = ExprContext {
             file_no,
-            unchecked: false,
             contract_no: Some(*contract_no),
             function_no: None,
             constant: false,
@@ -234,10 +223,9 @@ pub fn resolve_initializers(
             &mut diagnostics,
             ResolveTo::Type(&ty),
         ) {
-            if let Ok(res) = res.cast(&initializer.loc(), &ty, true, ns, &mut diagnostics) {
-                res.recurse(ns, check_term_for_constant_overflow);
-                ns.contracts[*contract_no].variables[*var_no].initializer = Some(res);
-            }
+            res.recurse(ns, check_term_for_constant_overflow);
+            ns.contracts[*contract_no].variables[*var_no].initializer = Some(res);
+
         }
     }
 

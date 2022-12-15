@@ -186,12 +186,7 @@ pub fn resolve_call(
             };
 
             if let Some(ty) = ty {
-                match arg.cast(&arg.loc(), ty, true, ns, &mut errors) {
-                    Ok(expr) => cast_args.push(expr),
-                    Err(()) => {
-                        matches = false;
-                    }
-                }
+                   cast_args.push(arg);
             }
         }
 
@@ -341,13 +336,7 @@ pub fn resolve_method_call(
             };
 
             if let Some(ty) = ty {
-                match arg.cast(&arg.loc(), ty, true, ns, &mut errors) {
-                    Ok(expr) => cast_args.push(expr),
-                    Err(()) => {
-                        matches = false;
-                        continue;
-                    }
-                }
+                    cast_args.push(arg);
             }
         }
 

@@ -258,9 +258,6 @@ impl Dot {
             }
             Expression::Add(loc, ty, left, right) => {
                 let mut labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
-                if *unchecked {
-                    labels.push(String::from("unchecked"));
-                }
                 let node = self.add_node(Node::new("add", labels), Some(parent), Some(parent_rel));
 
                 self.add_expression(left, func, ns, node, String::from("left"));
@@ -272,9 +269,6 @@ impl Dot {
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
                 ];
-                if *unchecked {
-                    labels.push(String::from("unchecked"));
-                }
                 let node = self.add_node(
                     Node::new("subtract", labels),
                     Some(parent),
@@ -290,9 +284,6 @@ impl Dot {
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
                 ];
-                if *unchecked {
-                    labels.push(String::from("unchecked"));
-                }
                 let node = self.add_node(
                     Node::new("multiply", labels),
                     Some(parent),
@@ -332,9 +323,6 @@ impl Dot {
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
                 ];
-                if *unchecked {
-                    labels.push(String::from("unchecked"));
-                }
                 let node =
                     self.add_node(Node::new("power", labels), Some(parent), Some(parent_rel));
 
@@ -401,7 +389,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::ShiftRight(loc, ty, left, right, _) => {
+            Expression::ShiftRight(loc, ty, left, right) => {
                 let labels = vec![
                     String::from("shift right"),
                     ty.to_string(ns),
@@ -439,9 +427,6 @@ impl Dot {
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
                 ];
-                if *unchecked {
-                    labels.push(String::from("unchecked"));
-                }
                 let node = self.add_node(
                     Node::new("pre_increment", labels),
                     Some(parent),
@@ -456,9 +441,6 @@ impl Dot {
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
                 ];
-                if *unchecked {
-                    labels.push(String::from("unchecked"));
-                }
                 let node = self.add_node(
                     Node::new("pre_decrement", labels),
                     Some(parent),

@@ -203,6 +203,7 @@ fn resolve_contract<'a>(
                     pt.name.as_ref().unwrap(),
                     Symbol::Struct(
                         pt.name.as_ref().unwrap().loc,
+                        struct_no
                     ),
                 ) {
                     ns.structs.push(StructDecl {
@@ -522,9 +523,11 @@ impl Type {
             Type::Contract(n) => format!("contract {}", ns.contracts[*n].name),
             Type::UserType(n) => format!("usertype {}", ns.user_types[*n]),
             Type::Void => "void".to_owned(),
+            Type::Unreachable => "unreachable".into(),
             Type::Slice(ty) => format!("{} slice", ty.to_string(ns)),
             Type::Unresolved => "unresolved".to_owned(),
             Type::BufferPointer => "buffer_pointer".to_owned(),
+
         }
     }
 
@@ -765,10 +768,10 @@ impl Type {
                 Type::Enum(_) => BigInt::one(),
                 Type::Bool => BigInt::one(),
                 Type::Contract(_) => BigInt::from(ns.address_length),
-                Type::U32  => 4,
-                Type::U64  => 8,
-                Type::U256  => 32,
-                Type::Field  => 8,
+                Type::U32  => BigInt::from(4),
+                Type::U64  => BigInt::from(8),
+                Type::U256  => BigInt::from(32),
+                Type::Field  => BigInt::from(8),
                 Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => {
                     BigInt::from(4)
                 }
@@ -802,6 +805,19 @@ impl Type {
 
     }
 
+    /// Give the type of an memory array after dereference
+    #[must_use]
+    pub fn array_deref(&self) -> Self {
+        match self {
+            Type::Array(ty, dim) if dim.len() > 1 => Type::Array(
+                ty.clone(),
+                dim[..dim.len() - 1].to_vec(),
+            ),
+            Type::Array(ty, dim) if dim.len() == 1 => *ty.clone(),
+            _ => panic!("deref on non-array"),
+        }
+    }
+
 
     /// Alignment of elements in storage
     pub fn storage_align(&self, ns: &Namespace) -> BigInt {
@@ -813,11 +829,7 @@ impl Type {
                     BigInt::from(4)
                 }
                 Type::Array(ty, _) => {
-                    if self.is_sparse_solana(ns) {
-                        BigInt::from(4)
-                    } else {
-                        ty.storage_align(ns)
-                    }
+                    ty.storage_align(ns)
                 }
                 Type::Struct(n) => ns.structs[*n].fields
                     .iter()

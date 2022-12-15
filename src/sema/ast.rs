@@ -27,6 +27,7 @@ pub enum Type {
     Field,
     Array(Box<Type>, Vec<ArrayLength>),
     Void,
+    Unreachable,
     /// The usize is an index into enums in the namespace
     Enum(usize),
     /// The usize is an index into contracts in the namespace
@@ -320,7 +321,7 @@ pub enum Symbol {
     Enum(program::Loc, usize),
     Function(Vec<(program::Loc, usize)>),
     Variable(program::Loc, Option<usize>, usize),
-    Struct(program::Loc),
+    Struct(program::Loc, usize),
     Contract(program::Loc, usize),
     Import(program::Loc, usize),
     UserType(program::Loc, usize),
@@ -331,7 +332,7 @@ impl CodeLocation for Symbol {
         match self {
             Symbol::Enum(loc, _)
             | Symbol::Variable(loc, ..)
-            | Symbol::Struct(loc)
+            | Symbol::Struct(loc,_)
             | Symbol::Contract(loc, _)
             | Symbol::Import(loc, _)
             | Symbol::UserType(loc, _) => *loc,
@@ -367,8 +368,7 @@ pub struct Namespace {
     pub constants: Vec<Variable>,
     /// address length in bytes
     pub address_length: usize,
-    /// value length in bytes
-    pub value_length: usize,
+
     pub diagnostics: Diagnostics,
     /// There is a separate namespace for functions and non-functions
     pub function_symbols: HashMap<(usize, Option<usize>, String), Symbol>,
@@ -419,7 +419,7 @@ pub enum Expression {
     BitwiseAnd(program::Loc, Type, Box<Expression>, Box<Expression>),
     BitwiseXor(program::Loc, Type, Box<Expression>, Box<Expression>),
     ShiftLeft(program::Loc, Type, Box<Expression>, Box<Expression>),
-    ShiftRight(program::Loc, Type, Box<Expression>, Box<Expression>, bool),
+    ShiftRight(program::Loc, Type, Box<Expression>, Box<Expression>),
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
     Increment(program::Loc, Type, Box<Expression>),
@@ -497,7 +497,7 @@ impl Recurse for Expression {
                 | Expression::BitwiseAnd(_, _, left, right)
                 | Expression::BitwiseXor(_, _, left, right)
                 | Expression::ShiftLeft(_, _, left, right)
-                | Expression::ShiftRight(_, _, left, right, _) => {
+                | Expression::ShiftRight(_, _, left, right) => {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }

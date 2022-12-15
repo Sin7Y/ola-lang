@@ -93,7 +93,7 @@ pub fn eval_const_number(
             };
             Ok((*loc, l << r))
         }
-        Expression::ShiftRight(loc, _, left, right, _) => {
+        Expression::ShiftRight(loc, _, left, right) => {
             let l = eval_const_number(left, ns)?.1;
             let r = eval_const_number(right, ns)?.1;
             let r = match r.to_usize() {
@@ -339,7 +339,7 @@ fn eval_constants_in_expression(
             }
         }
 
-        Expression::ShiftRight(loc, ty, left, right, _) => {
+        Expression::ShiftRight(loc, ty, left, right) => {
             let left = eval_constants_in_expression(left, ns).0;
             let right = eval_constants_in_expression(right, ns).0;
 

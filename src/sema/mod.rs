@@ -6,7 +6,7 @@ use self::{
     variables::variable_decl,
 };
 use crate::file_resolver::{FileResolver, ResolvedFile};
-use crate::sema::unused_variable::{check_unused_events, check_unused_namespace_variables};
+use crate::sema::unused_variable::{check_unused_namespace_variables};
 use num_bigint::BigInt;
 use ola_parser::{ parse, program};
 use std::ffi::OsStr;
@@ -40,7 +40,6 @@ pub fn sema(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Name
     if !ns.diagnostics.any_errors() {
         // Checks for unused variables
         check_unused_namespace_variables(ns);
-        check_unused_events(ns);
     }
 }
 
