@@ -9,13 +9,11 @@ use std::ffi::OsStr;
 
 pub(crate) fn parse(src: &'static str) -> ast::Namespace {
     let mut cache = FileResolver::new();
-    cache.set_file_contents("test.sol", src.to_string());
+    cache.set_file_contents("test.ola", src.to_string());
 
-    let ns = parse_and_resolve(OsStr::new("test.sol"), &mut cache);
+    let ns = parse_and_resolve(OsStr::new("test.ola"), &mut cache);
     ns
 }
-
-
 
 #[test]
 fn test_statement_reachable() {
@@ -76,112 +74,116 @@ fn test_statement_reachable() {
 fn constant_overflow_checks() {
     let file = r#"
     contract test_contract {
-        function test_params(uint8 usesa, int8 sesa) public returns(uint8) {
-            return usesa + uint8(sesa);
+        fn test_params(u32 usesa, u32 sesa) -> (u32) {
+
+            return usesa + sesa;
         }
-    
-        function test_add(int8 input) public returns (uint8) {
-            // value 133 does not fit into type int8.
-            int8 add_ovf = 127 + 6;
-    
-            // negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.
-            uint8 negative = 3 - 4;
-    
-            // value 133 does not fit into type int8.
-            int8 mixed = 126 + 7 + input;
-    
-            // negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.
+
+         fn test_add(u32 input) -> (u32) {
+            // value 4294967297 does not fit into type u32.
+            u32 add_ovf = 4294967295 + 2;
+
+            // negative value -1 does not fit into type u32. Cannot implicitly convert signed literal to unsigned type.
+            u32 negative = 3 - 4;
+
+            // value 4294967295 does not fit into type u32.
+            u32 mixed = 4294967295 + 2 + input;
+
+            // negative value -1 does not fit into type u32. Cannot implicitly convert signed literal to unsigned type.
             return 1 - 2;
         }
-    
-        function test_mul(int8 input) public {
-            // value 726 does not fit into type int8.
-            int8 mul_ovf = 127 * 6;
-    
-            // value 882 does not fit into type int8.
-            int8 mixed = 126 * 7 * input;
+
+        fn test_mul(u32 input)  {
+            // value 4294967296 does not fit into type u32.
+            u32 mul_ovf_u32 = 2147483647 * 2 + 2;
+            // value 9223372036854775808 does not fit into type u64.
+            u64 mul_ovf_u64 = 4611686018427387903 * 2 + 2;
         }
-    
-        function test_shift(int8 input) public {
-            // value 128 does not fit into type int8.
-            // warning: left shift by 7 may overflow the final result.
-            int8 mul_ovf = 1 << 7;
-    
+
+        fn test_shift(u32 input) {
+            // value 4294967296 does not fit into type u32.
+            u32 mul_ovf = 2147483648 << 2;
+
+            // value 4294967296 does not fit into type u.
+            u32 mul_ovf_u32 = 2147483647 * 2 + 2;
+            // value 9223372036854775808 does not fit into type u64.
+            u64 mul_ovf_u64 = 4611686018427387903 * 2 + 2;
+
             // value 128 does not fit into type int8.
             // warning: left shift by 7 may overflow the final result
             int8 mixed = (1 << 7) + input;
         }
-    
-        function test_call() public {
-            // negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.
-            // value 129 does not fit into type int8.
-            test_params(1 - 2, 127 + 2);
-    
-            // negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.
-            // value 129 does not fit into type int8.
-            test_params({usesa: 1 - 2, sesa: 127 + 2});
-        }
-
-        function test_builtin (bytes input) public{
-
-            // value 4294967296 does not fit into type uint32.
-            int16 sesa = input.readInt16LE(4294967296);
-        }
-
-        function test_for_loop () public {
-            for (int8 i = 125 + 5; i < 300 ; i++) {
-            }
-        }
-
-        function composite(int8 a, bytes input) public{
-
-            uint8 sesa = 500- 400 + test_params(100+200, 0) + (200+101) + input.readUint8(4294967296);
-            int8 seas = (120 + 120) + a + (120 + 125);  
-
-            // no diagnostic
-            uint8 b = 255 - 255/5 ;
-
-            // value 260 does not fit into type uint8.
-            uint8 shift_r = (120 >> 2) + 230;
-
-            // value 261 does not fit into type uint8.
-            uint8 mod_test = 254 + (500%17);
-
-            // value 269 does not fit into type uint8.
-            uint8 bb = 320 - (255/5) ;
-
-            // left shift by 7 may overflow the final result
-            uint8 shift_warning = (1 << 9) - 300;
-
-            int8 bitwise_or = (250 | 5) - 150;
-
-            // value 155 does not fit into type int8.
-            int8 bitwise_or_ovf = (250 | 5) - 100;
-
-            uint8 bitwise_and = 1000 & 5 ;
-
-            // value 262 does not fit into type uint8.
-            uint8 bitwise_and_ovf = (1000 & 255) + 30 ;
-
-            uint8 bitwise_xor = 1000 ^ 256;
-
-            // divide by zero
-            uint8 div_zero= 3 / (1-1);
-
-            // divide by zero
-            uint8 div_zeroo = (300-50) % 0;
-
-            // shift by negative number not allowed.
-            uint8 shift_left_neg = 120 << -1;
-            uint8 shift_right_neg = 120 >> -1;
-
-            // power by -1 is not allowed.
-            uint8 pow = 12 ** -1;
-
-            // large shift not allowed
-            int x = 1 >> 14676683207225698178084221555689649093015162623576402558976;
-
-        }
+        //
+        // function test_call() public {
+        //     // negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.
+        //     // value 129 does not fit into type int8.
+        //     test_params(1 - 2, 127 + 2);
+        //
+        //     // negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.
+        //     // value 129 does not fit into type int8.
+        //     test_params({usesa: 1 - 2, sesa: 127 + 2});
+        // }
+        //
+        // function test_builtin (bytes input) public{
+        //
+        //     // value 4294967296 does not fit into type uint32.
+        //     int16 sesa = input.readInt16LE(4294967296);
+        // }
+        //
+        // function test_for_loop () public {
+        //     for (int8 i = 125 + 5; i < 300 ; i++) {
+        //     }
+        // }
+        //
+        // function composite(int8 a, bytes input) public{
+        //
+        //     uint8 sesa = 500- 400 + test_params(100+200, 0) + (200+101) + input.readUint8(4294967296);
+        //     int8 seas = (120 + 120) + a + (120 + 125);
+        //
+        //     // no diagnostic
+        //     uint8 b = 255 - 255/5 ;
+        //
+        //     // value 260 does not fit into type uint8.
+        //     uint8 shift_r = (120 >> 2) + 230;
+        //
+        //     // value 261 does not fit into type uint8.
+        //     uint8 mod_test = 254 + (500%17);
+        //
+        //     // value 269 does not fit into type uint8.
+        //     uint8 bb = 320 - (255/5) ;
+        //
+        //     // left shift by 7 may overflow the final result
+        //     uint8 shift_warning = (1 << 9) - 300;
+        //
+        //     int8 bitwise_or = (250 | 5) - 150;
+        //
+        //     // value 155 does not fit into type int8.
+        //     int8 bitwise_or_ovf = (250 | 5) - 100;
+        //
+        //     uint8 bitwise_and = 1000 & 5 ;
+        //
+        //     // value 262 does not fit into type uint8.
+        //     uint8 bitwise_and_ovf = (1000 & 255) + 30 ;
+        //
+        //     uint8 bitwise_xor = 1000 ^ 256;
+        //
+        //     // divide by zero
+        //     uint8 div_zero= 3 / (1-1);
+        //
+        //     // divide by zero
+        //     uint8 div_zeroo = (300-50) % 0;
+        //
+        //     // shift by negative number not allowed.
+        //     uint8 shift_left_neg = 120 << -1;
+        //     uint8 shift_right_neg = 120 >> -1;
+        //
+        //     // power by -1 is not allowed.
+        //     uint8 pow = 12 ** -1;
+        //
+        //     // large shift not allowed
+        //     int x = 1 >> 14676683207225698178084221555689649093015162623576402558976;
+        //
+        // }
     }
     
         "#;
@@ -189,12 +191,12 @@ fn constant_overflow_checks() {
     let errors = ns.diagnostics.errors();
     let warnings = ns.diagnostics.warnings();
 
-    assert_eq!(errors[0].message, "value 133 does not fit into type int8.");
-    assert_eq!(errors[1].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
-    assert_eq!(errors[2].message, "value 133 does not fit into type int8.");
-    assert_eq!(errors[3].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
-    assert_eq!(errors[4].message, "value 762 does not fit into type int8.");
-    assert_eq!(errors[5].message, "value 882 does not fit into type int8.");
+    assert_eq!(errors[0].message, "value 4294967297 does not fit into type u32.");
+    assert_eq!(errors[1].message, "negative value -1 does not fit into type u32. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(errors[2].message, "value 4294967297 does not fit into type u32.");
+    assert_eq!(errors[3].message, "negative value -1 does not fit into type u32. Cannot implicitly convert signed literal to unsigned type.");
+    assert_eq!(errors[4].message, "value 4294967296 does not fit into type u32.");
+    assert_eq!(errors[5].message, "value 9223372036854775808 does not fit into type u64.");
     assert_eq!(errors[6].message, "value 128 does not fit into type int8.");
     assert_eq!(errors[7].message, "value 128 does not fit into type int8.");
     assert_eq!(errors[8].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");

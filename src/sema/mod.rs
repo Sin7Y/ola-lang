@@ -6,11 +6,10 @@ use self::{
     variables::variable_decl,
 };
 use crate::file_resolver::{FileResolver, ResolvedFile};
-use crate::sema::unused_variable::{check_unused_namespace_variables};
+use crate::sema::unused_variable::check_unused_namespace_variables;
 use num_bigint::BigInt;
-use ola_parser::{ parse, program};
+use ola_parser::{parse, program};
 use std::ffi::OsStr;
-
 
 pub mod ast;
 pub mod builtin;
@@ -30,7 +29,6 @@ mod unused_variable;
 mod variables;
 
 pub type ArrayDimension = Option<(program::Loc, BigInt)>;
-
 
 /// Load a file file from the cache, parse and resolve it. The file must be present in
 /// the cache.
@@ -80,7 +78,7 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
             .collect::<Vec<(usize, &program::ContractDefinition)>>();
 
     // first resolve all the types we can find
-    let fields = types::resolve_typenames(&pt,  file_no, ns);
+    let fields = types::resolve_typenames(&pt, file_no, ns);
 
     // resolve pragmas and imports
     for part in &pt.0 {
@@ -92,16 +90,12 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
         }
     }
 
-
     // once all the types are resolved, we can resolve the structs and events. This is because
     // struct fields or event fields can have types defined elsewhere.
     types::resolve_fields(fields, file_no, ns);
 
     // resolve functions/constants outside of contracts
     let mut resolve_bodies = Vec::new();
-
-
-
 
     // now resolve the contracts
     contracts::resolve(&contracts_to_resolve, file_no, ns);
@@ -110,7 +104,6 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
     for (func_no, func) in resolve_bodies {
         let _ = statements::resolve_function_body(func, file_no, None, func_no, ns);
     }
-
 }
 
 /// Find import file, resolve it by calling sema and add it to the namespace

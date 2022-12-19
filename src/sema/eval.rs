@@ -132,7 +132,6 @@ pub fn eval_const_number(
     }
 }
 
-
 /// Function that recurses the expression and folds number literals by calling 'eval_constants_in_expression'.
 /// If the expression is an arithmetic operation of two number literals, overflow_check() will be called on the result.
 pub(super) fn check_term_for_constant_overflow(expr: &Expression, ns: &mut Namespace) -> bool {
@@ -443,23 +442,21 @@ fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
     if let Sign::Minus = result.sign() {
         return Some(Diagnostic::error(
             *loc,
-            format!( "negative value {} does not fit into type uint{}. Cannot implicitly convert signed literal to unsigned type.",result,ty.get_type_size()),
+            format!( "negative value {} does not fit into type u{}. Cannot implicitly convert signed literal to unsigned type.",result,ty.get_type_size()),
         ));
     }
-    if let Type::U32 = ty {
 
         // If bits of the result is more than bits of the type, throw and error.
-        if result.bits() > 32 as u64 {
+        if result.bits() > ty.get_type_size() as u64 {
             return Some(Diagnostic::error(
                 *loc,
                 format!(
-                    "value {} does not fit into type uint{}.",
+                    "value {} does not fit into type u{}.",
                     result,
                     ty.get_type_size(),
                 ),
             ));
         }
-    }
 
     None
 }

@@ -2,8 +2,7 @@
 
 use super::{
     ast::{
-        Diagnostic, Expression, Function, Namespace, Parameter, Statement, Symbol,
-        Type, Variable,
+        Diagnostic, Expression, Function, Namespace, Parameter, Statement, Symbol, Type, Variable,
     },
     diagnostics::Diagnostics,
     expression::{expression, ExprContext, ResolveTo},
@@ -12,10 +11,8 @@ use super::{
 };
 use crate::sema::eval::check_term_for_constant_overflow;
 use crate::sema::Recurse;
-use ola_parser::{
-    program::{self, CodeLocation, OptionalCodeLocation},
-};
 use ola_parser::program::VariableAttribute;
+use ola_parser::program::{self, CodeLocation, OptionalCodeLocation};
 
 pub struct DelayedResolveInitializer<'a> {
     var_no: usize,
@@ -36,15 +33,9 @@ pub fn contract_variables<'a>(
     for part in &def.parts {
         match part {
             program::ContractPart::VariableDefinition(ref s) => {
-
-                if let Some(delay) = variable_decl(
-                    Some(def),
-                    s,
-                    file_no,
-                    Some(contract_no),
-                    ns,
-                    &mut symtable,
-                ) {
+                if let Some(delay) =
+                    variable_decl(Some(def), s, file_no, Some(contract_no), ns, &mut symtable)
+                {
                     delayed.push(delay);
                 }
             }
@@ -75,7 +66,6 @@ pub fn variable_decl<'a>(
     let mut ty = def.ty.clone();
     let mut ret = None;
 
-
     let mut diagnostics = Diagnostics::default();
 
     let ty = match ns.resolve_type(file_no, contract_no, false, &ty, &mut diagnostics) {
@@ -103,7 +93,6 @@ pub fn variable_decl<'a>(
             _ => {}
         }
     }
-
 
     let initializer = if constant {
         if let Some(initializer) = &def.initializer {
@@ -144,7 +133,6 @@ pub fn variable_decl<'a>(
         None
     };
 
-
     let sdecl = Variable {
         name: def.name.as_ref().unwrap().name.to_string(),
         loc: def.loc,
@@ -152,7 +140,7 @@ pub fn variable_decl<'a>(
         constant,
         assigned: def.initializer.is_some(),
         initializer,
-        read: true
+        read: true,
     };
 
     let var_no = if let Some(contract_no) = contract_no {
@@ -185,7 +173,6 @@ pub fn variable_decl<'a>(
         def.name.as_ref().unwrap(),
         Symbol::Variable(def.loc, contract_no, var_no),
     );
-
 
     ret
 }
@@ -225,7 +212,6 @@ pub fn resolve_initializers(
         ) {
             res.recurse(ns, check_term_for_constant_overflow);
             ns.contracts[*contract_no].variables[*var_no].initializer = Some(res);
-
         }
     }
 

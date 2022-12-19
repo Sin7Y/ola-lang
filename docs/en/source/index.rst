@@ -5,14 +5,13 @@
 
 Ola Language
 ==================================
-Olang is a high-level language for implementing smart contracts. From the outset it is designed to be a zk-friendly programming language.
+Olang is a high-level language for implementing smart contracts. From the outset, it is designed to be a zk-friendly programming language.
 
-olang is compiled into ola ir, which is then optimized and compiled into ola opcode, which is executed by the Ola VM.
+Olang is compiled into ola ir, which is then optimized and compiled into ola opcode, which is executed by the OlaVM.
 
-olang is influenced by solidity and Rust and very easy for developers familiar with solidity and rust to get started, It is statically typed, supports complex user-defined types among other features.
-With Ola you can create contracts for a variety of uses
+Olang is influenced by Solidity and Rust, and is very easy for developers familiar with these languages to get started. It is statically typed and supports complex user-defined types among other features. With Ola, you can create contracts for a variety of uses.
 
-The current olang is unstable and has many features that need to be improved, so keep an eye on our progress!
+The current Olang is unstable, with many features that need to be improved. Keep an eye on our progress!
 
 
 Contents

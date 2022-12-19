@@ -24,15 +24,13 @@ pub struct Variable {
 
 #[derive(Clone, Debug)]
 pub enum VariableInitializer {
-    Solidity(Option<Arc<Expression>>),
-    Yul(bool),
+    Ola(Option<Arc<Expression>>),
 }
 
 impl VariableInitializer {
     pub fn has_initializer(&self) -> bool {
         match self {
-            VariableInitializer::Solidity(expr) => expr.is_some(),
-            VariableInitializer::Yul(initialized) => *initialized,
+            VariableInitializer::Ola(expr) => expr.is_some(),
         }
     }
 }

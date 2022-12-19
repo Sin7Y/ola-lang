@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{
-        Diagnostic, Expression, Function, Namespace, Parameter, Symbol,
-        Type,
-    },
+    ast::{Diagnostic, Expression, Function, Namespace, Parameter, Symbol, Type},
     diagnostics::Diagnostics,
     expression::{expression, ExprContext, ResolveTo},
     Symtable,
 };
 
-use ola_parser::{program, program::{CodeLocation, OptionalCodeLocation},
+use ola_parser::{
+    program,
+    program::{CodeLocation, OptionalCodeLocation},
 };
 
 /// Resolve function declaration in a contract
@@ -23,23 +22,22 @@ pub fn contract_function(
 ) -> Option<usize> {
     let mut success = true;
 
-
-        // Function name cannot be the same as the contract name
-        if let Some(n) = &func.name {
-            if n.name == ns.contracts[contract_no].name {
-                ns.diagnostics.push(Diagnostic::error(
-                    func.loc,
-                    "function cannot have same name as the contract".to_string(),
-                ));
-                return None;
-            }
-        } else {
+    // Function name cannot be the same as the contract name
+    if let Some(n) = &func.name {
+        if n.name == ns.contracts[contract_no].name {
             ns.diagnostics.push(Diagnostic::error(
-                func.name_loc,
-                "function is missing a name. A function without a name is syntax for 'fallback() external' or 'receive() external' in older versions of the Solidity language, see https://solang.readthedocs.io/en/latest/language/functions.html#fallback-and-receive-function".to_string(),
+                func.loc,
+                "function cannot have same name as the contract".to_string(),
             ));
             return None;
         }
+    } else {
+        ns.diagnostics.push(Diagnostic::error(
+                func.name_loc,
+                "function is missing a name. A function without a name is syntax for 'fallback() external' or 'receive() external' in older versions of the Solidity language, see https://solang.readthedocs.io/en/latest/language/functions.html#fallback-and-receive-function".to_string(),
+            ));
+        return None;
+    }
 
     let mut diagnostics = Diagnostics::default();
 
@@ -61,7 +59,6 @@ pub fn contract_function(
 
     ns.diagnostics.extend(diagnostics);
 
-
     if !success || !returns_success || !params_success {
         return None;
     }
@@ -69,62 +66,55 @@ pub fn contract_function(
     let name = func
         .name
         .as_ref()
-        .map(|s| s.name.as_str()).unwrap().to_owned();
+        .map(|s| s.name.as_str())
+        .unwrap()
+        .to_owned();
 
-
-    let mut fdecl = Function::new(
-        func.loc,
-        name,
-        Some(contract_no),
-        params,
-        returns,
-        ns,
-    );
+    let mut fdecl = Function::new(func.loc, name, Some(contract_no), params, returns, ns);
 
     fdecl.has_body = func.body.is_some();
 
-        let id = func.name.as_ref().unwrap();
+    let id = func.name.as_ref().unwrap();
 
-        if let Some(func_no) = ns.contracts[contract_no]
-            .all_functions
-            .keys()
-            .find(|func_no| {
-                let func = &ns.functions[**func_no];
+    if let Some(func_no) = ns.contracts[contract_no]
+        .all_functions
+        .keys()
+        .find(|func_no| {
+            let func = &ns.functions[**func_no];
 
-                func.signature == fdecl.signature
-            })
-        {
-            ns.diagnostics.push(Diagnostic::error_with_note(
-                func.loc,
-                format!("overloaded fn with this signature already exist"),
-                ns.functions[*func_no].loc,
-                "location of previous definition".to_string(),
-            ));
+            func.signature == fdecl.signature
+        })
+    {
+        ns.diagnostics.push(Diagnostic::error_with_note(
+            func.loc,
+            format!("overloaded fn with this signature already exist"),
+            ns.functions[*func_no].loc,
+            "location of previous definition".to_string(),
+        ));
 
-            return None;
-        }
+        return None;
+    }
 
-        let func_no = ns.functions.len();
+    let func_no = ns.functions.len();
 
-        ns.functions.push(fdecl);
-        ns.contracts[contract_no].functions.push(func_no);
+    ns.functions.push(fdecl);
+    ns.contracts[contract_no].functions.push(func_no);
 
-        if let Some(Symbol::Function(ref mut v)) =
-            ns.function_symbols
-                .get_mut(&(file_no, Some(contract_no), id.name.to_owned()))
-        {
-            v.push((func.loc, func_no));
-        } else {
-            ns.add_symbol(
-                file_no,
-                Some(contract_no),
-                id,
-                Symbol::Function(vec![(id.loc, func_no)]),
-            );
-        }
+    if let Some(Symbol::Function(ref mut v)) =
+        ns.function_symbols
+            .get_mut(&(file_no, Some(contract_no), id.name.to_owned()))
+    {
+        v.push((func.loc, func_no));
+    } else {
+        ns.add_symbol(
+            file_no,
+            Some(contract_no),
+            id,
+            Symbol::Function(vec![(id.loc, func_no)]),
+        );
+    }
 
-        Some(func_no)
-
+    Some(func_no)
 }
 
 /// Resolve free function
@@ -168,15 +158,7 @@ pub fn function(
         }
     };
 
-
-    let mut fdecl = Function::new(
-        func.loc,
-        name,
-        None,
-        params,
-        returns,
-        ns,
-    );
+    let mut fdecl = Function::new(func.loc, name, None, params, returns, ns);
 
     fdecl.has_body = true;
 
@@ -274,7 +256,6 @@ pub fn resolve_returns(
 
         match ns.resolve_type(file_no, contract_no, false, &r.ty, diagnostics) {
             Ok(ty) => {
-
                 resolved_returns.push(Parameter {
                     loc: *loc,
                     id: r.name.clone(),
@@ -296,10 +277,8 @@ fn signatures() {
 
     let mut ns = Namespace::new();
 
-    ns.contracts.push(ast::Contract::new(
-        "bar",
-        program::Loc::Implicit,
-    ));
+    ns.contracts
+        .push(ast::Contract::new("bar", program::Loc::Implicit));
 
     let fdecl = Function::new(
         program::Loc::Implicit,

@@ -2,16 +2,15 @@
 
 use super::{
     ast::{
-        ArrayLength, Contract, Diagnostic, EnumDecl, Namespace, Parameter, StructDecl,
-        Symbol, Type, UserTypeDecl,
+        ArrayLength, Contract, Diagnostic, EnumDecl, Namespace, Parameter, StructDecl, Symbol,
+        Type, UserTypeDecl,
     },
     diagnostics::Diagnostics,
 };
 use indexmap::IndexMap;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-use ola_parser::{program, program::CodeLocation,
-};
+use ola_parser::{program, program::CodeLocation};
 use std::collections::HashSet;
 use std::{fmt::Write, ops::Mul};
 
@@ -19,8 +18,6 @@ use std::{fmt::Write, ops::Mul};
 pub struct ResolveFields<'a> {
     structs: Vec<ResolveStructFields<'a>>,
 }
-
-
 
 struct ResolveStructFields<'a> {
     struct_no: usize,
@@ -39,17 +36,14 @@ pub fn resolve_typenames<'a>(
         structs: Vec::new(),
     };
 
-
     for part in &s.0 {
         match part {
             program::SourceUnitPart::ContractDefinition(def) => {
-
                 resolve_contract(def, file_no, &mut delay, ns);
             }
 
             _ => (),
         }
-
     }
 
     delay
@@ -96,7 +90,6 @@ fn type_decl(
         return;
     }
 
-
     ns.user_types.push(UserTypeDecl {
         loc: def.loc,
         name: def.name.name.to_string(),
@@ -139,7 +132,7 @@ fn find_struct_recursion(struct_no: usize, structs_visited: &mut Vec<usize>, ns:
 pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) {
     // now we can resolve the fields for the structs
     for resolve in delay.structs {
-        let fields = struct_decl(resolve.pt, file_no,resolve.contract, ns);
+        let fields = struct_decl(resolve.pt, file_no, resolve.contract, ns);
 
         ns.structs[resolve.struct_no].fields = fields;
     }
@@ -151,7 +144,6 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
 
     // Calculate the offset of each field in all the struct types
     struct_offsets(ns);
-
 }
 
 /// Resolve all the types in a contract
@@ -188,23 +180,18 @@ fn resolve_contract<'a>(
     for parts in &def.parts {
         match parts {
             program::ContractPart::EnumDefinition(ref e) => {
-
-                if !enum_decl(e, file_no,  Some(contract_no), ns) {
+                if !enum_decl(e, file_no, Some(contract_no), ns) {
                     broken = true;
                 }
             }
             program::ContractPart::StructDefinition(ref pt) => {
                 let struct_no = ns.structs.len();
 
-
                 if ns.add_symbol(
                     file_no,
                     Some(contract_no),
                     pt.name.as_ref().unwrap(),
-                    Symbol::Struct(
-                        pt.name.as_ref().unwrap().loc,
-                        struct_no
-                    ),
+                    Symbol::Struct(pt.name.as_ref().unwrap().loc, struct_no),
                 ) {
                     ns.structs.push(StructDecl {
                         name: pt.name.as_ref().unwrap().name.to_owned(),
@@ -224,8 +211,7 @@ fn resolve_contract<'a>(
                 }
             }
             program::ContractPart::TypeDefinition(ty) => {
-
-                type_decl(ty, file_no,  Some(contract_no), ns);
+                type_decl(ty, file_no, Some(contract_no), ns);
             }
             program::ContractPart::FunctionDefinition(f) => {
                 if let Some(program::Statement::Block { loc, .. }) = &f.body {
@@ -251,7 +237,7 @@ pub fn struct_decl(
     file_no: usize,
     contract_no: Option<usize>,
     ns: &mut Namespace,
-) ->  Vec<Parameter> {
+) -> Vec<Parameter> {
     let mut fields: Vec<Parameter> = Vec::new();
 
     for field in &def.fields {
@@ -307,10 +293,8 @@ pub fn struct_decl(
         ));
     }
 
-
-     fields
+    fields
 }
-
 
 /// Parse enum declaration. If the declaration is invalid, it is still generated
 /// so that we can continue parsing, with errors recorded.
@@ -360,7 +344,6 @@ fn enum_decl(
             e.as_ref().unwrap().loc,
         );
     }
-
 
     let decl = EnumDecl {
         name: enum_.name.as_ref().unwrap().name.to_string(),
@@ -449,7 +432,6 @@ fn struct_offsets(ns: &mut Namespace) {
                         offset += alignment - remainder;
                     }
 
-
                     offset += field.ty.storage_slots(ns);
                 }
             }
@@ -462,7 +444,6 @@ fn struct_offsets(ns: &mut Namespace) {
                     offset += largest_alignment - remainder;
                 }
             }
-
         }
 
         if !changes {
@@ -491,10 +472,7 @@ impl Type {
                     })
                     .collect::<String>()
             ),
-            | Type::Function {
-                params,
-                returns,
-            } => {
+            Type::Function { params, returns } => {
                 let mut s = format!(
                     "fn({}) ",
                     params
@@ -503,7 +481,6 @@ impl Type {
                         .collect::<Vec<String>>()
                         .join(","),
                 );
-
 
                 if !returns.is_empty() {
                     write!(
@@ -527,7 +504,6 @@ impl Type {
             Type::Slice(ty) => format!("{} slice", ty.to_string(ns)),
             Type::Unresolved => "unresolved".to_owned(),
             Type::BufferPointer => "buffer_pointer".to_owned(),
-
         }
     }
 
@@ -567,14 +543,15 @@ impl Type {
             Type::Struct(n) => {
                 format!(
                     "({})",
-                    ns.structs[*n].fields
+                    ns.structs[*n]
+                        .fields
                         .iter()
                         .map(|f| f.ty.to_signature_string(say_tuple, ns))
                         .collect::<Vec<String>>()
                         .join(",")
                 )
             }
-            Type::Function{ .. } => "fn".to_owned(),
+            Type::Function { .. } => "fn".to_owned(),
             Type::UserType(n) => ns.user_types[*n].ty.to_signature_string(say_tuple, ns),
             // TODO: should an unresolved type not match another unresolved type?
             Type::Unresolved => "unresolved".to_owned(),
@@ -582,7 +559,6 @@ impl Type {
             _ => unreachable!(),
         }
     }
-
 
     /// Fetch the type of an array element
     pub fn elem_ty(&self) -> Self {
@@ -598,7 +574,7 @@ impl Type {
             Type::Bool => false,
             Type::U32 => false,
             Type::U64 => false,
-            Type::U256  => false,
+            Type::U256 => false,
             Type::Field => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
@@ -621,7 +597,6 @@ impl Type {
             _ => panic!("not an array"),
         }
     }
-
 
     /// Give the length of the outer array. This can only be called on array types
     /// and will panic otherwise.
@@ -650,7 +625,8 @@ impl Type {
                         .product::<BigInt>(),
                 )
             }
-            Type::Struct(n) => ns.structs[*n].fields
+            Type::Struct(n) => ns.structs[*n]
+                .fields
                 .iter()
                 .map(|d| d.ty.memory_size_of(ns))
                 .sum::<BigInt>(),
@@ -705,7 +681,8 @@ impl Type {
                         .product::<BigInt>(),
                 )
             }
-            Type::Struct(n) => ns.structs[*n].offsets
+            Type::Struct(n) => ns.structs[*n]
+                .offsets
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
@@ -723,10 +700,11 @@ impl Type {
     /// Calculate the alignment
     pub fn align_of(&self, ns: &Namespace) -> usize {
         match self {
-            Type::U32  => 1,
+            Type::U32 => 1,
             Type::U64 | Type::Field => 2,
-            Type::U256  => 8,
-            Type::Struct(n) => ns.structs[*n].fields
+            Type::U256 => 8,
+            Type::Struct(n) => ns.structs[*n]
+                .fields
                 .iter()
                 .map(|f| if f.recursive { 1 } else { f.ty.align_of(ns) })
                 .max()
@@ -748,7 +726,6 @@ impl Type {
         }
     }
 
-
     pub fn is_integer(&self) -> bool {
         match self {
             Type::U32 => true,
@@ -760,98 +737,86 @@ impl Type {
         }
     }
 
-
     /// Calculate how many storage slots a type occupies. Note that storage arrays can
     /// be very large
     pub fn storage_slots(&self, ns: &Namespace) -> BigInt {
-            match self {
-                Type::Enum(_) => BigInt::one(),
-                Type::Bool => BigInt::one(),
-                Type::Contract(_) => BigInt::from(ns.address_length),
-                Type::U32  => BigInt::from(4),
-                Type::U64  => BigInt::from(8),
-                Type::U256  => BigInt::from(32),
-                Type::Field  => BigInt::from(8),
-                Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => {
-                    BigInt::from(4)
-                }
-                Type::Array(ty, dims) => {
-                    let pointer_size = BigInt::from(4);
+        match self {
+            Type::Enum(_) => BigInt::one(),
+            Type::Bool => BigInt::one(),
+            Type::Contract(_) => BigInt::from(ns.address_length),
+            Type::U32 => BigInt::from(4),
+            Type::U64 => BigInt::from(8),
+            Type::U256 => BigInt::from(32),
+            Type::Field => BigInt::from(8),
+            Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
+            Type::Array(ty, dims) => {
+                let pointer_size = BigInt::from(4);
 
-                        ty.storage_slots(ns).mul(
-                            dims.iter()
-                                .map(|d| match d {
-                                    ArrayLength::Dynamic => &pointer_size,
-                                    ArrayLength::Fixed(d) => d,
-                                    ArrayLength::AnyFixed => {
-                                        panic!("unknown length");
-                                    }
-                                })
-                                .product::<BigInt>(),
-                        )
-
-                }
-                // TODO add struct storage offsets
-                // Type::Struct(n) => ns.structs[*n]
-                //     .storage_offsets
-                //     .last()
-                //     .cloned()
-                //     .unwrap_or_else(BigInt::zero),
-                Type::Function { .. } => BigInt::from(4),
-                Type::Unresolved => BigInt::one(),
-                _ => unimplemented!(),
+                ty.storage_slots(ns).mul(
+                    dims.iter()
+                        .map(|d| match d {
+                            ArrayLength::Dynamic => &pointer_size,
+                            ArrayLength::Fixed(d) => d,
+                            ArrayLength::AnyFixed => {
+                                panic!("unknown length");
+                            }
+                        })
+                        .product::<BigInt>(),
+                )
             }
-
-
+            // TODO add struct storage offsets
+            // Type::Struct(n) => ns.structs[*n]
+            //     .storage_offsets
+            //     .last()
+            //     .cloned()
+            //     .unwrap_or_else(BigInt::zero),
+            Type::Function { .. } => BigInt::from(4),
+            Type::Unresolved => BigInt::one(),
+            _ => unimplemented!(),
+        }
     }
 
     /// Give the type of an memory array after dereference
     #[must_use]
     pub fn array_deref(&self) -> Self {
         match self {
-            Type::Array(ty, dim) if dim.len() > 1 => Type::Array(
-                ty.clone(),
-                dim[..dim.len() - 1].to_vec(),
-            ),
+            Type::Array(ty, dim) if dim.len() > 1 => {
+                Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())
+            }
             Type::Array(ty, dim) if dim.len() == 1 => *ty.clone(),
             _ => panic!("deref on non-array"),
         }
     }
 
-
     /// Alignment of elements in storage
     pub fn storage_align(&self, ns: &Namespace) -> BigInt {
-            let length = match self {
-                Type::Enum(_) => BigInt::one(),
-                Type::Bool => BigInt::one(),
-                Type::Contract(_) => BigInt::from(ns.address_length),
-                Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => {
-                    BigInt::from(4)
-                }
-                Type::Array(ty, _) => {
-                    ty.storage_align(ns)
-                }
-                Type::Struct(n) => ns.structs[*n].fields
-                    .iter()
-                    .map(|field| {
-                        if field.recursive {
-                            BigInt::one()
-                        } else {
-                            field.ty.storage_align(ns)
-                        }
-                    })
-                    .max()
-                    .unwrap(),
-                Type::Unresolved => BigInt::one(),
-                _ => unimplemented!(),
-            };
+        let length = match self {
+            Type::Enum(_) => BigInt::one(),
+            Type::Bool => BigInt::one(),
+            Type::Contract(_) => BigInt::from(ns.address_length),
+            Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
+            Type::Array(ty, _) => ty.storage_align(ns),
+            Type::Struct(n) => ns.structs[*n]
+                .fields
+                .iter()
+                .map(|field| {
+                    if field.recursive {
+                        BigInt::one()
+                    } else {
+                        field.ty.storage_align(ns)
+                    }
+                })
+                .max()
+                .unwrap(),
+            Type::Unresolved => BigInt::one(),
+            _ => unimplemented!(),
+        };
 
-            if length > BigInt::from(8) {
-                BigInt::from(8)
-            } else {
-                length
-            }
-
+        if length > BigInt::from(8) {
+            BigInt::from(8)
+        } else {
+            length
+        }
     }
 
     /// Is it an address (with some sugar)
@@ -859,9 +824,6 @@ impl Type {
         matches!(self, Type::Contract(_))
     }
 }
-
-
-
 
 /// These names cannot be used on Windows, even with an extension.
 /// shamelessly stolen from cargo

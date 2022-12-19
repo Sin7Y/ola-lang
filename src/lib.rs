@@ -2,10 +2,7 @@
 
 extern crate core;
 
-#[cfg(feature = "llvm")]
-pub mod emit;
 pub mod file_resolver;
-
 
 pub mod standard_json;
 
@@ -16,11 +13,9 @@ pub mod standard_json;
 pub mod sema;
 
 use file_resolver::FileResolver;
-use sema::diagnostics;
 use ola_parser::program;
+use sema::diagnostics;
 use std::{ffi::OsStr, fmt};
-
-
 
 /// Compile a solidity file to list of wasm files and their ABIs. The filename is only used for error messages;
 /// the contents of the file is provided in the `src` argument.
@@ -98,10 +93,7 @@ pub fn compile_many<'a>(
 /// informational messages like `found contact N`.
 ///
 /// Note that multiple contracts can be specified in on solidity source file.
-pub fn parse_and_resolve(
-    filename: &OsStr,
-    resolver: &mut FileResolver,
-) -> sema::ast::Namespace {
+pub fn parse_and_resolve(filename: &OsStr, resolver: &mut FileResolver) -> sema::ast::Namespace {
     let mut ns = sema::ast::Namespace::new();
 
     match resolver.resolve_file(None, filename) {

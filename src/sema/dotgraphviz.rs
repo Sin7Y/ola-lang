@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::{
-    ast::*,
-    symtable::Symtable,
-};
+use crate::sema::{ast::*, symtable::Symtable};
 use ola_parser::{program, program::Loc};
 use std::fmt::Write;
 
@@ -45,7 +42,7 @@ impl Dot {
                     node.name,
                     node.labels.join("\\n")
                 )
-                    .unwrap();
+                .unwrap();
             }
         }
 
@@ -56,14 +53,14 @@ impl Dot {
                     "\t{} -> {} [label=\"{}\"]",
                     self.nodes[edge.from].name, self.nodes[edge.to].name, label
                 )
-                    .unwrap();
+                .unwrap();
             } else {
                 writeln!(
                     result,
                     "\t{} -> {}",
                     self.nodes[edge.from].name, self.nodes[edge.to].name
                 )
-                    .unwrap();
+                .unwrap();
             }
         }
 
@@ -107,19 +104,14 @@ impl Dot {
         no
     }
 
-
     fn add_function(&mut self, func: &Function, ns: &Namespace, parent: usize) {
-        let mut labels = vec![
-            format!("{}", func.name),
-            ns.loc_to_string(&func.loc),
-        ];
+        let mut labels = vec![format!("{}", func.name), ns.loc_to_string(&func.loc)];
 
         if let Some(contract) = func.contract_no {
             labels.insert(1, format!("contract: {}", ns.contracts[contract].name));
         }
 
         labels.push(format!("signature {}", func.signature));
-
 
         if let Some(selector) = &func.selector {
             labels.push(format!("selector {}", hex::encode(selector)));
@@ -732,7 +724,6 @@ impl Dot {
         }
     }
 
-
     fn add_statement(
         &mut self,
         stmts: &[Statement],
@@ -925,9 +916,7 @@ impl Dot {
     }
 }
 
-
 impl Namespace {
-
     pub fn dotgraphviz(&self) -> String {
         let mut dot = Dot {
             filename: format!("{}", self.files[self.top_file_no()].path.display()),
@@ -986,12 +975,19 @@ impl Namespace {
             }
         }
 
-
         // user types
-        if self.user_types.iter().any(|t| t.loc != program::Loc::Builtin) {
+        if self
+            .user_types
+            .iter()
+            .any(|t| t.loc != program::Loc::Builtin)
+        {
             let types = dot.add_node(Node::new("types", Vec::new()), None, None);
 
-            for decl in self.user_types.iter().filter(|t| t.loc != program::Loc::Builtin) {
+            for decl in self
+                .user_types
+                .iter()
+                .filter(|t| t.loc != program::Loc::Builtin)
+            {
                 let mut labels = vec![
                     format!("name:{} ty:{}", decl.name, decl.ty.to_string(self)),
                     self.loc_to_string(&decl.loc),

@@ -4,8 +4,8 @@ use super::ast::*;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
 use super::expression::{
-    available_functions, call_expr, expression, function_call_expr,
-    function_call_pos_args,  named_call_expr, named_function_call_expr, ExprContext, ResolveTo,
+    available_functions, call_expr, expression, function_call_expr, function_call_pos_args,
+    named_call_expr, named_function_call_expr, ExprContext, ResolveTo,
 };
 use super::symtable::{LoopScopes, Symtable};
 use crate::sema::builtin;
@@ -44,7 +44,7 @@ pub fn resolve_function_body(
                 name,
                 ns.functions[function_no].params[i].ty.clone(),
                 ns,
-                VariableInitializer::Solidity(None),
+                VariableInitializer::Ola(None),
                 VariableUsage::Parameter,
             ) {
                 ns.check_shadowing(file_no, contract_no, name);
@@ -72,7 +72,7 @@ pub fn resolve_function_body(
                 name,
                 ret.ty.clone(),
                 ns,
-                VariableInitializer::Solidity(None),
+                VariableInitializer::Ola(None),
                 VariableUsage::ReturnVariable,
             ) {
                 ns.check_shadowing(file_no, contract_no, name);
@@ -90,7 +90,7 @@ pub fn resolve_function_body(
                     &id,
                     ret.ty.clone(),
                     ns,
-                    VariableInitializer::Solidity(None),
+                    VariableInitializer::Ola(None),
                     VariableUsage::AnonymousReturnVariable,
                 )
                 .unwrap();
@@ -126,7 +126,6 @@ pub fn resolve_function_body(
         return Err(());
     }
 
-
     ns.functions[function_no].body = res;
 
     std::mem::swap(&mut ns.functions[function_no].symtable, &mut symtable);
@@ -149,8 +148,7 @@ fn statement(
 
     match stmt {
         program::Statement::VariableDefinition(loc, decl, initializer) => {
-            let (var_ty, ty_loc) =
-                resolve_var_decl_ty(&decl.ty, context, ns, diagnostics)?;
+            let (var_ty, ty_loc) = resolve_var_decl_ty(&decl.ty, context, ns, diagnostics)?;
 
             let initializer = if let Some(init) = initializer {
                 let expr = expression(
@@ -174,7 +172,7 @@ fn statement(
                 decl.name.as_ref().unwrap(),
                 var_ty.clone(),
                 ns,
-                VariableInitializer::Solidity(initializer.clone()),
+                VariableInitializer::Ola(initializer.clone()),
                 VariableUsage::LocalVariable,
             ) {
                 ns.check_shadowing(
@@ -199,10 +197,7 @@ fn statement(
 
             Ok(true)
         }
-        program::Statement::Block {
-            statements,
-            ..
-        } => {
+        program::Statement::Block { statements, .. } => {
             symtable.new_scope();
             let mut reachable = true;
 
@@ -514,6 +509,7 @@ fn statement(
                     expression(expr, context, ns, symtable, diagnostics, ResolveTo::Unknown)?
                 }
             };
+
             let reachable = expr.tys() != vec![Type::Unreachable];
 
             res.push(Statement::Expression(*loc, reachable, expr));
@@ -754,4 +750,3 @@ pub fn parameter_list_to_expr_list<'a>(
         e => Ok(vec![e]),
     }
 }
-

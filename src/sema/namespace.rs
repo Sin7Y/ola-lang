@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{
-        ArrayLength, Diagnostic, Namespace, Note, Parameter, RetrieveType, Symbol, Type,
-    },
+    ast::{ArrayLength, Diagnostic, Namespace, Note, Parameter, RetrieveType, Symbol, Type},
     builtin,
     diagnostics::Diagnostics,
     eval::eval_const_number,
@@ -24,7 +22,6 @@ use std::collections::HashMap;
 impl Namespace {
     /// Create a namespace and populate with the parameters for the target
     pub fn new() -> Self {
-
         let mut ns = Namespace {
             files: Vec::new(),
             enums: Vec::new(),
@@ -40,7 +37,6 @@ impl Namespace {
             next_id: 0,
             hover_overrides: HashMap::new(),
         };
-
 
         ns
     }
@@ -247,7 +243,6 @@ impl Namespace {
         }
 
         if let Some(contract_no) = contract_no {
-
             if let Some(Symbol::Enum(_, n)) =
                 self.variable_symbols
                     .get(&(file_no, None, id.name.to_owned()))
@@ -270,8 +265,6 @@ impl Namespace {
 
         None
     }
-
-
 
     pub fn wrong_symbol(sym: Option<&Symbol>, id: &program::Identifier) -> Diagnostic {
         match sym {
@@ -326,7 +319,6 @@ impl Namespace {
             let mut s = self
                 .variable_symbols
                 .get(&(file_no, contract_no, id.name.to_owned()));
-
 
             s.or_else(|| {
                 self.variable_symbols
@@ -456,7 +448,6 @@ impl Namespace {
         id: &program::Expression,
         diagnostics: &mut Diagnostics,
     ) -> Result<Type, ()> {
-
         let resolve_dimensions = |ast_dimensions: &[Option<(program::Loc, BigInt)>],
                                   diagnostics: &mut Diagnostics| {
             let mut dimensions = Vec::new();
@@ -498,7 +489,7 @@ impl Namespace {
         if let program::Expression::Type(loc, ty) = &id {
             assert!(namespace.is_empty());
 
-             let ty = Type::from(ty);
+            let ty = Type::from(ty);
 
             return if dimensions.is_empty() {
                 Ok(ty)
@@ -663,7 +654,6 @@ impl Namespace {
             });
 
         if let Some(contract_no) = contract_no {
-
             // try global scope
             if s.is_none() {
                 s = self
@@ -691,7 +681,14 @@ impl Namespace {
         contract_no: Option<usize>,
         expr: &'a program::Expression,
         diagnostics: &mut Diagnostics,
-    ) -> Result<(Vec<&'a program::Identifier>, program::Expression, Vec<ArrayDimension>), ()> {
+    ) -> Result<
+        (
+            Vec<&'a program::Identifier>,
+            program::Expression,
+            Vec<ArrayDimension>,
+        ),
+        (),
+    > {
         let mut expr = expr;
         let mut dimensions = vec![];
 
@@ -778,7 +775,7 @@ impl Namespace {
         )?;
 
         match size_expr.ty() {
-            Type::U32| Type::U64 | Type::U256 | Type::Field => {}
+            Type::U32 | Type::U64 | Type::U256 | Type::Field => {}
             _ => {
                 diagnostics.push(Diagnostic::decl_error(
                     expr.loc(),
@@ -811,5 +808,4 @@ impl Namespace {
                 .join(",")
         )
     }
-
 }

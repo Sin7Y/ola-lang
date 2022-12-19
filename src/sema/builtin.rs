@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::ast::{
-    ArrayLength, Builtin, Diagnostic, Expression, File, Function, Namespace, Parameter,
-    Symbol, Type,
+    ArrayLength, Builtin, Diagnostic, Expression, File, Function, Namespace, Parameter, Symbol,
+    Type,
 };
 use super::diagnostics::Diagnostics;
 use super::eval::eval_const_number;
@@ -30,38 +30,29 @@ pub struct Prototype {
 
 // A list of all Solidity builtins functions
 static BUILTIN_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
-    [
-        Prototype {
-            builtin: Builtin::PoseidonHash,
-            namespace: None,
-            method: None,
-            name: "hash",
-            params: vec![Type::Bool],
-            ret: vec![Type::U256],
-            doc: "Abort execution if argument evaluates to false",
-            constant: false,
-        },
-
-    ]
+    [Prototype {
+        builtin: Builtin::PoseidonHash,
+        namespace: None,
+        method: None,
+        name: "hash",
+        params: vec![Type::Bool],
+        ret: vec![Type::U256],
+        doc: "Abort execution if argument evaluates to false",
+        constant: false,
+    }]
 });
 
 // A list of all Solidity builtins variables
-static BUILTIN_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| {
-    [
-    ]
-});
+static BUILTIN_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
 // A list of all Solidity builtins methods
-static BUILTIN_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| {
-    []
-});
+static BUILTIN_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
 /// Does function call match builtin
 pub fn is_builtin_call(namespace: Option<&str>, fname: &str, ns: &Namespace) -> bool {
-    BUILTIN_FUNCTIONS.iter().any(|p| {
-        p.name == fname
-            && p.namespace == namespace
-    })
+    BUILTIN_FUNCTIONS
+        .iter()
+        .any(|p| p.name == fname && p.namespace == namespace)
 }
 
 /// Get the prototype for a builtin. If the prototype has arguments, it is a function else
@@ -186,7 +177,7 @@ pub fn resolve_call(
             };
 
             if let Some(ty) = ty {
-                   cast_args.push(arg);
+                cast_args.push(arg);
             }
         }
 
@@ -195,7 +186,6 @@ pub fn resolve_call(
                 return Err(());
             }
         } else {
-
             return Ok(Expression::Builtin(
                 *loc,
                 func.ret.to_vec(),
@@ -250,10 +240,8 @@ pub fn resolve_namespace_call(
         _ => unreachable!(),
     };
 
-
     let mut resolved_args = Vec::new();
     let mut args_iter = args.iter();
-
 
     for arg in args_iter {
         let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
@@ -336,7 +324,7 @@ pub fn resolve_method_call(
             };
 
             if let Some(ty) = ty {
-                    cast_args.push(arg);
+                cast_args.push(arg);
             }
         }
 
@@ -380,6 +368,4 @@ pub fn resolve_method_call(
     }
 }
 
-impl Namespace {
-
-}
+impl Namespace {}

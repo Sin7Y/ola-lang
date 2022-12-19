@@ -2,26 +2,21 @@
 
 use num_bigint::BigInt;
 use num_traits::Zero;
-use ola_parser::{program::{self, CodeLocation, Statement}, };
+use ola_parser::program::{self, CodeLocation, Statement};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::convert::TryInto;
 use tiny_keccak::{Hasher, Keccak};
 
 use super::{
-    ast,
-    diagnostics::Diagnostics,
-    expression::{ ExprContext},
-    functions, statements,
-    symtable::Symtable,
-    variables
+    ast, diagnostics::Diagnostics, expression::ExprContext, functions, statements,
+    symtable::Symtable, variables,
 };
-#[cfg(feature = "llvm")]
-use crate::emit;
+
 use crate::sema::unused_variable::emit_warning_local_variable;
 
 impl ast::Contract {
     /// Create a new contract, abstract contract, interface or library
-    pub fn new(name: &str,  loc: program::Loc) -> Self {
+    pub fn new(name: &str, loc: program::Loc) -> Self {
         ast::Contract {
             loc,
             name: name.to_owned(),
@@ -76,7 +71,6 @@ pub fn resolve(
     file_no: usize,
     ns: &mut ast::Namespace,
 ) {
-
     // we need to resolve declarations first, so we call functions/constructors of
     // contracts before they are declared
     let mut delayed: ResolveLater = Default::default();
@@ -89,14 +83,10 @@ pub fn resolve(
     variables::resolve_initializers(&delayed.initializers, file_no, ns);
 
     // Now we can resolve the bodies
-     resolve_bodies(delayed.function_bodies, file_no, ns);
+    resolve_bodies(delayed.function_bodies, file_no, ns);
 }
 
-
-impl ast::Namespace {
-
-}
-
+impl ast::Namespace {}
 
 /// Function body which should be resolved.
 /// List of function_no, contract_no, and function parse tree
@@ -133,21 +123,17 @@ fn resolve_declarations<'a>(
 
     // resolve state variables. We may need a constant to resolve the array
     // dimension of a function argument.
-    delayed.initializers.extend(variables::contract_variables(
-        def,
-        file_no,
-        contract_no,
-        ns,
-    ));
+    delayed
+        .initializers
+        .extend(variables::contract_variables(def, file_no, contract_no, ns));
 
     // resolve function signatures
     let mut doc_comment_start = def.loc.start();
 
     for part in &def.parts {
         if let program::ContractPart::FunctionDefinition(ref f) = part {
-
             if let Some(function_no) =
-                functions::contract_function(def, f,  file_no, contract_no, ns)
+                functions::contract_function(def, f, file_no, contract_no, ns)
             {
                 if f.body.is_some() {
                     delayed.function_bodies.push(DelayedResolveFunction {
@@ -169,21 +155,19 @@ fn resolve_declarations<'a>(
         doc_comment_start = part.loc().end();
     }
 
-        if !function_no_bodies.is_empty() {
-            function_no_bodies.into_iter()
-                .map(|function_no| ast::Note {
-                    loc: ns.functions[function_no].loc,
-                    message: format!(
-                        "location of function '{}' with no body",
-                        ns.functions[function_no].name
-                    ),
-                })
-                .collect::<Vec<ast::Note>>();
-
-
+    if !function_no_bodies.is_empty() {
+        function_no_bodies
+            .into_iter()
+            .map(|function_no| ast::Note {
+                loc: ns.functions[function_no].loc,
+                message: format!(
+                    "location of function '{}' with no body",
+                    ns.functions[function_no].name
+                ),
+            })
+            .collect::<Vec<ast::Note>>();
     }
 }
-
 
 /// Resolve contract functions bodies
 fn resolve_bodies(

@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::ast::{
-    ArrayLength, Builtin, Diagnostic, Expression, Function,
-    Namespace, RetrieveType,  Symbol, Type,
+    ArrayLength, Builtin, Diagnostic, Expression, Function, Namespace, RetrieveType, Symbol, Type,
 };
 use super::builtin;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
 use super::eval::eval_const_number;
-use super::{symtable::Symtable};
+use super::symtable::Symtable;
 use crate::sema::unused_variable::{
     assigned_variable, check_function_call, check_var_usage_expression, used_variable,
 };
@@ -64,8 +63,7 @@ impl RetrieveType for Expression {
             Expression::Subscript(_, ty, ..) => ty.clone(),
 
             Expression::StorageArrayLength { ty, .. } => ty.clone(),
-            Expression::Builtin(_, returns, ..)
-            | Expression::FunctionCall { returns, .. } => {
+            Expression::Builtin(_, returns, ..) | Expression::FunctionCall { returns, .. } => {
                 assert_eq!(returns.len(), 1);
                 returns[0].clone()
             }
@@ -92,8 +90,9 @@ impl Expression {
     /// Return the type for this expression.
     pub fn tys(&self) -> Vec<Type> {
         match self {
-            Expression::Builtin(_, returns, ..)
-            | Expression::FunctionCall { returns, .. } => returns.to_vec(),
+            Expression::Builtin(_, returns, ..) | Expression::FunctionCall { returns, .. } => {
+                returns.to_vec()
+            }
             Expression::List(_, list) => list.iter().map(|e| e.ty()).collect(),
             _ => vec![self.ty()],
         }
@@ -1166,18 +1165,29 @@ impl Expression {
     // }
 }
 
-
-
-
-fn coerce(
-    l: &Type,
-    r: &Type,
-) -> Result<Type, ()> {
-
+fn coerce(l: &Type, r: &Type) -> Result<Type, ()> {
     if *l == *r {
         return Ok(l.clone());
     }
-    coerce_number(l, r, true)
+    match (l, r) {
+        (Type::Contract(left), Type::Contract(right)) if left == right => {
+            return Ok(Type::Contract(*left));
+        }
+
+        (Type::U32, Type::U64 | Type::Field) => {
+            return Ok(Type::U64);
+        }
+        (Type::U32, Type::U256) => {
+            return Ok(Type::U256);
+        }
+        (Type::U64, Type::U32 | Type::Field) => {
+            return Ok(Type::U64);
+        }
+        (Type::U256, Type::U32 | Type::U64 | Type::Field | Type::U256) => {
+            return Ok(Type::U256);
+        }
+        _ => todo!(),
+    }
 }
 
 fn get_int_length(
@@ -1220,34 +1230,6 @@ fn get_int_length(
             Err(())
         }
     }
-}
-
-pub fn coerce_number(
-    l: &Type,
-    r: &Type,
-    for_compare: bool,
-) -> Result<Type, ()> {
-
-    match (l, r) {
-        (Type::Contract(left), Type::Contract(right)) if left == right && for_compare => {
-            return Ok(Type::Contract(*left));
-        }
-
-        (Type::U32,  Type::U64 | Type::Field) => {
-            return Ok(Type::U64);
-        }
-        (Type::U32 , Type::U256) => {
-            return Ok(Type::U256);
-        }
-        (Type::U64 , Type::U32 | Type::Field) => {
-            return Ok(Type::U64);
-        }
-        (Type::U256, Type::U32 | Type::U64 | Type::Field | Type::U256) => {
-            return Ok(Type::U256);
-        }
-        _ => todo!()
-    }
-
 }
 
 // TODO Resolve u32、u64、u256、field number
@@ -1296,15 +1278,11 @@ pub fn bigint_to_expression(
 
     let int_size = if bits < 7 { 8 } else { (bits + 7) & !7 } as u16;
 
-     if bits > 256 {
+    if bits > 256 {
         diagnostics.push(Diagnostic::error(*loc, format!("{} is too large", n)));
         Err(())
     } else {
-        Ok(Expression::NumberLiteral(
-            *loc,
-            Type::Field,
-            n.clone(),
-        ))
+        Ok(Expression::NumberLiteral(*loc, Type::Field, n.clone()))
     }
 }
 
@@ -1355,34 +1333,18 @@ pub fn expression(
             res
         }
         program::Expression::BoolLiteral(loc, v) => Ok(Expression::BoolLiteral(*loc, *v)),
-        program::Expression::U32Literal(loc, integer) => number_literal(
-            loc,
-            integer,
-            ns,
-            diagnostics,
-            resolve_to,
-        ),
-        program::Expression::U64Literal(loc, integer) => number_literal(
-            loc,
-            integer,
-            ns,
-            diagnostics,
-            resolve_to,
-        ),
-        program::Expression::FieldLiteral(loc, integer) => number_literal(
-            loc,
-            integer,
-            ns,
-            diagnostics,
-            resolve_to,
-        ),
-        program::Expression::U256Literal(loc, integer) => number_literal(
-            loc,
-            integer,
-            ns,
-            diagnostics,
-            resolve_to,
-        ),
+        program::Expression::U32Literal(loc, integer) => {
+            number_literal(loc, integer, ns, diagnostics, resolve_to)
+        }
+        program::Expression::U64Literal(loc, integer) => {
+            number_literal(loc, integer, ns, diagnostics, resolve_to)
+        }
+        program::Expression::FieldLiteral(loc, integer) => {
+            number_literal(loc, integer, ns, diagnostics, resolve_to)
+        }
+        program::Expression::U256Literal(loc, integer) => {
+            number_literal(loc, integer, ns, diagnostics, resolve_to)
+        }
 
         program::Expression::Variable(id) => {
             variable(id, context, ns, symtable, diagnostics, resolve_to)
@@ -1427,11 +1389,7 @@ pub fn expression(
 
             check_var_usage_expression(ns, &left, &right, symtable);
 
-            Ok(Expression::More(
-                *loc,
-                Box::new(left),
-                Box::new(right),
-            ))
+            Ok(Expression::More(*loc, Box::new(left), Box::new(right)))
         }
         program::Expression::Less(loc, l, r) => {
             let left = expression(l, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
@@ -1439,36 +1397,25 @@ pub fn expression(
 
             check_var_usage_expression(ns, &left, &right, symtable);
 
-            Ok(Expression::Less(
-                *loc,
-                Box::new(left),
-                Box::new(right),
-            ))
+            Ok(Expression::Less(*loc, Box::new(left), Box::new(right)))
         }
         program::Expression::MoreEqual(loc, l, r) => {
             let left = expression(l, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
             let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
             check_var_usage_expression(ns, &left, &right, symtable);
 
-            Ok(Expression::MoreEqual(
-                *loc,
-                Box::new(left),
-                Box::new(right),
-            ))
+            Ok(Expression::MoreEqual(*loc, Box::new(left), Box::new(right)))
         }
         program::Expression::LessEqual(loc, l, r) => {
             let left = expression(l, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
             let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
             check_var_usage_expression(ns, &left, &right, symtable);
 
-
-            Ok(Expression::LessEqual(
-                *loc,
-                Box::new(left),
-                Box::new(right),
-            ))
+            Ok(Expression::LessEqual(*loc, Box::new(left), Box::new(right)))
         }
-        program::Expression::Equal(loc, l, r) => equal(loc, l, r, context, ns, symtable, diagnostics),
+        program::Expression::Equal(loc, l, r) => {
+            equal(loc, l, r, context, ns, symtable, diagnostics)
+        }
 
         program::Expression::NotEqual(loc, l, r) => Ok(Expression::Not(
             *loc,
@@ -1479,10 +1426,7 @@ pub fn expression(
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
 
             used_variable(ns, &expr, symtable);
-            Ok(Expression::Not(
-                *loc,
-                Box::new(expr),
-            ))
+            Ok(Expression::Not(*loc, Box::new(expr)))
         }
         program::Expression::Complement(loc, e) => {
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
@@ -1502,8 +1446,7 @@ pub fn expression(
             let cond = expression(c, context, ns, symtable, diagnostics, resolve_to)?;
             used_variable(ns, &cond, symtable);
 
-
-            let ty = coerce(&left.ty(),  &right.ty())?;
+            let ty = coerce(&left.ty(), &right.ty())?;
 
             Ok(Expression::ConditionalOperator(
                 *loc,
@@ -1515,8 +1458,7 @@ pub fn expression(
         }
 
         // pre/post decrement/increment
-        program::Expression::Increment(loc, var)
-        | program::Expression::Decrement(loc, var) => {
+        program::Expression::Increment(loc, var) | program::Expression::Decrement(loc, var) => {
             if context.constant {
                 diagnostics.push(Diagnostic::error(
                     *loc,
@@ -1681,7 +1623,6 @@ fn hex_number_literal(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
     // from_str_radix does not like the 0x prefix
     let s: String = n.chars().skip(2).filter(|v| *v != '_').collect();
 
@@ -1693,7 +1634,6 @@ fn hex_number_literal(
         resolve_to,
     )
 }
-
 
 fn variable(
     id: &program::Identifier,
@@ -1721,10 +1661,7 @@ fn variable(
 
     // are we trying to resolve a function type?
     let function_first = if let ResolveTo::Type(resolve_to) = resolve_to {
-        matches!(
-            resolve_to,
-            Type::Function { .. }
-        )
+        matches!(resolve_to, Type::Function { .. })
     } else {
         false
     };
@@ -1775,8 +1712,6 @@ fn variable(
             {
                 let func = &ns.functions[function_no];
 
-
-
                 let ty = Type::Function {
                     params: func.params.iter().map(|p| p.ty.clone()).collect(),
                     returns: func.returns.iter().map(|p| p.ty.clone()).collect(),
@@ -1823,11 +1758,7 @@ fn subtract(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        false,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::Subtract(
         *loc,
@@ -1852,11 +1783,7 @@ fn bitwise_or(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        true,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::BitwiseOr(
         *loc,
@@ -1881,11 +1808,7 @@ fn bitwise_and(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        true,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::BitwiseAnd(
         *loc,
@@ -1910,11 +1833,7 @@ fn bitwise_xor(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        true,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::BitwiseXor(
         *loc,
@@ -1940,8 +1859,8 @@ fn shift_left(
     check_var_usage_expression(ns, &left, &right, symtable);
     // left hand side may be bytes/int/uint
     // right hand size may be int/uint
-    let _ = get_int_length(&left.ty(), &l.loc(),  ns, diagnostics)?;
-    let right_length = get_int_length(&right.ty(), &r.loc(),  ns, diagnostics)?;
+    let _ = get_int_length(&left.ty(), &l.loc(), ns, diagnostics)?;
+    let right_length = get_int_length(&right.ty(), &r.loc(), ns, diagnostics)?;
 
     let left_type = left.ty();
 
@@ -1972,7 +1891,7 @@ fn shift_right(
     // left hand side may be bytes/int/uint
     // right hand size may be int/uint
     let _ = get_int_length(&left_type, &l.loc(), ns, diagnostics)?;
-    let right_length = get_int_length(&right.ty(), &r.loc(),ns, diagnostics)?;
+    let right_length = get_int_length(&right.ty(), &r.loc(), ns, diagnostics)?;
 
     Ok(Expression::ShiftRight(
         *loc,
@@ -1997,19 +1916,14 @@ fn multiply(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        false,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::Multiply(
-            *loc,
-            ty.clone(),
-            Box::new(left),
-            Box::new(right),
+        *loc,
+        ty.clone(),
+        Box::new(left),
+        Box::new(right),
     ))
-
 }
 
 fn divide(
@@ -2027,11 +1941,7 @@ fn divide(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        false,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::Divide(
         *loc,
@@ -2056,11 +1966,7 @@ fn modulo(
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
-    let ty = coerce_number(
-        &left.ty(),
-        &right.ty(),
-        false,
-    )?;
+    let ty = coerce(&left.ty(), &right.ty())?;
 
     Ok(Expression::Modulo(
         *loc,
@@ -2089,12 +1995,7 @@ fn power(
     let base_type = base.ty();
     let exp_type = exp.ty();
 
-
-    let ty = coerce_number(
-        &base_type,
-        &exp_type,
-        false,
-    )?;
+    let ty = coerce(&base_type, &exp_type)?;
 
     Ok(Expression::Power(
         *loc,
@@ -2103,8 +2004,6 @@ fn power(
         Box::new(exp),
     ))
 }
-
-
 
 /// check if from creates to, recursively
 fn circular_reference(from: usize, to: usize, ns: &Namespace) -> bool {
@@ -2117,7 +2016,6 @@ fn circular_reference(from: usize, to: usize, ns: &Namespace) -> bool {
         .iter()
         .any(|n| circular_reference(*n, to, ns))
 }
-
 
 /// Test for equality; first check string equality, then integer equality
 fn equal(
@@ -2139,11 +2037,7 @@ fn equal(
 
     let ty = coerce(&left_type, &right_type)?;
 
-    Ok(Expression::Equal(
-        *loc,
-        Box::new(left),
-        Box::new(right),
-    ))
+    Ok(Expression::Equal(*loc, Box::new(left), Box::new(right)))
 }
 
 /// Try string concatenation
@@ -2164,11 +2058,7 @@ fn addition(
     let left_type = left.ty();
     let right_type = right.ty();
 
-    let ty = coerce_number(
-        &left_type,
-        &right_type,
-        false,
-    )?;
+    let ty = coerce(&left_type, &right_type)?;
 
     Ok(Expression::Add(
         *loc,
@@ -2240,12 +2130,12 @@ fn assign_single(
         )),
 
         _ => {
-                diagnostics.push(Diagnostic::error(
-                    var.loc(),
-                    "expression is not assignable".to_string(),
-                ));
-                Err(())
-            }
+            diagnostics.push(Diagnostic::error(
+                var.loc(),
+                "expression is not assignable".to_string(),
+            ));
+            Err(())
+        }
     }
 }
 
@@ -2293,7 +2183,8 @@ fn assign_expr(
               diagnostics: &mut Diagnostics|
      -> Result<Expression, ()> {
         let set = match expr {
-            program::Expression::AssignShiftLeft(..) | program::Expression::AssignShiftRight(..) => {
+            program::Expression::AssignShiftLeft(..)
+            | program::Expression::AssignShiftRight(..) => {
                 let left_length = get_int_length(ty, loc, ns, diagnostics)?;
                 let right_length = get_int_length(&set_type, &left.loc(), ns, diagnostics)?;
                 set
@@ -2302,24 +2193,15 @@ fn assign_expr(
         };
 
         Ok(match expr {
-            program::Expression::AssignAdd(..) => Expression::Add(
-                *loc,
-                ty.clone(),
-                Box::new(assign),
-                Box::new(set),
-            ),
-            program::Expression::AssignSubtract(..) => Expression::Subtract(
-                *loc,
-                ty.clone(),
-                Box::new(assign),
-                Box::new(set),
-            ),
-            program::Expression::AssignMultiply(..) => Expression::Multiply(
-                *loc,
-                ty.clone(),
-                Box::new(assign),
-                Box::new(set),
-            ),
+            program::Expression::AssignAdd(..) => {
+                Expression::Add(*loc, ty.clone(), Box::new(assign), Box::new(set))
+            }
+            program::Expression::AssignSubtract(..) => {
+                Expression::Subtract(*loc, ty.clone(), Box::new(assign), Box::new(set))
+            }
+            program::Expression::AssignMultiply(..) => {
+                Expression::Multiply(*loc, ty.clone(), Box::new(assign), Box::new(set))
+            }
             program::Expression::AssignOr(..) => {
                 Expression::BitwiseOr(*loc, ty.clone(), Box::new(assign), Box::new(set))
             }
@@ -2332,12 +2214,9 @@ fn assign_expr(
             program::Expression::AssignShiftLeft(..) => {
                 Expression::ShiftLeft(*loc, ty.clone(), Box::new(assign), Box::new(set))
             }
-            program::Expression::AssignShiftRight(..) => Expression::ShiftRight(
-                *loc,
-                ty.clone(),
-                Box::new(assign),
-                Box::new(set),
-            ),
+            program::Expression::AssignShiftRight(..) => {
+                Expression::ShiftRight(*loc, ty.clone(), Box::new(assign), Box::new(set))
+            }
             program::Expression::AssignDivide(..) => {
                 Expression::Divide(*loc, ty.clone(), Box::new(assign), Box::new(set))
             }
@@ -2368,7 +2247,7 @@ fn assign_expr(
         }
         Expression::Variable(_, _, n) => {
             match var_ty {
-                Type::U32| Type::U64 | Type::U256 | Type::Field => (),
+                Type::U32 | Type::U64 | Type::U256 | Type::Field => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -2409,12 +2288,8 @@ fn incr_decr(
 ) -> Result<Expression, ()> {
     let op = |e: Expression, ty: Type| -> Expression {
         match expr {
-            program::Expression::Increment(loc, _) => {
-                Expression::Increment(*loc, ty,Box::new(e))
-            }
-            program::Expression::Decrement(loc, _) => {
-                Expression::Decrement(*loc, ty,Box::new(e))
-            }
+            program::Expression::Increment(loc, _) => Expression::Increment(*loc, ty, Box::new(e)),
+            program::Expression::Decrement(loc, _) => Expression::Decrement(*loc, ty, Box::new(e)),
             _ => unreachable!(),
         }
     };
@@ -2447,7 +2322,7 @@ fn incr_decr(
         }
         Expression::Variable(_, ty, n) => {
             match ty {
-                Type::U32| Type::U64 | Type::U256 | Type::Field => (),
+                Type::U32 | Type::U64 | Type::U256 | Type::Field => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -2607,8 +2482,6 @@ fn member_access(
         return Ok(expr);
     }
 
-
-
     let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
     let expr_ty = expr.ty();
 
@@ -2619,20 +2492,18 @@ fn member_access(
             .enumerate()
             .find(|f| id.name == f.1.name_as_str())
         {
-               return Ok(Expression::StructMember(
-                    id.loc,
-                    f.ty.clone(),
-                    Box::new(expr),
-                    i,
-                ));
-
+            return Ok(Expression::StructMember(
+                id.loc,
+                f.ty.clone(),
+                Box::new(expr),
+                i,
+            ));
         } else {
             diagnostics.push(Diagnostic::error(
                 id.loc,
                 format!(
                     "struct '{}' does not have a field called '{}'",
-                    ns.structs[*n],
-                    id.name
+                    ns.structs[*n], id.name
                 ),
             ));
             return Err(());
@@ -2672,10 +2543,7 @@ fn contract_constant(
         {
             if !var.constant {
                 let resolve_function = if let ResolveTo::Type(ty) = resolve_to {
-                    matches!(
-                        ty,
-                        Type::Function { .. }
-                    )
+                    matches!(ty, Type::Function { .. })
                 } else {
                     false
                 };
@@ -2730,8 +2598,6 @@ fn array_subscript(
     )?;
     let array_ty = array.ty();
 
-
-
     let mut index = expression(
         index,
         context,
@@ -2759,20 +2625,18 @@ fn array_subscript(
         }
     };
 
-
-
     match &array_ty {
-         Type::Array(..) => {
-                let elem_ty = array_ty.array_deref();
+        Type::Array(..) => {
+            let elem_ty = array_ty.array_deref();
 
-                Ok(Expression::Subscript(
-                    *loc,
-                    elem_ty,
-                    array_ty,
-                    Box::new(array),
-                    Box::new(index),
-                ))
-            }
+            Ok(Expression::Subscript(
+                *loc,
+                elem_ty,
+                array_ty,
+                Box::new(array),
+                Box::new(index),
+            ))
+        }
 
         _ => {
             diagnostics.push(Diagnostic::error(
@@ -2784,8 +2648,6 @@ fn array_subscript(
     }
 }
 
-
-
 /// Resolve a function call with positional arguments
 fn struct_literal(
     loc: &program::Loc,
@@ -2796,7 +2658,6 @@ fn struct_literal(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-
     let struct_def = ns.structs[*n].clone();
     let ty = Type::Struct(*n);
 
@@ -2827,7 +2688,7 @@ fn struct_literal(
             fields.push(expr);
         }
 
-        Ok(Expression::StructLiteral(*loc,  ty,fields))
+        Ok(Expression::StructLiteral(*loc, ty, fields))
     }
 }
 
@@ -2868,7 +2729,6 @@ pub fn available_functions(
     list
 }
 
-
 /// Resolve a function call with positional arguments
 pub fn function_call_pos_args(
     loc: &program::Loc,
@@ -2887,7 +2747,6 @@ pub fn function_call_pos_args(
     // Try to resolve as a function call
     for function_no in &function_nos {
         let func = &ns.functions[*function_no];
-
 
         name_matches += 1;
 
@@ -2908,20 +2767,19 @@ pub fn function_call_pos_args(
         // TODO refactor it
         let mut cast_args = Vec::new();
 
-
         let func = &ns.functions[*function_no];
 
         let returns = function_returns(func, resolve_to);
         let ty = function_type(func, resolve_to);
 
-        return Ok(Expression::FunctionCall{
+        return Ok(Expression::FunctionCall {
             loc: *loc,
             returns,
             function: Box::new(Expression::Function {
                 loc: *loc,
                 ty,
                 function_no: *function_no,
-                signature: None
+                signature: None,
             }),
             args: cast_args,
         });
@@ -2929,11 +2787,10 @@ pub fn function_call_pos_args(
 
     match name_matches {
         0 => {
-                diagnostics.push(Diagnostic::error(
-                    id.loc,
-                    format!("unknown fn or type '{}'", id.name),
-                ));
-
+            diagnostics.push(Diagnostic::error(
+                id.loc,
+                format!("unknown fn or type '{}'", id.name),
+            ));
         }
         1 => diagnostics.extend(errors),
         _ => {
@@ -2953,7 +2810,6 @@ fn function_call_named_args(
     id: &program::Identifier,
     args: &[program::NamedArgument],
     function_nos: Vec<usize>,
-    virtual_call: bool,
     context: &ExprContext,
     resolve_to: ResolveTo,
     ns: &mut Namespace,
@@ -2988,7 +2844,6 @@ fn function_call_named_args(
     for function_no in &function_nos {
         let func = &ns.functions[*function_no];
 
-
         let unnamed_params = func.params.iter().filter(|p| p.id.is_none()).count();
         let params_len = func.params.len();
         let mut matches = true;
@@ -3018,13 +2873,10 @@ fn function_call_named_args(
 
         let mut cast_args = Vec::new();
 
-
-
         let func = &ns.functions[*function_no];
 
-
         let returns = function_returns(func, resolve_to);
-        let ty = function_type(func,resolve_to);
+        let ty = function_type(func, resolve_to);
 
         return Ok(Expression::FunctionCall {
             loc: *loc,
@@ -3033,8 +2885,7 @@ fn function_call_named_args(
                 loc: *loc,
                 ty,
                 function_no: *function_no,
-                signature: None
-
+                signature: None,
             }),
             args: cast_args,
         });
@@ -3132,7 +2983,6 @@ fn method_call_pos_args(
 ) -> Result<Expression, ()> {
     if let program::Expression::Variable(namespace) = var {
         if builtin::is_builtin_call(Some(&namespace.name), &func.name, ns) {
-
             return builtin::resolve_namespace_call(
                 loc,
                 &namespace.name,
@@ -3144,7 +2994,6 @@ fn method_call_pos_args(
                 diagnostics,
             );
         }
-
     }
 
     let var_expr = expression(var, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
@@ -3176,11 +3025,7 @@ fn method_call_named_args(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
-
-
     let var_expr = expression(var, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
-
 
     diagnostics.push(Diagnostic::error(
         func_name.loc,
@@ -3189,7 +3034,6 @@ fn method_call_named_args(
 
     Err(())
 }
-
 
 /// Given an parsed literal array, ensure that it is valid. All the elements in the array
 /// must of the same type. The array might be a multidimensional array; all the leaf nodes
@@ -3385,8 +3229,6 @@ fn check_subarrays<'a>(
     Ok(())
 }
 
-
-
 pub fn named_call_expr(
     loc: &program::Loc,
     ty: &program::Expression,
@@ -3544,7 +3386,6 @@ pub fn function_call_expr(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
     match ty.remove_parenthesis() {
         program::Expression::MemberAccess(_, member, func) => {
             if context.constant {
@@ -3603,24 +3444,23 @@ pub fn function_call_expr(
             }
 
             function_call_pos_args(
-                    loc,
-                    id,
-                    args,
-                    available_functions(&id.name, true, context.file_no, context.contract_no, ns),
-                    context,
-                    ns,
-                    resolve_to,
-                    symtable,
-                    diagnostics,
-                )
-
+                loc,
+                id,
+                args,
+                available_functions(&id.name, true, context.file_no, context.contract_no, ns),
+                context,
+                ns,
+                resolve_to,
+                symtable,
+                diagnostics,
+            )
         }
-        _ =>   {
+        _ => {
             diagnostics.push(Diagnostic::error(
-            *loc,
-            "expression is not a function".to_string(),
-        ));
-        Err(())
+                *loc,
+                "expression is not a function".to_string(),
+            ));
+            Err(())
         }
     }
 }
@@ -3636,7 +3476,6 @@ pub fn named_function_call_expr(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
     match ty {
         program::Expression::MemberAccess(_, member, func) => method_call_named_args(
             loc,
@@ -3649,20 +3488,17 @@ pub fn named_function_call_expr(
             diagnostics,
             resolve_to,
         ),
-        program::Expression::Variable(id) => {
-            function_call_named_args(
-                loc,
-                id,
-                args,
-                available_functions(&id.name, true, context.file_no, context.contract_no, ns),
-                true,
-                context,
-                resolve_to,
-                ns,
-                symtable,
-                diagnostics,
-            )
-        }
+        program::Expression::Variable(id) => function_call_named_args(
+            loc,
+            id,
+            args,
+            available_functions(&id.name, true, context.file_no, context.contract_no, ns),
+            context,
+            resolve_to,
+            ns,
+            symtable,
+            diagnostics,
+        ),
         program::Expression::ArraySubscript(..) => {
             diagnostics.push(Diagnostic::error(
                 ty.loc(),
@@ -3690,15 +3526,9 @@ pub(crate) fn function_returns(ftype: &Function, resolve_to: ResolveTo) -> Vec<T
 }
 
 /// Get the function type for an internal.external function call
-pub(crate) fn function_type(func: &Function,  resolve_to: ResolveTo) -> Type {
+pub(crate) fn function_type(func: &Function, resolve_to: ResolveTo) -> Type {
     let params = func.params.iter().map(|p| p.ty.clone()).collect();
     let returns = function_returns(func, resolve_to);
 
-    Type::Function {
-        params,
-        returns,
-        }
-
+    Type::Function { params, returns }
 }
-
-

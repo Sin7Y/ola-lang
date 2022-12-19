@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{Builtin, Diagnostic,  Expression, Namespace};
+use crate::sema::ast::{Builtin, Diagnostic, Expression, Namespace};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
 use ola_parser::program::Loc;
@@ -9,7 +9,6 @@ use ola_parser::program::Loc;
 /// Namespace (for storage variables)
 pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-
         Expression::Variable(_, _, offset) => {
             let var = symtable.vars.get_mut(offset).unwrap();
             var.assigned = true;
@@ -34,8 +33,6 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
 /// assign expressions and array subscripts.
 pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-
-
         Expression::Variable(_, _, offset) => {
             let var = symtable.vars.get_mut(offset).unwrap();
             var.read = true;
@@ -70,8 +67,7 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, array, symtable);
         }
 
-
-        Expression::FunctionCall { .. }  => {
+        Expression::FunctionCall { .. } => {
             check_function_call(ns, exp, symtable);
         }
 
@@ -83,7 +79,6 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
 /// usage of the latter as well
 pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-
         Expression::FunctionCall {
             loc: _,
             returns: _,
@@ -99,7 +94,6 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
         _ => {}
     }
 }
-
 
 /// Marks as used variables that appear in an expression with right and left hand side.
 pub fn check_var_usage_expression(
@@ -151,7 +145,7 @@ pub fn emit_warning_local_variable(variable: &symtable::Variable) -> Option<Diag
                         variable.id.name
                     ),
                 ));
-            } else if assigned && !variable.read  {
+            } else if assigned && !variable.read {
                 // Values assigned to variables that reference others change the value of its reference
                 // No warning needed in this case
                 return Some(Diagnostic::warning(
@@ -285,4 +279,3 @@ pub fn check_unused_namespace_variables(ns: &mut Namespace) {
         }
     }
 }
-

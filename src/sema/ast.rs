@@ -41,7 +41,6 @@ pub enum Type {
     /// is an index into user_tyxzzzzzpes in the namespace.
     UserType(usize),
 
-
     /// DynamicBytes and String are lowered to a vector.
     Slice(Box<Type>),
     /// We could not resolve this type
@@ -84,9 +83,11 @@ pub trait RetrieveType {
 impl Type {
     pub fn get_type_size(&self) -> u32 {
         match self {
-            Type::U32 | Type:: Bool => 1,
-            Type::U64 | Type::Field => 2,
-            Type::U256 => 8,
+            Type::U32 => 32,
+            Type::U64 => 64,
+            Type::U256 => 256,
+            Type::Field => 64,
+            Type::Bool => 1,
             _ => unimplemented!("size of type not known"),
         }
     }
@@ -119,8 +120,6 @@ impl fmt::Display for EnumDecl {
     }
 }
 
-
-
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct StructDecl {
     pub name: String,
@@ -129,9 +128,7 @@ pub struct StructDecl {
     pub fields: Vec<Parameter>,
     // List of offsets of the fields, last entry is the offset for the struct overall size
     pub offsets: Vec<BigInt>,
-
 }
-
 
 impl fmt::Display for StructDecl {
     /// Make the struct name into a string for printing. The struct can be declared either
@@ -143,7 +140,6 @@ impl fmt::Display for StructDecl {
         }
     }
 }
-
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Parameter {
@@ -263,10 +259,7 @@ impl Function {
     /// Print the contract name, and name
     pub fn print_name(&self, ns: &Namespace) -> String {
         if let Some(contract_no) = &self.contract_no {
-            format!(
-                "{}.{}",
-                 ns.contracts[*contract_no].name, self.name
-            )
+            format!("{}.{}", ns.contracts[*contract_no].name, self.name)
         } else {
             format!("{} ", self.name)
         }
@@ -330,15 +323,14 @@ impl CodeLocation for Symbol {
         match self {
             Symbol::Enum(loc, _)
             | Symbol::Variable(loc, ..)
-            | Symbol::Struct(loc,_)
+            | Symbol::Struct(loc, _)
             | Symbol::Contract(loc, _)
             | Symbol::Import(loc, _)
             | Symbol::UserType(loc, _) => *loc,
-            | Symbol::Function(items) => items[0].0,
+            Symbol::Function(items) => items[0].0,
         }
     }
 }
-
 
 /// Any Solidity file, either the main file or anything that was imported
 #[derive(Clone, Debug)]
@@ -382,8 +374,6 @@ pub struct Namespace {
     pub hover_overrides: HashMap<program::Loc, String>,
 }
 
-
-
 pub struct Contract {
     pub loc: program::Loc,
     pub name: String,
@@ -401,7 +391,6 @@ pub struct Contract {
     pub dispatch_no: usize,
 }
 
-
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Expression {
     BoolLiteral(program::Loc, bool),
@@ -411,7 +400,7 @@ pub enum Expression {
     ConstArrayLiteral(program::Loc, Type, Vec<u32>, Vec<Expression>),
     Add(program::Loc, Type, Box<Expression>, Box<Expression>),
     Subtract(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Multiply(program::Loc, Type,  Box<Expression>, Box<Expression>),
+    Multiply(program::Loc, Type, Box<Expression>, Box<Expression>),
     Divide(program::Loc, Type, Box<Expression>, Box<Expression>),
     Modulo(program::Loc, Type, Box<Expression>, Box<Expression>),
     Power(program::Loc, Type, Box<Expression>, Box<Expression>),
@@ -474,7 +463,6 @@ pub enum Expression {
     List(program::Loc, Vec<Expression>),
 }
 
-
 impl Recurse for Expression {
     type ArgType = Expression;
     fn recurse<T>(&self, cx: &mut T, f: fn(expr: &Expression, ctx: &mut T) -> bool) {
@@ -489,10 +477,10 @@ impl Recurse for Expression {
                 }
                 Expression::Add(_, _, left, right)
                 | Expression::Subtract(_, _, left, right)
-                | Expression::Multiply(_, _,  left, right)
+                | Expression::Multiply(_, _, left, right)
                 | Expression::Divide(_, _, left, right)
                 | Expression::Modulo(_, _, left, right)
-                | Expression::Power(_, _,  left, right)
+                | Expression::Power(_, _, left, right)
                 | Expression::BitwiseOr(_, _, left, right)
                 | Expression::BitwiseAnd(_, _, left, right)
                 | Expression::BitwiseXor(_, _, left, right)
@@ -660,15 +648,10 @@ impl CodeLocation for Statement {
 //     }
 // }
 
-
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Builtin {
-    PoseidonHash
-
-
+    PoseidonHash,
 }
-
-
 
 #[derive(Clone, Debug)]
 #[allow(clippy::large_enum_variant)]
@@ -679,7 +662,13 @@ pub enum Statement {
         statements: Vec<Statement>,
     },
     VariableDecl(program::Loc, usize, Parameter, Option<Arc<Expression>>),
-    If(program::Loc, bool, Expression, Vec<Statement>, Vec<Statement>),
+    If(
+        program::Loc,
+        bool,
+        Expression,
+        Vec<Statement>,
+        Vec<Statement>,
+    ),
     For {
         loc: program::Loc,
         reachable: bool,
@@ -694,7 +683,6 @@ pub enum Statement {
     Return(program::Loc, Option<Expression>),
     Underscore(program::Loc),
 }
-
 
 impl Recurse for Statement {
     type ArgType = Statement;
@@ -745,14 +733,13 @@ impl Statement {
     pub fn reachable(&self) -> bool {
         match self {
             Statement::Block { statements, .. } => statements.iter().all(|s| s.reachable()),
-            Statement::Underscore(_)
-            | Statement::VariableDecl(..) => true,
+            Statement::Underscore(_) | Statement::VariableDecl(..) => true,
 
             Statement::Continue(_) | Statement::Break(_) | Statement::Return(..) => false,
 
             Statement::If(_, reachable, ..)
             | Statement::Expression(_, reachable, _)
-            | Statement::For { reachable, .. } => *reachable
+            | Statement::For { reachable, .. } => *reachable,
         }
     }
 }
