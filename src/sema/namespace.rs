@@ -774,7 +774,7 @@ impl Namespace {
         )?;
 
         match size_expr.ty() {
-            Type::Uint(_)  => {}
+            Type::Uint(_) => {}
             _ => {
                 diagnostics.push(Diagnostic::decl_error(
                     expr.loc(),

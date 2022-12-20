@@ -351,7 +351,7 @@ impl CodeLocation for Expression {
             | Expression::AssignModulo(loc, ..)
             | Expression::BoolLiteral(loc, _)
             | Expression::NumberLiteral(loc, ..)
-            | Expression::HexNumberLiteral(loc,_)
+            | Expression::HexNumberLiteral(loc, _)
             | Expression::ArrayLiteral(loc, _)
             | Expression::List(loc, _)
             | Expression::Type(loc, _)

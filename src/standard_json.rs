@@ -2,7 +2,6 @@
 
 use serde::Serialize;
 
-
 #[derive(Serialize)]
 pub struct LocJson {
     pub file: String,

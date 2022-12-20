@@ -432,6 +432,14 @@ fn eval_constants_in_expression(
                 (None, true)
             }
         }
+        Expression::ZeroExt { loc, to, expr } => {
+            let expr = eval_constants_in_expression(expr, ns).0;
+            if let Some(Expression::NumberLiteral(_, _, n)) = expr {
+                (Some(Expression::NumberLiteral(*loc, to.clone(), n)), true)
+            } else {
+                (None, true)
+            }
+        }
         Expression::NumberLiteral(..) => (Some(expr.clone()), true),
         _ => (None, true),
     }
@@ -440,15 +448,16 @@ fn eval_constants_in_expression(
 /// Function that takes a BigInt and an expected type. If the number of bits in the type required to represent the BigInt is not suffiecient, it will return a diagnostic.
 fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
     // If the result sign is minus, throw an error.
-    if let Sign::Minus = result.sign() {
-        return Some(Diagnostic::error(
-            *loc,
-            format!( "negative value {} does not fit into type u{}. Cannot implicitly convert signed literal to unsigned type.",result,ty.get_type_size()),
-        ));
-    }
+    if let Type::Uint(bits) = ty {
+        if let Sign::Minus = result.sign() {
+            return Some(Diagnostic::error(
+                *loc,
+                format!("negative value {} does not fit into type u{}. Cannot implicitly convert signed literal to unsigned type.", result, ty.get_type_size()),
+            ));
+        }
 
         // If bits of the result is more than bits of the type, throw and error.
-        if result.bits() > ty.get_type_size() as u64 {
+        if result.bits() > *bits as u64 {
             return Some(Diagnostic::error(
                 *loc,
                 format!(
@@ -458,6 +467,7 @@ fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
                 ),
             ));
         }
+    }
 
     None
 }

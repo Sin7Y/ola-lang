@@ -93,16 +93,8 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
     // struct fields or event fields can have types defined elsewhere.
     types::resolve_fields(fields, file_no, ns);
 
-    // resolve functions/constants outside of contracts
-    let mut resolve_bodies = Vec::new();
-
     // now resolve the contracts
     contracts::resolve(&contracts_to_resolve, file_no, ns);
-
-    // now we can resolve the body of functions outside of contracts
-    for (func_no, func) in resolve_bodies {
-        let _ = statements::resolve_function_body(func, file_no, None, func_no, ns);
-    }
 }
 
 /// Find import file, resolve it by calling sema and add it to the namespace
