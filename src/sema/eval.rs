@@ -446,17 +446,17 @@ fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
         ));
     }
 
-        // If bits of the result is more than bits of the type, throw and error.
-        if result.bits() > ty.get_type_size() as u64 {
-            return Some(Diagnostic::error(
-                *loc,
-                format!(
-                    "value {} does not fit into type u{}.",
-                    result,
-                    ty.get_type_size(),
-                ),
-            ));
-        }
+    // If bits of the result is more than bits of the type, throw and error.
+    if result.bits() > ty.get_type_size() as u64 {
+        return Some(Diagnostic::error(
+            *loc,
+            format!(
+                "value {} does not fit into type u{}.",
+                result,
+                ty.get_type_size(),
+            ),
+        ));
+    }
 
     None
 }

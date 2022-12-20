@@ -191,12 +191,24 @@ fn constant_overflow_checks() {
     let errors = ns.diagnostics.errors();
     let warnings = ns.diagnostics.warnings();
 
-    assert_eq!(errors[0].message, "value 4294967297 does not fit into type u32.");
+    assert_eq!(
+        errors[0].message,
+        "value 4294967297 does not fit into type u32."
+    );
     assert_eq!(errors[1].message, "negative value -1 does not fit into type u32. Cannot implicitly convert signed literal to unsigned type.");
-    assert_eq!(errors[2].message, "value 4294967297 does not fit into type u32.");
+    assert_eq!(
+        errors[2].message,
+        "value 4294967297 does not fit into type u32."
+    );
     assert_eq!(errors[3].message, "negative value -1 does not fit into type u32. Cannot implicitly convert signed literal to unsigned type.");
-    assert_eq!(errors[4].message, "value 4294967296 does not fit into type u32.");
-    assert_eq!(errors[5].message, "value 9223372036854775808 does not fit into type u64.");
+    assert_eq!(
+        errors[4].message,
+        "value 4294967296 does not fit into type u32."
+    );
+    assert_eq!(
+        errors[5].message,
+        "value 9223372036854775808 does not fit into type u64."
+    );
     assert_eq!(errors[6].message, "value 128 does not fit into type int8.");
     assert_eq!(errors[7].message, "value 128 does not fit into type int8.");
     assert_eq!(errors[8].message, "negative value -1 does not fit into type uint8. Cannot implicitly convert signed literal to unsigned type.");
