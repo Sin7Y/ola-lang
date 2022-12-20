@@ -3,7 +3,6 @@
 use self::{
     functions::{resolve_params, resolve_returns},
     symtable::Symtable,
-    variables::variable_decl,
 };
 use crate::file_resolver::{FileResolver, ResolvedFile};
 use crate::sema::unused_variable::check_unused_namespace_variables;

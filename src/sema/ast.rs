@@ -16,13 +16,14 @@ use std::{
 };
 use tiny_keccak::{Hasher, Keccak};
 
+
+
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Type {
     Bool,
-    U32,
-    U64,
-    U256,
+    Uint(u16),
     Field,
+
     Array(Box<Type>, Vec<ArrayLength>),
     Void,
     Unreachable,
@@ -81,12 +82,9 @@ pub trait RetrieveType {
 }
 
 impl Type {
-    pub fn get_type_size(&self) -> u32 {
+    pub fn get_type_size(&self) -> u16 {
         match self {
-            Type::U32 => 32,
-            Type::U64 => 64,
-            Type::U256 => 256,
-            Type::Field => 64,
+            Type::Uint(n) => *n,
             Type::Bool => 1,
             _ => unimplemented!("size of type not known"),
         }
@@ -271,9 +269,7 @@ impl From<&program::Type> for Type {
         match p {
             program::Type::Bool => Type::Bool,
             program::Type::Field => Type::Field,
-            program::Type::U32 => Type::U32,
-            program::Type::U64 => Type::U64,
-            program::Type::U256 => Type::U256,
+            program::Type::Uint(n) => Type::Uint(*n),
         }
     }
 }
@@ -411,6 +407,21 @@ pub enum Expression {
     ShiftRight(program::Loc, Type, Box<Expression>, Box<Expression>),
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
+    ZeroExt {
+        loc: program::Loc,
+        to: Type,
+        expr: Box<Expression>,
+    },
+    Trunc {
+        loc: program::Loc,
+        to: Type,
+        expr: Box<Expression>,
+    },
+    Cast {
+        loc: program::Loc,
+        to: Type,
+        expr: Box<Expression>,
+    },
     Increment(program::Loc, Type, Box<Expression>),
     Decrement(program::Loc, Type, Box<Expression>),
     Assign(program::Loc, Type, Box<Expression>, Box<Expression>),
@@ -558,6 +569,9 @@ impl CodeLocation for Expression {
             | Expression::ShiftRight(loc, ..)
             | Expression::Variable(loc, ..)
             | Expression::ConstantVariable(loc, ..)
+            | Expression::ZeroExt { loc, .. }
+            | Expression::Trunc { loc, .. }
+            | Expression::Cast { loc, .. }
             | Expression::More(loc, ..)
             | Expression::Less(loc, ..)
             | Expression::MoreEqual(loc, ..)

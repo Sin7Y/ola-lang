@@ -2,7 +2,6 @@
 
 use serde::Serialize;
 
-use std::collections::HashMap;
 
 #[derive(Serialize)]
 pub struct LocJson {

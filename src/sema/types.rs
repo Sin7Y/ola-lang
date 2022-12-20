@@ -57,7 +57,7 @@ fn type_decl(
 ) {
     let mut diagnostics = Diagnostics::default();
 
-    let mut ty = match ns.resolve_type(file_no, contract_no, false, &def.ty, &mut diagnostics) {
+    let mut ty = match ns.resolve_type(file_no, contract_no, &def.ty, &mut diagnostics) {
         Ok(ty) => ty,
         Err(_) => {
             ns.diagnostics.extend(diagnostics);
@@ -70,7 +70,7 @@ fn type_decl(
     // - Need for circular checks (type a is b; type b is a;)
     if !matches!(
         ty,
-        Type::U32 | Type::Bool | Type::U64 | Type::Field | Type::U256
+        Type::Uint(_) | Type::Field | Type::Bool
     ) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
@@ -243,7 +243,7 @@ pub fn struct_decl(
     for field in &def.fields {
         let mut diagnostics = Diagnostics::default();
 
-        let ty = match ns.resolve_type(file_no, contract_no, false, &field.ty, &mut diagnostics) {
+        let ty = match ns.resolve_type(file_no, contract_no, &field.ty, &mut diagnostics) {
             Ok(s) => s,
             Err(()) => {
                 ns.diagnostics.extend(diagnostics);
@@ -353,7 +353,7 @@ fn enum_decl(
             None => None,
         },
         // TODO change type to field ?
-        ty: Type::U32,
+        ty: Type::Uint(32),
         values: entries,
     };
 
@@ -456,9 +456,7 @@ impl Type {
     pub fn to_string(&self, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
-            Type::U32 => "u32".to_string(),
-            Type::U64 => "u64".to_string(),
-            Type::U256 => "u256".to_string(),
+            Type::Uint(n) => format!("uint{}", n),
             Type::Field => "field".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
@@ -511,9 +509,7 @@ impl Type {
     pub fn is_primitive(&self) -> bool {
         match self {
             Type::Bool => true,
-            Type::U32 => true,
-            Type::U64 => true,
-            Type::U256 => true,
+            Type::Uint(_) => true,
             Type::Field => true,
             _ => false,
         }
@@ -524,9 +520,7 @@ impl Type {
         match self {
             Type::Bool => "bool".to_string(),
             Type::Contract(_) => "address".to_string(),
-            Type::U32 => "u32".to_string(),
-            Type::U64 => "u64".to_string(),
-            Type::U256 => "u256".to_string(),
+            Type::Uint(n) => format!("uint{}", n),
             Type::Field => "field".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(
@@ -572,9 +566,7 @@ impl Type {
     pub fn is_fixed_reference_type(&self) -> bool {
         match self {
             Type::Bool => false,
-            Type::U32 => false,
-            Type::U64 => false,
-            Type::U256 => false,
+            Type::Uint(_) => false,
             Type::Field => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
@@ -700,9 +692,9 @@ impl Type {
     /// Calculate the alignment
     pub fn align_of(&self, ns: &Namespace) -> usize {
         match self {
-            Type::U32 => 1,
-            Type::U64 | Type::Field => 2,
-            Type::U256 => 8,
+            Type::Uint(32) => 1,
+            Type::Uint(64) | Type::Field => 2,
+            Type::Uint(256) => 8,
             Type::Struct(n) => ns.structs[*n]
                 .fields
                 .iter()
@@ -717,10 +709,8 @@ impl Type {
         match self {
             Type::Contract(_) => ns.address_length as u16 * 8,
             Type::Bool => 1,
-            Type::U32 => 32,
+            Type::Uint(n) => *n,
             Type::Field => 64,
-            Type::U64 => 64,
-            Type::U256 => 256,
             Type::Enum(n) => ns.enums[*n].ty.bits(ns),
             _ => panic!("type not allowed"),
         }
@@ -728,11 +718,8 @@ impl Type {
 
     pub fn is_integer(&self) -> bool {
         match self {
-            Type::U32 => true,
-            Type::U64 => true,
-            Type::U256 => true,
+            Type::Uint(_) => true,
             Type::Field => true,
-            Type::U32 => true,
             _ => false,
         }
     }
@@ -744,9 +731,7 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Contract(_) => BigInt::from(ns.address_length),
-            Type::U32 => BigInt::from(4),
-            Type::U64 => BigInt::from(8),
-            Type::U256 => BigInt::from(32),
+            Type::Uint(n)  => BigInt::from(n / 8),
             Type::Field => BigInt::from(8),
             Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
             Type::Array(ty, dims) => {

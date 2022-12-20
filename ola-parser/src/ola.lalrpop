@@ -20,9 +20,10 @@ ImportDirective: SourceUnitPart = {
 Type: Type = {
     "bool" => Type::Bool,
     "field" => Type::Field,
-    "u32" => Type::U32,
-    "u64" => Type::U64,
-    "u256" => Type::U256,
+    "u32" => Type::Uint(32),
+    "u64" => Type::Uint(64),
+    "u256" => Type::Uint(256),
+
 }
 
 
@@ -230,15 +231,10 @@ LiteralExpression: Expression = {
     <a:@L> "true" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), true),
     <a:@L> "false" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), false),
     <l:@L> <n: Number> <r:@R> =>  {
-        if n.ends_with("ll") {
-            Expression::U256Literal(Loc::File(file_no, l, r), n)
-        } else if n.ends_with("l") {
-            Expression::U64Literal(Loc::File(file_no, l, r), n)
-        } else if n.ends_with("u") {
-            Expression::U32Literal(Loc::File(file_no, l, r), n)
-        } else {
-            Expression::FieldLiteral(Loc::File(file_no, l, r), n)
-        }  
+      Expression::NumberLiteral(Loc::File(file_no, l, r), n)
+    },
+    <l:@L> <n: HexNumber> <r:@R> =>  {
+      Expression::HexNumberLiteral(Loc::File(file_no, l, r), n)
     },
 }
 
@@ -378,7 +374,10 @@ CommaTwo<T>: Vec<T> = {
 
 Number: String = {
     r#"([1-9][0-9]*|0)(u|ll|l)?"# => <>.to_string(),
-    r#"0x[0-9A-Fa-f]*(u|ll|l)?"# => <>.to_string(),
+}
+
+HexNumber: String = {
+   r#"0x[0-9A-Fa-f]*(u|ll|l)?"# => <>.to_string(),
 }
 
 Identifier: Identifier = {

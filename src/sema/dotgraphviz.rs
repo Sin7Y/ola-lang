@@ -248,6 +248,48 @@ impl Dot {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));
                 }
             }
+            Expression::ZeroExt { loc, to, expr } => {
+                let node = self.add_node(
+                    Node::new(
+                        "zero_ext",
+                        vec![
+                            format!("zero extend {}", to.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+            Expression::Trunc { loc, to, expr } => {
+                let node = self.add_node(
+                    Node::new(
+                        "trunc",
+                        vec![
+                            format!("truncate {}", to.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+            Expression::Cast { loc, to, expr } => {
+                let node = self.add_node(
+                    Node::new(
+                        "cast",
+                        vec![format!("cast {}", to.to_string(ns)), ns.loc_to_string(loc)],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
             Expression::Add(loc, ty, left, right) => {
                 let mut labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
                 let node = self.add_node(Node::new("add", labels), Some(parent), Some(parent_rel));
