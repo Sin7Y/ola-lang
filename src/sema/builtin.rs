@@ -36,7 +36,7 @@ static BUILTIN_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
         method: None,
         name: "hash",
         params: vec![Type::Bool],
-        ret: vec![Type::U256],
+        ret: vec![Type::Uint(256)],
         doc: "Abort execution if argument evaluates to false",
         constant: false,
     }]

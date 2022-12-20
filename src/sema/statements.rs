@@ -163,7 +163,12 @@ fn statement(
                 expr.recurse(ns, check_term_for_constant_overflow);
                 used_variable(ns, &expr, symtable);
 
-                Some(Arc::new(expr))
+                Some(Arc::new(expr.cast(
+                    &expr.loc(),
+                    &var_ty,
+                    ns,
+                    diagnostics,
+                )?))
             } else {
                 None
             };
@@ -530,7 +535,7 @@ fn resolve_var_decl_ty(
 ) -> Result<(Type, program::Loc), ()> {
     let mut loc_ty = ty.loc();
     let mut var_ty =
-        ns.resolve_type(context.file_no, context.contract_no, false, ty, diagnostics)?;
+        ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
     Ok((var_ty, loc_ty))
 }
 

@@ -144,7 +144,7 @@ fn parse_contract() {
                         },
                         VariableDeclaration {
                             loc: Loc::File(0, 495, 506),
-                            ty: Expression::Type(Loc::File(0, 495, 499), Type::U256),
+                            ty: Expression::Type(Loc::File(0, 495, 499), Type::Uint(256)),
                             name: Some(Identifier {
                                 loc: Loc::File(0, 500, 506),
                                 name: "keyIdx".to_string(),
@@ -169,7 +169,7 @@ fn parse_contract() {
                     ],
                 })),
                 ContractPart::VariableDefinition(Box::new(VariableDefinition {
-                    ty: Expression::Type(Loc::File(0, 627, 630), Type::U64),
+                    ty: Expression::Type(Loc::File(0, 627, 630), Type::Uint(64)),
                     name: Some(Identifier {
                         loc: Loc::File(0, 631, 639),
                         name: "__abba_$".to_string(),
@@ -179,7 +179,7 @@ fn parse_contract() {
                     initializer: None,
                 })),
                 ContractPart::VariableDefinition(Box::new(VariableDefinition {
-                    ty: Expression::Type(Loc::File(0, 661, 664), Type::U64),
+                    ty: Expression::Type(Loc::File(0, 661, 664), Type::Uint(64)),
                     attrs: vec![],
                     name: Some(Identifier {
                         loc: Loc::File(0, 665, 675),
@@ -221,7 +221,7 @@ fn parse_user_defined_value_type() {
                         loc: Loc::File(0, 47, 54),
                         name: "uint256".to_string(),
                     },
-                    ty: Expression::Type(Loc::File(0, 57, 61), Type::U256),
+                    ty: Expression::Type(Loc::File(0, 57, 61), Type::Uint(256)),
                 })),
                 ContractPart::TypeDefinition(Box::new(TypeDefinition {
                     loc: Loc::File(0, 75, 95),

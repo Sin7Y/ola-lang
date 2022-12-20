@@ -153,10 +153,8 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 #[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum Type {
     Bool,
-    U32,
-    U64,
-    U256,
     Field,
+    Uint(u16),
 }
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
@@ -299,10 +297,8 @@ pub enum Expression {
     AssignDivide(Loc, Box<Expression>, Box<Expression>),
     AssignModulo(Loc, Box<Expression>, Box<Expression>),
     BoolLiteral(Loc, bool),
-    U32Literal(Loc, String),
-    U64Literal(Loc, String),
-    U256Literal(Loc, String),
-    FieldLiteral(Loc, String),
+    NumberLiteral(Loc, String),
+    HexNumberLiteral(Loc, String),
     Type(Loc, Type),
     Variable(Identifier),
     List(Loc, ParameterList),
@@ -354,10 +350,8 @@ impl CodeLocation for Expression {
             | Expression::AssignDivide(loc, ..)
             | Expression::AssignModulo(loc, ..)
             | Expression::BoolLiteral(loc, _)
-            | Expression::U32Literal(loc, ..)
-            | Expression::U64Literal(loc, ..)
-            | Expression::U256Literal(loc, ..)
-            | Expression::FieldLiteral(loc, ..)
+            | Expression::NumberLiteral(loc, ..)
+            | Expression::HexNumberLiteral(loc,_)
             | Expression::ArrayLiteral(loc, _)
             | Expression::List(loc, _)
             | Expression::Type(loc, _)

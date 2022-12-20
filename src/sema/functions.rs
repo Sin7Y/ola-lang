@@ -214,7 +214,7 @@ pub fn resolve_params(
 
         let mut ty_loc = p.ty.loc();
 
-        match ns.resolve_type(file_no, contract_no, false, &p.ty, diagnostics) {
+        match ns.resolve_type(file_no, contract_no, &p.ty, diagnostics) {
             Ok(ty) => {
                 params.push(Parameter {
                     loc: *loc,
@@ -254,7 +254,7 @@ pub fn resolve_returns(
 
         let mut ty_loc = r.ty.loc();
 
-        match ns.resolve_type(file_no, contract_no, false, &r.ty, diagnostics) {
+        match ns.resolve_type(file_no, contract_no,  &r.ty, diagnostics) {
             Ok(ty) => {
                 resolved_returns.push(Parameter {
                     loc: *loc,
@@ -288,14 +288,14 @@ fn signatures() {
             Parameter {
                 loc: program::Loc::Implicit,
                 id: None,
-                ty: Type::U32,
+                ty: Type::Uint(32),
                 ty_loc: None,
                 recursive: false,
             },
             Parameter {
                 loc: program::Loc::Implicit,
                 id: None,
-                ty: Type::U64,
+                ty: Type::Uint(64),
                 ty_loc: None,
                 recursive: false,
             },

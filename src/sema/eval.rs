@@ -108,6 +108,8 @@ pub fn eval_const_number(
             Ok((*loc, l >> r))
         }
         Expression::NumberLiteral(loc, _, n) => Ok((*loc, n.clone())),
+        Expression::ZeroExt { loc, expr, .. } => Ok((*loc, eval_const_number(expr, ns)?.1)),
+        Expression::Cast { loc, expr, .. } => Ok((*loc, eval_const_number(expr, ns)?.1)),
         Expression::Not(loc, n) => Ok((*loc, !eval_const_number(n, ns)?.1)),
         Expression::Complement(loc, _, n) => Ok((*loc, !eval_const_number(n, ns)?.1)),
         Expression::UnaryMinus(loc, _, n) => Ok((*loc, -eval_const_number(n, ns)?.1)),
@@ -281,7 +283,7 @@ fn eval_constants_in_expression(
                 Some(Expression::NumberLiteral(right_loc, _, right)),
             ) = (&left, &right)
             {
-                if overflow_check(right, &Type::U32, right_loc).is_some() {
+                if overflow_check(right, &Type::Uint(32), right_loc).is_some() {
                     ns.diagnostics.push(Diagnostic::error(
                         *right_loc,
                         format!("power by {} is not possible", right),
@@ -310,7 +312,7 @@ fn eval_constants_in_expression(
                 Some(Expression::NumberLiteral(right_loc, _, right)),
             ) = (&left, &right)
             {
-                if overflow_check(right, &Type::U64, right_loc).is_some() {
+                if overflow_check(right, &Type::Uint(32), right_loc).is_some() {
                     ns.diagnostics.push(Diagnostic::error(
                         *right_loc,
                         format!("left shift by {} is not possible", right),
@@ -328,7 +330,7 @@ fn eval_constants_in_expression(
                         Some(Expression::NumberLiteral(
                             *loc,
                             ty.clone(),
-                            left.shl(right.to_u64().unwrap()),
+                            left.shl(right.to_u32().unwrap()),
                         )),
                         true,
                     )
@@ -347,7 +349,7 @@ fn eval_constants_in_expression(
                 Some(Expression::NumberLiteral(right_loc, _, right)),
             ) = (&left, &right)
             {
-                if overflow_check(right, &Type::U64, right_loc).is_some() {
+                if overflow_check(right, &Type::Uint(32), right_loc).is_some() {
                     ns.diagnostics.push(Diagnostic::error(
                         *right_loc,
                         format!("right shift by {} is not possible", right),
@@ -436,7 +438,6 @@ fn eval_constants_in_expression(
 }
 
 /// Function that takes a BigInt and an expected type. If the number of bits in the type required to represent the BigInt is not suffiecient, it will return a diagnostic.
-/// TODO ADD other type overflow check
 fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
     // If the result sign is minus, throw an error.
     if let Sign::Minus = result.sign() {

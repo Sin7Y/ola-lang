@@ -444,7 +444,6 @@ impl Namespace {
         &mut self,
         file_no: usize,
         contract_no: Option<usize>,
-        casting: bool,
         id: &program::Expression,
         diagnostics: &mut Diagnostics,
     ) -> Result<Type, ()> {
@@ -771,11 +770,11 @@ impl Namespace {
             self,
             &mut symtable,
             diagnostics,
-            ResolveTo::Type(&Type::U32),
+            ResolveTo::Type(&Type::Uint(32)),
         )?;
 
         match size_expr.ty() {
-            Type::U32 | Type::U64 | Type::U256 | Type::Field => {}
+            Type::Uint(_)  => {}
             _ => {
                 diagnostics.push(Diagnostic::decl_error(
                     expr.loc(),
