@@ -1,6 +1,9 @@
 contract test {
     u32 x;
     u256 v;
+    u32 global_a;
+    u32 global_b = 32;
+    u32 global_c = global_b;
     fn f() -> (u256 r) {
         u256 a = 6;
         r = a;

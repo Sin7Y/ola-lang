@@ -37,12 +37,8 @@ pub fn resolve_typenames<'a>(
     };
 
     for part in &s.0 {
-        match part {
-            program::SourceUnitPart::ContractDefinition(def) => {
-                resolve_contract(def, file_no, &mut delay, ns);
-            }
-
-            _ => (),
+        if let program::SourceUnitPart::ContractDefinition(def) = part {
+            resolve_contract(def, file_no, &mut delay, ns);
         }
     }
 
@@ -68,10 +64,7 @@ fn type_decl(
     // We could permit all types to be defined here, however:
     // - This would require resolving the types definition after all other types are resolved
     // - Need for circular checks (type a is b; type b is a;)
-    if !matches!(
-        ty,
-        Type::Uint(_) | Type::Field | Type::Bool
-    ) {
+    if !matches!(ty, Type::Uint(_) | Type::Field | Type::Bool) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
             format!("'{}' is not an elementary value type", ty.to_string(ns)),
@@ -497,6 +490,7 @@ impl Type {
             }
             Type::Contract(n) => format!("contract {}", ns.contracts[*n].name),
             Type::UserType(n) => format!("usertype {}", ns.user_types[*n]),
+            Type::StorageRef(ty) => format!("{} storage", ty.to_string(ns)),
             Type::Void => "void".to_owned(),
             Type::Unreachable => "unreachable".into(),
             Type::Slice(ty) => format!("{} slice", ty.to_string(ns)),
@@ -511,6 +505,7 @@ impl Type {
             Type::Bool => true,
             Type::Uint(_) => true,
             Type::Field => true,
+            Type::StorageRef(r) => r.is_primitive(),
             _ => false,
         }
     }
@@ -533,6 +528,7 @@ impl Type {
                     })
                     .collect::<String>()
             ),
+            Type::StorageRef(r) => r.to_string(ns),
             Type::Struct(_) if say_tuple => "tuple".to_string(),
             Type::Struct(n) => {
                 format!(
@@ -574,6 +570,7 @@ impl Type {
             Type::Contract(_) => false,
             Type::Slice(_) => false,
             Type::Unresolved => false,
+            Type::StorageRef(..) => false,
             _ => unreachable!("{:?}", self),
         }
     }
@@ -590,10 +587,26 @@ impl Type {
         }
     }
 
+    /// Give the type of an storage array after dereference. This can only be used on
+    /// array types and will cause a panic otherwise.
+    #[must_use]
+    pub fn storage_array_elem(&self) -> Self {
+        match self {
+            Type::Array(ty, dim) if dim.len() > 1 => Type::StorageRef(Box::new(Type::Array(
+                ty.clone(),
+                dim[..dim.len() - 1].to_vec(),
+            ))),
+            Type::Array(ty, dim) if dim.len() == 1 => Type::StorageRef(ty.clone()),
+            Type::StorageRef(ty) => ty.storage_array_elem(),
+            _ => panic!("deref on non-array"),
+        }
+    }
+
     /// Give the length of the outer array. This can only be called on array types
     /// and will panic otherwise.
     pub fn array_length(&self) -> Option<&BigInt> {
         match self {
+            Type::StorageRef(ty) => ty.array_length(),
             Type::Array(_, dim) => dim.last().unwrap().array_length(),
             _ => panic!("array_length on non-array"),
         }
@@ -622,6 +635,7 @@ impl Type {
                 .iter()
                 .map(|d| d.ty.memory_size_of(ns))
                 .sum::<BigInt>(),
+            Type::StorageRef(..) => BigInt::from(4),
             Type::Unresolved => BigInt::zero(),
             Type::UserType(no) => ns.user_types[*no].ty.memory_size_of(ns),
             _ => unimplemented!("sizeof on {:?}", self),
@@ -649,6 +663,7 @@ impl Type {
             Type::Struct(n) => {
                 ns.structs[*n].fields.iter().map(|d| d.ty.struct_elem_alignment(ns)).max().unwrap()
             }
+            Type::StorageRef(..) => BigInt::from(4),
             Type::UserType(no) => ns.user_types[*no].ty.struct_elem_alignment(ns),
 
             _ => unreachable!("Type should not appear on a struct"),
@@ -678,6 +693,7 @@ impl Type {
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
+            Type::StorageRef(ty) => ty.storage_size(ns),
             Type::UserType(no) => ns.user_types[*no].ty.storage_size(ns),
             // Other types have the same size both in storage and in memory
             _ => self.memory_size_of(ns),
@@ -711,6 +727,7 @@ impl Type {
             Type::Bool => 1,
             Type::Uint(n) => *n,
             Type::Field => 64,
+            Type::StorageRef(..) => Type::Uint(32).bits(ns),
             Type::Enum(n) => ns.enums[*n].ty.bits(ns),
             _ => panic!("type not allowed"),
         }
@@ -720,6 +737,7 @@ impl Type {
         match self {
             Type::Uint(_) => true,
             Type::Field => true,
+            Type::StorageRef(r) => r.is_integer(),
             _ => false,
         }
     }
@@ -731,7 +749,7 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Contract(_) => BigInt::from(ns.address_length),
-            Type::Uint(n)  => BigInt::from(n / 8),
+            Type::Uint(n) => BigInt::from(n / 8),
             Type::Field => BigInt::from(8),
             Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
             Type::Array(ty, dims) => {
@@ -757,6 +775,7 @@ impl Type {
             //     .unwrap_or_else(BigInt::zero),
             Type::Function { .. } => BigInt::from(4),
             Type::Unresolved => BigInt::one(),
+            Type::StorageRef(ty) => ty.storage_slots(ns),
             _ => unimplemented!(),
         }
     }
@@ -794,6 +813,7 @@ impl Type {
                 .max()
                 .unwrap(),
             Type::Unresolved => BigInt::one(),
+            Type::StorageRef(ty) => ty.storage_align(ns),
             _ => unimplemented!(),
         };
 
@@ -801,6 +821,64 @@ impl Type {
             BigInt::from(8)
         } else {
             length
+        }
+    }
+
+    /// Is this type an reference type in the solidity language? (struct, array, mapping)
+    pub fn is_reference_type(&self, ns: &Namespace) -> bool {
+        match self {
+            Type::Bool => false,
+            Type::Uint(_) => false,
+            Type::Enum(_) => false,
+            Type::Struct(_) => true,
+            Type::Array(..) => true,
+            Type::Contract(_) => false,
+            Type::StorageRef(r) => r.is_reference_type(ns),
+            Type::Function { .. } => false,
+            Type::UserType(no) => ns.user_types[*no].ty.is_reference_type(ns),
+            _ => false,
+        }
+    }
+
+    /// Does this type contain any types which are variable-length
+    pub fn is_dynamic(&self, ns: &Namespace) -> bool {
+        match self {
+            Type::Array(ty, dim) => {
+                if dim.iter().any(|d| d == &ArrayLength::Dynamic) {
+                    return true;
+                }
+
+                ty.is_dynamic(ns)
+            }
+            Type::Struct(n) => ns.structs[*n].fields.iter().any(|f| f.ty.is_dynamic(ns)),
+            Type::StorageRef(r) => r.is_dynamic(ns),
+            Type::Slice(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Can this type have a calldata, memory, or storage location. This is to be
+    /// compatible with ethereum solidity. Opinions on whether other types should be
+
+    /// Is this a reference to contract storage?
+    pub fn is_contract_storage(&self) -> bool {
+        matches!(self, Type::StorageRef(..))
+    }
+
+    /// If the type is Ref or StorageRef, get the underlying type
+    pub fn deref_any(&self) -> &Self {
+        match self {
+            Type::StorageRef(r) => r,
+            _ => self,
+        }
+    }
+
+    /// If the type is Ref or StorageRef, get the underlying type
+    #[must_use]
+    pub fn deref_into(self) -> Self {
+        match self {
+            Type::StorageRef(r) => *r,
+            _ => self,
         }
     }
 

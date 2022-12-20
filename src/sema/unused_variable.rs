@@ -9,6 +9,10 @@ use ola_parser::program::Loc;
 /// Namespace (for storage variables)
 pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
+        Expression::StorageVariable(_, _, contract_no, offset) => {
+            ns.contracts[*contract_no].variables[*offset].assigned = true;
+        }
+
         Expression::Variable(_, _, offset) => {
             let var = symtable.vars.get_mut(offset).unwrap();
             var.assigned = true;
@@ -23,6 +27,12 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
             used_variable(ns, index, symtable);
         }
 
+        Expression::StorageLoad(_, _, expr)
+        | Expression::Trunc { expr, .. }
+        | Expression::Cast { expr, .. } => {
+            assigned_variable(ns, expr, symtable);
+        }
+
         _ => {}
     }
 }
@@ -33,6 +43,10 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
 /// assign expressions and array subscripts.
 pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
+        Expression::StorageVariable(_, _, contract_no, offset) => {
+            ns.contracts[*contract_no].variables[*offset].read = true;
+        }
+
         Expression::Variable(_, _, offset) => {
             let var = symtable.vars.get_mut(offset).unwrap();
             var.read = true;
@@ -67,6 +81,13 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, array, symtable);
         }
 
+        Expression::StorageLoad(_, _, expr)
+        | Expression::ZeroExt { expr, .. }
+        | Expression::Trunc { expr, .. }
+        | Expression::Cast { expr, .. } => {
+            used_variable(ns, expr, symtable);
+        }
+
         Expression::FunctionCall { .. } => {
             check_function_call(ns, exp, symtable);
         }
@@ -79,6 +100,9 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
 /// usage of the latter as well
 pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
+        Expression::StorageLoad(..) | Expression::Variable(..) => {
+            used_variable(ns, exp, symtable);
+        }
         Expression::FunctionCall {
             loc: _,
             returns: _,

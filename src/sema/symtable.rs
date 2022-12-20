@@ -35,8 +35,6 @@ impl VariableInitializer {
     }
 }
 
-impl Variable {}
-
 #[derive(Clone, Debug)]
 pub enum VariableUsage {
     Parameter,

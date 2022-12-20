@@ -28,27 +28,15 @@ pub fn contract_variables<'a>(
 ) -> Vec<DelayedResolveInitializer<'a>> {
     let mut symtable = Symtable::new();
     let mut delayed = Vec::new();
-    let mut doc_comment_start = def.loc.start();
 
     for part in &def.parts {
-        match part {
-            program::ContractPart::VariableDefinition(ref s) => {
-                if let Some(delay) =
-                    variable_decl(Some(def), s, file_no, Some(contract_no), ns, &mut symtable)
-                {
-                    delayed.push(delay);
-                }
+        if let program::ContractPart::VariableDefinition(ref s) = &part {
+            if let Some(delay) =
+                variable_decl(Some(def), s, file_no, Some(contract_no), ns, &mut symtable)
+            {
+                delayed.push(delay);
             }
-            program::ContractPart::FunctionDefinition(f) => {
-                if let Some(program::Statement::Block { loc, .. }) = &f.body {
-                    doc_comment_start = loc.end();
-                    continue;
-                }
-            }
-            _ => (),
         }
-
-        doc_comment_start = part.loc().end();
     }
 
     delayed
@@ -113,8 +101,17 @@ pub fn variable_decl<'a>(
                 ResolveTo::Type(&ty),
             ) {
                 Ok(res) => {
-                    res.recurse(ns, check_term_for_constant_overflow);
-                    Some(res)
+                    // implicitly conversion to correct ty
+                    match res.cast(&def.loc, &ty, ns, &mut diagnostics) {
+                        Ok(res) => {
+                            res.recurse(ns, check_term_for_constant_overflow);
+                            Some(res)
+                        }
+                        Err(_) => {
+                            ns.diagnostics.extend(diagnostics);
+                            None
+                        }
+                    }
                 }
                 Err(()) => {
                     ns.diagnostics.extend(diagnostics);
@@ -210,8 +207,10 @@ pub fn resolve_initializers(
             &mut diagnostics,
             ResolveTo::Type(&ty),
         ) {
-            res.recurse(ns, check_term_for_constant_overflow);
-            ns.contracts[*contract_no].variables[*var_no].initializer = Some(res);
+            if let Ok(res) = res.cast(&initializer.loc(), &ty, ns, &mut diagnostics) {
+                res.recurse(ns, check_term_for_constant_overflow);
+                ns.contracts[*contract_no].variables[*var_no].initializer = Some(res);
+            }
         }
     }
 

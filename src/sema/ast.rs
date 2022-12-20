@@ -16,8 +16,6 @@ use std::{
 };
 use tiny_keccak::{Hasher, Keccak};
 
-
-
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Type {
     Bool,
@@ -25,23 +23,25 @@ pub enum Type {
     Field,
 
     Array(Box<Type>, Vec<ArrayLength>),
-    Void,
-    Unreachable,
     /// The usize is an index into enums in the namespace
     Enum(usize),
     /// The usize is an index into contracts in the namespace
     Struct(usize),
     /// The usize is an index into contracts in the namespace
     Contract(usize),
+    /// Reference to storage
+    StorageRef(Box<Type>),
+
     Function {
         params: Vec<Type>,
         returns: Vec<Type>,
     },
 
     /// User type definitions, e.g. `type Foo is int128;`. The usize
-    /// is an index into user_tyxzzzzzpes in the namespace.
+    /// is an index into user_types in the namespace.
     UserType(usize),
-
+    Void,
+    Unreachable,
     /// DynamicBytes and String are lowered to a vector.
     Slice(Box<Type>),
     /// We could not resolve this type
@@ -407,6 +407,8 @@ pub enum Expression {
     ShiftRight(program::Loc, Type, Box<Expression>, Box<Expression>),
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
+    StorageVariable(program::Loc, Type, usize, usize),
+    StorageLoad(program::Loc, Type, Box<Expression>),
     ZeroExt {
         loc: program::Loc,
         to: Type,
@@ -500,6 +502,12 @@ impl Recurse for Expression {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
+                Expression::StorageLoad(_, _, expr)
+                | Expression::ZeroExt { expr, .. }
+                | Expression::Trunc { expr, .. }
+                | Expression::Cast { expr, .. }
+                | Expression::Increment(_, _, expr)
+                | Expression::Decrement(_, _, expr) => expr.recurse(cx, f),
 
                 Expression::Assign(_, _, left, right)
                 | Expression::More(_, left, right)
@@ -569,6 +577,8 @@ impl CodeLocation for Expression {
             | Expression::ShiftRight(loc, ..)
             | Expression::Variable(loc, ..)
             | Expression::ConstantVariable(loc, ..)
+            | Expression::StorageVariable(loc, ..)
+            | Expression::StorageLoad(loc, ..)
             | Expression::ZeroExt { loc, .. }
             | Expression::Trunc { loc, .. }
             | Expression::Cast { loc, .. }

@@ -254,7 +254,7 @@ pub fn resolve_returns(
 
         let mut ty_loc = r.ty.loc();
 
-        match ns.resolve_type(file_no, contract_no,  &r.ty, diagnostics) {
+        match ns.resolve_type(file_no, contract_no, &r.ty, diagnostics) {
             Ok(ty) => {
                 resolved_returns.push(Parameter {
                     loc: *loc,

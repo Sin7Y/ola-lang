@@ -454,6 +454,25 @@ impl Dot {
                     Some(parent_rel),
                 );
             }
+            Expression::StorageVariable(loc, ty, contract, var_no) => {
+                self.add_storage_variable(loc, ty, contract, var_no, parent, parent_rel, ns);
+            }
+
+            Expression::StorageLoad(loc, ty, expr) => {
+                let node = self.add_node(
+                    Node::new(
+                        "storage_load",
+                        vec![
+                            format!("storage load {}", ty.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
 
             Expression::Increment(loc, ty, expr) => {
                 let mut labels = vec![

@@ -259,7 +259,7 @@ fn statement(
             )?;
             used_variable(ns, &expr, symtable);
 
-            let cond = expr;
+            let cond = expr.cast(&expr.loc(), &Type::Bool, ns, diagnostics)?;
 
             symtable.new_scope();
             let mut then_stmts = Vec::new();
@@ -393,7 +393,7 @@ fn statement(
                 ResolveTo::Type(&Type::Bool),
             )?;
 
-            let cond = expr;
+            let cond = expr.cast(&cond_expr.loc(), &Type::Bool, ns, diagnostics)?;
 
             // continue goes to next, and if that does exist, cond
             loops.new_scope();
@@ -534,8 +534,7 @@ fn resolve_var_decl_ty(
     diagnostics: &mut Diagnostics,
 ) -> Result<(Type, program::Loc), ()> {
     let mut loc_ty = ty.loc();
-    let mut var_ty =
-        ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
+    let mut var_ty = ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
     Ok((var_ty, loc_ty))
 }
 
@@ -659,6 +658,7 @@ fn return_with_values(
                     diagnostics,
                     ResolveTo::Type(&return_ty),
                 )?;
+                let expr = expr.cast(loc, &return_ty, ns, diagnostics)?;
                 used_variable(ns, &expr, symtable);
                 exprs.push(expr);
             }
@@ -709,6 +709,27 @@ fn return_with_values(
         ));
         return Err(());
     }
+
+    let func_returns_tys = ns.functions[function_no]
+        .returns
+        .iter()
+        .map(|r| r.ty.clone())
+        .collect::<Vec<_>>();
+
+    // Check that the values can be cast
+    let _ = expr_return_tys
+        .into_iter()
+        .zip(func_returns_tys)
+        .enumerate()
+        .map(|(i, (expr_return_ty, func_return_ty))| {
+            Expression::Variable(expr_returns.loc(), expr_return_ty, i).cast(
+                &expr_returns.loc(),
+                &func_return_ty,
+                ns,
+                diagnostics,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
     Ok(expr_returns)
 }
