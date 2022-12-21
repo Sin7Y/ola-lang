@@ -329,6 +329,57 @@ impl GetElemPtr {
     }
 }
 
+/// Unary operation.
+#[derive(Clone, Debug)]
+pub struct Unary {
+    op: UnaryOp,
+    val: Value,
+}
+
+impl Unary {
+    pub(in crate::ir) fn new_data(op: UnaryOp, val: Value, ty: Type) -> ValueData {
+        ValueData::new(ty, ValueKind::Unary(Self { op, val }))
+    }
+
+    /// Returns the unary operator.
+    pub fn op(&self) -> UnaryOp {
+        self.op
+    }
+
+    /// Returns a mutable reference to the unary operator.
+    pub fn op_mut(&mut self) -> &mut UnaryOp {
+        &mut self.op
+    }
+
+    /// Returns the value.
+    pub fn val(&self) -> Value {
+        self.val
+    }
+
+    /// Returns a mutable reference to the value.
+    pub fn val_mut(&mut self) -> &mut Value {
+        &mut self.val
+    }
+}
+
+/// Supported unary operators.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum UnaryOp {
+    /// Not.
+    Not,
+    /// Complement.
+    Comp,
+}
+
+impl fmt::Display for UnaryOp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            UnaryOp::Not => f.write_str("not"),
+            UnaryOp::Comp => f.write_str("comp"),
+        }
+    }
+}
+
 /// Binary operation.
 #[derive(Clone, Debug)]
 pub struct Binary {
@@ -398,6 +449,8 @@ pub enum BinaryOp {
     Div,
     /// Modulo.
     Mod,
+    /// Power.
+    Pow,
     /// Bitwise AND.
     And,
     /// Bitwise OR.
@@ -408,8 +461,6 @@ pub enum BinaryOp {
     Shl,
     /// Shift right logical.
     Shr,
-    /// Shift right arithmetic.
-    Sar,
 }
 
 impl fmt::Display for BinaryOp {
@@ -426,12 +477,12 @@ impl fmt::Display for BinaryOp {
             BinaryOp::Mul => f.write_str("mul"),
             BinaryOp::Div => f.write_str("div"),
             BinaryOp::Mod => f.write_str("mod"),
+            BinaryOp::Pow => f.write_str("pow"),
             BinaryOp::And => f.write_str("and"),
             BinaryOp::Or => f.write_str("or"),
             BinaryOp::Xor => f.write_str("xor"),
             BinaryOp::Shl => f.write_str("shl"),
             BinaryOp::Shr => f.write_str("shr"),
-            BinaryOp::Sar => f.write_str("sar"),
         }
     }
 }

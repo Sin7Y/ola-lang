@@ -136,6 +136,13 @@ pub trait LocalInstBuilder: ValueBuilder {
         self.insert_value(GetElemPtr::new_data(src, index, ty))
     }
 
+    /// Creates a unary operation.
+    fn unary(mut self, op: UnaryOp, val: Value) -> Value {
+        let ty = self.value_type(val);
+        assert!(ty.is_U32(), "`val` must be integer");
+        self.insert_value(Unary::new_data(op, val, ty))
+    }
+
     /// Creates a binary operation.
     fn binary(mut self, op: BinaryOp, lhs: Value, rhs: Value) -> Value {
         let lhs_ty = self.value_type(lhs);

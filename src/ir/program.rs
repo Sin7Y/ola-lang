@@ -434,6 +434,8 @@ pub enum ValueKind {
     GetPtr(values::GetPtr),
     /// Element pointer calculation.
     GetElemPtr(values::GetElemPtr),
+    /// Unary operation.
+    Unary(values::Unary),
     /// Binary operation.
     Binary(values::Binary),
     /// Conditional branch.
@@ -490,6 +492,7 @@ impl ValueKind {
                 | ValueKind::Store(..)
                 | ValueKind::GetPtr(..)
                 | ValueKind::GetElemPtr(..)
+                | ValueKind::Unary(..)
                 | ValueKind::Binary(..)
                 | ValueKind::Branch(..)
                 | ValueKind::Jump(..)
@@ -542,6 +545,7 @@ impl<'a> Iterator for ValueUses<'a> {
             ValueKind::Store(v) => field_use!(v.value(), v.dest()),
             ValueKind::GetPtr(v) => field_use!(v.src(), v.index()),
             ValueKind::GetElemPtr(v) => field_use!(v.src(), v.index()),
+            ValueKind::Unary(v) => field_use!(v.val()),
             ValueKind::Binary(v) => field_use!(v.lhs(), v.rhs()),
             ValueKind::Branch(v) => {
                 let tlen = v.true_args().len();
