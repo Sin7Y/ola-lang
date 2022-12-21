@@ -14,6 +14,9 @@ pub mod selector;
 pub mod types;
 pub mod values;
 
+pub mod codegen;
+pub mod irgen;
+
 pub mod builder_traits {
     pub use super::builder::{
         BasicBlockBuilder, GlobalInstBuilder, LocalInstBuilder, ValueBuilder,
