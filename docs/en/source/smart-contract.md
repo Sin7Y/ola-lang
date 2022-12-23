@@ -11,15 +11,15 @@ The following example shows a recursive and non-recursive ola smart contract imp
 
 contract Fibonacci {
     u32 num;
-    fn fib_recursive(u32 n) -> (u32){
+    fn fib_recursive(u32 n) -> (u32) {
         num += 1;
         if (n == 0 || n == 1) {
             return 1;
-        } 
-        return fib(n -1) + fib(n -2);
+        }
+        return fib_recursive(n -1) + fib_recursive(n -2);
     }
-    
-    fb fib_non_recursive(u32 n) -> (u32) {
+
+    fn fib_non_recursive(u32 n) -> (u32) {
         num += 1;
         if (n == 0 || n == 1) {
             return 1;
@@ -31,7 +31,7 @@ contract Fibonacci {
         }
         return a + b;
     }
-    
+
 }
 
 ````
@@ -41,27 +41,26 @@ assigns a value to the person structure and reads the status of the person.
 
 ````javascript
 
-
 contract Person {
-    
+
     enum Sex {
-        Man
+        Man,
         Women
     }
-    
+
     struct Person {
         Sex s;
         u32 age;
-        u256 person_id;
+        u256 id;
     }
 
     Person p;
-    
+
     fn newPerson(Sex s, u32 age, u256 id) {
         p = Person(s, age, id);
     }
-    
-    fn getPersionId() -> (u256) {
+
+    fn getPersonId() -> (u256) {
         return p.id;
     }
 

@@ -362,12 +362,6 @@ pub struct Namespace {
     pub variable_symbols: HashMap<(usize, Option<usize>, String), Symbol>,
     // each variable in the symbol table should have a unique number
     pub next_id: usize,
-    /// For a variable reference at a location, give the constant value
-    /// This for use by the language server to show the value of a variable at a location
-    /// TODO add it after sema build successful
-    // pub var_constants: HashMap<program::Loc, codegen::Expression>,
-    /// Overrides for hover in the language server
-    pub hover_overrides: HashMap<program::Loc, String>,
 }
 
 pub struct Contract {
@@ -377,8 +371,7 @@ pub struct Contract {
     pub functions: Vec<usize>,
     pub all_functions: BTreeMap<usize, usize>,
     pub variables: Vec<Variable>,
-    /// List of contracts this contract instantiates
-    pub creates: Vec<usize>,
+
     pub initializer: Option<usize>,
     // TODO add cfg after build sema successful
     // pub cfg: Vec<ControlFlowGraph>,

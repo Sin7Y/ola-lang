@@ -23,7 +23,6 @@ impl ast::Contract {
             functions: Vec::new(),
             all_functions: BTreeMap::new(),
             variables: Vec::new(),
-            creates: Vec::new(),
             initializer: None,
             code: Vec::new(),
             dispatch_no: 0,
@@ -79,14 +78,21 @@ pub fn resolve(
         resolve_declarations(def, file_no, *contract_no, ns, &mut delayed);
     }
 
+    // Now we have all the declarations, we can add all functions
+    for (contract_no, _) in contracts {
+        for function_no in ns.contracts[*contract_no].functions.clone() {
+            ns.contracts[*contract_no]
+                .all_functions
+                .insert(function_no, usize::MAX);
+        }
+    }
+
     // Now we can resolve the initializers
     variables::resolve_initializers(&delayed.initializers, file_no, ns);
 
     // Now we can resolve the bodies
     resolve_bodies(delayed.function_bodies, file_no, ns);
 }
-
-impl ast::Namespace {}
 
 /// Function body which should be resolved.
 /// List of function_no, contract_no, and function parse tree
@@ -127,9 +133,6 @@ fn resolve_declarations<'a>(
         .initializers
         .extend(variables::contract_variables(def, file_no, contract_no, ns));
 
-    // resolve function signatures
-    let mut doc_comment_start = def.loc.start();
-
     for part in &def.parts {
         if let program::ContractPart::FunctionDefinition(ref f) = part {
             if let Some(function_no) =
@@ -147,12 +150,9 @@ fn resolve_declarations<'a>(
             }
 
             if let Some(Statement::Block { loc, .. }) = &f.body {
-                doc_comment_start = loc.end();
                 continue;
             }
         }
-
-        doc_comment_start = part.loc().end();
     }
 
     if !function_no_bodies.is_empty() {

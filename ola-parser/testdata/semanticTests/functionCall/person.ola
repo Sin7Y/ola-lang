@@ -1,0 +1,27 @@
+        contract Person {
+
+            enum Sex {
+                Man,
+                Women
+            }
+
+            struct Person {
+                Sex s;
+                u32 age;
+                u256 id;
+            }
+
+            Person p;
+
+            fn newPerson(Sex s, u32 age, u256 id) {
+                p = Person(s, age, id);
+            }
+
+            fn getPersonId() -> (u256) {
+                return p.id;
+            }
+
+            fn getAge() -> (u32) {
+                return p.age;
+            }
+    }
