@@ -35,7 +35,6 @@ impl Namespace {
             function_symbols: HashMap::new(),
             diagnostics: Diagnostics::default(),
             next_id: 0,
-            hover_overrides: HashMap::new(),
         };
 
         ns

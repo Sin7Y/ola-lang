@@ -891,7 +891,7 @@ fn variable(
             let mut expr = None;
 
             for function_no in
-                available_functions(&id.name, true, context.file_no, context.contract_no, ns)
+                available_functions(&id.name, context.file_no, context.contract_no, ns)
             {
                 let func = &ns.functions[function_no];
 
@@ -1213,18 +1213,6 @@ fn power(
         Box::new(base.cast(&b.loc(), &ty, ns, diagnostics)?),
         Box::new(exp.cast(&e.loc(), &ty, ns, diagnostics)?),
     ))
-}
-
-/// check if from creates to, recursively
-fn circular_reference(from: usize, to: usize, ns: &Namespace) -> bool {
-    if ns.contracts[from].creates.contains(&to) {
-        return true;
-    }
-
-    ns.contracts[from]
-        .creates
-        .iter()
-        .any(|n| circular_reference(*n, to, ns))
 }
 
 /// Test for equality; first check string equality, then integer equality
@@ -2036,24 +2024,14 @@ fn struct_literal(
     }
 }
 
-/// Create a list of functions that can be called in this context. If global is true, then
-/// include functions outside of contracts
+/// Create a list of functions that can be called in this context.
 pub fn available_functions(
     name: &str,
-    global: bool,
     file_no: usize,
     contract_no: Option<usize>,
     ns: &Namespace,
 ) -> Vec<usize> {
     let mut list = Vec::new();
-
-    if global {
-        if let Some(Symbol::Function(v)) =
-            ns.function_symbols.get(&(file_no, None, name.to_owned()))
-        {
-            list.extend(v.iter().map(|(_, func_no)| *func_no));
-        }
-    }
 
     if let Some(contract_no) = contract_no {
         list.extend(
@@ -2168,7 +2146,7 @@ pub fn function_call_pos_args(
         0 => {
             diagnostics.push(Diagnostic::error(
                 id.loc,
-                format!("unknown fn or type '{}'", id.name),
+                format!("unknown fn or type with name '{}'", id.name),
             ));
         }
         1 => diagnostics.extend(errors),
@@ -2442,187 +2420,6 @@ fn method_call_pos_args(
     diagnostics.push(Diagnostic::error(
         func.loc,
         format!("method '{}' does not exist", func.name),
-    ));
-
-    Err(())
-}
-
-fn method_call_named_args(
-    loc: &program::Loc,
-    var: &program::Expression,
-    func_name: &program::Identifier,
-    args: &[program::NamedArgument],
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    let var_expr = expression(var, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
-    let var_ty = var_expr.ty();
-
-    if let Type::Contract(external_contract_no) = &var_ty {
-        let mut arguments = HashMap::new();
-
-        // check if the arguments are not garbage
-        for arg in args {
-            if arguments.contains_key(arg.name.name.as_str()) {
-                diagnostics.push(Diagnostic::error(
-                    arg.name.loc,
-                    format!("duplicate argument with name '{}'", arg.name.name),
-                ));
-
-                let _ = expression(
-                    &arg.expr,
-                    context,
-                    ns,
-                    symtable,
-                    diagnostics,
-                    ResolveTo::Unknown,
-                );
-
-                continue;
-            }
-
-            arguments.insert(arg.name.name.as_str(), &arg.expr);
-        }
-
-        let mut errors = Diagnostics::default();
-        let mut name_matches: Vec<usize> = Vec::new();
-
-        // function call
-        for function_no in ns.contracts[*external_contract_no].all_functions.keys() {
-            if ns.functions[*function_no].name != func_name.name {
-                continue;
-            }
-
-            name_matches.push(*function_no);
-        }
-
-        for function_no in &name_matches {
-            let func = &ns.functions[*function_no];
-
-            let unnamed_params = func.params.iter().filter(|p| p.id.is_none()).count();
-            let params_len = func.params.len();
-
-            let mut matches = true;
-
-            if unnamed_params > 0 {
-                errors.push(Diagnostic::cast_error_with_note(
-                    *loc,
-                    format!(
-                        "function cannot be called with named arguments as {} of its parameters do not have names",
-                        unnamed_params,
-                    ),
-                    func.loc,
-                    format!("definition of {}", func.name),
-                ));
-                matches = false;
-            } else if params_len != args.len() {
-                errors.push(Diagnostic::cast_error(
-                    *loc,
-                    format!(
-                        "function expects {} arguments, {} provided",
-                        params_len,
-                        args.len()
-                    ),
-                ));
-                matches = false;
-            }
-            let mut cast_args = Vec::new();
-
-            for i in 0..params_len {
-                let param = ns.functions[*function_no].params[i].clone();
-                if param.id.is_none() {
-                    continue;
-                }
-
-                let arg = match arguments.get(param.name_as_str()) {
-                    Some(a) => a,
-                    None => {
-                        matches = false;
-                        diagnostics.push(Diagnostic::cast_error(
-                            *loc,
-                            format!(
-                                "missing argument '{}' to function '{}'",
-                                param.name_as_str(),
-                                func_name.name,
-                            ),
-                        ));
-                        continue;
-                    }
-                };
-
-                let arg = match expression(
-                    arg,
-                    context,
-                    ns,
-                    symtable,
-                    &mut errors,
-                    ResolveTo::Type(&param.ty),
-                ) {
-                    Ok(e) => e,
-                    Err(()) => {
-                        matches = false;
-                        continue;
-                    }
-                };
-
-                match arg.cast(&arg.loc(), &param.ty, ns, &mut errors) {
-                    Ok(expr) => cast_args.push(expr),
-                    Err(()) => {
-                        matches = false;
-                        break;
-                    }
-                }
-            }
-
-            if matches {
-                let func = &ns.functions[*function_no];
-                let returns = function_returns(func, resolve_to);
-                let ty = function_type(func, resolve_to);
-
-                return Ok(Expression::FunctionCall {
-                    loc: *loc,
-                    returns,
-                    function: Box::new(Expression::Function {
-                        loc: *loc,
-                        ty,
-                        function_no: *function_no,
-                        signature: None,
-                    }),
-                    args: cast_args,
-                });
-            } else if name_matches.len() > 1 && diagnostics.extend_non_casting(&errors) {
-                return Err(());
-            }
-        }
-
-        match name_matches.len() {
-            0 => {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    format!(
-                        "contract '{}' does not have function '{}'",
-                        var_ty.to_string(ns),
-                        func_name.name
-                    ),
-                ));
-            }
-            1 => diagnostics.extend(errors),
-            _ => {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "cannot find overloaded function which matches signature".to_string(),
-                ));
-            }
-        }
-        return Err(());
-    }
-
-    diagnostics.push(Diagnostic::error(
-        func_name.loc,
-        format!("method '{}' does not exist", func_name.name),
     ));
 
     Err(())
@@ -3063,7 +2860,7 @@ pub fn function_call_expr(
                 loc,
                 id,
                 args,
-                available_functions(&id.name, true, context.file_no, context.contract_no, ns),
+                available_functions(&id.name, context.file_no, context.contract_no, ns),
                 context,
                 ns,
                 resolve_to,
@@ -3093,22 +2890,11 @@ pub fn named_function_call_expr(
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     match ty {
-        program::Expression::MemberAccess(_, member, func) => method_call_named_args(
-            loc,
-            member,
-            func,
-            args,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            resolve_to,
-        ),
         program::Expression::Variable(id) => function_call_named_args(
             loc,
             id,
             args,
-            available_functions(&id.name, true, context.file_no, context.contract_no, ns),
+            available_functions(&id.name, context.file_no, context.contract_no, ns),
             context,
             resolve_to,
             ns,

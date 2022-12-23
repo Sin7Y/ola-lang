@@ -618,6 +618,7 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Contract(_) => BigInt::from(ns.address_length),
+            Type::Uint(n) => BigInt::from(n / 8),
             Type::Array(ty, dims) => {
                 let pointer_size = BigInt::one();
                 ty.memory_size_of(ns).mul(
@@ -798,6 +799,7 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Contract(_) => BigInt::from(ns.address_length),
+            Type::Uint(n) => BigInt::from(n / 8),
             Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
             Type::Array(ty, _) => ty.storage_align(ns),
             Type::Struct(n) => ns.structs[*n]
