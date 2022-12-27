@@ -3,6 +3,7 @@ mod gen;
 use crate::ir::program::Program;
 use ola_parser::program::SourceUnit;
 
+use crate::sema::ast::Namespace;
 use gen::GenerateProgram;
 
 /// Result type of IR generator.
@@ -15,8 +16,8 @@ pub enum Error {
 }
 
 /// Generates IR program for the given compile unit (ASTs).
-pub fn generate_program(src_unit: &SourceUnit) -> Result<Program> {
+pub fn generate_program(ns: &Namespace) -> Result<Program> {
     let mut program = Program::new();
-    src_unit.generate(&mut program)?;
+    ns.generate(&mut program)?;
     Ok(program)
 }

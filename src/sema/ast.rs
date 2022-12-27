@@ -675,7 +675,6 @@ pub enum Builtin {
 pub enum Statement {
     Block {
         loc: program::Loc,
-        unchecked: bool,
         statements: Vec<Statement>,
     },
     VariableDecl(program::Loc, usize, Parameter, Option<Arc<Expression>>),

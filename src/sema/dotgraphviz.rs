@@ -798,16 +798,8 @@ impl Dot {
 
         for stmt in stmts {
             match stmt {
-                Statement::Block {
-                    loc,
-                    unchecked,
-                    statements,
-                } => {
+                Statement::Block { loc, statements } => {
                     let mut labels = vec![String::from("block"), ns.loc_to_string(loc)];
-
-                    if *unchecked {
-                        labels.push(String::from("unchecked"));
-                    }
 
                     parent =
                         self.add_node(Node::new("block", labels), Some(parent), Some(parent_rel));
