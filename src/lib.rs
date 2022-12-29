@@ -12,6 +12,8 @@ pub mod standard_json;
 #[allow(clippy::result_unit_err)]
 pub mod sema;
 
+pub mod ir;
+
 use file_resolver::FileResolver;
 use ola_parser::program;
 use sema::diagnostics;
