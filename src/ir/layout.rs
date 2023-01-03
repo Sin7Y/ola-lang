@@ -161,6 +161,12 @@ impl BasicBlockNode {
     }
 }
 
+impl From<()> for BasicBlockNode {
+    fn from(_: ()) -> Self {
+        panic!("shound not be called")
+    }
+}
+
 /// Instruction list, stores the order of all instructions in the basic
 /// block.
 pub type InstList = KeyNodeList<Value, InstNode, InstMap>;

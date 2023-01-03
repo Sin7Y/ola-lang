@@ -1,4 +1,7 @@
+mod func;
 mod gen;
+mod scopes;
+mod values;
 
 use crate::ir::program::Program;
 use ola_parser::program::SourceUnit;
@@ -13,6 +16,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     DuplicatedDef,
     SymbolNotFound,
+    UseVoidValue,
+    NonIntCalc,
+    ArrayAssign,
 }
 
 /// Generates IR program for the given compile unit (ASTs).
