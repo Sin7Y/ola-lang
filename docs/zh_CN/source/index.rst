@@ -44,6 +44,7 @@ Contents
 
    ola-abi
    ola-ir
+   ola-codegen
 
 .. toctree::
    :maxdepth: 2
