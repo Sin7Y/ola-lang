@@ -60,7 +60,7 @@ fn generate_expr(program: &mut Program, expr: &Expression, ns: &Namespace) -> Re
         Expression::BoolLiteral(loc, val) => {}
 
         Expression::NumberLiteral(loc, ty, val) => {}
-
+        // ExpValue::Int(cur_func!(ns).new_value(program).integer(*val as i32)
         Expression::StructLiteral(loc, ty, args) => {
             for (no, arg) in args.iter().enumerate() {
                 generate_expr(program, arg, ns);

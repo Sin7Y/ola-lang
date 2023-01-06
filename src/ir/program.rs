@@ -70,6 +70,13 @@ impl Program {
         data
     }
 
+    /// Immutably borrows the global value data by the given value handle.
+    pub fn borrow_value(&self, value: Value) -> Ref<ValueData> {
+        Ref::map(self.values.borrow(), |m| {
+            m.get(&value).expect("`value` does not exist")
+        })
+    }
+
     /// Immutably borrows the global value map.
     pub fn borrow_values(&self) -> Ref<HashMap<Value, ValueData>> {
         self.values.borrow()

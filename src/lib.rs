@@ -14,6 +14,8 @@ pub mod sema;
 
 pub mod ir;
 
+pub mod codegen;
+
 use file_resolver::FileResolver;
 use ola_parser::program;
 use sema::diagnostics;
