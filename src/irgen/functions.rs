@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: Apache-2.0
+
+use crate::{
+    sema::ast::{Type},
+};
+use inkwell::{
+    module::Linkage,
+    { IntPredicate},
+};
+
+// SPDX-License-Identifier: Apache-2.0
+
+use crate::irgen::binary::Binary;
+use crate::sema::ast::{Contract, Expression, Function, FunctionAttributes, Namespace};
+use inkwell::debug_info::{AsDIScope, DISubprogram, DIType};
+use inkwell::types::BasicType;
+use inkwell::values::{FunctionValue, PhiValue};
+use inkwell::AddressSpace;
+use ola_parser::program;
+use ola_parser::program::CodeLocation;
+use std::collections::{HashMap, VecDeque};
+use crate::irgen::statements::statement;
+
+/// Emit all functions, constructors, fallback and receiver
+pub(super) fn gen_functions<'a>(
+    bin: &mut Binary<'a>,
+    contract: &Contract,
+    ns: &Namespace,
+) {
+    for (func_no, func) in ns.functions.iter().enumerate() {
+            let ftype = bin.function_type(
+                &func.params
+                    .iter()
+                    .map(|p| p.ty.clone())
+                    .collect::<Vec<Type>>(),
+                &func.returns
+                    .iter()
+                    .map(|p| p.ty.clone())
+                    .collect::<Vec<Type>>(),
+                ns,
+            );
+
+            let func_value = if let Some(func) = bin.module.get_function(&func.name) {
+                // must not have a body yet
+                assert_eq!(func.get_first_basic_block(), None);
+
+                func
+            } else {
+                bin.module
+                    .add_function(&func.name, ftype, Some(Linkage::Internal))
+            };
+
+        gen_function(bin, contract, func , func_value, ns);
+
+    }
+}
+
+
+
+pub(super) fn gen_function<'a>(
+    bin: &mut Binary<'a>,
+    contract: &Contract,
+    func: &Function,
+    func_val: FunctionValue<'a>,
+    ns: &Namespace,
+) {
+
+    // Create all the stack variables
+    // let mut vars = HashMap::new();
+
+    // for (no, v) in &cfg.vars {
+    //
+    //     let ty = bin.llvm_type(&v.ty, ns);
+    //     vars.insert(
+    //         *no,
+    //         Variable {
+    //             value: if ty.is_pointer_type() {
+    //                 ty.into_pointer_type().const_zero().into()
+    //             } else if ty.is_array_type() {
+    //                 ty.into_array_type().const_zero().into()
+    //             } else if ty.is_int_type() {
+    //                 ty.into_int_type().const_zero().into()
+    //             } else {
+    //                 ty.into_struct_type().const_zero().into()
+    //             },
+    //         },
+    //     );
+    // }
+
+    // populate the argument variables
+    populate_arguments(bin, func, func_val, ns);
+
+    for stmt in &func.body {
+        statement(
+            stmt,
+            bin,
+            func,
+            func_val,
+            ns,
+        );
+    }
+}
+
+/// Populate the arguments of a function
+pub(crate) fn populate_arguments<'a>(
+    bin: &mut Binary<'a>,
+    func: &Function,
+    func_val: FunctionValue<'a>,
+    ns: &Namespace,
+) {
+    for (i, arg) in func.get_symbol_table().arguments.iter().enumerate() {
+        if let Some(pos) = arg {
+            let var = &func.get_symbol_table().vars[pos];
+            let arg_val = func_val.get_nth_param(i as u32).unwrap();
+            let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str())
+                .into();
+            bin.builder.build_store(alloc, arg_val);
+        }
+
+    }
+}

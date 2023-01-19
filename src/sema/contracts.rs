@@ -6,6 +6,7 @@ use ola_parser::program::{self, CodeLocation, Statement};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::convert::TryInto;
 use tiny_keccak::{Hasher, Keccak};
+use crate::irgen;
 
 use super::{
     ast, diagnostics::Diagnostics, expression::ExprContext, functions, statements,
@@ -36,20 +37,12 @@ impl ast::Contract {
         ns: &'a ast::Namespace,
         context: &'a inkwell::context::Context,
         filename: &'a str,
-        opt: inkwell::OptimizationLevel,
-        math_overflow_check: bool,
-        generate_debug_info: bool,
-        log_api_return_codes: bool,
-    ) -> emit::binary::Binary {
-        emit::binary::Binary::build(
+    ) -> irgen::binary::Binary {
+        irgen::binary::Binary::build(
             context,
             self,
             ns,
             filename,
-            opt,
-            math_overflow_check,
-            generate_debug_info,
-            log_api_return_codes,
         )
     }
 
