@@ -29,5 +29,4 @@ impl ast::Contract {
     ) -> binary::Binary {
         binary::Binary::build(context, self, ns, filename)
     }
-
 }

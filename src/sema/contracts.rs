@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::irgen;
 use num_bigint::BigInt;
 use num_traits::Zero;
 use ola_parser::program::{self, CodeLocation, Statement};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::convert::TryInto;
 use tiny_keccak::{Hasher, Keccak};
-use crate::irgen;
 
 use super::{
     ast, diagnostics::Diagnostics, expression::ExprContext, functions, statements,
@@ -38,12 +38,7 @@ impl ast::Contract {
         context: &'a inkwell::context::Context,
         filename: &'a str,
     ) -> irgen::binary::Binary {
-        irgen::binary::Binary::build(
-            context,
-            self,
-            ns,
-            filename,
-        )
+        irgen::binary::Binary::build(context, self, ns, filename)
     }
 
     /// Selector for this contract. This is used by Solana contract bundle

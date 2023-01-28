@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::sema::ast::{ArrayLength, Contract, Namespace, Type};
+use std::collections::HashMap;
 use std::path::Path;
 use std::str;
 
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
+use crate::irgen::functions::gen_functions;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
-use inkwell::module::{ Module};
-use inkwell::targets::{RelocMode};
-use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, IntType, StringRadix,
+use inkwell::module::Module;
+use inkwell::targets::RelocMode;
+use inkwell::types::{
+    BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, IntType, StringRadix,
 };
 use inkwell::values::{BasicValueEnum, FunctionValue, GlobalValue, IntValue, PointerValue};
 use inkwell::AddressSpace;
-use crate::irgen::functions::gen_functions;
-
 
 pub struct Binary<'a> {
     pub name: String,
@@ -31,16 +32,11 @@ impl<'a> Binary<'a> {
         context: &'a Context,
         contract: &'a Contract,
         ns: &'a Namespace,
-        filename: &'a str
+        filename: &'a str,
     ) -> Self {
+        let mut binary = Binary::new(context, &contract.name, filename);
 
-        let mut binary = Binary::new(
-            context,
-            &contract.name,
-            filename,
-        );
-
-        gen_functions(&mut binary, contract, ns);
+        gen_functions(&mut binary, ns);
         binary
     }
 
@@ -52,13 +48,8 @@ impl<'a> Binary<'a> {
         Ok(())
     }
 
-    pub fn new(
-        context: &'a Context,
-        name: &str,
-        filename: &str,
-    ) -> Self {
+    pub fn new(context: &'a Context, name: &str, filename: &str) -> Self {
         let module = context.create_module(name);
-
 
         let builder = context.create_builder();
 
@@ -119,12 +110,9 @@ impl<'a> Binary<'a> {
             });
         }
 
-        let i64_type = self.context.i64_type();
-        i64_type.fn_type(&args, false)
-
+        let i32_type = self.context.i32_type();
+        i32_type.fn_type(&args, false)
     }
-
-
 
     /// Return the llvm type for a variable holding the type, not the type itself
     pub(crate) fn llvm_var_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
@@ -153,9 +141,7 @@ impl<'a> Binary<'a> {
         match ty {
             Type::Bool => BasicTypeEnum::IntType(self.context.bool_type()),
 
-            Type::Uint(n) => {
-                BasicTypeEnum::IntType(self.context.custom_width_int_type(*n as u32))
-            }
+            Type::Uint(n) => BasicTypeEnum::IntType(self.context.custom_width_int_type(*n as u32)),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
 
             Type::Array(base_ty, dims) => {
@@ -215,7 +201,28 @@ impl<'a> Binary<'a> {
         }
     }
 
+    // Creates a new stack allocation instruction in the entry block of the function
+    pub(crate) fn build_alloca<T: BasicType<'a>>(
+        &self,
+        function: inkwell::values::FunctionValue<'a>,
+        ty: T,
+        name: &str,
+    ) -> PointerValue<'a> {
+        let entry = function
+            .get_first_basic_block()
+            .expect("function missing entry block");
+        let current = self.builder.get_insert_block().unwrap();
+        if let Some(instr) = &entry.get_first_instruction() {
+            self.builder.position_before(instr);
+        } else {
+            // if there is no instruction yet, then nothing was built
+            self.builder.position_at_end(entry);
+        }
+
+        let res = self.builder.build_alloca(ty, name);
+
+        self.builder.position_at_end(current);
+
+        res
+    }
 }
-
-
-
