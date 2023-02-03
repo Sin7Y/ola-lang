@@ -1,27 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{Diagnostic, Expression, Function, Namespace, Parameter, Symbol, Type},
+    ast::{Diagnostic, Function, Namespace, Parameter, Symbol},
     diagnostics::Diagnostics,
-    expression::{expression, ExprContext, ResolveTo},
-    Symtable,
 };
 
-use ola_parser::{
-    program,
-    program::{CodeLocation, OptionalCodeLocation},
-};
+use ola_parser::{program, program::CodeLocation};
 
 /// Resolve function declaration in a contract
 pub fn contract_function(
-    contract: &program::ContractDefinition,
     func: &program::FunctionDefinition,
     file_no: usize,
     contract_no: usize,
     ns: &mut Namespace,
 ) -> Option<usize> {
-    let mut success = true;
-
     // Function name cannot be the same as the contract name
     if let Some(n) = &func.name {
         if n.name == ns.contracts[contract_no].name {
@@ -59,7 +51,7 @@ pub fn contract_function(
 
     ns.diagnostics.extend(diagnostics);
 
-    if !success || !returns_success || !params_success {
+    if !returns_success || !params_success {
         return None;
     }
 
@@ -87,7 +79,7 @@ pub fn contract_function(
     {
         ns.diagnostics.push(Diagnostic::error_with_note(
             func.loc,
-            format!("overloaded fn with this signature already exist"),
+            "overloaded fn with this signature already exist".to_string(),
             ns.functions[*func_no].loc,
             "location of previous definition".to_string(),
         ));
@@ -117,79 +109,79 @@ pub fn contract_function(
     Some(func_no)
 }
 
-/// Resolve free function
-pub fn function(
-    func: &program::FunctionDefinition,
-    file_no: usize,
-    ns: &mut Namespace,
-) -> Option<usize> {
-    let mut success = true;
-
-    let mut diagnostics = Diagnostics::default();
-
-    let (params, params_success) =
-        resolve_params(&func.params, file_no, None, ns, &mut diagnostics);
-
-    let (returns, returns_success) =
-        resolve_returns(&func.returns, file_no, None, ns, &mut diagnostics);
-
-    ns.diagnostics.extend(diagnostics);
-
-    if func.body.is_none() {
-        ns.diagnostics.push(Diagnostic::error(
-            func.loc,
-            String::from("missing function body"),
-        ));
-        success = false;
-    }
-
-    if !success || !returns_success || !params_success {
-        return None;
-    }
-
-    let name = match &func.name {
-        Some(s) => s.name.to_owned(),
-        None => {
-            ns.diagnostics.push(Diagnostic::error(
-                func.loc,
-                String::from("missing function name"),
-            ));
-            return None;
-        }
-    };
-
-    let mut fdecl = Function::new(func.loc, name, None, params, returns, ns);
-
-    fdecl.has_body = true;
-
-    let id = func.name.as_ref().unwrap();
-
-    if let Some(prev) = ns.functions.iter().find(|f| fdecl.signature == f.signature) {
-        ns.diagnostics.push(Diagnostic::error_with_note(
-            func.loc,
-            format!("overloaded fn with this signature already exist"),
-            prev.loc,
-            "location of previous definition".to_string(),
-        ));
-
-        return None;
-    }
-
-    let func_no = ns.functions.len();
-
-    ns.functions.push(fdecl);
-
-    if let Some(Symbol::Function(ref mut v)) =
-        ns.function_symbols
-            .get_mut(&(file_no, None, id.name.to_owned()))
-    {
-        v.push((func.loc, func_no));
-    } else {
-        ns.add_symbol(file_no, None, id, Symbol::Function(vec![(id.loc, func_no)]));
-    }
-
-    Some(func_no)
-}
+// /// Resolve free function
+// pub fn function(
+//     func: &program::FunctionDefinition,
+//     file_no: usize,
+//     ns: &mut Namespace,
+// ) -> Option<usize> {
+//     let mut success = true;
+//
+//     let mut diagnostics = Diagnostics::default();
+//
+//     let (params, params_success) =
+//         resolve_params(&func.params, file_no, None, ns, &mut diagnostics);
+//
+//     let (returns, returns_success) =
+//         resolve_returns(&func.returns, file_no, None, ns, &mut diagnostics);
+//
+//     ns.diagnostics.extend(diagnostics);
+//
+//     if func.body.is_none() {
+//         ns.diagnostics.push(Diagnostic::error(
+//             func.loc,
+//             String::from("missing function body"),
+//         ));
+//         success = false;
+//     }
+//
+//     if !success || !returns_success || !params_success {
+//         return None;
+//     }
+//
+//     let name = match &func.name {
+//         Some(s) => s.name.to_owned(),
+//         None => {
+//             ns.diagnostics.push(Diagnostic::error(
+//                 func.loc,
+//                 String::from("missing function name"),
+//             ));
+//             return None;
+//         }
+//     };
+//
+//     let mut fdecl = Function::new(func.loc, name, None, params, returns, ns);
+//
+//     fdecl.has_body = true;
+//
+//     let id = func.name.as_ref().unwrap();
+//
+//     if let Some(prev) = ns.functions.iter().find(|f| fdecl.signature == f.signature) {
+//         ns.diagnostics.push(Diagnostic::error_with_note(
+//             func.loc,
+//             format!("overloaded fn with this signature already exist"),
+//             prev.loc,
+//             "location of previous definition".to_string(),
+//         ));
+//
+//         return None;
+//     }
+//
+//     let func_no = ns.functions.len();
+//
+//     ns.functions.push(fdecl);
+//
+//     if let Some(Symbol::Function(ref mut v)) =
+//         ns.function_symbols
+//             .get_mut(&(file_no, None, id.name.to_owned()))
+//     {
+//         v.push((func.loc, func_no));
+//     } else {
+//         ns.add_symbol(file_no, None, id, Symbol::Function(vec![(id.loc, func_no)]));
+//     }
+//
+//     Some(func_no)
+// }
 
 /// Resolve the parameters
 pub fn resolve_params(
@@ -212,7 +204,7 @@ pub fn resolve_params(
             }
         };
 
-        let mut ty_loc = p.ty.loc();
+        let ty_loc = p.ty.loc();
 
         match ns.resolve_type(file_no, contract_no, &p.ty, diagnostics) {
             Ok(ty) => {
@@ -252,7 +244,7 @@ pub fn resolve_returns(
             }
         };
 
-        let mut ty_loc = r.ty.loc();
+        let ty_loc = r.ty.loc();
 
         match ns.resolve_type(file_no, contract_no, &r.ty, diagnostics) {
             Ok(ty) => {
@@ -288,14 +280,14 @@ fn signatures() {
             Parameter {
                 loc: program::Loc::Implicit,
                 id: None,
-                ty: Type::Uint(32),
+                ty: ast::Type::Uint(32),
                 ty_loc: None,
                 recursive: false,
             },
             Parameter {
                 loc: program::Loc::Implicit,
                 id: None,
-                ty: Type::Uint(64),
+                ty: ast::Type::Uint(64),
                 ty_loc: None,
                 recursive: false,
             },

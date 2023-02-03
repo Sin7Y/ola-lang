@@ -1,24 +1,13 @@
-// SPDX-License-Identifier: Apache-2.0
-
-use crate::sema::ast::Type;
-use inkwell::{module::Linkage, IntPredicate};
-
-// SPDX-License-Identifier: Apache-2.0
-
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
-use crate::sema::ast::{Contract, Expression, Function, FunctionAttributes, Namespace};
-use inkwell::debug_info::{AsDIScope, DISubprogram, DIType};
-use inkwell::types::BasicType;
-use inkwell::values::{BasicValueEnum, FunctionValue, PhiValue, PointerValue};
-use inkwell::AddressSpace;
-use ola_parser::program;
-use ola_parser::program::CodeLocation;
-use std::collections::{HashMap, VecDeque};
+use crate::sema::ast::Type;
+use crate::sema::ast::{Function, FunctionAttributes, Namespace};
+use inkwell::values::{BasicValueEnum, FunctionValue};
+use std::collections::HashMap;
 
 /// Emit all functions, constructors, fallback and receiver
 pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
-    for (func_no, func) in ns.functions.iter().enumerate() {
+    for (_, func) in ns.functions.iter().enumerate() {
         let ftype = bin.function_type(
             &func
                 .params
@@ -39,8 +28,7 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
 
             func
         } else {
-            bin.module
-                .add_function(&func.name, ftype, None)
+            bin.module.add_function(&func.name, ftype, None)
         };
 
         gen_function(bin, func, func_val, ns);
@@ -96,7 +84,6 @@ pub(crate) fn populate_arguments<'a>(
 ) {
     for (i, arg) in func.get_symbol_table().arguments.iter().enumerate() {
         if let Some(pos) = arg {
-            let var = &func.get_symbol_table().vars[pos];
             let arg_val = func_val.get_nth_param(i as u32).unwrap();
             // let alloc =
             //     bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());

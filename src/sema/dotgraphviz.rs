@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::{ast::*, symtable::Symtable};
-use ola_parser::{program, program::Loc};
+use crate::sema::ast::*;
+use ola_parser::program::Loc;
 use std::fmt::Write;
 
 struct Node {
@@ -120,7 +120,7 @@ impl Dot {
         let func_node = self.add_node(
             Node::new(&func.name, labels),
             Some(parent),
-            Some(format!("fn")),
+            Some("fn".to_string()),
         );
 
         // parameters
@@ -291,14 +291,14 @@ impl Dot {
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
             Expression::Add(loc, ty, left, right) => {
-                let mut labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
+                let labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
                 let node = self.add_node(Node::new("add", labels), Some(parent), Some(parent_rel));
 
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
             Expression::Subtract(loc, ty, left, right) => {
-                let mut labels = vec![
+                let labels = vec![
                     String::from("subtract"),
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
@@ -313,7 +313,7 @@ impl Dot {
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
             Expression::Multiply(loc, ty, left, right) => {
-                let mut labels = vec![
+                let labels = vec![
                     String::from("multiply"),
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
@@ -352,7 +352,7 @@ impl Dot {
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
             Expression::Power(loc, ty, left, right) => {
-                let mut labels = vec![
+                let labels = vec![
                     String::from("power"),
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
@@ -475,7 +475,7 @@ impl Dot {
             }
 
             Expression::Increment(loc, ty, expr) => {
-                let mut labels = vec![
+                let labels = vec![
                     String::from("pre increment"),
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
@@ -489,7 +489,7 @@ impl Dot {
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
             Expression::Decrement(loc, ty, expr) => {
-                let mut labels = vec![
+                let labels = vec![
                     String::from("pre decrement"),
                     ty.to_string(ns),
                     ns.loc_to_string(loc),
@@ -799,7 +799,7 @@ impl Dot {
         for stmt in stmts {
             match stmt {
                 Statement::Block { loc, statements } => {
-                    let mut labels = vec![String::from("block"), ns.loc_to_string(loc)];
+                    let labels = vec![String::from("block"), ns.loc_to_string(loc)];
 
                     parent =
                         self.add_node(Node::new("block", labels), Some(parent), Some(parent_rel));
@@ -979,8 +979,6 @@ impl Namespace {
 
         // enums
         if !self.enums.is_empty() {
-            let enums = dot.add_node(Node::new("enums", Vec::new()), None, None);
-
             for decl in &self.enums {
                 let mut labels = decl
                     .values
@@ -993,19 +991,13 @@ impl Namespace {
                     labels.insert(0, format!("contract: {}", contract));
                 }
                 labels.insert(0, format!("name: {}", decl.name));
-
-                let e = Node::new(&decl.name, labels);
-
-                let node = dot.add_node(e, Some(enums), None);
             }
         }
 
         // structs
         if !self.structs.is_empty() {
-            let structs = dot.add_node(Node::new("structs", Vec::new()), None, None);
-
             for decl in &self.structs {
-                if let program::Loc::File(..) = &decl.loc {
+                if let Loc::File(..) = &decl.loc {
                     let mut labels =
                         vec![format!("name:{}", decl.name), self.loc_to_string(&decl.loc)];
 
@@ -1020,27 +1012,13 @@ impl Namespace {
                             field.ty.to_string(self)
                         ));
                     }
-
-                    let e = Node::new(&decl.name, labels);
-
-                    let node = dot.add_node(e, Some(structs), None);
                 }
             }
         }
 
         // user types
-        if self
-            .user_types
-            .iter()
-            .any(|t| t.loc != program::Loc::Builtin)
-        {
-            let types = dot.add_node(Node::new("types", Vec::new()), None, None);
-
-            for decl in self
-                .user_types
-                .iter()
-                .filter(|t| t.loc != program::Loc::Builtin)
-            {
+        if self.user_types.iter().any(|t| t.loc != Loc::Builtin) {
+            for decl in self.user_types.iter().filter(|t| t.loc != Loc::Builtin) {
                 let mut labels = vec![
                     format!("name:{} ty:{}", decl.name, decl.ty.to_string(self)),
                     self.loc_to_string(&decl.loc),
@@ -1049,10 +1027,6 @@ impl Namespace {
                 if let Some(contract) = &decl.contract {
                     labels.insert(1, format!("contract: {}", contract));
                 }
-
-                let e = Node::new(&decl.name, labels);
-
-                let node = dot.add_node(e, Some(types), None);
             }
         }
 
@@ -1060,12 +1034,12 @@ impl Namespace {
         if self
             .functions
             .iter()
-            .any(|func| func.contract_no.is_none() && func.loc != program::Loc::Builtin)
+            .any(|func| func.contract_no.is_none() && func.loc != Loc::Builtin)
         {
             let functions = dot.add_node(Node::new("free_functions", Vec::new()), None, None);
 
             for func in &self.functions {
-                if func.contract_no.is_none() && func.loc != program::Loc::Builtin {
+                if func.contract_no.is_none() && func.loc != Loc::Builtin {
                     dot.add_function(func, self, functions);
                 }
             }

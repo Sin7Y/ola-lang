@@ -18,7 +18,7 @@ pub mod sema;
 use file_resolver::FileResolver;
 use ola_parser::program;
 use sema::diagnostics;
-use std::{ffi::OsStr, fmt};
+use std::ffi::OsStr;
 
 /// Parse and resolve the Solidity source code provided in src, for the target chain as specified in target.
 /// The result is a list of resolved contracts (if successful) and a list of compiler warnings, errors and

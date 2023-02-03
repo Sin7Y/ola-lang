@@ -6,23 +6,19 @@ use super::{
     diagnostics::Diagnostics,
     eval::eval_const_number,
     expression::{expression, ExprContext, ResolveTo},
-    resolve_params, resolve_returns,
     symtable::Symtable,
     ArrayDimension,
 };
 use num_bigint::BigInt;
 use num_traits::Signed;
 use num_traits::Zero;
-use ola_parser::{
-    program,
-    program::{CodeLocation, OptionalCodeLocation},
-};
+use ola_parser::{program, program::CodeLocation};
 use std::collections::HashMap;
 
 impl Namespace {
     /// Create a namespace and populate with the parameters for the target
     pub fn new() -> Self {
-        let mut ns = Namespace {
+        let ns = Namespace {
             files: Vec::new(),
             enums: Vec::new(),
             structs: Vec::new(),
@@ -241,7 +237,7 @@ impl Namespace {
             return Some(*n);
         }
 
-        if let Some(contract_no) = contract_no {
+        if contract_no.is_some() {
             if let Some(Symbol::Enum(_, n)) =
                 self.variable_symbols
                     .get(&(file_no, None, id.name.to_owned()))
@@ -304,7 +300,7 @@ impl Namespace {
         function_first: bool,
     ) -> Option<&Symbol> {
         let func = || {
-            let mut s = self
+            let s = self
                 .function_symbols
                 .get(&(file_no, contract_no, id.name.to_owned()));
 
@@ -315,7 +311,7 @@ impl Namespace {
         };
 
         let var = || {
-            let mut s = self
+            let s = self
                 .variable_symbols
                 .get(&(file_no, contract_no, id.name.to_owned()));
 
@@ -484,7 +480,7 @@ impl Namespace {
         let (namespace, id, dimensions) =
             self.expr_to_type(file_no, contract_no, id, diagnostics)?;
 
-        if let program::Expression::Type(loc, ty) = &id {
+        if let program::Expression::Type(_, ty) = &id {
             assert!(namespace.is_empty());
 
             let ty = Type::from(ty);
@@ -651,7 +647,7 @@ impl Namespace {
                     .get(&(import_file_no, contract_no, id.name.to_owned()))
             });
 
-        if let Some(contract_no) = contract_no {
+        if contract_no.is_some() {
             // try global scope
             if s.is_none() {
                 s = self

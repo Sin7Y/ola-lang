@@ -1,29 +1,11 @@
-// SPDX-License-Identifier: Apache-2.0
-
-use std::borrow::Borrow;
 use crate::irgen::binary::Binary;
-use crate::sema::ast::Expression;
-use crate::sema::{
-    ast,
-    ast::{ArrayLength, Function, Namespace, RetrieveType, Type},
-    diagnostics::Diagnostics,
-    eval::eval_const_number,
-    expression::{bigint_to_expression, ResolveTo},
-};
-use inkwell::values::{
-    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, PointerValue,
-};
+use crate::sema::ast::{Expression, Function, Namespace};
+use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
-use num_bigint::BigInt;
-use num_traits::{FromPrimitive, One, ToPrimitive, Zero};
-use ola_parser::program;
-use ola_parser::program::{CodeLocation, Loc};
 use std::collections::HashMap;
-use std::env::var;
-use std::ops::Mul;
 
 pub fn expression<'a>(
-    expr: &ast::Expression,
+    expr: &Expression,
     bin: &Binary<'a>,
     func: Option<&Function>,
     func_val: FunctionValue<'a>,
@@ -31,62 +13,64 @@ pub fn expression<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     match expr {
-        ast::Expression::Add(loc, ty, l, r) => {
+        Expression::Add(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns);
             let right = expression(r, bin, func, func_val, var_table, ns);
-            bin.builder.build_int_add(left.into_int_value(), right.into_int_value(), "").into()
+            bin.builder
+                .build_int_add(left.into_int_value(), right.into_int_value(), "")
+                .into()
         }
-        ast::Expression::Subtract(loc, ty, l, r) => {
+        Expression::Subtract(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
             bin.builder.build_int_sub(left, right, "").into()
         }
-        ast::Expression::Multiply(loc, ty, l, r) => {
+        Expression::Multiply(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
             bin.builder.build_int_mul(left, right, "").into()
         }
-        ast::Expression::Divide(loc, ty, l, r) => {
+        Expression::Divide(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
             bin.builder.build_int_unsigned_div(left, right, "").into()
         }
-        ast::Expression::Modulo(loc, ty, l, r) => {
+        Expression::Modulo(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
             bin.builder.build_int_unsigned_rem(left, right, "").into()
         }
-        ast::Expression::BitwiseOr(loc, ty, l, r) => {
+        Expression::BitwiseOr(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder.build_or(left, right, "").into()
         }
-        ast::Expression::BitwiseAnd(loc, ty, l, r) => {
+        Expression::BitwiseAnd(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder.build_and(left, right, "").into()
         }
-        ast::Expression::BitwiseXor(loc, ty, l, r) => {
+        Expression::BitwiseXor(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder.build_xor(left, right, "").into()
         }
-        ast::Expression::ShiftLeft(loc, ty, l, r) => {
+        Expression::ShiftLeft(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder.build_left_shift(left, right, "").into()
         }
-        ast::Expression::ShiftRight(loc, ty, l, r) => {
+        Expression::ShiftRight(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder.build_right_shift(left, right, false, "").into()
         }
-        ast::Expression::Equal(loc, l, r) => {
+        Expression::Equal(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -94,7 +78,7 @@ pub fn expression<'a>(
                 .build_int_compare(IntPredicate::EQ, left, right, "")
                 .into()
         }
-        ast::Expression::NotEqual(loc, l, r) => {
+        Expression::NotEqual(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -102,7 +86,7 @@ pub fn expression<'a>(
                 .build_int_compare(IntPredicate::NE, left, right, "")
                 .into()
         }
-        ast::Expression::More(loc, l, r) => {
+        Expression::More(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -110,7 +94,7 @@ pub fn expression<'a>(
                 .build_int_compare(IntPredicate::UGT, left, right, "")
                 .into()
         }
-        ast::Expression::MoreEqual(loc, l, r) => {
+        Expression::MoreEqual(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -118,7 +102,7 @@ pub fn expression<'a>(
                 .build_int_compare(IntPredicate::UGE, left, right, "")
                 .into()
         }
-        ast::Expression::Less(loc, l, r) => {
+        Expression::Less(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -126,7 +110,7 @@ pub fn expression<'a>(
                 .build_int_compare(IntPredicate::ULT, left, right, "")
                 .into()
         }
-        ast::Expression::LessEqual(loc, l, r) => {
+        Expression::LessEqual(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -134,49 +118,47 @@ pub fn expression<'a>(
                 .build_int_compare(IntPredicate::ULE, left, right, "")
                 .into()
         }
-        ast::Expression::Not(loc, expr) => {
+        Expression::Not(_, expr) => {
             let e = expression(expr, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder
                 .build_int_compare(IntPredicate::EQ, e, e.get_type().const_zero(), "")
                 .into()
         }
-        ast::Expression::Complement(loc, ty, expr) => {
+        Expression::Complement(_, _, expr) => {
             let e = expression(expr, bin, func, func_val, var_table, ns).into_int_value();
 
             bin.builder.build_not(e, "").into()
         }
-        ast::Expression::Assign(_, _, l, r) => {
+        Expression::Assign(_, _, l, r) => {
             let right = expression(r, bin, func, func_val, var_table, ns);
             let left = match **l {
-                Expression::Variable(_,_, pos) => {
+                Expression::Variable(_, _, pos) => {
                     let ret = *var_table.get(&pos).unwrap();
                     var_table.insert(pos, right);
-                     ret
+                    ret
                 }
-                _ => unreachable!()
+                _ => unreachable!(),
             };
             bin.builder.build_store(left.into_pointer_value(), right);
             left
         }
-        ast::Expression::FunctionCall { .. } => {
+        Expression::FunctionCall { .. } => {
             let mut ret = emit_function_call(expr, bin, func, func_val, var_table, ns);
             ret.remove(0)
         }
 
-        ast::Expression::Or(loc, l, r) => {
+        Expression::Or(_, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns);
             let right = expression(r, bin, func, func_val, var_table, ns);
-            bin.builder.build_or(left.into_int_value(), right.into_int_value(), "").into()
+            bin.builder
+                .build_or(left.into_int_value(), right.into_int_value(), "")
+                .into()
         }
 
-        ast::Expression::NumberLiteral(loc, ty, n) => {
-            bin.number_literal(ty.bits(ns) as u32, n, ns).into()
-        }
+        Expression::NumberLiteral(_, ty, n) => bin.number_literal(ty.bits(ns) as u32, n, ns).into(),
 
-        ast::Expression::Variable(loc, ty, var_no) => {
-            var_table.get(var_no).unwrap().as_basic_value_enum()
-        }
+        Expression::Variable(_, _, var_no) => var_table.get(var_no).unwrap().as_basic_value_enum(),
         _ => unreachable!(),
     }
 }
@@ -184,13 +166,13 @@ pub fn expression<'a>(
 // fn pre_incdec(
 //     vartab: &mut Vartable,
 //     ty: &Type,
-//     var: &ast::Expression,
+//     var: &Expression,
 //     cfg: &mut ControlFlowGraph,
 //     contract_no: usize,
 //     func: Option<&Function>,
 //     ns: &Namespace,
 //     loc: &pt::Loc,
-//     expr: &ast::Expression,
+//     expr: &Expression,
 //     unchecked: &bool,
 //     opt: &Options,
 // ) -> Expression {
@@ -203,10 +185,10 @@ pub fn expression<'a>(
 //     };
 //     let one = Box::new(Expression::NumberLiteral(*loc, ty.clone(), BigInt::one()));
 //     let expr = match expr {
-//         ast::Expression::PreDecrement { .. } => {
+//         Expression::PreDecrement { .. } => {
 //             Expression::Subtract(*loc, ty.clone(), *unchecked, Box::new(v), one)
 //         }
-//         ast::Expression::PreIncrement { .. } => {
+//         Expression::PreIncrement { .. } => {
 //             Expression::Add(*loc, ty.clone(), *unchecked, Box::new(v), one)
 //         }
 //         _ => unreachable!(),
@@ -220,7 +202,7 @@ pub fn expression<'a>(
 //         },
 //     );
 //     match var {
-//         ast::Expression::Variable(loc, _, pos) => {
+//         Expression::Variable(loc, _, pos) => {
 //             cfg.add(
 //                 vartab,
 //                 Instr::Set {
@@ -236,8 +218,8 @@ pub fn expression<'a>(
 // }
 
 // fn expr_or<'a>(
-//     left: &ast::Expression,
-//     right: &ast::Expression,
+//     left: &Expression,
+//     right: &Expression,
 //     bin: &Binary<'a>,
 //     func: Option<&Function>,
 //     func_val: FunctionValue<'a>,
@@ -299,7 +281,7 @@ pub fn expression<'a>(
 
 //Convert a function call expression to CFG in expression context
 pub fn emit_function_call<'a>(
-    expr: &ast::Expression,
+    expr: &Expression,
     bin: &Binary<'a>,
     func: Option<&Function>,
     func_val: FunctionValue<'a>,
@@ -308,18 +290,13 @@ pub fn emit_function_call<'a>(
 ) -> Vec<BasicValueEnum<'a>> {
     let mut ret_value = Vec::new();
     match expr {
-        ast::Expression::FunctionCall {
+        Expression::FunctionCall {
             function,
             returns,
             args,
             ..
         } => {
-            if let ast::Expression::Function {
-                function_no,
-                signature,
-                ..
-            } = function.as_ref()
-            {
+            if let Expression::Function { function_no, .. } = function.as_ref() {
                 let mut params = args
                     .iter()
                     .map(|a| expression(a, bin, func, func_val, var_table, ns).into())
@@ -342,7 +319,7 @@ pub fn emit_function_call<'a>(
                     .left()
                     .unwrap();
 
-                 let success = bin.builder.build_int_compare(
+                let success = bin.builder.build_int_compare(
                     IntPredicate::EQ,
                     ret.into_int_value(),
                     bin.context.i32_type().const_zero(),

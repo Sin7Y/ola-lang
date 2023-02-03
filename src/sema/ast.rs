@@ -7,7 +7,7 @@ use indexmap::IndexMap;
 use num_bigint::BigInt;
 pub use ola_parser::diagnostics::*;
 use ola_parser::program;
-use ola_parser::program::{CodeLocation, OptionalCodeLocation};
+use ola_parser::program::CodeLocation;
 use std::sync::Arc;
 use std::{
     collections::{BTreeMap, HashMap},
@@ -339,7 +339,7 @@ pub struct File {
     pub cache_no: Option<usize>,
 }
 
-/// When resolving a Solidity file, this holds all the resolved items
+/// When resolving a ola file, this holds all the resolved items
 pub struct Namespace {
     pub files: Vec<File>,
     pub enums: Vec<EnumDecl>,
@@ -373,8 +373,6 @@ pub struct Contract {
     pub variables: Vec<Variable>,
 
     pub initializer: Option<usize>,
-    // TODO add cfg after build sema successful
-    // pub cfg: Vec<ControlFlowGraph>,
     pub code: Vec<u8>,
     /// CFG number of this contract's dispatch function
     pub dispatch_no: usize,

@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use self::{
-    functions::{resolve_params, resolve_returns},
-    symtable::Symtable,
-};
 use crate::file_resolver::{FileResolver, ResolvedFile};
 use crate::sema::unused_variable::check_unused_namespace_variables;
 use num_bigint::BigInt;
@@ -81,11 +77,8 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
 
     // resolve pragmas and imports
     for part in &pt.0 {
-        match part {
-            program::SourceUnitPart::ImportDirective(import) => {
-                resolve_import(import, Some(file), file_no, resolver, ns);
-            }
-            _ => (),
+        if let program::SourceUnitPart::ImportDirective(import) = part {
+            resolve_import(import, Some(file), file_no, resolver, ns);
         }
     }
 
@@ -215,39 +208,6 @@ fn resolve_import(
                 ast::Symbol::Import(symbol.loc, import_file_no),
             );
         }
-    }
-}
-
-/// Resolve pragma. We don't do anything with pragmas for now
-fn resolve_pragma(
-    loc: &program::Loc,
-    name: &program::Identifier,
-    value: &program::StringLiteral,
-    ns: &mut ast::Namespace,
-) {
-    if name.name == "solidity" {
-        ns.diagnostics.push(ast::Diagnostic::debug(
-            *loc,
-            "pragma 'solidity' is ignored".to_string(),
-        ));
-    } else if name.name == "experimental" && value.string == "ABIEncoderV2" {
-        ns.diagnostics.push(ast::Diagnostic::debug(
-            *loc,
-            "pragma 'experimental' with value 'ABIEncoderV2' is ignored".to_string(),
-        ));
-    } else if name.name == "abicoder" && value.string == "v2" {
-        ns.diagnostics.push(ast::Diagnostic::debug(
-            *loc,
-            "pragma 'abicoder' with value 'v2' is ignored".to_string(),
-        ));
-    } else {
-        ns.diagnostics.push(ast::Diagnostic::warning(
-            *loc,
-            format!(
-                "unknown pragma '{}' with value '{}' ignored",
-                name.name, value.string
-            ),
-        ));
     }
 }
 

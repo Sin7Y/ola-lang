@@ -1,27 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::ast::{
-    ArrayLength, Builtin, Diagnostic, Expression, Function, Namespace, RetrieveType, Symbol, Type,
+    ArrayLength, Diagnostic, Expression, Function, Namespace, RetrieveType, Symbol, Type,
 };
 use super::builtin;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
-use super::eval::eval_const_number;
 use super::symtable::Symtable;
 use crate::sema::unused_variable::{
     assigned_variable, check_function_call, check_var_usage_expression, used_variable,
 };
 use crate::sema::Recurse;
-use num_bigint::{BigInt, Sign};
-use num_traits::{FromPrimitive, Num, One, Pow, ToPrimitive, Zero};
+use num_bigint::BigInt;
+use num_traits::{FromPrimitive, Num};
 use ola_parser::program::{self, CodeLocation, Loc};
-use std::{
-    cmp,
-    cmp::Ordering,
-    collections::{BTreeMap, HashMap},
-    ops::{Mul, Shl, Sub},
-    str::FromStr,
-};
+use std::{cmp, cmp::Ordering, collections::HashMap, str::FromStr};
 
 impl RetrieveType for Expression {
     fn ty(&self) -> Type {
@@ -83,15 +76,6 @@ impl RetrieveType for Expression {
 }
 
 impl Expression {
-    /// Is this expression 0
-    fn const_zero(&self, ns: &Namespace) -> bool {
-        if let Ok((_, value)) = eval_const_number(self, ns) {
-            value == BigInt::zero()
-        } else {
-            false
-        }
-    }
-
     /// Return the type for this expression.
     pub fn tys(&self) -> Vec<Type> {
         match self {
@@ -107,7 +91,7 @@ impl Expression {
     /// if the cast is explicit (e.g. bytes32(bar) then implicit should be set to false.
     pub fn cast(
         &self,
-        loc: &program::Loc,
+        loc: &Loc,
         to: &Type,
         ns: &Namespace,
         diagnostics: &mut Diagnostics,
@@ -180,7 +164,7 @@ impl Expression {
 
     fn cast_types(
         &self,
-        loc: &program::Loc,
+        loc: &Loc,
         from: &Type,
         to: &Type,
         ns: &Namespace,
@@ -188,7 +172,7 @@ impl Expression {
     ) -> Result<Expression, ()> {
         #[allow(clippy::comparison_chain)]
         match (&from, &to) {
-            (Type::Uint(from_width), Type::Enum(enum_no)) => {
+            (Type::Uint(_), Type::Enum(_)) => {
                 diagnostics.push(Diagnostic::cast_error(
                     *loc,
                     format!(
@@ -197,9 +181,9 @@ impl Expression {
                         to.to_string(ns)
                     ),
                 ));
-                return Err(());
+                Err(())
             }
-            (Type::Enum(enum_no), Type::Uint(from_width)) => {
+            (Type::Enum(_), Type::Uint(_)) => {
                 diagnostics.push(Diagnostic::cast_error(
                     *loc,
                     format!(
@@ -208,7 +192,7 @@ impl Expression {
                         to.to_string(ns)
                     ),
                 ));
-                return Err(());
+                Err(())
             }
             (Type::Uint(from_len), Type::Uint(to_len)) => match from_len.cmp(to_len) {
                 Ordering::Greater => {
@@ -262,9 +246,9 @@ impl Expression {
 
 fn coerce(
     l: &Type,
-    l_loc: &program::Loc,
+    l_loc: &Loc,
     r: &Type,
-    r_loc: &program::Loc,
+    r_loc: &Loc,
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<Type, ()> {
@@ -285,7 +269,7 @@ fn coerce(
 
 fn get_uint_length(
     l: &Type,
-    l_loc: &program::Loc,
+    l_loc: &Loc,
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<u16, ()> {
@@ -326,9 +310,9 @@ fn get_uint_length(
 
 pub fn coerce_number(
     l: &Type,
-    l_loc: &program::Loc,
+    l_loc: &Loc,
     r: &Type,
-    r_loc: &program::Loc,
+    r_loc: &Loc,
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<Type, ()> {
@@ -356,7 +340,7 @@ pub fn coerce_number(
 
 /// Resolve the given number literal, multiplied by value of unit
 fn number_literal(
-    loc: &program::Loc,
+    loc: &Loc,
     integer: &str,
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
@@ -376,7 +360,7 @@ fn number_literal(
 
 /// Try to convert a BigInt into a Expression::NumberLiteral.
 pub fn bigint_to_expression(
-    loc: &program::Loc,
+    loc: &Loc,
     n: &BigInt,
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
@@ -783,7 +767,7 @@ pub fn expression(
 }
 
 fn hex_number_literal(
-    loc: &program::Loc,
+    loc: &Loc,
     n: &str,
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
@@ -792,7 +776,7 @@ fn hex_number_literal(
     // from_str_radix does not like the 0x prefix
     let s: String = n.chars().skip(2).filter(|v| *v != '_').collect();
 
-    let mut skip_suffix = "";
+    let skip_suffix;
     if s.ends_with("ll") {
         skip_suffix = &s[..s.len() - 2];
     } else if s.ends_with("l") | s.ends_with("u") {
@@ -803,7 +787,7 @@ fn hex_number_literal(
 
     bigint_to_expression(
         loc,
-        &BigInt::from_str_radix(&s, 16).unwrap(),
+        &BigInt::from_str_radix(skip_suffix, 16).unwrap(),
         ns,
         diagnostics,
         resolve_to,
@@ -828,10 +812,6 @@ fn variable(
         } else {
             Ok(Expression::Variable(id.loc, v.ty.clone(), v.pos))
         };
-    }
-
-    if let Some((builtin, ty)) = builtin::builtin_var(&id.loc, None, &id.name, ns, diagnostics) {
-        return Ok(Expression::Builtin(id.loc, vec![ty], builtin, vec![]));
     }
 
     // are we trying to resolve a function type?
@@ -889,9 +869,7 @@ fn variable(
             let mut name_matches = 0;
             let mut expr = None;
 
-            for function_no in
-                available_functions(&id.name, context.file_no, context.contract_no, ns)
-            {
+            for function_no in available_functions(&id.name, context.contract_no, ns) {
                 let func = &ns.functions[function_no];
 
                 let ty = Type::Function {
@@ -926,7 +904,7 @@ fn variable(
 }
 
 fn subtract(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -951,7 +929,7 @@ fn subtract(
 }
 
 fn bitwise_or(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -976,7 +954,7 @@ fn bitwise_or(
 }
 
 fn bitwise_and(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1001,7 +979,7 @@ fn bitwise_and(
 }
 
 fn bitwise_xor(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1026,7 +1004,7 @@ fn bitwise_xor(
 }
 
 fn shift_left(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1054,7 +1032,7 @@ fn shift_left(
 }
 
 fn shift_right(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1083,7 +1061,7 @@ fn shift_right(
 }
 
 fn multiply(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1101,7 +1079,7 @@ fn multiply(
 
     // If we don't know what type the result is going to be, make any possible result fit.
     if resolve_to == ResolveTo::Unknown {
-        let bits = std::cmp::min(256, ty.bits(ns) * 2);
+        let bits = cmp::min(256, ty.bits(ns) * 2);
         multiply(
             loc,
             l,
@@ -1123,7 +1101,7 @@ fn multiply(
 }
 
 fn divide(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1148,7 +1126,7 @@ fn divide(
 }
 
 fn modulo(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1173,7 +1151,7 @@ fn modulo(
 }
 
 fn power(
-    loc: &program::Loc,
+    loc: &Loc,
     b: &program::Expression,
     e: &program::Expression,
     context: &ExprContext,
@@ -1216,7 +1194,7 @@ fn power(
 
 /// Test for equality; first check string equality, then integer equality
 fn equal(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1242,7 +1220,7 @@ fn equal(
 
 /// Try string concatenation
 fn addition(
-    loc: &program::Loc,
+    loc: &Loc,
     l: &program::Expression,
     r: &program::Expression,
     context: &ExprContext,
@@ -1262,7 +1240,7 @@ fn addition(
 
     // If we don't know what type the result is going to be
     if resolve_to == ResolveTo::Unknown {
-        let bits = std::cmp::min(256, ty.bits(ns) * 2);
+        let bits = cmp::min(256, ty.bits(ns) * 2);
         let resolve_to = Type::Uint(bits);
 
         left = expression(
@@ -1293,7 +1271,7 @@ fn addition(
 
 /// Resolve an assignment
 fn assign_single(
-    loc: &program::Loc,
+    loc: &Loc,
     left: &program::Expression,
     right: &program::Expression,
     context: &ExprContext,
@@ -1345,7 +1323,7 @@ fn assign_single(
             ));
             Err(())
         }
-        Expression::StorageVariable(loc, ty, var_contract_no, var_no) => Ok(Expression::Assign(
+        Expression::StorageVariable(loc, ty, _, _) => Ok(Expression::Assign(
             *loc,
             ty.clone(),
             Box::new(var.clone()),
@@ -1377,7 +1355,7 @@ fn assign_single(
 
 /// Resolve an assignment with an operator
 fn assign_expr(
-    loc: &program::Loc,
+    loc: &Loc,
     left: &program::Expression,
     expr: &program::Expression,
     right: &program::Expression,
@@ -1636,7 +1614,7 @@ fn incr_decr(
 /// Try to resolve expression as an enum value. An enum can be prefixed
 /// with import symbols, contract namespace before the enum type
 fn enum_value(
-    loc: &program::Loc,
+    loc: &Loc,
     expr: &program::Expression,
     id: &program::Identifier,
     file_no: usize,
@@ -1714,7 +1692,7 @@ fn enum_value(
 
 /// Resolve an member access expression
 fn member_access(
-    loc: &program::Loc,
+    loc: &Loc,
     e: &program::Expression,
     id: &program::Identifier,
     context: &ExprContext,
@@ -1725,12 +1703,6 @@ fn member_access(
 ) -> Result<Expression, ()> {
     // is it a builtin special variable like "block.timestamp"
     if let program::Expression::Variable(namespace) = e {
-        if let Some((builtin, ty)) =
-            builtin::builtin_var(loc, Some(&namespace.name), &id.name, ns, diagnostics)
-        {
-            return Ok(Expression::Builtin(*loc, vec![ty], builtin, vec![]));
-        }
-
         if builtin::builtin_namespace(&namespace.name) {
             diagnostics.push(Diagnostic::error(
                 e.loc(),
@@ -1834,7 +1806,7 @@ fn member_access(
 }
 
 fn contract_constant(
-    loc: &program::Loc,
+    loc: &Loc,
     e: &program::Expression,
     id: &program::Identifier,
     file_no: usize,
@@ -1898,7 +1870,7 @@ fn contract_constant(
 
 /// Resolve an array subscript expression
 fn array_subscript(
-    loc: &program::Loc,
+    loc: &Loc,
     array: &program::Expression,
     index: &program::Expression,
     context: &ExprContext,
@@ -1981,7 +1953,7 @@ fn array_subscript(
 
 /// Resolve a function call with positional arguments
 fn struct_literal(
-    loc: &program::Loc,
+    loc: &Loc,
     n: &usize,
     args: &[program::Expression],
     context: &ExprContext,
@@ -2024,12 +1996,7 @@ fn struct_literal(
 }
 
 /// Create a list of functions that can be called in this context.
-pub fn available_functions(
-    name: &str,
-    file_no: usize,
-    contract_no: Option<usize>,
-    ns: &Namespace,
-) -> Vec<usize> {
+pub fn available_functions(name: &str, contract_no: Option<usize>, ns: &Namespace) -> Vec<usize> {
     let mut list = Vec::new();
 
     if let Some(contract_no) = contract_no {
@@ -2052,7 +2019,7 @@ pub fn available_functions(
 
 /// Resolve a function call with positional arguments
 pub fn function_call_pos_args(
-    loc: &program::Loc,
+    loc: &Loc,
     id: &program::Identifier,
     args: &[program::Expression],
     function_nos: Vec<usize>,
@@ -2162,7 +2129,7 @@ pub fn function_call_pos_args(
 
 /// Resolve a function call with named arguments
 fn function_call_named_args(
-    loc: &program::Loc,
+    loc: &Loc,
     id: &program::Identifier,
     args: &[program::NamedArgument],
     function_nos: Vec<usize>,
@@ -2322,7 +2289,7 @@ fn function_call_named_args(
 
 /// Resolve a struct literal with named fields
 fn named_struct_literal(
-    loc: &program::Loc,
+    loc: &Loc,
     n: &usize,
     args: &[program::NamedArgument],
     context: &ExprContext,
@@ -2381,7 +2348,6 @@ fn named_struct_literal(
 
 /// Resolve a method call with positional arguments
 fn method_call_pos_args(
-    loc: &program::Loc,
     var: &program::Expression,
     func: &program::Identifier,
     args: &[program::Expression],
@@ -2389,23 +2355,7 @@ fn method_call_pos_args(
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    if let program::Expression::Variable(namespace) = var {
-        if builtin::is_builtin_call(Some(&namespace.name), &func.name, ns) {
-            return builtin::resolve_namespace_call(
-                loc,
-                &namespace.name,
-                &func.name,
-                args,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-            );
-        }
-    }
-
     let var_expr = expression(var, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
 
     if let Some(expr) =
@@ -2413,8 +2363,6 @@ fn method_call_pos_args(
     {
         return Ok(expr);
     }
-
-    let var_ty = var_expr.ty();
 
     diagnostics.push(Diagnostic::error(
         func.loc,
@@ -2428,7 +2376,7 @@ fn method_call_pos_args(
 // result of the shift to be left argument, so this function coercies the right argument
 // into the right length.
 pub fn cast_shift_arg(
-    loc: &program::Loc,
+    loc: &Loc,
     expr: Expression,
     from_width: u16,
     ty: &Type,
@@ -2457,7 +2405,7 @@ pub fn cast_shift_arg(
 /// must of the same type. The array might be a multidimensional array; all the leaf nodes
 /// must match.
 fn array_literal(
-    loc: &program::Loc,
+    loc: &Loc,
     exprs: &[program::Expression],
     context: &ExprContext,
     ns: &mut Namespace,
@@ -2654,7 +2602,7 @@ fn check_subarrays<'a>(
 }
 
 pub fn named_call_expr(
-    loc: &program::Loc,
+    loc: &Loc,
     ty: &program::Expression,
     args: &[program::NamedArgument],
     is_destructible: bool,
@@ -2715,7 +2663,7 @@ pub fn named_call_expr(
 
 /// Resolve any callable expression
 pub fn call_expr(
-    loc: &program::Loc,
+    loc: &Loc,
     ty: &program::Expression,
     args: &[program::Expression],
     is_destructible: bool,
@@ -2789,7 +2737,7 @@ pub fn call_expr(
 
 /// Resolve function call
 pub fn function_call_expr(
-    loc: &program::Loc,
+    loc: &Loc,
     ty: &program::Expression,
     args: &[program::Expression],
     context: &ExprContext,
@@ -2808,45 +2756,9 @@ pub fn function_call_expr(
                 return Err(());
             }
 
-            method_call_pos_args(
-                loc,
-                member,
-                func,
-                args,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                resolve_to,
-            )
+            method_call_pos_args(member, func, args, context, ns, symtable, diagnostics)
         }
         program::Expression::Variable(id) => {
-            // is it a builtin
-            if builtin::is_builtin_call(None, &id.name, ns) {
-                return {
-                    let expr = builtin::resolve_call(
-                        &id.loc,
-                        None,
-                        &id.name,
-                        args,
-                        context,
-                        ns,
-                        symtable,
-                        diagnostics,
-                    )?;
-
-                    if expr.tys().len() > 1 {
-                        diagnostics.push(Diagnostic::error(
-                            *loc,
-                            format!("builtin function '{}' returns more than one value", id.name),
-                        ));
-                        Err(())
-                    } else {
-                        Ok(expr)
-                    }
-                };
-            }
-
             if context.constant {
                 diagnostics.push(Diagnostic::error(
                     *loc,
@@ -2859,7 +2771,7 @@ pub fn function_call_expr(
                 loc,
                 id,
                 args,
-                available_functions(&id.name, context.file_no, context.contract_no, ns),
+                available_functions(&id.name, context.contract_no, ns),
                 context,
                 ns,
                 resolve_to,
@@ -2879,7 +2791,7 @@ pub fn function_call_expr(
 
 /// Resolve function call expression with named arguments
 pub fn named_function_call_expr(
-    loc: &program::Loc,
+    loc: &Loc,
     ty: &program::Expression,
     args: &[program::NamedArgument],
     context: &ExprContext,
@@ -2893,7 +2805,7 @@ pub fn named_function_call_expr(
             loc,
             id,
             args,
-            available_functions(&id.name, context.file_no, context.contract_no, ns),
+            available_functions(&id.name, context.contract_no, ns),
             context,
             resolve_to,
             ns,

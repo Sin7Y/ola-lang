@@ -1,29 +1,24 @@
-// SPDX-License-Identifier: Apache-2.0
-
-use ola_lang::file_resolver::FileResolver;
-use ola_lang::irgen::binary::Binary;
-use std::ffi::{OsStr, OsString};
-use std::path::Path;
-
 fn main() {}
-
-fn process_file(filename: &OsStr) {
-    let mut resolver = FileResolver::new();
-    // resolve phase
-    let mut ns = ola_lang::parse_and_resolve(filename, &mut resolver);
-
-    for contract_no in 0..ns.contracts.len() {
-        let resolved_contract = &ns.contracts[contract_no];
-
-        let context = inkwell::context::Context::create();
-        let filename_string = filename.to_string_lossy();
-
-        let binary = resolved_contract.binary(&ns, &context, &filename_string);
-    }
-}
+//
+// fn process_file(filename: &OsStr) {
+//     let mut resolver = FileResolver::new();
+//     // resolve phase
+//     let mut ns = ola_lang::parse_and_resolve(filename, &mut resolver);
+//
+//     for contract_no in 0..ns.contracts.len() {
+//         let resolved_contract = &ns.contracts[contract_no];
+//
+//         let context = inkwell::context::Context::create();
+//         let filename_string = filename.to_string_lossy();
+//
+//         resolved_contract.binary(&ns, &context, &filename_string);
+//     }
+// }
 
 #[test]
 fn gen_ir_test() {
+    use ola_lang::file_resolver::FileResolver;
+    use std::ffi::OsStr;
     let mut resolver = FileResolver::new();
     let source = r#"
       contract Fibonacci {

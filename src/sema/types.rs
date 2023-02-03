@@ -168,8 +168,6 @@ fn resolve_contract<'a>(
         ));
     }
 
-    let mut doc_comment_start = def.loc.start();
-
     for parts in &def.parts {
         match parts {
             program::ContractPart::EnumDefinition(ref e) => {
@@ -206,16 +204,8 @@ fn resolve_contract<'a>(
             program::ContractPart::TypeDefinition(ty) => {
                 type_decl(ty, file_no, Some(contract_no), ns);
             }
-            program::ContractPart::FunctionDefinition(f) => {
-                if let Some(program::Statement::Block { loc, .. }) = &f.body {
-                    doc_comment_start = loc.end();
-                    continue;
-                }
-            }
             _ => (),
         }
-
-        doc_comment_start = parts.loc().end();
     }
 
     broken
@@ -449,7 +439,7 @@ impl Type {
     pub fn to_string(&self, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
-            Type::Uint(n) => format!("uint{}", n),
+            Type::Uint(n) => format!("u{}", n),
             Type::Field => "field".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
@@ -515,7 +505,7 @@ impl Type {
         match self {
             Type::Bool => "bool".to_string(),
             Type::Contract(_) => "address".to_string(),
-            Type::Uint(n) => format!("uint{}", n),
+            Type::Uint(n) => format!("u{}", n),
             Type::Field => "field".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(
