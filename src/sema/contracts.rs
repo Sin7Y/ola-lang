@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::irgen;
 use num_bigint::BigInt;
 use num_traits::Zero;
 use ola_parser::program::{self, CodeLocation, Statement};
@@ -36,21 +37,8 @@ impl ast::Contract {
         ns: &'a ast::Namespace,
         context: &'a inkwell::context::Context,
         filename: &'a str,
-        opt: inkwell::OptimizationLevel,
-        math_overflow_check: bool,
-        generate_debug_info: bool,
-        log_api_return_codes: bool,
-    ) -> emit::binary::Binary {
-        emit::binary::Binary::build(
-            context,
-            self,
-            ns,
-            filename,
-            opt,
-            math_overflow_check,
-            generate_debug_info,
-            log_api_return_codes,
-        )
+    ) -> irgen::binary::Binary {
+        irgen::binary::Binary::build(context, self, ns, filename)
     }
 
     /// Selector for this contract. This is used by Solana contract bundle

@@ -848,7 +848,6 @@ fn variable(
 
             let var = &ns.contracts[var_contract_no].variables[var_no];
 
-            //TODO add context constant
             if var.constant {
                 Ok(Expression::ConstantVariable(
                     id.loc,

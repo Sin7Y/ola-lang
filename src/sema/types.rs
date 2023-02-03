@@ -875,6 +875,13 @@ impl Type {
         }
     }
 
+    /// If the type is Ref, get the underlying type
+    pub fn deref_memory(&self) -> &Self {
+        match self {
+            _ => self,
+        }
+    }
+
     /// If the type is Ref or StorageRef, get the underlying type
     #[must_use]
     pub fn deref_into(self) -> Self {
