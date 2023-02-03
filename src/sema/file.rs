@@ -78,9 +78,6 @@ impl fmt::Display for File {
         #[cfg(not(windows))]
         let res = write!(f, "{}", self.path.display());
 
-        #[cfg(windows)]
-        let res = write!(f, "{}", fix_windows_verbatim(&self.path).display());
-
         res
     }
 }
@@ -103,34 +100,5 @@ impl Namespace {
             .iter()
             .position(|file| file.cache_no.is_some())
             .unwrap()
-    }
-}
-
-/// Windows verbatim paths look like \\?\C:\foo\bar which not very human readable,
-/// so fix up paths. This is a copy of fn fix_windows_verbatim_for_gcc in rust
-/// https://github.com/rust-lang/rust/blob/master/compiler/rustc_fs_util/src/lib.rs#L23
-#[cfg(windows)]
-fn fix_windows_verbatim(p: &path::Path) -> path::PathBuf {
-    use std::ffi::OsString;
-    let mut components = p.components();
-    let prefix = match components.next() {
-        Some(path::Component::Prefix(p)) => p,
-        _ => return p.to_path_buf(),
-    };
-    match prefix.kind() {
-        path::Prefix::VerbatimDisk(disk) => {
-            let mut base = OsString::from(format!("{}:", disk as char));
-            base.push(components.as_path());
-            path::PathBuf::from(base)
-        }
-        path::Prefix::VerbatimUNC(server, share) => {
-            let mut base = OsString::from(r"\\");
-            base.push(server);
-            base.push(r"\");
-            base.push(share);
-            base.push(components.as_path());
-            path::PathBuf::from(base)
-        }
-        _ => p.to_path_buf(),
     }
 }

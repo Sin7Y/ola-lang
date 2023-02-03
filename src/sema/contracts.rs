@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::irgen;
-use num_bigint::BigInt;
-use num_traits::Zero;
-use ola_parser::program::{self, CodeLocation, Statement};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use ola_parser::program::{self, Statement};
+use std::collections::BTreeMap;
 use std::convert::TryInto;
 use tiny_keccak::{Hasher, Keccak};
 
-use super::{
-    ast, diagnostics::Diagnostics, expression::ExprContext, functions, statements,
-    symtable::Symtable, variables,
-};
+use super::{ast, functions, statements, variables};
 
 use crate::sema::unused_variable::emit_warning_local_variable;
 
@@ -123,9 +118,7 @@ fn resolve_declarations<'a>(
 
     for part in &def.parts {
         if let program::ContractPart::FunctionDefinition(ref f) = part {
-            if let Some(function_no) =
-                functions::contract_function(def, f, file_no, contract_no, ns)
-            {
+            if let Some(function_no) = functions::contract_function(f, file_no, contract_no, ns) {
                 if f.body.is_some() {
                     delayed.function_bodies.push(DelayedResolveFunction {
                         contract_no,
@@ -137,23 +130,10 @@ fn resolve_declarations<'a>(
                 }
             }
 
-            if let Some(Statement::Block { loc, .. }) = &f.body {
+            if let Some(Statement::Block { .. }) = &f.body {
                 continue;
             }
         }
-    }
-
-    if !function_no_bodies.is_empty() {
-        function_no_bodies
-            .into_iter()
-            .map(|function_no| ast::Note {
-                loc: ns.functions[function_no].loc,
-                message: format!(
-                    "location of function '{}' with no body",
-                    ns.functions[function_no].name
-                ),
-            })
-            .collect::<Vec<ast::Note>>();
     }
 }
 

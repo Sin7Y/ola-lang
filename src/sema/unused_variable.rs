@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{Builtin, Diagnostic, Expression, Namespace};
+use crate::sema::ast::{Diagnostic, Expression, Namespace};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
-use ola_parser::program::Loc;
 
 /// Mark variables as assigned, either in the symbol table (for local variables) or in the
 /// Namespace (for storage variables)

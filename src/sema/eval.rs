@@ -6,15 +6,11 @@ use num_bigint::Sign;
 use num_traits::One;
 use num_traits::ToPrimitive;
 use num_traits::Zero;
-use ola_parser::program;
 use ola_parser::program::{CodeLocation, Loc};
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Shl, Shr, Sub};
 
 /// Resolve an expression where a compile-time constant is expected
-pub fn eval_const_number(
-    expr: &Expression,
-    ns: &Namespace,
-) -> Result<(program::Loc, BigInt), Diagnostic> {
+pub fn eval_const_number(expr: &Expression, ns: &Namespace) -> Result<(Loc, BigInt), Diagnostic> {
     match expr {
         Expression::Add(loc, _, l, r) => Ok((
             *loc,

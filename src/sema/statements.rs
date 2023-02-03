@@ -3,19 +3,13 @@
 use super::ast::*;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
-use super::expression::{
-    available_functions, call_expr, expression, function_call_expr, function_call_pos_args,
-    named_call_expr, named_function_call_expr, ExprContext, ResolveTo,
-};
+use super::expression::{call_expr, expression, named_call_expr, ExprContext, ResolveTo};
 use super::symtable::{LoopScopes, Symtable};
-use crate::sema::builtin;
 use crate::sema::symtable::{VariableInitializer, VariableUsage};
-use crate::sema::unused_variable::{assigned_variable, check_function_call, used_variable};
+use crate::sema::unused_variable::used_variable;
 use crate::sema::Recurse;
 use ola_parser::program;
 use ola_parser::program::CodeLocation;
-use ola_parser::program::OptionalCodeLocation;
-use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 
 pub fn resolve_function_body(
@@ -144,8 +138,6 @@ fn statement(
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<bool, ()> {
-    let function_no = context.function_no.unwrap();
-
     match stmt {
         program::Statement::VariableDefinition(loc, decl, initializer) => {
             let (var_ty, ty_loc) = resolve_var_decl_ty(&decl.ty, context, ns, diagnostics)?;
@@ -206,7 +198,7 @@ fn statement(
             symtable.new_scope();
             let mut reachable = true;
 
-            let mut context = context.clone();
+            let context = context.clone();
 
             for stmt in statements {
                 if !reachable {
@@ -533,8 +525,8 @@ fn resolve_var_decl_ty(
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<(Type, program::Loc), ()> {
-    let mut loc_ty = ty.loc();
-    let mut var_ty = ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
+    let loc_ty = ty.loc();
+    let var_ty = ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
     Ok((var_ty, loc_ty))
 }
 

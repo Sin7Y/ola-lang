@@ -168,8 +168,6 @@ fn resolve_contract<'a>(
         ));
     }
 
-    let mut doc_comment_start = def.loc.start();
-
     for parts in &def.parts {
         match parts {
             program::ContractPart::EnumDefinition(ref e) => {
@@ -206,16 +204,8 @@ fn resolve_contract<'a>(
             program::ContractPart::TypeDefinition(ty) => {
                 type_decl(ty, file_no, Some(contract_no), ns);
             }
-            program::ContractPart::FunctionDefinition(f) => {
-                if let Some(program::Statement::Block { loc, .. }) = &f.body {
-                    doc_comment_start = loc.end();
-                    continue;
-                }
-            }
             _ => (),
         }
-
-        doc_comment_start = parts.loc().end();
     }
 
     broken

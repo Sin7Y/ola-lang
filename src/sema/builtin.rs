@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ast::{
-    ArrayLength, Builtin, Diagnostic, Expression, File, Function, Namespace, Parameter, Symbol,
-    Type,
-};
+use super::ast::{Builtin, Diagnostic, Expression, Namespace, Type};
 use super::diagnostics::Diagnostics;
-use super::eval::eval_const_number;
 use super::expression::{expression, ExprContext, ResolveTo};
 use super::symtable::Symtable;
-use crate::sema::ast::{RetrieveType, UserTypeDecl};
-use num_bigint::BigInt;
-use num_traits::One;
-use ola_parser::program::CodeLocation;
-use ola_parser::program::{self, Identifier};
+use crate::sema::ast::RetrieveType;
+use ola_parser::program;
 use once_cell::sync::Lazy;
-use std::path::PathBuf;
 
 pub struct Prototype {
     pub builtin: Builtin,
@@ -48,13 +40,6 @@ static BUILTIN_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 // A list of all Solidity builtins methods
 static BUILTIN_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
-/// Does function call match builtin
-pub fn is_builtin_call(namespace: Option<&str>, fname: &str, ns: &Namespace) -> bool {
-    BUILTIN_FUNCTIONS
-        .iter()
-        .any(|p| p.name == fname && p.namespace == namespace)
-}
-
 /// Get the prototype for a builtin. If the prototype has arguments, it is a function else
 /// it is a variable.
 pub fn get_prototype(builtin: Builtin) -> Option<&'static Prototype> {
@@ -63,24 +48,6 @@ pub fn get_prototype(builtin: Builtin) -> Option<&'static Prototype> {
         .find(|p| p.builtin == builtin)
         .or_else(|| BUILTIN_VARIABLE.iter().find(|p| p.builtin == builtin))
         .or_else(|| BUILTIN_METHODS.iter().find(|p| p.builtin == builtin))
-}
-
-/// Does variable name match builtin
-pub fn builtin_var(
-    loc: &program::Loc,
-    namespace: Option<&str>,
-    fname: &str,
-    ns: &Namespace,
-    diagnostics: &mut Diagnostics,
-) -> Option<(Builtin, Type)> {
-    if let Some(p) = BUILTIN_VARIABLE
-        .iter()
-        .find(|p| p.name == fname && p.namespace == namespace)
-    {
-        return Some((p.builtin, p.ret[0].clone()));
-    }
-
-    None
 }
 
 /// Does variable name match any builtin namespace
@@ -176,7 +143,7 @@ pub fn resolve_call(
                 }
             };
 
-            if let Some(ty) = ty {
+            if ty.is_some() {
                 cast_args.push(arg);
             }
         }
@@ -241,10 +208,10 @@ pub fn resolve_namespace_call(
     };
 
     let mut resolved_args = Vec::new();
-    let mut args_iter = args.iter();
+    let args_iter = args.iter();
 
     for arg in args_iter {
-        let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+        let expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
 
         resolved_args.push(expr);
     }
@@ -323,7 +290,7 @@ pub fn resolve_method_call(
                 }
             };
 
-            if let Some(ty) = ty {
+            if ty.is_some() {
                 cast_args.push(arg);
             }
         }

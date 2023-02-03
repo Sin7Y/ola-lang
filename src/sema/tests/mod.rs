@@ -2,7 +2,6 @@
 
 #![cfg(test)]
 use crate::sema::ast::{Expression, Parameter, Statement, Type};
-use crate::sema::diagnostics::Diagnostics;
 use crate::{parse_and_resolve, sema::ast, FileResolver};
 use ola_parser::program::Loc;
 use std::ffi::OsStr;

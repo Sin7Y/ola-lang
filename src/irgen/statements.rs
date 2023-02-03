@@ -1,16 +1,11 @@
-// SPDX-License-Identifier: Apache-2.0
-
-use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue, PointerValue};
+use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use num_bigint::BigInt;
 use std::collections::HashMap;
 
 use super::expression::expression;
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::emit_function_call;
-use crate::sema::ast::Expression;
-use crate::sema::ast::RetrieveType;
-use crate::sema::ast::{ArrayLength, Function, Namespace, Parameter, Statement, Type};
-use crate::sema::{ast, Recurse};
+use crate::sema::ast::{Expression, Function, Namespace, Statement, Type};
 use ola_parser::program;
 
 /// Resolve a statement, which might be a block of statements or an entire body of a function
@@ -28,7 +23,7 @@ pub(crate) fn statement<'a>(
                 statement(stmt, bin, func, func_val, var_table, ns);
             }
         }
-        Statement::VariableDecl(loc, pos, param, Some(init)) => {
+        Statement::VariableDecl(_, pos, param, Some(init)) => {
             let alloc = bin.build_alloca(
                 func_val,
                 bin.llvm_var_ty(&param.ty, ns),
@@ -73,7 +68,7 @@ pub(crate) fn statement<'a>(
 
 /// Generate if-then-no-else
 fn if_then<'a>(
-    cond: &ast::Expression,
+    cond: &Expression,
     bin: &Binary<'a>,
     then_stmt: &[Statement],
     func: &Function,
@@ -105,7 +100,7 @@ fn if_then<'a>(
 
 /// Generate if-then-else
 fn if_then_else<'a>(
-    cond: &ast::Expression,
+    cond: &Expression,
     then_stmt: &[Statement],
     else_stmt: &[Statement],
     bin: &Binary<'a>,
@@ -150,7 +145,7 @@ fn if_then_else<'a>(
 }
 
 fn returns<'a>(
-    expr: &ast::Expression,
+    expr: &Expression,
     bin: &Binary<'a>,
     func: &Function,
     func_val: FunctionValue<'a>,
@@ -159,11 +154,11 @@ fn returns<'a>(
 ) -> Vec<BasicValueEnum<'a>> {
     // Can only be another function call without returns
     let values = match expr {
-        ast::Expression::List(_, exprs) => exprs
+        Expression::List(_, exprs) => exprs
             .iter()
             .map(|e| expression(e, bin, Some(func), func_val, var_table, ns))
             .collect::<Vec<BasicValueEnum>>(),
-        ast::Expression::FunctionCall { .. } => {
+        Expression::FunctionCall { .. } => {
             emit_function_call(expr, bin, Some(func), func_val, var_table, ns)
         }
         // Can be any other expression

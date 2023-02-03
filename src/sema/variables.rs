@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{
-        Diagnostic, Expression, Function, Namespace, Parameter, Statement, Symbol, Type, Variable,
-    },
+    ast::{Diagnostic, Namespace, Symbol, Variable},
     diagnostics::Diagnostics,
     expression::{expression, ExprContext, ResolveTo},
     symtable::Symtable,
-    symtable::{VariableInitializer, VariableUsage},
 };
 use crate::sema::eval::check_term_for_constant_overflow;
 use crate::sema::Recurse;
-use ola_parser::program::VariableAttribute;
-use ola_parser::program::{self, CodeLocation, OptionalCodeLocation};
+use ola_parser::program::{self, CodeLocation};
 
 pub struct DelayedResolveInitializer<'a> {
     var_no: usize,
@@ -31,9 +27,7 @@ pub fn contract_variables<'a>(
 
     for part in &def.parts {
         if let program::ContractPart::VariableDefinition(ref s) = &part {
-            if let Some(delay) =
-                variable_decl(Some(def), s, file_no, Some(contract_no), ns, &mut symtable)
-            {
+            if let Some(delay) = variable_decl(s, file_no, Some(contract_no), ns, &mut symtable) {
                 delayed.push(delay);
             }
         }
@@ -43,15 +37,14 @@ pub fn contract_variables<'a>(
 }
 
 pub fn variable_decl<'a>(
-    contract: Option<&program::ContractDefinition>,
     def: &'a program::VariableDefinition,
     file_no: usize,
     contract_no: Option<usize>,
     ns: &mut Namespace,
     symtable: &mut Symtable,
 ) -> Option<DelayedResolveInitializer<'a>> {
-    let mut attrs = def.attrs.clone();
-    let mut ty = def.ty.clone();
+    let attrs = def.attrs.clone();
+    let ty = def.ty.clone();
     let mut ret = None;
 
     let mut diagnostics = Diagnostics::default();
@@ -67,18 +60,14 @@ pub fn variable_decl<'a>(
     let mut constant = false;
 
     for attr in attrs {
-        match &attr {
-            program::VariableAttribute::Constant(loc) => {
-                if constant {
-                    ns.diagnostics.push(Diagnostic::error(
-                        *loc,
-                        "duplicate constant attribute".to_string(),
-                    ));
-                }
-                constant = true;
+        if let program::VariableAttribute::Constant(loc) = &attr {
+            if constant {
+                ns.diagnostics.push(Diagnostic::error(
+                    *loc,
+                    "duplicate constant attribute".to_string(),
+                ));
             }
-
-            _ => {}
+            constant = true;
         }
     }
 
