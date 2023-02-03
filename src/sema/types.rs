@@ -449,7 +449,7 @@ impl Type {
     pub fn to_string(&self, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
-            Type::Uint(n) => format!("uint{}", n),
+            Type::Uint(n) => format!("u{}", n),
             Type::Field => "field".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
@@ -515,7 +515,7 @@ impl Type {
         match self {
             Type::Bool => "bool".to_string(),
             Type::Contract(_) => "address".to_string(),
-            Type::Uint(n) => format!("uint{}", n),
+            Type::Uint(n) => format!("u{}", n),
             Type::Field => "field".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(

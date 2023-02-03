@@ -39,8 +39,7 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
 
             func
         } else {
-            bin.module
-                .add_function(&func.name, ftype, None)
+            bin.module.add_function(&func.name, ftype, None)
         };
 
         gen_function(bin, func, func_val, ns);

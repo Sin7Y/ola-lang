@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Borrow;
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Expression;
 use crate::sema::{
@@ -18,6 +17,7 @@ use num_bigint::BigInt;
 use num_traits::{FromPrimitive, One, ToPrimitive, Zero};
 use ola_parser::program;
 use ola_parser::program::{CodeLocation, Loc};
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::env::var;
 use std::ops::Mul;
@@ -34,7 +34,9 @@ pub fn expression<'a>(
         ast::Expression::Add(loc, ty, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns);
             let right = expression(r, bin, func, func_val, var_table, ns);
-            bin.builder.build_int_add(left.into_int_value(), right.into_int_value(), "").into()
+            bin.builder
+                .build_int_add(left.into_int_value(), right.into_int_value(), "")
+                .into()
         }
         ast::Expression::Subtract(loc, ty, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
@@ -149,12 +151,12 @@ pub fn expression<'a>(
         ast::Expression::Assign(_, _, l, r) => {
             let right = expression(r, bin, func, func_val, var_table, ns);
             let left = match **l {
-                Expression::Variable(_,_, pos) => {
+                Expression::Variable(_, _, pos) => {
                     let ret = *var_table.get(&pos).unwrap();
                     var_table.insert(pos, right);
-                     ret
+                    ret
                 }
-                _ => unreachable!()
+                _ => unreachable!(),
             };
             bin.builder.build_store(left.into_pointer_value(), right);
             left
@@ -167,7 +169,9 @@ pub fn expression<'a>(
         ast::Expression::Or(loc, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns);
             let right = expression(r, bin, func, func_val, var_table, ns);
-            bin.builder.build_or(left.into_int_value(), right.into_int_value(), "").into()
+            bin.builder
+                .build_or(left.into_int_value(), right.into_int_value(), "")
+                .into()
         }
 
         ast::Expression::NumberLiteral(loc, ty, n) => {
@@ -342,7 +346,7 @@ pub fn emit_function_call<'a>(
                     .left()
                     .unwrap();
 
-                 let success = bin.builder.build_int_compare(
+                let success = bin.builder.build_int_compare(
                     IntPredicate::EQ,
                     ret.into_int_value(),
                     bin.context.i32_type().const_zero(),

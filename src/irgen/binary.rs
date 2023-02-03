@@ -100,12 +100,12 @@ impl<'a> Binary<'a> {
         for ty in returns {
             args.push(if ty.is_reference_type(ns) && !ty.is_contract_storage() {
                 self.llvm_type(ty, ns)
-                    .ptr_type(AddressSpace::Generic)
-                    .ptr_type(AddressSpace::Generic)
+                    .ptr_type(AddressSpace::default())
+                    .ptr_type(AddressSpace::default())
                     .into()
             } else {
                 self.llvm_type(ty, ns)
-                    .ptr_type(AddressSpace::Generic)
+                    .ptr_type(AddressSpace::default())
                     .into()
             });
         }
@@ -118,9 +118,9 @@ impl<'a> Binary<'a> {
     pub(crate) fn llvm_var_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {
-            Type::Struct(_) | Type::Array(..) => {
-                llvm_ty.ptr_type(AddressSpace::Generic).as_basic_type_enum()
-            }
+            Type::Struct(_) | Type::Array(..) => llvm_ty
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
             _ => llvm_ty,
         }
     }
@@ -129,9 +129,9 @@ impl<'a> Binary<'a> {
     pub(crate) fn llvm_field_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {
-            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => {
-                llvm_ty.ptr_type(AddressSpace::Generic).as_basic_type_enum()
-            }
+            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => llvm_ty
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
             _ => llvm_ty,
         }
     }
@@ -189,13 +189,13 @@ impl<'a> Binary<'a> {
             } => {
                 let ftype = self.function_type(params, returns, ns);
 
-                BasicTypeEnum::PointerType(ftype.ptr_type(AddressSpace::Generic))
+                BasicTypeEnum::PointerType(ftype.ptr_type(AddressSpace::default()))
             }
             Type::UserType(no) => self.llvm_type(&ns.user_types[*no].ty, ns),
             Type::BufferPointer => self
                 .context
                 .i8_type()
-                .ptr_type(AddressSpace::Generic)
+                .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => unreachable!(),
         }

@@ -6,12 +6,12 @@ use std::collections::HashMap;
 
 use super::expression::expression;
 use crate::irgen::binary::Binary;
+use crate::irgen::expression::emit_function_call;
 use crate::sema::ast::Expression;
 use crate::sema::ast::RetrieveType;
 use crate::sema::ast::{ArrayLength, Function, Namespace, Parameter, Statement, Type};
 use crate::sema::{ast, Recurse};
 use ola_parser::program;
-use crate::irgen::expression::emit_function_call;
 
 /// Resolve a statement, which might be a block of statements or an entire body of a function
 pub(crate) fn statement<'a>(
@@ -49,8 +49,7 @@ pub(crate) fn statement<'a>(
                 let returns_offset = func.params.len();
                 for (i, ret) in return_vals.iter().enumerate() {
                     let arg = func_val.get_nth_param((returns_offset + i) as u32).unwrap();
-                    bin.builder
-                        .build_store(arg.into_pointer_value(), *ret);
+                    bin.builder.build_store(arg.into_pointer_value(), *ret);
                 }
 
                 let i32_type = bin.context.i32_type();
@@ -164,8 +163,8 @@ fn returns<'a>(
             .iter()
             .map(|e| expression(e, bin, Some(func), func_val, var_table, ns))
             .collect::<Vec<BasicValueEnum>>(),
-        ast::Expression::FunctionCall {..} => {
-            emit_function_call(expr, bin, Some(func), func_val, var_table,  ns)
+        ast::Expression::FunctionCall { .. } => {
+            emit_function_call(expr, bin, Some(func), func_val, var_table, ns)
         }
         // Can be any other expression
         _ => {
