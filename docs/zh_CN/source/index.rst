@@ -48,6 +48,12 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Ola Assembly
+
+   ola-asm
+
+.. toctree::
+   :maxdepth: 2
    :caption: Appendix
 
    ola-libs
