@@ -51,19 +51,19 @@ r8寄存器为fp寄存器。汇编中通用寄存器访问不能通过名字，�
 ```
 main: ;加法算术运算
 .LBL_0_0:
-  add r8 r8 16 ;计算局部变量栈空间并开栈,r8为fp
+  add r8 r8 4 ;计算局部变量栈空间并开栈,r8为fp
   mov r4 100   ;立即数存入通用寄存器
-  not r5 12    ;局部变量1计算栈位置
+  not r5 3    ;局部变量1计算栈位置
   add r5 r5 1
   add r5 r8 r5
   mstore r5 r4 ;局部变量1赋值入栈
   mov r4 1     ;同上，局部变量2赋值入栈
-  not r6 8
+  not r6 2
   add r6 r6 1
   add r6 r8 r6
   mstore r6 r4
   mov r4 2     ;同上，局部变量3赋值入栈
-  not r7 4
+  not r7 1
   add r7 r7 1
   add r7 r8 r7
   mstore r7 r4
@@ -72,10 +72,10 @@ main: ;加法算术运算
   add r4 r4 r1 ;加法二元运算
   mstore r5 r4 ;运算结果覆盖局部变量1栈空间
   mload r0 r5  ;栈上运算结果存入r0返回值寄存器
-  not r4 16    ;回收栈空间 
+  not r4 4    ;回收栈空间
   add r4 r4 1
   add r8 r8 r4
-  ret          ;函数返回
+  end          ;程序结束
 ```
 ## 函数调用
 todo
