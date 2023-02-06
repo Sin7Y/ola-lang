@@ -78,6 +78,92 @@ main: ;加法算术运算
   end          ;程序结束
 ```
 ## 函数调用
-todo
+```
+fib_recursive:
+.LBL_0_0:
+  mov r4 r8
+  add r8 r8 6
+  not r5 5
+  add r5 r5 1
+  add r5 r8 r5
+  mstore r5 r4  ;保存fp, lr由vm保存于[fp-1]
+  not r6 2
+  add r6 r6 1
+  add r6 r8 r6
+  mstore r6 r0
+  mload  r1 r6
+  eq r1 0
+  cjmp .LBL_0_2
+  jmp .LBL_0_1
+.LBL_0_1:
+  mload  r1 r6
+  not r2 1
+  add r2 r2 1
+  add r1 r1 r2
+  eq r1 0
+  cjmp .LBL_0_2
+  jmp .LBL_0_3
+.LBL_0_2:
+  mov r1 1
+  not r2 3
+  add r2 r2 1
+  add r2 r8 r2
+  mstore r2 r1
+  jmp LBL_0_4
+.LBL_0_3:
+  not r4 2
+  add r4 r4 1
+  add r4 r8 r4
+  mload r5 r4
+  not r6 1
+  add r6 r6 1
+  add r5 r5 r6
+  call fib_recursive
+  add r6 r8 r6
+  mstore r6 r0
+  not r7 2
+  add r7 r7 1
+  add r8 r8 r7
+  call fib_recursive
+  mov r4 r0
+  mload r0 r6
+  add r4 r4 r0
+  not r5 3
+  add r5 r5 1
+  add r5 r8 r5
+  mstore r5 r4
+  jmp .LBL_0_4
+.LBL_0_4:
+  not r7 3
+  add r7 r7 1
+  add r7 r8 r7
+  mload r0 r7
+  not r7 4
+  add r7 r7 1
+  add r7 r8 r7
+  mload r8 r7
+  not r7 6
+  add r7 r7 1
+  add r8 r8 r7
+  ret
+main:
+  mov r4 r8
+  add r8 r8 4
+  not r5 3
+  add r5 r5 1
+  add r5 r8 r5
+  mstore r5 r4
+  mov r0 6
+  call fib_recursive
+  not r6 1
+  add r6 r6 1
+  add r6 r8 r6
+  mstore r6 r0
+  mload r8 r5
+  not r7 4
+  add r7 r7 1
+  add r7 r8 r7
+  end
+```
 
 
