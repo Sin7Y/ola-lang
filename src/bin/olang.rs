@@ -1,3 +1,6 @@
+use std::ffi::OsString;
+use std::path::Path;
+
 fn main() {}
 //
 // fn process_file(filename: &OsStr) {
@@ -22,13 +25,16 @@ fn gen_ir_test() {
     let mut resolver = FileResolver::new();
     let source = r#"
       contract Fibonacci {
+
+            fn main() -> (u32) {
+               return fib_recursive(10);
+            }
+
             fn fib_recursive(u32 n) -> (u32) {
-                u32 x = 88;
-                x = n + 1;
                 if (n == 0 || n == 1) {
                     return 1;
                 }
-                return fib_recursive(n -1) + fib_recursive(n -2) + x;
+                return fib_recursive(n -1) + fib_recursive(n -2);
             }
 
         }
@@ -44,11 +50,10 @@ fn gen_ir_test() {
         let filename_string = file_name.to_string_lossy();
 
         let binary = resolved_contract.binary(&ns, &context, &filename_string);
-        // binary
-        //     .dump_llvm(
-        //         &Path::new(&OsString::from(".")).join(format!("{}.{}", filename_string, "ll")),
-        //     )
-        //     .expect("TODO: panic message");
-        assert!(binary.module.verify().is_ok());
+        binary
+            .dump_llvm(
+                &Path::new(&OsString::from(".")).join(format!("{}.{}", filename_string, "ll")),
+            )
+            .expect("TODO: panic message");
     }
 }
