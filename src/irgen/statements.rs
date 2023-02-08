@@ -31,6 +31,7 @@ pub(crate) fn statement<'a>(
             );
             var_table.insert(*pos, alloc.as_basic_value_enum());
             let var_value = expression(init, bin, Some(func), func_val, var_table, ns);
+            var_table.insert(*pos, var_value);
             bin.builder.build_store(alloc, var_value);
         }
 

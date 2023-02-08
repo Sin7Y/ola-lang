@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 /// Emit all functions, constructors, fallback and receiver
 pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
+    // gen function prototype
     for (_, func) in ns.functions.iter().enumerate() {
         let ftype = bin.function_type(
             &func
@@ -22,16 +23,20 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
             ns,
         );
 
-        let func_val = if let Some(func) = bin.module.get_function(&func.name) {
+        if let Some(func) = bin.module.get_function(&func.name) {
             // must not have a body yet
             assert_eq!(func.get_first_basic_block(), None);
-
             func
         } else {
             bin.module.add_function(&func.name, ftype, None)
         };
+    }
 
-        gen_function(bin, func, func_val, ns);
+    // gen function definition
+    for (_, func) in ns.functions.iter().enumerate() {
+        if let Some(func_val) = bin.module.get_function(&func.name) {
+            gen_function(bin, func, func_val, ns);
+        }
     }
 }
 
