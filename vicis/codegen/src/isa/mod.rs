@@ -1,5 +1,6 @@
 pub mod aarch64;
 pub mod x86_64;
+pub mod ola;
 
 use crate::{
     call_conv::CallConvKind,
