@@ -15,14 +15,7 @@ mod ola {
     include!(concat!(env!("OUT_DIR"), "/ola.rs"));
 }
 
-// /// Parse ola file
-// pub fn parse(src: &str, file_no: usize) -> Result<SourceUnit, ParseError<usize, Token, &str>> {
-//     let mut errors = Vec::new();
-//     let s = ola::SourceUnitParser::new().parse(file_no, &mut errors, src);
-//     s
-// }
-
-/// Parse solidity file
+/// Parse Ola file
 pub fn parse(src: &str, file_no: usize) -> Result<program::SourceUnit, Vec<Diagnostic>> {
     let parser_errors = &mut Vec::new();
     let errors = &mut Vec::new();

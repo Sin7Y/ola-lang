@@ -1,4 +1,4 @@
-# Olang Syntax
+# Ola Language Syntax
 
 ### Variables
 
@@ -74,7 +74,7 @@ fn foo() -> u32 {
 
 ### Data Type
 
-Olang is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. 
+Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. 
 Three basic types and multiple complex types are supported.
 
 #### Basic Types
@@ -85,7 +85,7 @@ There are three types of basic types, namely integer, field and Boolean
 
 There are several types of integer types: `u32`, `u64`, and `u256`, and currently only unsigned integer operations are supported. 
 All types are built on the basis of the `field` type.
-Olang provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic.
+Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic.
 Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal. 
 
 ```
@@ -96,9 +96,9 @@ u256 d = 102411ll  // u256
 ```
 
 ##### Field
-`Field` is the most basic type of Olang, and the data range of the `field` variable is `[0, p-1]`.
+`Field` is the most basic type of Ola, and the data range of the `field` variable is `[0, p-1]`.
 The olaVM uses plonky2 as its back-end proof system, so the `field` of prime is selected as `$p=2^{64}-2^{32}+1$`. 
-For Olang developers, `field` type operations, like integer types, require special attention when overflowing.
+For Ola developers, `field` type operations, like integer types, require special attention when overflowing.
 
 ```
 field a = 0xff; // field
@@ -114,11 +114,11 @@ bool b = false;
 ```
 #### Complex Types
 
-Olang supports a variety of complex types such as`Arrays`,`Slice`,`Tuples`,`Structs`,`Enumerations`,`Map`。
+Ola supports a variety of complex types such as`Arrays`,`Slice`,`Tuples`,`Structs`,`Enumerations`,`Map`。
 
 ##### Arrays
 
-Olang supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time. 
+Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time. 
 
 Array elements are numbered from zero and are accessed using`[index]`for addressing.
 
@@ -347,7 +347,7 @@ fn foo() -> u32 {
 
 ### Functions
 
-It is the basic module unit of Olang, containing declarations and statements.
+It is the basic module unit of Ola, containing declarations and statements.
 
 If the`fn`keyword is used, the function name must be explicitly provided. parameters, and return values are optional, and parameters are passed by value.
 
