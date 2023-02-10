@@ -1,4 +1,4 @@
-# Olang Grammar
+# Ola Language Grammar
 
 ## Rule SourceUnit
 

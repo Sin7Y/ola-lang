@@ -184,7 +184,6 @@ pub struct Function {
 }
 
 /// This trait provides a single interface for fetching paramenters, returns and the symbol table
-/// for both yul and solidity functions
 pub trait FunctionAttributes {
     fn get_symbol_table(&self) -> &Symtable;
     fn get_parameters(&self) -> &Vec<Parameter>;
@@ -328,7 +327,6 @@ impl CodeLocation for Symbol {
     }
 }
 
-/// Any Solidity file, either the main file or anything that was imported
 #[derive(Clone, Debug)]
 pub struct File {
     /// The on-disk filename

@@ -4,6 +4,6 @@
 
 TODO
 
-## Hello Olang
+## Hello Ola language
 
 TODO

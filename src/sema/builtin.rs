@@ -20,7 +20,7 @@ pub struct Prototype {
     pub constant: bool,
 }
 
-// A list of all Solidity builtins functions
+// A list of all Ola builtins functions
 static BUILTIN_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
     [Prototype {
         builtin: Builtin::PoseidonHash,
@@ -34,10 +34,10 @@ static BUILTIN_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
     }]
 });
 
-// A list of all Solidity builtins variables
+// A list of all Ola builtins variables
 static BUILTIN_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
-// A list of all Solidity builtins methods
+// A list of all ola builtins methods
 static BUILTIN_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
 /// Get the prototype for a builtin. If the prototype has arguments, it is a function else

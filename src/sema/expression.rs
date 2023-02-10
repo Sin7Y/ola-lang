@@ -2499,8 +2499,6 @@ fn array_literal(
 
     let mut flattened = flattened.iter();
 
-    // We follow the solidity scheme were everthing gets implicitly converted to the
-    // type of the first element
     let mut first = expression(
         flattened.next().unwrap(),
         context,

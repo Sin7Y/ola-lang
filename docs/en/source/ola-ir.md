@@ -1,6 +1,6 @@
 # IR Design
 
-Overall principle: keep the Olang upper language operation and type abstract, and facilitate the mapping of lower to the OlaVM instruction set.
+Overall principle: keep the Ola upper language operation and type abstract, and facilitate the mapping of lower to the OlaVM instruction set.
 
 ## Compilation Process
 

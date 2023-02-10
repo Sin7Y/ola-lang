@@ -1,6 +1,6 @@
 # Ola backend asm codegen
 
-Olang 高级程序基本单元 `Contract`, 其两部分要素合约变量 `GlobalVar` 及 `functions` 
+Ola 高级程序基本单元 `Contract`, 其两部分要素合约变量 `GlobalVar` 及 `functions` 
 
 汇编代码生成分别位于 `.data` 及 `.text` 段，其中函数以 `.global` 标识全局符号，供汇编器使用。
 
