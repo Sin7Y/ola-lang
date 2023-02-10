@@ -816,7 +816,6 @@ impl Type {
         }
     }
 
-    /// Is this type an reference type in the solidity language? (struct, array, mapping)
     pub fn is_reference_type(&self, ns: &Namespace) -> bool {
         match self {
             Type::Bool => false,
@@ -848,9 +847,6 @@ impl Type {
             _ => false,
         }
     }
-
-    /// Can this type have a calldata, memory, or storage location. This is to be
-    /// compatible with ethereum solidity. Opinions on whether other types should be
 
     /// Is this a reference to contract storage?
     pub fn is_contract_storage(&self) -> bool {

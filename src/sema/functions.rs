@@ -23,12 +23,6 @@ pub fn contract_function(
             ));
             return None;
         }
-    } else {
-        ns.diagnostics.push(Diagnostic::error(
-                func.name_loc,
-                "function is missing a name. A function without a name is syntax for 'fallback() external' or 'receive() external' in older versions of the Solidity language, see https://solang.readthedocs.io/en/latest/language/functions.html#fallback-and-receive-function".to_string(),
-            ));
-        return None;
     }
 
     let mut diagnostics = Diagnostics::default();
