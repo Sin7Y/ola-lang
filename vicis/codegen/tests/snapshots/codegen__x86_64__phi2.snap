@@ -1,0 +1,31 @@
+---
+source: codegen/tests/codegen.rs
+assertion_line: 36
+expression: mach_module.display_asm()
+---
+  .text
+  .intel_syntax noprefix
+  .text
+  .globl main
+main:
+.LBL0_0:
+  push rbp
+  mov rbp, rsp
+  mov eax, 1
+  mov ecx, 0
+  jmp .LBL0_1
+.LBL0_1:
+  cmp eax, 10
+  jle .LBL0_2
+  jmp .LBL0_4
+.LBL0_2:
+  add ecx, eax
+  jmp .LBL0_3
+.LBL0_3:
+  add eax, 1
+  jmp .LBL0_1
+.LBL0_4:
+  mov eax, ecx
+  pop rbp
+  ret 
+
