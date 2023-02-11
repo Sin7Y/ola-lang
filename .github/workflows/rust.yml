@@ -16,12 +16,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
       - name: check
         run:
           cargo check --all-features
       - name: fmt-check
         run:
-          cargo fmt --all -- --check
+          rustup component add rustfmt && cargo fmt --all -- --check
       - name: Clippy
         run:
           cargo check --all-features

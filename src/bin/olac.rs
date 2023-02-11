@@ -199,6 +199,7 @@ fn gen_ir_test() {
         }
         "#;
     resolver.set_file_contents("test.ola", source.to_string());
+
     let file_name = OsStr::new("test.ola");
     // resolve phase
     let ns = ola_lang::parse_and_resolve(file_name, &mut resolver);
