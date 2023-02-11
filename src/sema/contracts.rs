@@ -26,7 +26,6 @@ impl ast::Contract {
     }
 
     /// Generate contract code for this contract
-    #[cfg(feature = "llvm")]
     pub fn emit<'a>(
         &'a self,
         ns: &'a ast::Namespace,
