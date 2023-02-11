@@ -2,13 +2,7 @@ use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 
 use ola_lang::file_resolver::FileResolver;
 use ola_lang::sema::ast::Namespace;
-use std::{
-    ffi::{OsStr, OsString},
-    fs::{create_dir_all, File},
-    io::prelude::*,
-    path::{Path, PathBuf},
-    process::exit,
-};
+use std::{ffi::{OsStr, OsString}, fs::{create_dir_all, File}, io::prelude::*, path::{Path, PathBuf}, process::exit};
 
 fn main() {
     let app = || {
@@ -199,6 +193,7 @@ fn gen_ir_test() {
         }
         "#;
     resolver.set_file_contents("test.ola", source.to_string());
+
     let file_name = OsStr::new("test.ola");
     // resolve phase
     let ns = ola_lang::parse_and_resolve(file_name, &mut resolver);

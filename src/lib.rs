@@ -1,9 +1,12 @@
+#![feature(let_chains)]
 // SPDX-License-Identifier: Apache-2.0
 
 extern crate core;
 
 #[cfg(feature = "llvm")]
 pub mod irgen;
+
+pub mod codegen;
 
 pub mod file_resolver;
 

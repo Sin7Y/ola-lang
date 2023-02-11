@@ -1,23 +1,11 @@
+use vicis_codegen::{self, isa::ola::Ola, lower::compile_module};
+use vicis_core::ir::module::Module;
 
-#[macro_use]
-pub mod macros;
-pub mod call_conv;
-pub mod core;
-pub mod function;
-pub mod isa;
-pub mod lower;
-pub mod module;
-pub mod pass;
-pub mod register;
-
-
-#[test]
-fn codegen_test() {
-
-    use crate::codegen::{isa::ola::Ola, core::ir::module::Module, lower::compile_module};
+fn main() {
     // LLVM Assembly
     let asm = r#"
   source_filename = "asm"
+
   ; Function Attrs: noinline nounwind optnone uwtable
   define dso_local i32 @main() #0 {
     %a = alloca i32, align 4
@@ -29,6 +17,7 @@ fn codegen_test() {
     %f = sub i32 %e, %d ; 1740
     ret i32 %f
   }
+
   attributes #0 = { noinline nounwind optnone uwtable }
 "#;
 
@@ -38,6 +27,7 @@ fn codegen_test() {
     // Compile the module for x86 and get a machine module
     let isa = Ola::default();
     let mach_module = compile_module(&isa, &module).expect("failed to compile");
+    println!("{}",mach_module.display_asm());
 
     // Display the machine module as assembly
     assert_eq!(
@@ -57,6 +47,7 @@ fn codegen_test() {
   not r6 1
   add r6 r6 1
   add r8 r8 r6
-  ret \n"
+  ret
+"
     );
 }
