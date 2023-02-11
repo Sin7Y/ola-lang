@@ -2,7 +2,13 @@ use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 
 use ola_lang::file_resolver::FileResolver;
 use ola_lang::sema::ast::Namespace;
-use std::{ffi::{OsStr, OsString}, fs::{create_dir_all, File}, io::prelude::*, path::{Path, PathBuf}, process::exit};
+use std::{
+    ffi::{OsStr, OsString},
+    fs::{create_dir_all, File},
+    io::prelude::*,
+    path::{Path, PathBuf},
+    process::exit,
+};
 
 fn main() {
     let app = || {

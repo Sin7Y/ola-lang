@@ -1,4 +1,3 @@
-
 use super::{
     util::{spaces, string_literal},
     Error,
@@ -130,9 +129,7 @@ pub fn parse(mut source: &str) -> Result<Module, Error> {
         }
 
         return Err(Error::Located(source, "Parse error: module body"));
-
     }
-
 
     Ok(module)
 }
@@ -142,7 +139,8 @@ macro_rules! generate_test {
         #[test]
         fn $fname() {
             use std::fs;
-            let source = fs::read_to_string(concat!("./src/codegen/core/examples/", $name)).unwrap();
+            let source =
+                fs::read_to_string(concat!("./src/codegen/core/examples/", $name)).unwrap();
             match parse(&source) {
                 Ok(ok) => ok,
                 Err(e) => {

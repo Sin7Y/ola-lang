@@ -1,4 +1,3 @@
-
 #[macro_use]
 pub mod macros;
 pub mod call_conv;
@@ -10,11 +9,9 @@ pub mod module;
 pub mod pass;
 pub mod register;
 
-
 #[test]
 fn codegen_test() {
-
-    use crate::codegen::{isa::ola::Ola, core::ir::module::Module, lower::compile_module};
+    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
     // LLVM Assembly
     let asm = r#"
   source_filename = "asm"
