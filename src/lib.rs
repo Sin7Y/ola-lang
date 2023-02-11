@@ -3,7 +3,6 @@
 
 extern crate core;
 
-#[cfg(feature = "llvm")]
 pub mod irgen;
 
 pub mod codegen;
@@ -12,10 +11,6 @@ pub mod file_resolver;
 
 pub mod standard_json;
 
-// In Sema, we use result unit for returning early
-// when code-misparses. The error will be added to the namespace diagnostics, no need to have anything but unit
-// as error.
-#[allow(clippy::result_unit_err)]
 pub mod sema;
 
 use file_resolver::FileResolver;
