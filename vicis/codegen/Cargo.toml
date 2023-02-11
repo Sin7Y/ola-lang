@@ -1,0 +1,27 @@
+[package]
+name = "vicis-codegen"
+version = "0.2.0"
+authors = ["uint256_t"]
+edition = "2021"
+license-file = "../LICENSE"
+description = "Manipulate LLVM-IR in Pure Rust"
+homepage = "https://github.com/maekawatoshiki/vicis"
+documentation = "https://docs.rs/vicis"
+repository = "https://github.com/maekawatoshiki/vicis"
+readme = "../README.md"
+keywords = ["llvm", "compiler"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vicis-core = { path = "../core" }
+rustc-hash = "^1.1.0"
+id-arena = "^2.2.1"
+anyhow = "^1.0.38"
+log = "0.4.17"
+
+[dev-dependencies]
+color-backtrace = "0.5.1"
+env_logger = "0.9.0"
+insta = "^1.7.1"
+structopt = "0.3.26"

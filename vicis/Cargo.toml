@@ -1,0 +1,7 @@
+[workspace]
+members = [
+  "core",
+  "codegen",
+  "codegen_cranelift",
+  "interpreter",
+]

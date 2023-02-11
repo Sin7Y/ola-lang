@@ -21,6 +21,7 @@ num-integer = "0.1.44"
 hex = "0.4"
 itertools = "0.10"
 ola-parser = { path = "./ola-parser" }
+code_gen = { path = "./vicis" }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = { version = "1.0" }
