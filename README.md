@@ -133,7 +133,7 @@ The extension can be found on the [Visual Studio Marketplace](https://marketplac
 | Better statement support and type system                     | Doing       | Medium:grin:                    |
 | Smart Contract Storage Model Design                          | Doing       | Medium:grin:                    |
 | Assembler, outputting better assembly format                 | Doing       | Easy:grinning:                  |
-| Poseidon hash builtin function to reduce the complexity of proof systems | Not started | Medium                          |
+| Poseidon hash builtin function to reduce the complexity of proof systems | Not started | Medium :grin:                          |
 | Prophet is designed to reduce the complexity of proof systems | Not started | Hard:upside_down_face: :muscle: |
 | A more complete compilation back-end system, based on Ola opcode | Not started | Hard:upside_down_face::muscle:  |
 
