@@ -4,7 +4,6 @@ use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use inkwell::values::{BasicValueEnum, FunctionValue};
 use std::collections::HashMap;
-use inkwell::types::AnyType;
 
 /// Emit all functions, constructors, fallback and receiver
 pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
@@ -42,8 +41,6 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
             bin.builder.build_return(None);
         }
     }
-
-
 
 }
 
