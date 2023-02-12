@@ -1,4 +1,4 @@
-<img src="docs/en/source/images/ola.jpg" alt="Ola Logo" width = "400" height = "300" align=center />
+<img src="docs/en/source/images/ola.jpg" alt="Ola Logo" width = "400" height = "300" style="align:center" />
 
 
 
