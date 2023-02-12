@@ -190,7 +190,7 @@ fn gen_ir_test() {
             }
 
             fn fib_recursive(u32 n) -> (u32) {
-                if (n == 0 || n == 1) {
+                if (n < 2) {
                     return 1;
                 }
                 return fib_recursive(n -1) + fib_recursive(n -2);
