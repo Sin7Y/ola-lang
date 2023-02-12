@@ -85,25 +85,15 @@ impl<'a> Binary<'a> {
         ns: &Namespace,
     ) -> FunctionType<'a> {
         // function parameters
-        let mut args = params
+        let args = params
             .iter()
             .map(|ty| self.llvm_var_ty(ty, ns).into())
             .collect::<Vec<BasicMetadataTypeEnum>>();
 
-        // add return values
-        for ty in returns {
-            args.push(if ty.is_reference_type(ns) && !ty.is_contract_storage() {
-                self.llvm_type(ty, ns)
-                    .ptr_type(AddressSpace::default())
-                    .ptr_type(AddressSpace::default())
-                    .into()
-            } else {
-                self.llvm_type(ty, ns)
-                    .ptr_type(AddressSpace::default())
-                    .into()
-            });
+        if returns.is_empty() {
+            let void_type = self.context.void_type();
+            return void_type.fn_type(&args, false)
         }
-
         let i32_type = self.context.i32_type();
         i32_type.fn_type(&args, false)
     }

@@ -144,11 +144,7 @@ pub fn expression<'a>(
             left
         }
         Expression::FunctionCall { .. } => {
-            let mut ret = emit_function_call(expr, bin, func, func_val, var_table, ns);
-            if !ret.is_empty() {
-                return ret.remove(0);
-            }
-            bin.context.i32_type().const_zero().as_basic_value_enum()
+            emit_function_call(expr, bin, func, func_val, var_table, ns)
         }
 
         Expression::Or(_, l, r) => {
@@ -290,59 +286,24 @@ pub fn emit_function_call<'a>(
     func_val: FunctionValue<'a>,
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
-) -> Vec<BasicValueEnum<'a>> {
-    let mut ret_value = Vec::new();
+) -> BasicValueEnum<'a> {
+    let mut ret_value = bin.context.i32_type().const_zero().as_basic_value_enum();
     match expr {
         Expression::FunctionCall { function, args, .. } => {
             if let Expression::Function { function_no, .. } = function.as_ref() {
                 let callee = &ns.functions[*function_no];
                 if let Some(callee_value) = bin.module.get_function(&callee.name) {
-                    let mut params = args
+                    let params = args
                         .iter()
                         .map(|a| expression(a, bin, func, func_val, var_table, ns).into())
                         .collect::<Vec<BasicMetadataValueEnum>>();
 
-                    if !callee.returns.is_empty() {
-                        for v in callee.returns.iter() {
-                            params.push(
-                                bin.builder
-                                    .build_alloca(bin.llvm_var_ty(&v.ty, ns), v.name_as_str())
-                                    .into(),
-                            );
-                        }
-                    }
-
-                    let ret = bin
+                    ret_value = bin
                         .builder
                         .build_call(callee_value, &params, "")
                         .try_as_basic_value()
                         .left()
                         .unwrap();
-
-                    let success = bin.builder.build_int_compare(
-                        IntPredicate::EQ,
-                        ret.into_int_value(),
-                        bin.context.i32_type().const_zero(),
-                        "success",
-                    );
-
-                    let success_block = bin.context.append_basic_block(func_val, "success");
-                    let bail_block = bin.context.append_basic_block(func_val, "bail");
-                    bin.builder
-                        .build_conditional_branch(success, success_block, bail_block);
-
-                    bin.builder.position_at_end(bail_block);
-
-                    bin.builder.build_return(Some(&ret));
-                    bin.builder.position_at_end(success_block);
-                    if !callee.returns.is_empty() {
-                        for (i, v) in callee.returns.iter().enumerate() {
-                            ret_value.push(bin.builder.build_load(
-                                params[args.len() + i].into_pointer_value(),
-                                v.name_as_str(),
-                            ));
-                        }
-                    }
                 }
             }
             ret_value

@@ -1,7 +1,7 @@
 contract Fibonacci {
 
-    fn main() -> (u32) {
-       return fib_recursive(10);
+    fn main() {
+       fib_recursive(10);
     }
 
     fn fib_recursive(u32 n) -> (u32) {
