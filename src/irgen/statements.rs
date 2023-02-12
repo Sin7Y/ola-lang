@@ -35,12 +35,9 @@ pub(crate) fn statement<'a>(
             bin.builder.build_store(alloc, var_value);
         }
 
-        Statement::Return(_, expr) => match expr {
-            Some(expr) => {
-                let ret_value = returns(expr, bin, func, func_val, var_table, ns);
-                bin.builder.build_return(Some(&ret_value));
-            }
-            _ => {}
+        Statement::Return(_, expr) => if let Some(expr) = expr {
+            let ret_value = returns(expr, bin, func, func_val, var_table, ns);
+            bin.builder.build_return(Some(&ret_value));
         },
         Statement::Expression(_, _, expr) => {
             expression(expr, bin, Some(func), func_val, var_table, ns);
