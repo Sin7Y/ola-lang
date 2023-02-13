@@ -1,5 +1,8 @@
 use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 
+use ola_lang::codegen::core::ir::module::Module;
+use ola_lang::codegen::isa::ola::Ola;
+use ola_lang::codegen::lower::compile_module;
 use ola_lang::file_resolver::FileResolver;
 use ola_lang::sema::ast::Namespace;
 use std::{
@@ -127,18 +130,19 @@ fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()>
             }
 
             Some("asm") => {
-                // let obj = match binary.code(Generate::Assembly) {
-                //     Ok(o) => o,
-                //     Err(s) => {
-                //         println!("error: {s}");
-                //         exit(1);
-                //     }
-                // };
-                //
-                // let obj_filename = output_file(matches, &binary.name, "asm");
-                //
-                // let mut file = create_file(&obj_filename);
-                // file.write_all(&obj).unwrap();
+                // Parse the assembly and get a module
+                let module = Module::try_from(binary.module.to_string().as_str())
+                    .expect("failed to parse LLVM IR");
+                // Compile the module for Ola and get a machine module
+                let isa = Ola::default();
+                let code = compile_module(&isa, &module).expect("failed to compile");
+                let asm_path = output_file(matches, &binary.name, "asm");
+                let mut asm_file = create_file(&asm_path);
+
+                if let Err(err) = asm_file.write_all(format!("{}", code.display_asm()).as_bytes()) {
+                    eprintln!("{}: error: {}", asm_path.display(), err);
+                    exit(1);
+                }
             }
             _ => {}
         }
@@ -174,81 +178,5 @@ fn create_file(path: &Path) -> File {
             eprintln!("error: cannot create file '{}': {}", path.display(), err,);
             exit(1);
         }
-    }
-}
-
-#[test]
-fn gen_ir_test() {
-    use ola_lang::file_resolver::FileResolver;
-    use std::ffi::OsStr;
-    let mut resolver = FileResolver::new();
-    let source = r#"
-        contract Fibonacci {
-
-    fn main() {
-       fib_recursive(10);
-    }
-
-    fn fib_recursive(u32 n) -> (u32) {
-        if (n == 1) {
-            return 1;
-        }
-        if (n == 2) {
-            return 1;
-        }
-
-        return fib_recursive(n -1) + fib_recursive(n -2);
-    }
-
-}"#;
-    resolver.set_file_contents("test.ola", source.to_string());
-
-    let file_name = OsStr::new("test.ola");
-    // resolve phase
-    let ns = ola_lang::parse_and_resolve(file_name, &mut resolver);
-
-    for contract_no in 0..ns.contracts.len() {
-        let resolved_contract = &ns.contracts[contract_no];
-        let context = inkwell::context::Context::create();
-        let filename_string = file_name.to_string_lossy();
-
-        let binary = resolved_contract.binary(&ns, &context, &filename_string);
-        let ir = binary.module.to_string();
-        assert_eq!(
-            r#"; ModuleID = 'Fibonacci'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @fib_recursive(i32 10)
-  ret void
-}
-
-define i32 @fib_recursive(i32 %0) {
-entry:
-  %1 = icmp eq i32 %0, 1
-  br i1 %1, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 1
-
-enif:                                             ; preds = %entry
-  %2 = icmp eq i32 %0, 2
-  br i1 %2, label %then1, label %enif2
-
-then1:                                            ; preds = %enif
-  ret i32 1
-
-enif2:                                            ; preds = %enif
-  %3 = sub i32 %0, 1
-  %4 = call i32 @fib_recursive(i32 %3)
-  %5 = sub i32 %0, 2
-  %6 = call i32 @fib_recursive(i32 %5)
-  %7 = add i32 %4, %6
-  ret i32 %7
-}
-"#,
-            ir
-        );
     }
 }

@@ -31,7 +31,7 @@ fn codegen_binop_test() {
     // Parse the assembly and get a module
     let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-    // Compile the module for x86 and get a machine module
+    // Compile the module for Ola and get a machine module
     let isa = Ola::default();
     let mach_module = compile_module(&isa, &module).expect("failed to compile");
 
@@ -102,7 +102,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
     // Parse the assembly and get a module
     let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-    // Compile the module for x86 and get a machine module
+    // Compile the module for Ola and get a machine module
     let isa = Ola::default();
     let mach_module = compile_module(&isa, &module).expect("failed to compile");
 
@@ -190,7 +190,7 @@ fn codegen_fib_recursive_test() {
     // Parse the assembly and get a module
     let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-    // Compile the module for x86 and get a machine module
+    // Compile the module for Ola and get a machine module
     let isa = Ola::default();
     let mach_module = compile_module(&isa, &module).expect("failed to compile");
 
