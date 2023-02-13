@@ -23,18 +23,22 @@ The following shows a simple contract for calculating the Fibonacci function
 ```
 contract Fibonacci {
 
-      fn main() -> (u32) {
-         return fib_recursive(10);
-      }
+    fn main() {
+       fib_recursive(10);
+    }
 
-      fn fib_recursive(u32 n) -> (u32) {
-          if (n == 0 || n == 1) {
-              return 1;
-          }
-          return fib_recursive(n -1) + fib_recursive(n -2);
-      }
+    fn fib_recursive(u32 n) -> (u32) {
+        if (n == 1) {
+            return 1;
+        }
+        if (n == 2) {
+            return 1;
+        }
 
-  }
+        return fib_recursive(n -1) + fib_recursive(n -2);
+    }
+
+}
 ```
 
 ## Getting Started
