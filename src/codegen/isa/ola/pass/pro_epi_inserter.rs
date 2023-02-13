@@ -1,5 +1,6 @@
 use crate::codegen::{
-    function::{instruction::{Instruction, TargetInst}, 
+    function::{
+        instruction::{Instruction, TargetInst},
         Function,
     },
     isa::ola::{
@@ -38,7 +39,8 @@ pub fn run_on_function(function: &mut Function<Ola>) {
     let mut adj = (roundup(
         (slot_size + num_saved_64bit_regs * 1 + 1/*=call*/) as i32,
         1,
-    ) - (num_saved_64bit_regs * 1 + 1) as i32) / 4;
+    ) - (num_saved_64bit_regs * 1 + 1) as i32)
+        / 4;
 
     // insert prologue
     let entry = function.layout.first_block.unwrap();

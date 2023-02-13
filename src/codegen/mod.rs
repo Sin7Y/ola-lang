@@ -58,10 +58,11 @@ fn codegen_binop_test() {
     );
 }
 
+#[test]
 fn codegen_functioncall_test() {
-  use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
-  // LLVM Assembly
-  let asm = r#"
+    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
+    // LLVM Assembly
+    let asm = r#"
 source_filename = "asm" 
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable
@@ -97,17 +98,17 @@ define i32 @bar(i32 %0, i32 %1) #0 {
 }  
 "#;
 
-  // Parse the assembly and get a module
-  let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+    // Parse the assembly and get a module
+    let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-  // Compile the module for x86 and get a machine module
-  let isa = Ola::default();
-  let mach_module = compile_module(&isa, &module).expect("failed to compile");
+    // Compile the module for x86 and get a machine module
+    let isa = Ola::default();
+    let mach_module = compile_module(&isa, &module).expect("failed to compile");
 
-  // Display the machine module as assembly
-  assert_eq!(
-      format!("{}", mach_module.display_asm()),
-      "main:
+    // Display the machine module as assembly
+    assert_eq!(
+        format!("{}", mach_module.display_asm()),
+        "main:
 .LBL0_0:
 add r8 r8 7
 mstore [r8,-2] r8
@@ -143,11 +144,12 @@ add r7 r7 1
 add r8 r8 r7
 ret 
 "
-  );
+    );
 }
 
+#[test]
 fn codegen_fib_recursive_test() {
-  use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
+    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
     // LLVM Assembly
     let asm = r#"
     ; ModuleID = 'Fibonacci'

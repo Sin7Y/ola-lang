@@ -1,12 +1,12 @@
 use crate::codegen::{
-    function::{Function, instruction::TargetInst},
+    function::{instruction::TargetInst, Function},
     isa::ola::{
         instruction::{Opcode, Operand, OperandData},
         register::reg_to_str,
         Ola,
     },
-    register::Reg,
     module::{DisplayAsm, Module},
+    register::Reg,
 };
 use std::{fmt, str};
 
@@ -54,18 +54,19 @@ pub fn print_function(
         for inst in function.layout.inst_iter(block) {
             let inst = function.data.inst_ref(inst);
             if Opcode::MSTOREr == inst.data.opcode {
-                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0,8))) && 
-                    matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0,8))) {
-                        write!(f, "  mstore [r8,-2] r8")?;
-                        writeln!(f)?;
-                        continue;
+                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 8)))
+                    && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 8)))
+                {
+                    write!(f, "  mstore [r8,-2] r8")?;
+                    writeln!(f)?;
+                    continue;
                 }
             }
             if inst.data.is_call() {
                 main_call = true;
             }
-            if function.ir.name() == "main" && main_call && Opcode::RET == inst.data.opcode {  
-                write!(f, "  end ")?;                              
+            if function.ir.name() == "main" && main_call && Opcode::RET == inst.data.opcode {
+                write!(f, "  end ")?;
             } else {
                 write!(f, "  {} ", inst.data.opcode)?;
             }

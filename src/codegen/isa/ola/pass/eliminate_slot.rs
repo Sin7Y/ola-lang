@@ -1,9 +1,9 @@
+use crate::codegen::core::ir::types;
 use crate::codegen::{
-    function::{Function, instruction::TargetInst},
+    function::{instruction::TargetInst, Function},
     isa::ola::{instruction::OperandData, register::GR, Ola},
     module::Module,
 };
-use crate::codegen::core::ir::types;
 use anyhow::Result;
 
 pub fn run_on_module(module: &mut Module<Ola>) -> Result<()> {
@@ -36,7 +36,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
 
     if call {
         for _ in 0..2 {
-            function.slots.add_slot(types::I32,4,4);
+            function.slots.add_slot(types::I32, 4, 4);
         }
     }
     function.slots.ensure_computed_offsets();
@@ -62,7 +62,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 (OperandData::Slot(slot), OperandData::None) => {
                     let off = function.slots.get(*slot).offset;
                     mem[1].data = OperandData::None;
-                    let size = off as i32 / 4 - 1  - function.slots.arena.len() as i32;
+                    let size = off as i32 / 4 - 1 - function.slots.arena.len() as i32;
                     mem[2].data = OperandData::Int32(size);
                     mem[3].data = OperandData::Reg(GR::R8.into());
                 }

@@ -87,14 +87,10 @@ impl RegisterClass for RegClass {
 
     fn csr_list(&self) -> Vec<Reg> {
         match self {
-            RegClass::GR => vec![
-                GR::R4,
-                GR::R5,
-                GR::R7,
-            ]
-            .into_iter()
-            .map(|r| r.into())
-            .collect(),
+            RegClass::GR => vec![GR::R4, GR::R5, GR::R7]
+                .into_iter()
+                .map(|r| r.into())
+                .collect(),
         }
     }
 
