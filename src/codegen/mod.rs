@@ -42,19 +42,21 @@ fn codegen_binop_test() {
         "main:
 .LBL0_0:
   add r8 r8 1
-  mstore [r8,-1] 10
+  mov r4 10
+  mstore [r8,-1] r4
   mload r4 [r8,-1]
   add r0 r4 20
   add r1 r4 30
   mul r2 r0 r1
-  not r6 r1
-  add r6 r6 1
-  add r3 r2 r6
+  not r7 r1
+  add r7 r7 1
+  add r3 r2 r7
   mov r0 r3
-  not r6 1
-  add r6 r6 1
-  add r8 r8 r6
-  ret \n"
+  not r7 1
+  add r7 r7 1
+  add r8 r8 r7
+  ret 
+"
     );
 }
 
@@ -110,39 +112,39 @@ define i32 @bar(i32 %0, i32 %1) #0 {
         format!("{}", mach_module.display_asm()),
         "main:
 .LBL0_0:
-add r8 r8 7
-mstore [r8,-2] r8
-mov r0 10
-mstore [r8,-5] r0
-mov r0 20
-mstore [r8,-4] r0
-mov r0 100
-mstore [r8,-3] r0
-mload r1 [r8,-5]
-mload r2 [r8,-4]
-call bar
-mstore [r8,-3] r0
-mload r0 [r8,-3]
-not r7 7
-add r7 r7 1
-add r8 r8 r7
-end 
+  add r8 r8 7
+  mstore [r8,-2] r8
+  mov r0 10
+  mstore [r8,-5] r0
+  mov r0 20
+  mstore [r8,-4] r0
+  mov r0 100
+  mstore [r8,-3] r0
+  mload r1 [r8,-5]
+  mload r2 [r8,-4]
+  call bar
+  mstore [r8,-3] r0
+  mload r0 [r8,-3]
+  not r7 7
+  add r7 r7 1
+  add r8 r8 r7
+  end 
 bar:
 .LBL1_0:
-add r8 r8 3
-mstore [r8,-3] r1
-mstore [r8,-2] r2
-mov r1 200
-mstore [r8,-1] r1
-mload r1 [r8,-3]
-mload r2 [r8,-2]
-add r0 r1 r2
-mstore [r8,-1] r0
-mload r0 [r8,-1]
-not r7 3
-add r7 r7 1
-add r8 r8 r7
-ret 
+  add r8 r8 3
+  mstore [r8,-3] r1
+  mstore [r8,-2] r2
+  mov r1 200
+  mstore [r8,-1] r1
+  mload r1 [r8,-3]
+  mload r2 [r8,-2]
+  add r0 r1 r2
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  not r7 3
+  add r7 r7 1
+  add r8 r8 r7
+  ret 
 "
     );
 }
