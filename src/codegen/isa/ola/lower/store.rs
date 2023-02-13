@@ -39,12 +39,36 @@ pub fn lower_store(
         }
     }
 
-    let mut konst = None;
-    let mut vreg = None;
+    let konst = None;
+    let vreg;
 
     let src = args[0];
     match ctx.ir_data.value_ref(src) {
-        Value::Constant(c) => konst = Some(c),
+        Value::Constant(c) => {
+            let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+            match c {
+                ConstantValue::Int(ConstantInt::Int32(i)) => {
+                    //let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::MOVri,
+                            operands: vec![
+                                MOperand::output(addr.into()),
+                                MOperand::new(OperandData::Int32(*i)),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                    //vreg = Some(addr.into());
+                }
+                e => {
+                    return Err(
+                        LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into(),
+                    )
+                }
+            }
+            vreg = Some(addr.into());
+        }
         Value::Instruction(id) => vreg = Some(get_inst_output(ctx, tys[0], *id)?),
         Value::Argument(a) => vreg = ctx.arg_idx_to_vreg.get(&a.nth).copied(),
         e => return Err(LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into()),

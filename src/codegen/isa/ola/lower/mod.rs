@@ -6,13 +6,13 @@ use crate::codegen::core::ir::{
         basic_block::BasicBlockId,
         data::Data as IrData,
         instruction::{
-            Alloca, Br, Call, Cast, CondBr, ICmp, ICmpCond, Instruction as IrInstruction,
-            InstructionId, IntBinary, Load, Opcode as IrOpcode, Operand, Ret, Store,
+            Alloca, Br, Call, CondBr, ICmp, ICmpCond, Instruction as IrInstruction, InstructionId,
+            IntBinary, Load, Opcode as IrOpcode, Operand, Ret, Store,
         },
         Parameter,
     },
     module::name::Name,
-    types::{self, CompoundType, FunctionType, Type},
+    types::{CompoundType, FunctionType, Type},
     value::{ConstantExpr, ConstantInt, ConstantValue, Value, ValueId},
 };
 use crate::codegen::{
@@ -48,7 +48,7 @@ impl LowerTrait<Ola> for Lower {
         let args = RegInfo::arg_reg_list(&ctx.call_conv);
         for (gpr_used, Parameter { name: _, ty, .. }) in params.iter().enumerate() {
             let reg = args[gpr_used].apply(&RegClass::for_type(ctx.types, *ty));
-            debug!(reg);
+            // debug!(reg);
             // Copy reg to new vreg
             assert!(ty.is_integer() || ty.is_pointer(ctx.types));
             let output = ctx.mach_data.vregs.add_vreg_data(*ty);
@@ -129,10 +129,7 @@ fn lower_alloca(
 
         return Ok(());
     }
-    let dl = ctx.isa.data_layout();
-    let sz = dl.get_size_of(ctx.types, tys[0]) as u32;
-    let align = dl.get_align_of(ctx.types, tys[0]) as u32;
-    let slot_id = ctx.slots.add_slot(tys[0], sz / 4, align);
+    let slot_id = ctx.slots.add_slot(tys[0], 4, 4);
     ctx.inst_id_to_slot_id.insert(id, slot_id);
     Ok(())
 }
@@ -153,7 +150,7 @@ fn lower_bin(
             InstructionData {
                 opcode: Opcode::NOT,
                 operands: vec![
-                    MO::output(OperandData::Reg(GR::R6.into())),
+                    MO::output(OperandData::Reg(GR::R7.into())),
                     MO::input(rhs.clone().into()),
                 ],
             },
@@ -166,8 +163,8 @@ fn lower_bin(
             InstructionData {
                 opcode: Opcode::ADDri,
                 operands: vec![
-                    MO::output(OperandData::Reg(GR::R6.into())),
-                    MO::input(OperandData::Reg(GR::R6.into())),
+                    MO::output(OperandData::Reg(GR::R7.into())),
+                    MO::input(OperandData::Reg(GR::R7.into())),
                     MO::input(OperandData::Int64(1)),
                 ],
             },
@@ -187,7 +184,7 @@ fn lower_bin(
                     operands: vec![
                         MO::input_output(output.into()),
                         MO::input(lhs.into()),
-                        MO::input(OperandData::Reg(GR::R6.into())),
+                        MO::input(OperandData::Reg(GR::R7.into())),
                     ],
                 },
                 IrOpcode::Add => InstructionData {
@@ -222,7 +219,7 @@ fn lower_bin(
                     operands: vec![
                         MO::input_output(output.into()),
                         MO::input(lhs.into()),
-                        MO::input(OperandData::Reg(GR::R6.into())),
+                        MO::input(OperandData::Reg(GR::R7.into())),
                     ],
                 },
                 IrOpcode::Add => InstructionData {
@@ -286,23 +283,6 @@ fn lower_condbr(
             _ => None,
         }
     }
-    fn is_trunc_from_i8(data: &IrData, val: &Value) -> Option<(InstructionId, ValueId)> {
-        match val {
-            Value::Instruction(id) => {
-                let inst = data.inst_ref(*id);
-                match &inst.operand {
-                    Operand::Cast(Cast {
-                        arg,
-                        tys: [from, to],
-                    }) if inst.opcode == IrOpcode::Trunc && from.is_i8() && to.is_i1() => {
-                        Some((*id, *arg))
-                    }
-                    _ => None,
-                }
-            }
-            _ => None,
-        }
-    }
 
     let arg = ctx.ir_data.value_ref(arg);
 
@@ -311,19 +291,79 @@ fn lower_condbr(
         let lhs = get_vreg_for_val(ctx, *ty, args[0])?;
         let rhs = ctx.ir_data.value_ref(args[1]);
         match rhs {
-            Value::Constant(ConstantValue::Int(ConstantInt::Int32(rhs))) => {
-                ctx.inst_seq.push(MachInstruction::new(
-                    InstructionData {
-                        opcode: Opcode::CMPri,
-                        operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
-                    },
-                    ctx.block_map[&ctx.cur_block],
-                ));
-            }
+            Value::Constant(ConstantValue::Int(ConstantInt::Int32(rhs))) => match cond {
+                ICmpCond::Eq => {
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::EQri,
+                            operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                }
+                ICmpCond::Ne => {
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::NEQ,
+                            operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                }
+                ICmpCond::Sge | ICmpCond::Uge => {
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::GTE,
+                            operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                }
+                ICmpCond::Ult => {
+                    let output = new_empty_inst_output(ctx, *ty, icmp);
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::MOVri,
+                            operands: vec![
+                                MO::output(OperandData::VReg(output)),
+                                MO::new(rhs.into()),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::GTE,
+                            operands: vec![
+                                MO::input(OperandData::VReg(output)),
+                                MO::input(lhs.into()),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::NEQ,
+                            operands: vec![
+                                MO::input(OperandData::VReg(output)),
+                                MO::input(lhs.into()),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                }
+                e => {
+                    return Err(
+                        LoweringError::Todo(format!("Unsupported icmp condition: {:?}", e)).into(),
+                    )
+                }
+            },
             Value::Constant(ConstantValue::Null(_)) => {
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
-                        opcode: Opcode::CMPri,
+                        opcode: Opcode::GTE,
                         operands: vec![MO::input(lhs.into()), MO::new(0.into())],
                     },
                     ctx.block_map[&ctx.cur_block],
@@ -334,7 +374,7 @@ fn lower_condbr(
                 let rhs = get_operand_for_val(ctx, *ty, args[1])?;
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
-                        opcode: Opcode::CMPrr, // TODO: CMPrr64
+                        opcode: Opcode::GTE, // TODO: CMPrr64
                         operands: vec![MO::input(lhs.into()), MO::input(rhs.into())],
                     },
                     ctx.block_map[&ctx.cur_block],
@@ -345,56 +385,12 @@ fn lower_condbr(
 
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode: match cond {
-                    ICmpCond::Eq => Opcode::CJMPr,
-                    ICmpCond::Ne => Opcode::CJMPr,
-                    ICmpCond::Sle => Opcode::CJMPr,
-                    ICmpCond::Slt => Opcode::CJMPr,
-                    ICmpCond::Sge => Opcode::CJMPr,
-                    ICmpCond::Sgt => Opcode::CJMPr,
-                    // ICmpCond::Ule => Opcode::JLE,
-                    // ICmpCond::Ult => Opcode::JL,
-                    // ICmpCond::Uge => Opcode::JGE,
-                    // ICmpCond::Ugt => Opcode::JG,
-                    e => {
-                        return Err(LoweringError::Todo(format!(
-                            "Unsupported icmp condition: {:?}",
-                            e
-                        ))
-                        .into())
-                    }
-                },
-                operands: vec![MO::new(OperandData::Block(ctx.block_map[&blocks[0]]))],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode: Opcode::JMPr,
-                operands: vec![MO::new(OperandData::Block(ctx.block_map[&blocks[1]]))],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
-        return Ok(());
-    }
-
-    if let Some((trunc, src)) = is_trunc_from_i8(ctx.ir_data, arg) {
-        ctx.mark_as_merged(trunc);
-        let lhs = get_vreg_for_val(ctx, types::I8, src)?;
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode: Opcode::CMPri,
-                operands: vec![MO::input(lhs.into()), MO::new(0i8.into())],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
                 opcode: Opcode::CJMPr,
                 operands: vec![MO::new(OperandData::Block(ctx.block_map[&blocks[0]]))],
             },
             ctx.block_map[&ctx.cur_block],
         ));
+
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::JMPr,

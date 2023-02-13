@@ -1,5 +1,8 @@
 use crate::codegen::{
-    function::{instruction::Instruction, Function},
+    function::{
+        instruction::{Instruction, TargetInst},
+        Function,
+    },
     isa::ola::{
         instruction::{InstructionData, Opcode, Operand, OperandData},
         register::{RegClass, GR},
@@ -33,7 +36,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
     used_csr.sort();
     let num_saved_64bit_regs = 1/*8=rbp*/ + used_csr.len() as u32;
 
-    let adj = (roundup(
+    let mut adj = (roundup(
         (slot_size + num_saved_64bit_regs * 1 + 1/*=call*/) as i32,
         1,
     ) - (num_saved_64bit_regs * 1 + 1) as i32)
@@ -41,6 +44,32 @@ pub fn run_on_function(function: &mut Function<Ola>) {
 
     // insert prologue
     let entry = function.layout.first_block.unwrap();
+    let mut call = false;
+    for block_id in function.layout.block_iter() {
+        for inst_id in function.layout.inst_iter(block_id) {
+            let inst = function.data.inst_ref(inst_id);
+            if !inst.data.is_call() {
+                continue;
+            }
+            call = true;
+            adj += 2;
+            break;
+        }
+    }
+    if call {
+        let mstore = function.data.create_inst(Instruction::new(
+            InstructionData {
+                opcode: Opcode::MSTOREr,
+                operands: vec![
+                    Operand::output(GR::R8.into()),
+                    Operand::input(GR::R8.into()),
+                ],
+            },
+            entry,
+        ));
+        function.layout.insert_inst_at_start(mstore, entry);
+    }
+
     if adj > 0 {
         let sub = function.data.create_inst(Instruction::new(
             InstructionData {
@@ -74,7 +103,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 InstructionData {
                     opcode: Opcode::NOT,
                     operands: vec![
-                        Operand::input_output(GR::R6.into()),
+                        Operand::input_output(GR::R7.into()),
                         Operand::input(adj.into()),
                     ],
                 },
@@ -86,8 +115,8 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
-                        Operand::output(GR::R6.into()),
-                        Operand::input_output(GR::R6.into()),
+                        Operand::output(GR::R7.into()),
+                        Operand::input_output(GR::R7.into()),
                         Operand::input(OperandData::Int64(1)),
                     ],
                 },
@@ -101,7 +130,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     operands: vec![
                         Operand::output(GR::R8.into()),
                         Operand::input_output(GR::R8.into()),
-                        Operand::input(GR::R6.into()),
+                        Operand::input(GR::R7.into()),
                     ],
                 },
                 block,

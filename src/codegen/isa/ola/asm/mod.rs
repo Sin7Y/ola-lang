@@ -1,11 +1,12 @@
 use crate::codegen::{
-    function::Function,
+    function::{instruction::TargetInst, Function},
     isa::ola::{
         instruction::{Opcode, Operand, OperandData},
         register::reg_to_str,
         Ola,
     },
     module::{DisplayAsm, Module},
+    register::Reg,
 };
 use std::{fmt, str};
 
@@ -45,14 +46,30 @@ pub fn print_function(
         writeln!(f, "  .globl {}", function.ir.name())?;
     }
     */
-
+    let mut main_call = false;
     writeln!(f, "{}:", function.ir.name())?;
 
     for block in function.layout.block_iter() {
         writeln!(f, ".LBL{}_{}:", fn_idx, block.index())?;
         for inst in function.layout.inst_iter(block) {
             let inst = function.data.inst_ref(inst);
-            write!(f, "  {} ", inst.data.opcode)?;
+            if Opcode::MSTOREr == inst.data.opcode {
+                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 8)))
+                    && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 8)))
+                {
+                    write!(f, "  mstore [r8,-2] r8")?;
+                    writeln!(f)?;
+                    continue;
+                }
+            }
+            if inst.data.is_call() {
+                main_call = true;
+            }
+            if function.ir.name() == "main" && main_call && Opcode::RET == inst.data.opcode {
+                write!(f, "  end ")?;
+            } else {
+                write!(f, "  {} ", inst.data.opcode)?;
+            }
             let mut i = 0;
             while i < inst.data.operands.len() {
                 let operand = &inst.data.operands[i];
@@ -93,14 +110,17 @@ impl fmt::Display for Opcode {
                 Self::ADDri | Self::ADDrr => "add",
                 Self::MULri | Self::MULrr => "mul",
                 Self::MOVri | Self::MOVrr => "mov",
-                Self::CMPri | Self::CMPrr => "cmp",
                 Self::JMPi | Self::JMPr => "jmp",
+                Self::CJMPi | Self::CJMPr => "cjmp",
                 Self::CALL => "call",
                 Self::RET => "ret",
                 Self::Phi => "PHI",
                 Self::MLOADi | Self::MLOADr => "mload",
                 Self::MSTOREi | Self::MSTOREr => "mstore",
                 Self::NOT => "not",
+                Self::GTE => "gte",
+                Self::NEQ => "neq",
+                Self::EQri | Self::EQrr => "eq",
                 e => todo!("{:?}", e),
             }
         )

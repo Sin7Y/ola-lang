@@ -55,9 +55,6 @@ pub enum Opcode {
     NEQ,
     GTE,
 
-    CMPri,
-    CMPrr,
-
     // TODO
     Phi,
 }

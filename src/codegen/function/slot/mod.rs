@@ -6,7 +6,7 @@ pub type SlotId = Id<Slot>;
 
 pub struct Slots<'a, T: TargetIsa> {
     pub isa: &'a T,
-    arena: Arena<Slot>,
+    pub arena: Arena<Slot>,
     aligned_size: u32,
 }
 

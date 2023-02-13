@@ -1,5 +1,6 @@
+use crate::codegen::core::ir::types;
 use crate::codegen::{
-    function::Function,
+    function::{instruction::TargetInst, Function},
     isa::ola::{instruction::OperandData, register::GR, Ola},
     module::Module,
 };
@@ -14,6 +15,7 @@ pub fn run_on_module(module: &mut Module<Ola>) -> Result<()> {
 
 pub fn run_on_function(function: &mut Function<Ola>) {
     let mut worklist = vec![];
+    let mut call = false;
 
     for block in function.layout.block_iter() {
         for inst_id in function.layout.inst_iter(block) {
@@ -26,9 +28,17 @@ pub fn run_on_function(function: &mut Function<Ola>) {
             {
                 worklist.push(inst_id);
             }
+            if inst.data.is_call() {
+                call = true;
+            }
         }
     }
 
+    if call {
+        for _ in 0..2 {
+            function.slots.add_slot(types::I32, 4, 4);
+        }
+    }
     function.slots.ensure_computed_offsets();
 
     while let Some(inst_id) = worklist.pop() {
@@ -52,12 +62,14 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 (OperandData::Slot(slot), OperandData::None) => {
                     let off = function.slots.get(*slot).offset;
                     mem[1].data = OperandData::None;
-                    mem[2].data = OperandData::Int32(-(off as i32));
+                    let size = off as i32 / 4 - 1 - function.slots.arena.len() as i32;
+                    mem[2].data = OperandData::Int32(size);
                     mem[3].data = OperandData::Reg(GR::R8.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int32(imm)) => {
                     let off = function.slots.get(*slot).offset;
-                    mem[2].data = OperandData::Int32(*imm - off as i32);
+                    let size = function.slots.arena.len() as i32 + (*imm - off as i32) / 4;
+                    mem[2].data = OperandData::Int32(size);
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R8.into());
                 }
