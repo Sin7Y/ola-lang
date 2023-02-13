@@ -35,22 +35,9 @@ pub(crate) fn statement<'a>(
             bin.builder.build_store(alloc, var_value);
         }
 
-        Statement::Return(_, expr) => match expr {
-            None => {
-                let i32_type = bin.context.i32_type();
-                bin.builder.build_return(Some(&i32_type.const_zero()));
-            }
-            Some(expr) => {
-                let return_vals = returns(expr, bin, func, func_val, var_table, ns);
-                let returns_offset = func.params.len();
-                for (i, ret) in return_vals.iter().enumerate() {
-                    let arg = func_val.get_nth_param((returns_offset + i) as u32).unwrap();
-                    bin.builder.build_store(arg.into_pointer_value(), *ret);
-                }
-
-                let i32_type = bin.context.i32_type();
-                bin.builder.build_return(Some(&i32_type.const_zero()));
-            }
+        Statement::Return(_, expr) => if let Some(expr) = expr {
+            let ret_value = returns(expr, bin, func, func_val, var_table, ns);
+            bin.builder.build_return(Some(&ret_value));
         },
         Statement::Expression(_, _, expr) => {
             expression(expr, bin, Some(func), func_val, var_table, ns);
@@ -152,20 +139,14 @@ fn returns<'a>(
     func_val: FunctionValue<'a>,
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
-) -> Vec<BasicValueEnum<'a>> {
+) -> BasicValueEnum<'a> {
     // Can only be another function call without returns
     let values = match expr {
-        Expression::List(_, exprs) => exprs
-            .iter()
-            .map(|e| expression(e, bin, Some(func), func_val, var_table, ns))
-            .collect::<Vec<BasicValueEnum>>(),
         Expression::FunctionCall { .. } => {
             emit_function_call(expr, bin, Some(func), func_val, var_table, ns)
         }
         // Can be any other expression
-        _ => {
-            vec![expression(expr, bin, Some(func), func_val, var_table, ns)]
-        }
+        _ => expression(expr, bin, Some(func), func_val, var_table, ns),
     };
     values
 }
