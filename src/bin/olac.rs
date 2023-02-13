@@ -214,7 +214,8 @@ fn gen_ir_test() {
 
         let binary = resolved_contract.binary(&ns, &context, &filename_string);
         let ir = binary.module.to_string();
-        assert_eq!(r#"; ModuleID = 'Fibonacci'
+        assert_eq!(
+            r#"; ModuleID = 'Fibonacci'
 source_filename = "test.ola"
 
 define void @main() {
@@ -246,6 +247,8 @@ enif2:                                            ; preds = %enif
   %7 = add i32 %4, %6
   ret i32 %7
 }
-"#, ir);
+"#,
+            ir
+        );
     }
 }

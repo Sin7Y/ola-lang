@@ -41,7 +41,6 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
             bin.builder.build_return(None);
         }
     }
-
 }
 
 pub(super) fn gen_function<'a>(

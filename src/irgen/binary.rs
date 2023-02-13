@@ -92,7 +92,7 @@ impl<'a> Binary<'a> {
 
         if returns.is_empty() {
             let void_type = self.context.void_type();
-            return void_type.fn_type(&args, false)
+            return void_type.fn_type(&args, false);
         }
         let i32_type = self.context.i32_type();
         i32_type.fn_type(&args, false)
