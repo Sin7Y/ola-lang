@@ -17,8 +17,9 @@ pub type ValueId = Id<Value>;
 ///
 /// The original LLVM Value class has information about its uses and users.
 /// However, `Value` here does not have such information.
-/// Instead, only for [`Instruction`](super::function::instruction::Instruction)s
-/// we track uses & users. (See [`Data`](Data) for details.)
+/// Instead, only for
+/// [`Instruction`](super::function::instruction::Instruction)s we track uses &
+/// users. (See [`Data`](Data) for details.)
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Instruction(InstructionId),

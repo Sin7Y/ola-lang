@@ -40,8 +40,8 @@ static BUILTIN_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 // A list of all ola builtins methods
 static BUILTIN_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
-/// Get the prototype for a builtin. If the prototype has arguments, it is a function else
-/// it is a variable.
+/// Get the prototype for a builtin. If the prototype has arguments, it is a
+/// function else it is a variable.
 pub fn get_prototype(builtin: Builtin) -> Option<&'static Prototype> {
     BUILTIN_FUNCTIONS
         .iter()
@@ -174,10 +174,10 @@ pub fn resolve_call(
     Err(())
 }
 
-/// Resolve a builtin namespace call. The takes the unresolved arguments, since it has
-/// to handle the special case "abi.decode(foo, (int32, bool, address))" where the
-/// second argument is a type list. The generic expression resolver cannot deal with
-/// this. It is only used in for this specific call.
+/// Resolve a builtin namespace call. The takes the unresolved arguments, since
+/// it has to handle the special case "abi.decode(foo, (int32, bool, address))"
+/// where the second argument is a type list. The generic expression resolver
+/// cannot deal with this. It is only used in for this specific call.
 pub fn resolve_namespace_call(
     loc: &program::Loc,
     namespace: &str,

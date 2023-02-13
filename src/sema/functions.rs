@@ -150,8 +150,8 @@ pub fn contract_function(
 //
 //     let id = func.name.as_ref().unwrap();
 //
-//     if let Some(prev) = ns.functions.iter().find(|f| fdecl.signature == f.signature) {
-//         ns.diagnostics.push(Diagnostic::error_with_note(
+//     if let Some(prev) = ns.functions.iter().find(|f| fdecl.signature ==
+// f.signature) {         ns.diagnostics.push(Diagnostic::error_with_note(
 //             func.loc,
 //             format!("overloaded fn with this signature already exist"),
 //             prev.loc,
@@ -171,8 +171,8 @@ pub fn contract_function(
 //     {
 //         v.push((func.loc, func_no));
 //     } else {
-//         ns.add_symbol(file_no, None, id, Symbol::Function(vec![(id.loc, func_no)]));
-//     }
+//         ns.add_symbol(file_no, None, id, Symbol::Function(vec![(id.loc,
+// func_no)]));     }
 //
 //     Some(func_no)
 // }

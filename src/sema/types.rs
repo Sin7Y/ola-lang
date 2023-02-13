@@ -25,8 +25,9 @@ struct ResolveStructFields<'a> {
     contract: Option<usize>,
 }
 
-/// Resolve all the types we can find (enums, structs, contracts). structs can have other
-/// structs as fields, including ones that have not been declared yet.
+/// Resolve all the types we can find (enums, structs, contracts). structs can
+/// have other structs as fields, including ones that have not been declared
+/// yet.
 pub fn resolve_typenames<'a>(
     s: &'a program::SourceUnit,
     file_no: usize,
@@ -62,7 +63,8 @@ fn type_decl(
     };
 
     // We could permit all types to be defined here, however:
-    // - This would require resolving the types definition after all other types are resolved
+    // - This would require resolving the types definition after all other types are
+    //   resolved
     // - Need for circular checks (type a is b; type b is a;)
     if !matches!(ty, Type::Uint(_) | Type::Field | Type::Bool) {
         ns.diagnostics.push(Diagnostic::error(
@@ -211,10 +213,11 @@ fn resolve_contract<'a>(
     broken
 }
 
-/// Resolve a parsed struct definition. The return value will be true if the entire
-/// definition is valid; however, whatever could be parsed will be added to the resolved
-/// contract, so that we can continue producing compiler messages for the remainder
-/// of the contract, even if the struct contains an invalid definition.
+/// Resolve a parsed struct definition. The return value will be true if the
+/// entire definition is valid; however, whatever could be parsed will be added
+/// to the resolved contract, so that we can continue producing compiler
+/// messages for the remainder of the contract, even if the struct contains an
+/// invalid definition.
 pub fn struct_decl(
     def: &program::StructDefinition,
     file_no: usize,
@@ -356,11 +359,12 @@ fn enum_decl(
     valid
 }
 
-/// Calculate the offsets for the fields in structs, and also the size of a struct overall.
+/// Calculate the offsets for the fields in structs, and also the size of a
+/// struct overall.
 ///
-/// Structs can be recursive, and we may not know the size of a field if the field is a struct
-/// and we have not calculated yet. In this case we will get size 0. So, loop over all the structs
-/// until all the offsets are unchanged.
+/// Structs can be recursive, and we may not know the size of a field if the
+/// field is a struct and we have not calculated yet. In this case we will get
+/// size 0. So, loop over all the structs until all the offsets are unchanged.
 fn struct_offsets(ns: &mut Namespace) {
     loop {
         let mut changes = false;
@@ -577,8 +581,8 @@ impl Type {
         }
     }
 
-    /// Give the type of an storage array after dereference. This can only be used on
-    /// array types and will cause a panic otherwise.
+    /// Give the type of an storage array after dereference. This can only be
+    /// used on array types and will cause a panic otherwise.
     #[must_use]
     pub fn storage_array_elem(&self) -> Self {
         match self {
@@ -592,8 +596,8 @@ impl Type {
         }
     }
 
-    /// Give the length of the outer array. This can only be called on array types
-    /// and will panic otherwise.
+    /// Give the length of the outer array. This can only be called on array
+    /// types and will panic otherwise.
     pub fn array_length(&self) -> Option<&BigInt> {
         match self {
             Type::StorageRef(ty) => ty.array_length(),
@@ -634,8 +638,9 @@ impl Type {
     }
 
     /// Retrieve the alignment for each type, if it is a struct member.
-    /// Arrays are always reference types when declared as local variables. Inside structs, however,
-    /// they are the object itself, if they are of fixed length.
+    /// Arrays are always reference types when declared as local variables.
+    /// Inside structs, however, they are the object itself, if they are of
+    /// fixed length.
     pub fn struct_elem_alignment(&self, ns: &Namespace) -> BigInt {
         match self {
             Type::Bool
@@ -663,8 +668,8 @@ impl Type {
     }
 
     /// Calculate how much memory this type occupies in Solana's storage.
-    /// Depending on the llvm implementation there might be padding between elements
-    /// which is not accounted for.
+    /// Depending on the llvm implementation there might be padding between
+    /// elements which is not accounted for.
     pub fn storage_size(&self, ns: &Namespace) -> BigInt {
         match self {
             Type::Array(ty, dims) => {
@@ -733,8 +738,8 @@ impl Type {
         }
     }
 
-    /// Calculate how many storage slots a type occupies. Note that storage arrays can
-    /// be very large
+    /// Calculate how many storage slots a type occupies. Note that storage
+    /// arrays can be very large
     pub fn storage_slots(&self, ns: &Namespace) -> BigInt {
         match self {
             Type::Enum(_) => BigInt::one(),

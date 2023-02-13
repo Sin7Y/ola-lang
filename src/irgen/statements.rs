@@ -8,7 +8,8 @@ use crate::irgen::expression::emit_function_call;
 use crate::sema::ast::{Expression, Function, Namespace, Statement, Type};
 use ola_parser::program;
 
-/// Resolve a statement, which might be a block of statements or an entire body of a function
+/// Resolve a statement, which might be a block of statements or an entire body
+/// of a function
 pub(crate) fn statement<'a>(
     stmt: &Statement,
     bin: &Binary<'a>,
@@ -154,8 +155,8 @@ fn returns<'a>(
 }
 
 impl Type {
-    /// Default value for a type, e.g. an empty string. Some types cannot have a default value,
-    /// for example a reference to a variable in storage.
+    /// Default value for a type, e.g. an empty string. Some types cannot have a
+    /// default value, for example a reference to a variable in storage.
     pub fn default(&self, ns: &Namespace) -> Option<Expression> {
         match self {
             Type::Uint(_) => Some(Expression::NumberLiteral(

@@ -94,7 +94,8 @@ pub(crate) fn populate_arguments<'a>(
         if let Some(pos) = arg {
             let arg_val = func_val.get_nth_param(i as u32).unwrap();
             // let alloc =
-            //     bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());
+            //     bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns),
+            // var.id.name.as_str());
             var_table.insert(*pos, arg_val);
         }
     }

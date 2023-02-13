@@ -87,8 +87,9 @@ impl Expression {
         }
     }
 
-    /// Cast from one type to another, which also automatically derefs any Type::Ref() type.
-    /// if the cast is explicit (e.g. bytes32(bar) then implicit should be set to false.
+    /// Cast from one type to another, which also automatically derefs any
+    /// Type::Ref() type. if the cast is explicit (e.g. bytes32(bar) then
+    /// implicit should be set to false.
     pub fn cast(
         &self,
         loc: &Loc,
@@ -425,8 +426,8 @@ pub struct ExprContext {
     pub lvalue: bool,
 }
 
-/// Resolve a parsed expression into an AST expression. The resolve_to argument is a hint to what
-/// type the result should be.
+/// Resolve a parsed expression into an AST expression. The resolve_to argument
+/// is a hint to what type the result should be.
 pub fn expression(
     expr: &program::Expression,
     context: &ExprContext,
@@ -1077,7 +1078,8 @@ fn multiply(
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
 
-    // If we don't know what type the result is going to be, make any possible result fit.
+    // If we don't know what type the result is going to be, make any possible
+    // result fit.
     if resolve_to == ResolveTo::Unknown {
         let bits = cmp::min(256, ty.bits(ns) * 2);
         multiply(
@@ -2372,9 +2374,9 @@ fn method_call_pos_args(
     Err(())
 }
 
-// When generating shifts, llvm wants both arguments to have the same width. We want the
-// result of the shift to be left argument, so this function coercies the right argument
-// into the right length.
+// When generating shifts, llvm wants both arguments to have the same width. We
+// want the result of the shift to be left argument, so this function coercies
+// the right argument into the right length.
 pub fn cast_shift_arg(
     loc: &Loc,
     expr: Expression,
@@ -2401,9 +2403,9 @@ pub fn cast_shift_arg(
     }
 }
 
-/// Given an parsed literal array, ensure that it is valid. All the elements in the array
-/// must of the same type. The array might be a multidimensional array; all the leaf nodes
-/// must match.
+/// Given an parsed literal array, ensure that it is valid. All the elements in
+/// the array must of the same type. The array might be a multidimensional
+/// array; all the leaf nodes must match.
 fn array_literal(
     loc: &Loc,
     exprs: &[program::Expression],
@@ -2418,8 +2420,8 @@ fn array_literal(
 
     let resolve_to = match resolve_to {
         ResolveTo::Type(Type::Array(elem_ty, _)) => ResolveTo::Type(elem_ty),
-        // Solana seeds are a slice of slice of bytes, e.g. [ [ "fo", "o" ], [ "b", "a", "r"]]. In this
-        // case we want to resolve
+        // Solana seeds are a slice of slice of bytes, e.g. [ [ "fo", "o" ], [ "b", "a", "r"]]. In
+        // this case we want to resolve
         ResolveTo::Type(Type::Slice(slice)) if matches!(slice.as_ref(), Type::Slice(_)) => {
             let mut res = Vec::new();
             let mut has_errors = false;

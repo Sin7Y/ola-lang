@@ -18,9 +18,10 @@ use ola_parser::program;
 use sema::diagnostics;
 use std::ffi::OsStr;
 
-/// Parse and resolve the Ola source code provided in src, for the target chain as specified in target.
-/// The result is a list of resolved contracts (if successful) and a list of compiler warnings, errors and
-/// informational messages like `found contact N`.
+/// Parse and resolve the Ola source code provided in src, for the target chain
+/// as specified in target. The result is a list of resolved contracts (if
+/// successful) and a list of compiler warnings, errors and informational
+/// messages like `found contact N`.
 ///
 /// Note that multiple contracts can be specified in on ola source file.
 pub fn parse_and_resolve(filename: &OsStr, resolver: &mut FileResolver) -> sema::ast::Namespace {

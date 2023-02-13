@@ -130,8 +130,9 @@ pub fn eval_const_number(expr: &Expression, ns: &Namespace) -> Result<(Loc, BigI
     }
 }
 
-/// Function that recurses the expression and folds number literals by calling 'eval_constants_in_expression'.
-/// If the expression is an arithmetic operation of two number literals, overflow_check() will be called on the result.
+/// Function that recurses the expression and folds number literals by calling
+/// 'eval_constants_in_expression'. If the expression is an arithmetic operation
+/// of two number literals, overflow_check() will be called on the result.
 pub(super) fn check_term_for_constant_overflow(expr: &Expression, ns: &mut Namespace) -> bool {
     match expr {
         Expression::Add(..)
@@ -165,7 +166,9 @@ pub(super) fn check_term_for_constant_overflow(expr: &Expression, ns: &mut Names
 }
 
 /// This function recursively folds number literals in a given expression.
-/// It returns an Option<Expression> which is the result of the folding if the operands are number literals, and a boolean flag that is set to false if the recursion should stop.
+/// It returns an Option<Expression> which is the result of the folding if the
+/// operands are number literals, and a boolean flag that is set to false if the
+/// recursion should stop.
 fn eval_constants_in_expression(
     expr: &Expression,
     ns: &mut Namespace,
@@ -441,7 +444,9 @@ fn eval_constants_in_expression(
     }
 }
 
-/// Function that takes a BigInt and an expected type. If the number of bits in the type required to represent the BigInt is not suffiecient, it will return a diagnostic.
+/// Function that takes a BigInt and an expected type. If the number of bits in
+/// the type required to represent the BigInt is not suffiecient, it will return
+/// a diagnostic.
 fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
     // If the result sign is minus, throw an error.
     if let Type::Uint(bits) = ty {

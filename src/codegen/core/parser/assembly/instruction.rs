@@ -256,7 +256,8 @@ pub fn parse_add_sub_mul<'a, 'b>(
             map(tag("lshr"), |_| Opcode::LShr),
         )),
     )(source)?;
-    // TODO: `and` doesn't need nuw/nsw/exact keywords. We had better show error when they appear.
+    // TODO: `and` doesn't need nuw/nsw/exact keywords. We had better show error
+    // when they appear.
     let (source, nuw) = opt(preceded(spaces, tag("nuw")))(source)?;
     let (source, nsw) = opt(preceded(spaces, tag("nsw")))(source)?;
     let (source, exact) = opt(preceded(spaces, tag("exact")))(source)?;

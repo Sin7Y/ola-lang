@@ -57,7 +57,7 @@ impl RegisterInfo for RegInfo {
 
     fn to_reg_unit(r: Reg) -> RegUnit {
         match r {
-            Reg(/*GR*/ 0, x) => RegUnit(RegClass::GR as u16, x),
+            Reg(/* GR */ 0, x) => RegUnit(RegClass::GR as u16, x),
             _ => panic!(),
         }
     }
@@ -103,7 +103,7 @@ impl RegisterClass for RegClass {
 
 pub fn to_reg_unit(r: Reg) -> RegUnit {
     match r {
-        Reg(/*GR*/ 0, x) => RegUnit(0, x),
+        Reg(/* GR */ 0, x) => RegUnit(0, x),
         _ => panic!(),
     }
 }

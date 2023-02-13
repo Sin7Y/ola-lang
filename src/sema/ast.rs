@@ -47,8 +47,8 @@ pub enum Type {
     /// We could not resolve this type
     Unresolved,
     /// When we advance a pointer, it cannot be any of the previous types.
-    /// e.g. Type::Bytes is a pointer to struct.vector. When we advance it, it is a pointer
-    /// to latter's data region.
+    /// e.g. Type::Bytes is a pointer to struct.vector. When we advance it, it
+    /// is a pointer to latter's data region.
     BufferPointer,
 }
 
@@ -76,8 +76,8 @@ impl ArrayLength {
 }
 
 pub trait RetrieveType {
-    /// Return the type for this expression. This assumes the expression has a single value,
-    /// panics will occur otherwise
+    /// Return the type for this expression. This assumes the expression has a
+    /// single value, panics will occur otherwise
     fn ty(&self) -> Type;
 }
 
@@ -108,8 +108,8 @@ pub struct EnumDecl {
 }
 
 impl fmt::Display for EnumDecl {
-    /// Make the enum name into a string for printing. The enum can be declared either
-    /// inside or outside a contract.
+    /// Make the enum name into a string for printing. The enum can be declared
+    /// either inside or outside a contract.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.contract {
             Some(c) => write!(f, "{}.{}", c, self.name),
@@ -129,8 +129,8 @@ pub struct StructDecl {
 }
 
 impl fmt::Display for StructDecl {
-    /// Make the struct name into a string for printing. The struct can be declared either
-    /// inside or outside a contract.
+    /// Make the struct name into a string for printing. The struct can be
+    /// declared either inside or outside a contract.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.contract {
             Some(c) => write!(f, "{}.{}", c, self.name),
@@ -183,7 +183,8 @@ pub struct Function {
     pub mangled_name: String,
 }
 
-/// This trait provides a single interface for fetching paramenters, returns and the symbol table
+/// This trait provides a single interface for fetching paramenters, returns and
+/// the symbol table
 pub trait FunctionAttributes {
     fn get_symbol_table(&self) -> &Symtable;
     fn get_parameters(&self) -> &Vec<Parameter>;
@@ -620,21 +621,21 @@ impl CodeLocation for Statement {
 //                 program::Loc::File(_, _, _) => *loc,
 //                 _ => expr.loc(),
 //             },
-//             Instr::Call { args, .. } if args.is_empty() => program::Loc::Codegen,
-//             Instr::Call { args, .. } => args[0].loc(),
-//             Instr::Return { value } if value.is_empty() => program::Loc::Codegen,
-//             Instr::Return { value } => value[0].loc(),
-//             Instr::EmitEvent { data, .. } if data.is_empty() => program::Loc::Codegen,
-//             Instr::EmitEvent { data, .. } => data[0].loc(),
-//             Instr::BranchCond { cond, .. } => cond.loc(),
+//             Instr::Call { args, .. } if args.is_empty() =>
+// program::Loc::Codegen,             Instr::Call { args, .. } => args[0].loc(),
+//             Instr::Return { value } if value.is_empty() =>
+// program::Loc::Codegen,             Instr::Return { value } => value[0].loc(),
+//             Instr::EmitEvent { data, .. } if data.is_empty() =>
+// program::Loc::Codegen,             Instr::EmitEvent { data, .. } =>
+// data[0].loc(),             Instr::BranchCond { cond, .. } => cond.loc(),
 //             Instr::Store { dest, .. } => dest.loc(),
 //             Instr::SetStorageBytes { storage, .. }
 //             | Instr::PushStorage { storage, .. }
 //             | Instr::PopStorage { storage, .. }
 //             | Instr::LoadStorage { storage, .. }
 //             | Instr::ClearStorage { storage, .. } => storage.loc(),
-//             Instr::ExternalCall { value, .. } | Instr::SetStorage { value, .. } => value.loc(),
-//             Instr::PushMemory { value, .. } => value.loc(),
+//             Instr::ExternalCall { value, .. } | Instr::SetStorage { value, ..
+// } => value.loc(),             Instr::PushMemory { value, .. } => value.loc(),
 //             Instr::Constructor { gas, .. } => gas.loc(),
 //             Instr::ValueTransfer { address, .. } => address.loc(),
 //             Instr::AbiDecode { data, .. } => data.loc(),

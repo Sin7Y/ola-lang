@@ -47,7 +47,8 @@ impl Diagnostics {
         self.contents.extend(diagnostics.contents);
     }
 
-    /// Filter out all the diagnostics which are not the result of casting problems
+    /// Filter out all the diagnostics which are not the result of casting
+    /// problems
     pub fn extend_non_casting(&mut self, other: &Diagnostics) -> bool {
         let others: Vec<_> = other
             .iter()

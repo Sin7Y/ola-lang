@@ -25,8 +25,8 @@ mod variables;
 
 pub type ArrayDimension = Option<(program::Loc, BigInt)>;
 
-/// Load a file file from the cache, parse and resolve it. The file must be present in
-/// the cache.
+/// Load a file file from the cache, parse and resolve it. The file must be
+/// present in the cache.
 pub fn sema(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Namespace) {
     sema_file(file, resolver, ns);
 
@@ -57,8 +57,9 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
         }
     };
 
-    // We need to iterate over the parsed contracts a few times, so create a temporary vector
-    // This should be done before the contract types are created so the contract type numbers line up
+    // We need to iterate over the parsed contracts a few times, so create a
+    // temporary vector This should be done before the contract types are
+    // created so the contract type numbers line up
     let contracts_to_resolve =
         pt.0.iter()
             .filter_map(|part| {
@@ -82,8 +83,9 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
         }
     }
 
-    // once all the types are resolved, we can resolve the structs and events. This is because
-    // struct fields or event fields can have types defined elsewhere.
+    // once all the types are resolved, we can resolve the structs and events. This
+    // is because struct fields or event fields can have types defined
+    // elsewhere.
     types::resolve_fields(fields, file_no, ns);
 
     // now resolve the contracts
