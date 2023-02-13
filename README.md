@@ -3,7 +3,7 @@
 
 
  [![CI](https://img.shields.io/github/actions/workflow/status/Sin7y/ola-lang/rust.yml)](https://github.com/Sin7Y/ola-lang/actions)
- [![Documentation Status](https://img.shields.io/readthedocs/olang)](https://solang.readthedocs.io/en/latest/?badge=latest)
+ [![Documentation Status](https://img.shields.io/readthedocs/olang)](https://olang.readthedocs.io/en/latest/?badge=latest)
  [![Project license](https://img.shields.io/github/license/Sin7y/ola-lang)](LICENSE)
  [![LoC](https://tokei.rs/b1/github/Sin7y/ola-lang?category=lines)](https://github.com/Sin7y/ola-lang)
  [![Twitter](https://img.shields.io/twitter/follow/Sin7y_Labs?style=social)](https://twitter.com/Sin7y_Labs)
@@ -79,10 +79,9 @@ cargo build --release
 
 The executable will be in `target/release/olac`
 
-## Uasge
+## Usage
 
-The Solang compiler is run on the command line. The solidity source file names are provided as command line arguments; the output is an optimized wasm or bpf file which is ready for deployment on a chain, and an metadata file (also known as the abi).
-
+The olac compiler is run on the command line. The ola source file names are provided as command line arguments; the output is an ola asm.
 ### Command line interface
 
 ```
@@ -124,9 +123,9 @@ The extension can be found on the [Visual Studio Marketplace](https://marketplac
 
 [Chinese Version](./README_zh_CN.md) | English Version
 
-| Code Repo                                          | Doc Entry                                      | Current Status                                               |
-| :------------------------------------------------- | :--------------------------------------------- | :----------------------------------------------------------- |
-| [Code Repo](https://github.com/Sin7Y/ola-lang.git) | [Doc](https://olang.readthedocs.io/en/latest/) | [![Documentation Status](https://img.shields.io/readthedocs/olang)](https://solang.readthedocs.io/en/latest/?badge=latest) |
+| Code Repo                                          | Doc Entry                                      | Current Status                                                                                                            |
+| :------------------------------------------------- | :--------------------------------------------- |:--------------------------------------------------------------------------------------------------------------------------|
+| [Code Repo](https://github.com/Sin7Y/ola-lang.git) | [Doc](https://olang.readthedocs.io/en/latest/) | [![Documentation Status](https://img.shields.io/readthedocs/olang)](https://olang.readthedocs.io/en/latest/?badge=latest) |
 
 ## Roadmap
 
