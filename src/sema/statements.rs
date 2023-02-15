@@ -53,9 +53,9 @@ pub fn resolve_function_body(
     // a function with no return values does not need a return statement
     let mut return_required = !def.returns.is_empty();
 
-    // If any of the return values are named, then the return statement can be omitted at
-    // the end of the function, and return values may be omitted too. Create variables to
-    // store the return values
+    // If any of the return values are named, then the return statement can be
+    // omitted at the end of the function, and return values may be omitted too.
+    // Create variables to store the return values
     for (i, p) in def.returns.iter().enumerate() {
         let ret = &ns.functions[function_no].returns[i];
 

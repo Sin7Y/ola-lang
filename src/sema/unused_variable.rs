@@ -4,8 +4,8 @@ use crate::sema::ast::{Diagnostic, Expression, Namespace};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
 
-/// Mark variables as assigned, either in the symbol table (for local variables) or in the
-/// Namespace (for storage variables)
+/// Mark variables as assigned, either in the symbol table (for local variables)
+/// or in the Namespace (for storage variables)
 pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
         Expression::StorageVariable(_, _, contract_no, offset) => {
@@ -36,10 +36,10 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
     }
 }
 
-/// Mark variables as used, either in the symbol table (for local variables) or in the
-/// Namespace (for global constants and storage variables)
-/// The functions handles complex expressions in a recursive fashion, such as array length call,
-/// assign expressions and array subscripts.
+/// Mark variables as used, either in the symbol table (for local variables) or
+/// in the Namespace (for global constants and storage variables)
+/// The functions handles complex expressions in a recursive fashion, such as
+/// array length call, assign expressions and array subscripts.
 pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
         Expression::StorageVariable(_, _, contract_no, offset) => {
@@ -95,8 +95,8 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
     }
 }
 
-/// Mark function arguments as used. If the function is an attribute of another variable, mark the
-/// usage of the latter as well
+/// Mark function arguments as used. If the function is an attribute of another
+/// variable, mark the usage of the latter as well
 pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
         Expression::StorageLoad(..) | Expression::Variable(..) => {
@@ -118,7 +118,8 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
     }
 }
 
-/// Marks as used variables that appear in an expression with right and left hand side.
+/// Marks as used variables that appear in an expression with right and left
+/// hand side.
 pub fn check_var_usage_expression(
     ns: &mut Namespace,
     left: &Expression,
@@ -169,8 +170,8 @@ pub fn emit_warning_local_variable(variable: &symtable::Variable) -> Option<Diag
                     ),
                 ));
             } else if assigned && !variable.read {
-                // Values assigned to variables that reference others change the value of its reference
-                // No warning needed in this case
+                // Values assigned to variables that reference others change the value of its
+                // reference No warning needed in this case
                 return Some(Diagnostic::warning(
                     variable.id.loc,
                     format!(

@@ -93,8 +93,8 @@ struct ResolveLater<'a> {
     initializers: Vec<variables::DelayedResolveInitializer<'a>>,
 }
 
-/// Resolve functions declarations, constructor declarations, and contract variables
-/// This returns a list of function bodies to resolve
+/// Resolve functions declarations, constructor declarations, and contract
+/// variables This returns a list of function bodies to resolve
 fn resolve_declarations<'a>(
     def: &'a program::ContractDefinition,
     file_no: usize,

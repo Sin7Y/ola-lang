@@ -36,7 +36,8 @@ impl Namespace {
         ns
     }
 
-    /// Add symbol to symbol table; either returns true for success, or adds an appropriate error
+    /// Add symbol to symbol table; either returns true for success, or adds an
+    /// appropriate error
     pub fn add_symbol(
         &mut self,
         file_no: usize,
@@ -288,10 +289,11 @@ impl Namespace {
         }
     }
 
-    /// Resolve contract variable or function. Specify whether you wish to resolve
-    /// a function or a variable; this will change the lookup order. A public contract
-    /// will have both a accesssor function and variable, and the accessor function
-    /// may show else where in the base contracts a function without body.
+    /// Resolve contract variable or function. Specify whether you wish to
+    /// resolve a function or a variable; this will change the lookup order.
+    /// A public contract will have both a accesssor function and variable,
+    /// and the accessor function may show else where in the base contracts
+    /// a function without body.
     pub fn resolve_var(
         &self,
         file_no: usize,
@@ -432,9 +434,10 @@ impl Namespace {
         }
     }
 
-    /// Resolve the parsed data type. The type can be a primitive, enum and also an arrays.
-    /// The type for address payable is "address payable" used as a type, and "payable" when
-    /// casting. So, we need to know what we are resolving for.
+    /// Resolve the parsed data type. The type can be a primitive, enum and also
+    /// an arrays. The type for address payable is "address payable" used as
+    /// a type, and "payable" when casting. So, we need to know what we are
+    /// resolving for.
     pub fn resolve_type(
         &mut self,
         file_no: usize,
@@ -665,9 +668,9 @@ impl Namespace {
         Ok(s)
     }
 
-    // An array type can look like foo[2] foo.baz.bar, if foo is an enum type. The lalrpop parses
-    // this as an expression, so we need to convert it to Type and check there are
-    // no unexpected expressions types.
+    // An array type can look like foo[2] foo.baz.bar, if foo is an enum type. The
+    // lalrpop parses this as an expression, so we need to convert it to Type
+    // and check there are no unexpected expressions types.
     #[allow(clippy::vec_init_then_push)]
     pub fn expr_to_type<'a>(
         &mut self,
@@ -741,7 +744,8 @@ impl Namespace {
         }
     }
 
-    /// Resolve an expression which defines the array length, e.g. 2**8 in "bool[2**8]"
+    /// Resolve an expression which defines the array length, e.g. 2**8 in
+    /// "bool[2**8]"
     fn resolve_array_dimension(
         &mut self,
         file_no: usize,

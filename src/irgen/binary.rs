@@ -58,8 +58,8 @@ impl<'a> Binary<'a> {
     }
 
     // /// Default empty value
-    // pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) -> BasicValueEnum<'a> {
-    //     let llvm_ty = self.llvm_var_ty(ty, ns);
+    // pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) ->
+    // BasicValueEnum<'a> {     let llvm_ty = self.llvm_var_ty(ty, ns);
     //
     //     // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
     //     if llvm_ty.is_pointer_type() {
@@ -98,7 +98,8 @@ impl<'a> Binary<'a> {
         i32_type.fn_type(&args, false)
     }
 
-    /// Return the llvm type for a variable holding the type, not the type itself
+    /// Return the llvm type for a variable holding the type, not the type
+    /// itself
     pub(crate) fn llvm_var_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {

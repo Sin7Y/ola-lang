@@ -178,15 +178,15 @@ pub fn expression<'a>(
 //     let res = vartab.temp_anonymous(ty);
 //     let v = expression(var, cfg, contract_no, func, ns, vartab, opt);
 //     let v = match var.ty() {
-//         Type::Ref(ty) => Expression::Load(var.loc(), ty.as_ref().clone(), Box::new(v)),
-//         Type::StorageRef(_, ty) => load_storage(&var.loc(), ty.as_ref(), v, cfg, vartab),
-//         _ => v,
+//         Type::Ref(ty) => Expression::Load(var.loc(), ty.as_ref().clone(),
+// Box::new(v)),         Type::StorageRef(_, ty) => load_storage(&var.loc(),
+// ty.as_ref(), v, cfg, vartab),         _ => v,
 //     };
-//     let one = Box::new(Expression::NumberLiteral(*loc, ty.clone(), BigInt::one()));
-//     let expr = match expr {
+//     let one = Box::new(Expression::NumberLiteral(*loc, ty.clone(),
+// BigInt::one()));     let expr = match expr {
 //         Expression::PreDecrement { .. } => {
-//             Expression::Subtract(*loc, ty.clone(), *unchecked, Box::new(v), one)
-//         }
+//             Expression::Subtract(*loc, ty.clone(), *unchecked, Box::new(v),
+// one)         }
 //         Expression::PreIncrement { .. } => {
 //             Expression::Add(*loc, ty.clone(), *unchecked, Box::new(v), one)
 //         }
@@ -226,8 +226,8 @@ pub fn expression<'a>(
 //
 // ) -> Expression {
 //     let l = expression(left, bin, func, func_val, ns);
-//     let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&left.ty(), ns), "")
-//         .into();
+//     let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&left.ty(), ns),
+// "")         .into();
 //     bin.builder.build_store(alloc, l);
 //
 //     cfg.add(
@@ -245,20 +245,22 @@ pub fn expression<'a>(
 //         let pos = bin.builder.get_insert_block().unwrap();
 //
 //         let bb_true =
-//             add_or_retrieve_block(*true_, pos, bin, function, blocks, work, w, cfg, ns);
+//             add_or_retrieve_block(*true_, pos, bin, function, blocks, work,
+// w, cfg, ns);
 //
 //         let bb_false =
-//             add_or_retrieve_block(*false_, pos, bin, function, blocks, work, w, cfg, ns);
+//             add_or_retrieve_block(*false_, pos, bin, function, blocks, work,
+// w, cfg, ns);
 //
 //         bin.builder.position_at_end(pos);
 //         bin.builder
-//             .build_conditional_branch(cond.into_int_value(), bb_true, bb_false);
-//     }
+//             .build_conditional_branch(cond.into_int_value(), bb_true,
+// bb_false);     }
 //
 //
 //     let r = expression(right, bin, func, func_val, ns);
-//     let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&right.ty(), ns), "")
-//         .into();
+//     let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&right.ty(), ns),
+// "")         .into();
 //     bin.builder.build_store(alloc, r);
 //
 //     cfg.add(vartab, Instr::Branch { block: end_or });
@@ -267,7 +269,8 @@ pub fn expression<'a>(
 //     {
 //         let pos = bin.builder.get_insert_block().unwrap();
 //
-//         let bb = add_or_retrieve_block(*dest, pos, bin, function, blocks, work, w, cfg, ns);
+//         let bb = add_or_retrieve_block(*dest, pos, bin, function, blocks,
+// work, w, cfg, ns);
 //
 //         bin.builder.position_at_end(pos);
 //         bin.builder.build_unconditional_branch(bb);

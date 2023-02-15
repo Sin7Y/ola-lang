@@ -178,8 +178,8 @@ impl<Inst: TargetInst> Layout<Inst> {
         self.instructions.get_mut(&after).unwrap().next = Some(inst);
 
         // if self.basic_blocks[&block].first_inst == Some(before) {
-        //     self.basic_blocks.get_mut(&block).unwrap().first_inst = Some(inst);
-        // }
+        //     self.basic_blocks.get_mut(&block).unwrap().first_inst =
+        // Some(inst); }
     }
 
     pub fn append_inst(&mut self, inst: InstructionId<Inst>, block: BasicBlockId) {

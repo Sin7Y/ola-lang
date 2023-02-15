@@ -185,7 +185,8 @@ pub enum ContractPart {
 }
 
 impl ContractPart {
-    // Return the location of the part. Note that this excluded the body of the function
+    // Return the location of the part. Note that this excluded the body of the
+    // function
     pub fn loc(&self) -> &Loc {
         match self {
             ContractPart::StructDefinition(def) => &def.loc,

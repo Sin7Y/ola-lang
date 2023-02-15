@@ -37,7 +37,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
     let num_saved_64bit_regs = 1/*8=rbp*/ + used_csr.len() as u32;
 
     let mut adj = (roundup(
-        (slot_size + num_saved_64bit_regs * 1 + 1/*=call*/) as i32,
+        (slot_size + num_saved_64bit_regs * 1 + 1/* =call */) as i32,
         1,
     ) - (num_saved_64bit_regs * 1 + 1) as i32)
         / 4;

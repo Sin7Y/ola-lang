@@ -206,8 +206,8 @@ impl<T: TargetIsa> Liveness<T> {
         self.vreg_lrs_map.remove(&vreg);
     }
 
-    /// Recomputes the instruction indices for each program point that belongs to
-    /// the same basic block of `from`.
+    /// Recomputes the instruction indices for each program point that belongs
+    /// to the same basic block of `from`.
     pub fn recompute_program_points_after(&mut self, from: ProgramPoint, add_one_more_step: bool) {
         let base = from.1 + add_one_more_step as u32 * STEP;
         for pp in self

@@ -122,8 +122,8 @@ impl FileResolver {
     }
 
     /// Walk the import path to search for a file. If no import path is set up,
-    /// return. Check each import path if the file can be found in a subdirectory
-    /// of that path, and return the canonicalized path.
+    /// return. Check each import path if the file can be found in a
+    /// subdirectory of that path, and return the canonicalized path.
     pub fn resolve_file(
         &mut self,
         parent: Option<&ResolvedFile>,
