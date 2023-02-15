@@ -20,6 +20,8 @@ The current Ola Language is unstable, with many features that need to be improve
 
 The following shows a simple contract for calculating the Fibonacci function
 
+### Writing fibo case using Ola syntax
+
 ```
 contract Fibonacci {
 
@@ -39,6 +41,107 @@ contract Fibonacci {
     }
 
 }
+```
+
+### Generating LLVM IR code using Ola compiler front-end
+
+```
+ModuleID = 'Fibonacci'
+source_filename = "test.ola"
+
+define void @main() {
+entry:
+  %0 = call i32 @fib_recursive(i32 10)
+  ret void
+}
+
+define i32 @fib_recursive(i32 %0) {
+entry:
+  %1 = icmp eq i32 %0, 1
+  br i1 %1, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 1
+
+enif:                                             ; preds = %entry
+  %2 = icmp eq i32 %0, 2
+  br i1 %2, label %then1, label %enif2
+
+then1:                                            ; preds = %enif
+  ret i32 1
+
+enif2:                                            ; preds = %enif
+  %3 = sub i32 %0, 1
+  %4 = call i32 @fib_recursive(i32 %3)
+  %5 = sub i32 %0, 2
+  %6 = call i32 @fib_recursive(i32 %5)
+  %7 = add i32 %4, %6
+  ret i32 %7
+}
+```
+
+### Generating Ola assemble code using Ola compiler back-end
+
+```
+main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 10
+  call fib_recursive
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+fib_recursive:
+.LBL1_0:
+  add r8 r8 9
+  mstore [r8,-2] r8
+  mov r0 r1
+  mstore [r8,-7] r0
+  mload r0 [r8,-7]
+  eq r0 1
+  cjmp .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 1
+  not r7 9
+  add r7 r7 1
+  add r8 r8 r7
+  ret 
+.LBL1_2:
+  mload r0 [r8,-7]
+  eq r0 2
+  cjmp .LBL1_3
+  jmp .LBL1_4
+.LBL1_3:
+  mov r0 1
+  not r7 9
+  add r7 r7 1
+  add r8 r8 r7
+  ret 
+.LBL1_4:
+  not r7 1
+  add r7 r7 1
+  mload r0 [r8,-7]
+  add r1 r0 r7
+  call fib_recursive
+  mstore [r8,-3] r0
+  not r7 2
+  add r7 r7 1
+  mload r0 [r8,-7]
+  add r0 r0 r7
+  mstore [r8,-5] r0
+  mload r1 [r8,-5]
+  call fib_recursive
+  mload r1 [r8,-3]
+  add r0 r1 r0
+  mstore [r8,-6] r0
+  mload r0 [r8,-6]
+  not r7 9
+  add r7 r7 1
+  add r8 r8 r7
+  ret 
 ```
 
 ## Getting Started
@@ -81,7 +184,8 @@ The executable will be in `target/release/olac`
 
 ## Usage
 
-The olac compiler is run on the command line. The ola source file names are provided as command line arguments; the output is an ola asm.
+The olac compiler is run on the command line. The ola source file names are provided as command line arguments; the output is an Ola asm.
+
 ### Command line interface
 
 ```
@@ -107,7 +211,9 @@ Olac's compile command supports subcommands, using the  `--gen  llvm-ir` option 
 olac compile examples/fib.ola --gen llvm-ir
 ```
 
-### Compile Ola to Ola's Opcode
+### Compile Ola to Ola's Assembly code
+
+using the `--gen  asm` option to generate Ola assembly code
 
 ```
 olac compile ./examples/fib.ola --gen asm
