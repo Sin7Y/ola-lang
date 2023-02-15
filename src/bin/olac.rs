@@ -1,3 +1,5 @@
+#![feature(path_file_prefix)]
+
 use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 
 use ola_lang::codegen::core::ir::module::Module;
@@ -118,13 +120,15 @@ fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()>
         let resolved_contract = &ns.contracts[contract_no];
 
         let context = inkwell::context::Context::create();
-        let filename_string = filename.to_string_lossy();
+        let filename_lossy = filename.to_string_lossy().clone();
+        let filename_string = String::from(filename_lossy);
+        let filename_stem = Path::new(&filename_string).file_prefix().unwrap();
 
         let binary = resolved_contract.binary(&ns, &context, &filename_string);
 
         match matches.get_one::<String>("Generate").map(|v| v.as_str()) {
             Some("llvm-ir") => {
-                let llvm_filename = output_file(matches, &binary.name, "ll");
+                let llvm_filename = output_file(matches, filename_stem.to_str().unwrap(), "ll");
 
                 binary.dump_llvm(&llvm_filename).unwrap();
             }
@@ -136,7 +140,7 @@ fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()>
                 // Compile the module for Ola and get a machine module
                 let isa = Ola::default();
                 let code = compile_module(&isa, &module).expect("failed to compile");
-                let asm_path = output_file(matches, &binary.name, "asm");
+                let asm_path = output_file(matches, filename_stem.to_str().unwrap(), "asm");
                 let mut asm_file = create_file(&asm_path);
 
                 if let Err(err) = asm_file.write_all(format!("{}", code.display_asm()).as_bytes()) {
