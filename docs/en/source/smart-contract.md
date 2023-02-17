@@ -24,12 +24,14 @@ contract Fibonacci {
         if (n == 0 || n == 1) {
             return 1;
         }
-        u32 a = 1; u32 b = 1;
-        for (u32 i = 2; i < n - 1 ;i++) {
-            b = a + b;
-            a = b - a;
+        u32 a = 0; u32 b = 0;
+        u32 result = 1;
+        for (u32 i = 2; i <= n; i++) {
+            a = b;
+            b = result;
+            result = a + b;
         }
-        return a + b;
+        return result;
     }
 
 }

@@ -45,6 +45,19 @@ mod test {
         return fib_recursive(n -1) + fib_recursive(n -2);
     }
 
+    fn fib_non_recursive(u32 n) -> (u32) {
+        num += 1;
+        if (n == 0 || n == 1) {
+            return 1;
+        }
+        u32 a = 1; u32 b = 1;
+        for (u32 i = 2; i < n - 1 ;i++) {
+            b = a + b;
+            a = b - a;
+        }
+        return a + b;
+    }
+
 }"#;
         resolver.set_file_contents("test.ola", source.to_string());
 

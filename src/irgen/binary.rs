@@ -12,12 +12,14 @@ use inkwell::module::Module;
 use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
 use inkwell::values::{IntValue, PointerValue};
 use inkwell::AddressSpace;
+use inkwell::basic_block::BasicBlock;
 
 pub struct Binary<'a> {
     pub name: String,
     pub module: Module<'a>,
     pub builder: Builder<'a>,
     pub(crate) context: &'a Context,
+    pub loops: Vec<(BasicBlock<'a>, BasicBlock<'a>)>
 }
 
 impl<'a> Binary<'a> {
@@ -54,6 +56,7 @@ impl<'a> Binary<'a> {
             module,
             builder,
             context,
+            loops: Vec::new(),
         }
     }
 

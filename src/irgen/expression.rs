@@ -130,12 +130,37 @@ pub fn expression<'a>(
 
             bin.builder.build_not(e, "").into()
         }
+        Expression::Decrement(_, _, expr) => {
+            match **expr {
+                Expression::Variable(_, _, pos) => {
+                    let one = bin.context.i32_type().const_int(1, false);
+                    let before_ptr = *var_table.get(&pos).unwrap();
+                    let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
+                    let after = bin.builder.build_int_sub(before_val.into_int_value(), one, "");
+                    bin.builder.build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
+                    return before_ptr.as_basic_value_enum();
+                }
+                _ => unreachable!(),
+            }
+        }
+        Expression::Increment(_, _, expr) => {
+            match **expr {
+                Expression::Variable(_, _, pos) => {
+                    let one = bin.context.i32_type().const_int(1, false);
+                    let before_ptr = *var_table.get(&pos).unwrap();
+                    let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
+                    let after = bin.builder.build_int_add(before_val.into_int_value(), one, "");
+                    bin.builder.build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
+                    return before_ptr.as_basic_value_enum();
+                }
+                _ => unreachable!(),
+            }
+        }
         Expression::Assign(_, _, l, r) => {
             let right = expression(r, bin, func, func_val, var_table, ns);
             let left = match **l {
                 Expression::Variable(_, _, pos) => {
                     let ret = *var_table.get(&pos).unwrap();
-                    var_table.insert(pos, right);
                     ret
                 }
                 _ => unreachable!(),
@@ -157,129 +182,14 @@ pub fn expression<'a>(
 
         Expression::NumberLiteral(_, ty, n) => bin.number_literal(ty.bits(ns) as u32, n, ns).into(),
 
-        Expression::Variable(_, _, var_no) => var_table.get(var_no).unwrap().as_basic_value_enum(),
+        Expression::Variable(_, _, var_no) => {
+            let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
+            bin.builder.build_load(ptr.into_pointer_value(), "")
+        },
         _ => unreachable!(),
     }
 }
-//
-// fn pre_incdec(
-//     vartab: &mut Vartable,
-//     ty: &Type,
-//     var: &Expression,
-//     cfg: &mut ControlFlowGraph,
-//     contract_no: usize,
-//     func: Option<&Function>,
-//     ns: &Namespace,
-//     loc: &pt::Loc,
-//     expr: &Expression,
-//     unchecked: &bool,
-//     opt: &Options,
-// ) -> Expression {
-//     let res = vartab.temp_anonymous(ty);
-//     let v = expression(var, cfg, contract_no, func, ns, vartab, opt);
-//     let v = match var.ty() {
-//         Type::Ref(ty) => Expression::Load(var.loc(), ty.as_ref().clone(),
-// Box::new(v)),         Type::StorageRef(_, ty) => load_storage(&var.loc(),
-// ty.as_ref(), v, cfg, vartab),         _ => v,
-//     };
-//     let one = Box::new(Expression::NumberLiteral(*loc, ty.clone(),
-// BigInt::one()));     let expr = match expr {
-//         Expression::PreDecrement { .. } => {
-//             Expression::Subtract(*loc, ty.clone(), *unchecked, Box::new(v),
-// one)         }
-//         Expression::PreIncrement { .. } => {
-//             Expression::Add(*loc, ty.clone(), *unchecked, Box::new(v), one)
-//         }
-//         _ => unreachable!(),
-//     };
-//     cfg.add(
-//         vartab,
-//         Instr::Set {
-//             loc: expr.loc(),
-//             res,
-//             expr,
-//         },
-//     );
-//     match var {
-//         Expression::Variable(loc, _, pos) => {
-//             cfg.add(
-//                 vartab,
-//                 Instr::Set {
-//                     loc: *loc,
-//                     res: *pos,
-//                     expr: Expression::Variable(*loc, ty.clone(), res),
-//                 },
-//             );
-//         }
-//         _ => unreachable!()
-//     }
-//     Expression::Variable(*loc, ty.clone(), res)
-// }
 
-// fn expr_or<'a>(
-//     left: &Expression,
-//     right: &Expression,
-//     bin: &Binary<'a>,
-//     func: Option<&Function>,
-//     func_val: FunctionValue<'a>,
-//     ns: &Namespace,
-//
-// ) -> Expression {
-//     let l = expression(left, bin, func, func_val, ns);
-//     let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&left.ty(), ns),
-// "")         .into();
-//     bin.builder.build_store(alloc, l);
-//
-//     cfg.add(
-//         vartab,
-//         Instr::BranchCond {
-//             cond: l,
-//             true_block: end_or,
-//             false_block: right_side,
-//         },
-//     );
-//   =
-//     {
-//         let cond = expression(target, bin, cond, &w.vars, function, ns);
-//
-//         let pos = bin.builder.get_insert_block().unwrap();
-//
-//         let bb_true =
-//             add_or_retrieve_block(*true_, pos, bin, function, blocks, work,
-// w, cfg, ns);
-//
-//         let bb_false =
-//             add_or_retrieve_block(*false_, pos, bin, function, blocks, work,
-// w, cfg, ns);
-//
-//         bin.builder.position_at_end(pos);
-//         bin.builder
-//             .build_conditional_branch(cond.into_int_value(), bb_true,
-// bb_false);     }
-//
-//
-//     let r = expression(right, bin, func, func_val, ns);
-//     let alloc = bin.builder.build_alloca( bin.llvm_var_ty(&right.ty(), ns),
-// "")         .into();
-//     bin.builder.build_store(alloc, r);
-//
-//     cfg.add(vartab, Instr::Branch { block: end_or });
-//
-//     =
-//     {
-//         let pos = bin.builder.get_insert_block().unwrap();
-//
-//         let bb = add_or_retrieve_block(*dest, pos, bin, function, blocks,
-// work, w, cfg, ns);
-//
-//         bin.builder.position_at_end(pos);
-//         bin.builder.build_unconditional_branch(bb);
-//     }
-//
-//     cfg.set_basic_block(end_or);
-//     cfg.set_phis(end_or, vartab.pop_dirty_tracker());
-//     Expression::Variable(*loc, Type::Bool, pos)
-// }
 
 //Convert a function call expression to CFG in expression context
 pub fn emit_function_call<'a>(

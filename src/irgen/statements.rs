@@ -12,7 +12,7 @@ use ola_parser::program;
 /// of a function
 pub(crate) fn statement<'a>(
     stmt: &Statement,
-    bin: &Binary<'a>,
+    bin: &mut Binary<'a>,
     func: &Function,
     func_val: FunctionValue<'a>,
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
@@ -30,16 +30,18 @@ pub(crate) fn statement<'a>(
                 bin.llvm_var_ty(&param.ty, ns),
                 param.name_as_str(),
             );
-            var_table.insert(*pos, alloc.as_basic_value_enum());
             let var_value = expression(init, bin, Some(func), func_val, var_table, ns);
-            var_table.insert(*pos, var_value);
+            var_table.insert(*pos, alloc.as_basic_value_enum());
             bin.builder.build_store(alloc, var_value);
         }
 
         Statement::Return(_, expr) => {
-            if let Some(expr) = expr {
-                let ret_value = returns(expr, bin, func, func_val, var_table, ns);
-                bin.builder.build_return(Some(&ret_value));
+            match expr {
+                Some(expr) => {
+                    let ret_value = returns(expr, bin, func, func_val, var_table, ns);
+                    bin.builder.build_return(Some(&ret_value));
+                }
+                None => {}
             }
         }
         Statement::Expression(_, _, expr) => {
@@ -53,6 +55,102 @@ pub(crate) fn statement<'a>(
             cond, then_stmt, else_stmt, bin, func, func_val, var_table, ns,
         ),
 
+        Statement::For {
+            init,
+            cond: Some(cond_expr),
+            next,
+            body,
+            ..
+        } => {
+
+            for stmt in init {
+                statement(
+                    stmt,
+                    bin,
+                    func,
+                    func_val,
+                    var_table,
+                    ns,
+                );
+            }
+
+            let body_block = bin.context.append_basic_block(func_val, "body");
+            let cond_block = bin.context.append_basic_block(func_val, "cond");
+            let next_block = bin.context.append_basic_block(func_val, "next");
+            let end_block = bin.context.append_basic_block(func_val, "endfor");
+
+            bin.builder.build_unconditional_branch(cond_block);
+            bin.builder.position_at_end(cond_block);
+
+            let cond_expr = expression(cond_expr, bin, Some(func), func_val, var_table, ns);
+
+            bin.builder.build_conditional_branch(
+                cond_expr.into_int_value(),
+                body_block,
+                end_block,
+            );
+
+            // compile loop body
+            bin.builder.position_at_end(body_block);
+
+            bin.loops.push((end_block, next_block));
+
+
+            let mut body_reachable = true;
+
+            for stmt in body {
+                statement(
+                    stmt,
+                    bin,
+                    func,
+                    func_val,
+                    var_table,
+                    ns,
+                );
+
+                body_reachable = stmt.reachable();
+            }
+
+            if body_reachable {
+                // jump to next body
+                bin.builder
+                    .build_unconditional_branch(next_block);
+            }
+
+            bin.loops.pop();
+
+            bin.builder.position_at_end(next_block);
+
+            let mut next_reachable = true;
+
+            for stmt in next {
+                statement(
+                    stmt,
+                    bin,
+                    func,
+                    func_val,
+                    var_table,
+                    ns,
+                );
+
+                next_reachable = stmt.reachable();
+            }
+
+            if next_reachable {
+                bin.builder.build_unconditional_branch(cond_block);
+            }
+
+            bin.builder.position_at_end(end_block);
+
+        }
+        Statement::Break(_) => {
+            bin.builder.build_unconditional_branch(bin.loops.last().unwrap().0);
+        }
+        Statement::Continue(_) => {
+            bin.builder.build_unconditional_branch(bin.loops.last().unwrap().1);
+        }
+
+
         _ => {}
     }
 }
@@ -60,7 +158,7 @@ pub(crate) fn statement<'a>(
 /// Generate if-then-no-else
 fn if_then<'a>(
     cond: &Expression,
-    bin: &Binary<'a>,
+    bin: &mut Binary<'a>,
     then_stmt: &[Statement],
     func: &Function,
     func_val: FunctionValue<'a>,
@@ -94,7 +192,7 @@ fn if_then_else<'a>(
     cond: &Expression,
     then_stmt: &[Statement],
     else_stmt: &[Statement],
-    bin: &Binary<'a>,
+    bin: &mut Binary<'a>,
     func: &Function,
     func_val: FunctionValue<'a>,
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
