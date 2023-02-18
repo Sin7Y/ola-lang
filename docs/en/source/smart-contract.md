@@ -10,28 +10,28 @@ The following example shows a recursive and non-recursive ola smart contract imp
 ````javascript
 
 contract Fibonacci {
-    u32 num;
+
+    fn main() {
+       fib_non_recursive(10);
+    }
+
     fn fib_recursive(u32 n) -> (u32) {
-        num += 1;
-        if (n == 0 || n == 1) {
+        if (n == 1 || n == 2) {
             return 1;
         }
         return fib_recursive(n -1) + fib_recursive(n -2);
     }
 
     fn fib_non_recursive(u32 n) -> (u32) {
-        num += 1;
-        if (n == 0 || n == 1) {
-            return 1;
-        }
-        u32 a = 0; u32 b = 0;
-        u32 result = 1;
+        u32 first = 0;
+        u32 second = 1;
+        u32 third = 1;
         for (u32 i = 2; i <= n; i++) {
-            a = b;
-            b = result;
-            result = a + b;
+             third = first + second;
+             first = second;
+             second = third;
         }
-        return result;
+        return third;
     }
 
 }

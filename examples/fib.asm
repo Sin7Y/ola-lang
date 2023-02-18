@@ -3,57 +3,44 @@ main:
   add r8 r8 4
   mstore [r8,-2] r8
   mov r1 10
-  call fib_recursive
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
-  end 
-fib_recursive:
+  call fib_non_recursive
+  add r8 r8 -4
+  end
+fib_non_recursive:
 .LBL1_0:
-  add r8 r8 9
-  mstore [r8,-2] r8
-  mov r0 r1
-  mstore [r8,-7] r0
-  mload r0 [r8,-7]
-  eq r0 1
-  cjmp .LBL1_1
-  jmp .LBL1_2
+  add r8 r8 5
+  mstore [r8,-1] r1
+  mov r1 0
+  mstore [r8,-2] r1
+  mov r1 1
+  mstore [r8,-3] r1
+  mov r1 1
+  mstore [r8,-4] r1
+  mov r1 2
+  mstore [r8,-5] r1
+  jmp .LBL1_1
 .LBL1_1:
-  mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
-  ret 
-.LBL1_2:
-  mload r0 [r8,-7]
-  eq r0 2
-  cjmp .LBL1_3
-  jmp .LBL1_4
-.LBL1_3:
-  mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
-  ret 
-.LBL1_4:
-  not r7 1
-  add r7 r7 1
-  mload r0 [r8,-7]
-  add r1 r0 r7
-  call fib_recursive
-  mstore [r8,-3] r0
-  not r7 2
-  add r7 r7 1
-  mload r0 [r8,-7]
-  add r0 r0 r7
-  mstore [r8,-5] r0
   mload r1 [r8,-5]
-  call fib_recursive
+  mload r2 [r8,-1]
+  gte r1 r2
+  cjmp r0 .LBL1_2
+  jmp .LBL1_4
+.LBL1_2:
+  mload r2 [r8,-2]
+  mload r3 [r8,-3]
+  add r1 r2 r3
+  mstore [r8,-4] r1
   mload r1 [r8,-3]
-  add r0 r1 r0
-  mstore [r8,-6] r0
-  mload r0 [r8,-6]
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
-  ret 
+  mstore [r8,-2] r1
+  mload r1 [r8,-4]
+  mstore [r8,-3] r1
+  jmp .LBL1_3
+.LBL1_3:
+  mload r2 [r8,-5]
+  add r1 r2 1
+  mstore [r8,-5] r1
+  jmp .LBL1_1
+.LBL1_4:
+  mload r0 [r8,-4]
+  add r8 r8 -5
+  ret

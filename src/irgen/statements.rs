@@ -35,15 +35,13 @@ pub(crate) fn statement<'a>(
             bin.builder.build_store(alloc, var_value);
         }
 
-        Statement::Return(_, expr) => {
-            match expr {
-                Some(expr) => {
-                    let ret_value = returns(expr, bin, func, func_val, var_table, ns);
-                    bin.builder.build_return(Some(&ret_value));
-                }
-                None => {}
+        Statement::Return(_, expr) => match expr {
+            Some(expr) => {
+                let ret_value = returns(expr, bin, func, func_val, var_table, ns);
+                bin.builder.build_return(Some(&ret_value));
             }
-        }
+            None => {}
+        },
         Statement::Expression(_, _, expr) => {
             expression(expr, bin, Some(func), func_val, var_table, ns);
         }
@@ -62,20 +60,12 @@ pub(crate) fn statement<'a>(
             body,
             ..
         } => {
-
             for stmt in init {
-                statement(
-                    stmt,
-                    bin,
-                    func,
-                    func_val,
-                    var_table,
-                    ns,
-                );
+                statement(stmt, bin, func, func_val, var_table, ns);
             }
 
-            let body_block = bin.context.append_basic_block(func_val, "body");
             let cond_block = bin.context.append_basic_block(func_val, "cond");
+            let body_block = bin.context.append_basic_block(func_val, "body");
             let next_block = bin.context.append_basic_block(func_val, "next");
             let end_block = bin.context.append_basic_block(func_val, "endfor");
 
@@ -84,37 +74,25 @@ pub(crate) fn statement<'a>(
 
             let cond_expr = expression(cond_expr, bin, Some(func), func_val, var_table, ns);
 
-            bin.builder.build_conditional_branch(
-                cond_expr.into_int_value(),
-                body_block,
-                end_block,
-            );
+            bin.builder
+                .build_conditional_branch(cond_expr.into_int_value(), body_block, end_block);
 
             // compile loop body
             bin.builder.position_at_end(body_block);
 
             bin.loops.push((end_block, next_block));
 
-
             let mut body_reachable = true;
 
             for stmt in body {
-                statement(
-                    stmt,
-                    bin,
-                    func,
-                    func_val,
-                    var_table,
-                    ns,
-                );
+                statement(stmt, bin, func, func_val, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
 
             if body_reachable {
                 // jump to next body
-                bin.builder
-                    .build_unconditional_branch(next_block);
+                bin.builder.build_unconditional_branch(next_block);
             }
 
             bin.loops.pop();
@@ -124,14 +102,7 @@ pub(crate) fn statement<'a>(
             let mut next_reachable = true;
 
             for stmt in next {
-                statement(
-                    stmt,
-                    bin,
-                    func,
-                    func_val,
-                    var_table,
-                    ns,
-                );
+                statement(stmt, bin, func, func_val, var_table, ns);
 
                 next_reachable = stmt.reachable();
             }
@@ -141,15 +112,15 @@ pub(crate) fn statement<'a>(
             }
 
             bin.builder.position_at_end(end_block);
-
         }
         Statement::Break(_) => {
-            bin.builder.build_unconditional_branch(bin.loops.last().unwrap().0);
+            bin.builder
+                .build_unconditional_branch(bin.loops.last().unwrap().0);
         }
         Statement::Continue(_) => {
-            bin.builder.build_unconditional_branch(bin.loops.last().unwrap().1);
+            bin.builder
+                .build_unconditional_branch(bin.loops.last().unwrap().1);
         }
-
 
         _ => {}
     }

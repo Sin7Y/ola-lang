@@ -6,20 +6,20 @@ use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
 use crate::irgen::functions::gen_functions;
+use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
 use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
 use inkwell::values::{IntValue, PointerValue};
 use inkwell::AddressSpace;
-use inkwell::basic_block::BasicBlock;
 
 pub struct Binary<'a> {
     pub name: String,
     pub module: Module<'a>,
     pub builder: Builder<'a>,
     pub(crate) context: &'a Context,
-    pub loops: Vec<(BasicBlock<'a>, BasicBlock<'a>)>
+    pub loops: Vec<(BasicBlock<'a>, BasicBlock<'a>)>,
 }
 
 impl<'a> Binary<'a> {

@@ -1,32 +1,75 @@
 ; ModuleID = 'Fibonacci'
-source_filename = "../../examples/fib.ola"
+source_filename = "examples/fib.ola"
 
 define void @main() {
 entry:
-  %0 = call i32 @fib_recursive(i32 10)
+  %0 = call i32 @fib_non_recursive(i32 10)
   ret void
 }
 
 define i32 @fib_recursive(i32 %0) {
 entry:
-  %1 = icmp eq i32 %0, 1
-  br i1 %1, label %then, label %enif
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp eq i32 %1, 1
+  %3 = load i32, i32* %n, align 4
+  %4 = icmp eq i32 %3, 2
+  %5 = or i1 %2, %4
+  br i1 %5, label %then, label %enif
 
 then:                                             ; preds = %entry
   ret i32 1
 
 enif:                                             ; preds = %entry
-  %2 = icmp eq i32 %0, 2
-  br i1 %2, label %then1, label %enif2
+  %6 = load i32, i32* %n, align 4
+  %7 = sub i32 %6, 1
+  %8 = call i32 @fib_recursive(i32 %7)
+  %9 = load i32, i32* %n, align 4
+  %10 = sub i32 %9, 2
+  %11 = call i32 @fib_recursive(i32 %10)
+  %12 = add i32 %8, %11
+  ret i32 %12
+}
 
-then1:                                            ; preds = %enif
-  ret i32 1
+define i32 @fib_non_recursive(i32 %0) {
+entry:
+  %i = alloca i32, align 4
+  %third = alloca i32, align 4
+  %second = alloca i32, align 4
+  %first = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 0, i32* %first, align 4
+  store i32 1, i32* %second, align 4
+  store i32 1, i32* %third, align 4
+  store i32 2, i32* %i, align 4
+  br label %cond
 
-enif2:                                            ; preds = %enif
-  %3 = sub i32 %0, 1
-  %4 = call i32 @fib_recursive(i32 %3)
-  %5 = sub i32 %0, 2
-  %6 = call i32 @fib_recursive(i32 %5)
-  %7 = add i32 %4, %6
-  ret i32 %7
+cond:                                             ; preds = %next, %entry
+  %1 = load i32, i32* %i, align 4
+  %2 = load i32, i32* %n, align 4
+  %3 = icmp ule i32 %1, %2
+  br i1 %3, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %4 = load i32, i32* %first, align 4
+  %5 = load i32, i32* %second, align 4
+  %6 = add i32 %4, %5
+  store i32 %6, i32* %third, align 4
+  %7 = load i32, i32* %second, align 4
+  store i32 %7, i32* %first, align 4
+  %8 = load i32, i32* %third, align 4
+  store i32 %8, i32* %second, align 4
+  br label %next
+
+next:                                             ; preds = %body
+  %9 = load i32, i32* %i, align 4
+  %10 = add i32 %9, 1
+  store i32 %10, i32* %i, align 4
+  br label %cond
+
+endfor:                                           ; preds = %cond
+  %11 = load i32, i32* %third, align 4
+  ret i32 %11
 }

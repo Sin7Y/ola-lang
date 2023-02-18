@@ -130,32 +130,34 @@ pub fn expression<'a>(
 
             bin.builder.build_not(e, "").into()
         }
-        Expression::Decrement(_, _, expr) => {
-            match **expr {
-                Expression::Variable(_, _, pos) => {
-                    let one = bin.context.i32_type().const_int(1, false);
-                    let before_ptr = *var_table.get(&pos).unwrap();
-                    let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
-                    let after = bin.builder.build_int_sub(before_val.into_int_value(), one, "");
-                    bin.builder.build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
-                    return before_ptr.as_basic_value_enum();
-                }
-                _ => unreachable!(),
+        Expression::Decrement(_, _, expr) => match **expr {
+            Expression::Variable(_, _, pos) => {
+                let one = bin.context.i32_type().const_int(1, false);
+                let before_ptr = *var_table.get(&pos).unwrap();
+                let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
+                let after = bin
+                    .builder
+                    .build_int_sub(before_val.into_int_value(), one, "");
+                bin.builder
+                    .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
+                return before_ptr.as_basic_value_enum();
             }
-        }
-        Expression::Increment(_, _, expr) => {
-            match **expr {
-                Expression::Variable(_, _, pos) => {
-                    let one = bin.context.i32_type().const_int(1, false);
-                    let before_ptr = *var_table.get(&pos).unwrap();
-                    let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
-                    let after = bin.builder.build_int_add(before_val.into_int_value(), one, "");
-                    bin.builder.build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
-                    return before_ptr.as_basic_value_enum();
-                }
-                _ => unreachable!(),
+            _ => unreachable!(),
+        },
+        Expression::Increment(_, _, expr) => match **expr {
+            Expression::Variable(_, _, pos) => {
+                let one = bin.context.i32_type().const_int(1, false);
+                let before_ptr = *var_table.get(&pos).unwrap();
+                let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
+                let after = bin
+                    .builder
+                    .build_int_add(before_val.into_int_value(), one, "");
+                bin.builder
+                    .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
+                return before_ptr.as_basic_value_enum();
             }
-        }
+            _ => unreachable!(),
+        },
         Expression::Assign(_, _, l, r) => {
             let right = expression(r, bin, func, func_val, var_table, ns);
             let left = match **l {
@@ -185,11 +187,10 @@ pub fn expression<'a>(
         Expression::Variable(_, _, var_no) => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
             bin.builder.build_load(ptr.into_pointer_value(), "")
-        },
+        }
         _ => unreachable!(),
     }
 }
-
 
 //Convert a function call expression to CFG in expression context
 pub fn emit_function_call<'a>(

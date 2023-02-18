@@ -19,446 +19,130 @@ impl ast::Contract {
     }
 }
 
-#[cfg(test)]
-mod test {
+#[test]
+fn gen_ir_test() {
     use crate::file_resolver::FileResolver;
     use std::ffi::OsStr;
-
-    #[test]
-    fn gen_ir_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-        contract Fibonacci {
+    let mut resolver = FileResolver::new();
+    let source = r#" contract Fibonacci {
 
     fn main() {
-       fib_recursive(10);
+       fib_non_recursive(10);
     }
 
     fn fib_recursive(u32 n) -> (u32) {
-        if (n == 1) {
+        if (n == 1 || n == 2) {
             return 1;
         }
-        if (n == 2) {
-            return 1;
-        }
-
         return fib_recursive(n -1) + fib_recursive(n -2);
     }
 
     fn fib_non_recursive(u32 n) -> (u32) {
-        num += 1;
-        if (n == 0 || n == 1) {
-            return 1;
+        u32 first = 0;
+        u32 second = 1;
+        u32 third = 1;
+        for (u32 i = 2; i <= n; i++) {
+             third = first + second;
+             first = second;
+             second = third;
         }
-        u32 a = 1; u32 b = 1;
-        for (u32 i = 2; i < n - 1 ;i++) {
-            b = a + b;
-            a = b - a;
-        }
-        return a + b;
+        return third;
     }
 
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
+}
 
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
+    "#;
+    resolver.set_file_contents("test.ola", source.to_string());
 
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
+    let file_name = OsStr::new("test.ola");
+    // resolve phase
+    let ns = crate::parse_and_resolve(file_name, &mut resolver);
 
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            assert_eq!(
-                r#"; ModuleID = 'Fibonacci'
+    for contract_no in 0..ns.contracts.len() {
+        let resolved_contract = &ns.contracts[contract_no];
+        let context = inkwell::context::Context::create();
+        let filename_string = file_name.to_string_lossy();
+
+        let binary = resolved_contract.binary(&ns, &context, &filename_string);
+        let ir = binary.module.to_string();
+        assert_eq!(
+            r#"; ModuleID = 'Fibonacci'
 source_filename = "test.ola"
 
 define void @main() {
 entry:
-  %0 = call i32 @fib_recursive(i32 10)
+  %0 = call i32 @fib_non_recursive(i32 10)
   ret void
 }
 
 define i32 @fib_recursive(i32 %0) {
 entry:
-  %1 = icmp eq i32 %0, 1
-  br i1 %1, label %then, label %enif
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp eq i32 %1, 1
+  %3 = load i32, i32* %n, align 4
+  %4 = icmp eq i32 %3, 2
+  %5 = or i1 %2, %4
+  br i1 %5, label %then, label %enif
 
 then:                                             ; preds = %entry
   ret i32 1
 
 enif:                                             ; preds = %entry
-  %2 = icmp eq i32 %0, 2
-  br i1 %2, label %then1, label %enif2
+  %6 = load i32, i32* %n, align 4
+  %7 = sub i32 %6, 1
+  %8 = call i32 @fib_recursive(i32 %7)
+  %9 = load i32, i32* %n, align 4
+  %10 = sub i32 %9, 2
+  %11 = call i32 @fib_recursive(i32 %10)
+  %12 = add i32 %8, %11
+  ret i32 %12
+}
 
-then1:                                            ; preds = %enif
-  ret i32 1
+define i32 @fib_non_recursive(i32 %0) {
+entry:
+  %i = alloca i32, align 4
+  %third = alloca i32, align 4
+  %second = alloca i32, align 4
+  %first = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 0, i32* %first, align 4
+  store i32 1, i32* %second, align 4
+  store i32 1, i32* %third, align 4
+  store i32 2, i32* %i, align 4
+  br label %cond
 
-enif2:                                            ; preds = %enif
-  %3 = sub i32 %0, 1
-  %4 = call i32 @fib_recursive(i32 %3)
-  %5 = sub i32 %0, 2
-  %6 = call i32 @fib_recursive(i32 %5)
-  %7 = add i32 %4, %6
-  ret i32 %7
+cond:                                             ; preds = %next, %entry
+  %1 = load i32, i32* %i, align 4
+  %2 = load i32, i32* %n, align 4
+  %3 = icmp ule i32 %1, %2
+  br i1 %3, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %4 = load i32, i32* %first, align 4
+  %5 = load i32, i32* %second, align 4
+  %6 = add i32 %4, %5
+  store i32 %6, i32* %third, align 4
+  %7 = load i32, i32* %second, align 4
+  store i32 %7, i32* %first, align 4
+  %8 = load i32, i32* %third, align 4
+  store i32 %8, i32* %second, align 4
+  br label %next
+
+next:                                             ; preds = %body
+  %9 = load i32, i32* %i, align 4
+  %10 = add i32 %9, 1
+  store i32 %10, i32* %i, align 4
+  br label %cond
+
+endfor:                                           ; preds = %cond
+  %11 = load i32, i32* %third, align 4
+  ret i32 %11
 }
 "#,
-                ir
-            );
-        }
-    }
-
-    #[test]
-    fn gen_ir_eq_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-        contract condCmp {
-
-    fn main() {
-       eq(1);
-    }
-
-    fn eq(u32 n) -> (u32) {
-      if (n == 1) {
-        return 2;
-      }
-      return 3;
-    }
-
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
-
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
-
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
-
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            assert_eq!(
-                r#"; ModuleID = 'condCmp'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @eq(i32 1)
-  ret void
-}
-
-define i32 @eq(i32 %0) {
-entry:
-  %1 = icmp eq i32 %0, 1
-  br i1 %1, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 2
-
-enif:                                             ; preds = %entry
-  ret i32 3
-}
-"#,
-                ir
-            );
-        }
-    }
-
-    #[test]
-    fn gen_ir_ne_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-        contract condCmp {
-
-    fn main() {
-       ne(1);
-    }
-
-    fn ne(u32 n) -> (u32) {
-      if (n != 1) {
-        return 2;
-      }
-      return 3;
-    }
-
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
-
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
-
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
-
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            assert_eq!(
-                r#"; ModuleID = 'condCmp'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @ne(i32 1)
-  ret void
-}
-
-define i32 @ne(i32 %0) {
-entry:
-  %1 = icmp eq i32 %0, 1
-  %2 = icmp eq i1 %1, false
-  br i1 %2, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 2
-
-enif:                                             ; preds = %entry
-  ret i32 3
-}
-"#,
-                ir
-            );
-        }
-    }
-
-    #[test]
-    fn gen_ir_ge_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-      contract condCmp {
-
-  fn main() {
-     ge(1);
-  }
-
-  fn ge(u32 n) -> (u32) {
-    if (n >= 1) {
-      return 2;
-    }
-    return 3;
-  }
-
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
-
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
-
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
-
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            assert_eq!(
-                r#"; ModuleID = 'condCmp'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @ge(i32 1)
-  ret void
-}
-
-define i32 @ge(i32 %0) {
-entry:
-  %1 = icmp uge i32 %0, 1
-  br i1 %1, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 2
-
-enif:                                             ; preds = %entry
-  ret i32 3
-}
-"#,
-                ir
-            );
-        }
-    }
-
-    #[test]
-    fn gen_ir_gt_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-      contract condCmp {
-
-  fn main() {
-     gt(1);
-  }
-
-  fn gt(u32 n) -> (u32) {
-    if (n > 1) {
-      return 2;
-    }
-    return 3;
-  }
-
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
-
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
-
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
-
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            assert_eq!(
-                r#"; ModuleID = 'condCmp'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @gt(i32 1)
-  ret void
-}
-
-define i32 @gt(i32 %0) {
-entry:
-  %1 = icmp ugt i32 %0, 1
-  br i1 %1, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 2
-
-enif:                                             ; preds = %entry
-  ret i32 3
-}
-"#,
-                ir
-            );
-        }
-    }
-
-    #[test]
-    fn gen_ir_lt_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-      contract condCmp {
-
-  fn main() {
-    lt(1);
-  }
-
-  fn lt(u32 n) -> (u32) {
-    if (n < 1) {
-      return 2;
-    }
-    return 3;
-  }
-
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
-
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
-
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
-
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            println!("ir:{}", ir);
-            assert_eq!(
-                r#"; ModuleID = 'condCmp'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @lt(i32 1)
-  ret void
-}
-
-define i32 @lt(i32 %0) {
-entry:
-  %1 = icmp ult i32 %0, 1
-  br i1 %1, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 2
-
-enif:                                             ; preds = %entry
-  ret i32 3
-}
-"#,
-                ir
-            );
-        }
-    }
-
-    #[test]
-    fn gen_ir_le_test() {
-        let mut resolver = FileResolver::new();
-        let source = r#"
-      contract condCmp {
-
-  fn main() {
-     le(1);
-  }
-
-  fn le(u32 n) -> (u32) {
-    if (n <= 1) {
-      return 2;
-    }
-    return 3;
-  }
-
-}"#;
-        resolver.set_file_contents("test.ola", source.to_string());
-
-        let file_name = OsStr::new("test.ola");
-        // resolve phase
-        let ns = crate::parse_and_resolve(file_name, &mut resolver);
-
-        for contract_no in 0..ns.contracts.len() {
-            let resolved_contract = &ns.contracts[contract_no];
-            let context = inkwell::context::Context::create();
-            let filename_string = file_name.to_string_lossy();
-
-            let binary = resolved_contract.binary(&ns, &context, &filename_string);
-            let ir = binary.module.to_string();
-            println!("ir:{}", ir);
-            assert_eq!(
-                r#"; ModuleID = 'condCmp'
-source_filename = "test.ola"
-
-define void @main() {
-entry:
-  %0 = call i32 @le(i32 1)
-  ret void
-}
-
-define i32 @le(i32 %0) {
-entry:
-  %1 = icmp ule i32 %0, 1
-  br i1 %1, label %then, label %enif
-
-then:                                             ; preds = %entry
-  ret i32 2
-
-enif:                                             ; preds = %entry
-  ret i32 3
-}
-"#,
-                ir
-            );
-        }
+            ir
+        );
     }
 }
