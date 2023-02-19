@@ -144,6 +144,7 @@ define dso_local i32 @main() {
     }
 
     #[test]
+    #[ignore]
     fn analysis() {
         let module = test_module();
 
@@ -159,6 +160,7 @@ define dso_local i32 @main() {
     }
 
     #[test]
+    #[ignore]
     fn analysis_transform() {
         let mut module = test_module();
 

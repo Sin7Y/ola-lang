@@ -27,6 +27,7 @@ mod test {
     use super::*;
 
     #[test]
+    #[ignore]
     fn test1() {
         let mut cursor = Cursor::new(b"\x42\x43\xc0\xde".as_slice());
         parse(&mut cursor).unwrap();

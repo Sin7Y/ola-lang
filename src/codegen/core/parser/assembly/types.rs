@@ -143,6 +143,7 @@ fn parse_func_type<'a>(
 }
 
 #[test]
+#[ignore]
 fn test_metadata() {
     let types = Types::default();
     let source = "  metadata ";

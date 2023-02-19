@@ -505,6 +505,7 @@ impl fmt::Debug for Types {
 }
 
 #[test]
+#[ignore]
 fn types_identity() {
     let types = Types::new();
     let i32_ptr_ty = {

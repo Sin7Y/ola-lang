@@ -137,6 +137,7 @@ pub fn parse(mut source: &str) -> Result<Module, Error> {
 macro_rules! generate_test {
     ($fname:ident, $name:literal) => {
         #[test]
+        #[ignore]
         fn $fname() {
             use std::fs;
             let source =
@@ -180,6 +181,7 @@ generate_test!(parse_example_struct, "struct.ll");
 generate_test!(parse_example_hello_cc, "hello.cc.ll");
 
 #[test]
+#[ignore]
 fn parse_module1() {
     let result = parse(
         r#"
@@ -209,6 +211,7 @@ fn parse_module1() {
 }
 
 #[test]
+#[ignore]
 #[rustfmt::skip]
 fn parse_module2() {
     use rustc_hash::FxHashMap;

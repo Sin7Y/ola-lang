@@ -29,6 +29,35 @@ pub fn lower_br(ctx: &mut LoweringContext<Ola>, block: BasicBlockId) -> Result<(
     Ok(())
 }
 
+// instructions selection pattern:
+// eq/neq/gte ->
+// {
+//   eq tmp a b;/neq tmp a b;/gte tmp a,b;
+//   cjmp tmp label;
+// }
+//
+// gt ->
+// a > b(a>=b && a!=b) =>
+// {
+//   gte tmp1 a b; neq tmp2 a b;
+//   and tmp3 tmp1 tmp2;
+//   cjmp tmp3 label
+// }
+// lt ->
+//
+// a < b(b>=a && a!=b) =>
+// {
+//   gte tmp1 b a; neq tmp2 a b;
+//   and tmp3 tmp1 tmp2;
+//   cjmp tmp3 label
+// }
+// lte ->
+// a <= b(b>=a) =>
+// {
+//   gte tmp b,a;
+//   cjmp tmp label
+// }
+
 pub fn lower_condbr(
     ctx: &mut LoweringContext<Ola>,
     arg: ValueId,
@@ -56,13 +85,18 @@ pub fn lower_condbr(
         ctx.mark_as_merged(icmp);
         let lhs = get_vreg_for_val(ctx, *ty, args[0])?;
         let rhs = ctx.ir_data.value_ref(args[1]);
+        let output = new_empty_inst_output(ctx, *ty, icmp);
         match rhs {
             Value::Constant(ConstantValue::Int(ConstantInt::Int32(rhs))) => match cond {
                 ICmpCond::Eq => {
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::EQri,
-                            operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
+                            operands: vec![
+                                MO::output(OperandData::VReg(output)),
+                                MO::input(lhs.into()),
+                                MO::new(rhs.into()),
+                            ],
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
@@ -71,7 +105,11 @@ pub fn lower_condbr(
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::NEQ,
-                            operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
+                            operands: vec![
+                                MO::output(OperandData::VReg(output)),
+                                MO::input(lhs.into()),
+                                MO::new(rhs.into()),
+                            ],
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
@@ -80,50 +118,67 @@ pub fn lower_condbr(
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::GTE,
-                            operands: vec![MO::input(lhs.into()), MO::new(rhs.into())],
-                        },
-                        ctx.block_map[&ctx.cur_block],
-                    ));
-                }
-                ICmpCond::Ult => {
-                    let output = new_empty_inst_output(ctx, *ty, icmp);
-                    ctx.inst_seq.push(MachInstruction::new(
-                        InstructionData {
-                            opcode: Opcode::MOVri,
                             operands: vec![
                                 MO::output(OperandData::VReg(output)),
+                                MO::input(lhs.into()),
                                 MO::new(rhs.into()),
                             ],
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
-
+                }
+                ICmpCond::Sle | ICmpCond::Ule => {
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::GTE,
                             operands: vec![
-                                MO::input(OperandData::VReg(output)),
-                                MO::input(lhs.into()),
-                            ],
-                        },
-                        ctx.block_map[&ctx.cur_block],
-                    ));
-
-                    ctx.inst_seq.push(MachInstruction::new(
-                        InstructionData {
-                            opcode: Opcode::NEQ,
-                            operands: vec![
-                                MO::input(OperandData::VReg(output)),
-                                MO::input(lhs.into()),
+                                MO::output(OperandData::VReg(output)),
+                                MO::input(rhs.into()),
+                                MO::new(lhs.into()),
                             ],
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
                 }
-                e => {
-                    return Err(
-                        LoweringError::Todo(format!("Unsupported icmp condition: {:?}", e)).into(),
-                    )
+                ICmpCond::Slt | ICmpCond::Ult | ICmpCond::Sgt | ICmpCond::Ugt => {
+                    let mut op0 = MO::new(lhs.into());
+                    let mut op1 = MO::new(rhs.into());
+                    if *cond == ICmpCond::Slt || *cond == ICmpCond::Ult {
+                        op0 = MO::new(rhs.into());
+                        op1 = MO::new(lhs.into());
+                    }
+                    let inst = MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::GTE,
+                            operands: vec![MO::output(OperandData::VReg(output)), op0, op1],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    );
+                    ctx.inst_seq.push(inst);
+                    let output2 = new_empty_inst_output(ctx, *ty, icmp);
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::NEQ,
+                            operands: vec![
+                                MO::input(OperandData::VReg(output2)),
+                                MO::input(lhs.into()),
+                                MO::input(rhs.into()),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::AND,
+                            operands: vec![
+                                MO::output(OperandData::VReg(output)),
+                                MO::input_output(OperandData::VReg(output)),
+                                MO::input(OperandData::VReg(output2)),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
                 }
             },
             Value::Constant(ConstantValue::Null(_)) => {
@@ -152,7 +207,10 @@ pub fn lower_condbr(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::CJMPr,
-                operands: vec![MO::new(OperandData::Block(ctx.block_map[&blocks[0]]))],
+                operands: vec![
+                    MO::input(output.into()),
+                    MO::new(OperandData::Block(ctx.block_map[&blocks[0]])),
+                ],
             },
             ctx.block_map[&ctx.cur_block],
         ));

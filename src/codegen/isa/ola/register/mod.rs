@@ -41,9 +41,10 @@ const ARG_REGS: [RegUnit; 3] = [
     RegUnit(RegClass::GR as u16, GR::R3 as u16),
 ];
 
-const CSR: [RegUnit; 3] = [
+const CSR: [RegUnit; 4] = [
     RegUnit(RegClass::GR as u16, GR::R4 as u16),
     RegUnit(RegClass::GR as u16, GR::R5 as u16),
+    RegUnit(RegClass::GR as u16, GR::R6 as u16),
     RegUnit(RegClass::GR as u16, GR::R7 as u16),
 ];
 
@@ -87,7 +88,7 @@ impl RegisterClass for RegClass {
 
     fn csr_list(&self) -> Vec<Reg> {
         match self {
-            RegClass::GR => vec![GR::R4, GR::R5, GR::R7]
+            RegClass::GR => vec![GR::R4, GR::R5, GR::R6, GR::R7]
                 .into_iter()
                 .map(|r| r.into())
                 .collect(),
