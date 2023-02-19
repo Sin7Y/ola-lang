@@ -21,8 +21,8 @@ impl ast::Contract {
 
 #[cfg(test)]
 mod test {
-  use crate::file_resolver::FileResolver;
-  use std::ffi::OsStr;
+    use crate::file_resolver::FileResolver;
+    use std::ffi::OsStr;
 
     #[test]
     fn gen_ir_test() {
