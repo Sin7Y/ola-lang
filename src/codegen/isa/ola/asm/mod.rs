@@ -121,6 +121,9 @@ impl fmt::Display for Opcode {
                 Self::GTE => "gte",
                 Self::NEQ => "neq",
                 Self::EQri | Self::EQrr => "eq",
+                Self::AND => "and",
+                Self::OR => "or",
+                Self::XOR => "xor",
                 e => todo!("{:?}", e),
             }
         )

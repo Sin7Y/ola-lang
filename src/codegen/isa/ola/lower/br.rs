@@ -12,9 +12,11 @@ use crate::codegen::{
     function::instruction::Instruction as MachInstruction,
     isa::ola::{
         instruction::{InstructionData, Opcode, Operand as MO, OperandData},
+        register::GR,
         Ola,
     },
     lower::{LoweringContext, LoweringError},
+    register::Reg,
 };
 use anyhow::Result;
 
@@ -128,12 +130,20 @@ pub fn lower_condbr(
                     ));
                 }
                 ICmpCond::Sle | ICmpCond::Ule => {
+                    let tmp_reg: Reg = GR::R7.into();
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::MOVri,
+                            operands: vec![MO::output(tmp_reg.into()), MO::input(rhs.into())],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::GTE,
                             operands: vec![
                                 MO::output(OperandData::VReg(output)),
-                                MO::input(rhs.into()),
+                                MO::input(tmp_reg.into()),
                                 MO::new(lhs.into()),
                             ],
                         },
@@ -146,6 +156,14 @@ pub fn lower_condbr(
                     if *cond == ICmpCond::Slt || *cond == ICmpCond::Ult {
                         op0 = MO::new(rhs.into());
                         op1 = MO::new(lhs.into());
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::MOVri,
+                                operands: vec![MO::output(OperandData::VReg(output)), op0.clone()],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                        op0 = MO::input(OperandData::VReg(output));
                     }
                     let inst = MachInstruction::new(
                         InstructionData {
@@ -155,7 +173,8 @@ pub fn lower_condbr(
                         ctx.block_map[&ctx.cur_block],
                     );
                     ctx.inst_seq.push(inst);
-                    let output2 = new_empty_inst_output(ctx, *ty, icmp);
+                    let output2 = ctx.mach_data.vregs.add_vreg_data(*ty);
+                    ctx.inst_id_to_vreg.insert(icmp, output2);
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::NEQ,
@@ -226,4 +245,378 @@ pub fn lower_condbr(
     }
 
     Err(LoweringError::Todo("Unsupported conditional br pattern".into()).into())
+}
+
+#[cfg(test)]
+mod test {
+    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
+    #[test]
+    fn codegen_eq_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'condCmp'
+        source_filename = "test.ola"
+        
+        define void @main() {
+        entry:
+          %0 = call i32 @eq(i32 1)
+          ret void
+        }
+        
+        define i32 @eq(i32 %0) {
+        entry:
+          %1 = icmp eq i32 %0, 1
+          br i1 %1, label %then, label %enif
+        
+        then:                                             ; preds = %entry
+          ret i32 2
+        
+        enif:                                             ; preds = %entry
+          ret i32 3
+    }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call eq
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+eq:
+.LBL1_0:
+  mov r0 r1
+  eq r0 r0 1
+  cjmp r0 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  ret 
+.LBL1_2:
+  mov r0 3
+  ret 
+"
+        );
+    }
+
+    #[test]
+    fn codegen_ne_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'condCmp'
+        source_filename = "test.ola"
+        
+        define void @main() {
+        entry:
+          %0 = call i32 @ne(i32 1)
+          ret void
+        }
+        
+        define i32 @ne(i32 %0) {
+        entry:
+          %1 = icmp ne i32 %0, 1
+          br i1 %1, label %then, label %enif
+        
+        then:                                             ; preds = %entry
+          ret i32 2
+        
+        enif:                                             ; preds = %entry
+          ret i32 3
+    }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call ne
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+ne:
+.LBL1_0:
+  mov r0 r1
+  neq r0 r0 1
+  cjmp r0 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  ret 
+.LBL1_2:
+  mov r0 3
+  ret 
+"
+        );
+    }
+
+    #[test]
+    fn codegen_ge_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'condCmp'
+        source_filename = "test.ola"
+        
+        define void @main() {
+        entry:
+          %0 = call i32 @ge(i32 1)
+          ret void
+        }
+        
+        define i32 @ge(i32 %0) {
+        entry:
+          %1 = icmp uge i32 %0, 1
+          br i1 %1, label %then, label %enif
+        
+        then:                                             ; preds = %entry
+          ret i32 2
+        
+        enif:                                             ; preds = %entry
+          ret i32 3
+    }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call ge
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+ge:
+.LBL1_0:
+  mov r0 r1
+  gte r0 r0 1
+  cjmp r0 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  ret 
+.LBL1_2:
+  mov r0 3
+  ret 
+"
+        );
+    }
+
+    #[test]
+    fn codegen_gt_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'condCmp'
+        source_filename = "test.ola"
+        
+        define void @main() {
+        entry:
+          %0 = call i32 @gt(i32 1)
+          ret void
+        }
+        
+        define i32 @gt(i32 %0) {
+        entry:
+          %1 = icmp ugt i32 %0, 1
+          br i1 %1, label %then, label %enif
+        
+        then:                                             ; preds = %entry
+          ret i32 2
+        
+        enif:                                             ; preds = %entry
+          ret i32 3
+    }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call gt
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+gt:
+.LBL1_0:
+  gte r2 r1 1
+  neq r0 r1 1
+  and r2 r2 r0
+  cjmp r2 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  ret 
+.LBL1_2:
+  mov r0 3
+  ret 
+"
+        );
+    }
+
+    #[test]
+    fn codegen_lt_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'condCmp'
+        source_filename = "test.ola"
+        
+        define void @main() {
+        entry:
+          %0 = call i32 @lt(i32 1)
+          ret void
+        }
+        
+        define i32 @eq(i32 %0) {
+        entry:
+          %1 = icmp ult i32 %0, 1
+          br i1 %1, label %then, label %enif
+        
+        then:                                             ; preds = %entry
+          ret i32 2
+        
+        enif:                                             ; preds = %entry
+          ret i32 3
+    }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call lt
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+eq:
+.LBL1_0:
+  mov r2 1
+  gte r2 r2 r1
+  neq r0 r1 1
+  and r2 r2 r0
+  cjmp r2 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  ret 
+.LBL1_2:
+  mov r0 3
+  ret 
+"
+        );
+    }
+
+    #[test]
+    fn codegen_le_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'condCmp'
+        source_filename = "test.ola"
+        
+        define void @main() {
+        entry:
+          %0 = call i32 @le(i32 1)
+          ret void
+        }
+        
+        define i32 @le(i32 %0) {
+        entry:
+          %1 = icmp ule i32 %0, 1
+          br i1 %1, label %then, label %enif
+        
+        then:                                             ; preds = %entry
+          ret i32 2
+        
+        enif:                                             ; preds = %entry
+          ret i32 3
+    }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call le
+  not r7 4
+  add r7 r7 1
+  add r8 r8 r7
+  end 
+le:
+.LBL1_0:
+  mov r0 r1
+  mov r7 1
+  gte r0 r7 r0
+  cjmp r0 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  ret 
+.LBL1_2:
+  mov r0 3
+  ret 
+"
+        );
+    }
 }
