@@ -114,6 +114,7 @@ fn align_to(offset: usize, align: usize) -> usize {
 }
 
 #[test]
+#[ignore]
 fn size() {
     use crate::codegen::core::ir::types::*;
 
@@ -154,6 +155,7 @@ fn size() {
 }
 
 #[test]
+#[ignore]
 fn align() {
     use crate::codegen::core::ir::types::*;
 

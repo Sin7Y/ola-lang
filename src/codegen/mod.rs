@@ -8,11 +8,13 @@ pub mod module;
 pub mod pass;
 pub mod register;
 
-#[test]
-fn codegen_binop_test() {
+#[cfg(test)]
+mod test {
     use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
-    // LLVM Assembly
-    let asm = r#"
+    #[test]
+    fn codegen_binop_test() {
+        // LLVM Assembly
+        let asm = r#"
   source_filename = "asm"
   ; Function Attrs: noinline nounwind optnone uwtable
   define dso_local i32 @main() #0 {
@@ -28,17 +30,16 @@ fn codegen_binop_test() {
   attributes #0 = { noinline nounwind optnone uwtable }
 "#;
 
-    // Parse the assembly and get a module
-    let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-    // Compile the module for Ola and get a machine module
-    let isa = Ola::default();
-    let mach_module = compile_module(&isa, &module).expect("failed to compile");
-
-    // Display the machine module as assembly
-    assert_eq!(
-        format!("{}", mach_module.display_asm()),
-        "main:
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
 .LBL0_0:
   add r8 r8 1
   mov r4 10
@@ -51,19 +52,16 @@ fn codegen_binop_test() {
   add r7 r7 1
   add r3 r2 r7
   mov r0 r3
-  not r7 1
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -1
   ret 
 "
-    );
-}
+        );
+    }
 
-#[test]
-fn codegen_functioncall_test() {
-    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
-    // LLVM Assembly
-    let asm = r#"
+    #[test]
+    fn codegen_functioncall_test() {
+        // LLVM Assembly
+        let asm = r#"
 source_filename = "asm" 
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable
@@ -99,17 +97,17 @@ define i32 @bar(i32 %0, i32 %1) #0 {
 }  
 "#;
 
-    // Parse the assembly and get a module
-    let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-    // Compile the module for Ola and get a machine module
-    let isa = Ola::default();
-    let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
 
-    // Display the machine module as assembly
-    assert_eq!(
-        format!("{}", mach_module.display_asm()),
-        "main:
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
 .LBL0_0:
   add r8 r8 7
   mstore [r8,-2] r8
@@ -124,9 +122,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
   call bar
   mstore [r8,-3] r0
   mload r0 [r8,-3]
-  not r7 7
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -7
   end 
 bar:
 .LBL1_0:
@@ -140,19 +136,16 @@ bar:
   add r0 r1 r2
   mstore [r8,-1] r0
   mload r0 [r8,-1]
-  not r7 3
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -3
   ret 
 "
-    );
-}
+        );
+    }
 
-#[test]
-fn codegen_fib_recursive_test() {
-    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
-    // LLVM Assembly
-    let asm = r#"
+    #[test]
+    fn codegen_fib_recursive_test() {
+        // LLVM Assembly
+        let asm = r#"
     ; ModuleID = 'Fibonacci'
     source_filename = "../../examples/fib.ola"
     
@@ -187,25 +180,22 @@ fn codegen_fib_recursive_test() {
     }
 "#;
 
-    // Parse the assembly and get a module
-    let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
 
-    // Compile the module for Ola and get a machine module
-    let isa = Ola::default();
-    let mach_module = compile_module(&isa, &module).expect("failed to compile");
-
-    // Display the machine module as assembly
-    assert_eq!(
-        format!("{}", mach_module.display_asm()),
-        "main:
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
 .LBL0_0:
   add r8 r8 4
   mstore [r8,-2] r8
   mov r1 10
   call fib_recursive
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 fib_recursive:
 .LBL1_0:
@@ -214,25 +204,21 @@ fib_recursive:
   mov r0 r1
   mstore [r8,-7] r0
   mload r0 [r8,-7]
-  eq r0 1
-  cjmp .LBL1_1
+  eq r0 r0 1
+  cjmp r0 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
   ret 
 .LBL1_2:
   mload r0 [r8,-7]
-  eq r0 2
-  cjmp .LBL1_3
+  eq r0 r0 2
+  cjmp r0 .LBL1_3
   jmp .LBL1_4
 .LBL1_3:
   mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
   ret 
 .LBL1_4:
   not r7 1
@@ -240,22 +226,21 @@ fib_recursive:
   mload r0 [r8,-7]
   add r1 r0 r7
   call fib_recursive
-  mstore [r8,-3] r0
+  mstore [r8,-4] r0
   not r7 2
   add r7 r7 1
   mload r0 [r8,-7]
   add r0 r0 r7
-  mstore [r8,-5] r0
-  mload r1 [r8,-5]
-  call fib_recursive
-  mload r1 [r8,-3]
-  add r0 r1 r0
   mstore [r8,-6] r0
-  mload r0 [r8,-6]
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  mload r1 [r8,-6]
+  call fib_recursive
+  mload r1 [r8,-4]
+  add r0 r1 r0
+  mstore [r8,-5] r0
+  mload r0 [r8,-5]
+  add r8 r8 -9
   ret 
 "
-    );
+        );
+    }
 }

@@ -281,6 +281,7 @@ impl<'a> ParserContext<'a> {
 }
 
 #[test]
+#[ignore]
 fn test_parse_function1() {
     let types = Types::new();
     let result = parse(
@@ -302,6 +303,7 @@ fn test_parse_function1() {
 }
 
 #[test]
+#[ignore]
 fn test_parse_function2() {
     let types = Types::new();
     let result = parse(

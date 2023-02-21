@@ -4,7 +4,7 @@ use crate::codegen::{
         Function,
     },
     isa::ola::{
-        instruction::{InstructionData, Opcode, Operand, OperandData},
+        instruction::{InstructionData, Opcode, Operand},
         register::{RegClass, GR},
         Ola,
     },
@@ -99,38 +99,13 @@ pub fn run_on_function(function: &mut Function<Ola>) {
     for (block, ret_id) in epilogues {
         if adj > 0 {
             // insert: sub fp fp size
-            let not_size = function.data.create_inst(Instruction::new(
-                InstructionData {
-                    opcode: Opcode::NOT,
-                    operands: vec![
-                        Operand::input_output(GR::R7.into()),
-                        Operand::input(adj.into()),
-                    ],
-                },
-                block,
-            ));
-            function.layout.insert_inst_before(ret_id, not_size, block);
-
-            let add_one = function.data.create_inst(Instruction::new(
-                InstructionData {
-                    opcode: Opcode::ADDri,
-                    operands: vec![
-                        Operand::output(GR::R7.into()),
-                        Operand::input_output(GR::R7.into()),
-                        Operand::input(OperandData::Int64(1)),
-                    ],
-                },
-                block,
-            ));
-            function.layout.insert_inst_before(ret_id, add_one, block);
-
             let add_fp = function.data.create_inst(Instruction::new(
                 InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
                         Operand::output(GR::R8.into()),
                         Operand::input_output(GR::R8.into()),
-                        Operand::input(GR::R7.into()),
+                        Operand::input((-adj).into()),
                     ],
                 },
                 block,
