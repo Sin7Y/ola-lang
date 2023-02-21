@@ -6,6 +6,7 @@ use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
 use crate::irgen::functions::gen_functions;
+use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
@@ -18,6 +19,7 @@ pub struct Binary<'a> {
     pub module: Module<'a>,
     pub builder: Builder<'a>,
     pub(crate) context: &'a Context,
+    pub loops: Vec<(BasicBlock<'a>, BasicBlock<'a>)>,
 }
 
 impl<'a> Binary<'a> {
@@ -54,6 +56,7 @@ impl<'a> Binary<'a> {
             module,
             builder,
             context,
+            loops: Vec::new(),
         }
     }
 

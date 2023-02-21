@@ -2,7 +2,7 @@ use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
-use inkwell::values::{BasicValueEnum, FunctionValue};
+use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use std::collections::HashMap;
 
 /// Emit all functions, constructors, fallback and receiver
@@ -77,7 +77,7 @@ pub(super) fn gen_function<'a>(
 
     let mut var_table: HashMap<usize, BasicValueEnum<'a>> = HashMap::new();
     // populate the argument variables
-    populate_arguments(func, func_val, &mut var_table);
+    populate_arguments(bin, func, func_val, &mut var_table, ns);
 
     for stmt in &func.body {
         statement(stmt, bin, func, func_val, &mut var_table, ns);
@@ -86,17 +86,20 @@ pub(super) fn gen_function<'a>(
 
 /// Populate the arguments of a function
 pub(crate) fn populate_arguments<'a>(
+    bin: &mut Binary<'a>,
     func: &Function,
     func_val: FunctionValue<'a>,
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
+    ns: &Namespace,
 ) {
     for (i, arg) in func.get_symbol_table().arguments.iter().enumerate() {
         if let Some(pos) = arg {
+            let var = &func.get_symbol_table().vars[pos];
             let arg_val = func_val.get_nth_param(i as u32).unwrap();
-            // let alloc =
-            //     bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns),
-            // var.id.name.as_str());
-            var_table.insert(*pos, arg_val);
+            let alloc =
+                bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());
+            var_table.insert(*pos, alloc.as_basic_value_enum());
+            bin.builder.build_store(alloc, arg_val);
         }
     }
 }

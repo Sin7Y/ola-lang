@@ -26,18 +26,26 @@ The following shows a simple contract for calculating the Fibonacci function
 contract Fibonacci {
 
     fn main() {
-       fib_recursive(10);
+       fib_non_recursive(10);
     }
 
     fn fib_recursive(u32 n) -> (u32) {
-        if (n == 1) {
+        if (n == 1 || n == 2) {
             return 1;
         }
-        if (n == 2) {
-            return 1;
-        }
-
         return fib_recursive(n -1) + fib_recursive(n -2);
+    }
+
+    fn fib_non_recursive(u32 n) -> (u32) {
+        u32 first = 0;
+        u32 second = 1;
+        u32 third = 1;
+        for (u32 i = 2; i <= n; i++) {
+             third = first + second;
+             first = second;
+             second = third;
+        }
+        return third;
     }
 
 }
