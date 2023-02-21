@@ -36,7 +36,6 @@ mod test {
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
-
         // Display the machine module as assembly
         assert_eq!(
             format!("{}", mach_module.display_asm()),
@@ -53,9 +52,7 @@ mod test {
   add r7 r7 1
   add r3 r2 r7
   mov r0 r3
-  not r7 1
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -1
   ret 
 "
         );
@@ -125,9 +122,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
   call bar
   mstore [r8,-3] r0
   mload r0 [r8,-3]
-  not r7 7
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -7
   end 
 bar:
 .LBL1_0:
@@ -141,9 +136,7 @@ bar:
   add r0 r1 r2
   mstore [r8,-1] r0
   mload r0 [r8,-1]
-  not r7 3
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -3
   ret 
 "
         );
@@ -202,9 +195,7 @@ bar:
   mstore [r8,-2] r8
   mov r1 10
   call fib_recursive
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 fib_recursive:
 .LBL1_0:
@@ -218,9 +209,7 @@ fib_recursive:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
   ret 
 .LBL1_2:
   mload r0 [r8,-7]
@@ -229,9 +218,7 @@ fib_recursive:
   jmp .LBL1_4
 .LBL1_3:
   mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
   ret 
 .LBL1_4:
   not r7 1
@@ -251,9 +238,7 @@ fib_recursive:
   add r0 r1 r0
   mstore [r8,-5] r0
   mload r0 [r8,-5]
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
   ret 
 "
         );

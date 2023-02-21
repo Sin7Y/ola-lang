@@ -291,9 +291,7 @@ mod test {
   mstore [r8,-2] r8
   mov r1 1
   call eq
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 eq:
 .LBL1_0:
@@ -352,9 +350,7 @@ eq:
   mstore [r8,-2] r8
   mov r1 1
   call ne
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 ne:
 .LBL1_0:
@@ -413,9 +409,7 @@ ne:
   mstore [r8,-2] r8
   mov r1 1
   call ge
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 ge:
 .LBL1_0:
@@ -474,9 +468,7 @@ ge:
   mstore [r8,-2] r8
   mov r1 1
   call gt
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 gt:
 .LBL1_0:
@@ -536,9 +528,7 @@ gt:
   mstore [r8,-2] r8
   mov r1 1
   call lt
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 eq:
 .LBL1_0:
@@ -599,9 +589,7 @@ eq:
   mstore [r8,-2] r8
   mov r1 1
   call le
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -4
   end 
 le:
 .LBL1_0:
