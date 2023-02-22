@@ -30,7 +30,7 @@ contract Fibonacci {
     }
 
     fn fib_recursive(u32 n) -> (u32) {
-        if (n == 1 || n == 2) {
+        if (n <= 2) {
             return 1;
         }
         return fib_recursive(n -1) + fib_recursive(n -2);
@@ -54,41 +54,81 @@ contract Fibonacci {
 ### Generating LLVM IR code using Ola compiler front-end
 
 ```
-ModuleID = 'Fibonacci'
-source_filename = "test.ola"
+; ModuleID = 'Fibonacci'
+source_filename = "fib.ola"
 
 define void @main() {
 entry:
-  %0 = call i32 @fib_recursive(i32 10)
+  %0 = call i32 @fib_non_recursive(i32 10)
   ret void
 }
 
 define i32 @fib_recursive(i32 %0) {
 entry:
-  %1 = icmp eq i32 %0, 1
-  br i1 %1, label %then, label %enif
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ule i32 %1, 2
+  br i1 %2, label %then, label %enif
 
 then:                                             ; preds = %entry
   ret i32 1
 
 enif:                                             ; preds = %entry
-  %2 = icmp eq i32 %0, 2
-  br i1 %2, label %then1, label %enif2
+  %3 = load i32, i32* %n, align 4
+  %4 = sub i32 %3, 1
+  %5 = call i32 @fib_recursive(i32 %4)
+  %6 = load i32, i32* %n, align 4
+  %7 = sub i32 %6, 2
+  %8 = call i32 @fib_recursive(i32 %7)
+  %9 = add i32 %5, %8
+  ret i32 %9
+}
 
-then1:                                            ; preds = %enif
-  ret i32 1
+define i32 @fib_non_recursive(i32 %0) {
+entry:
+  %i = alloca i32, align 4
+  %third = alloca i32, align 4
+  %second = alloca i32, align 4
+  %first = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 0, i32* %first, align 4
+  store i32 1, i32* %second, align 4
+  store i32 1, i32* %third, align 4
+  store i32 2, i32* %i, align 4
+  br label %cond
 
-enif2:                                            ; preds = %enif
-  %3 = sub i32 %0, 1
-  %4 = call i32 @fib_recursive(i32 %3)
-  %5 = sub i32 %0, 2
-  %6 = call i32 @fib_recursive(i32 %5)
-  %7 = add i32 %4, %6
-  ret i32 %7
+cond:                                             ; preds = %next, %entry
+  %1 = load i32, i32* %i, align 4
+  %2 = load i32, i32* %n, align 4
+  %3 = icmp ule i32 %1, %2
+  br i1 %3, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %4 = load i32, i32* %first, align 4
+  %5 = load i32, i32* %second, align 4
+  %6 = add i32 %4, %5
+  store i32 %6, i32* %third, align 4
+  %7 = load i32, i32* %second, align 4
+  store i32 %7, i32* %first, align 4
+  %8 = load i32, i32* %third, align 4
+  store i32 %8, i32* %second, align 4
+  br label %next
+
+next:                                             ; preds = %body
+  %9 = load i32, i32* %i, align 4
+  %10 = add i32 %9, 1
+  store i32 %10, i32* %i, align 4
+  br label %cond
+
+endfor:                                           ; preds = %cond
+  %11 = load i32, i32* %third, align 4
+  ret i32 %11
 }
 ```
 
-### Generating Ola assemble code using Ola compiler back-end
+### Generating Ola assembly code using Ola compiler back-end
 
 ```
 main:
@@ -96,10 +136,8 @@ main:
   add r8 r8 4
   mstore [r8,-2] r8
   mov r1 10
-  call fib_recursive
-  not r7 4
-  add r7 r7 1
-  add r8 r8 r7
+  call fib_non_recursive
+  add r8 r8 -4
   end 
 fib_recursive:
 .LBL1_0:
@@ -108,36 +146,24 @@ fib_recursive:
   mov r0 r1
   mstore [r8,-7] r0
   mload r0 [r8,-7]
-  eq r0 1
-  cjmp .LBL1_1
+  mov r7 2
+  gte r0 r7 r0
+  cjmp r0 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
   ret 
 .LBL1_2:
   mload r0 [r8,-7]
-  eq r0 2
-  cjmp .LBL1_3
-  jmp .LBL1_4
-.LBL1_3:
-  mov r0 1
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
-  ret 
-.LBL1_4:
   not r7 1
   add r7 r7 1
-  mload r0 [r8,-7]
   add r1 r0 r7
   call fib_recursive
   mstore [r8,-3] r0
+  mload r0 [r8,-7]
   not r7 2
   add r7 r7 1
-  mload r0 [r8,-7]
   add r0 r0 r7
   mstore [r8,-5] r0
   mload r1 [r8,-5]
@@ -146,9 +172,46 @@ fib_recursive:
   add r0 r1 r0
   mstore [r8,-6] r0
   mload r0 [r8,-6]
-  not r7 9
-  add r7 r7 1
-  add r8 r8 r7
+  add r8 r8 -9
+  ret 
+fib_non_recursive:
+.LBL2_0:
+  add r8 r8 5
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 0
+  mstore [r8,-2] r0
+  mov r0 1
+  mstore [r8,-3] r0
+  mov r0 1
+  mstore [r8,-4] r0
+  mov r0 2
+  mstore [r8,-5] r0
+  jmp .LBL2_1
+.LBL2_1:
+  mload r0 [r8,-5]
+  mload r1 [r8,-1]
+  gte r0 r1 r0
+  cjmp r0 .LBL2_2
+  jmp .LBL2_4
+.LBL2_2:
+  mload r1 [r8,-2]
+  mload r2 [r8,-3]
+  add r0 r1 r2
+  mstore [r8,-4] r0
+  mload r0 [r8,-3]
+  mstore [r8,-2] r0
+  mload r0 [r8,-4]
+  mstore [r8,-3] r0
+  jmp .LBL2_3
+.LBL2_3:
+  mload r1 [r8,-5]
+  add r0 r1 1
+  mstore [r8,-5] r0
+  jmp .LBL2_1
+.LBL2_4:
+  mload r0 [r8,-4]
+  add r8 r8 -5
   ret 
 ```
 
