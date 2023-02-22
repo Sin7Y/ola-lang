@@ -557,10 +557,9 @@ pub fn expression(
             equal(loc, l, r, context, ns, symtable, diagnostics)
         }
 
-        program::Expression::NotEqual(loc, l, r) => Ok(Expression::Not(
-            *loc,
-            Box::new(equal(loc, l, r, context, ns, symtable, diagnostics)?),
-        )),
+        program::Expression::NotEqual(loc, l, r) => {
+            not_equal(loc, l, r, context, ns, symtable, diagnostics)
+        }
         // unary expressions
         program::Expression::Not(loc, e) => {
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
@@ -1214,6 +1213,32 @@ fn equal(
 
     let ty = coerce(&left_type, &l.loc(), &right_type, &r.loc(), ns, diagnostics)?;
     Ok(Expression::Equal(
+        *loc,
+        Box::new(left.cast(&l.loc(), &ty, ns, diagnostics)?),
+        Box::new(right.cast(&r.loc(), &ty, ns, diagnostics)?),
+    ))
+}
+
+/// Test for equality; first check string equality, then integer equality
+fn not_equal(
+    loc: &Loc,
+    l: &program::Expression,
+    r: &program::Expression,
+    context: &ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    let left = expression(l, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
+    let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Integer)?;
+
+    check_var_usage_expression(ns, &left, &right, symtable);
+
+    let left_type = left.ty();
+    let right_type = right.ty();
+
+    let ty = coerce(&left_type, &l.loc(), &right_type, &r.loc(), ns, diagnostics)?;
+    Ok(Expression::NotEqual(
         *loc,
         Box::new(left.cast(&l.loc(), &ty, ns, diagnostics)?),
         Box::new(right.cast(&r.loc(), &ty, ns, diagnostics)?),
