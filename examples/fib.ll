@@ -1,5 +1,5 @@
 ; ModuleID = 'Fibonacci'
-source_filename = "examples/fib.ola"
+source_filename = "fib.ola"
 
 define void @main() {
 entry:
@@ -12,24 +12,21 @@ entry:
   %n = alloca i32, align 4
   store i32 %0, i32* %n, align 4
   %1 = load i32, i32* %n, align 4
-  %2 = icmp eq i32 %1, 1
-  %3 = load i32, i32* %n, align 4
-  %4 = icmp eq i32 %3, 2
-  %5 = or i1 %2, %4
-  br i1 %5, label %then, label %enif
+  %2 = icmp ule i32 %1, 2
+  br i1 %2, label %then, label %enif
 
 then:                                             ; preds = %entry
   ret i32 1
 
 enif:                                             ; preds = %entry
+  %3 = load i32, i32* %n, align 4
+  %4 = sub i32 %3, 1
+  %5 = call i32 @fib_recursive(i32 %4)
   %6 = load i32, i32* %n, align 4
-  %7 = sub i32 %6, 1
+  %7 = sub i32 %6, 2
   %8 = call i32 @fib_recursive(i32 %7)
-  %9 = load i32, i32* %n, align 4
-  %10 = sub i32 %9, 2
-  %11 = call i32 @fib_recursive(i32 %10)
-  %12 = add i32 %8, %11
-  ret i32 %12
+  %9 = add i32 %5, %8
+  ret i32 %9
 }
 
 define i32 @fib_non_recursive(i32 %0) {
