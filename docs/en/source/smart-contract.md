@@ -16,7 +16,7 @@ contract Fibonacci {
     }
 
     fn fib_recursive(u32 n) -> (u32) {
-        if (n == 1 || n == 2) {
+        if (n <= 2) {
             return 1;
         }
         return fib_recursive(n -1) + fib_recursive(n -2);

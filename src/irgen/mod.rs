@@ -19,19 +19,22 @@ impl ast::Contract {
     }
 }
 
-#[test]
-fn gen_ir_test() {
+#[cfg(test)]
+mod test {
     use crate::file_resolver::FileResolver;
     use std::ffi::OsStr;
-    let mut resolver = FileResolver::new();
-    let source = r#" contract Fibonacci {
+
+    #[test]
+    fn gen_ir_fibo_test() {
+        let mut resolver = FileResolver::new();
+        let source = r#" contract Fibonacci {
 
     fn main() {
        fib_non_recursive(10);
     }
 
     fn fib_recursive(u32 n) -> (u32) {
-        if (n == 1 || n == 2) {
+        if (n <= 2) {
             return 1;
         }
         return fib_recursive(n -1) + fib_recursive(n -2);
@@ -52,21 +55,21 @@ fn gen_ir_test() {
 }
 
     "#;
-    resolver.set_file_contents("test.ola", source.to_string());
+        resolver.set_file_contents("test.ola", source.to_string());
 
-    let file_name = OsStr::new("test.ola");
-    // resolve phase
-    let ns = crate::parse_and_resolve(file_name, &mut resolver);
+        let file_name = OsStr::new("test.ola");
+        // resolve phase
+        let ns = crate::parse_and_resolve(file_name, &mut resolver);
 
-    for contract_no in 0..ns.contracts.len() {
-        let resolved_contract = &ns.contracts[contract_no];
-        let context = inkwell::context::Context::create();
-        let filename_string = file_name.to_string_lossy();
+        for contract_no in 0..ns.contracts.len() {
+            let resolved_contract = &ns.contracts[contract_no];
+            let context = inkwell::context::Context::create();
+            let filename_string = file_name.to_string_lossy();
 
-        let binary = resolved_contract.binary(&ns, &context, &filename_string);
-        let ir = binary.module.to_string();
-        assert_eq!(
-            r#"; ModuleID = 'Fibonacci'
+            let binary = resolved_contract.binary(&ns, &context, &filename_string);
+            let ir = binary.module.to_string();
+            assert_eq!(
+                r#"; ModuleID = 'Fibonacci'
 source_filename = "test.ola"
 
 define void @main() {
@@ -80,24 +83,21 @@ entry:
   %n = alloca i32, align 4
   store i32 %0, i32* %n, align 4
   %1 = load i32, i32* %n, align 4
-  %2 = icmp eq i32 %1, 1
-  %3 = load i32, i32* %n, align 4
-  %4 = icmp eq i32 %3, 2
-  %5 = or i1 %2, %4
-  br i1 %5, label %then, label %enif
+  %2 = icmp ule i32 %1, 2
+  br i1 %2, label %then, label %enif
 
 then:                                             ; preds = %entry
   ret i32 1
 
 enif:                                             ; preds = %entry
+  %3 = load i32, i32* %n, align 4
+  %4 = sub i32 %3, 1
+  %5 = call i32 @fib_recursive(i32 %4)
   %6 = load i32, i32* %n, align 4
-  %7 = sub i32 %6, 1
+  %7 = sub i32 %6, 2
   %8 = call i32 @fib_recursive(i32 %7)
-  %9 = load i32, i32* %n, align 4
-  %10 = sub i32 %9, 2
-  %11 = call i32 @fib_recursive(i32 %10)
-  %12 = add i32 %8, %11
-  ret i32 %12
+  %9 = add i32 %5, %8
+  ret i32 %9
 }
 
 define i32 @fib_non_recursive(i32 %0) {
@@ -142,7 +142,336 @@ endfor:                                           ; preds = %cond
   ret i32 %11
 }
 "#,
-            ir
-        );
+                ir
+            );
+        }
+    }
+
+    #[test]
+    fn gen_ir_cond_br_test() {
+        let mut resolver = FileResolver::new();
+        let source = r#" contract condCmp {
+
+    fn main() {
+       eq_rr(1);
+    }
+
+    fn eq_ri(u32 n) -> (u32) {
+      if (n == 1) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn eq_rr(u32 n) -> (u32) {
+      u32 m = 1;
+      if (n == m) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn neq_ri(u32 n) -> (u32) {
+      if (n != 1) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn neq_rr(u32 n) -> (u32) {
+      u32 m = 1;
+      if (n != m) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn lt_ri(u32 n) -> (u32) {
+      if (n < 1) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn lt_rr(u32 n) -> (u32) {
+      u32 m = 1;
+      if (n < m) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn lte_ri(u32 n) -> (u32) {
+      if (n <= 1) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn lte_rr(u32 n) -> (u32) {
+      u32 m = 1;
+      if (n <= m) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn gt_ri(u32 n) -> (u32) {
+      if (n > 1) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn gt_rr(u32 n) -> (u32) {
+      u32 m = 1;
+      if (n > m) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn gte_ri(u32 n) -> (u32) {
+      if (n >= 1) {
+        return 2;
+      }
+      return 3;
+    }
+
+    fn gte_rr(u32 n) -> (u32) {
+      u32 m = 1;
+      if (n >= m) {
+        return 2;
+      }
+      return 3;
+    }
+
+}
+
+    "#;
+        resolver.set_file_contents("test.ola", source.to_string());
+
+        let file_name = OsStr::new("test.ola");
+        // resolve phase
+        let ns = crate::parse_and_resolve(file_name, &mut resolver);
+
+        for contract_no in 0..ns.contracts.len() {
+            let resolved_contract = &ns.contracts[contract_no];
+            let context = inkwell::context::Context::create();
+            let filename_string = file_name.to_string_lossy();
+
+            let binary = resolved_contract.binary(&ns, &context, &filename_string);
+            let ir = binary.module.to_string();
+            assert_eq!(
+                r#"; ModuleID = 'condCmp'
+source_filename = "test.ola"
+
+define void @main() {
+entry:
+  %0 = call i32 @eq_rr(i32 1)
+  ret void
+}
+
+define i32 @eq_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp eq i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @eq_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp eq i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @neq_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ne i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @neq_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ne i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lt_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ult i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lt_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ult i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lte_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ule i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lte_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ule i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gt_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ugt i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gt_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ugt i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gte_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp uge i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gte_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp uge i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+"#,
+                ir
+            );
+        }
     }
 }

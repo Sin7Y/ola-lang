@@ -143,41 +143,82 @@ bar:
     }
 
     #[test]
-    fn codegen_fib_recursive_test() {
+    fn codegen_fib_test() {
         // LLVM Assembly
         let asm = r#"
     ; ModuleID = 'Fibonacci'
-    source_filename = "../../examples/fib.ola"
-    
-    define void @main() {
-    entry:
-      %0 = call i32 @fib_recursive(i32 10)
-      ret void
-    }
-    
-    define i32 @fib_recursive(i32 %0) {
-    entry:
-      %1 = icmp eq i32 %0, 1
-      br i1 %1, label %then, label %enif
-    
-    then:                                             ; preds = %entry
-      ret i32 1
-    
-    enif:                                             ; preds = %entry
-      %2 = icmp eq i32 %0, 2
-      br i1 %2, label %then1, label %enif2
-    
-    then1:                                            ; preds = %enif
-      ret i32 1
-    
-    enif2:                                            ; preds = %enif
-      %3 = sub i32 %0, 1
-      %4 = call i32 @fib_recursive(i32 %3)
-      %5 = sub i32 %0, 2
-      %6 = call i32 @fib_recursive(i32 %5)
-      %7 = add i32 %4, %6
-      ret i32 %7
-    }
+source_filename = "fib.ola"
+
+define void @main() {
+entry:
+  %0 = call i32 @fib_non_recursive(i32 10)
+  ret void
+}
+
+define i32 @fib_recursive(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ule i32 %1, 2
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 1
+
+enif:                                             ; preds = %entry
+  %3 = load i32, i32* %n, align 4
+  %4 = sub i32 %3, 1
+  %5 = call i32 @fib_recursive(i32 %4)
+  %6 = load i32, i32* %n, align 4
+  %7 = sub i32 %6, 2
+  %8 = call i32 @fib_recursive(i32 %7)
+  %9 = add i32 %5, %8
+  ret i32 %9
+}
+
+define i32 @fib_non_recursive(i32 %0) {
+entry:
+  %i = alloca i32, align 4
+  %third = alloca i32, align 4
+  %second = alloca i32, align 4
+  %first = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 0, i32* %first, align 4
+  store i32 1, i32* %second, align 4
+  store i32 1, i32* %third, align 4
+  store i32 2, i32* %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %next, %entry
+  %1 = load i32, i32* %i, align 4
+  %2 = load i32, i32* %n, align 4
+  %3 = icmp ule i32 %1, %2
+  br i1 %3, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %4 = load i32, i32* %first, align 4
+  %5 = load i32, i32* %second, align 4
+  %6 = add i32 %4, %5
+  store i32 %6, i32* %third, align 4
+  %7 = load i32, i32* %second, align 4
+  store i32 %7, i32* %first, align 4
+  %8 = load i32, i32* %third, align 4
+  store i32 %8, i32* %second, align 4
+  br label %next
+
+next:                                             ; preds = %body
+  %9 = load i32, i32* %i, align 4
+  %10 = add i32 %9, 1
+  store i32 %10, i32* %i, align 4
+  br label %cond
+
+endfor:                                           ; preds = %cond
+  %11 = load i32, i32* %third, align 4
+  ret i32 %11
+}
+
 "#;
 
         // Parse the assembly and get a module
@@ -194,7 +235,7 @@ bar:
   add r8 r8 4
   mstore [r8,-2] r8
   mov r1 10
-  call fib_recursive
+  call fib_non_recursive
   add r8 r8 -4
   end 
 fib_recursive:
@@ -204,7 +245,8 @@ fib_recursive:
   mov r0 r1
   mstore [r8,-7] r0
   mload r0 [r8,-7]
-  eq r0 r0 1
+  mov r7 2
+  gte r0 r7 r0
   cjmp r0 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
@@ -213,32 +255,524 @@ fib_recursive:
   ret 
 .LBL1_2:
   mload r0 [r8,-7]
-  eq r0 r0 2
-  cjmp r0 .LBL1_3
-  jmp .LBL1_4
-.LBL1_3:
-  mov r0 1
-  add r8 r8 -9
-  ret 
-.LBL1_4:
   not r7 1
   add r7 r7 1
-  mload r0 [r8,-7]
   add r1 r0 r7
   call fib_recursive
-  mstore [r8,-4] r0
+  mstore [r8,-3] r0
+  mload r0 [r8,-7]
   not r7 2
   add r7 r7 1
-  mload r0 [r8,-7]
   add r0 r0 r7
-  mstore [r8,-6] r0
-  mload r1 [r8,-6]
-  call fib_recursive
-  mload r1 [r8,-4]
-  add r0 r1 r0
   mstore [r8,-5] r0
-  mload r0 [r8,-5]
+  mload r1 [r8,-5]
+  call fib_recursive
+  mload r1 [r8,-3]
+  add r0 r1 r0
+  mstore [r8,-6] r0
+  mload r0 [r8,-6]
   add r8 r8 -9
+  ret 
+fib_non_recursive:
+.LBL2_0:
+  add r8 r8 5
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 0
+  mstore [r8,-2] r0
+  mov r0 1
+  mstore [r8,-3] r0
+  mov r0 1
+  mstore [r8,-4] r0
+  mov r0 2
+  mstore [r8,-5] r0
+  jmp .LBL2_1
+.LBL2_1:
+  mload r0 [r8,-5]
+  mload r1 [r8,-1]
+  gte r0 r1 r0
+  cjmp r0 .LBL2_2
+  jmp .LBL2_4
+.LBL2_2:
+  mload r1 [r8,-2]
+  mload r2 [r8,-3]
+  add r0 r1 r2
+  mstore [r8,-4] r0
+  mload r0 [r8,-3]
+  mstore [r8,-2] r0
+  mload r0 [r8,-4]
+  mstore [r8,-3] r0
+  jmp .LBL2_3
+.LBL2_3:
+  mload r1 [r8,-5]
+  add r0 r1 1
+  mstore [r8,-5] r0
+  jmp .LBL2_1
+.LBL2_4:
+  mload r0 [r8,-4]
+  add r8 r8 -5
+  ret 
+"
+        );
+    }
+
+    #[test]
+    fn codegen_condbr_test() {
+        // LLVM Assembly
+        let asm = r#"
+  source_filename = "test.ola"
+
+define void @main() {
+entry:
+  %0 = call i32 @eq_rr(i32 1)
+  ret void
+}
+
+define i32 @eq_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp eq i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @eq_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp eq i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @neq_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ne i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @neq_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ne i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lt_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ult i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lt_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ult i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lte_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ule i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @lte_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ule i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gt_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp ugt i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gt_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp ugt i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gte_ri(i32 %0) {
+entry:
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = icmp uge i32 %1, 1
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+
+define i32 @gte_rr(i32 %0) {
+entry:
+  %m = alloca i32, align 4
+  %n = alloca i32, align 4
+  store i32 %0, i32* %n, align 4
+  store i32 1, i32* %m, align 4
+  %1 = load i32, i32* %n, align 4
+  %2 = load i32, i32* %m, align 4
+  %3 = icmp uge i32 %1, %2
+  br i1 %3, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i32 2
+
+enif:                                             ; preds = %entry
+  ret i32 3
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+        // Display the machine module as assembly
+        assert_eq!(
+            format!("{}", mach_module.display_asm()),
+            "main:
+.LBL0_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 1
+  call eq_rr
+  add r8 r8 -4
+  end 
+eq_ri:
+.LBL1_0:
+  add r8 r8 1
+  mov r0 r1
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  eq r0 r0 1
+  cjmp r0 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mov r0 2
+  add r8 r8 -1
+  ret 
+.LBL1_2:
+  mov r0 3
+  add r8 r8 -1
+  ret 
+eq_rr:
+.LBL2_0:
+  add r8 r8 2
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 1
+  mstore [r8,-2] r0
+  mload r0 [r8,-1]
+  mload r1 [r8,-2]
+  eq r0 r0 r1
+  cjmp r0 .LBL2_1
+  jmp .LBL2_2
+.LBL2_1:
+  mov r0 2
+  add r8 r8 -2
+  ret 
+.LBL2_2:
+  mov r0 3
+  add r8 r8 -2
+  ret 
+neq_ri:
+.LBL3_0:
+  add r8 r8 1
+  mov r0 r1
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  neq r0 r0 1
+  cjmp r0 .LBL3_1
+  jmp .LBL3_2
+.LBL3_1:
+  mov r0 2
+  add r8 r8 -1
+  ret 
+.LBL3_2:
+  mov r0 3
+  add r8 r8 -1
+  ret 
+neq_rr:
+.LBL4_0:
+  add r8 r8 2
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 1
+  mstore [r8,-2] r0
+  mload r0 [r8,-1]
+  mload r1 [r8,-2]
+  neq r0 r0 r1
+  cjmp r0 .LBL4_1
+  jmp .LBL4_2
+.LBL4_1:
+  mov r0 2
+  add r8 r8 -2
+  ret 
+.LBL4_2:
+  mov r0 3
+  add r8 r8 -2
+  ret 
+lt_ri:
+.LBL5_0:
+  add r8 r8 1
+  mstore [r8,-1] r1
+  mload r1 [r8,-1]
+  mov r2 1
+  gte r2 r2 r1
+  neq r0 r1 1
+  and r2 r2 r0
+  cjmp r2 .LBL5_1
+  jmp .LBL5_2
+.LBL5_1:
+  mov r0 2
+  add r8 r8 -1
+  ret 
+.LBL5_2:
+  mov r0 3
+  add r8 r8 -1
+  ret 
+lt_rr:
+.LBL6_0:
+  add r8 r8 2
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 1
+  mstore [r8,-2] r0
+  mload r0 [r8,-1]
+  mload r1 [r8,-2]
+  gte r2 r1 r0
+  neq r0 r0 r1
+  and r2 r2 r0
+  cjmp r2 .LBL6_1
+  jmp .LBL6_2
+.LBL6_1:
+  mov r0 2
+  add r8 r8 -2
+  ret 
+.LBL6_2:
+  mov r0 3
+  add r8 r8 -2
+  ret 
+lte_ri:
+.LBL7_0:
+  add r8 r8 1
+  mov r0 r1
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  mov r7 1
+  gte r0 r7 r0
+  cjmp r0 .LBL7_1
+  jmp .LBL7_2
+.LBL7_1:
+  mov r0 2
+  add r8 r8 -1
+  ret 
+.LBL7_2:
+  mov r0 3
+  add r8 r8 -1
+  ret 
+lte_rr:
+.LBL8_0:
+  add r8 r8 2
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 1
+  mstore [r8,-2] r0
+  mload r0 [r8,-1]
+  mload r1 [r8,-2]
+  gte r0 r1 r0
+  cjmp r0 .LBL8_1
+  jmp .LBL8_2
+.LBL8_1:
+  mov r0 2
+  add r8 r8 -2
+  ret 
+.LBL8_2:
+  mov r0 3
+  add r8 r8 -2
+  ret 
+gt_ri:
+.LBL9_0:
+  add r8 r8 1
+  mstore [r8,-1] r1
+  mload r1 [r8,-1]
+  gte r2 r1 1
+  neq r0 r1 1
+  and r2 r2 r0
+  cjmp r2 .LBL9_1
+  jmp .LBL9_2
+.LBL9_1:
+  mov r0 2
+  add r8 r8 -1
+  ret 
+.LBL9_2:
+  mov r0 3
+  add r8 r8 -1
+  ret 
+gt_rr:
+.LBL10_0:
+  add r8 r8 2
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 1
+  mstore [r8,-2] r0
+  mload r0 [r8,-1]
+  mload r1 [r8,-2]
+  gte r2 r0 r1
+  neq r0 r0 r1
+  and r2 r2 r0
+  cjmp r2 .LBL10_1
+  jmp .LBL10_2
+.LBL10_1:
+  mov r0 2
+  add r8 r8 -2
+  ret 
+.LBL10_2:
+  mov r0 3
+  add r8 r8 -2
+  ret 
+gte_ri:
+.LBL11_0:
+  add r8 r8 1
+  mov r0 r1
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  gte r0 r0 1
+  cjmp r0 .LBL11_1
+  jmp .LBL11_2
+.LBL11_1:
+  mov r0 2
+  add r8 r8 -1
+  ret 
+.LBL11_2:
+  mov r0 3
+  add r8 r8 -1
+  ret 
+gte_rr:
+.LBL12_0:
+  add r8 r8 2
+  mov r0 r1
+  mstore [r8,-1] r0
+  mov r0 1
+  mstore [r8,-2] r0
+  mload r0 [r8,-1]
+  mload r1 [r8,-2]
+  gte r0 r0 r1
+  cjmp r0 .LBL12_1
+  jmp .LBL12_2
+.LBL12_1:
+  mov r0 2
+  add r8 r8 -2
+  ret 
+.LBL12_2:
+  mov r0 3
+  add r8 r8 -2
   ret 
 "
         );

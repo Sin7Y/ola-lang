@@ -203,7 +203,7 @@ pub fn lower_condbr(
             Value::Constant(ConstantValue::Null(_)) => {
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
-                        opcode: Opcode::GTE,
+                        opcode: Opcode::EQrr,
                         operands: vec![MO::input(lhs.into()), MO::new(0.into())],
                     },
                     ctx.block_map[&ctx.cur_block],
@@ -211,14 +211,139 @@ pub fn lower_condbr(
             }
             Value::Argument(_) | Value::Instruction(_) => {
                 assert!(ty.is_i32() || ty.is_i64());
-                let rhs = get_operand_for_val(ctx, *ty, args[1])?;
-                ctx.inst_seq.push(MachInstruction::new(
-                    InstructionData {
-                        opcode: Opcode::GTE, // TODO: CMPrr64
-                        operands: vec![MO::input(lhs.into()), MO::input(rhs.into())],
-                    },
-                    ctx.block_map[&ctx.cur_block],
-                ));
+                let rhs_reg = get_operand_for_val(ctx, *ty, args[1])?;
+                match cond {
+                    ICmpCond::Eq => {
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::EQrr,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input(lhs.into()),
+                                    MO::input(rhs_reg.into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                    }
+                    ICmpCond::Ne => {
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::NEQ,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input(lhs.into()),
+                                    MO::input(rhs_reg.into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                    }
+                    ICmpCond::Sge | ICmpCond::Uge => {
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::GTE,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input(lhs.into()),
+                                    MO::input(rhs_reg.into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                    }
+                    ICmpCond::Sle | ICmpCond::Ule => {
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::GTE,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input(rhs_reg.into()),
+                                    MO::input(lhs.into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                    }
+                    ICmpCond::Sgt | ICmpCond::Ugt => {
+                        let inst = MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::GTE,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input(lhs.into()),
+                                    MO::input(rhs_reg.clone().into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        );
+                        ctx.inst_seq.push(inst);
+                        let output2 = ctx.mach_data.vregs.add_vreg_data(*ty);
+                        ctx.inst_id_to_vreg.insert(icmp, output2);
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::NEQ,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output2)),
+                                    MO::input(lhs.into()),
+                                    MO::input(rhs_reg.clone().into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::AND,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input_output(OperandData::VReg(output)),
+                                    MO::input(OperandData::VReg(output2)),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                    }
+                    ICmpCond::Slt | ICmpCond::Ult => {
+                        let inst = MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::GTE,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input(rhs_reg.clone().into()),
+                                    MO::input(lhs.into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        );
+                        ctx.inst_seq.push(inst);
+                        let output2 = ctx.mach_data.vregs.add_vreg_data(*ty);
+                        ctx.inst_id_to_vreg.insert(icmp, output2);
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::NEQ,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output2)),
+                                    MO::input(lhs.into()),
+                                    MO::input(rhs_reg.clone().into()),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::AND,
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output)),
+                                    MO::input_output(OperandData::VReg(output)),
+                                    MO::input(OperandData::VReg(output2)),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                    }
+                };
             }
             e => return Err(LoweringError::Todo(format!("Unsupported operand: {:?}", e)).into()),
         }
