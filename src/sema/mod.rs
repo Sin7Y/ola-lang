@@ -7,7 +7,7 @@ use ola_parser::{parse, program};
 use std::ffi::OsStr;
 
 pub mod ast;
-pub mod builtin;
+pub mod corelib;
 pub(crate) mod contracts;
 pub mod diagnostics;
 mod dotgraphviz;
@@ -22,6 +22,7 @@ mod tests;
 mod types;
 mod unused_variable;
 mod variables;
+pub mod function_call;
 
 pub type ArrayDimension = Option<(program::Loc, BigInt)>;
 

@@ -13,6 +13,7 @@ use inkwell::module::Module;
 use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
 use inkwell::values::{IntValue, PointerValue};
 use inkwell::AddressSpace;
+use crate::irgen::corelib::gen_lib_functions;
 
 pub struct Binary<'a> {
     pub name: String,
@@ -31,7 +32,7 @@ impl<'a> Binary<'a> {
         filename: &'a str,
     ) -> Self {
         let mut binary = Binary::new(context, &contract.name, filename);
-
+        gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
         binary
     }

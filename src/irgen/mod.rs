@@ -4,7 +4,10 @@ pub mod binary;
 mod expression;
 mod functions;
 mod statements;
+mod corelib;
+
 use crate::sema::ast;
+
 
 impl ast::Contract {
     /// Generate the binary. This can be used to generate llvm text, object file

@@ -3,7 +3,7 @@
 use super::ast::*;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
-use super::expression::{call_expr, expression, named_call_expr, ExprContext, ResolveTo};
+use super::function_call::{call_expr, named_call_expr};
 use super::symtable::{LoopScopes, Symtable};
 use crate::sema::symtable::{VariableInitializer, VariableUsage};
 use crate::sema::unused_variable::used_variable;
@@ -11,6 +11,7 @@ use crate::sema::Recurse;
 use ola_parser::program;
 use ola_parser::program::CodeLocation;
 use std::sync::Arc;
+use crate::sema::expression::{ExprContext, expression, ResolveTo};
 
 pub fn resolve_function_body(
     def: &program::FunctionDefinition,

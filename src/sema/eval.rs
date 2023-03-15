@@ -449,26 +449,48 @@ fn eval_constants_in_expression(
 /// a diagnostic.
 fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
     // If the result sign is minus, throw an error.
-    if let Type::Uint(bits) = ty {
-        if let Sign::Minus = result.sign() {
-            return Some(Diagnostic::error(
-                *loc,
-                format!("negative value {} does not fit into type u{}. Cannot implicitly convert signed literal to unsigned type.", result, ty.get_type_size()),
-            ));
-        }
+    match ty {
+        Type::Uint(bits) => {
+            if let Sign::Minus = result.sign() {
+                return Some(Diagnostic::error(
+                    *loc,
+                    format!("negative value {} does not fit into type u{}. Cannot implicitly convert signed literal to unsigned type.", result, ty.get_type_size()),
+                ));
+            }
 
-        // If bits of the result is more than bits of the type, throw and error.
-        if result.bits() > *bits as u64 {
-            return Some(Diagnostic::error(
-                *loc,
-                format!(
-                    "value {} does not fit into type u{}.",
-                    result,
-                    ty.get_type_size(),
-                ),
-            ));
+            // If bits of the result is more than bits of the type, throw and error.
+            if result.bits() > *bits as u64 {
+                return Some(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "value {} does not fit into type u{}.",
+                        result,
+                        ty.get_type_size(),
+                    ),
+                ));
+            }
         }
+        Type::Field => {
+            if let Sign::Minus = result.sign() {
+                return Some(Diagnostic::error(
+                    *loc,
+                    format!("negative value {} does not fit into type field. \
+                    Cannot implicitly convert signed literal to unsigned type.", result),
+                ));
+            }
+            // If bits of the result is more than bits of the type, throw and error.
+            // field cannot
+            if result.gt(&BigInt::from(0xFFFFFFFF00000001_u64)) {
+                return Some(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "value {} does not fit into type field.",
+                        result,
+                    ),
+                ));
+            }
+        }
+        _ => {}
     }
-
     None
 }

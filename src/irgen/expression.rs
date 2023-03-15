@@ -1,9 +1,11 @@
 use crate::irgen::binary::Binary;
-use crate::sema::ast::{Expression, Function, Namespace};
+use crate::sema::ast::{Expression, Function, LibFunc, Namespace, RetrieveType};
 use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
 use std::collections::HashMap;
 
+
+// field only supports + - * / operations, all other operations are not supported
 pub fn expression<'a>(
     expr: &Expression,
     bin: &Binary<'a>,
@@ -35,6 +37,8 @@ pub fn expression<'a>(
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
             bin.builder.build_int_unsigned_div(left, right, "").into()
         }
+
+        // only support u32、u6
         Expression::Modulo(_, _, l, r) => {
             let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
             let right = expression(r, bin, func, func_val, var_table, ns).into_int_value();
