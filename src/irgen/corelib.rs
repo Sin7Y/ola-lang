@@ -13,39 +13,48 @@ const EPSILON: u64 = (1 << 32) - 1;
 ///
 pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 1]> = Lazy::new(|| [
+static PROPHET_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| [
     "prophet_u32_sqrt",
+    "prophet_u64_sqrt",
 
 ]);
 
-static BUILTIN_FUNCTIONS: Lazy<[&str; 1]> = Lazy::new(|| [
+static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| [
     "builtin_assert",
+    "builtin_range_check",
 ]);
 
 // These functions will be called implicitly by corelib
 // May later become corelib functions open to the user as well
-static IMPLICIT_CALLED_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| [
-    "field_modulo",
+static IMPLICIT_CALLED_FUNCTIONS: Lazy<[&str; 1]> = Lazy::new(|| [
     "assert",
 ]);
-
 
 // Generate core lib functions ir
 pub fn gen_lib_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
 
-    declare_prophets(bin, ns);
-
     declare_builtins(bin, ns);
+
+    declare_prophets(bin, ns);
 
     //Generate some functions that are called implicitly
     IMPLICIT_CALLED_FUNCTIONS.iter().for_each(|p| {
         match *p {
-            "modulo" => {
-
-            },
             "assert" => {
+                // build assert function
+                let i64_type = bin.context.i64_type();
+                let void_type = bin.context.void_type();
+                let ftype = void_type.fn_type(&[i64_type.into(), i64_type.into()], false);
+                let func = bin.module.add_function("assert", ftype, None);
+                bin.builder.position_at_end(bin.context.append_basic_block(func, "entry"));
 
-            }
+                // call builtin assert function
+                bin.builder.build_call(
+                    bin.module.get_function("builtin_assert").expect("builtin_assert should have been defined before"),
+                    &[func.get_first_param().unwrap().into(), func.get_last_param().unwrap().into()],
+                    "",
+                );
+            },
             _ => {}
         }
     });
@@ -54,6 +63,27 @@ pub fn gen_lib_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
     ns.called_lib_functions.iter().for_each(|p| {
         match p.as_str() {
             "u32_sqrt" => {
+                // build u32_sqrt function
+                let i64_type = bin.context.i64_type();
+                let ftype = i64_type.fn_type(&[i64_type.into()], false);
+                let func = bin.module.add_function("u32_sqrt", ftype, None);
+                bin.builder.position_at_end(bin.context.append_basic_block(func, "entry"));
+                let value = func.get_first_param().unwrap().into();
+                let root = bin.builder.build_call(
+                    bin.module.get_function("prophet_u32_sqrt").expect("prophet_u32_sqrt should have been defined before"),
+                    &[value],
+                    "",
+                ).try_as_basic_value().left().expect("Should have a left return value");
+                let root_squared =  bin.builder.build_int_mul(root.into_int_value(), root.into_int_value(), "");
+                bin.builder.build_call(
+                    bin.module.get_function("assert").expect("assert should have been defined before"),
+                    &[root_squared.into(), value],
+                    "",
+                );
+                bin.builder.build_return(Some(&root));
+
+            },
+            "u64_sqrt" => {
 
             },
             _ => {}
@@ -69,7 +99,13 @@ pub fn declare_prophets<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
 
     PROPHET_FUNCTIONS.iter().for_each(|p| {
         match *p {
-            "prophet_sqrt" => {
+            "prophet_u32_sqrt" => {
+                let i64_type = bin.context.i64_type();
+                let ftype = i64_type.fn_type(&[i64_type.into()], false);
+                bin.module.add_function("prophet_u32_sqrt", ftype, None);
+
+            },
+            "prophet_u64_sqrt" => {
 
             }
             _ => {}
@@ -84,8 +120,14 @@ pub fn declare_builtins<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
     BUILTIN_FUNCTIONS.iter().for_each(|p| {
         match *p {
             "builtin_assert" => {
+                let i64_type = bin.context.i64_type();
+                let void_type = bin.context.void_type();
+                let ftype = void_type.fn_type(&[i64_type.into(), i64_type.into()], false);
+                bin.module.add_function("builtin_assert", ftype, None);
+            },
+            "builtin_range_check" => {
 
-            }
+            },
             _ => {}
         }
     });
