@@ -1,13 +1,12 @@
 use std::str;
 
 pub mod binary;
+mod corelib;
 mod expression;
 mod functions;
 mod statements;
-mod corelib;
 
 use crate::sema::ast;
-
 
 impl ast::Contract {
     /// Generate the binary. This can be used to generate llvm text, object file
@@ -478,7 +477,6 @@ enif:                                             ; preds = %entry
         }
     }
 }
-
 
 #[test]
 fn gen_lib_func_test() {

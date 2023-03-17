@@ -762,11 +762,8 @@ impl Dot {
             Expression::LibFunction(loc, _, libfunc, args) => {
                 let labels = vec![format!("libfunc {:?}", libfunc), ns.loc_to_string(loc)];
 
-                let node = self.add_node(
-                    Node::new("libfunc", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
+                let node =
+                    self.add_node(Node::new("libfunc", labels), Some(parent), Some(parent_rel));
 
                 for (no, arg) in args.iter().enumerate() {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));

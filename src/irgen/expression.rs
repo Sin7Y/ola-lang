@@ -1,11 +1,11 @@
 use crate::irgen::binary::Binary;
-use crate::sema::ast::{Expression, Function, LibFunc, Namespace, RetrieveType};
+use crate::sema::ast::{Expression, Function, LibFunc, Namespace};
 use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
 use std::collections::HashMap;
 
-
-// field only supports + - * / operations, all other operations are not supported
+// field only supports + - * / operations, all other operations are not
+// supported
 pub fn expression<'a>(
     expr: &Expression,
     bin: &Binary<'a>,
@@ -193,22 +193,31 @@ pub fn expression<'a>(
             bin.builder.build_load(ptr.into_pointer_value(), "")
         }
 
-        Expression::LibFunction(_, _, LibFunc::U32_SQRT, args) => {
-            let value_u32 = expression(&args[0], bin, func, func_val, var_table, ns).into_int_value();
-            let value_u64 = bin.builder.build_int_s_extend(
-                value_u32,
-                bin.context.i64_type(),
-                "extended_a",
+        Expression::LibFunction(_, _, LibFunc::U32Sqrt, args) => {
+            let value_u32 =
+                expression(&args[0], bin, func, func_val, var_table, ns).into_int_value();
+            let value_u64 =
+                bin.builder
+                    .build_int_s_extend(value_u32, bin.context.i64_type(), "extended_a");
+            let root = bin
+                .builder
+                .build_call(
+                    bin.module
+                        .get_function("u32_sqrt")
+                        .expect("u32_sqrt should have been defined before"),
+                    &[value_u64.into()],
+                    "",
+                )
+                .try_as_basic_value()
+                .left()
+                .expect("Should have a left return value");
+
+            let res = bin.builder.build_int_truncate(
+                root.into_int_value(),
+                bin.context.i32_type(),
+                "truncate_a",
             );
-            let root = bin.builder.build_call(
-                bin.module.get_function("u32_sqrt").expect("u32_sqrt should have been defined before"),
-                &[value_u64.into()],
-                "",
-            ).try_as_basic_value().left().expect("Should have a left return value");
-
-            let res = bin.builder.build_int_truncate(root.into_int_value(), bin.context.i32_type(), "truncate_a");
             res.as_basic_value_enum()
-
         }
 
         _ => unreachable!(),

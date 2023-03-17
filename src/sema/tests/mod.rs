@@ -164,12 +164,6 @@ fn constant_overflow_checks() {
             // divide by zero
             u32 div_zeroo = (300-50) % 0;
 
-            field small = 10;
-
-            field order = 0xFFFFFFFF00000001;
-
-            field gt_order = 0xFFFFFFFF00000010;
-
         }
     }
     
@@ -236,12 +230,8 @@ fn constant_overflow_checks() {
     );
     assert_eq!(errors[17].message, "divide by zero");
     assert_eq!(errors[18].message, "divide by zero");
-    assert_eq!(
-        errors[19].message,
-        "value 18446744069414584336 does not fit into type field."
-    );
 
-    assert_eq!(errors.len(), 20);
+    assert_eq!(errors.len(), 19);
 
     assert_eq!(
         warnings[0].message,
@@ -250,40 +240,6 @@ fn constant_overflow_checks() {
     assert_eq!(warnings.len(), 1);
 }
 
-
-
-#[test]
-fn field_op_checks() {
-    let file = r#"
-
-    contract test_contract {
-
-        fn composite(u32 a) {
-
-            field order = 0xFFFFFFFF00000001;
-
-            field order_add_one = 0xFFFFFFFF00000001 + 1;
-            field order_sub_one = 0xFFFFFFFF00000001 - 1;
-            field order_div_two = 0xFFFFFFFF00000001 / 1;
-            field order_mul_two = 0xFFFFFFFF00000001 * 2;
-
-        }
-    }
-
-        "#;
-    let ns = parse(file);
-    let errors = ns.diagnostics.errors();
-    assert_eq!(errors.len(), 2);
-    assert_eq!(
-        errors[0].message,
-        "value 18446744069414584322 does not fit into type field."
-    );
-    assert_eq!(
-        errors[1].message,
-        "value 36893488138829168642 does not fit into type field."
-    );
-
-}
 #[test]
 fn test_types() {
     let file = r#"
@@ -293,7 +249,6 @@ fn test_types() {
             u32[] arr_u32;
             u64[] arr_u64;
             u256[] arr_u256;
-            field[] arr_field;
 
         }
 

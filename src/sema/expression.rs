@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ast::{
-    ArrayLength, Diagnostic, Expression, Function, Namespace, RetrieveType, Symbol, Type,
-};
+use super::ast::{ArrayLength, Diagnostic, Expression, Namespace, RetrieveType, Symbol, Type};
 use super::corelib;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
 use super::symtable::Symtable;
-use crate::sema::unused_variable::{
-    assigned_variable, check_function_call, check_var_usage_expression, used_variable,
-};
+use crate::sema::function_call::{available_functions, call_expr, named_call_expr};
+use crate::sema::unused_variable::{assigned_variable, check_var_usage_expression, used_variable};
 use crate::sema::Recurse;
 use num_bigint::BigInt;
 use num_traits::{FromPrimitive, Num};
 use ola_parser::program::{self, CodeLocation, Loc};
-use std::{cmp, cmp::Ordering, collections::HashMap, str::FromStr};
-use crate::sema::function_call::{available_functions, call_expr, function_call_pos_args, named_call_expr};
+use std::{cmp, cmp::Ordering, str::FromStr};
 
 impl RetrieveType for Expression {
     fn ty(&self) -> Type {
@@ -277,7 +273,6 @@ fn get_uint_length(
 ) -> Result<u16, ()> {
     match l {
         Type::Uint(n) => Ok(*n),
-        Type::Field => Ok(64),
         Type::Enum(n) => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
@@ -329,9 +324,6 @@ pub fn coerce_number(
     match (l, r) {
         (Type::Contract(left), Type::Contract(right)) if left == right => {
             return Ok(Type::Contract(*left));
-        }
-        (Type::Field, Type::Field) => {
-            return Ok(r.clone());
         }
         _ => (),
     }
@@ -1491,7 +1483,7 @@ fn assign_expr(
         }
         Expression::Variable(_, _, n) => {
             match var_ty {
-                Type::Uint(_) | Type::Field => (),
+                Type::Uint(_) => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -1588,7 +1580,7 @@ fn incr_decr(
         }
         Expression::Variable(_, ty, n) => {
             match ty {
-                Type::Uint(_) | Type::Field => (),
+                Type::Uint(_) => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -2068,7 +2060,6 @@ pub fn named_struct_literal(
     }
 }
 
-
 // When generating shifts, llvm wants both arguments to have the same width. We
 // want the result of the shift to be left argument, so this function coercies
 // the right argument into the right length.
@@ -2295,4 +2286,3 @@ fn check_subarrays<'a>(
 
     Ok(())
 }
-

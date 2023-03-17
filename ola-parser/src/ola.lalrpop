@@ -19,7 +19,6 @@ ImportDirective: SourceUnitPart = {
 
 Type: Type = {
     "bool" => Type::Bool,
-    "field" => Type::Field,
     "u32" => Type::Uint(32),
     "u64" => Type::Uint(64),
     "u256" => Type::Uint(256),

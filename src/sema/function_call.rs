@@ -1,27 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{
-    ArrayLength, Expression, Function, Namespace,
-    RetrieveType, Symbol, Type,
-};
+use crate::sema::ast::{Expression, Function, Namespace, Type};
 use crate::sema::diagnostics::Diagnostics;
 
-use crate::sema::expression::{ExprContext, expression, named_struct_literal, ResolveTo, struct_literal};
+use crate::sema::corelib;
+use crate::sema::expression::{
+    expression, named_struct_literal, struct_literal, ExprContext, ResolveTo,
+};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::check_function_call;
-use crate::sema::{corelib};
-use std::collections::HashMap;
 use ola_parser::diagnostics::Diagnostic;
 use ola_parser::program;
 use ola_parser::program::{CodeLocation, Loc};
-
+use std::collections::HashMap;
 
 /// Create a list of functions that can be called in this context.
-pub fn available_functions(
-    name: &str,
-    contract_no: Option<usize>,
-    ns: &Namespace,
-) -> Vec<usize> {
+pub fn available_functions(name: &str, contract_no: Option<usize>, ns: &Namespace) -> Vec<usize> {
     let mut list = Vec::new();
 
     if let Some(contract_no) = contract_no {
@@ -323,8 +317,7 @@ fn try_namespace(
     diagnostics: &mut Diagnostics,
 ) -> Result<Option<Expression>, ()> {
     if let program::Expression::Variable(namespace) = var {
-        if corelib::is_lib_func_call(Some(&namespace.name), &func.name, ns) {
-
+        if corelib::is_lib_func_call(Some(&namespace.name), &func.name) {
             return Ok(Some(corelib::resolve_call(
                 loc,
                 Some(namespace.name.as_str()),
@@ -336,13 +329,10 @@ fn try_namespace(
                 diagnostics,
             )?));
         }
-        
     }
 
     Ok(None)
 }
-
-
 
 /// Resolve a method call with positional arguments
 pub(super) fn method_call_pos_args(
@@ -354,18 +344,10 @@ pub(super) fn method_call_pos_args(
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    if let Some(resolved_call) = try_namespace(
-        loc,
-        var,
-        func,
-        args,
-        context,
-        ns,
-        symtable,
-        diagnostics,
-    )? {
+    if let Some(resolved_call) =
+        try_namespace(loc, var, func, args, context, ns, symtable, diagnostics)?
+    {
         return Ok(resolved_call);
     }
 
@@ -399,12 +381,7 @@ pub fn named_call_expr(
     let mut nullsink = Diagnostics::default();
 
     // is it a struct literal
-    match ns.resolve_type(
-        context.file_no,
-        context.contract_no,
-        ty,
-        &mut nullsink,
-    ) {
+    match ns.resolve_type(context.file_no, context.contract_no, ty, &mut nullsink) {
         Ok(Type::Struct(str_ty)) => {
             return named_struct_literal(loc, &str_ty, args, context, ns, symtable, diagnostics);
         }
@@ -465,12 +442,7 @@ pub fn call_expr(
     let mut nullsink = Diagnostics::default();
     let ty = ty.remove_parenthesis();
 
-    match ns.resolve_type(
-        context.file_no,
-        context.contract_no,
-        ty,
-        &mut nullsink,
-    ) {
+    match ns.resolve_type(context.file_no, context.contract_no, ty, &mut nullsink) {
         Ok(Type::Struct(str_ty)) => {
             return struct_literal(loc, &str_ty, args, context, ns, symtable, diagnostics);
         }
@@ -505,19 +477,16 @@ pub fn call_expr(
     }
 
     let expr = match ty.remove_parenthesis() {
-        _ => {
-
-            function_call_expr(
-                loc,
-                ty,
-                args,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                resolve_to,
-            )?
-        }
+        _ => function_call_expr(
+            loc,
+            ty,
+            args,
+            context,
+            ns,
+            symtable,
+            diagnostics,
+            resolve_to,
+        )?,
     };
 
     check_function_call(ns, &expr, symtable);
@@ -532,7 +501,6 @@ pub fn call_expr(
     Ok(expr)
 }
 
-
 /// Resolve function call
 pub fn function_call_expr(
     loc: &program::Loc,
@@ -544,7 +512,6 @@ pub fn function_call_expr(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
     match ty.remove_parenthesis() {
         program::Expression::MemberAccess(_, member, func) => {
             if context.constant {
@@ -555,21 +522,11 @@ pub fn function_call_expr(
                 return Err(());
             }
 
-            method_call_pos_args(
-                loc,
-                member,
-                func,
-                args,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                resolve_to,
-            )
+            method_call_pos_args(loc, member, func, args, context, ns, symtable, diagnostics)
         }
         program::Expression::Variable(id) => {
             // is it a lib function call
-            if corelib::is_lib_func_call(None, &id.name, ns) {
+            if corelib::is_lib_func_call(None, &id.name) {
                 return {
                     let expr = corelib::resolve_call(
                         &id.loc,
@@ -585,7 +542,10 @@ pub fn function_call_expr(
                     if expr.tys().len() > 1 {
                         diagnostics.push(Diagnostic::error(
                             *loc,
-                            format!("core lib function '{}' returns more than one value", id.name),
+                            format!(
+                                "core lib function '{}' returns more than one value",
+                                id.name
+                            ),
                         ));
                         Err(())
                     } else {
@@ -635,20 +595,17 @@ pub fn named_function_call_expr(
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     match ty {
-        program::Expression::Variable(id) => {
-
-            function_call_named_args(
-                loc,
-                id,
-                args,
-                available_functions(&id.name, context.contract_no, ns),
-                context,
-                resolve_to,
-                ns,
-                symtable,
-                diagnostics,
-            )
-        }
+        program::Expression::Variable(id) => function_call_named_args(
+            loc,
+            id,
+            args,
+            available_functions(&id.name, context.contract_no, ns),
+            context,
+            resolve_to,
+            ns,
+            symtable,
+            diagnostics,
+        ),
         program::Expression::ArraySubscript(..) => {
             diagnostics.push(Diagnostic::error(
                 ty.loc(),
@@ -682,4 +639,3 @@ pub(crate) fn function_type(func: &Function, resolve_to: ResolveTo) -> Type {
 
     Type::Function { params, returns }
 }
-

@@ -66,7 +66,7 @@ fn type_decl(
     // - This would require resolving the types definition after all other types are
     //   resolved
     // - Need for circular checks (type a is b; type b is a;)
-    if !matches!(ty, Type::Uint(_) | Type::Field | Type::Bool) {
+    if !matches!(ty, Type::Uint(_) | Type::Bool) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
             format!("'{}' is not an elementary value type", ty.to_string(ns)),
@@ -444,7 +444,6 @@ impl Type {
         match self {
             Type::Bool => "bool".to_string(),
             Type::Uint(n) => format!("u{}", n),
-            Type::Field => "field".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
             Type::Array(ty, len) => format!(
@@ -498,7 +497,6 @@ impl Type {
         match self {
             Type::Bool => true,
             Type::Uint(_) => true,
-            Type::Field => true,
             Type::StorageRef(r) => r.is_primitive(),
             _ => false,
         }
@@ -510,7 +508,6 @@ impl Type {
             Type::Bool => "bool".to_string(),
             Type::Contract(_) => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
-            Type::Field => "field".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(
                 "{}{}",
@@ -557,7 +554,6 @@ impl Type {
         match self {
             Type::Bool => false,
             Type::Uint(_) => false,
-            Type::Field => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
             Type::Array(_, dims) => matches!(dims.last(), Some(ArrayLength::Fixed(_))),
@@ -705,7 +701,6 @@ impl Type {
     pub fn align_of(&self, ns: &Namespace) -> usize {
         match self {
             Type::Uint(32) => 1,
-            Type::Uint(64) | Type::Field => 2,
             Type::Uint(256) => 8,
             Type::Struct(n) => ns.structs[*n]
                 .fields
@@ -722,7 +717,6 @@ impl Type {
             Type::Contract(_) => ns.address_length as u16 * 8,
             Type::Bool => 1,
             Type::Uint(n) => *n,
-            Type::Field => 64,
             Type::StorageRef(..) => Type::Uint(32).bits(ns),
             Type::Enum(n) => ns.enums[*n].ty.bits(ns),
             _ => panic!("type not allowed"),
@@ -732,7 +726,6 @@ impl Type {
     pub fn is_integer(&self) -> bool {
         match self {
             Type::Uint(_) => true,
-            Type::Field => true,
             Type::StorageRef(r) => r.is_integer(),
             _ => false,
         }
@@ -746,7 +739,6 @@ impl Type {
             Type::Bool => BigInt::one(),
             Type::Contract(_) => BigInt::from(ns.address_length),
             Type::Uint(n) => BigInt::from(n / 8),
-            Type::Field => BigInt::from(8),
             Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
             Type::Array(ty, dims) => {
                 let pointer_size = BigInt::from(4);

@@ -5,6 +5,7 @@ use std::str;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
+use crate::irgen::corelib::gen_lib_functions;
 use crate::irgen::functions::gen_functions;
 use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
@@ -13,7 +14,6 @@ use inkwell::module::Module;
 use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
 use inkwell::values::{IntValue, PointerValue};
 use inkwell::AddressSpace;
-use crate::irgen::corelib::gen_lib_functions;
 
 pub struct Binary<'a> {
     pub name: String,

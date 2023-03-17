@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ast::{LibFunc, Diagnostic, Expression, Namespace, Type};
+use super::ast::{Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
 use super::expression::{expression, ExprContext, ResolveTo};
 use super::symtable::Symtable;
@@ -19,7 +19,7 @@ pub struct Prototype {
 // A list of all Ola lib functions
 static LIB_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
     [Prototype {
-        libfunc: LibFunc::U32_SQRT,
+        libfunc: LibFunc::U32Sqrt,
         namespace: None,
         name: "u32_sqrt",
         params: vec![Type::Uint(32)],
@@ -34,21 +34,16 @@ static LIB_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 // A list of all Ola lib methods
 static LIB_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
-
 /// Does function call match lib function
-pub fn is_lib_func_call(namespace: Option<&str>, fname: &str, ns: &Namespace) -> bool {
-    LIB_FUNCTIONS.iter().any(|p| {
-        p.name == fname
-            && p.namespace == namespace
-    })
+pub fn is_lib_func_call(namespace: Option<&str>, fname: &str) -> bool {
+    LIB_FUNCTIONS
+        .iter()
+        .any(|p| p.name == fname && p.namespace == namespace)
 }
-
 
 /// Does variable name match any builtin namespace
 pub fn lib_namespace(namespace: &str) -> bool {
-    LIB_VARIABLE
-        .iter()
-        .any(|p| p.namespace == Some(namespace))
+    LIB_VARIABLE.iter().any(|p| p.namespace == Some(namespace))
 }
 
 /// Is name reserved for lib function
@@ -57,19 +52,17 @@ pub fn is_reserved(fname: &str) -> bool {
         return true;
     }
 
-    let is_lib_function = LIB_FUNCTIONS.iter().any(|p| {
-        (p.name == fname && p.namespace.is_none() )
-            || (p.namespace == Some(fname))
-    });
+    let is_lib_function = LIB_FUNCTIONS
+        .iter()
+        .any(|p| (p.name == fname && p.namespace.is_none()) || (p.namespace == Some(fname)));
 
     if is_lib_function {
         return true;
     }
 
-    LIB_VARIABLE.iter().any(|p| {
-        (p.name == fname && p.namespace.is_none())
-            || (p.namespace == Some(fname))
-    })
+    LIB_VARIABLE
+        .iter()
+        .any(|p| (p.name == fname && p.namespace.is_none()) || (p.namespace == Some(fname)))
 }
 
 /// Resolve a builtin call
@@ -85,7 +78,7 @@ pub fn resolve_call(
 ) -> Result<Expression, ()> {
     let funcs = LIB_FUNCTIONS
         .iter()
-        .filter(|p| p.name == id && p.namespace == namespace )
+        .filter(|p| p.name == id && p.namespace == namespace)
         .collect::<Vec<&Prototype>>();
     let mut errors: Diagnostics = Diagnostics::default();
 
@@ -181,14 +174,14 @@ pub fn resolve_method_call(
 ) -> Result<Option<Expression>, ()> {
     let funcs: Vec<_> = LIB_METHODS
         .iter()
-        .filter(|func| func.name == id.name )
+        .filter(|func| func.name == id.name)
         .collect();
     let mut errors = Diagnostics::default();
 
     for func in &funcs {
         let mut matches = true;
 
-        if context.constant  {
+        if context.constant {
             diagnostics.push(Diagnostic::cast_error(
                 id.loc,
                 format!(

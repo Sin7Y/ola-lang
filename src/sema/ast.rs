@@ -20,7 +20,6 @@ use tiny_keccak::{Hasher, Keccak};
 pub enum Type {
     Bool,
     Uint(u16),
-    Field,
 
     Array(Box<Type>, Vec<ArrayLength>),
     /// The usize is an index into enums in the namespace
@@ -85,7 +84,6 @@ impl Type {
     pub fn get_type_size(&self) -> u16 {
         match self {
             Type::Uint(n) => *n,
-            Type::Field => 64,
             Type::Bool => 1,
             _ => unimplemented!("size of type not known"),
         }
@@ -269,7 +267,6 @@ impl From<&program::Type> for Type {
     fn from(p: &program::Type) -> Type {
         match p {
             program::Type::Bool => Type::Bool,
-            program::Type::Field => Type::Field,
             program::Type::Uint(n) => Type::Uint(*n),
         }
     }
@@ -620,7 +617,7 @@ impl CodeLocation for Statement {
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum LibFunc {
-    U32_SQRT,
+    U32Sqrt,
 }
 
 #[derive(Clone, Debug)]

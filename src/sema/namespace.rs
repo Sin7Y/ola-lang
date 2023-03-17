@@ -807,8 +807,6 @@ impl Namespace {
     }
 }
 
-
-
 impl Default for Namespace {
     fn default() -> Self {
         Namespace::new()
