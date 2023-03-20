@@ -32,7 +32,7 @@ pub(crate) fn statement<'a>(
             );
             let var_value = expression(init, bin, Some(func), func_val, var_table, ns);
             var_table.insert(*pos, alloc.as_basic_value_enum());
-            bin.builder.build_store(alloc, var_value);
+            bin.builder.build_store(alloc, var_value).set_alignment(8).unwrap();
         }
 
         Statement::Return(_, expr) => match expr {
@@ -228,7 +228,7 @@ impl Type {
     /// default value, for example a reference to a variable in storage.
     pub fn default(&self, ns: &Namespace) -> Option<Expression> {
         match self {
-            Type::Uint(_) => Some(Expression::NumberLiteral(
+            Type::Uint(32) => Some(Expression::NumberLiteral(
                 program::Loc::Codegen,
                 self.clone(),
                 BigInt::from(0),

@@ -5,6 +5,7 @@ mod corelib;
 mod expression;
 mod functions;
 mod statements;
+pub mod u32_op;
 
 use crate::sema::ast;
 
@@ -483,14 +484,11 @@ fn gen_lib_func_test() {
     use crate::file_resolver::FileResolver;
     use std::ffi::OsStr;
     let mut resolver = FileResolver::new();
-    let source = r#" contract Fibonacci {
-
-    fn main() {
-       sqrt_test(4);
-    }
+    let source = r#"
+    contract SqrtContract {
 
     fn sqrt_test(u32 n) -> (u32) {
-        u32 b = u32_sqrt(n);
+        u32 b = n;
         return b;
     }
 
