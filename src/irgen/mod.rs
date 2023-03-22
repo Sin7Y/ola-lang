@@ -488,8 +488,8 @@ fn gen_lib_func_test() {
     contract SqrtContract {
 
     fn sqrt_test(u32 n) -> (u32) {
-        u32 b = n;
-        return b;
+        u32 d = n << 2;
+        return d;
     }
 
 }

@@ -160,7 +160,21 @@ pub fn u32_shift_left<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    unimplemented!()
+    let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
+    let base_two = NumberLiteral(Loc::IRgen, Type::Uint(32), BigInt::from(2));
+    let pow_two = u32_power(&base_two, r, bin, func, func_val, var_table, ns).into_int_value();
+    let result: BasicValueEnum = bin.builder
+        .build_int_mul(left, pow_two, "")
+        .into();
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[result.into()],
+        "",
+    );
+    result
+
 }
 
 pub fn u32_shift_right<'a>(
@@ -396,6 +410,53 @@ pub fn u32_power<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    unimplemented!()
+
+    let current_bb = bin.builder.get_insert_block().unwrap();
+    let left_value = expression(l, bin, func, func_val, var_table, ns).into_int_value();
+    let right_value = expression(r, bin, func, func_val, var_table, ns).into_int_value();
+    bin.builder.position_at_end(current_bb);
+
+    let loop_block = bin.context.append_basic_block(func_val, "loop");
+    let exit_block = bin.context.append_basic_block(func_val, "exit");
+    let i64_type = bin.context.i64_type();
+
+    // Initialize the accumulator with the value 1
+    let accumulator = bin.builder.build_alloca(i64_type, "");
+    bin.builder.build_store(accumulator, i64_type.const_int(1, false));
+
+    let current_right_value = bin.builder.build_alloca(i64_type, "");
+    bin.builder.build_store(current_right_value, right_value);
+
+    bin.builder.build_unconditional_branch(loop_block);
+    bin.builder.position_at_end(loop_block);
+
+    let current_right_value_loaded = bin.builder.build_load(current_right_value, "").into_int_value();
+
+    let is_zero = bin.builder.build_int_compare(IntPredicate::EQ, current_right_value_loaded, i64_type.const_zero(), "");
+    bin.builder.build_conditional_branch(is_zero, exit_block, loop_block);
+
+    bin.builder.position_at_end(loop_block);
+
+    // Update the accumulator
+    let acc_value = bin.builder.build_load(accumulator, "").into_int_value();
+    let new_acc_value = bin.builder.build_int_mul(acc_value, left_value, "");
+    bin.builder.build_store(accumulator, new_acc_value);
+
+    // Decrement the right value
+    let updated_right_value = bin.builder.build_int_sub(current_right_value_loaded, i64_type.const_int(1, false), "");
+    bin.builder.build_store(current_right_value, updated_right_value);
+
+    bin.builder.build_unconditional_branch(loop_block);
+
+    bin.builder.position_at_end(exit_block);
+    let result = bin.builder.build_load(accumulator, "");
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[result.into()],
+        "",
+    );
+    result
 }
 

@@ -377,15 +377,13 @@ pub fn bigint_to_expression(
 
     // Return smallest type
 
-    let int_size = if bits < 7 { 8 } else { (bits + 7) & !7 } as u16;
-
     if bits > 256 {
         diagnostics.push(Diagnostic::error(*loc, format!("{} is too large", n)));
         Err(())
     } else {
         Ok(Expression::NumberLiteral(
             *loc,
-            Type::Uint(int_size),
+            Type::Uint(32),
             n.clone(),
         ))
     }

@@ -74,8 +74,8 @@ pub fn expression<'a>(
         Expression::And(_, l, r) => {
             u32_and(l, r, bin, func, func_val, var_table, ns)
         }
-        Expression::Power(_, _, base, exp) => {
-            u32_power(base, exp, bin, func, func_val, var_table, ns)
+        Expression::Power(_, _, l, r) => {
+            u32_power(l, r, bin, func, func_val, var_table, ns)
         }
         Expression::Decrement(_, _, expr) => match **expr {
             Expression::Variable(_, _, pos) => {
@@ -122,8 +122,6 @@ pub fn expression<'a>(
         Expression::FunctionCall { .. } => {
             emit_function_call(expr, bin, func, func_val, var_table, ns)
         }
-
-
         Expression::NumberLiteral(_, ty, n) => bin.number_literal(ty, n, ns).into(),
 
         Expression::Variable(_, _, var_no) => {
