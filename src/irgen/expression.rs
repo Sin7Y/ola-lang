@@ -1,7 +1,6 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::{Expression, Function, LibFunc, Namespace, RetrieveType, Type};
 use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
-use inkwell::IntPredicate;
 use std::collections::HashMap;
 use crate::irgen::u32_op::{u32_add, u32_and, u32_bitwise_and, u32_bitwise_or, u32_bitwise_xor, u32_complement, u32_div, u32_equal, u32_less, u32_less_equal, u32_mod, u32_more, u32_more_equal, u32_mul, u32_not, u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub};
 

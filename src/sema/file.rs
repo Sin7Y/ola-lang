@@ -88,7 +88,7 @@ impl Namespace {
         match loc {
             Loc::File(file_no, start, end) => self.files[*file_no].loc_to_string(*start, *end),
             Loc::Builtin => String::from("builtin"),
-            Loc::Codegen => String::from("codegen"),
+            Loc::IRgen => String::from("codegen"),
             Loc::Implicit => String::from("implicit"),
             Loc::CommandLine => String::from("commandline"),
         }

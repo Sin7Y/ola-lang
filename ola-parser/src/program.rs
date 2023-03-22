@@ -12,7 +12,7 @@ pub enum Loc {
     Builtin,
     CommandLine,
     Implicit,
-    Codegen,
+    IRgen,
     File(usize, usize, usize),
 }
 

@@ -136,7 +136,7 @@ impl<'a> Binary<'a> {
     /// Return the llvm type for the resolved type.
     pub(crate) fn llvm_type(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         match ty {
-            Type::Bool => BasicTypeEnum::IntType(self.context.i64_type()),
+            Type::Bool => BasicTypeEnum::IntType(self.context.bool_type()),
             // Map all i32 data to a field-based data type, with the maximum value of field between u63 and u64
             Type::Uint(32) => BasicTypeEnum::IntType(self.context.i64_type()),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),

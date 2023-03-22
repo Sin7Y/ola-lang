@@ -229,11 +229,11 @@ impl Type {
     pub fn default(&self, ns: &Namespace) -> Option<Expression> {
         match self {
             Type::Uint(32) => Some(Expression::NumberLiteral(
-                program::Loc::Codegen,
+                program::Loc::IRgen,
                 self.clone(),
                 BigInt::from(0),
             )),
-            Type::Bool => Some(Expression::BoolLiteral(program::Loc::Codegen, false)),
+            Type::Bool => Some(Expression::BoolLiteral(program::Loc::IRgen, false)),
             Type::Enum(e) => ns.enums[*e].ty.default(ns),
             Type::Struct(n) => {
                 // make sure all our fields have default values
@@ -242,7 +242,7 @@ impl Type {
                 }
 
                 Some(Expression::StructLiteral(
-                    program::Loc::Codegen,
+                    program::Loc::IRgen,
                     self.clone(),
                     Vec::new(),
                 ))
