@@ -16,7 +16,7 @@ use crate::codegen::{
     lower::{LoweringContext, LoweringError},
     register::{Reg, RegisterClass, RegisterInfo},
 };
-use anyhow::Result;
+use anyhow::{Ok, Result};
 
 pub fn lower_call(
     ctx: &mut LoweringContext<Ola>,
@@ -33,6 +33,43 @@ pub fn lower_call(
     };
     log::debug!("call name: {}", name);
 
+    // frist lower builtin call into isa inst directly
+    if name.starts_with("builtin") {
+        match name.as_str() {
+            "builtin_assert" => {
+                let lhs = get_operand_for_val(ctx, tys[1], args[1])?;
+                let rhs = get_operand_for_val(ctx, tys[2], args[2])?;
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::ASSERTri,
+                        operands: vec![MO::input(lhs), MO::input(rhs)],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+            }
+            "builtin_range_check" => {
+                let arg = get_operand_for_val(ctx, tys[1], args[1])?;
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::RANGECHECK,
+                        operands: vec![MO::input(arg)],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+            }
+            e => todo!("{:?}", e),
+        }
+        return Ok(());
+    }
+
+    // then lower general function calls and prophet separately:
+    // for gfc insts pattern as args + call_inst + return
+    // for prophet insts pattern as args + prophet_pseudo + return_prophet
+    let mut opcode = Opcode::CALL;
+    if name.starts_with("prophet") {
+        opcode = Opcode::PROPHET;
+    }
+
     let result_ty = if let Some(ty) = ctx.types.get(tys[0])
                     && let CompoundType::Function(FunctionType { ret, .. }) = &*ty {
         *ret
@@ -47,7 +84,7 @@ pub fn lower_call(
 
     ctx.inst_seq.push(MachInstruction::new(
         InstructionData {
-            opcode: Opcode::CALL,
+            opcode,
             operands: vec![
                 MO::implicit_output(result_reg.into()),
                 MO::new(OperandData::Label(name)),

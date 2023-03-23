@@ -55,6 +55,8 @@ pub enum Opcode {
     NEQ,
     GTE,
 
+    PROPHET,
+
     // TODO
     Phi,
 }

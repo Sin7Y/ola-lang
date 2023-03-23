@@ -10,6 +10,52 @@ use crate::codegen::{
 };
 use std::{fmt, str};
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub struct AsmProgram {
+    program: String,
+    prophets: Vec<Prophet>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Prophet {
+    name: String,
+    label: String,
+    code: String,
+    inputs: Vec<String>,
+    outputs: Vec<String>,
+}
+
+pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
+    match name {
+        "prophet_u32_sqrt" => Prophet {
+            name: name.to_string(),
+            code: "entry() {
+                            cid.y = sqrt(cid.x);
+                        }"
+            .to_string(),
+            label: format!("PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: ["cid.x".to_string()].to_vec(),
+            outputs: ["cid.y".to_string()].to_vec(),
+        },
+        "prophet_div_mod" => Prophet {
+            name: name.to_string(),
+            code: "function divmod(felt x, felt y) returns (felt, felt) {
+                            return (x / y, x % y);
+                        }
+                        entry() {
+                            (cid.q, cid.r) = divmod(cid.x, cid.y);
+                        }"
+            .to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
+            outputs: ["cid.q".to_string(), "cid.r".to_string()].to_vec(),
+        },
+        e => todo!("{:?}", e),
+    }
+}
+
 impl fmt::Display for DisplayAsm<'_, Ola> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         print(f, self.0)
@@ -17,48 +63,41 @@ impl fmt::Display for DisplayAsm<'_, Ola> {
 }
 
 pub fn print(f: &mut fmt::Formatter<'_>, module: &Module<Ola>) -> fmt::Result {
-    // writeln!(f, "  .text")?;
-    // writeln!(f, "  .ola_syntax noprefix")?;
-
+    let mut prophets = vec![];
+    let mut program = "".to_string();
     for (i, (_, func)) in module.functions.iter().enumerate() {
-        print_function(f, func, i)?
+        let inst = print_function(func, i, &mut prophets);
+        program.push_str(&format!("{}", inst));
     }
+    let asm_program = AsmProgram { program, prophets };
+    let serialized = serde_json::to_string_pretty(&asm_program).unwrap();
+    writeln!(f, "{}", serialized)?;
 
     Ok(())
 }
 
 pub fn print_function(
-    f: &mut fmt::Formatter<'_>,
     function: &Function<Ola>,
     fn_idx: usize,
-) -> fmt::Result {
+    prophets: &mut Vec<Prophet>,
+) -> String {
     if function.is_declaration {
-        return Ok(());
+        return "".to_string();
     }
 
-    /*
-    if let Some(name) = &function.ir.section {
-        writeln!(f, "  .section {}", name)?;
-    } else {
-        writeln!(f, "  .text")?;
-    }
-    if !function.ir.linkage.is_internal() {
-        writeln!(f, "  .globl {}", function.ir.name())?;
-    }
-    */
     let mut main_call = false;
-    writeln!(f, "{}:", function.ir.name())?;
+    let mut prophet_index: usize = 0;
+    let mut code = format!("{}:\n", function.ir.name());
 
     for block in function.layout.block_iter() {
-        writeln!(f, ".LBL{}_{}:", fn_idx, block.index())?;
+        code.push_str(&format!(".LBL{}_{}:\n", fn_idx, block.index()));
         for inst in function.layout.inst_iter(block) {
             let inst = function.data.inst_ref(inst);
             if Opcode::MSTOREr == inst.data.opcode {
                 if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 8)))
                     && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 8)))
                 {
-                    write!(f, "  mstore [r8,-2] r8")?;
-                    writeln!(f)?;
+                    code.push_str(&format!("  mstore [r8,-2] r8\n"));
                     continue;
                 }
             }
@@ -66,9 +105,20 @@ pub fn print_function(
                 main_call = true;
             }
             if function.ir.name() == "main" && main_call && Opcode::RET == inst.data.opcode {
-                write!(f, "  end ")?;
+                code.push_str(&format!("  end "));
+            } else if inst.data.opcode == Opcode::PROPHET {
+                code.push_str(&format!(".PROPHET{}_{}:", fn_idx, prophet_index));
+
+                code.push_str(&format!("  mov r0 psp\n"));
+                code.push_str(&format!("  mload r0 [r0,0]\n"));
+
+                prophets.push(from_prophet("prophet_u32_sqrt", fn_idx, prophet_index));
+
+                prophet_index += 1;
+
+                continue;
             } else {
-                write!(f, "  {} ", inst.data.opcode)?;
+                code.push_str(&format!("  {} ", inst.data.opcode));
             }
             let mut i = 0;
             while i < inst.data.operands.len() {
@@ -80,25 +130,25 @@ pub fn print_function(
                 if matches!(operand.data, OperandData::MemStart) {
                     i += 1;
                     let sz = mem_size(&inst.data.opcode);
-                    write!(f, "{}", sz)?;
+                    code.push_str(&format!("{}", sz));
                     if !sz.is_empty() {
-                        write!(f, " ")?;
+                        code.push_str(&format!(" "));
                     }
-                    write!(f, "{}", mem_op(&inst.data.operands[i..i + 6]))?;
+                    code.push_str(&format!("{}", mem_op(&inst.data.operands[i..i + 6])));
                     i += 6 - 1;
                 } else {
-                    write_operand(f, &operand.data, fn_idx)?;
+                    code.push_str(&format!("{}", write_operand(&operand.data, fn_idx)));
                 }
                 if i < inst.data.operands.len() - 1 {
-                    write!(f, " ")?
+                    code.push_str(&format!(" "))
                 }
                 i += 1;
             }
-            writeln!(f)?;
+            code.push_str(&format!("\n"));
         }
     }
 
-    Ok(())
+    code
 }
 
 impl fmt::Display for Opcode {
@@ -115,6 +165,7 @@ impl fmt::Display for Opcode {
                 Self::CALL => "call",
                 Self::RET => "ret",
                 Self::Phi => "PHI",
+                Self::PROPHET => "prophet",
                 Self::MLOADi | Self::MLOADr => "mload",
                 Self::MSTOREi | Self::MSTOREr => "mstore",
                 Self::NOT => "not",
@@ -124,25 +175,27 @@ impl fmt::Display for Opcode {
                 Self::AND => "and",
                 Self::OR => "or",
                 Self::XOR => "xor",
+                Self::RANGECHECK => "range",
+                Self::ASSERTri | Self::ASSERTrr => "assert",
                 e => todo!("{:?}", e),
             }
         )
     }
 }
 
-fn write_operand(f: &mut fmt::Formatter<'_>, op: &OperandData, fn_idx: usize) -> fmt::Result {
+fn write_operand(op: &OperandData, fn_idx: usize) -> String {
     match op {
-        OperandData::Reg(r) => write!(f, "{}", reg_to_str(r)),
-        OperandData::VReg(r) => write!(f, "%{}", r.0),
-        OperandData::Slot(slot) => write!(f, "{:?}", slot),
-        OperandData::Int8(i) => write!(f, "{}", i),
-        OperandData::Int32(i) => write!(f, "{}", i),
-        OperandData::Int64(i) => write!(f, "{}", i),
-        OperandData::Block(block) => write!(f, ".LBL{}_{}", fn_idx, block.index()),
-        OperandData::Label(name) => write!(f, "{}", name),
-        OperandData::MemStart => Ok(()),
-        OperandData::GlobalAddress(name) => write!(f, "offset {}", name),
-        OperandData::None => write!(f, "none"),
+        OperandData::Reg(r) => format!("{}", reg_to_str(r)),
+        OperandData::VReg(r) => format!("%{}", r.0),
+        OperandData::Slot(slot) => format!("{:?}", slot),
+        OperandData::Int8(i) => format!("{}", i),
+        OperandData::Int32(i) => format!("{}", i),
+        OperandData::Int64(i) => format!("{}", i),
+        OperandData::Block(block) => format!(".LBL{}_{}", fn_idx, block.index()),
+        OperandData::Label(name) => format!("{}", name),
+        OperandData::MemStart => format!(""),
+        OperandData::GlobalAddress(name) => format!("offset {}", name),
+        OperandData::None => format!("none"),
     }
 }
 
