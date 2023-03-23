@@ -71,7 +71,9 @@ impl RegisterInfo for RegInfo {
 impl RegisterClass for RegClass {
     fn for_type(types: &Types, ty: Type) -> Self {
         match ty {
-            types::I8 | types::I16 | types::I32 => RegClass::GR,
+            types::VOID | types::I1 | types::I8 | types::I16 | types::I32 | types::I64 => {
+                RegClass::GR
+            }
             _ if ty.is_pointer(types) => RegClass::GR,
             e => todo!("{}", types.to_string(e)),
         }

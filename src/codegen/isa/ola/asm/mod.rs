@@ -27,27 +27,33 @@ pub struct Prophet {
     outputs: Vec<String>,
 }
 
+const SQRT: &'static str = "%{
+    entry() {
+        cid.y = sqrt(cid.x);
+    }
+%}";
+
+const DIV_MOD: &'static str = "%{
+    entry() {
+        (cid.q, cid.r) = divmod(cid.x, cid.y);
+    }
+    function divmod(felt x, felt y) returns (felt, felt) {
+        return (x / y, x % y);
+    }
+%}";
+
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
             name: name.to_string(),
-            code: "entry() {
-                            cid.y = sqrt(cid.x);
-                        }"
-            .to_string(),
+            code: SQRT.to_string(),
             label: format!("PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
             inputs: ["cid.x".to_string()].to_vec(),
             outputs: ["cid.y".to_string()].to_vec(),
         },
         "prophet_div_mod" => Prophet {
             name: name.to_string(),
-            code: "function divmod(felt x, felt y) returns (felt, felt) {
-                            return (x / y, x % y);
-                        }
-                        entry() {
-                            (cid.q, cid.r) = divmod(cid.x, cid.y);
-                        }"
-            .to_string(),
+            code: DIV_MOD.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
             inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
             outputs: ["cid.q".to_string(), "cid.r".to_string()].to_vec(),
