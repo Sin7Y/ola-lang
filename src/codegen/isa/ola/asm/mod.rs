@@ -12,13 +12,13 @@ use std::{fmt, str};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AsmProgram {
     pub program: String,
     pub prophets: Vec<Prophet>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Prophet {
     pub name: String,
     pub label: String,

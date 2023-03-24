@@ -792,4 +792,107 @@ gte_rr:
 "
         );
     }
+
+    #[test]
+    fn codegen_sqrt_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'SqrtContract'
+        source_filename = "examples/sqrt.ola"
+        
+        declare void @builtin_assert(i64, i64)
+        
+        declare void @builtin_range_check(i64)
+        
+        declare i64 @prophet_u32_sqrt(i64)
+        
+        define i64 @u32_sqrt(i64 %0) {
+        entry:
+          %1 = call i64 @prophet_u32_sqrt(i64 %0)
+          call void @builtin_range_check(i64 %1)
+          %2 = mul i64 %1, %1
+          call void @builtin_assert(i64 %2, i64 %0)
+          ret i64 %1
+        }
+        
+        define void @main() {
+        entry:
+          %0 = call i64 @sqrt_test(i64 4)
+          ret void
+        }
+        
+        define i64 @sqrt_test(i64 %0) {
+        entry:
+          %b = alloca i64, align 8
+          %n = alloca i64, align 8
+          store i64 %0, i64* %n, align 8
+          %1 = load i64, i64* %n, align 8
+          %2 = call i64 @u32_sqrt(i64 %1)
+          store i64 %2, i64* %b, align 8
+          %3 = load i64, i64* %b, align 8
+          ret i64 %3
+        }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        assert_eq!(
+            format!("{}", code.program),
+            "u32_sqrt:
+.LBL3_0:
+  mov r3 r1
+  mov r1 r3
+.PROPHET3_0:  mov r0 psp
+  mload r0 [r0,0]
+  range r0
+  mul r2 r0 r0
+  assert r2 r3
+  ret 
+main:
+.LBL4_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 4
+  call sqrt_test
+  add r8 r8 -4
+  end 
+sqrt_test:
+.LBL5_0:
+  add r8 r8 6
+  mstore [r8,-2] r8
+  mov r0 r1
+  mstore [r8,-3] r0
+  mload r1 [r8,-3]
+  call u32_sqrt
+  mstore [r8,-4] r0
+  mload r0 [r8,-4]
+  add r8 r8 -6
+  ret 
+"
+        );
+        assert_eq!(
+            format!("{:#?}", code.prophets),
+            r#"[
+    Prophet {
+        name: "prophet_u32_sqrt",
+        label: ".PROPHET3_0",
+        code: "%{\n    entry() {\n        cid.y = sqrt(cid.x);\n    }\n%}",
+        inputs: [
+            "cid.x",
+        ],
+        outputs: [
+            "cid.y",
+        ],
+    },
+]"#
+        );
+    }
 }
