@@ -113,7 +113,7 @@ pub fn print_function(
             if function.ir.name() == "main" && main_call && Opcode::RET == inst.data.opcode {
                 code.push_str(&format!("  end "));
             } else if inst.data.opcode == Opcode::PROPHET {
-                code.push_str(&format!(".PROPHET{}_{}:", fn_idx, prophet_index));
+                code.push_str(&format!(".PROPHET{}_{}:\n", fn_idx, prophet_index));
 
                 code.push_str(&format!("  mov r0 psp\n"));
                 code.push_str(&format!("  mload r0 [r0,0]\n"));

@@ -850,7 +850,8 @@ gte_rr:
 .LBL3_0:
   mov r3 r1
   mov r1 r3
-.PROPHET3_0:  mov r0 psp
+.PROPHET3_0:
+  mov r0 psp
   mload r0 [r0,0]
   range r0
   mul r2 r0 r0
