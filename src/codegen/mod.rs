@@ -60,7 +60,7 @@ mod test {
   add r3 r2 r7
   mov r0 r3
   add r8 r8 -1
-  ret 
+  end
 "
         );
     }
@@ -69,7 +69,7 @@ mod test {
     fn codegen_functioncall_test() {
         // LLVM Assembly
         let asm = r#"
-source_filename = "asm" 
+source_filename = "asm"
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable
 define void @main() #0 {
@@ -101,7 +101,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
   store i32 %8, i32* %5, align 4
   %9 = load i32, i32* %5, align 4
   ret i32 %9
-}  
+}
 "#;
 
         // Parse the assembly and get a module
@@ -132,7 +132,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
   mstore [r8,-3] r0
   mload r0 [r8,-3]
   add r8 r8 -7
-  end 
+  end
 bar:
 .LBL1_0:
   add r8 r8 3
@@ -146,7 +146,7 @@ bar:
   mstore [r8,-1] r0
   mload r0 [r8,-1]
   add r8 r8 -3
-  ret 
+  ret
 "
         );
     }
@@ -249,7 +249,7 @@ endfor:                                           ; preds = %cond
   mov r1 10
   call fib_non_recursive
   add r8 r8 -4
-  end 
+  end
 fib_recursive:
 .LBL1_0:
   add r8 r8 9
@@ -264,7 +264,7 @@ fib_recursive:
 .LBL1_1:
   mov r0 1
   add r8 r8 -9
-  ret 
+  ret
 .LBL1_2:
   mload r0 [r8,-7]
   not r7 1
@@ -284,7 +284,7 @@ fib_recursive:
   mstore [r8,-6] r0
   mload r0 [r8,-6]
   add r8 r8 -9
-  ret 
+  ret
 fib_non_recursive:
 .LBL2_0:
   add r8 r8 5
@@ -323,7 +323,7 @@ fib_non_recursive:
 .LBL2_4:
   mload r0 [r8,-4]
   add r8 r8 -5
-  ret 
+  ret
 "
         );
     }
@@ -558,7 +558,7 @@ enif:                                             ; preds = %entry
   mov r1 1
   call eq_rr
   add r8 r8 -4
-  end 
+  end
 eq_ri:
 .LBL1_0:
   add r8 r8 1
@@ -571,11 +571,11 @@ eq_ri:
 .LBL1_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 eq_rr:
 .LBL2_0:
   add r8 r8 2
@@ -591,11 +591,11 @@ eq_rr:
 .LBL2_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL2_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 neq_ri:
 .LBL3_0:
   add r8 r8 1
@@ -608,11 +608,11 @@ neq_ri:
 .LBL3_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL3_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 neq_rr:
 .LBL4_0:
   add r8 r8 2
@@ -628,11 +628,11 @@ neq_rr:
 .LBL4_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL4_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 lt_ri:
 .LBL5_0:
   add r8 r8 1
@@ -647,11 +647,11 @@ lt_ri:
 .LBL5_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL5_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 lt_rr:
 .LBL6_0:
   add r8 r8 2
@@ -669,11 +669,11 @@ lt_rr:
 .LBL6_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL6_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 lte_ri:
 .LBL7_0:
   add r8 r8 1
@@ -687,11 +687,11 @@ lte_ri:
 .LBL7_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL7_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 lte_rr:
 .LBL8_0:
   add r8 r8 2
@@ -707,11 +707,11 @@ lte_rr:
 .LBL8_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL8_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 gt_ri:
 .LBL9_0:
   add r8 r8 1
@@ -725,11 +725,11 @@ gt_ri:
 .LBL9_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL9_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 gt_rr:
 .LBL10_0:
   add r8 r8 2
@@ -747,11 +747,11 @@ gt_rr:
 .LBL10_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL10_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 gte_ri:
 .LBL11_0:
   add r8 r8 1
@@ -764,11 +764,11 @@ gte_ri:
 .LBL11_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL11_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 gte_rr:
 .LBL12_0:
   add r8 r8 2
@@ -784,11 +784,11 @@ gte_rr:
 .LBL12_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL12_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 "
         );
     }
@@ -799,13 +799,13 @@ gte_rr:
         let asm = r#"
         ; ModuleID = 'SqrtContract'
         source_filename = "examples/sqrt.ola"
-        
+
         declare void @builtin_assert(i64, i64)
-        
+
         declare void @builtin_range_check(i64)
-        
+
         declare i64 @prophet_u32_sqrt(i64)
-        
+
         define i64 @u32_sqrt(i64 %0) {
         entry:
           %1 = call i64 @prophet_u32_sqrt(i64 %0)
@@ -814,13 +814,13 @@ gte_rr:
           call void @builtin_assert(i64 %2, i64 %0)
           ret i64 %1
         }
-        
+
         define void @main() {
         entry:
           %0 = call i64 @sqrt_test(i64 4)
           ret void
         }
-        
+
         define i64 @sqrt_test(i64 %0) {
         entry:
           %b = alloca i64, align 8
@@ -856,7 +856,7 @@ gte_rr:
   range r0
   mul r2 r0 r0
   assert r2 r3
-  ret 
+  ret
 main:
 .LBL4_0:
   add r8 r8 4
@@ -864,7 +864,7 @@ main:
   mov r1 4
   call sqrt_test
   add r8 r8 -4
-  end 
+  end
 sqrt_test:
 .LBL5_0:
   add r8 r8 6
@@ -876,7 +876,7 @@ sqrt_test:
   mstore [r8,-4] r0
   mload r0 [r8,-4]
   add r8 r8 -6
-  ret 
+  ret
 "
         );
         assert_eq!(

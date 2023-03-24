@@ -385,21 +385,21 @@ mod test {
         let asm = r#"
         ; ModuleID = 'condCmp'
         source_filename = "test.ola"
-        
+
         define void @main() {
         entry:
           %0 = call i32 @eq(i32 1)
           ret void
         }
-        
+
         define i32 @eq(i32 %0) {
         entry:
           %1 = icmp eq i32 %0, 1
           br i1 %1, label %then, label %enif
-        
+
         then:                                             ; preds = %entry
           ret i32 2
-        
+
         enif:                                             ; preds = %entry
           ret i32 3
     }
@@ -424,7 +424,7 @@ mod test {
   mov r1 1
   call eq
   add r8 r8 -4
-  end 
+  end
 eq:
 .LBL1_0:
   mov r0 r1
@@ -433,10 +433,10 @@ eq:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
-  ret 
+  ret
 "
         );
     }
@@ -447,21 +447,21 @@ eq:
         let asm = r#"
         ; ModuleID = 'condCmp'
         source_filename = "test.ola"
-        
+
         define void @main() {
         entry:
           %0 = call i32 @ne(i32 1)
           ret void
         }
-        
+
         define i32 @ne(i32 %0) {
         entry:
           %1 = icmp ne i32 %0, 1
           br i1 %1, label %then, label %enif
-        
+
         then:                                             ; preds = %entry
           ret i32 2
-        
+
         enif:                                             ; preds = %entry
           ret i32 3
     }
@@ -486,7 +486,7 @@ eq:
   mov r1 1
   call ne
   add r8 r8 -4
-  end 
+  end
 ne:
 .LBL1_0:
   mov r0 r1
@@ -495,10 +495,10 @@ ne:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
-  ret 
+  ret
 "
         );
     }
@@ -509,21 +509,21 @@ ne:
         let asm = r#"
         ; ModuleID = 'condCmp'
         source_filename = "test.ola"
-        
+
         define void @main() {
         entry:
           %0 = call i32 @ge(i32 1)
           ret void
         }
-        
+
         define i32 @ge(i32 %0) {
         entry:
           %1 = icmp uge i32 %0, 1
           br i1 %1, label %then, label %enif
-        
+
         then:                                             ; preds = %entry
           ret i32 2
-        
+
         enif:                                             ; preds = %entry
           ret i32 3
     }
@@ -548,7 +548,7 @@ ne:
   mov r1 1
   call ge
   add r8 r8 -4
-  end 
+  end
 ge:
 .LBL1_0:
   mov r0 r1
@@ -557,10 +557,10 @@ ge:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
-  ret 
+  ret
 "
         );
     }
@@ -571,21 +571,21 @@ ge:
         let asm = r#"
         ; ModuleID = 'condCmp'
         source_filename = "test.ola"
-        
+
         define void @main() {
         entry:
           %0 = call i32 @gt(i32 1)
           ret void
         }
-        
+
         define i32 @gt(i32 %0) {
         entry:
           %1 = icmp ugt i32 %0, 1
           br i1 %1, label %then, label %enif
-        
+
         then:                                             ; preds = %entry
           ret i32 2
-        
+
         enif:                                             ; preds = %entry
           ret i32 3
     }
@@ -610,7 +610,7 @@ ge:
   mov r1 1
   call gt
   add r8 r8 -4
-  end 
+  end
 gt:
 .LBL1_0:
   gte r2 r1 1
@@ -620,10 +620,10 @@ gt:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
-  ret 
+  ret
 "
         );
     }
@@ -634,21 +634,21 @@ gt:
         let asm = r#"
         ; ModuleID = 'condCmp'
         source_filename = "test.ola"
-        
+
         define void @main() {
         entry:
           %0 = call i32 @lt(i32 1)
           ret void
         }
-        
+
         define i32 @eq(i32 %0) {
         entry:
           %1 = icmp ult i32 %0, 1
           br i1 %1, label %then, label %enif
-        
+
         then:                                             ; preds = %entry
           ret i32 2
-        
+
         enif:                                             ; preds = %entry
           ret i32 3
     }
@@ -673,7 +673,7 @@ gt:
   mov r1 1
   call lt
   add r8 r8 -4
-  end 
+  end
 eq:
 .LBL1_0:
   mov r2 1
@@ -684,10 +684,10 @@ eq:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
-  ret 
+  ret
 "
         );
     }
@@ -698,21 +698,21 @@ eq:
         let asm = r#"
         ; ModuleID = 'condCmp'
         source_filename = "test.ola"
-        
+
         define void @main() {
         entry:
           %0 = call i32 @le(i32 1)
           ret void
         }
-        
+
         define i32 @le(i32 %0) {
         entry:
           %1 = icmp ule i32 %0, 1
           br i1 %1, label %then, label %enif
-        
+
         then:                                             ; preds = %entry
           ret i32 2
-        
+
         enif:                                             ; preds = %entry
           ret i32 3
     }
@@ -737,7 +737,7 @@ eq:
   mov r1 1
   call le
   add r8 r8 -4
-  end 
+  end
 le:
 .LBL1_0:
   mov r0 r1
@@ -747,10 +747,10 @@ le:
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
-  ret 
+  ret
 "
         );
     }

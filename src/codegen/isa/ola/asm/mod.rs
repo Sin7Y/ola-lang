@@ -1,5 +1,5 @@
 use crate::codegen::{
-    function::{instruction::TargetInst, Function},
+    function::Function,
     isa::ola::{
         instruction::{Opcode, Operand, OperandData},
         register::reg_to_str,
@@ -88,7 +88,6 @@ pub fn print_function(
         return "".to_string();
     }
 
-    let mut main_call = false;
     let mut prophet_index: usize = 0;
     let mut code = format!("{}:\n", function.ir.name());
 
@@ -104,11 +103,13 @@ pub fn print_function(
                     continue;
                 }
             }
-            if inst.data.is_call() {
-                main_call = true;
-            }
-            if function.ir.name() == "main" && main_call && Opcode::RET == inst.data.opcode {
-                code.push_str(&format!("  end "));
+
+            if Opcode::RET == inst.data.opcode {
+                let mut term = "  ret";
+                if function.ir.name() == "main" {
+                    term = "  end";
+                }
+                code.push_str(&format!("{}", term));
             } else if inst.data.opcode == Opcode::PROPHET {
                 code.push_str(&format!(".PROPHET{}_{}:\n", fn_idx, prophet_index));
 
