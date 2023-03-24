@@ -20,7 +20,6 @@ pub struct AsmProgram {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Prophet {
-    pub name: String,
     pub label: String,
     pub code: String,
     pub inputs: Vec<String>,
@@ -45,14 +44,12 @@ const DIV_MOD: &'static str = "%{
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
-            name: name.to_string(),
             code: SQRT.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
             inputs: ["cid.x".to_string()].to_vec(),
             outputs: ["cid.y".to_string()].to_vec(),
         },
         "prophet_div_mod" => Prophet {
-            name: name.to_string(),
             code: DIV_MOD.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
             inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
