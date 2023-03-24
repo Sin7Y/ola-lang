@@ -14,17 +14,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct AsmProgram {
-    program: String,
-    prophets: Vec<Prophet>,
+    pub program: String,
+    pub prophets: Vec<Prophet>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Prophet {
-    name: String,
-    label: String,
-    code: String,
-    inputs: Vec<String>,
-    outputs: Vec<String>,
+    pub name: String,
+    pub label: String,
+    pub code: String,
+    pub inputs: Vec<String>,
+    pub outputs: Vec<String>,
 }
 
 const SQRT: &'static str = "%{
@@ -47,7 +47,7 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
         "prophet_u32_sqrt" => Prophet {
             name: name.to_string(),
             code: SQRT.to_string(),
-            label: format!("PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
             inputs: ["cid.x".to_string()].to_vec(),
             outputs: ["cid.y".to_string()].to_vec(),
         },

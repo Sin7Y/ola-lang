@@ -3,7 +3,7 @@
   "prophets": [
     {
       "name": "prophet_u32_sqrt",
-      "label": "PROPHET3_0",
+      "label": ".PROPHET3_0",
       "code": "%{\n    entry() {\n        cid.y = sqrt(cid.x);\n    }\n%}",
       "inputs": [
         "cid.x"

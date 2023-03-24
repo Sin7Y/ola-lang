@@ -374,7 +374,11 @@ pub fn lower_condbr(
 
 #[cfg(test)]
 mod test {
-    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
+    use crate::codegen::{
+        core::ir::module::Module,
+        isa::ola::{asm::AsmProgram, Ola},
+        lower::compile_module,
+    };
     #[test]
     fn codegen_eq_test() {
         // LLVM Assembly
@@ -407,9 +411,12 @@ mod test {
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -466,9 +473,12 @@ eq:
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -525,9 +535,12 @@ ne:
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -584,9 +597,12 @@ ge:
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -644,9 +660,12 @@ gt:
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -705,9 +724,12 @@ eq:
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
