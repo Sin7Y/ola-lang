@@ -1,5 +1,5 @@
 use crate::codegen::core::ir::types::{
-    ArrayType, FunctionType, Type, Types, I1, I16, I32, I64, I8, VOID,
+    ArrayType, FunctionType, Type, Types, I1, I16, I32, I8, VOID,
 };
 use nom::{
     branch::alt,
@@ -35,7 +35,7 @@ pub fn parse<'a: 'b, 'b>(
                 alt((
                     map(tag("metadata"), |_| types.metadata()),
                     map(tag("void"), |_| VOID),
-                    map(tag("i64"), |_| I64),
+                    map(tag("i64"), |_| I32),
                     map(tag("i32"), |_| I32),
                     map(tag("i16"), |_| I16),
                     map(tag("i8"), |_| I8),

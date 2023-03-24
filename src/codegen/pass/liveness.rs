@@ -287,12 +287,13 @@ impl<T: TargetIsa> Liveness<T> {
                 }
                 for input in inst.data.input_regs() {
                     local_reg_lr_map
-                        .get_mut(&T::RegInfo::to_reg_unit(input))
-                        .unwrap()
+                        .entry(T::RegInfo::to_reg_unit(input))
+                        .or_insert_with(|| LiveRange(vec![]))
                         .0
-                        .last_mut()
-                        .unwrap()
-                        .end = ProgramPoint(block_num, inst_num);
+                        .push(LiveSegment {
+                            start: ProgramPoint(block_num, inst_num),
+                            end: ProgramPoint(block_num, inst_num),
+                        });
                 }
 
                 // outputs

@@ -10,7 +10,11 @@ pub mod register;
 
 #[cfg(test)]
 mod test {
-    use crate::codegen::{core::ir::module::Module, isa::ola::Ola, lower::compile_module};
+    use crate::codegen::{
+        core::ir::module::Module,
+        isa::ola::{asm::AsmProgram, Ola},
+        lower::compile_module,
+    };
     #[test]
     fn codegen_binop_test() {
         // LLVM Assembly
@@ -36,9 +40,12 @@ mod test {
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 1
@@ -53,7 +60,7 @@ mod test {
   add r3 r2 r7
   mov r0 r3
   add r8 r8 -1
-  ret 
+  end
 "
         );
     }
@@ -62,7 +69,7 @@ mod test {
     fn codegen_functioncall_test() {
         // LLVM Assembly
         let asm = r#"
-source_filename = "asm" 
+source_filename = "asm"
 
 ; Function Attrs: noinline nounwind optnone ssp uwtable
 define void @main() #0 {
@@ -94,7 +101,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
   store i32 %8, i32* %5, align 4
   %9 = load i32, i32* %5, align 4
   ret i32 %9
-}  
+}
 "#;
 
         // Parse the assembly and get a module
@@ -105,8 +112,10 @@ define i32 @bar(i32 %0, i32 %1) #0 {
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
 
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 7
@@ -123,7 +132,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
   mstore [r8,-3] r0
   mload r0 [r8,-3]
   add r8 r8 -7
-  end 
+  end
 bar:
 .LBL1_0:
   add r8 r8 3
@@ -137,7 +146,7 @@ bar:
   mstore [r8,-1] r0
   mload r0 [r8,-1]
   add r8 r8 -3
-  ret 
+  ret
 "
         );
     }
@@ -227,9 +236,12 @@ endfor:                                           ; preds = %cond
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -237,7 +249,7 @@ endfor:                                           ; preds = %cond
   mov r1 10
   call fib_non_recursive
   add r8 r8 -4
-  end 
+  end
 fib_recursive:
 .LBL1_0:
   add r8 r8 9
@@ -252,7 +264,7 @@ fib_recursive:
 .LBL1_1:
   mov r0 1
   add r8 r8 -9
-  ret 
+  ret
 .LBL1_2:
   mload r0 [r8,-7]
   not r7 1
@@ -272,7 +284,7 @@ fib_recursive:
   mstore [r8,-6] r0
   mload r0 [r8,-6]
   add r8 r8 -9
-  ret 
+  ret
 fib_non_recursive:
 .LBL2_0:
   add r8 r8 5
@@ -311,7 +323,7 @@ fib_non_recursive:
 .LBL2_4:
   mload r0 [r8,-4]
   add r8 r8 -5
-  ret 
+  ret
 "
         );
     }
@@ -533,9 +545,12 @@ enif:                                             ; preds = %entry
         // Compile the module for Ola and get a machine module
         let isa = Ola::default();
         let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
         // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
         assert_eq!(
-            format!("{}", mach_module.display_asm()),
+            format!("{}", code.program),
             "main:
 .LBL0_0:
   add r8 r8 4
@@ -543,7 +558,7 @@ enif:                                             ; preds = %entry
   mov r1 1
   call eq_rr
   add r8 r8 -4
-  end 
+  end
 eq_ri:
 .LBL1_0:
   add r8 r8 1
@@ -556,11 +571,11 @@ eq_ri:
 .LBL1_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL1_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 eq_rr:
 .LBL2_0:
   add r8 r8 2
@@ -576,11 +591,11 @@ eq_rr:
 .LBL2_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL2_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 neq_ri:
 .LBL3_0:
   add r8 r8 1
@@ -593,11 +608,11 @@ neq_ri:
 .LBL3_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL3_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 neq_rr:
 .LBL4_0:
   add r8 r8 2
@@ -613,11 +628,11 @@ neq_rr:
 .LBL4_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL4_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 lt_ri:
 .LBL5_0:
   add r8 r8 1
@@ -632,11 +647,11 @@ lt_ri:
 .LBL5_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL5_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 lt_rr:
 .LBL6_0:
   add r8 r8 2
@@ -654,11 +669,11 @@ lt_rr:
 .LBL6_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL6_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 lte_ri:
 .LBL7_0:
   add r8 r8 1
@@ -672,11 +687,11 @@ lte_ri:
 .LBL7_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL7_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 lte_rr:
 .LBL8_0:
   add r8 r8 2
@@ -692,11 +707,11 @@ lte_rr:
 .LBL8_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL8_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 gt_ri:
 .LBL9_0:
   add r8 r8 1
@@ -710,11 +725,11 @@ gt_ri:
 .LBL9_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL9_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 gt_rr:
 .LBL10_0:
   add r8 r8 2
@@ -732,11 +747,11 @@ gt_rr:
 .LBL10_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL10_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 gte_ri:
 .LBL11_0:
   add r8 r8 1
@@ -749,11 +764,11 @@ gte_ri:
 .LBL11_1:
   mov r0 2
   add r8 r8 -1
-  ret 
+  ret
 .LBL11_2:
   mov r0 3
   add r8 r8 -1
-  ret 
+  ret
 gte_rr:
 .LBL12_0:
   add r8 r8 2
@@ -769,12 +784,115 @@ gte_rr:
 .LBL12_1:
   mov r0 2
   add r8 r8 -2
-  ret 
+  ret
 .LBL12_2:
   mov r0 3
   add r8 r8 -2
-  ret 
+  ret
 "
+        );
+    }
+
+    #[test]
+    fn codegen_sqrt_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'SqrtContract'
+        source_filename = "examples/sqrt.ola"
+
+        declare void @builtin_assert(i64, i64)
+
+        declare void @builtin_range_check(i64)
+
+        declare i64 @prophet_u32_sqrt(i64)
+
+        define i64 @u32_sqrt(i64 %0) {
+        entry:
+          %1 = call i64 @prophet_u32_sqrt(i64 %0)
+          call void @builtin_range_check(i64 %1)
+          %2 = mul i64 %1, %1
+          call void @builtin_assert(i64 %2, i64 %0)
+          ret i64 %1
+        }
+
+        define void @main() {
+        entry:
+          %0 = call i64 @sqrt_test(i64 4)
+          ret void
+        }
+
+        define i64 @sqrt_test(i64 %0) {
+        entry:
+          %b = alloca i64, align 8
+          %n = alloca i64, align 8
+          store i64 %0, i64* %n, align 8
+          %1 = load i64, i64* %n, align 8
+          %2 = call i64 @u32_sqrt(i64 %1)
+          store i64 %2, i64* %b, align 8
+          %3 = load i64, i64* %b, align 8
+          ret i64 %3
+        }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        assert_eq!(
+            format!("{}", code.program),
+            "u32_sqrt:
+.LBL3_0:
+  mov r3 r1
+  mov r1 r3
+.PROPHET3_0:
+  mov r0 psp
+  mload r0 [r0,0]
+  range r0
+  mul r2 r0 r0
+  assert r2 r3
+  ret
+main:
+.LBL4_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 4
+  call sqrt_test
+  add r8 r8 -4
+  end
+sqrt_test:
+.LBL5_0:
+  add r8 r8 6
+  mstore [r8,-2] r8
+  mov r0 r1
+  mstore [r8,-3] r0
+  mload r1 [r8,-3]
+  call u32_sqrt
+  mstore [r8,-4] r0
+  mload r0 [r8,-4]
+  add r8 r8 -6
+  ret
+"
+        );
+        assert_eq!(
+            format!("{:#?}", code.prophets),
+            r#"[
+    Prophet {
+        label: ".PROPHET3_0",
+        code: "%{\n    entry() {\n        cid.y = sqrt(cid.x);\n    }\n%}",
+        inputs: [
+            "cid.x",
+        ],
+        outputs: [
+            "cid.y",
+        ],
+    },
+]"#
         );
     }
 }
