@@ -91,7 +91,92 @@ pub fn u32_div<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    unimplemented!()
+    let left = expression(l, bin, func, func_val, var_table, ns);
+    let right = expression(r, bin, func, func_val, var_table, ns);
+
+    let remainder = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_mod")
+                .expect("prophet_u32_mod should have been defined before"),
+            &[left.into(), right.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // remainder should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[remainder.into()],
+        "",
+    );
+
+    // 0 <= right - (remainder + 1)
+    let one = bin.context.i64_type().const_int(1, false);
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
+        right.into_int_value(),
+        bin.builder.build_int_add(
+            remainder.into_int_value(),
+            one,
+            "",
+        ),
+        "",
+    );
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[right_minus_remainder_minus_one.into()],
+        "",
+    );
+
+    let quotient = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_div")
+                .expect("prophet_u32_div should have been defined before"),
+            &[left.into(), right.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // quotient should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[quotient.into()],
+        "",
+    );
+
+    // assert that quotient * right + remainder == left
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
+        bin.builder.build_int_mul(
+            quotient.into_int_value(),
+            right.into_int_value(),
+            "",
+        ),
+        remainder.into_int_value(),
+        "",
+    );
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[quotient_mul_right_plus_remainder.into(), left.into()],
+        "",
+    );
+    quotient
+
 }
 
 pub fn u32_mod<'a>(
@@ -103,7 +188,91 @@ pub fn u32_mod<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    unimplemented!()
+    let left = expression(l, bin, func, func_val, var_table, ns);
+    let right = expression(r, bin, func, func_val, var_table, ns);
+
+    let remainder = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_mod")
+                .expect("prophet_u32_mod should have been defined before"),
+            &[left.into(), right.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // remainder should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[remainder.into()],
+        "",
+    );
+
+    // 0 <= right - (remainder + 1)
+    let one = bin.context.i64_type().const_int(1, false);
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
+        right.into_int_value(),
+        bin.builder.build_int_add(
+            remainder.into_int_value(),
+            one,
+            "",
+        ),
+        "",
+    );
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[right_minus_remainder_minus_one.into()],
+        "",
+    );
+
+    let quotient = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_div")
+                .expect("prophet_u32_div should have been defined before"),
+            &[left.into(), right.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // quotient should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[quotient.into()],
+        "",
+    );
+
+    // assert that quotient * right + remainder == left
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
+        bin.builder.build_int_mul(
+            quotient.into_int_value(),
+            right.into_int_value(),
+            "",
+        ),
+        remainder.into_int_value(),
+        "",
+    );
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[quotient_mul_right_plus_remainder.into(), left.into()],
+        "",
+    );
+    remainder
 }
 
 pub fn u32_bitwise_or<'a>(
@@ -186,7 +355,92 @@ pub fn u32_shift_right<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    unimplemented!()
+    let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
+    let base_two = NumberLiteral(Loc::IRgen, Type::Uint(32), BigInt::from(2));
+    let right = u32_power(&base_two, r, bin, func, func_val, var_table, ns).into_int_value();
+    let remainder = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_mod")
+                .expect("prophet_u32_mod should have been defined before"),
+            &[left.into(), right.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // remainder should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[remainder.into()],
+        "",
+    );
+
+    // 0 <= right - (remainder + 1)
+    let one = bin.context.i64_type().const_int(1, false);
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
+        right,
+        bin.builder.build_int_add(
+            remainder.into_int_value(),
+            one,
+            "",
+        ),
+        "",
+    );
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[right_minus_remainder_minus_one.into()],
+        "",
+    );
+
+    let quotient = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_div")
+                .expect("prophet_u32_div should have been defined before"),
+            &[left.into(), right.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // quotient should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[quotient.into()],
+        "",
+    );
+
+    // assert that quotient * right + remainder == left
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
+        bin.builder.build_int_mul(
+            quotient.into_int_value(),
+            right,
+            "",
+        ),
+        remainder.into_int_value(),
+        "",
+    );
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[quotient_mul_right_plus_remainder.into(), left.into()],
+        "",
+    );
+    quotient
+
 }
 
 pub fn u32_equal<'a>(
