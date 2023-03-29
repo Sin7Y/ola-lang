@@ -32,11 +32,29 @@ const SQRT: &'static str = "%{
     }
 %}";
 
+const DIV: &'static str = "%{
+    entry() {
+        cid.q = div(cid.x, cid.y);
+    }
+    function div(felt x, felt y) -> felt {
+        return x / y;
+    }
+%}";
+
+const MOD: &'static str = "%{
+    entry() {
+        cid.r = mod(cid.x, cid.y);
+    }
+    function mod(felt x, felt y) -> felt {
+        return x % y;
+    }
+%}";
+
 const DIV_MOD: &'static str = "%{
     entry() {
         (cid.q, cid.r) = divmod(cid.x, cid.y);
     }
-    function divmod(felt x, felt y) returns (felt, felt) {
+    function divmod(felt x, felt y) -> (felt, felt) {
         return (x / y, x % y);
     }
 %}";
@@ -48,6 +66,18 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
             inputs: ["cid.x".to_string()].to_vec(),
             outputs: ["cid.y".to_string()].to_vec(),
+        },
+        "prophet_u32_div" => Prophet {
+            code: DIV.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
+            outputs: ["cid.q".to_string()].to_vec(),
+        },
+        "prophet_u32_mod" => Prophet {
+            code: MOD.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
+            outputs: ["cid.r".to_string()].to_vec(),
         },
         "prophet_div_mod" => Prophet {
             code: DIV_MOD.to_string(),
@@ -116,7 +146,9 @@ pub fn print_function(
                 code.push_str(&format!("  mov r0 psp\n"));
                 code.push_str(&format!("  mload r0 [r0,0]\n"));
 
-                prophets.push(from_prophet("prophet_u32_sqrt", fn_idx, prophet_index));
+                assert_eq!(inst.data.operands.len(), 2);
+                let name = write_operand(&inst.data.operands[1].data, fn_idx);
+                prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));
 
                 prophet_index += 1;
 
