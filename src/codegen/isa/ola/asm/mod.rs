@@ -33,20 +33,20 @@ const SQRT: &'static str = "%{
 %}";
 
 const DIV: &'static str = "%{
-    entry() {
-        cid.q = div(cid.x, cid.y);
-    }
     function div(felt x, felt y) -> felt {
         return x / y;
+    }
+    entry() {
+        cid.q = div(cid.x, cid.y);
     }
 %}";
 
 const MOD: &'static str = "%{
-    entry() {
-        cid.r = mod(cid.x, cid.y);
-    }
     function mod(felt x, felt y) -> felt {
         return x % y;
+    }
+    entry() {
+        cid.r = mod(cid.x, cid.y);
     }
 %}";
 

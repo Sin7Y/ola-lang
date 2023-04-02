@@ -895,4 +895,333 @@ sqrt_test:
 ]"#
         );
     }
+
+    #[test]
+    fn codegen_sqrt_inst_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'SqrtContract'
+source_filename = "examples/sqrt.ola"
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+define void @main() {
+entry:
+  %0 = call i64 @sqrt_test(i64 4)
+  ret void
+}
+
+define i64 @sqrt_test(i64 %0) {
+entry:
+  %i = alloca i64, align 8
+  %x = alloca i64, align 8
+  %result = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 %0, i64* %a, align 8
+  store i64 0, i64* %result, align 8
+  %1 = load i64, i64* %a, align 8
+  %2 = icmp ugt i64 %1, 3
+  br i1 %2, label %then, label %else
+
+then:                                             ; preds = %entry
+  %3 = load i64, i64* %a, align 8
+  store i64 %3, i64* %result, align 4
+  %4 = load i64, i64* %a, align 8
+  %5 = call i64 @prophet_u32_mod(i64 %4, i64 2)
+  call void @builtin_range_check(i64 %5)
+  %6 = add i64 %5, 1
+  %7 = sub i64 2, %6
+  call void @builtin_range_check(i64 %7)
+  %8 = call i64 @prophet_u32_div(i64 %4, i64 2)
+  call void @builtin_range_check(i64 %8)
+  %9 = mul i64 %8, 2
+  %10 = add i64 %9, %5
+  call void @builtin_assert(i64 %10, i64 %4)
+  %11 = add i64 %8, 1
+  call void @builtin_range_check(i64 %11)
+  store i64 %11, i64* %x, align 8
+  store i64 0, i64* %i, align 8
+  br label %cond
+
+else:                                             ; preds = %entry
+  %12 = load i64, i64* %a, align 8
+  %13 = icmp ne i64 %12, 0
+  br i1 %13, label %then3, label %enif4
+
+enif:                                             ; preds = %enif4, %endfor
+  %14 = load i64, i64* %result, align 8
+  ret i64 %14
+
+cond:                                             ; preds = %next, %then
+  %15 = load i64, i64* %i, align 8
+  %16 = icmp ult i64 %15, 100
+  br i1 %16, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %17 = load i64, i64* %x, align 8
+  %18 = load i64, i64* %result, align 8
+  %19 = icmp uge i64 %17, %18
+  br i1 %19, label %then1, label %enif2
+
+next:                                             ; preds = %enif2
+  %20 = load i64, i64* %i, align 8
+  %21 = add i64 %20, 1
+  store i64 %21, i64* %i, align 8
+  br label %cond
+
+endfor:                                           ; preds = %then1, %cond
+  br label %enif
+
+then1:                                            ; preds = %body
+  br label %endfor
+
+enif2:                                            ; preds = %body
+  %22 = load i64, i64* %x, align 8
+  store i64 %22, i64* %result, align 4
+  %23 = load i64, i64* %a, align 8
+  %24 = load i64, i64* %x, align 8
+  %25 = call i64 @prophet_u32_mod(i64 %23, i64 %24)
+  call void @builtin_range_check(i64 %25)
+  %26 = add i64 %25, 1
+  %27 = sub i64 %24, %26
+  call void @builtin_range_check(i64 %27)
+  %28 = call i64 @prophet_u32_div(i64 %23, i64 %24)
+  call void @builtin_range_check(i64 %28)
+  %29 = mul i64 %28, %24
+  %30 = add i64 %29, %25
+  call void @builtin_assert(i64 %30, i64 %23)
+  %31 = load i64, i64* %x, align 8
+  %32 = add i64 %28, %31
+  call void @builtin_range_check(i64 %32)
+  %33 = call i64 @prophet_u32_mod(i64 %32, i64 2)
+  call void @builtin_range_check(i64 %33)
+  %34 = add i64 %33, 1
+  %35 = sub i64 2, %34
+  call void @builtin_range_check(i64 %35)
+  %36 = call i64 @prophet_u32_div(i64 %32, i64 2)
+  call void @builtin_range_check(i64 %36)
+  %37 = mul i64 %36, 2
+  %38 = add i64 %37, %33
+  call void @builtin_assert(i64 %38, i64 %32)
+  store i64 %36, i64* %x, align 4
+  br label %next
+
+then3:                                            ; preds = %else
+  store i64 1, i64* %result, align 4
+  br label %enif4
+
+enif4:                                            ; preds = %then3, %else
+  br label %enif
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL5_0:
+  add r8 r8 4
+  mstore [r8,-2] r8
+  mov r1 4
+  call sqrt_test
+  add r8 r8 -4
+  end
+sqrt_test:
+.LBL6_0:
+  add r8 r8 19
+  mstore [r8,-16] r1
+  mov r1 0
+  mstore [r8,-17] r1
+  mload r1 [r8,-16]
+  gte r2 r1 3
+  neq r0 r1 3
+  and r2 r2 r0
+  cjmp r2 .LBL6_1
+  jmp .LBL6_2
+.LBL6_1:
+  mload r0 [r8,-16]
+  mstore [r8,-17] r0
+  mload r0 [r8,-16]
+  mstore [r8,-12] r0
+  mload r0 [r8,-12]
+  mov r1 r0
+  mov r2 2
+.PROPHET6_0:
+  mov r0 psp
+  mload r0 [r0,0]
+  mstore [r8,-11] r0
+  mload r0 [r8,-11]
+  range r0
+  mov r0 2
+  mload r1 [r8,-11]
+  add r4 r1 1
+  not r7 r4
+  add r7 r7 1
+  add r5 r0 r7
+  range r5
+  mload r0 [r8,-12]
+  mov r1 r0
+  mov r2 2
+.PROPHET6_1:
+  mov r0 psp
+  mload r0 [r0,0]
+  range r0
+  mul r1 r0 2
+  mstore [r8,-15] r1
+  mload r1 [r8,-15]
+  mload r2 [r8,-11]
+  add r1 r1 r2
+  mstore [r8,-14] r1
+  mload r1 [r8,-14]
+  mload r2 [r8,-12]
+  assert r1 r2
+  add r0 r0 1
+  mstore [r8,-13] r0
+  mload r0 [r8,-13]
+  range r0
+  mload r0 [r8,-13]
+  mstore [r8,-18] r0
+  mov r0 0
+  mstore [r8,-19] r0
+  jmp .LBL6_4
+.LBL6_2:
+  mload r0 [r8,-16]
+  neq r0 r0 0
+  cjmp r0 .LBL6_10
+  jmp .LBL6_11
+.LBL6_3:
+  mload r0 [r8,-17]
+  add r8 r8 -19
+  ret
+.LBL6_4:
+  mload r0 [r8,-19]
+  mov r1 100
+  gte r1 r1 r0
+  neq r3 r0 100
+  and r1 r1 r3
+  cjmp r1 .LBL6_5
+  jmp .LBL6_7
+.LBL6_5:
+  mload r0 [r8,-18]
+  mload r1 [r8,-17]
+  gte r0 r0 r1
+  cjmp r0 .LBL6_8
+  jmp .LBL6_9
+.LBL6_6:
+  mload r1 [r8,-19]
+  add r0 r1 1
+  mstore [r8,-19] r0
+  jmp .LBL6_4
+.LBL6_7:
+  jmp .LBL6_3
+.LBL6_8:
+  jmp .LBL6_7
+.LBL6_9:
+  mload r0 [r8,-18]
+  mstore [r8,-17] r0
+  mload r0 [r8,-16]
+  mstore [r8,-3] r0
+  mload r0 [r8,-18]
+  mstore [r8,-2] r0
+  mload r0 [r8,-3]
+  mov r1 r0
+  mload r0 [r8,-2]
+  mov r2 r0
+.PROPHET6_2:
+  mov r0 psp
+  mload r0 [r0,0]
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  range r0
+  mload r0 [r8,-1]
+  add r4 r0 1
+  not r7 r4
+  add r7 r7 1
+  mload r0 [r8,-2]
+  add r5 r0 r7
+  range r5
+  mload r0 [r8,-3]
+  mov r1 r0
+  mload r0 [r8,-2]
+  mov r2 r0
+.PROPHET6_3:
+  mov r0 psp
+  mload r0 [r0,0]
+  range r0
+  mload r1 [r8,-2]
+  mul r1 r0 r1
+  mstore [r8,-10] r1
+  mload r1 [r8,-10]
+  mload r2 [r8,-1]
+  add r1 r1 r2
+  mstore [r8,-9] r1
+  mload r1 [r8,-9]
+  mload r2 [r8,-3]
+  assert r1 r2
+  mload r1 [r8,-18]
+  add r0 r0 r1
+  mstore [r8,-5] r0
+  mload r0 [r8,-5]
+  range r0
+  mload r0 [r8,-5]
+  mov r1 r0
+  mov r2 2
+.PROPHET6_4:
+  mov r0 psp
+  mload r0 [r0,0]
+  mov r4 r0
+  range r4
+  mov r0 2
+  add r1 r4 1
+  mstore [r8,-8] r1
+  mload r1 [r8,-8]
+  not r7 r1
+  add r7 r7 1
+  add r0 r0 r7
+  mstore [r8,-7] r0
+  mload r0 [r8,-7]
+  range r0
+  mload r0 [r8,-5]
+  mov r1 r0
+  mov r2 2
+.PROPHET6_5:
+  mov r0 psp
+  mload r0 [r0,0]
+  range r0
+  mul r1 r0 2
+  mstore [r8,-6] r1
+  mload r1 [r8,-6]
+  add r1 r1 r4
+  mstore [r8,-4] r1
+  mload r1 [r8,-5]
+  mload r2 [r8,-4]
+  assert r2 r1
+  mstore [r8,-18] r0
+  jmp .LBL6_6
+.LBL6_10:
+  mov r0 1
+  mstore [r8,-17] r0
+  jmp .LBL6_11
+.LBL6_11:
+  jmp .LBL6_3
+"
+        );
+    }
 }
