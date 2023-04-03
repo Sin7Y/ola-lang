@@ -261,7 +261,7 @@ pub fn resolve_returns(
 fn signatures() {
     use super::*;
 
-    let mut ns = Namespace::new();
+    let mut ns = Namespace::default();
 
     ns.contracts
         .push(ast::Contract::new("bar", program::Loc::Implicit));

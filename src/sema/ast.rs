@@ -20,7 +20,6 @@ use tiny_keccak::{Hasher, Keccak};
 pub enum Type {
     Bool,
     Uint(u16),
-    Field,
 
     Array(Box<Type>, Vec<ArrayLength>),
     /// The usize is an index into enums in the namespace
@@ -268,7 +267,6 @@ impl From<&program::Type> for Type {
     fn from(p: &program::Type) -> Type {
         match p {
             program::Type::Bool => Type::Bool,
-            program::Type::Field => Type::Field,
             program::Type::Uint(n) => Type::Uint(*n),
         }
     }
@@ -339,6 +337,7 @@ pub struct File {
 }
 
 /// When resolving a ola file, this holds all the resolved items
+
 pub struct Namespace {
     pub files: Vec<File>,
     pub enums: Vec<EnumDecl>,
@@ -361,6 +360,8 @@ pub struct Namespace {
     pub variable_symbols: HashMap<(usize, Option<usize>, String), Symbol>,
     // each variable in the symbol table should have a unique number
     pub next_id: usize,
+
+    pub called_lib_functions: Vec<String>,
 }
 
 pub struct Contract {
@@ -462,7 +463,7 @@ pub enum Expression {
         args: Vec<Expression>,
     },
 
-    Builtin(program::Loc, Vec<Type>, Builtin, Vec<Expression>),
+    LibFunction(program::Loc, Vec<Type>, LibFunc, Vec<Expression>),
     List(program::Loc, Vec<Expression>),
 }
 
@@ -535,7 +536,7 @@ impl Recurse for Expression {
                         e.recurse(cx, f);
                     }
                 }
-                Expression::Builtin(_, _, _, exprs) | Expression::List(_, exprs) => {
+                Expression::LibFunction(_, _, _, exprs) | Expression::List(_, exprs) => {
                     for e in exprs {
                         e.recurse(cx, f);
                     }
@@ -590,7 +591,7 @@ impl CodeLocation for Expression {
             | Expression::FunctionCall { loc, .. }
             | Expression::Increment(loc, ..)
             | Expression::Decrement(loc, ..)
-            | Expression::Builtin(loc, ..)
+            | Expression::LibFunction(loc, ..)
             | Expression::Assign(loc, ..)
             | Expression::List(loc, _)
             | Expression::And(loc, ..) => *loc,
@@ -614,57 +615,9 @@ impl CodeLocation for Statement {
     }
 }
 
-// impl CodeLocation for Instr {
-//     fn loc(&self) -> program::Loc {
-//         match self {
-//             Instr::Set { loc, expr, .. } => match loc {
-//                 program::Loc::File(_, _, _) => *loc,
-//                 _ => expr.loc(),
-//             },
-//             Instr::Call { args, .. } if args.is_empty() =>
-// program::Loc::Codegen,             Instr::Call { args, .. } => args[0].loc(),
-//             Instr::Return { value } if value.is_empty() =>
-// program::Loc::Codegen,             Instr::Return { value } => value[0].loc(),
-//             Instr::EmitEvent { data, .. } if data.is_empty() =>
-// program::Loc::Codegen,             Instr::EmitEvent { data, .. } =>
-// data[0].loc(),             Instr::BranchCond { cond, .. } => cond.loc(),
-//             Instr::Store { dest, .. } => dest.loc(),
-//             Instr::SetStorageBytes { storage, .. }
-//             | Instr::PushStorage { storage, .. }
-//             | Instr::PopStorage { storage, .. }
-//             | Instr::LoadStorage { storage, .. }
-//             | Instr::ClearStorage { storage, .. } => storage.loc(),
-//             Instr::ExternalCall { value, .. } | Instr::SetStorage { value, ..
-// } => value.loc(),             Instr::PushMemory { value, .. } => value.loc(),
-//             Instr::Constructor { gas, .. } => gas.loc(),
-//             Instr::ValueTransfer { address, .. } => address.loc(),
-//             Instr::AbiDecode { data, .. } => data.loc(),
-//             Instr::SelfDestruct { recipient } => recipient.loc(),
-//             Instr::WriteBuffer { buf, .. } => buf.loc(),
-//             Instr::Print { expr } => expr.loc(),
-//             Instr::MemCopy {
-//                 source,
-//                 destination,
-//                 ..
-//             } => match source.loc() {
-//                 program::Loc::File(_, _, _) => source.loc(),
-//                 _ => destination.loc(),
-//             },
-//             Instr::Switch { cond, .. } => cond.loc(),
-//             Instr::ReturnData { data, .. } => data.loc(),
-//             Instr::Branch { .. }
-//             | Instr::Unreachable
-//             | Instr::ReturnCode { .. }
-//             | Instr::Nop
-//             | Instr::AssertFailure { .. }
-//             | Instr::PopMemory { .. } => program::Loc::Codegen,
-//         }
-//     }
-// }
-
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub enum Builtin {
-    PoseidonHash,
+pub enum LibFunc {
+    U32Sqrt,
 }
 
 #[derive(Clone, Debug)]

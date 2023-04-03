@@ -2,7 +2,7 @@
 
 use super::{
     ast::{ArrayLength, Diagnostic, Namespace, Note, Parameter, RetrieveType, Symbol, Type},
-    builtin,
+    corelib,
     diagnostics::Diagnostics,
     eval::eval_const_number,
     expression::{expression, ExprContext, ResolveTo},
@@ -18,7 +18,7 @@ use std::collections::HashMap;
 impl Namespace {
     /// Create a namespace and populate with the parameters for the target
     pub fn new() -> Self {
-        let ns = Namespace {
+        Namespace {
             files: Vec::new(),
             enums: Vec::new(),
             structs: Vec::new(),
@@ -31,9 +31,8 @@ impl Namespace {
             function_symbols: HashMap::new(),
             diagnostics: Diagnostics::default(),
             next_id: 0,
-        };
-
-        ns
+            called_lib_functions: Vec::new(),
+        }
     }
 
     /// Add symbol to symbol table; either returns true for success, or adds an
@@ -45,7 +44,7 @@ impl Namespace {
         id: &program::Identifier,
         symbol: Symbol,
     ) -> bool {
-        if builtin::is_reserved(&id.name) {
+        if corelib::is_reserved(&id.name) {
             self.diagnostics.push(Diagnostic::error(
                 id.loc,
                 format!("'{}' shadows name of a builtin", id.name),
@@ -337,7 +336,7 @@ impl Namespace {
         contract_no: Option<usize>,
         id: &program::Identifier,
     ) {
-        if builtin::is_reserved(&id.name) {
+        if corelib::is_reserved(&id.name) {
             self.diagnostics.push(Diagnostic::warning(
                 id.loc,
                 format!("'{}' shadows name of a builtin", id.name),
@@ -805,5 +804,11 @@ impl Namespace {
                 .collect::<Vec<String>>()
                 .join(",")
         )
+    }
+}
+
+impl Default for Namespace {
+    fn default() -> Self {
+        Namespace::new()
     }
 }

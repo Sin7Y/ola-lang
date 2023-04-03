@@ -12,7 +12,7 @@ pub enum Loc {
     Builtin,
     CommandLine,
     Implicit,
-    Codegen,
+    IRgen,
     File(usize, usize, usize),
 }
 
@@ -153,7 +153,6 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 #[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum Type {
     Bool,
-    Field,
     Uint(u16),
 }
 #[derive(Debug, PartialEq, Eq, Clone)]

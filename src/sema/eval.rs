@@ -469,6 +469,5 @@ fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
             ));
         }
     }
-
     None
 }

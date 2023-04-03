@@ -7,13 +7,14 @@ use ola_parser::{parse, program};
 use std::ffi::OsStr;
 
 pub mod ast;
-pub mod builtin;
 pub(crate) mod contracts;
+pub mod corelib;
 pub mod diagnostics;
 mod dotgraphviz;
 pub(crate) mod eval;
 pub(crate) mod expression;
 mod file;
+pub mod function_call;
 mod functions;
 mod namespace;
 mod statements;

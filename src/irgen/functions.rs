@@ -2,7 +2,7 @@ use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
-use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
+use inkwell::values::{BasicValueEnum, FunctionValue};
 use std::collections::HashMap;
 
 /// Emit all functions, constructors, fallback and receiver
@@ -49,28 +49,6 @@ pub(super) fn gen_function<'a>(
     func_val: FunctionValue<'a>,
     ns: &Namespace,
 ) {
-    // Create all the stack variables
-    // let mut vars = HashMap::new();
-
-    // for (no, v) in &cfg.vars {
-    //
-    //     let ty = bin.llvm_type(&v.ty, ns);
-    //     vars.insert(
-    //         *no,
-    //         Variable {
-    //             value: if ty.is_pointer_type() {
-    //                 ty.into_pointer_type().const_zero().into()
-    //             } else if ty.is_array_type() {
-    //                 ty.into_array_type().const_zero().into()
-    //             } else if ty.is_int_type() {
-    //                 ty.into_int_type().const_zero().into()
-    //             } else {
-    //                 ty.into_struct_type().const_zero().into()
-    //             },
-    //         },
-    //     );
-    // }
-
     let bb = bin.context.append_basic_block(func_val, "entry");
 
     bin.builder.position_at_end(bb);
@@ -98,8 +76,11 @@ pub(crate) fn populate_arguments<'a>(
             let arg_val = func_val.get_nth_param(i as u32).unwrap();
             let alloc =
                 bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());
-            var_table.insert(*pos, alloc.as_basic_value_enum());
-            bin.builder.build_store(alloc, arg_val);
+            var_table.insert(*pos, alloc.into());
+            bin.builder
+                .build_store(alloc, arg_val)
+                .set_alignment(8)
+                .unwrap();
         }
     }
 }

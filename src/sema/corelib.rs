@@ -1,81 +1,68 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ast::{Builtin, Diagnostic, Expression, Namespace, Type};
+use super::ast::{Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
 use super::expression::{expression, ExprContext, ResolveTo};
 use super::symtable::Symtable;
-use crate::sema::ast::RetrieveType;
 use ola_parser::program;
 use once_cell::sync::Lazy;
 
 pub struct Prototype {
-    pub builtin: Builtin,
+    pub libfunc: LibFunc,
     pub namespace: Option<&'static str>,
-    pub method: Option<Type>,
     pub name: &'static str,
     pub params: Vec<Type>,
     pub ret: Vec<Type>,
     pub doc: &'static str,
-    // Can this function be called in constant context (e.g. hash functions)
-    pub constant: bool,
 }
 
-// A list of all Ola builtins functions
-static BUILTIN_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
+// A list of all Ola lib functions
+static LIB_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
     [Prototype {
-        builtin: Builtin::PoseidonHash,
+        libfunc: LibFunc::U32Sqrt,
         namespace: None,
-        method: None,
-        name: "hash",
-        params: vec![Type::Bool],
-        ret: vec![Type::Uint(256)],
+        name: "u32_sqrt",
+        params: vec![Type::Uint(32)],
+        ret: vec![Type::Uint(32)],
         doc: "Abort execution if argument evaluates to false",
-        constant: false,
     }]
 });
 
-// A list of all Ola builtins variables
-static BUILTIN_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
+// A list of all Ola lib variables
+static LIB_VARIABLE: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
-// A list of all ola builtins methods
-static BUILTIN_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
+// A list of all Ola lib methods
+static LIB_METHODS: Lazy<[Prototype; 0]> = Lazy::new(|| []);
 
-/// Get the prototype for a builtin. If the prototype has arguments, it is a
-/// function else it is a variable.
-pub fn get_prototype(builtin: Builtin) -> Option<&'static Prototype> {
-    BUILTIN_FUNCTIONS
+/// Does function call match lib function
+pub fn is_lib_func_call(namespace: Option<&str>, fname: &str) -> bool {
+    LIB_FUNCTIONS
         .iter()
-        .find(|p| p.builtin == builtin)
-        .or_else(|| BUILTIN_VARIABLE.iter().find(|p| p.builtin == builtin))
-        .or_else(|| BUILTIN_METHODS.iter().find(|p| p.builtin == builtin))
+        .any(|p| p.name == fname && p.namespace == namespace)
 }
 
 /// Does variable name match any builtin namespace
-pub fn builtin_namespace(namespace: &str) -> bool {
-    BUILTIN_VARIABLE
-        .iter()
-        .any(|p| p.namespace == Some(namespace))
+pub fn lib_namespace(namespace: &str) -> bool {
+    LIB_VARIABLE.iter().any(|p| p.namespace == Some(namespace))
 }
 
-/// Is name reserved for builtins
+/// Is name reserved for lib function
 pub fn is_reserved(fname: &str) -> bool {
     if fname == "type" || fname == "super" {
         return true;
     }
 
-    let is_builtin_function = BUILTIN_FUNCTIONS.iter().any(|p| {
-        (p.name == fname && p.namespace.is_none() && p.method.is_none())
-            || (p.namespace == Some(fname))
-    });
+    let is_lib_function = LIB_FUNCTIONS
+        .iter()
+        .any(|p| (p.name == fname && p.namespace.is_none()) || (p.namespace == Some(fname)));
 
-    if is_builtin_function {
+    if is_lib_function {
         return true;
     }
 
-    BUILTIN_VARIABLE.iter().any(|p| {
-        (p.name == fname && p.namespace.is_none() && p.method.is_none())
-            || (p.namespace == Some(fname))
-    })
+    LIB_VARIABLE
+        .iter()
+        .any(|p| (p.name == fname && p.namespace.is_none()) || (p.namespace == Some(fname)))
 }
 
 /// Resolve a builtin call
@@ -89,16 +76,16 @@ pub fn resolve_call(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-    let funcs = BUILTIN_FUNCTIONS
+    let funcs = LIB_FUNCTIONS
         .iter()
-        .filter(|p| p.name == id && p.namespace == namespace && p.method.is_none())
+        .filter(|p| p.name == id && p.namespace == namespace)
         .collect::<Vec<&Prototype>>();
     let mut errors: Diagnostics = Diagnostics::default();
 
     for func in &funcs {
         let mut matches = true;
 
-        if context.constant && !func.constant {
+        if context.constant {
             errors.push(Diagnostic::cast_error(
                 *loc,
                 format!(
@@ -153,10 +140,11 @@ pub fn resolve_call(
                 return Err(());
             }
         } else {
-            return Ok(Expression::Builtin(
+            ns.called_lib_functions.push(id.to_string());
+            return Ok(Expression::LibFunction(
                 *loc,
                 func.ret.to_vec(),
-                func.builtin,
+                func.libfunc,
                 cast_args,
             ));
         }
@@ -174,56 +162,6 @@ pub fn resolve_call(
     Err(())
 }
 
-/// Resolve a builtin namespace call. The takes the unresolved arguments, since
-/// it has to handle the special case "abi.decode(foo, (int32, bool, address))"
-/// where the second argument is a type list. The generic expression resolver
-/// cannot deal with this. It is only used in for this specific call.
-pub fn resolve_namespace_call(
-    loc: &program::Loc,
-    namespace: &str,
-    name: &str,
-    args: &[program::Expression],
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-) -> Result<Expression, ()> {
-    // The abi.* functions need special handling, others do not
-    if namespace != "abi" {
-        return resolve_call(
-            loc,
-            Some(namespace),
-            name,
-            args,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-        );
-    }
-
-    let builtin = match name {
-        "hash" => Builtin::PoseidonHash,
-        _ => unreachable!(),
-    };
-
-    let mut resolved_args = Vec::new();
-    let args_iter = args.iter();
-
-    for arg in args_iter {
-        let expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
-
-        resolved_args.push(expr);
-    }
-
-    Ok(Expression::Builtin(
-        *loc,
-        vec![Type::Bool],
-        builtin,
-        resolved_args,
-    ))
-}
-
 /// Resolve a builtin call
 pub fn resolve_method_call(
     expr: &Expression,
@@ -234,17 +172,16 @@ pub fn resolve_method_call(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Option<Expression>, ()> {
-    let expr_ty = expr.ty();
-    let funcs: Vec<_> = BUILTIN_METHODS
+    let funcs: Vec<_> = LIB_METHODS
         .iter()
-        .filter(|func| func.name == id.name && func.method.as_ref() == Some(&expr_ty))
+        .filter(|func| func.name == id.name)
         .collect();
     let mut errors = Diagnostics::default();
 
     for func in &funcs {
         let mut matches = true;
 
-        if context.constant && !func.constant {
+        if context.constant {
             diagnostics.push(Diagnostic::cast_error(
                 id.loc,
                 format!(
@@ -308,10 +245,10 @@ pub fn resolve_method_call(
                 func.ret.to_vec()
             };
 
-            return Ok(Some(Expression::Builtin(
+            return Ok(Some(Expression::LibFunction(
                 id.loc,
                 returns,
-                func.builtin,
+                func.libfunc,
                 cast_args,
             )));
         }
@@ -334,5 +271,3 @@ pub fn resolve_method_call(
         }
     }
 }
-
-impl Namespace {}

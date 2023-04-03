@@ -73,8 +73,6 @@ fn test_statement_reachable() {
 fn constant_overflow_checks() {
     let file = r#"
 
-
-
     contract test_contract {
 
         u32 global_a;
@@ -133,7 +131,7 @@ fn constant_overflow_checks() {
         fn composite(u32 a) {
 
             u32 sesa = 500- 400 + test_params(100+200, 0);
-            
+
             // value 4294967298 does not fit into type u32.
             // value 4294967299 does not fit into type u32.
             u32 seas = (4294967297 + 1) + a + (4294967297 + 2);
@@ -166,10 +164,9 @@ fn constant_overflow_checks() {
             // divide by zero
             u32 div_zeroo = (300-50) % 0;
 
-
         }
     }
-    
+
         "#;
     let ns = parse(file);
     let errors = ns.diagnostics.errors();
@@ -252,22 +249,21 @@ fn test_types() {
             u32[] arr_u32;
             u64[] arr_u64;
             u256[] arr_u256;
-            field[] arr_field;
 
         }
 
-    
+
         fn foo()  {
             u32 x = 0;
             x += 4294967299;
-    
+
             u32 y = 0;
             y *= 4294967296 + 3;
             y -= 4294967298;
             y /= 4294967297 + y;
         }
     }
-    
+
         "#;
     let ns = parse(file);
     let errors = ns.diagnostics.errors();

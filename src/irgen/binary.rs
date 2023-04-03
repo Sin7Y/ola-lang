@@ -5,6 +5,7 @@ use std::str;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
+use crate::irgen::corelib::gen_lib_functions;
 use crate::irgen::functions::gen_functions;
 use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
@@ -31,7 +32,7 @@ impl<'a> Binary<'a> {
         filename: &'a str,
     ) -> Self {
         let mut binary = Binary::new(context, &contract.name, filename);
-
+        gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
         binary
     }
@@ -73,11 +74,19 @@ impl<'a> Binary<'a> {
     // }
 
     /// Convert a BigInt number to llvm const value
-    pub(crate) fn number_literal(&self, bits: u32, n: &BigInt, _ns: &Namespace) -> IntValue<'a> {
-        let ty = self.context.custom_width_int_type(bits);
-        let s = n.to_string();
-
-        ty.const_int_from_string(&s, StringRadix::Decimal).unwrap()
+    /// we should slice and dice into pointer array types.
+    /// Currently we only support u32 type data.
+    pub(crate) fn number_literal(&self, ty: &Type, n: &BigInt, _ns: &Namespace) -> IntValue<'a> {
+        match ty {
+            // Map all i32 data to a field-based data type,
+            // with the maximum value of field between u63 and u64.
+            Type::Uint(32) => {
+                let ty = self.context.i64_type();
+                let s = n.to_string();
+                ty.const_int_from_string(&s, StringRadix::Decimal).unwrap()
+            }
+            _ => panic!("not implemented"),
+        }
     }
 
     /// Emit function prototype
@@ -97,8 +106,8 @@ impl<'a> Binary<'a> {
             let void_type = self.context.void_type();
             return void_type.fn_type(&args, false);
         }
-        let i32_type = self.context.i32_type();
-        i32_type.fn_type(&args, false)
+        let i64_type = self.context.i64_type();
+        i64_type.fn_type(&args, false)
     }
 
     /// Return the llvm type for a variable holding the type, not the type
@@ -128,10 +137,10 @@ impl<'a> Binary<'a> {
     pub(crate) fn llvm_type(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         match ty {
             Type::Bool => BasicTypeEnum::IntType(self.context.bool_type()),
-
-            Type::Uint(n) => BasicTypeEnum::IntType(self.context.custom_width_int_type(*n as u32)),
+            // Map all i32 data to a field-based data type, with the maximum value of field between
+            // u63 and u64
+            Type::Uint(32) => BasicTypeEnum::IntType(self.context.i64_type()),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
-
             Type::Array(base_ty, dims) => {
                 let ty = self.llvm_field_ty(base_ty, ns);
 

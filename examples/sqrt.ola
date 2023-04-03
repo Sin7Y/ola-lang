@@ -4,9 +4,21 @@ contract SqrtContract {
        sqrt_test(4);
     }
 
-    fn sqrt_test(u32 n) -> (u32) {
-        u32 b = u32_sqrt(n);
-        return b;
+    fn sqrt_test(u32 a) -> (u32) {
+        u32 result = 0;
+        if (a > 3) {
+            result = a;
+            u32 x = a / 2 + 1;
+            // assume the maximum iteration is 100
+            for (u32 i = 0; i < 100; i++) {
+                if (x >= result) break;
+                result = x;
+                x = (a / x + x) / 2;
+            }
+        } else if (a != 0) {
+            result = 1;
+        }
+        return result;
     }
 
 }

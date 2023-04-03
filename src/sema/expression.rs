@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ast::{
-    ArrayLength, Diagnostic, Expression, Function, Namespace, RetrieveType, Symbol, Type,
-};
-use super::builtin;
+use super::ast::{ArrayLength, Diagnostic, Expression, Namespace, RetrieveType, Symbol, Type};
+use super::corelib;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
 use super::symtable::Symtable;
-use crate::sema::unused_variable::{
-    assigned_variable, check_function_call, check_var_usage_expression, used_variable,
-};
+use crate::sema::function_call::{available_functions, call_expr, named_call_expr};
+use crate::sema::unused_variable::{assigned_variable, check_var_usage_expression, used_variable};
 use crate::sema::Recurse;
 use num_bigint::BigInt;
 use num_traits::{FromPrimitive, Num};
 use ola_parser::program::{self, CodeLocation, Loc};
-use std::{cmp, cmp::Ordering, collections::HashMap, str::FromStr};
+use std::{cmp, cmp::Ordering, str::FromStr};
 
 impl RetrieveType for Expression {
     fn ty(&self) -> Type {
@@ -61,7 +58,7 @@ impl RetrieveType for Expression {
             | Expression::Cast { to, .. } => to.clone(),
 
             Expression::StorageArrayLength { ty, .. } => ty.clone(),
-            Expression::Builtin(_, returns, ..) | Expression::FunctionCall { returns, .. } => {
+            Expression::LibFunction(_, returns, ..) | Expression::FunctionCall { returns, .. } => {
                 assert_eq!(returns.len(), 1);
                 returns[0].clone()
             }
@@ -79,7 +76,7 @@ impl Expression {
     /// Return the type for this expression.
     pub fn tys(&self) -> Vec<Type> {
         match self {
-            Expression::Builtin(_, returns, ..) | Expression::FunctionCall { returns, .. } => {
+            Expression::LibFunction(_, returns, ..) | Expression::FunctionCall { returns, .. } => {
                 returns.to_vec()
             }
             Expression::List(_, list) => list.iter().map(|e| e.ty()).collect(),
@@ -276,7 +273,6 @@ fn get_uint_length(
 ) -> Result<u16, ()> {
     match l {
         Type::Uint(n) => Ok(*n),
-        Type::Field => Ok(64),
         Type::Enum(n) => {
             diagnostics.push(Diagnostic::error(
                 *l_loc,
@@ -347,15 +343,7 @@ fn number_literal(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    let skip_suffix;
-    if integer.ends_with("ll") {
-        skip_suffix = &integer[..integer.len() - 2];
-    } else if integer.ends_with("l") | integer.ends_with("u") | integer.ends_with("f") {
-        skip_suffix = &integer[..integer.len() - 1];
-    } else {
-        skip_suffix = integer;
-    }
-    let n = BigInt::from_str(skip_suffix).unwrap();
+    let n = BigInt::from_str(integer).unwrap();
     bigint_to_expression(loc, &n, ns, diagnostics, resolve_to)
 }
 
@@ -389,17 +377,11 @@ pub fn bigint_to_expression(
 
     // Return smallest type
 
-    let int_size = if bits < 7 { 8 } else { (bits + 7) & !7 } as u16;
-
     if bits > 256 {
         diagnostics.push(Diagnostic::error(*loc, format!("{} is too large", n)));
         Err(())
     } else {
-        Ok(Expression::NumberLiteral(
-            *loc,
-            Type::Uint(int_size),
-            n.clone(),
-        ))
+        Ok(Expression::NumberLiteral(*loc, Type::Uint(32), n.clone()))
     }
 }
 
@@ -776,18 +758,9 @@ fn hex_number_literal(
     // from_str_radix does not like the 0x prefix
     let s: String = n.chars().skip(2).filter(|v| *v != '_').collect();
 
-    let skip_suffix;
-    if s.ends_with("ll") {
-        skip_suffix = &s[..s.len() - 2];
-    } else if s.ends_with("l") | s.ends_with("u") {
-        skip_suffix = &s[..s.len() - 1];
-    } else {
-        skip_suffix = &*s;
-    }
-
     bigint_to_expression(
         loc,
-        &BigInt::from_str_radix(skip_suffix, 16).unwrap(),
+        &BigInt::from_str_radix(s.as_str(), 16).unwrap(),
         ns,
         diagnostics,
         resolve_to,
@@ -1504,7 +1477,7 @@ fn assign_expr(
         }
         Expression::Variable(_, _, n) => {
             match var_ty {
-                Type::Uint(_) | Type::Field => (),
+                Type::Uint(_) => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -1601,7 +1574,7 @@ fn incr_decr(
         }
         Expression::Variable(_, ty, n) => {
             match ty {
-                Type::Uint(_) | Type::Field => (),
+                Type::Uint(_) => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -1730,7 +1703,7 @@ fn member_access(
 ) -> Result<Expression, ()> {
     // is it a builtin special variable like "block.timestamp"
     if let program::Expression::Variable(namespace) = e {
-        if builtin::builtin_namespace(&namespace.name) {
+        if corelib::lib_namespace(&namespace.name) {
             diagnostics.push(Diagnostic::error(
                 e.loc(),
                 format!("builtin '{}.{}' does not exist", namespace.name, id.name),
@@ -1979,7 +1952,7 @@ fn array_subscript(
 }
 
 /// Resolve a function call with positional arguments
-fn struct_literal(
+pub fn struct_literal(
     loc: &Loc,
     n: &usize,
     args: &[program::Expression],
@@ -2022,300 +1995,8 @@ fn struct_literal(
     }
 }
 
-/// Create a list of functions that can be called in this context.
-pub fn available_functions(name: &str, contract_no: Option<usize>, ns: &Namespace) -> Vec<usize> {
-    let mut list = Vec::new();
-
-    if let Some(contract_no) = contract_no {
-        list.extend(
-            ns.contracts[contract_no]
-                .all_functions
-                .keys()
-                .filter_map(|func_no| {
-                    if ns.functions[*func_no].name == name && ns.functions[*func_no].has_body {
-                        Some(*func_no)
-                    } else {
-                        None
-                    }
-                }),
-        );
-    }
-
-    list
-}
-
-/// Resolve a function call with positional arguments
-pub fn function_call_pos_args(
-    loc: &Loc,
-    id: &program::Identifier,
-    args: &[program::Expression],
-    function_nos: Vec<usize>,
-    context: &ExprContext,
-    ns: &mut Namespace,
-    resolve_to: ResolveTo,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-) -> Result<Expression, ()> {
-    let mut name_matches = 0;
-    let mut errors = Diagnostics::default();
-
-    // Try to resolve as a function call
-    for function_no in &function_nos {
-        let func = &ns.functions[*function_no];
-
-        name_matches += 1;
-
-        let params_len = func.params.len();
-
-        if params_len != args.len() {
-            errors.push(Diagnostic::error(
-                *loc,
-                format!(
-                    "fn expects {} arguments, {} provided",
-                    params_len,
-                    args.len()
-                ),
-            ));
-            continue;
-        }
-
-        let mut matches = true;
-        let mut cast_args = Vec::new();
-
-        // check if arguments can be implicitly casted
-        for (i, arg) in args.iter().enumerate() {
-            let ty = ns.functions[*function_no].params[i].ty.clone();
-
-            let arg = match expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                &mut errors,
-                ResolveTo::Type(&ty),
-            ) {
-                Ok(e) => e,
-                Err(_) => {
-                    matches = false;
-                    continue;
-                }
-            };
-
-            match arg.cast(&arg.loc(), &ty, ns, &mut errors) {
-                Ok(expr) => cast_args.push(expr),
-                Err(_) => {
-                    matches = false;
-                }
-            }
-        }
-
-        if !matches {
-            if function_nos.len() > 1 && diagnostics.extend_non_casting(&errors) {
-                return Err(());
-            }
-
-            continue;
-        }
-
-        let func = &ns.functions[*function_no];
-
-        let returns = function_returns(func, resolve_to);
-        let ty = function_type(func, resolve_to);
-
-        return Ok(Expression::FunctionCall {
-            loc: *loc,
-            returns,
-            function: Box::new(Expression::Function {
-                loc: *loc,
-                ty,
-                function_no: *function_no,
-                signature: None,
-            }),
-            args: cast_args,
-        });
-    }
-
-    match name_matches {
-        0 => {
-            diagnostics.push(Diagnostic::error(
-                id.loc,
-                format!("unknown fn or type with name '{}'", id.name),
-            ));
-        }
-        1 => diagnostics.extend(errors),
-        _ => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                format!("cannot find overloaded fn which matches signature"),
-            ));
-        }
-    }
-
-    Err(())
-}
-
-/// Resolve a function call with named arguments
-fn function_call_named_args(
-    loc: &Loc,
-    id: &program::Identifier,
-    args: &[program::NamedArgument],
-    function_nos: Vec<usize>,
-    context: &ExprContext,
-    resolve_to: ResolveTo,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-) -> Result<Expression, ()> {
-    let mut arguments = HashMap::new();
-
-    for arg in args {
-        if arguments.contains_key(arg.name.name.as_str()) {
-            diagnostics.push(Diagnostic::error(
-                arg.name.loc,
-                format!("duplicate argument with name '{}'", arg.name.name),
-            ));
-
-            let _ = expression(
-                &arg.expr,
-                context,
-                ns,
-                symtable,
-                diagnostics,
-                ResolveTo::Unknown,
-            );
-        }
-
-        arguments.insert(arg.name.name.as_str(), &arg.expr);
-    }
-    // Try to resolve as a function call
-    let mut errors = Diagnostics::default();
-
-    // Try to resolve as a function call
-    for function_no in &function_nos {
-        let func = &ns.functions[*function_no];
-
-        let unnamed_params = func.params.iter().filter(|p| p.id.is_none()).count();
-        let params_len = func.params.len();
-        let mut matches = true;
-
-        if unnamed_params > 0 {
-            errors.push(Diagnostic::cast_error_with_note(
-                *loc,
-                format!(
-                    "function cannot be called with named arguments as {} of its parameters do not have names",
-                    unnamed_params,
-                ),
-                func.loc,
-                format!("definition of {}", func.name),
-            ));
-            matches = false;
-        } else if params_len != args.len() {
-            errors.push(Diagnostic::cast_error(
-                *loc,
-                format!(
-                    "function expects {} arguments, {} provided",
-                    params_len,
-                    args.len()
-                ),
-            ));
-            matches = false;
-        }
-
-        let mut cast_args = Vec::new();
-
-        // check if arguments can be implicitly casted
-        for i in 0..params_len {
-            let param = &ns.functions[*function_no].params[i];
-            if param.id.is_none() {
-                continue;
-            }
-            let arg = match arguments.get(param.name_as_str()) {
-                Some(a) => a,
-                None => {
-                    matches = false;
-                    diagnostics.push(Diagnostic::cast_error(
-                        *loc,
-                        format!(
-                            "missing argument '{}' to function '{}'",
-                            param.name_as_str(),
-                            id.name,
-                        ),
-                    ));
-                    continue;
-                }
-            };
-
-            let ty = param.ty.clone();
-
-            let arg = match expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                &mut errors,
-                ResolveTo::Type(&ty),
-            ) {
-                Ok(e) => e,
-                Err(()) => {
-                    matches = false;
-                    continue;
-                }
-            };
-
-            match arg.cast(&arg.loc(), &ty, ns, &mut errors) {
-                Ok(expr) => cast_args.push(expr),
-                Err(_) => {
-                    matches = false;
-                }
-            }
-        }
-
-        if !matches {
-            if diagnostics.extend_non_casting(&errors) {
-                return Err(());
-            }
-            continue;
-        }
-
-        let func = &ns.functions[*function_no];
-
-        let returns = function_returns(func, resolve_to);
-        let ty = function_type(func, resolve_to);
-
-        return Ok(Expression::FunctionCall {
-            loc: *loc,
-            returns,
-            function: Box::new(Expression::Function {
-                loc: *loc,
-                ty,
-                function_no: *function_no,
-                signature: None,
-            }),
-            args: cast_args,
-        });
-    }
-
-    match function_nos.len() {
-        0 => {
-            diagnostics.push(Diagnostic::error(
-                id.loc,
-                format!("unknown function or type '{}'", id.name),
-            ));
-        }
-        1 => diagnostics.extend(errors),
-        _ => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "cannot find overloaded function which matches signature".to_string(),
-            ));
-        }
-    }
-
-    Err(())
-}
-
 /// Resolve a struct literal with named fields
-fn named_struct_literal(
+pub fn named_struct_literal(
     loc: &Loc,
     n: &usize,
     args: &[program::NamedArgument],
@@ -2371,32 +2052,6 @@ fn named_struct_literal(
         }
         Ok(Expression::StructLiteral(*loc, ty, fields))
     }
-}
-
-/// Resolve a method call with positional arguments
-fn method_call_pos_args(
-    var: &program::Expression,
-    func: &program::Identifier,
-    args: &[program::Expression],
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-) -> Result<Expression, ()> {
-    let var_expr = expression(var, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
-
-    if let Some(expr) =
-        builtin::resolve_method_call(&var_expr, func, args, context, ns, symtable, diagnostics)?
-    {
-        return Ok(expr);
-    }
-
-    diagnostics.push(Diagnostic::error(
-        func.loc,
-        format!("method '{}' does not exist", func.name),
-    ));
-
-    Err(())
 }
 
 // When generating shifts, llvm wants both arguments to have the same width. We
@@ -2624,249 +2279,4 @@ fn check_subarrays<'a>(
     }
 
     Ok(())
-}
-
-pub fn named_call_expr(
-    loc: &Loc,
-    ty: &program::Expression,
-    args: &[program::NamedArgument],
-    is_destructible: bool,
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    let mut nullsink = Diagnostics::default();
-
-    // is it a struct literal
-    match ns.resolve_type(context.file_no, context.contract_no, ty, &mut nullsink) {
-        Ok(Type::Struct(n)) => {
-            return named_struct_literal(loc, &n, args, context, ns, symtable, diagnostics);
-        }
-        Ok(_) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "struct or function expected".to_string(),
-            ));
-            return Err(());
-        }
-        _ => {}
-    }
-
-    // not a struct literal, remove those errors and try resolving as function call
-    if context.constant {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "cannot call function in constant expression".to_string(),
-        ));
-        return Err(());
-    }
-
-    let expr = named_function_call_expr(
-        loc,
-        ty,
-        args,
-        context,
-        ns,
-        symtable,
-        diagnostics,
-        resolve_to,
-    )?;
-
-    check_function_call(ns, &expr, symtable);
-    if expr.tys().len() > 1 && !is_destructible {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "destucturing statement needed for function that returns multiple values".to_string(),
-        ));
-        return Err(());
-    }
-
-    Ok(expr)
-}
-
-/// Resolve any callable expression
-pub fn call_expr(
-    loc: &Loc,
-    ty: &program::Expression,
-    args: &[program::Expression],
-    is_destructible: bool,
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    let mut nullsink = Diagnostics::default();
-    let ty = ty.remove_parenthesis();
-
-    match ns.resolve_type(context.file_no, context.contract_no, ty, &mut nullsink) {
-        Ok(Type::Struct(n)) => {
-            return struct_literal(loc, &n, args, context, ns, symtable, diagnostics);
-        }
-        Ok(to) => {
-            // Cast
-            return if args.is_empty() {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "missing argument to cast".to_string(),
-                ));
-                Err(())
-            } else if args.len() > 1 {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "too many arguments to cast".to_string(),
-                ));
-                Err(())
-            } else {
-                let expr = expression(
-                    &args[0],
-                    context,
-                    ns,
-                    symtable,
-                    diagnostics,
-                    ResolveTo::Unknown,
-                )?;
-
-                expr.cast(loc, &to, ns, diagnostics)
-            };
-        }
-        Err(_) => (),
-    }
-
-    let expr = match ty.remove_parenthesis() {
-        _ => function_call_expr(
-            loc,
-            ty,
-            args,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            resolve_to,
-        )?,
-    };
-
-    check_function_call(ns, &expr, symtable);
-    if expr.tys().len() > 1 && !is_destructible {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "destucturing statement needed for function that returns multiple values".to_string(),
-        ));
-        return Err(());
-    }
-
-    Ok(expr)
-}
-
-/// Resolve function call
-pub fn function_call_expr(
-    loc: &Loc,
-    ty: &program::Expression,
-    args: &[program::Expression],
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    match ty.remove_parenthesis() {
-        program::Expression::MemberAccess(_, member, func) => {
-            if context.constant {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "cannot call function in constant expression".to_string(),
-                ));
-                return Err(());
-            }
-
-            method_call_pos_args(member, func, args, context, ns, symtable, diagnostics)
-        }
-        program::Expression::Variable(id) => {
-            if context.constant {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "cannot call function in constant expression".to_string(),
-                ));
-                return Err(());
-            }
-
-            function_call_pos_args(
-                loc,
-                id,
-                args,
-                available_functions(&id.name, context.contract_no, ns),
-                context,
-                ns,
-                resolve_to,
-                symtable,
-                diagnostics,
-            )
-        }
-        _ => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "expression is not a function".to_string(),
-            ));
-            Err(())
-        }
-    }
-}
-
-/// Resolve function call expression with named arguments
-pub fn named_function_call_expr(
-    loc: &Loc,
-    ty: &program::Expression,
-    args: &[program::NamedArgument],
-    context: &ExprContext,
-    ns: &mut Namespace,
-    symtable: &mut Symtable,
-    diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
-) -> Result<Expression, ()> {
-    match ty {
-        program::Expression::Variable(id) => function_call_named_args(
-            loc,
-            id,
-            args,
-            available_functions(&id.name, context.contract_no, ns),
-            context,
-            resolve_to,
-            ns,
-            symtable,
-            diagnostics,
-        ),
-        program::Expression::ArraySubscript(..) => {
-            diagnostics.push(Diagnostic::error(
-                ty.loc(),
-                "unexpected array type".to_string(),
-            ));
-            Err(())
-        }
-        _ => {
-            diagnostics.push(Diagnostic::error(
-                ty.loc(),
-                "expression not expected here".to_string(),
-            ));
-            Err(())
-        }
-    }
-}
-
-/// Get the return values for a function call
-pub(crate) fn function_returns(ftype: &Function, resolve_to: ResolveTo) -> Vec<Type> {
-    if !ftype.returns.is_empty() && !matches!(resolve_to, ResolveTo::Discard) {
-        ftype.returns.iter().map(|p| p.ty.clone()).collect()
-    } else {
-        vec![Type::Void]
-    }
-}
-
-/// Get the function type for an internal.external function call
-pub(crate) fn function_type(func: &Function, resolve_to: ResolveTo) -> Type {
-    let params = func.params.iter().map(|p| p.ty.clone()).collect();
-    let returns = function_returns(func, resolve_to);
-
-    Type::Function { params, returns }
 }

@@ -25,7 +25,7 @@ use std::ffi::OsStr;
 ///
 /// Note that multiple contracts can be specified in on ola source file.
 pub fn parse_and_resolve(filename: &OsStr, resolver: &mut FileResolver) -> sema::ast::Namespace {
-    let mut ns = sema::ast::Namespace::new();
+    let mut ns = sema::ast::Namespace::default();
 
     match resolver.resolve_file(None, filename) {
         Err(message) => {
