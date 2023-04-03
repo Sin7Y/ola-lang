@@ -49,7 +49,6 @@ pub(super) fn gen_function<'a>(
     func_val: FunctionValue<'a>,
     ns: &Namespace,
 ) {
-
     let bb = bin.context.append_basic_block(func_val, "entry");
 
     bin.builder.position_at_end(bb);
@@ -78,7 +77,10 @@ pub(crate) fn populate_arguments<'a>(
             let alloc =
                 bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());
             var_table.insert(*pos, alloc.into());
-            bin.builder.build_store(alloc, arg_val).set_alignment(8).unwrap();
+            bin.builder
+                .build_store(alloc, arg_val)
+                .set_alignment(8)
+                .unwrap();
         }
     }
 }

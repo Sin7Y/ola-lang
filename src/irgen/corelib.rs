@@ -13,7 +13,8 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 3]> = Lazy::new(|| ["prophet_u32_sqrt", "prophet_u32_div", "prophet_u32_mod"]);
+static PROPHET_FUNCTIONS: Lazy<[&str; 3]> =
+    Lazy::new(|| ["prophet_u32_sqrt", "prophet_u32_div", "prophet_u32_mod"]);
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 
@@ -26,7 +27,6 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
     declare_builtins(bin);
 
     declare_prophets(bin);
-
 
     // Generate core lib functions
     ns.called_lib_functions.iter().for_each(|p| {
@@ -69,10 +69,8 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                     "",
                 );
                 bin.builder.build_return(Some(&root));
-            },
-            "u32_sort" => {
-
-            },
+            }
+            "u32_sort" => {}
             _ => {}
         }
     });
@@ -85,12 +83,12 @@ pub fn declare_prophets(bin: &mut Binary) {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into()], false);
             bin.module.add_function("prophet_u32_sqrt", ftype, None);
-        },
+        }
         "prophet_u32_div" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             bin.module.add_function("prophet_u32_div", ftype, None);
-        },
+        }
         "prophet_u32_mod" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);

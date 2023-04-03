@@ -1,13 +1,12 @@
-use std::collections::HashMap;
-use inkwell::IntPredicate;
-use inkwell::values::{BasicValueEnum, FunctionValue};
-use num_bigint::BigInt;
-use ola_parser::program::Loc;
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::expression;
-use crate::sema::ast::{Expression, Function, Namespace, Type};
 use crate::sema::ast::Expression::NumberLiteral;
-
+use crate::sema::ast::{Expression, Function, Namespace, Type};
+use inkwell::values::{BasicValueEnum, FunctionValue};
+use inkwell::IntPredicate;
+use num_bigint::BigInt;
+use ola_parser::program::Loc;
+use std::collections::HashMap;
 
 pub fn u32_add<'a>(
     l: &Expression,
@@ -20,19 +19,19 @@ pub fn u32_add<'a>(
 ) -> BasicValueEnum<'a> {
     let left = expression(l, bin, func, func_val, var_table, ns);
     let right = expression(r, bin, func, func_val, var_table, ns);
-    let result: BasicValueEnum = bin.builder
+    let result: BasicValueEnum = bin
+        .builder
         .build_int_add(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
-            bin.module
-                .get_function("builtin_range_check")
-                .expect("builtin_range_check should have been defined before"),
-            &[result.into()],
-            "",
-        );
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[result.into()],
+        "",
+    );
     result
 }
-
 
 pub fn u32_sub<'a>(
     l: &Expression,
@@ -45,7 +44,8 @@ pub fn u32_sub<'a>(
 ) -> BasicValueEnum<'a> {
     let left = expression(l, bin, func, func_val, var_table, ns);
     let right = expression(r, bin, func, func_val, var_table, ns);
-    let result: BasicValueEnum = bin.builder
+    let result: BasicValueEnum = bin
+        .builder
         .build_int_sub(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
@@ -69,7 +69,8 @@ pub fn u32_mul<'a>(
 ) -> BasicValueEnum<'a> {
     let left = expression(l, bin, func, func_val, var_table, ns);
     let right = expression(r, bin, func, func_val, var_table, ns);
-    let result: BasicValueEnum = bin.builder
+    let result: BasicValueEnum = bin
+        .builder
         .build_int_mul(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
@@ -120,11 +121,8 @@ pub fn u32_div<'a>(
     let one = bin.context.i64_type().const_int(1, false);
     let right_minus_remainder_minus_one = bin.builder.build_int_sub(
         right.into_int_value(),
-        bin.builder.build_int_add(
-            remainder.into_int_value(),
-            one,
-            "",
-        ),
+        bin.builder
+            .build_int_add(remainder.into_int_value(), one, ""),
         "",
     );
     bin.builder.build_call(
@@ -159,11 +157,8 @@ pub fn u32_div<'a>(
 
     // assert that quotient * right + remainder == left
     let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
-        bin.builder.build_int_mul(
-            quotient.into_int_value(),
-            right.into_int_value(),
-            "",
-        ),
+        bin.builder
+            .build_int_mul(quotient.into_int_value(), right.into_int_value(), ""),
         remainder.into_int_value(),
         "",
     );
@@ -176,7 +171,6 @@ pub fn u32_div<'a>(
         "",
     );
     quotient
-
 }
 
 pub fn u32_mod<'a>(
@@ -217,11 +211,8 @@ pub fn u32_mod<'a>(
     let one = bin.context.i64_type().const_int(1, false);
     let right_minus_remainder_minus_one = bin.builder.build_int_sub(
         right.into_int_value(),
-        bin.builder.build_int_add(
-            remainder.into_int_value(),
-            one,
-            "",
-        ),
+        bin.builder
+            .build_int_add(remainder.into_int_value(), one, ""),
         "",
     );
     bin.builder.build_call(
@@ -256,11 +247,8 @@ pub fn u32_mod<'a>(
 
     // assert that quotient * right + remainder == left
     let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
-        bin.builder.build_int_mul(
-            quotient.into_int_value(),
-            right.into_int_value(),
-            "",
-        ),
+        bin.builder
+            .build_int_mul(quotient.into_int_value(), right.into_int_value(), ""),
         remainder.into_int_value(),
         "",
     );
@@ -332,9 +320,7 @@ pub fn u32_shift_left<'a>(
     let left = expression(l, bin, func, func_val, var_table, ns).into_int_value();
     let base_two = NumberLiteral(Loc::IRgen, Type::Uint(32), BigInt::from(2));
     let pow_two = u32_power(&base_two, r, bin, func, func_val, var_table, ns).into_int_value();
-    let result: BasicValueEnum = bin.builder
-        .build_int_mul(left, pow_two, "")
-        .into();
+    let result: BasicValueEnum = bin.builder.build_int_mul(left, pow_two, "").into();
     bin.builder.build_call(
         bin.module
             .get_function("builtin_range_check")
@@ -343,7 +329,6 @@ pub fn u32_shift_left<'a>(
         "",
     );
     result
-
 }
 
 pub fn u32_shift_right<'a>(
@@ -384,11 +369,8 @@ pub fn u32_shift_right<'a>(
     let one = bin.context.i64_type().const_int(1, false);
     let right_minus_remainder_minus_one = bin.builder.build_int_sub(
         right,
-        bin.builder.build_int_add(
-            remainder.into_int_value(),
-            one,
-            "",
-        ),
+        bin.builder
+            .build_int_add(remainder.into_int_value(), one, ""),
         "",
     );
     bin.builder.build_call(
@@ -423,11 +405,8 @@ pub fn u32_shift_right<'a>(
 
     // assert that quotient * right + remainder == left
     let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
-        bin.builder.build_int_mul(
-            quotient.into_int_value(),
-            right,
-            "",
-        ),
+        bin.builder
+            .build_int_mul(quotient.into_int_value(), right, ""),
         remainder.into_int_value(),
         "",
     );
@@ -440,7 +419,6 @@ pub fn u32_shift_right<'a>(
         "",
     );
     quotient
-
 }
 
 pub fn u32_equal<'a>(
@@ -581,7 +559,6 @@ pub fn u32_or<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-
     // Generate code for the left and right expressions
     let left_value = expression(l, bin, func, func_val, var_table, ns).into_int_value();
 
@@ -597,7 +574,8 @@ pub fn u32_or<'a>(
     let result_ptr = bin.builder.build_alloca(bool_type, "");
 
     // Generate the OR expression using basic blocks
-    bin.builder.build_conditional_branch(left_value, left_true_bb, right_true_bb);
+    bin.builder
+        .build_conditional_branch(left_value, left_true_bb, right_true_bb);
 
     bin.builder.position_at_end(left_true_bb);
     bin.builder.build_store(result_ptr, left_value);
@@ -638,7 +616,8 @@ pub fn u32_and<'a>(
     let result_ptr = bin.builder.build_alloca(bool_type, "");
 
     // Generate the OR expression using basic blocks
-    bin.builder.build_conditional_branch(left_value, right_false_bb, left_false_bb);
+    bin.builder
+        .build_conditional_branch(left_value, right_false_bb, left_false_bb);
 
     bin.builder.position_at_end(left_false_bb);
     bin.builder.build_store(result_ptr, left_value);
@@ -664,7 +643,6 @@ pub fn u32_power<'a>(
     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-
     let current_bb = bin.builder.get_insert_block().unwrap();
     let left_value = expression(l, bin, func, func_val, var_table, ns).into_int_value();
     let right_value = expression(r, bin, func, func_val, var_table, ns).into_int_value();
@@ -676,7 +654,8 @@ pub fn u32_power<'a>(
 
     // Initialize the accumulator with the value 1
     let accumulator = bin.builder.build_alloca(i64_type, "");
-    bin.builder.build_store(accumulator, i64_type.const_int(1, false));
+    bin.builder
+        .build_store(accumulator, i64_type.const_int(1, false));
 
     let current_right_value = bin.builder.build_alloca(i64_type, "");
     bin.builder.build_store(current_right_value, right_value);
@@ -684,10 +663,19 @@ pub fn u32_power<'a>(
     bin.builder.build_unconditional_branch(loop_block);
     bin.builder.position_at_end(loop_block);
 
-    let current_right_value_loaded = bin.builder.build_load(current_right_value, "").into_int_value();
+    let current_right_value_loaded = bin
+        .builder
+        .build_load(current_right_value, "")
+        .into_int_value();
 
-    let is_zero = bin.builder.build_int_compare(IntPredicate::EQ, current_right_value_loaded, i64_type.const_zero(), "");
-    bin.builder.build_conditional_branch(is_zero, exit_block, loop_block);
+    let is_zero = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        current_right_value_loaded,
+        i64_type.const_zero(),
+        "",
+    );
+    bin.builder
+        .build_conditional_branch(is_zero, exit_block, loop_block);
 
     bin.builder.position_at_end(loop_block);
 
@@ -697,8 +685,11 @@ pub fn u32_power<'a>(
     bin.builder.build_store(accumulator, new_acc_value);
 
     // Decrement the right value
-    let updated_right_value = bin.builder.build_int_sub(current_right_value_loaded, i64_type.const_int(1, false), "");
-    bin.builder.build_store(current_right_value, updated_right_value);
+    let updated_right_value =
+        bin.builder
+            .build_int_sub(current_right_value_loaded, i64_type.const_int(1, false), "");
+    bin.builder
+        .build_store(current_right_value, updated_right_value);
 
     bin.builder.build_unconditional_branch(loop_block);
 
@@ -713,4 +704,3 @@ pub fn u32_power<'a>(
     );
     result
 }
-
