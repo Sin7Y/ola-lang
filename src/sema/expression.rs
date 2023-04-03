@@ -381,11 +381,7 @@ pub fn bigint_to_expression(
         diagnostics.push(Diagnostic::error(*loc, format!("{} is too large", n)));
         Err(())
     } else {
-        Ok(Expression::NumberLiteral(
-            *loc,
-            Type::Uint(32),
-            n.clone(),
-        ))
+        Ok(Expression::NumberLiteral(*loc, Type::Uint(32), n.clone()))
     }
 }
 

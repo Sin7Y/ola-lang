@@ -32,7 +32,10 @@ pub(crate) fn statement<'a>(
             );
             let var_value = expression(init, bin, Some(func), func_val, var_table, ns);
             var_table.insert(*pos, alloc.as_basic_value_enum());
-            bin.builder.build_store(alloc, var_value).set_alignment(8).unwrap();
+            bin.builder
+                .build_store(alloc, var_value)
+                .set_alignment(8)
+                .unwrap();
         }
 
         Statement::Return(_, expr) => match expr {

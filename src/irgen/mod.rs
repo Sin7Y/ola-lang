@@ -607,7 +607,6 @@ endfor:                                           ; preds = %cond
     }
 }
 
-
 #[test]
 fn gen_lib_func_test() {
     use crate::file_resolver::FileResolver;
