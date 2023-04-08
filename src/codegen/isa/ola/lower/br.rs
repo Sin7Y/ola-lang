@@ -179,7 +179,7 @@ pub fn lower_condbr(
                         InstructionData {
                             opcode: Opcode::NEQ,
                             operands: vec![
-                                MO::input(OperandData::VReg(output2)),
+                                MO::output(OperandData::VReg(output2)),
                                 MO::input(lhs.into()),
                                 MO::input(rhs.into()),
                             ],
@@ -613,10 +613,11 @@ ge:
   end
 gt:
 .LBL1_0:
-  gte r2 r1 1
-  neq r0 r1 1
-  and r2 r2 r0
-  cjmp r2 .LBL1_1
+  mov r0 r1
+  gte r1 r0 1
+  neq r0 r0 1
+  and r1 r1 r0
+  cjmp r1 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
@@ -676,11 +677,12 @@ gt:
   end
 eq:
 .LBL1_0:
-  mov r2 1
-  gte r2 r2 r1
-  neq r0 r1 1
-  and r2 r2 r0
-  cjmp r2 .LBL1_1
+  mov r0 r1
+  mov r1 1
+  gte r1 r1 r0
+  neq r0 r0 1
+  and r1 r1 r0
+  cjmp r1 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2

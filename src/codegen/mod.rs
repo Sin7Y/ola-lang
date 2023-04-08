@@ -636,13 +636,14 @@ neq_rr:
 lt_ri:
 .LBL5_0:
   add r8 r8 1
-  mstore [r8,-1] r1
-  mload r1 [r8,-1]
-  mov r2 1
-  gte r2 r2 r1
-  neq r0 r1 1
-  and r2 r2 r0
-  cjmp r2 .LBL5_1
+  mov r0 r1
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  mov r1 1
+  gte r1 r1 r0
+  neq r0 r0 1
+  and r1 r1 r0
+  cjmp r1 .LBL5_1
   jmp .LBL5_2
 .LBL5_1:
   mov r0 2
@@ -715,12 +716,13 @@ lte_rr:
 gt_ri:
 .LBL9_0:
   add r8 r8 1
-  mstore [r8,-1] r1
-  mload r1 [r8,-1]
-  gte r2 r1 1
-  neq r0 r1 1
-  and r2 r2 r0
-  cjmp r2 .LBL9_1
+  mov r0 r1
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  gte r1 r0 1
+  neq r0 r0 1
+  and r1 r1 r0
+  cjmp r1 .LBL9_1
   jmp .LBL9_2
 .LBL9_1:
   mov r0 2
@@ -1045,100 +1047,99 @@ enif4:                                            ; preds = %then3, %else
   end
 sqrt_test:
 .LBL6_0:
-  add r8 r8 19
-  mstore [r8,-16] r1
-  mov r1 0
-  mstore [r8,-17] r1
-  mload r1 [r8,-16]
-  gte r2 r1 3
-  neq r0 r1 3
-  and r2 r2 r0
-  cjmp r2 .LBL6_1
+  add r8 r8 17
+  mov r0 r1
+  mstore [r8,-14] r0
+  mov r0 0
+  mstore [r8,-15] r0
+  mload r0 [r8,-14]
+  gte r1 r0 3
+  neq r0 r0 3
+  and r1 r1 r0
+  cjmp r1 .LBL6_1
   jmp .LBL6_2
 .LBL6_1:
-  mload r0 [r8,-16]
-  mstore [r8,-17] r0
-  mload r0 [r8,-16]
-  mstore [r8,-12] r0
-  mload r0 [r8,-12]
+  mload r0 [r8,-14]
+  mstore [r8,-15] r0
+  mload r0 [r8,-14]
+  mstore [r8,-11] r0
+  mload r0 [r8,-11]
   mov r1 r0
   mov r2 2
 .PROPHET6_0:
   mov r0 psp
   mload r0 [r0,0]
-  mstore [r8,-11] r0
-  mload r0 [r8,-11]
+  mstore [r8,-10] r0
+  mload r0 [r8,-10]
   range r0
   mov r0 2
-  mload r1 [r8,-11]
-  add r4 r1 1
-  not r7 r4
+  mload r1 [r8,-10]
+  add r3 r1 1
+  not r7 r3
   add r7 r7 1
-  add r5 r0 r7
-  range r5
-  mload r0 [r8,-12]
+  add r4 r0 r7
+  range r4
+  mload r0 [r8,-11]
   mov r1 r0
   mov r2 2
 .PROPHET6_1:
   mov r0 psp
   mload r0 [r0,0]
   range r0
-  mul r1 r0 2
-  mstore [r8,-15] r1
-  mload r1 [r8,-15]
+  mul r5 r0 2
+  mload r1 [r8,-10]
+  add r1 r5 r1
+  mstore [r8,-13] r1
+  mload r1 [r8,-13]
   mload r2 [r8,-11]
-  add r1 r1 r2
-  mstore [r8,-14] r1
-  mload r1 [r8,-14]
-  mload r2 [r8,-12]
   assert r1 r2
   add r0 r0 1
-  mstore [r8,-13] r0
-  mload r0 [r8,-13]
+  mstore [r8,-12] r0
+  mload r0 [r8,-12]
   range r0
-  mload r0 [r8,-13]
-  mstore [r8,-18] r0
+  mload r0 [r8,-12]
+  mstore [r8,-16] r0
   mov r0 0
-  mstore [r8,-19] r0
+  mstore [r8,-17] r0
   jmp .LBL6_4
 .LBL6_2:
-  mload r0 [r8,-16]
+  mload r0 [r8,-14]
   neq r0 r0 0
   cjmp r0 .LBL6_10
   jmp .LBL6_11
 .LBL6_3:
-  mload r0 [r8,-17]
-  add r8 r8 -19
+  mload r0 [r8,-15]
+  add r8 r8 -17
   ret
 .LBL6_4:
-  mload r0 [r8,-19]
+  mload r0 [r8,-17]
   mov r1 100
   gte r1 r1 r0
-  neq r3 r0 100
-  and r1 r1 r3
+  neq r0 r0 100
+  and r1 r1 r0
   cjmp r1 .LBL6_5
   jmp .LBL6_7
 .LBL6_5:
-  mload r0 [r8,-18]
-  mload r1 [r8,-17]
+  mload r0 [r8,-16]
+  mload r1 [r8,-15]
   gte r0 r0 r1
   cjmp r0 .LBL6_8
   jmp .LBL6_9
 .LBL6_6:
-  mload r1 [r8,-19]
+  mload r1 [r8,-17]
   add r0 r1 1
-  mstore [r8,-19] r0
+  mstore [r8,-17] r0
   jmp .LBL6_4
 .LBL6_7:
   jmp .LBL6_3
 .LBL6_8:
   jmp .LBL6_7
 .LBL6_9:
-  mload r0 [r8,-18]
-  mstore [r8,-17] r0
   mload r0 [r8,-16]
+  mstore [r8,-15] r0
+  mload r0 [r8,-14]
   mstore [r8,-3] r0
-  mload r0 [r8,-18]
+  mload r0 [r8,-16]
   mstore [r8,-2] r0
   mload r0 [r8,-3]
   mov r1 r0
@@ -1151,12 +1152,12 @@ sqrt_test:
   mload r0 [r8,-1]
   range r0
   mload r0 [r8,-1]
-  add r4 r0 1
-  not r7 r4
+  add r3 r0 1
+  not r7 r3
   add r7 r7 1
   mload r0 [r8,-2]
-  add r5 r0 r7
-  range r5
+  add r4 r0 r7
+  range r4
   mload r0 [r8,-3]
   mov r1 r0
   mload r0 [r8,-2]
@@ -1166,16 +1167,14 @@ sqrt_test:
   mload r0 [r0,0]
   range r0
   mload r1 [r8,-2]
-  mul r1 r0 r1
-  mstore [r8,-10] r1
-  mload r1 [r8,-10]
-  mload r2 [r8,-1]
-  add r1 r1 r2
+  mul r5 r0 r1
+  mload r1 [r8,-1]
+  add r1 r5 r1
   mstore [r8,-9] r1
   mload r1 [r8,-9]
   mload r2 [r8,-3]
   assert r1 r2
-  mload r1 [r8,-18]
+  mload r1 [r8,-16]
   add r0 r0 r1
   mstore [r8,-5] r0
   mload r0 [r8,-5]
@@ -1186,10 +1185,10 @@ sqrt_test:
 .PROPHET6_4:
   mov r0 psp
   mload r0 [r0,0]
-  mov r4 r0
-  range r4
+  mov r3 r0
+  range r3
   mov r0 2
-  add r1 r4 1
+  add r1 r3 1
   mstore [r8,-8] r1
   mload r1 [r8,-8]
   not r7 r1
@@ -1208,16 +1207,16 @@ sqrt_test:
   mul r1 r0 2
   mstore [r8,-6] r1
   mload r1 [r8,-6]
-  add r1 r1 r4
+  add r1 r1 r3
   mstore [r8,-4] r1
   mload r1 [r8,-5]
   mload r2 [r8,-4]
   assert r2 r1
-  mstore [r8,-18] r0
+  mstore [r8,-16] r0
   jmp .LBL6_6
 .LBL6_10:
   mov r0 1
-  mstore [r8,-17] r0
+  mstore [r8,-15] r0
   jmp .LBL6_11
 .LBL6_11:
   jmp .LBL6_3
