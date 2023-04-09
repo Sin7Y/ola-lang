@@ -11,8 +11,8 @@ Variables cannot start with a number, and cannot use
 ```
 fn foo() {
     // declare and ine `_variable`
-    u32 _aBC123 = 2u;   // identifiers start with "_"
-    // u32 0a = 2u;  define error, identifiers can't start with number
+    u32 _aBC123 = 2;   // identifiers start with "_"
+    // u32 0a = 2;  define error, identifiers can't start with number
 }
 ```
 
@@ -23,9 +23,9 @@ Variables need to be declared in order to be used. To avoid variables being unde
 ```
 fn foo() {
     // declare and define `a`
-    field a = 2f;
+    u32 a = 2;
     // redefine `a`
-    a = 3f;
+    a = 3;
 }
 ```
 
@@ -36,11 +36,11 @@ If you need multiple adjacent variables with similar logical meanings, use a var
 
 ```
 fn foo() {
-    field a = 5;
+    u32 a = 5;
     {        
-        field a = 25; // compile error: redeclared variable 'a'
+        u32 a = 25; // compile error: redeclared variable 'a'
     };    
-    field a = 25; // compile error: redeclared variable 'a'
+    u32 a = 25; // compile error: redeclared variable 'a'
 
     a = 25; // ok
 }
@@ -48,13 +48,13 @@ fn foo() {
 Variables differ from constants in that the scope of a variable is limited to the current function itself and global variables are not supported.
 
 ```
-fn foo() -> field {
+fn foo() -> u32 {
     // return a; <- not allowed
     return 2;
 }
 
-fn bar() -> field {
-    field a = 2;
+fn bar() -> u32 {
+    32 a = 2;
     return foo();
 }
 ```
@@ -89,20 +89,10 @@ Ola provides the above-mentioned basic libs of various integer types based on th
 Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal. 
 
 ```
-u32 a = 2u; // u8
-field b = 2;
+u32 a = 2; // u32
+u64 b = 2; // u64
 u64 b  = 0xffffl; // u64
 u256 d = 102411ll  // u256
-```
-
-##### Field
-`Field` is the most basic type of Ola, and the data range of the `field` variable is `[0, p-1]`.
-The olaVM uses plonky2 as its back-end proof system, so the `field` of prime is selected as `$p=2^{64}-2^{32}+1$`. 
-For Ola developers, `field` type operations, like integer types, require special attention when overflowing.
-
-```
-field a = 0xff; // field
-field b = 0; // field
 ```
 
 ##### Boolean
