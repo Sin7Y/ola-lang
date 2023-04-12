@@ -1,7 +1,7 @@
 contract SqrtContract {
 
     fn main() {
-       sqrt_test(4);
+       sqrt_test(10000);
     }
 
     fn sqrt_test(u32 a) -> (u32) {
