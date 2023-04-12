@@ -78,7 +78,7 @@ impl fmt::Display for File {
         #[cfg(not(windows))]
         let res = write!(f, "{}", self.path.display());
         #[cfg(windows)]
-            let res = write!(f, "{}", fix_windows_verbatim(&self.path).display());
+        let res = write!(f, "{}", fix_windows_verbatim(&self.path).display());
         res
     }
 }
@@ -104,10 +104,9 @@ impl Namespace {
     }
 }
 
-
-/// Windows verbatim paths look like \\?\C:\foo\bar which not very human readable,
-/// so fix up paths. This is a copy of fn fix_windows_verbatim_for_gcc in rust
-/// https://github.com/rust-lang/rust/blob/master/compiler/rustc_fs_util/src/lib.rs#L23
+/// Windows verbatim paths look like \\?\C:\foo\bar which not very human
+/// readable, so fix up paths. This is a copy of fn fix_windows_verbatim_for_gcc
+/// in rust https://github.com/rust-lang/rust/blob/master/compiler/rustc_fs_util/src/lib.rs#L23
 #[cfg(windows)]
 fn fix_windows_verbatim(p: &path::Path) -> path::PathBuf {
     use std::ffi::OsString;
