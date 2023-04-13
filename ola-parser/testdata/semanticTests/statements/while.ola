@@ -1,0 +1,13 @@
+contract c {
+    fn f(u256 a) -> (u256) {
+        while(true) {
+            if (a == 0) {
+                return 0;
+            }
+            a = a - 1;
+        }
+        do {
+            a = a - 1;
+        } while (a != 0);
+    }
+}

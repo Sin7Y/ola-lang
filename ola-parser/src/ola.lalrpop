@@ -299,12 +299,18 @@ OpenStatement: Statement = {
     <l:@L> "for" "(" <b:SimpleStatement?> ";" <c:Expression?> ";" <n:SimpleStatement?> ")" <block:OpenStatement> <r:@R> => {
         Statement::For(Loc::File(file_no, l, r), b.map(Box::new), c.map(Box::new), n.map(Box::new), Some(Box::new(block)))
     },
+    <l:@L> "while" "(" <e:Expression> ")" <b:OpenStatement> <r:@R> => {
+        Statement::While(Loc::File(file_no, l, r), e, Box::new(b))
+    }
 }
 
 ClosedStatement: Statement = {
     NonIfStatement,
     <l:@L> "if" "(" <cond:Expression> ")" <body:ClosedStatement> "else" <o:ClosedStatement> <r:@R> => {
         Statement::If(Loc::File(file_no, l, r), cond, Box::new(body), Some(Box::new(o)))
+    },
+    <l:@L> "while" "(" <e:Expression> ")" <b:ClosedStatement> <r:@R> => {
+        Statement::While(Loc::File(file_no, l, r), e, Box::new(b))
     },
     <l:@L> "for" "(" <b:SimpleStatement?> ";" <c:Expression?> ";" <n:SimpleStatement?> ")" <block:ClosedStatement> <r:@R> => {
         Statement::For(Loc::File(file_no, l, r), b.map(Box::new), c.map(Box::new), n.map(Box::new), Some(Box::new(block)))
@@ -335,6 +341,9 @@ SimpleStatement: Statement = {
 NonIfStatement: Statement = {
     BlockStatement => <>,
     <SimpleStatement> ";" => <>,
+    <l:@L> "do" <b:Statement> "while" "(" <e:Expression> ")" <r:@R> ";" => {
+        Statement::DoWhile(Loc::File(file_no, l, r), Box::new(b), e)
+    },
     <l:@L> "continue" <r:@R> ";" => {
         Statement::Continue(Loc::File(file_no, l, r))
     },
