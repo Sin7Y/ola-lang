@@ -86,7 +86,7 @@ fn parser_struct() {
                 Diagnostic { loc: File(0, 268, 275), level: Error, ty: ParserError, message: r#"unrecognised token 'sesa_id', expected ")", ";""#.to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 296, 300), level: Error, ty: ParserError, message: "unrecognised token 'sesa', expected \"(\", \")\", \",\", \";\", \"=\", \"{\", \"}\"".to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 303, 304), level: Error, ty: ParserError, message: "unrecognised token 'b', expected \")\", \";\"".to_string(), notes: vec![] },
-                Diagnostic { loc: File(0, 351, 352), level: Error, ty: ParserError, message: "unrecognised token '}', expected \"!\", \"(\", \"[\", \"bool\", \"break\", \"continue\", \"false\", \"field\", \"for\", \"if\", \"return\", \"true\", \"u256\", \"u32\", \"u64\", \"{\", \"~\", r#\"([1-9][0-9]*|0)(u|ll|l)?\"#, r#\"0x[0-9A-Fa-f]*(u|ll|l)?\"#, r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 351, 352), level: Error, ty: ParserError, message: "unrecognised token '}', expected \"!\", \"(\", \"[\", \"bool\", \"break\", \"continue\", \"do\", \"false\", \"for\", \"if\", \"return\", \"true\", \"u256\", \"u32\", \"u64\", \"while\", \"{\", \"~\", r#\"([1-9][0-9]*|0)(u|ll|l)?\"#, r#\"0x[0-9A-Fa-f]*(u|ll|l)?\"#, r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
             ]
         )
     }
@@ -110,8 +110,8 @@ fn parse_contract() {
                     struct Jurisdiction {
                         bool exists;
                         u256 keyIdx;
-                        field country;
-                        field region;
+                        u32 country;
+                        u32 region;
                     }
                     u64 __abba_$;
                     u64 $thing_102;
@@ -121,7 +121,7 @@ fn parse_contract() {
     let actual_parse_tree = ola::SourceUnitParser::new().parse(0, my_errs, src).unwrap();
     let expected_parse_tree = SourceUnit(vec![SourceUnitPart::ContractDefinition(Box::new(
         ContractDefinition {
-            loc: Loc::File(0, 92, 694),
+            loc: Loc::File(0, 92, 690),
             name: Some(Identifier {
                 loc: Loc::File(0, 101, 104),
                 name: "foo".to_string(),
@@ -132,7 +132,7 @@ fn parse_contract() {
                         loc: Loc::File(0, 419, 431),
                         name: "Jurisdiction".to_string(),
                     }),
-                    loc: Loc::File(0, 412, 606),
+                    loc: Loc::File(0, 412, 602),
                     fields: vec![
                         VariableDeclaration {
                             loc: Loc::File(0, 458, 469),
@@ -151,41 +151,41 @@ fn parse_contract() {
                             }),
                         },
                         VariableDeclaration {
-                            loc: Loc::File(0, 532, 545),
-                            ty: Expression::Type(Loc::File(0, 532, 537), Type::Field),
+                            loc: Loc::File(0, 532, 543),
+                            ty: Expression::Type(Loc::File(0, 532, 535), Type::Uint(32)),
                             name: Some(Identifier {
-                                loc: Loc::File(0, 538, 545),
+                                loc: Loc::File(0, 536, 543),
                                 name: "country".to_string(),
                             }),
                         },
                         VariableDeclaration {
-                            loc: Loc::File(0, 571, 583),
-                            ty: Expression::Type(Loc::File(0, 571, 576), Type::Field),
+                            loc: Loc::File(0, 569, 579),
+                            ty: Expression::Type(Loc::File(0, 569, 572), Type::Uint(32)),
                             name: Some(Identifier {
-                                loc: Loc::File(0, 577, 583),
+                                loc: Loc::File(0, 573, 579),
                                 name: "region".to_string(),
                             }),
                         },
                     ],
                 })),
                 ContractPart::VariableDefinition(Box::new(VariableDefinition {
-                    ty: Expression::Type(Loc::File(0, 627, 630), Type::Uint(64)),
+                    ty: Expression::Type(Loc::File(0, 623, 626), Type::Uint(64)),
                     name: Some(Identifier {
-                        loc: Loc::File(0, 631, 639),
+                        loc: Loc::File(0, 627, 635),
                         name: "__abba_$".to_string(),
                     }),
                     attrs: vec![],
-                    loc: Loc::File(0, 627, 639),
+                    loc: Loc::File(0, 623, 635),
                     initializer: None,
                 })),
                 ContractPart::VariableDefinition(Box::new(VariableDefinition {
-                    ty: Expression::Type(Loc::File(0, 661, 664), Type::Uint(64)),
+                    ty: Expression::Type(Loc::File(0, 657, 660), Type::Uint(64)),
                     attrs: vec![],
                     name: Some(Identifier {
-                        loc: Loc::File(0, 665, 675),
+                        loc: Loc::File(0, 661, 671),
                         name: "$thing_102".to_string(),
                     }),
-                    loc: Loc::File(0, 661, 675),
+                    loc: Loc::File(0, 657, 671),
                     initializer: None,
                 })),
             ],
@@ -200,7 +200,7 @@ fn parse_user_defined_value_type() {
     let src = r#"
         contract TestToken {
             type uint256 = u256;
-            type Bytes32 = field;
+            type Bytes32 = u32;
         }
         "#;
 
@@ -209,7 +209,7 @@ fn parse_user_defined_value_type() {
 
     let expected_parse_tree = SourceUnit(vec![SourceUnitPart::ContractDefinition(Box::new(
         ContractDefinition {
-            loc: Loc::File(0, 9, 106),
+            loc: Loc::File(0, 9, 104),
             name: Some(Identifier {
                 loc: Loc::File(0, 18, 27),
                 name: "TestToken".to_string(),
@@ -224,12 +224,12 @@ fn parse_user_defined_value_type() {
                     ty: Expression::Type(Loc::File(0, 57, 61), Type::Uint(256)),
                 })),
                 ContractPart::TypeDefinition(Box::new(TypeDefinition {
-                    loc: Loc::File(0, 75, 95),
+                    loc: Loc::File(0, 75, 93),
                     name: Identifier {
                         loc: Loc::File(0, 80, 87),
                         name: "Bytes32".to_string(),
                     },
-                    ty: Expression::Type(Loc::File(0, 90, 95), Type::Field),
+                    ty: Expression::Type(Loc::File(0, 90, 93), Type::Uint(32)),
                 })),
             ],
         },
