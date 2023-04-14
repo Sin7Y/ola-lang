@@ -182,7 +182,9 @@ Precedence3: Expression = {
 
 Precedence2: Expression = {
     <a:@L> "!" <e:Precedence2> <b:@R> => Expression::Not(Loc::File(file_no, a, b), Box::new(e)),
-    <a:@L> "~" <e:Precedence2> <b:@R> => Expression::Complement(Loc::File(file_no, a, b), Box::new(e)),
+    <a:@L> "~" <e:Precedence2> <b:@R> => Expression::BitwiseNot(Loc::File(file_no, a, b), Box::new(e)),
+    <a:@L> "delete" <e:Precedence2> <b:@R>  => Expression::Delete(Loc::File(file_no, a, b), Box::new(e)),
+    <a:@L> "new" <call:Precedence2> <b:@R> => Expression::New(Loc::File(file_no, a, b), Box::new(call)),
     Precedence0,
 }
 

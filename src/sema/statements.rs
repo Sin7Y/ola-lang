@@ -240,6 +240,68 @@ fn statement(
                 Err(())
             }
         }
+        program::Statement::While(loc, cond_expr, body) => {
+            let expr = expression(
+                cond_expr,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                ResolveTo::Type(&Type::Bool),
+            )?;
+            used_variable(ns, &expr, symtable);
+            let cond = expr.cast(&expr.loc(), &Type::Bool, ns, diagnostics)?;
+
+            symtable.new_scope();
+            let mut body_stmts = Vec::new();
+            loops.new_scope();
+            statement(
+                body,
+                &mut body_stmts,
+                context,
+                symtable,
+                loops,
+                ns,
+                diagnostics,
+            )?;
+            symtable.leave_scope();
+            loops.leave_scope();
+
+            res.push(Statement::While(*loc, true, cond, body_stmts));
+
+            Ok(true)
+        }
+
+        program::Statement::DoWhile(loc, body, cond_expr) => {
+            let expr = expression(
+                cond_expr,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                ResolveTo::Type(&Type::Bool),
+            )?;
+            used_variable(ns, &expr, symtable);
+            let cond = expr.cast(&expr.loc(), &Type::Bool, ns, diagnostics)?;
+
+            symtable.new_scope();
+            let mut body_stmts = Vec::new();
+            loops.new_scope();
+            statement(
+                body,
+                &mut body_stmts,
+                context,
+                symtable,
+                loops,
+                ns,
+                diagnostics,
+            )?;
+            symtable.leave_scope();
+            loops.leave_scope();
+
+            res.push(Statement::DoWhile(*loc, true, body_stmts, cond));
+            Ok(true)
+        }
 
         program::Statement::If(loc, cond_expr, then, else_) => {
             let expr = expression(

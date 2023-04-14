@@ -235,6 +235,7 @@ pub struct NamedArgument {
 pub enum Expression {
     Increment(Loc, Box<Expression>),
     Decrement(Loc, Box<Expression>),
+    New(Loc, Box<Expression>),
     ArraySubscript(Loc, Box<Expression>, Option<Box<Expression>>),
     ArraySlice(
         Loc,
@@ -247,7 +248,8 @@ pub enum Expression {
     FunctionCall(Loc, Box<Expression>, Vec<Expression>),
     NamedFunctionCall(Loc, Box<Expression>, Vec<NamedArgument>),
     Not(Loc, Box<Expression>),
-    Complement(Loc, Box<Expression>),
+    BitwiseNot(Loc, Box<Expression>),
+    Delete(Loc, Box<Expression>),
     Power(Loc, Box<Expression>, Box<Expression>),
     Multiply(Loc, Box<Expression>, Box<Expression>),
     Divide(Loc, Box<Expression>, Box<Expression>),
@@ -293,6 +295,8 @@ impl CodeLocation for Expression {
         match self {
             Expression::Increment(loc, _)
             | Expression::Decrement(loc, _)
+            | Expression::New(loc, _)
+            | Expression::Delete(loc, _)
             | Expression::Parenthesis(loc, _)
             | Expression::ArraySubscript(loc, ..)
             | Expression::ArraySlice(loc, ..)
@@ -300,7 +304,7 @@ impl CodeLocation for Expression {
             | Expression::FunctionCall(loc, ..)
             | Expression::NamedFunctionCall(loc, ..)
             | Expression::Not(loc, _)
-            | Expression::Complement(loc, _)
+            | Expression::BitwiseNot(loc, _)
             | Expression::Power(loc, ..)
             | Expression::Multiply(loc, ..)
             | Expression::Divide(loc, ..)

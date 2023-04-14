@@ -28,6 +28,7 @@ pub enum Type {
     Struct(usize),
     /// The usize is an index into contracts in the namespace
     Contract(usize),
+    Ref(Box<Type>),
     /// Reference to storage
     StorageRef(Box<Type>),
 
@@ -399,6 +400,8 @@ pub enum Expression {
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
     StorageVariable(program::Loc, Type, usize, usize),
+    Load (program::Loc, Type, Box<Expression>),
+    GetRef (program::Loc, Type, Box<Expression>),
     StorageLoad(program::Loc, Type, Box<Expression>),
     ZeroExt {
         loc: program::Loc,
@@ -427,9 +430,7 @@ pub enum Expression {
     NotEqual(program::Loc, Box<Expression>, Box<Expression>),
 
     Not(program::Loc, Box<Expression>),
-    Complement(program::Loc, Type, Box<Expression>),
-    UnaryMinus(program::Loc, Type, Box<Expression>),
-
+    BitwiseNot(program::Loc, Type, Box<Expression>),
     ConditionalOperator(
         program::Loc,
         Type,
@@ -511,8 +512,7 @@ impl Recurse for Expression {
                     right.recurse(cx, f);
                 }
                 Expression::Not(_, expr)
-                | Expression::Complement(_, _, expr)
-                | Expression::UnaryMinus(_, _, expr) => expr.recurse(cx, f),
+                | Expression::BitwiseNot(_, _, expr) => expr.recurse(cx, f),
 
                 Expression::ConditionalOperator(_, _, cond, left, right) => {
                     cond.recurse(cx, f);
@@ -569,6 +569,8 @@ impl CodeLocation for Expression {
             | Expression::Variable(loc, ..)
             | Expression::ConstantVariable(loc, ..)
             | Expression::StorageVariable(loc, ..)
+            | Expression::Load(loc, ..)
+            | Expression::GetRef(loc, ..)
             | Expression::StorageLoad(loc, ..)
             | Expression::ZeroExt { loc, .. }
             | Expression::Trunc { loc, .. }
@@ -580,8 +582,7 @@ impl CodeLocation for Expression {
             | Expression::Equal(loc, ..)
             | Expression::NotEqual(loc, ..)
             | Expression::Not(loc, _)
-            | Expression::Complement(loc, ..)
-            | Expression::UnaryMinus(loc, ..)
+            | Expression::BitwiseNot(loc, ..)
             | Expression::ConditionalOperator(loc, ..)
             | Expression::Subscript(loc, ..)
             | Expression::StructMember(loc, ..)
@@ -618,6 +619,10 @@ impl CodeLocation for Statement {
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum LibFunc {
     U32Sqrt,
+    ArrayPush,
+    ArrayPop,
+    ArrayLength,
+
 }
 
 #[derive(Clone, Debug)]
@@ -635,6 +640,7 @@ pub enum Statement {
         Vec<Statement>,
         Vec<Statement>,
     ),
+    While(program::Loc, bool, Expression, Vec<Statement>),
     For {
         loc: program::Loc,
         reachable: bool,
@@ -643,6 +649,7 @@ pub enum Statement {
         next: Vec<Statement>,
         body: Vec<Statement>,
     },
+    DoWhile(program::Loc, bool, Vec<Statement>, Expression),
     Expression(program::Loc, bool, Expression),
     Continue(program::Loc),
     Break(program::Loc),

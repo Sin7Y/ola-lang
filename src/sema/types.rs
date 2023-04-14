@@ -66,6 +66,7 @@ fn type_decl(
     // - This would require resolving the types definition after all other types are
     //   resolved
     // - Need for circular checks (type a is b; type b is a;)
+    // TODO add address type
     if !matches!(ty, Type::Uint(_) | Type::Bool) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
@@ -483,6 +484,7 @@ impl Type {
             }
             Type::Contract(n) => format!("contract {}", ns.contracts[*n].name),
             Type::UserType(n) => format!("usertype {}", ns.user_types[*n]),
+            Type::Ref(r) => r.to_string(ns),
             Type::StorageRef(ty) => format!("{} storage", ty.to_string(ns)),
             Type::Void => "void".to_owned(),
             Type::Unreachable => "unreachable".into(),
@@ -556,10 +558,12 @@ impl Type {
             Type::Uint(_) => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
-            Type::Array(_, dims) => matches!(dims.last(), Some(ArrayLength::Fixed(_))),
+            Type::Array(_, dims) => !dims.iter().any(|d| *d == ArrayLength::Dynamic),
             Type::Contract(_) => false,
             Type::Slice(_) => false,
             Type::Unresolved => false,
+            Type::Ref(_) => false,
+            Type::Function { .. } => false,
             Type::StorageRef(..) => false,
             _ => unreachable!("{:?}", self),
         }
@@ -854,6 +858,7 @@ impl Type {
     pub fn deref_any(&self) -> &Self {
         match self {
             Type::StorageRef(r) => r,
+            Type::Ref(r) => r,
             _ => self,
         }
     }
@@ -861,6 +866,7 @@ impl Type {
     /// If the type is Ref, get the underlying type
     pub fn deref_memory(&self) -> &Self {
         match self {
+            Type::Ref(r) => r,
             _ => self,
         }
     }
@@ -870,9 +876,11 @@ impl Type {
     pub fn deref_into(self) -> Self {
         match self {
             Type::StorageRef(r) => *r,
+            Type::Ref(r) => *r,
             _ => self,
         }
     }
+
 
     /// Is it an address (with some sugar)
     pub fn is_address(&self) -> bool {
