@@ -86,7 +86,7 @@ fn parser_struct() {
                 Diagnostic { loc: File(0, 268, 275), level: Error, ty: ParserError, message: r#"unrecognised token 'sesa_id', expected ")", ";""#.to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 296, 300), level: Error, ty: ParserError, message: "unrecognised token 'sesa', expected \"(\", \")\", \",\", \";\", \"=\", \"{\", \"}\"".to_string(), notes: vec![] },
                 Diagnostic { loc: File(0, 303, 304), level: Error, ty: ParserError, message: "unrecognised token 'b', expected \")\", \";\"".to_string(), notes: vec![] },
-                Diagnostic { loc: File(0, 351, 352), level: Error, ty: ParserError, message: "unrecognised token '}', expected \"!\", \"(\", \"[\", \"bool\", \"break\", \"continue\", \"do\", \"false\", \"for\", \"if\", \"return\", \"true\", \"u256\", \"u32\", \"u64\", \"while\", \"{\", \"~\", r#\"([1-9][0-9]*|0)(u|ll|l)?\"#, r#\"0x[0-9A-Fa-f]*(u|ll|l)?\"#, r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
+                Diagnostic { loc: File(0, 351, 352), level: Error, ty: ParserError, message: "unrecognised token '}', expected \"!\", \"(\", \"[\", \"bool\", \"break\", \"continue\", \"delete\", \"do\", \"false\", \"for\", \"if\", \"new\", \"return\", \"true\", \"u256\", \"u32\", \"u64\", \"while\", \"{\", \"~\", r#\"([1-9][0-9]*|0)(u|ll|l)?\"#, r#\"0x[0-9A-Fa-f]*(u|ll|l)?\"#, r#\"[$_]*[a-zA-Z][a-zA-Z$_0-9]*\"#".to_string(), notes: vec![] },
             ]
         )
     }

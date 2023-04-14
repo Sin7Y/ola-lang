@@ -45,8 +45,7 @@ impl RetrieveType for Expression {
             | Expression::ConstantVariable(_, ty, ..)
             | Expression::StorageVariable(_, ty, ..)
             | Expression::StorageLoad(_, ty, _)
-            | Expression::Complement(_, ty, _)
-            | Expression::UnaryMinus(_, ty, _)
+            | Expression::BitwiseNot(_, ty, _)
             | Expression::ConditionalOperator(_, ty, ..)
             | Expression::StructMember(_, ty, ..)
             | Expression::Increment(_, ty, ..)
@@ -101,6 +100,35 @@ impl Expression {
 
         if from == Type::Unresolved || *to == Type::Unresolved {
             return Ok(self.clone());
+        }
+        // First of all, if we have a ref then derefence it
+        if let Type::Ref(r) = &from {
+            return if r.is_fixed_reference_type() {
+                // A struct/fixed array *value* is simply the type, e.g. Type::Struct(_)
+                // An assignable struct value, e.g. member of another struct, is Type::Ref(Type:Struct(_)).
+                // However, the underlying types are identical: simply a pointer.
+                //
+                // So a Type::Ref(Type::Struct(_)) can be cast to Type::Struct(_).
+                //
+                // The Type::Ref(..) just means it can be used as an l-value and assigned
+                // a new value, unlike say, a struct literal.
+                if r.as_ref() == to {
+                    Ok(self.clone())
+                } else {
+                    diagnostics.push(Diagnostic::cast_error(
+                        *loc,
+                        format!(
+                            "conversion from {} to {} not possible",
+                            from.to_string(ns),
+                            to.to_string(ns)
+                        ),
+                    ));
+                    Err(())
+                }
+            } else {
+                Expression::Load (*loc, r.as_ref().clone(), Box::new(self.clone()))
+                    .cast(loc, to,  ns, diagnostics)
+            };
         }
         // If it's a storage reference then load the value. The expr is the storage slot
         if let Type::StorageRef(r) = from {
@@ -258,7 +286,7 @@ fn coerce(
         Type::StorageRef(ty) => ty,
         _ => r,
     };
-    if *l == *r {
+    if l == r {
         return Ok(l.clone());
     }
 
@@ -294,6 +322,7 @@ fn get_uint_length(
             ));
             Err(())
         }
+        Type::Ref(n) => get_uint_length(n, l_loc, ns, diagnostics),
         Type::StorageRef(n) => get_uint_length(n, l_loc, ns, diagnostics),
         _ => {
             diagnostics.push(Diagnostic::error(
@@ -314,10 +343,12 @@ pub fn coerce_number(
     diagnostics: &mut Diagnostics,
 ) -> Result<Type, ()> {
     let l = match l {
+        Type::Ref(ty) => ty,
         Type::StorageRef(ty) => ty,
         _ => l,
     };
     let r = match r {
+        Type::Ref(ty) => ty,
         Type::StorageRef(ty) => ty,
         _ => r,
     };
@@ -552,7 +583,7 @@ pub fn expression(
                 Box::new(expr.cast(loc, &Type::Bool, ns, diagnostics)?),
             ))
         }
-        program::Expression::Complement(loc, e) => {
+        program::Expression::BitwiseNot(loc, e) => {
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
 
             used_variable(ns, &expr, symtable);
@@ -560,7 +591,7 @@ pub fn expression(
 
             get_uint_length(&expr_ty, loc, ns, diagnostics)?;
 
-            Ok(Expression::Complement(*loc, expr_ty, Box::new(expr)))
+            Ok(Expression::BitwiseNot(*loc, expr_ty, Box::new(expr)))
         }
 
         program::Expression::ConditionalOperator(loc, c, l, r) => {
@@ -585,7 +616,7 @@ pub fn expression(
             ))
         }
 
-        // pre/post decrement/increment
+        // decrement/increment
         program::Expression::Increment(loc, var) | program::Expression::Decrement(loc, var) => {
             if context.constant {
                 diagnostics.push(Diagnostic::error(
@@ -1218,7 +1249,6 @@ fn not_equal(
     ))
 }
 
-/// Try string concatenation
 fn addition(
     loc: &Loc,
     l: &program::Expression,
@@ -1498,6 +1528,21 @@ fn assign_expr(
             ))
         }
         _ => match &var_ty {
+            Type::Ref(r_ty) => match r_ty.as_ref() {
+                 Type::Uint(_) => Ok(Expression::Assign(*loc, *r_ty.clone(), Box::new(var.clone()), Box::new(op(
+                     var.cast(loc, r_ty, ns, diagnostics)?,
+                     r_ty,
+                     ns,
+                     diagnostics,
+                 )?))),
+                _ => {
+                    diagnostics.push(Diagnostic::error(
+                        var.loc(),
+                        format!("assigning to incorrect type {}", r_ty.to_string(ns)),
+                    ));
+                    Err(())
+                }
+            },
             Type::StorageRef(r_ty) => match r_ty.as_ref() {
                 Type::Uint(_) => Ok(Expression::Assign(
                     *loc,
@@ -1590,7 +1635,7 @@ fn incr_decr(
             Ok(op(var.clone(), ty.clone()))
         }
         _ => match &var_ty {
-            Type::StorageRef(r_ty) => match r_ty.as_ref() {
+            Type::Ref(r_ty) => match r_ty.as_ref() {
                 Type::Uint(_) => Ok(op(var, r_ty.as_ref().clone())),
                 _ => {
                     diagnostics.push(Diagnostic::error(
@@ -1599,6 +1644,19 @@ fn incr_decr(
                     ));
                     Err(())
                 }
+            },
+            Type::StorageRef(r_ty) => {
+                match r_ty.as_ref() {
+                    Type::Uint(_) => Ok(op(var, r_ty.as_ref().clone())),
+                    _ => {
+                        diagnostics.push(Diagnostic::error(
+                            var.loc(),
+                            format!("assigning to incorrect type {}", r_ty.to_string(ns)),
+                        ));
+                        Err(())
+                    }
+                }
+
             },
             _ => {
                 diagnostics.push(Diagnostic::error(
@@ -1726,7 +1784,6 @@ fn member_access(
         return Ok(expr);
     }
 
-    // is it a constant (unless basecontract is a local variable)
     if let Some(expr) = contract_constant(
         loc,
         e,
@@ -2095,13 +2152,11 @@ fn array_literal(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    let mut dims = Box::new(Vec::new());
+    let mut dimensions = Vec::new();
     let mut flattened = Vec::new();
 
     let resolve_to = match resolve_to {
         ResolveTo::Type(Type::Array(elem_ty, _)) => ResolveTo::Type(elem_ty),
-        // Solana seeds are a slice of slice of bytes, e.g. [ [ "fo", "o" ], [ "b", "a", "r"]]. In
-        // this case we want to resolve
         ResolveTo::Type(Type::Slice(slice)) if matches!(slice.as_ref(), Type::Slice(_)) => {
             let mut res = Vec::new();
             let mut has_errors = false;
@@ -2169,7 +2224,7 @@ fn array_literal(
         _ => resolve_to,
     };
 
-    check_subarrays(exprs, &mut Some(&mut dims), &mut flattened, diagnostics)?;
+    check_subarrays(exprs, &mut Some(&mut dimensions), &mut flattened, diagnostics)?;
 
     if flattened.is_empty() {
         diagnostics.push(Diagnostic::error(
@@ -2214,15 +2269,15 @@ fn array_literal(
 
     let aty = Type::Array(
         Box::new(ty),
-        dims.iter()
+        dimensions.iter()
             .map(|n| ArrayLength::Fixed(BigInt::from_u32(*n).unwrap()))
             .collect::<Vec<ArrayLength>>(),
     );
 
     if context.constant {
-        Ok(Expression::ConstArrayLiteral(*loc, aty, *dims, exprs))
+        Ok(Expression::ConstArrayLiteral(*loc, aty, dimensions, exprs))
     } else {
-        Ok(Expression::ArrayLiteral(*loc, aty, *dims, exprs))
+        Ok(Expression::ArrayLiteral(*loc, aty, dimensions, exprs))
     }
 }
 

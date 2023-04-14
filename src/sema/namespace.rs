@@ -339,7 +339,7 @@ impl Namespace {
         if corelib::is_reserved(&id.name) {
             self.diagnostics.push(Diagnostic::warning(
                 id.loc,
-                format!("'{}' shadows name of a builtin", id.name),
+                format!("'{}' shadows name of a corelib", id.name),
             ));
             return;
         }
@@ -464,7 +464,7 @@ impl Namespace {
                         return Err(());
                     } else if n > &u32::MAX.into() {
                         let msg = format!(
-                            "array dimension of {} exceeds the maximum of 4294967295 on Substrate",
+                            "array dimension of {} exceeds the maximum of 4294967295 on ola",
                             n
                         );
                         diagnostics.push(Diagnostic::decl_error(*loc, msg));
@@ -484,6 +484,8 @@ impl Namespace {
 
         if let program::Expression::Type(_, ty) = &id {
             assert!(namespace.is_empty());
+
+            // TODO Add Mapping type
 
             let ty = Type::from(ty);
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{Diagnostic, Expression, Namespace};
+use crate::sema::ast::{Diagnostic, Expression, LibFunc, Namespace};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
 
@@ -27,6 +27,7 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
         }
 
         Expression::StorageLoad(_, _, expr)
+        | Expression::Load (.., expr)
         | Expression::Trunc { expr, .. }
         | Expression::Cast { expr, .. } => {
             assigned_variable(ns, expr, symtable);
@@ -67,6 +68,12 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, array, symtable);
             used_variable(ns, index, symtable);
         }
+        Expression::LibFunction(_, _, LibFunc::ArrayLength, args)=> {
+            // We should not eliminate an array from the code when 'length' is called
+            // So the variable is also assigned
+            assigned_variable(ns, &args[0], symtable);
+            used_variable(ns, &args[0], symtable);
+        }
 
         Expression::StorageArrayLength {
             loc: _,
@@ -81,6 +88,7 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
         }
 
         Expression::StorageLoad(_, _, expr)
+        | Expression::Load (.., expr)
         | Expression::ZeroExt { expr, .. }
         | Expression::Trunc { expr, .. }
         | Expression::Cast { expr, .. } => {

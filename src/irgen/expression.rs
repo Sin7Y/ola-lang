@@ -46,7 +46,7 @@ pub fn expression<'a>(
         Expression::Less(_, l, r) => u32_less(l, r, bin, func, func_val, var_table, ns),
         Expression::LessEqual(_, l, r) => u32_less_equal(l, r, bin, func, func_val, var_table, ns),
         Expression::Not(_, expr) => u32_not(expr, bin, func, func_val, var_table, ns),
-        Expression::Complement(_, _, expr) => {
+        Expression::BitwiseNot(_, _, expr) => {
             u32_complement(expr, bin, func, func_val, var_table, ns)
         }
         Expression::Or(_, l, r) => u32_or(l, r, bin, func, func_val, var_table, ns),
