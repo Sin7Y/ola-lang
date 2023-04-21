@@ -48,5 +48,3 @@ structopt = "0.3.26"
 
 [workspace]
 members = ["ola-parser"]
-
-

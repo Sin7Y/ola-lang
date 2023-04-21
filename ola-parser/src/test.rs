@@ -43,7 +43,7 @@ contract C{
 
 #[test]
 fn parser_struct() {
-    let src = r#"import "./keccak.ola"; 
+    let src = r#"import "./keccak.ola";
     import "filename" as symbolName;
 
  contract 9c {
@@ -242,21 +242,21 @@ fn parse_user_defined_value_type() {
 fn parse_random_doccomment() {
     let src = r#" contract foo {
         fn a() -> () {
-        /** x */ 
-        /** x */ 
-        /** dev:  */ 
+        /** x */
+        /** x */
+        /** dev:  */
          /** as */
-          /** x */ 
-           /** x */ 
+          /** x */
+           /** x */
            /** x */
         }
         fn b() {
-            /** x */ 
-            /** x */ 
-            /** dev:  */ 
+            /** x */
+            /** x */
+            /** dev:  */
              /** as */
-              /** x */ 
-               /** x */ 
+              /** x */
+               /** x */
                /** x */
             }
     }

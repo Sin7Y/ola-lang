@@ -55,7 +55,7 @@ ContractPart: ContractPart = {
 }
 
 ContractDefinition: Box<ContractDefinition> = {
-    <l:@L> "contract" <name:IdentifierOrError> 
+    <l:@L> "contract" <name:IdentifierOrError>
     "{" <parts:(<ContractPart>)*> "}" <r:@R> => {
         Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), name,  parts})
     }
@@ -270,7 +270,7 @@ BlockStatementOrSemiColon: Option<Statement> = {
     BlockStatement => Some(<>),
 }
 FunctionDefinition: Box<FunctionDefinition> = {
-    <l:@L> "fn" <nl:@L> <name: IdentifierOrError> <nr:@R> <params:ParameterList> 
+    <l:@L> "fn" <nl:@L> <name: IdentifierOrError> <nr:@R> <params:ParameterList>
     <returns: ("->" ParameterList)?> <r:@R> <body:BlockStatementOrSemiColon> => {
         let (_, returns) = returns.unwrap_or(("", Vec::new()));
         Box::new(FunctionDefinition{
@@ -404,6 +404,6 @@ StringLiteral: StringLiteral = {
 match {
     r"\s*" => {},
     r"//[^\n\r]*[\n\r]" => {},
-    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => { },  
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => { },
     _,
 }
