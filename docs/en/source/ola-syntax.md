@@ -5,8 +5,7 @@
 #### Identifier
 
 Variables consist of numbers (`0-9`), ASCII uppercase and lowercase letters (`a-zA-Z`), underscores (`_`).
-Variables cannot start with a number, and cannot use 
-
+Variables cannot start with a number, and cannot use
 
 ```
 fn foo() {
@@ -18,7 +17,7 @@ fn foo() {
 
 #### Declaration
 
-Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time. 
+Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time.
 
 ```
 fn foo() {
@@ -31,20 +30,21 @@ fn foo() {
 
 #### Scope
 
-For security reasons, variable definitions do not support Shadowing. 
+For security reasons, variable definitions do not support Shadowing.
 If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
 
 ```
 fn foo() {
     u32 a = 5;
-    {        
+    {
         u32 a = 25; // compile error: redeclared variable 'a'
-    };    
+    };
     u32 a = 25; // compile error: redeclared variable 'a'
 
     a = 25; // ok
 }
 ```
+
 Variables differ from constants in that the scope of a variable is limited to the current function itself and global variables are not supported.
 
 ```
@@ -74,7 +74,7 @@ fn foo() -> u32 {
 
 ### Data Type
 
-Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. 
+Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions.
 Three basic types and multiple complex types are supported.
 
 #### Basic Types
@@ -83,10 +83,10 @@ There are three types of basic types, namely integer, field and Boolean
 
 ##### Integer Type
 
-There are several types of integer types: `u32`, `u64`, and `u256`, and currently only unsigned integer operations are supported. 
+There are several types of integer types: `u32`, `u64`, and `u256`, and currently only unsigned integer operations are supported.
 All types are built on the basis of the `field` type.
 Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic.
-Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal. 
+Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
 
 ```
 u32 a = 2; // u32
@@ -98,22 +98,25 @@ u256 d = 102411ll  // u256
 ##### Boolean
 
 Bool indicates that the value of `field` is `0` or `1`, which is declared using the keyword `bool`.
+
 ```
 bool a = true;
 bool b = false;
 ```
+
 #### Complex Types
 
 Ola supports a variety of complex types such as`Arrays`,`Slice`,`Tuples`,`Structs`,`Enumerations`,`Map`。
 
 ##### Arrays
 
-Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time. 
+Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time.
 
 Array elements are numbered from zero and are accessed using`[index]`for addressing.
 
-Array declarations must be initialized, and the array declaration format is为`type`and`[]`(`type []`),and the array size must be specified.
+Array declarations must be initialized, and the array declaration format is 为`type`and`[]`(`type []`),and the array size must be specified.
 Two ways to initialize arrays are provided:
+
 - Split the list of elements by commas,`[array_element1,array_element2,...]`。
 - Array declaration and initialization with consistent array elements,`[array_value; size]`。
 
@@ -124,7 +127,7 @@ bool[3] b = [true; 3]; // initialize a bool array with value true
 
 Two-dimensional Arrays
 
-Two-dimensional arrays are declared and used similarly to one-dimensional arrays, except that the internal elements of a two-dimensional array are also one-dimensional arrays. 
+Two-dimensional arrays are declared and used similarly to one-dimensional arrays, except that the internal elements of a two-dimensional array are also one-dimensional arrays.
 
 Declar`type [row_size][col_size]`, and initializ`[[],[],...]`。
 
@@ -139,6 +142,7 @@ field[4] b = a[1]; // should be [4, 5, 6, 7]
 Array Slicing
 
 Similar to rust, arrays can be created by slicing an array to copy the generated array,`[from_index..to_index]`。
+
 ```
 field[5] a = [1, 2, 3, 4, 5];
 field[3] b = a[2..4];   // initialize an array copying a slice from `a`
@@ -158,7 +162,8 @@ fn main() -> bool {
 ```
 
 ##### Structs
-A combination of multiple data types to form a new custom combination type. 
+
+A combination of multiple data types to form a new custom combination type.
 Struct members are accessed via`.` (`struct_name.struct_field`)
 
 ```
@@ -180,7 +185,7 @@ fn foo() {
 
 The enumeration type is defined by the keyword `enum`.
 
-````
+```
 contract Foo {
     u256 const x = 56;
     enum ActionChoices {
@@ -191,7 +196,7 @@ contract Foo {
     }
     ActionChoices const choices = ActionChoices.GoLeft;
 }
-````
+```
 
 ##### Map
 
@@ -216,7 +221,8 @@ fn main() -> balance {
 
 Constants can only be declared as constant expressions when defined with the `const` keyword.
 
-Compile time determination cannot be redeclared and assigned, that is, once defined, it can only be used within its scope, and it is recommended to declare with all capital letters and `_` concatenation. 
+Compile time determination cannot be redeclared and assigned, that is, once defined, it can only be used within its scope, and it is recommended to declare with all capital letters and `_` concatenation.
+
 ```
 const field ONE = 1;
 const field TWO = ONE + ONE;
@@ -230,60 +236,60 @@ fn hash_size() -> field {
 
 ### Operators
 
-Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics. 
+Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics.
 
 #### Arithmetic operators
 
 All arithmetic operators are Mod p.
 
-Arithmetic operators can be combined with the assignment operator`=`to form new compound operators `+=`、`-=`、`*=`、`/=`、`%=`, with arithmetic operators having higher priority than compound operators. 
+Arithmetic operators can be combined with the assignment operator`=`to form new compound operators `+=`、`-=`、`*=`、`/=`、`%=`, with arithmetic operators having higher priority than compound operators.
 
-| Operat |Example|Explanation|
-|:---:| :--:| :---: |
-|  +  | a + b |Arithmetic addition modulo p |
-|  -  | a-b |Arithmetic subtraction modulo p |
-|  *  | a * b |Arithmetic multiplication modulo p |
-|  /  | a / b |Arithmetic multiplication inverse modulo p |
-|  %  | a%b |The modulo of arithmetic integer division|
-| **  | a**b |Power modulo p|
+| Operat | Example |                Explanation                 |
+| :----: | :-----: | :----------------------------------------: |
+|   +    |  a + b  |        Arithmetic addition modulo p        |
+|   -    |   a-b   |      Arithmetic subtraction modulo p       |
+|   \*   | a \* b  |     Arithmetic multiplication modulo p     |
+|   /    |  a / b  | Arithmetic multiplication inverse modulo p |
+|   %    |   a%b   | The modulo of arithmetic integer division  |
+|  \*\*  | a\*\*b  |               Power modulo p               |
 
 #### Boolean operators
 
 Support with AND(`&&`)as well as OR(`||`),with the latter having higher priority.
 
-| Operator | Example | Explanation |
-| :--- | :--- | :--- |
-| && | a && b | Boolean operator and (AND) |
-| \|\| | a \|\| b | Boolean operator or (OR) |
-| ! | ! a | Boolean operator NEGATION |
+| Operator | Example  | Explanation                |
+| :------- | :------- | :------------------------- |
+| &&       | a && b   | Boolean operator and (AND) |
+| \|\|     | a \|\| b | Boolean operator or (OR)   |
+| !        | ! a      | Boolean operator NEGATION  |
 
 #### Relational operators
 
 The return result of the relational operator is type`bool`
 
-|Operator|Example|Explanation|
-| :--- | :--- | :--- |
-| == | a == b |equal|
-| != | a ！= b | not equal|
-| < | a < b | less than |
-| > | a >b  | greater than |
-|<= | a <= b  |less than or equal to |
-| >= | a >= b | greater than or equal to | 
+| Operator | Example | Explanation              |
+| :------- | :------ | :----------------------- |
+| ==       | a == b  | equal                    |
+| !=       | a ！= b | not equal                |
+| <        | a < b   | less than                |
+| >        | a >b    | greater than             |
+| <=       | a <= b  | less than or equal to    |
+| >=       | a >= b  | greater than or equal to |
 
 #### Bitwise operators
 
 All bitwise operators are modulo p, containing bit or and non and shift operations.
 
-|Operator|Example|Explanation|
-| :--- | :--- | :--- |
-| & | a & b |bit and|
-| \| | a \| b |bit or|
-| ^ | a ^ b |XOR 32 bits|
-|<<| a << 3 | shift left |
-| >> | a >> 3 | shift right |
-| ~ | ~a | Complement 32  bits |
+| Operator | Example | Explanation        |
+| :------- | :------ | :----------------- |
+| &        | a & b   | bit and            |
+| \|       | a \| b  | bit or             |
+| ^        | a ^ b   | XOR 32 bits        |
+| <<       | a << 3  | shift left         |
+| >>       | a >> 3  | shift right        |
+| ~        | ~a      | Complement 32 bits |
 
-Bitwise operators can be combined with the assignment operator`=`to form the new compound operators`&=`、`|=`、`^=`、`<<=`、`>>=`, with bitwise operators taking precedence over compound operators. 
+Bitwise operators can be combined with the assignment operator`=`to form the new compound operators`&=`、`|=`、`^=`、`<<=`、`>>=`, with bitwise operators taking precedence over compound operators.
 
 ### Control Flow
 
@@ -297,13 +303,14 @@ It comes in two forms:
 
 ```
 fn foo(field a) -> field {
-    
-    // Similar to rust, the result of a conditional expression 
+
+    // Similar to rust, the result of a conditional expression
     // can be received directly by the variable
     field b = if (a + 1 == 2) { 1 } else { 3 };
     return b;
 }
 ```
+
 Note: Conditional statements support ternary conditional operators.
 
 ```
@@ -318,9 +325,10 @@ fn foo(field a) -> field {
 Repeats the statement within the loop for a specified number of times based on the loop condition.
 
 `for-loop`statement is supported. Its syntax is
-`for (init_expression; conditional_expression; loop_expression) {statements}` 
+`for (init_expression; conditional_expression; loop_expression) {statements}`
 
 The execution process is:
+
 - Calculate the`init_expression`，namely the loop initialization.
 - Calculate the`conditional_expression`.If the result is`true`,the loop body`statements`are executed, followed by the`loop_expression`.
 - If the result is`false`,`for-loop`statement terminates. Sequential execution starts with the next`statement`.
@@ -343,7 +351,7 @@ If the`fn`keyword is used, the function name must be explicitly provided. parame
 
 The function return type must be specified after`->`.
 
-- - When a function call occurs, program execution control is passed from the calling function to the called function, and the parameters are passed to the called function by value. 
+- - When a function call occurs, program execution control is passed from the calling function to the called function, and the parameters are passed to the called function by value.
 - The called function executes the return control to the calling function through the`return`statement, and returns the return value to the calling function.
 
 The basic syntax is:
@@ -355,18 +363,20 @@ fn function_name(parameter_declaration_list) -> return_parameter_list {
     return_statement
 }
 ```
+
 e.g.:
+
 ```
 fn foo() -> u32 {
     return sum(1u, 2u)
 }
 
 fn sum(u32 a, u32 b) -> u32 {
-/* 
- *  Unlike rust, the return value of 
+/*
+ *  Unlike rust, the return value of
  *  a function must be a combination of return and return value
  */
-    return a + b;  
+    return a + b;
 }
 ```
 
@@ -375,10 +385,12 @@ fn sum(u32 a, u32 b) -> u32 {
 In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name.
 Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development.
 The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
+
 ```
 import "path-spec"
 import "path-spec" as alias_name
 ```
+
 e.g.:
 
 ```
@@ -393,6 +405,7 @@ They are in-code documentation. When comments are inserted into the code, the co
 ingle-line comments start with `//` and multi-line paragraph comments start with `/*` and end with `*/` .
 
 Single line using`//`:
+
 ```
 // Using this, we can comment a line.
 fn main(field a) -> field {
@@ -402,12 +415,13 @@ fn main(field a) -> field {
 ```
 
 Multi-line paragraph comments using`/*` 及 `*/`:
+
 ```
 fn sum(u32 a, u32 b) -> u32 {
-/* 
- *  Unlike rust, the return value of 
+/*
+ *  Unlike rust, the return value of
  *  a function must be a combination of return and return value
 */
-    return a + b;  
+    return a + b;
 }
 ```
