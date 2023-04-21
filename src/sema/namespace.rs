@@ -745,6 +745,29 @@ impl Namespace {
         }
     }
 
+    /// Convert expression to IdentifierPath
+    pub fn expr_to_identifier_path(
+        &self,
+        mut expr: &program::Expression,
+    ) -> Option<program::IdentifierPath> {
+        let loc = expr.loc();
+        let mut identifiers = Vec::new();
+
+        while let program::Expression::MemberAccess(_, member, name) = expr {
+            identifiers.insert(0, name.clone());
+
+            expr = member.as_ref();
+        }
+
+        if let program::Expression::Variable(id) = expr {
+            identifiers.insert(0, id.clone());
+
+            return Some(program::IdentifierPath { loc, identifiers });
+        }
+
+        None
+    }
+
     /// Resolve an expression which defines the array length, e.g. 2**8 in
     /// "bool[2**8]"
     fn resolve_array_dimension(

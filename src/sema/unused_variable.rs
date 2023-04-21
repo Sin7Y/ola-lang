@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::sema::ast::Expression::LibFunction;
 use crate::sema::ast::{Diagnostic, Expression, LibFunc, Namespace};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
@@ -27,7 +28,7 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
         }
 
         Expression::StorageLoad(_, _, expr)
-        | Expression::Load (.., expr)
+        | Expression::Load(.., expr)
         | Expression::Trunc { expr, .. }
         | Expression::Cast { expr, .. } => {
             assigned_variable(ns, expr, symtable);
@@ -68,7 +69,7 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, array, symtable);
             used_variable(ns, index, symtable);
         }
-        Expression::LibFunction(_, _, LibFunc::ArrayLength, args)=> {
+        Expression::LibFunction(_, _, LibFunc::ArrayLength, args) => {
             // We should not eliminate an array from the code when 'length' is called
             // So the variable is also assigned
             assigned_variable(ns, &args[0], symtable);
@@ -88,7 +89,7 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
         }
 
         Expression::StorageLoad(_, _, expr)
-        | Expression::Load (.., expr)
+        | Expression::Load(.., expr)
         | Expression::ZeroExt { expr, .. }
         | Expression::Trunc { expr, .. }
         | Expression::Cast { expr, .. } => {
@@ -107,7 +108,7 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
 /// variable, mark the usage of the latter as well
 pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::StorageLoad(..) | Expression::Variable(..) => {
+        Expression::Load { .. } | Expression::StorageLoad(..) | Expression::Variable(..) => {
             used_variable(ns, exp, symtable);
         }
         Expression::FunctionCall {
@@ -121,6 +122,20 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
             }
             check_function_call(ns, function, symtable);
         }
+        Expression::LibFunction(_, _, expr_type, args) => match expr_type {
+            LibFunc::ArrayPush => {
+                assigned_variable(ns, &args[0], symtable);
+                if args.len() > 1 {
+                    used_variable(ns, &args[1], symtable);
+                }
+            }
+
+            _ => {
+                for arg in args {
+                    used_variable(ns, arg, symtable);
+                }
+            }
+        },
 
         _ => {}
     }

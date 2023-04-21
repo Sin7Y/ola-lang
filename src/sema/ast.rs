@@ -147,7 +147,9 @@ pub struct Parameter {
     pub ty: Type,
     /// Yul function parameters may not have a type identifier
     pub ty_loc: Option<program::Loc>,
-
+    /// A recursive struct may contain itself which make the struct infinite
+    /// size in memory.
+    pub infinite_size: bool,
     /// A struct may contain itself which make the struct infinite size in
     /// memory. This boolean specifies which field introduces the recursion.
     pub recursive: bool,
@@ -400,8 +402,8 @@ pub enum Expression {
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
     StorageVariable(program::Loc, Type, usize, usize),
-    Load (program::Loc, Type, Box<Expression>),
-    GetRef (program::Loc, Type, Box<Expression>),
+    Load(program::Loc, Type, Box<Expression>),
+    GetRef(program::Loc, Type, Box<Expression>),
     StorageLoad(program::Loc, Type, Box<Expression>),
     ZeroExt {
         loc: program::Loc,
@@ -511,8 +513,9 @@ impl Recurse for Expression {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
-                Expression::Not(_, expr)
-                | Expression::BitwiseNot(_, _, expr) => expr.recurse(cx, f),
+                Expression::Not(_, expr) | Expression::BitwiseNot(_, _, expr) => {
+                    expr.recurse(cx, f)
+                }
 
                 Expression::ConditionalOperator(_, _, cond, left, right) => {
                     cond.recurse(cx, f);
@@ -622,7 +625,6 @@ pub enum LibFunc {
     ArrayPush,
     ArrayPop,
     ArrayLength,
-
 }
 
 #[derive(Clone, Debug)]

@@ -5,8 +5,10 @@ use super::corelib;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
 use super::symtable::Symtable;
+use crate::sema::ast::Expression::LibFunction;
+use crate::sema::ast::LibFunc;
 use crate::sema::function_call::{available_functions, call_expr, named_call_expr};
-use crate::sema::unused_variable::{assigned_variable, check_var_usage_expression, used_variable};
+use crate::sema::unused_variable::{assigned_variable, check_function_call, check_var_usage_expression, used_variable};
 use crate::sema::Recurse;
 use num_bigint::BigInt;
 use num_traits::{FromPrimitive, Num};
@@ -105,8 +107,9 @@ impl Expression {
         if let Type::Ref(r) = &from {
             return if r.is_fixed_reference_type() {
                 // A struct/fixed array *value* is simply the type, e.g. Type::Struct(_)
-                // An assignable struct value, e.g. member of another struct, is Type::Ref(Type:Struct(_)).
-                // However, the underlying types are identical: simply a pointer.
+                // An assignable struct value, e.g. member of another struct, is
+                // Type::Ref(Type:Struct(_)). However, the underlying types are
+                // identical: simply a pointer.
                 //
                 // So a Type::Ref(Type::Struct(_)) can be cast to Type::Struct(_).
                 //
@@ -126,8 +129,12 @@ impl Expression {
                     Err(())
                 }
             } else {
-                Expression::Load (*loc, r.as_ref().clone(), Box::new(self.clone()))
-                    .cast(loc, to,  ns, diagnostics)
+                Expression::Load(*loc, r.as_ref().clone(), Box::new(self.clone())).cast(
+                    loc,
+                    to,
+                    ns,
+                    diagnostics,
+                )
             };
         }
         // If it's a storage reference then load the value. The expr is the storage slot
@@ -676,6 +683,49 @@ pub fn expression(
             diagnostics,
             resolve_to,
         ),
+        program::Expression::New(loc, call) => {
+            if context.constant {
+                diagnostics.push(Diagnostic::error(
+                    expr.loc(),
+                    "new not allowed in constant expression".to_string(),
+                ));
+                return Err(());
+            }
+
+            match call.remove_parenthesis() {
+                program::Expression::FunctionCall(_, ty, args) => {
+                    let res = new(loc, ty, args, context, ns, symtable, diagnostics);
+
+                    if let Ok(exp) = &res {
+                        check_function_call(ns, exp, symtable);
+                    }
+                    res
+                }
+
+                program::Expression::Variable(id) => {
+                    diagnostics.push(Diagnostic::error(
+                        *loc,
+                        format!("missing constructor arguments to {}", id.name),
+                    ));
+                    Err(())
+                }
+                expr => {
+                    diagnostics.push(Diagnostic::error(
+                        expr.loc(),
+                        "type with arguments expected".into(),
+                    ));
+                    Err(())
+                }
+            }
+        }
+        program::Expression::Delete(loc, _) => {
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                "delete not allowed in expression".to_string(),
+            ));
+            Err(())
+        }
+
         program::Expression::FunctionCall(loc, ty, args) => call_expr(
             loc,
             ty,
@@ -1366,6 +1416,12 @@ fn assign_single(
             Box::new(val.cast(&right.loc(), var_ty, ns, diagnostics)?),
         )),
         _ => match &var_ty {
+            Type::Ref(r_ty) => Ok(Expression::Assign(
+                *loc,
+                *r_ty.clone(),
+                Box::new(var),
+                Box::new(val.cast(&right.loc(), r_ty, ns, diagnostics)?),
+            )),
             Type::StorageRef(r_ty) => Ok(Expression::Assign(
                 *loc,
                 var_ty.clone(),
@@ -1432,7 +1488,6 @@ fn assign_expr(
                 let left_length = get_uint_length(ty, loc, ns, diagnostics)?;
                 let right_length = get_uint_length(&set_type, &left.loc(), ns, diagnostics)?;
 
-                // TODO: does shifting by negative value need compiletime/runtime check?
                 if left_length == right_length {
                     set
                 } else if right_length < left_length {
@@ -1529,12 +1584,17 @@ fn assign_expr(
         }
         _ => match &var_ty {
             Type::Ref(r_ty) => match r_ty.as_ref() {
-                 Type::Uint(_) => Ok(Expression::Assign(*loc, *r_ty.clone(), Box::new(var.clone()), Box::new(op(
-                     var.cast(loc, r_ty, ns, diagnostics)?,
-                     r_ty,
-                     ns,
-                     diagnostics,
-                 )?))),
+                Type::Uint(_) => Ok(Expression::Assign(
+                    *loc,
+                    *r_ty.clone(),
+                    Box::new(var.clone()),
+                    Box::new(op(
+                        var.cast(loc, r_ty, ns, diagnostics)?,
+                        r_ty,
+                        ns,
+                        diagnostics,
+                    )?),
+                )),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -1546,7 +1606,7 @@ fn assign_expr(
             Type::StorageRef(r_ty) => match r_ty.as_ref() {
                 Type::Uint(_) => Ok(Expression::Assign(
                     *loc,
-                    Type::Void,
+                    *r_ty.clone(),
                     Box::new(var.clone()),
                     Box::new(op(
                         var.cast(loc, r_ty, ns, diagnostics)?,
@@ -1645,18 +1705,15 @@ fn incr_decr(
                     Err(())
                 }
             },
-            Type::StorageRef(r_ty) => {
-                match r_ty.as_ref() {
-                    Type::Uint(_) => Ok(op(var, r_ty.as_ref().clone())),
-                    _ => {
-                        diagnostics.push(Diagnostic::error(
-                            var.loc(),
-                            format!("assigning to incorrect type {}", r_ty.to_string(ns)),
-                        ));
-                        Err(())
-                    }
+            Type::StorageRef(r_ty) => match r_ty.as_ref() {
+                Type::Uint(_) => Ok(op(var, r_ty.as_ref().clone())),
+                _ => {
+                    diagnostics.push(Diagnostic::error(
+                        var.loc(),
+                        format!("assigning to incorrect type {}", r_ty.to_string(ns)),
+                    ));
+                    Err(())
                 }
-
             },
             _ => {
                 diagnostics.push(Diagnostic::error(
@@ -1800,7 +1857,7 @@ fn member_access(
     let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
     let expr_ty = expr.ty();
 
-    if let Type::Struct(n) = &expr_ty {
+    if let Type::Struct(n) = &expr_ty.deref_memory() {
         if let Some((i, f)) = ns.structs[*n]
             .fields
             .iter()
@@ -1825,7 +1882,43 @@ fn member_access(
         }
     }
 
+    // Dereference if need to
+    let (expr, expr_ty) = if let Type::Ref(ty) = &expr_ty {
+        (
+            Expression::Load(*loc, expr_ty.clone(), Box::new(expr)),
+            ty.as_ref().clone(),
+        )
+    } else {
+        (expr, expr_ty)
+    };
+
     match expr_ty {
+        Type::Array(_, dim) => {
+            if id.name == "length" {
+                return match dim.last().unwrap() {
+                    ArrayLength::Dynamic => Ok(Expression::LibFunction(
+                        *loc,
+                        vec![Type::Uint(32)],
+                        LibFunc::ArrayLength,
+                        vec![expr],
+                    )),
+                    ArrayLength::Fixed(d) => {
+                        //We should not eliminate an array from the code when 'length' is called
+                        //So the variable is also assigned a value to be read from 'length'
+                        assigned_variable(ns, &expr, symtable);
+                        used_variable(ns, &expr, symtable);
+                        bigint_to_expression(
+                            loc,
+                            d,
+                            ns,
+                            diagnostics,
+                            ResolveTo::Type(&Type::Uint(32)),
+                        )
+                    }
+                    ArrayLength::AnyFixed => unreachable!(),
+                };
+            }
+        }
         Type::StorageRef(r) => match *r {
             Type::Struct(n) => {
                 return if let Some((field_no, field)) = ns.structs[n]
@@ -1851,9 +1944,20 @@ fn member_access(
                     Err(())
                 }
             }
+            Type::Array(_, dim) => {
+                if id.name == "length" {
+                    let elem_ty = expr.ty().storage_array_elem().deref_into();
+
+                    return Ok(Expression::StorageArrayLength {
+                        loc: id.loc,
+                        ty: Type::Uint(32),
+                        array: Box::new(expr),
+                        elem_ty,
+                    });
+                }
+            }
             _ => {}
         },
-
         _ => (),
     }
 
@@ -2224,7 +2328,12 @@ fn array_literal(
         _ => resolve_to,
     };
 
-    check_subarrays(exprs, &mut Some(&mut dimensions), &mut flattened, diagnostics)?;
+    check_subarrays(
+        exprs,
+        &mut Some(&mut dimensions),
+        &mut flattened,
+        diagnostics,
+    )?;
 
     if flattened.is_empty() {
         diagnostics.push(Diagnostic::error(
@@ -2269,7 +2378,8 @@ fn array_literal(
 
     let aty = Type::Array(
         Box::new(ty),
-        dimensions.iter()
+        dimensions
+            .iter()
             .map(|n| ArrayLength::Fixed(BigInt::from_u32(*n).unwrap()))
             .collect::<Vec<ArrayLength>>(),
     );
@@ -2334,4 +2444,90 @@ fn check_subarrays<'a>(
     }
 
     Ok(())
+}
+
+// Resolve an new expression
+pub fn new(
+    loc: &program::Loc,
+    ty: &program::Expression,
+    args: &[program::Expression],
+    context: &ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+
+    let ty = if let program::Expression::New(_, ty) = ty.remove_parenthesis() {
+        ty
+    } else {
+        ty
+    };
+
+    let ty = ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
+
+    match &ty {
+        Type::Array(ty, dim) => {
+            if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "new cannot allocate fixed array type '{}'",
+                        ty.to_string(ns)
+                    ),
+                ));
+                return Err(());
+            }
+        }
+        _ => {
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                format!("new cannot allocate type '{}'", ty.to_string(ns)),
+            ));
+            return Err(());
+        }
+    };
+
+
+    if args.len() != 1 {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            "new dynamic array should have a single length argument".to_string(),
+        ));
+        return Err(());
+    }
+
+    let size_loc = args[0].loc();
+    let expected_ty = Type::Uint(32);
+
+    let size_expr = expression(
+        &args[0],
+        context,
+        ns,
+        symtable,
+        diagnostics,
+        ResolveTo::Type(&expected_ty),
+    )?;
+
+    used_variable(ns, &size_expr, symtable);
+
+    let size_ty = size_expr.ty();
+
+    if !matches!(size_ty.deref_any(), Type::Uint(_)) {
+        diagnostics.push(Diagnostic::error(
+            size_expr.loc(),
+            "new dynamic array should have an unsigned length argument".to_string(),
+        ));
+        return Err(());
+    }
+
+
+    size_expr.cast(&size_loc, &expected_ty, ns, diagnostics)?;
+
+
+    Ok(Expression::AllocDynamicBytes {
+        loc: *loc,
+        ty,
+        length: Box::new(size),
+        init: None,
+    })
 }

@@ -101,8 +101,18 @@ impl Display for Identifier {
     }
 }
 
+/// A qualified identifier.
+///
+/// `<identifiers>.*`
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct IdentifierPath {
+    /// The code location.
+    pub loc: Loc,
+    /// The list of identifiers.
+    pub identifiers: Vec<Identifier>,
+}
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SourceUnit(pub Vec<SourceUnitPart>);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
