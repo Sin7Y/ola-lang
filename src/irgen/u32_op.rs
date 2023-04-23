@@ -538,7 +538,7 @@ pub fn u32_not<'a>(
         .into()
 }
 
-pub fn u32_complement<'a>(
+pub fn u32_bitwise_not<'a>(
     expr: &Expression,
     bin: &Binary<'a>,
     func: Option<&Function>,

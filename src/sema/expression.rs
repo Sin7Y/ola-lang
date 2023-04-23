@@ -8,7 +8,9 @@ use super::symtable::Symtable;
 use crate::sema::ast::Expression::LibFunction;
 use crate::sema::ast::LibFunc;
 use crate::sema::function_call::{available_functions, call_expr, named_call_expr};
-use crate::sema::unused_variable::{assigned_variable, check_function_call, check_var_usage_expression, used_variable};
+use crate::sema::unused_variable::{
+    assigned_variable, check_function_call, check_var_usage_expression, used_variable,
+};
 use crate::sema::Recurse;
 use num_bigint::BigInt;
 use num_traits::{FromPrimitive, Num};
@@ -2458,7 +2460,6 @@ pub fn new_array(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-
     let ty = if let program::Expression::New(_, ty) = ty.remove_parenthesis() {
         ty
     } else {
@@ -2488,7 +2489,6 @@ pub fn new_array(
             return Err(());
         }
     };
-
 
     if args.len() != 1 {
         diagnostics.push(Diagnostic::error(
@@ -2522,9 +2522,7 @@ pub fn new_array(
         return Err(());
     }
 
-
     let size = size_expr.cast(&size_loc, &expected_ty, ns, diagnostics)?;
-
 
     Ok(Expression::AllocDynamicArray {
         loc: *loc,

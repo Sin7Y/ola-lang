@@ -4,7 +4,9 @@ use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, Re
 use crate::sema::diagnostics::Diagnostics;
 
 use crate::sema::corelib;
-use crate::sema::expression::{expression, named_struct_literal, struct_literal, ExprContext, ResolveTo, new_array};
+use crate::sema::expression::{
+    expression, named_struct_literal, new_array, struct_literal, ExprContext, ResolveTo,
+};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::check_function_call;
 use ola_parser::diagnostics::Diagnostic;
@@ -711,7 +713,9 @@ pub fn call_expr(
     }
 
     let expr = match ty.remove_parenthesis() {
-        program::Expression::New(_, ty) => new_array(loc, ty, args, context, ns, symtable, diagnostics)?,
+        program::Expression::New(_, ty) => {
+            new_array(loc, ty, args, context, ns, symtable, diagnostics)?
+        }
         _ => function_call_expr(
             loc,
             ty,

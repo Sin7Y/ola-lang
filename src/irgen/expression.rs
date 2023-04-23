@@ -1,9 +1,10 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::u32_op::{
-    u32_add, u32_and, u32_bitwise_and, u32_bitwise_or, u32_bitwise_xor, u32_complement, u32_div,
+    u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
     u32_equal, u32_less, u32_less_equal, u32_mod, u32_more, u32_more_equal, u32_mul, u32_not,
     u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
+use crate::irgen::unused_variable::should_remove_assignment;
 use crate::sema::ast::{Expression, Function, LibFunc, Namespace};
 use inkwell::values::{
     AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue,
@@ -45,13 +46,15 @@ pub fn expression<'a>(
         Expression::MoreEqual(_, l, r) => u32_more_equal(l, r, bin, func, func_val, var_table, ns),
         Expression::Less(_, l, r) => u32_less(l, r, bin, func, func_val, var_table, ns),
         Expression::LessEqual(_, l, r) => u32_less_equal(l, r, bin, func, func_val, var_table, ns),
+
         Expression::Not(_, expr) => u32_not(expr, bin, func, func_val, var_table, ns),
         Expression::BitwiseNot(_, _, expr) => {
-            u32_complement(expr, bin, func, func_val, var_table, ns)
+            u32_bitwise_not(expr, bin, func, func_val, var_table, ns)
         }
         Expression::Or(_, l, r) => u32_or(l, r, bin, func, func_val, var_table, ns),
         Expression::And(_, l, r) => u32_and(l, r, bin, func, func_val, var_table, ns),
         Expression::Power(_, _, l, r) => u32_power(l, r, bin, func, func_val, var_table, ns),
+        // TODO refactor Decrement and Increment
         Expression::Decrement(_, _, expr) => match **expr {
             Expression::Variable(_, _, pos) => {
                 let one = bin.context.i64_type().const_int(1, false);
@@ -97,7 +100,26 @@ pub fn expression<'a>(
             _ => unreachable!(),
         },
         Expression::Assign(_, _, l, r) => {
+            if let Some(function) = func {
+                if should_remove_assignment(ns, l, function) {
+                    return expression(r, bin, func, func_val, var_table, ns);
+                }
+            }
             let right = expression(r, bin, func, func_val, var_table, ns);
+
+            // TODO handle array assignment
+            // // If an assignment where the left hand side is an array, call a helper
+            // function that updates the temp variable.
+            // if let ast::Expression::Variable {
+            //     ty: Type::Array(..),
+            //     var_no,
+            //     ..
+            // } = &**left
+            // {
+            //     // If cfg_right is an AllocDynamicArray(_,_,size,_), update it such that
+            // it becomes AllocDynamicArray(_,_,temp_var,_) to avoid repetitive expressions
+            // in the cfg.     cfg_right = handle_array_assign(cfg_right, cfg,
+            // vartab, *var_no); }
             let left = match **l {
                 Expression::Variable(_, _, pos) => {
                     let ret = *var_table.get(&pos).unwrap();
@@ -141,11 +163,91 @@ pub fn expression<'a>(
             root
         }
 
-        _ => unreachable!(),
+        Expression::StructLiteral(loc, ty, values) => {
+            unimplemented!()
+        }
+
+        Expression::ArrayLiteral(loc, ty, dimensions, values) => {
+            unimplemented!()
+        }
+        Expression::ConstArrayLiteral(loc, ty, dimensions, values) => {
+            unimplemented!()
+        }
+
+        Expression::ConstantVariable(_, _, Some(var_contract_no), var_no) => {
+            unimplemented!()
+        }
+
+        Expression::StorageArrayLength {
+            loc,
+            ty,
+            array,
+            elem_ty,
+        } => {
+            unimplemented!()
+        }
+        Expression::Subscript(loc, elem_ty, array_ty, array, index) => {
+            unimplemented!()
+        }
+        Expression::StructMember(loc, ty, var, field_no) if ty.is_contract_storage() => {
+            unimplemented!()
+        }
+        Expression::StructMember(loc, ty, var, member) => {
+            unimplemented!()
+        }
+        Expression::Load(loc, ty, expr) => {
+            unimplemented!()
+        }
+
+        Expression::LibFunction(loc, ty, LibFunc::ArrayPush, args) => {
+            unimplemented!()
+        }
+        Expression::LibFunction(loc, ty, LibFunc::ArrayPop, args) => {
+            unimplemented!()
+        }
+
+        Expression::AllocDynamicArray {
+            loc,
+            ty,
+            length: size,
+            init,
+        } => {
+            unimplemented!()
+        }
+        Expression::ConditionalOperator(loc, ty, cond, left, right) => {
+            unimplemented!()
+        }
+        Expression::BoolLiteral(loc, value) => {
+            unimplemented!()
+        }
+        Expression::List(loc, elements) => {
+            unimplemented!()
+        }
+
+        Expression::GetRef(loc, ty, exp) => {
+            unimplemented!()
+        }
+        Expression::StorageVariable(loc, _, var_contract_no, var_no) => {
+            unimplemented!()
+        }
+        Expression::StorageLoad(loc, ty, expr) => {
+            unimplemented!()
+        }
+        Expression::Function {
+            function_no,
+            signature,
+            ..
+        } => {
+            unimplemented!()
+        }
+        _ => {
+            unreachable!("expression not implemented")
+        }
     }
 }
 
 //Convert a function call expression to CFG in expression context
+// TODO refactor function call
 pub fn emit_function_call<'a>(
     expr: &Expression,
     bin: &Binary<'a>,

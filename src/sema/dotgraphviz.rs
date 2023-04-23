@@ -458,14 +458,11 @@ impl Dot {
                 self.add_storage_variable(loc, ty, contract, var_no, parent, parent_rel, ns);
             }
 
-            Expression::Load ( loc, ty, expr ) => {
+            Expression::Load(loc, ty, expr) => {
                 let node = self.add_node(
                     Node::new(
                         "load",
-                        vec![
-                            format!("load {}", ty.to_string(ns)),
-                            ns.loc_to_string(loc),
-                        ],
+                        vec![format!("load {}", ty.to_string(ns)), ns.loc_to_string(loc)],
                     ),
                     Some(parent),
                     Some(parent_rel),
@@ -473,13 +470,13 @@ impl Dot {
 
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
-            Expression::GetRef ( loc, ty, expr ) => {
+            Expression::GetRef(loc, ty, expr) => {
                 let node = self.add_node(
                     Node::new(
                         "getref",
                         vec![
                             format!("getref {}", ty.to_string(ns)),
-                            ns.loc_to_string( loc),
+                            ns.loc_to_string(loc),
                         ],
                     ),
                     Some(parent),

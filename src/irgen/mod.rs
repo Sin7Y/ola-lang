@@ -6,6 +6,7 @@ mod expression;
 mod functions;
 mod statements;
 pub mod u32_op;
+mod unused_variable;
 
 use crate::sema::ast;
 

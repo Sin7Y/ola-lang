@@ -711,12 +711,10 @@ impl Recurse for Statement {
 }
 
 impl Statement {
-
     pub fn reachable(&self) -> bool {
         match self {
             Statement::Block { statements, .. } => statements.iter().all(|s| s.reachable()),
-            Statement::VariableDecl(..)
-            | Statement::Delete(..) => true,
+            Statement::VariableDecl(..) | Statement::Delete(..) => true,
 
             Statement::Continue(_) | Statement::Break(_) | Statement::Return(..) => false,
 

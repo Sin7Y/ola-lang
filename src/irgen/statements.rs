@@ -116,6 +116,15 @@ pub(crate) fn statement<'a>(
 
             bin.builder.position_at_end(end_block);
         }
+        Statement::For {
+            init,
+            cond: None,
+            next,
+            body,
+            ..
+        } => {
+            unimplemented!()
+        }
         Statement::Break(_) => {
             bin.builder
                 .build_unconditional_branch(bin.loops.last().unwrap().0);
@@ -125,7 +134,18 @@ pub(crate) fn statement<'a>(
                 .build_unconditional_branch(bin.loops.last().unwrap().1);
         }
 
-        _ => {}
+        Statement::While(_, _, body_stmt, cond_expr) => {
+            unimplemented!()
+        }
+        Statement::DoWhile(_, _, body_stmt, cond_expr) => {
+            unimplemented!()
+        }
+        Statement::Delete(_, ty, expr) => {
+            unimplemented!()
+        }
+        Statement::VariableDecl(loc, pos, param, None) => {
+            unimplemented!()
+        }
     }
 }
 
