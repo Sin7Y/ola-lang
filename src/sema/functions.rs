@@ -140,6 +140,7 @@ pub fn resolve_params(
                     id: p.name.clone(),
                     ty,
                     ty_loc: Some(ty_loc),
+                    infinite_size: false,
                     recursive: false,
                 });
             }
@@ -180,6 +181,7 @@ pub fn resolve_returns(
                     id: r.name.clone(),
                     ty,
                     ty_loc: Some(ty_loc),
+                    infinite_size: false,
                     recursive: false,
                 });
             }
@@ -209,6 +211,7 @@ fn signatures() {
                 id: None,
                 ty: ast::Type::Uint(32),
                 ty_loc: None,
+                infinite_size: false,
                 recursive: false,
             },
             Parameter {
@@ -216,6 +219,7 @@ fn signatures() {
                 id: None,
                 ty: ast::Type::Uint(64),
                 ty_loc: None,
+                infinite_size: false,
                 recursive: false,
             },
         ],

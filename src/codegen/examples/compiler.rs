@@ -4,7 +4,7 @@ extern crate vicis_core;
 
 use std::fs::{self, File};
 use std::io::Write;
-use structopt::StructOpt;
+use structoprogram::StructOpt;
 use vicis_codegen::lower::compile_module;
 use vicis_core::ir::function::Function;
 use vicis_core::ir::module::Module;
@@ -31,7 +31,7 @@ fn main() {
     env_logger::init();
     color_backtrace::install();
 
-    let opt = Opt::from_args();
+    let opt = Oprogram::from_args();
     let ir = fs::read_to_string(&opt.ir_file).expect("failed to load *.ll file");
     let mut module = Module::try_from(ir.as_str()).expect("failed to parse LLVM Assembly");
 

@@ -12,7 +12,7 @@ lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 serde = { version = "1.0.150", features = ["derive"]}
 
 [build-dependencies]
-lalrpop = "0.19.8"
+lalrpop = {path = "../../lalrpop/lalrpop"}
 
 [dev-dependencies]
 walkdir = "2.3.2"

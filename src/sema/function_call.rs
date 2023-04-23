@@ -4,9 +4,7 @@ use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, Re
 use crate::sema::diagnostics::Diagnostics;
 
 use crate::sema::corelib;
-use crate::sema::expression::{
-    expression, named_struct_literal, struct_literal, ExprContext, ResolveTo,
-};
+use crate::sema::expression::{expression, named_struct_literal, struct_literal, ExprContext, ResolveTo, new_array};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::check_function_call;
 use ola_parser::diagnostics::Diagnostic;
@@ -528,7 +526,7 @@ fn try_type_method(
 
                 return Ok(Some(Expression::LibFunction(
                     *loc,
-                    vec![elem_ty.clone()],
+                    vec![*elem_ty.clone()],
                     LibFunc::ArrayPop,
                     vec![var_expr.clone()],
                 )));
@@ -669,7 +667,6 @@ pub fn call_expr(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::Expression],
-    is_destructible: bool,
     context: &ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
@@ -714,7 +711,7 @@ pub fn call_expr(
     }
 
     let expr = match ty.remove_parenthesis() {
-        pt::Expression::New(_, ty) => new(loc, ty, args, context, ns, symtable, diagnostics)?,
+        program::Expression::New(_, ty) => new_array(loc, ty, args, context, ns, symtable, diagnostics)?,
         _ => function_call_expr(
             loc,
             ty,
@@ -728,14 +725,6 @@ pub fn call_expr(
     };
 
     check_function_call(ns, &expr, symtable);
-    if expr.tys().len() > 1 && !is_destructible {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "destucturing statement needed for function that returns multiple values".to_string(),
-        ));
-        return Err(());
-    }
-
     Ok(expr)
 }
 

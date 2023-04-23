@@ -47,9 +47,12 @@ impl RetrieveType for Expression {
             | Expression::ConstantVariable(_, ty, ..)
             | Expression::StorageVariable(_, ty, ..)
             | Expression::StorageLoad(_, ty, _)
+            | Expression::Load(_, ty, ..)
+            | Expression::GetRef(_, ty, ..)
             | Expression::BitwiseNot(_, ty, _)
             | Expression::ConditionalOperator(_, ty, ..)
             | Expression::StructMember(_, ty, ..)
+            | Expression::AllocDynamicArray { ty, .. }
             | Expression::Increment(_, ty, ..)
             | Expression::Decrement(_, ty, ..)
             | Expression::Assign(_, ty, ..) => ty.clone(),
@@ -694,7 +697,7 @@ pub fn expression(
 
             match call.remove_parenthesis() {
                 program::Expression::FunctionCall(_, ty, args) => {
-                    let res = new(loc, ty, args, context, ns, symtable, diagnostics);
+                    let res = new_array(loc, ty, args, context, ns, symtable, diagnostics);
 
                     if let Ok(exp) = &res {
                         check_function_call(ns, exp, symtable);
@@ -730,7 +733,6 @@ pub fn expression(
             loc,
             ty,
             args,
-            false,
             context,
             ns,
             symtable,
@@ -2447,7 +2449,7 @@ fn check_subarrays<'a>(
 }
 
 // Resolve an new expression
-pub fn new(
+pub fn new_array(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::Expression],
@@ -2521,10 +2523,10 @@ pub fn new(
     }
 
 
-    size_expr.cast(&size_loc, &expected_ty, ns, diagnostics)?;
+    let size = size_expr.cast(&size_loc, &expected_ty, ns, diagnostics)?;
 
 
-    Ok(Expression::AllocDynamicBytes {
+    Ok(Expression::AllocDynamicArray {
         loc: *loc,
         ty,
         length: Box::new(size),

@@ -108,7 +108,6 @@ pub fn eval_const_number(expr: &Expression, ns: &Namespace) -> Result<(Loc, BigI
         Expression::Cast { loc, expr, .. } => Ok((*loc, eval_const_number(expr, ns)?.1)),
         Expression::Not(loc, n) => Ok((*loc, !eval_const_number(n, ns)?.1)),
         Expression::BitwiseNot(loc, _, n) => Ok((*loc, !eval_const_number(n, ns)?.1)),
-        Expression::UnaryMinus(loc, _, n) => Ok((*loc, -eval_const_number(n, ns)?.1)),
         Expression::ConstantVariable(_, _, Some(contract_no), var_no) => {
             let expr = ns.contracts[*contract_no].variables[*var_no]
                 .initializer

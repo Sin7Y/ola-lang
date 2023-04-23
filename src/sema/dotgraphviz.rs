@@ -458,6 +458,37 @@ impl Dot {
                 self.add_storage_variable(loc, ty, contract, var_no, parent, parent_rel, ns);
             }
 
+            Expression::Load ( loc, ty, expr ) => {
+                let node = self.add_node(
+                    Node::new(
+                        "load",
+                        vec![
+                            format!("load {}", ty.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+            Expression::GetRef ( loc, ty, expr ) => {
+                let node = self.add_node(
+                    Node::new(
+                        "getref",
+                        vec![
+                            format!("getref {}", ty.to_string(ns)),
+                            ns.loc_to_string( loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+
             Expression::StorageLoad(loc, ty, expr) => {
                 let node = self.add_node(
                     Node::new(
@@ -596,21 +627,6 @@ impl Dot {
 
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
-            Expression::UnaryMinus(loc, ty, expr) => {
-                let node = self.add_node(
-                    Node::new(
-                        "unary_minus",
-                        vec![
-                            format!("unary minus {}", ty.to_string(ns)),
-                            ns.loc_to_string(loc),
-                        ],
-                    ),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(expr, func, ns, node, String::from("expr"));
-            }
 
             Expression::ConditionalOperator(loc, ty, cond, left, right) => {
                 let node = self.add_node(
@@ -645,6 +661,7 @@ impl Dot {
                 self.add_expression(array, func, ns, node, String::from("array"));
                 self.add_expression(index, func, ns, node, String::from("index"));
             }
+
             Expression::StructMember(loc, ty, var, member) => {
                 let node = self.add_node(
                     Node::new(
@@ -659,6 +676,30 @@ impl Dot {
                 );
 
                 self.add_expression(var, func, ns, node, String::from("var"));
+            }
+
+            Expression::AllocDynamicArray {
+                loc,
+                ty,
+                length,
+                init,
+            } => {
+                let mut labels = vec![
+                    format!("alloc array {}", ty.to_string(ns)),
+                    ns.loc_to_string(loc),
+                ];
+
+                if let Some(initializer) = init {
+                    labels.insert(1, format!("initializer: {}", hex::encode(initializer)));
+                }
+
+                let node = self.add_node(
+                    Node::new("alloc_array", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(length, func, ns, node, String::from("length"));
             }
 
             Expression::StorageArrayLength {
@@ -832,7 +873,15 @@ impl Dot {
                     self.add_statement(then, func, ns, parent, String::from("then"));
                     self.add_statement(else_, func, ns, parent, String::from("else"));
                 }
+                Statement::While(loc, _, cond, body) => {
+                    let labels = vec![String::from("while"), ns.loc_to_string(loc)];
 
+                    parent =
+                        self.add_node(Node::new("while", labels), Some(parent), Some(parent_rel));
+
+                    self.add_expression(cond, Some(func), ns, parent, String::from("cond"));
+                    self.add_statement(body, func, ns, parent, String::from("body"));
+                }
                 Statement::For {
                     loc,
                     init,
@@ -853,12 +902,34 @@ impl Dot {
                     self.add_statement(next, func, ns, parent, String::from("next"));
                     self.add_statement(body, func, ns, parent, String::from("body"));
                 }
+                Statement::DoWhile(loc, _, body, cond) => {
+                    let labels = vec![String::from("do while"), ns.loc_to_string(loc)];
+
+                    parent =
+                        self.add_node(Node::new("dowhile", labels), Some(parent), Some(parent_rel));
+
+                    self.add_statement(body, func, ns, parent, String::from("body"));
+                    self.add_expression(cond, Some(func), ns, parent, String::from("cond"));
+                }
 
                 Statement::Expression(loc, _, expr) => {
                     let labels = vec![String::from("expression"), ns.loc_to_string(loc)];
 
                     parent =
                         self.add_node(Node::new("expr", labels), Some(parent), Some(parent_rel));
+
+                    self.add_expression(expr, Some(func), ns, parent, String::from("expr"));
+                }
+
+                Statement::Delete(loc, ty, expr) => {
+                    let labels = vec![
+                        String::from("delete"),
+                        format!("ty: {}", ty.to_string(ns)),
+                        ns.loc_to_string(loc),
+                    ];
+
+                    parent =
+                        self.add_node(Node::new("delete", labels), Some(parent), Some(parent_rel));
 
                     self.add_expression(expr, Some(func), ns, parent, String::from("expr"));
                 }
@@ -887,16 +958,6 @@ impl Dot {
                     if let Some(expr) = expr {
                         self.add_expression(expr, Some(func), ns, parent, String::from("expr"));
                     }
-                }
-
-                Statement::Underscore(loc) => {
-                    let labels = vec![String::from("undersore"), ns.loc_to_string(loc)];
-
-                    parent = self.add_node(
-                        Node::new("underscore", labels),
-                        Some(parent),
-                        Some(parent_rel),
-                    );
                 }
             }
             parent_rel = String::from("next");

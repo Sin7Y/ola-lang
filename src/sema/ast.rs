@@ -443,6 +443,13 @@ pub enum Expression {
     Subscript(program::Loc, Type, Type, Box<Expression>, Box<Expression>),
     StructMember(program::Loc, Type, Box<Expression>, usize),
 
+    AllocDynamicArray {
+        loc: program::Loc,
+        ty: Type,
+        length: Box<Expression>,
+        init: Option<Vec<u8>>,
+    },
+
     StorageArrayLength {
         loc: program::Loc,
         ty: Type,
@@ -527,6 +534,7 @@ impl Recurse for Expression {
                     right.recurse(cx, f);
                 }
                 Expression::StructMember(_, _, expr, _) => expr.recurse(cx, f),
+                Expression::AllocDynamicArray { length, .. } => length.recurse(cx, f),
                 Expression::StorageArrayLength { array, .. } => array.recurse(cx, f),
                 Expression::Or(_, left, right) | Expression::And(_, left, right) => {
                     left.recurse(cx, f);
@@ -590,6 +598,7 @@ impl CodeLocation for Expression {
             | Expression::Subscript(loc, ..)
             | Expression::StructMember(loc, ..)
             | Expression::Or(loc, ..)
+            | Expression::AllocDynamicArray { loc, .. }
             | Expression::StorageArrayLength { loc, .. }
             | Expression::Function { loc, .. }
             | Expression::FunctionCall { loc, .. }
@@ -610,11 +619,13 @@ impl CodeLocation for Statement {
             | Statement::VariableDecl(loc, ..)
             | Statement::If(loc, ..)
             | Statement::For { loc, .. }
+            | Statement::While(loc, ..)
+            | Statement::DoWhile(loc, ..)
+            | Statement::Delete(loc, ..)
             | Statement::Expression(loc, ..)
             | Statement::Continue(loc, ..)
             | Statement::Break(loc, ..)
-            | Statement::Return(loc, ..)
-            | Statement::Underscore(loc, ..) => *loc,
+            | Statement::Return(loc, ..) => *loc,
         }
     }
 }
@@ -652,11 +663,11 @@ pub enum Statement {
         body: Vec<Statement>,
     },
     DoWhile(program::Loc, bool, Vec<Statement>, Expression),
+    Delete(program::Loc, Type, Expression),
     Expression(program::Loc, bool, Expression),
     Continue(program::Loc),
     Break(program::Loc),
     Return(program::Loc, Option<Expression>),
-    Underscore(program::Loc),
 }
 
 impl Recurse for Statement {
@@ -700,19 +711,18 @@ impl Recurse for Statement {
 }
 
 impl Statement {
-    /// Shorthand for checking underscore
-    pub fn is_underscore(&self) -> bool {
-        matches!(&self, Statement::Underscore(_))
-    }
 
     pub fn reachable(&self) -> bool {
         match self {
             Statement::Block { statements, .. } => statements.iter().all(|s| s.reachable()),
-            Statement::Underscore(_) | Statement::VariableDecl(..) => true,
+            Statement::VariableDecl(..)
+            | Statement::Delete(..) => true,
 
             Statement::Continue(_) | Statement::Break(_) | Statement::Return(..) => false,
 
             Statement::If(_, reachable, ..)
+            | Statement::While(_, reachable, ..)
+            | Statement::DoWhile(_, reachable, ..)
             | Statement::Expression(_, reachable, _)
             | Statement::For { reachable, .. } => *reachable,
         }

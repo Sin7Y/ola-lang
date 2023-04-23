@@ -187,6 +187,7 @@ fn statement(
                         ty: var_ty,
                         ty_loc: Some(ty_loc),
                         id: Some(decl.name.clone().unwrap()),
+                        infinite_size: false,
                         recursive: false,
                     },
                     initializer,
@@ -533,12 +534,29 @@ fn statement(
         }
         program::Statement::Expression(loc, expr) => {
             let expr = match expr {
+                // delete statement
+                program::Expression::Delete(_, expr) => {
+                    let expr =
+                        expression(expr, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+                    used_variable(ns, &expr, symtable);
+                    return if let Type::StorageRef(ty) = expr.ty() {
+                        res.push(Statement::Delete(*loc, ty.as_ref().clone(), expr));
+
+                        Ok(true)
+                    } else {
+                        ns.diagnostics.push(Diagnostic::error(
+                            *loc,
+                            "argument to 'delete' should be storage reference".to_string(),
+                        ));
+
+                        Err(())
+                    };
+                }
                 program::Expression::FunctionCall(loc, ty, args) => {
                     let ret = call_expr(
                         loc,
                         ty,
                         args,
-                        true,
                         context,
                         ns,
                         symtable,
@@ -611,7 +629,6 @@ fn return_with_values(
                 loc,
                 ty,
                 args,
-                true,
                 context,
                 ns,
                 symtable,
