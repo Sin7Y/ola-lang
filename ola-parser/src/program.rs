@@ -20,7 +20,7 @@ pub trait CodeLocation {
 
 /// Structs should implement this trait to return an optional location
 pub trait OptionalCodeLocation {
-    fn loc(&self) -> Option<Loc>;
+    fn loc_opt(&self) -> Option<Loc>;
 }
 
 impl Loc {

@@ -205,7 +205,19 @@ pub fn emit_warning_local_variable(variable: &symtable::Variable) -> Option<Diag
             }
             None
         }
+        VariableUsage::DestructureVariable => {
+            if !variable.read {
+                return Some(Diagnostic::warning(
+                    variable.id.loc,
+                    format!(
+                        "destructure variable '{}' has never been used",
+                        variable.id.name
+                    ),
+                ));
+            }
 
+            None
+        }
         VariableUsage::AnonymousReturnVariable => None,
     }
 }

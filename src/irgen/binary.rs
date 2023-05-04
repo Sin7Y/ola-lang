@@ -11,8 +11,8 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
-use inkwell::values::{IntValue, PointerValue};
+use inkwell::types::{ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
+use inkwell::values::{BasicValueEnum, IntValue, PointerValue};
 use inkwell::AddressSpace;
 
 pub struct Binary<'a> {
@@ -61,18 +61,6 @@ impl<'a> Binary<'a> {
         }
     }
 
-    // /// Default empty value
-    // pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) ->
-    // BasicValueEnum<'a> {     let llvm_ty = self.llvm_var_ty(ty, ns);
-    //
-    //     // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
-    //     if llvm_ty.is_pointer_type() {
-    //         llvm_ty.into_pointer_type().const_null().into()
-    //     } else {
-    //         llvm_ty.into_int_type().const_zero().into()
-    //     }
-    // }
-
     /// Convert a BigInt number to llvm const value
     /// we should slice and dice into pointer array types.
     /// Currently we only support u32 type data.
@@ -89,6 +77,24 @@ impl<'a> Binary<'a> {
         }
     }
 
+    /// Default empty value
+    pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) -> BasicValueEnum<'a> {
+        let llvm_ty = self.llvm_var_ty(ty, ns);
+
+        // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
+        if llvm_ty.is_pointer_type() {
+            llvm_ty.into_pointer_type().const_null().into()
+        } else if llvm_ty.is_array_type() {
+            self.address_type(ns).const_zero().into()
+        } else {
+            BasicTypeEnum::IntType(self.context.custom_width_int_type(64 as u32)).const_zero().into()
+        }
+    }
+
+    pub(crate) fn address_type(&self, ns: &Namespace) -> ArrayType<'a> {
+        self.context.i8_type().array_type(ns.address_length as u32)
+    }
+
     /// Emit function prototype
     pub(crate) fn function_type(
         &self,
@@ -102,12 +108,21 @@ impl<'a> Binary<'a> {
             .map(|ty| self.llvm_var_ty(ty, ns).into())
             .collect::<Vec<BasicMetadataTypeEnum>>();
 
-        if returns.is_empty() {
+        return if returns.is_empty() {
             let void_type = self.context.void_type();
-            return void_type.fn_type(&args, false);
-        }
-        let i64_type = self.context.i64_type();
-        i64_type.fn_type(&args, false)
+            void_type.fn_type(&args, false)
+        } else if returns.len() == 1 {
+            let return_type = self.llvm_var_ty(&returns[0], ns);
+            return_type.fn_type(&args, false)
+        } else {
+            // when function return multiple values, we need to return a struct
+            let struct_returns = returns
+                .iter()
+                .map(|ty| self.llvm_var_ty(ty, ns).into())
+                .collect::<Vec<BasicTypeEnum>>();
+            let struct_type = self.context.struct_type(&struct_returns, false);
+            struct_type.fn_type(&args, false)
+        };
     }
 
     /// Return the llvm type for a variable holding the type, not the type
@@ -181,6 +196,11 @@ impl<'a> Binary<'a> {
                     false,
                 )
                 .as_basic_type_enum(),
+            Type::Ref(r) => self
+                .llvm_type(r, ns)
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
+            Type::StorageRef(..) => self.llvm_type(&Type::Uint(32), ns),
             Type::Function {
                 params, returns, ..
             } => {
@@ -188,6 +208,17 @@ impl<'a> Binary<'a> {
 
                 BasicTypeEnum::PointerType(fn_type.ptr_type(AddressSpace::default()))
             }
+            Type::Slice(ty) => BasicTypeEnum::StructType(
+                self.context.struct_type(
+                    &[
+                        self.llvm_type(ty, ns)
+                            .ptr_type(AddressSpace::default())
+                            .into(),
+                        self.context.custom_width_int_type(64).into(),
+                    ],
+                    false,
+                ),
+            ),
             Type::UserType(no) => self.llvm_type(&ns.user_types[*no].ty, ns),
             Type::BufferPointer => self
                 .context
@@ -222,4 +253,5 @@ impl<'a> Binary<'a> {
 
         res
     }
+
 }

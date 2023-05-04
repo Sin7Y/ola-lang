@@ -6,11 +6,12 @@ use super::eval::check_term_for_constant_overflow;
 use super::function_call::{call_expr, named_call_expr};
 use super::symtable::{LoopScopes, Symtable};
 use crate::sema::expression::{expression, ExprContext, ResolveTo};
+use crate::sema::function_call::{function_call_expr, named_function_call_expr};
 use crate::sema::symtable::{VariableInitializer, VariableUsage};
-use crate::sema::unused_variable::used_variable;
+use crate::sema::unused_variable::{assigned_variable, check_function_call, used_variable};
 use crate::sema::Recurse;
 use ola_parser::program;
-use ola_parser::program::CodeLocation;
+use ola_parser::program::{CodeLocation, OptionalCodeLocation};
 use std::sync::Arc;
 
 pub fn resolve_function_body(
@@ -583,6 +584,24 @@ fn statement(
                     ret
                 }
                 _ => {
+                    // is it a destructure statement
+                    if let program::Expression::Assign(_, var, expr) = expr {
+                        if let program::Expression::List(_, var) = var.as_ref() {
+                            res.push(destructure(
+                                loc,
+                                var,
+                                expr,
+                                context,
+                                symtable,
+                                ns,
+                                diagnostics,
+                            )?);
+
+                            // if a noreturn function was called, then the destructure would not
+                            // resolve
+                            return Ok(true);
+                        }
+                    }
                     // the rest. We don't care about the result
                     expression(expr, context, ns, symtable, diagnostics, ResolveTo::Unknown)?
                 }
@@ -597,6 +616,279 @@ fn statement(
 
         program::Statement::Error(_) => unimplemented!(),
     }
+}
+
+/// Resolve destructuring assignment
+fn destructure(
+    loc: &program::Loc,
+    vars: &[(program::Loc, Option<program::Parameter>)],
+    expr: &program::Expression,
+    context: &ExprContext,
+    symtable: &mut Symtable,
+    ns: &mut Namespace,
+    diagnostics: &mut Diagnostics,
+) -> Result<Statement, ()> {
+    // first resolve the fields so we know the types
+    let mut fields = Vec::new();
+    let mut left_tys = Vec::new();
+
+    let mut lcontext = context.clone();
+    lcontext.lvalue = true;
+
+    for (_, param) in vars {
+        match param {
+            None => {
+                left_tys.push(None);
+                fields.push(DestructureField::None);
+            }
+            Some(program::Parameter {
+                loc,
+                ty,
+                name: None,
+            }) => {
+                // ty will just be a normal expression, not a type
+                let e = expression(ty, &lcontext, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+
+                match &e {
+                    Expression::ConstantVariable(_, _, Some(contract_no), var_no) => {
+                        diagnostics.push(Diagnostic::error(
+                            *loc,
+                            format!(
+                                "cannot assign to constant '{}'",
+                                ns.contracts[*contract_no].variables[*var_no].name
+                            ),
+                        ));
+                        return Err(());
+                    }
+
+                    Expression::Variable { .. } => (),
+                    _ => match e.ty() {
+                        Type::Ref(_) | Type::StorageRef(_) => (),
+                        _ => {
+                            diagnostics.push(Diagnostic::error(
+                                *loc,
+                                "expression is not assignable".to_string(),
+                            ));
+                            return Err(());
+                        }
+                    },
+                }
+
+                assigned_variable(ns, &e, symtable);
+                left_tys.push(Some(e.ty()));
+                fields.push(DestructureField::Expression(e));
+            }
+            Some(program::Parameter {
+                loc,
+                ty,
+                name: Some(name),
+            }) => {
+                let (ty, ty_loc) = resolve_var_decl_ty(ty, context, ns, diagnostics)?;
+
+                if let Some(pos) = symtable.add(
+                    name,
+                    ty.clone(),
+                    ns,
+                    VariableInitializer::Ola(None),
+                    VariableUsage::DestructureVariable,
+                ) {
+                    ns.check_shadowing(context.file_no, context.contract_no, name);
+
+                    left_tys.push(Some(ty.clone()));
+
+                    fields.push(DestructureField::VariableDecl(
+                        pos,
+                        Parameter {
+                            loc: *loc,
+                            id: Some(name.clone()),
+                            ty,
+                            ty_loc: Some(ty_loc),
+                            infinite_size: false,
+                            recursive: false,
+                        },
+                    ));
+                }
+            }
+        }
+    }
+
+    let expr = destructure_values(
+        loc,
+        expr,
+        &left_tys,
+        &fields,
+        context,
+        symtable,
+        ns,
+        diagnostics,
+    )?;
+
+    Ok(Statement::Destructure(*loc, fields, expr))
+}
+
+fn destructure_values(
+    loc: &program::Loc,
+    expr: &program::Expression,
+    left_tys: &[Option<Type>],
+    fields: &[DestructureField],
+    context: &ExprContext,
+    symtable: &mut Symtable,
+    ns: &mut Namespace,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    let expr = match expr.remove_parenthesis() {
+        program::Expression::FunctionCall(loc, ty, args) => {
+            let res = function_call_expr(
+                loc,
+                ty,
+                args,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                ResolveTo::Unknown,
+            )?;
+            check_function_call(ns, &res, symtable);
+            res
+        }
+        program::Expression::NamedFunctionCall(loc, ty, args) => {
+            let res = named_function_call_expr(
+                loc,
+                ty,
+                args,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                ResolveTo::Unknown,
+            )?;
+            check_function_call(ns, &res, symtable);
+            res
+        }
+        program::Expression::ConditionalOperator(loc, cond, left, right) => {
+            let cond = expression(
+                cond,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                ResolveTo::Type(&Type::Bool),
+            )?;
+
+            used_variable(ns, &cond, symtable);
+            let left = destructure_values(
+                &left.loc(),
+                left,
+                left_tys,
+                fields,
+                context,
+                symtable,
+                ns,
+                diagnostics,
+            )?;
+            used_variable(ns, &left, symtable);
+            let right = destructure_values(
+                &right.loc(),
+                right,
+                left_tys,
+                fields,
+                context,
+                symtable,
+                ns,
+                diagnostics,
+            )?;
+            used_variable(ns, &right, symtable);
+
+            return Ok(Expression::ConditionalOperator(
+                *loc,
+                Type::Unreachable,
+                Box::new(cond),
+                Box::new(left),
+                Box::new(right),
+            ));
+        }
+        _ => {
+            let mut list = Vec::new();
+
+            let exprs = parameter_list_to_expr_list(expr, diagnostics)?;
+
+            if exprs.len() != left_tys.len() {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "destructuring assignment has {} elements on the left and {} on the right",
+                        left_tys.len(),
+                        exprs.len(),
+                    ),
+                ));
+                return Err(());
+            }
+
+            for (i, e) in exprs.iter().enumerate() {
+                let e = expression(
+                    e,
+                    context,
+                    ns,
+                    symtable,
+                    diagnostics,
+                    if let Some(ty) = left_tys[i].as_ref() {
+                        ResolveTo::Type(ty)
+                    } else {
+                        ResolveTo::Unknown
+                    },
+                )?;
+                match e.ty() {
+                    Type::Void | Type::Unreachable => {
+                        diagnostics.push(Diagnostic::error(
+                            e.loc(),
+                            "function does not return a value".to_string(),
+                        ));
+                        return Err(());
+                    }
+                    _ => {
+                        used_variable(ns, &e, symtable);
+                    }
+                }
+
+                list.push(e);
+            }
+
+            Expression::List(*loc, list)
+        }
+    };
+
+    let mut right_tys = expr.tys();
+
+    // Return type void or unreachable are synthetic
+    if right_tys.len() == 1 && (right_tys[0] == Type::Unreachable || right_tys[0] == Type::Void) {
+        right_tys.truncate(0);
+    }
+
+    if left_tys.len() != right_tys.len() {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "destructuring assignment has {} elements on the left and {} on the right",
+                left_tys.len(),
+                right_tys.len()
+            ),
+        ));
+        return Err(());
+    }
+
+    // Check that the values can be cast
+    for (i, field) in fields.iter().enumerate() {
+        if let Some(left_ty) = &left_tys[i] {
+            let loc = field.loc_opt().unwrap();
+            let _ = Expression::Variable(loc, right_tys[i].clone(), i).cast(
+                &loc,
+                left_ty.deref_memory(),
+                ns,
+                diagnostics,
+            )?;
+        }
+    }
+    Ok(expr)
 }
 
 /// Resolve the type of a variable declaration

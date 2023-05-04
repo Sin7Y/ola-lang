@@ -931,6 +931,49 @@ impl Dot {
                     self.add_expression(expr, Some(func), ns, parent, String::from("expr"));
                 }
 
+                Statement::Destructure(loc, fields, expr) => {
+                    let labels = vec![String::from("destructure"), ns.loc_to_string(loc)];
+
+                    parent = self.add_node(
+                        Node::new("destructure", labels),
+                        Some(parent),
+                        Some(parent_rel),
+                    );
+
+                    for (no, field) in fields.iter().enumerate() {
+                        let parent_rel = format!("arg #{no}");
+
+                        match field {
+                            DestructureField::None => {
+                                self.add_node(
+                                    Node::new("none", vec![String::from("none")]),
+                                    Some(parent),
+                                    Some(parent_rel),
+                                );
+                            }
+                            DestructureField::Expression(expr) => {
+                                self.add_expression(expr, Some(func), ns, parent, parent_rel);
+                            }
+                            DestructureField::VariableDecl(_, param) => {
+                                self.add_node(
+                                    Node::new(
+                                        "param",
+                                        vec![format!(
+                                            "{} {}",
+                                            param.ty.to_string(ns),
+                                            param.name_as_str()
+                                        )],
+                                    ),
+                                    Some(parent),
+                                    Some(parent_rel),
+                                );
+                            }
+                        }
+                    }
+
+                    self.add_expression(expr, Some(func), ns, parent, String::from("expr"));
+                }
+
                 Statement::Continue(loc) => {
                     let labels = vec![String::from("continue"), ns.loc_to_string(loc)];
 

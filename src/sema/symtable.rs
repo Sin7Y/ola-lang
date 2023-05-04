@@ -41,6 +41,7 @@ pub enum VariableUsage {
     ReturnVariable,
     AnonymousReturnVariable,
     LocalVariable,
+    DestructureVariable,
 }
 
 #[derive(Debug, Clone)]

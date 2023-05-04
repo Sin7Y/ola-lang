@@ -26,7 +26,7 @@ impl Namespace {
             user_types: Vec::new(),
             functions: Vec::new(),
             constants: Vec::new(),
-            address_length: 0,
+            address_length: 32,
             variable_symbols: HashMap::new(),
             function_symbols: HashMap::new(),
             diagnostics: Diagnostics::default(),
