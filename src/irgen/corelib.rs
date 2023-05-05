@@ -1,3 +1,4 @@
+use inkwell::AddressSpace;
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
 use once_cell::sync::Lazy;
@@ -13,8 +14,8 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 3]> =
-    Lazy::new(|| ["prophet_u32_sqrt", "prophet_u32_div", "prophet_u32_mod"]);
+static PROPHET_FUNCTIONS: Lazy<[&str; 4]> =
+    Lazy::new(|| ["prophet_u32_sqrt", "prophet_u32_div", "prophet_u32_mod", "__malloc"]);
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 

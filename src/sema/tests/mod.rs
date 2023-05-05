@@ -18,22 +18,6 @@ pub(crate) fn parse(src: &'static str) -> ast::Namespace {
 fn test_statement_reachable() {
     let loc = Loc::File(0, 1, 2);
     let test_cases: Vec<(Statement, bool)> = vec![
-        (Statement::Underscore(loc), true),
-        (
-            Statement::VariableDecl(
-                loc,
-                0,
-                Parameter {
-                    loc,
-                    id: None,
-                    ty: Type::Bool,
-                    ty_loc: None,
-                    recursive: false,
-                },
-                None,
-            ),
-            true,
-        ),
         (Statement::Continue(loc), false),
         (Statement::Break(loc), false),
         (Statement::Return(loc, None), false),

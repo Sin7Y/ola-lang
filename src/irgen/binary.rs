@@ -87,7 +87,7 @@ impl<'a> Binary<'a> {
         } else if llvm_ty.is_array_type() {
             self.address_type(ns).const_zero().into()
         } else {
-            BasicTypeEnum::IntType(self.context.custom_width_int_type(64 as u32)).const_zero().into()
+            BasicTypeEnum::IntType(self.context.custom_width_int_type(64 as u32)).const_zero()
         }
     }
 
@@ -154,7 +154,7 @@ impl<'a> Binary<'a> {
             Type::Bool => BasicTypeEnum::IntType(self.context.bool_type()),
             // Map all i32 data to a field-based data type, with the maximum value of field between
             // u63 and u64
-            Type::Uint(32) => BasicTypeEnum::IntType(self.context.i64_type()),
+            Type::Uint(32) => BasicTypeEnum::IntType(self.context.custom_width_int_type(64)),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
             Type::Array(base_ty, dims) => {
                 let ty = self.llvm_field_ty(base_ty, ns);

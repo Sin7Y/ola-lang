@@ -1,5 +1,6 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::expression;
+use crate::irgen::functions::FunctionContext;
 use crate::sema::ast::Expression::NumberLiteral;
 use crate::sema::ast::{Expression, Function, Namespace, Type};
 use inkwell::values::{BasicValueEnum, FunctionValue};
@@ -7,7 +8,6 @@ use inkwell::IntPredicate;
 use num_bigint::BigInt;
 use ola_parser::program::Loc;
 use std::collections::HashMap;
-use crate::irgen::functions::FunctionContext;
 
 pub fn u32_add<'a>(
     l: &Expression,
@@ -528,9 +528,15 @@ pub fn u32_or<'a>(
     let bool_type = bin.context.bool_type();
     // Create basic blocks for the OR expression
     let current_bb = bin.builder.get_insert_block().unwrap();
-    let left_true_bb = bin.context.append_basic_block(func_context.func_val, "left_true");
-    let right_true_bb = bin.context.append_basic_block(func_context.func_val, "right_true");
-    let merge_bb = bin.context.append_basic_block(func_context.func_val, "merge");
+    let left_true_bb = bin
+        .context
+        .append_basic_block(func_context.func_val, "left_true");
+    let right_true_bb = bin
+        .context
+        .append_basic_block(func_context.func_val, "right_true");
+    let merge_bb = bin
+        .context
+        .append_basic_block(func_context.func_val, "merge");
     bin.builder.position_at_end(current_bb);
 
     // Create a temporary variable to store the result
@@ -550,7 +556,7 @@ pub fn u32_or<'a>(
     bin.builder.build_unconditional_branch(merge_bb);
 
     bin.builder.position_at_end(merge_bb);
-    let result = bin.builder.build_load(result_ptr, "");
+    let result = bin.builder.build_load(bool_type, result_ptr, "");
 
     result
 }
@@ -568,9 +574,15 @@ pub fn u32_and<'a>(
     let bool_type = bin.context.bool_type();
     // Create basic blocks for the OR expression
     let current_bb = bin.builder.get_insert_block().unwrap();
-    let left_false_bb = bin.context.append_basic_block(func_context.func_val, "left_false");
-    let right_false_bb = bin.context.append_basic_block(func_context.func_val, "right_false");
-    let merge_bb = bin.context.append_basic_block(func_context.func_val, "merge");
+    let left_false_bb = bin
+        .context
+        .append_basic_block(func_context.func_val, "left_false");
+    let right_false_bb = bin
+        .context
+        .append_basic_block(func_context.func_val, "right_false");
+    let merge_bb = bin
+        .context
+        .append_basic_block(func_context.func_val, "merge");
     bin.builder.position_at_end(current_bb);
 
     // Create a temporary variable to store the result
@@ -590,7 +602,7 @@ pub fn u32_and<'a>(
     bin.builder.build_unconditional_branch(merge_bb);
 
     bin.builder.position_at_end(merge_bb);
-    let result = bin.builder.build_load(result_ptr, "");
+    let result = bin.builder.build_load(bool_type, result_ptr, "");
 
     result
 }
@@ -607,8 +619,12 @@ pub fn u32_power<'a>(
     let right_value = expression(r, bin, func_context, ns).into_int_value();
     bin.builder.position_at_end(current_bb);
 
-    let loop_block = bin.context.append_basic_block(func_context.func_val, "loop");
-    let exit_block = bin.context.append_basic_block(func_context.func_val, "exit");
+    let loop_block = bin
+        .context
+        .append_basic_block(func_context.func_val, "loop");
+    let exit_block = bin
+        .context
+        .append_basic_block(func_context.func_val, "exit");
     let i64_type = bin.context.i64_type();
 
     // Initialize the accumulator with the value 1
@@ -624,7 +640,7 @@ pub fn u32_power<'a>(
 
     let current_right_value_loaded = bin
         .builder
-        .build_load(current_right_value, "")
+        .build_load(i64_type, current_right_value, "")
         .into_int_value();
 
     let is_zero = bin.builder.build_int_compare(
@@ -639,7 +655,10 @@ pub fn u32_power<'a>(
     bin.builder.position_at_end(loop_block);
 
     // Update the accumulator
-    let acc_value = bin.builder.build_load(accumulator, "").into_int_value();
+    let acc_value = bin
+        .builder
+        .build_load(i64_type, accumulator, "")
+        .into_int_value();
     let new_acc_value = bin.builder.build_int_mul(acc_value, left_value, "");
     bin.builder.build_store(accumulator, new_acc_value);
 
@@ -653,7 +672,7 @@ pub fn u32_power<'a>(
     bin.builder.build_unconditional_branch(loop_block);
 
     bin.builder.position_at_end(exit_block);
-    let result = bin.builder.build_load(accumulator, "");
+    let result = bin.builder.build_load(i64_type, accumulator, "");
     bin.builder.build_call(
         bin.module
             .get_function("builtin_range_check")
