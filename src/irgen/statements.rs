@@ -37,14 +37,13 @@ pub(crate) fn statement<'a>(
                 return;
             }
             // Let's check if the declaration is a declaration of a dynamic array
-            if let Expression::AllocDynamicArray {
-                loc,
-                ty,
-                length,
-                init,
-            } = Arc::clone(&init).as_ref()
-            {
-                unimplemented!()
+            if let Expression::AllocDynamicArray { .. } = init.as_ref() {
+                let alloca = bin.build_alloca(
+                    func_context.func_val,
+                    bin.llvm_var_ty(&Uint(32), ns),
+                    "array_length",
+                );
+                func_context.array_lengths_vars.insert(*pos, alloca.into());
             } else if let Expression::Variable(_, _, var_no) = Arc::clone(&init).as_ref() {
                 // If declaration happens with an existing array, check if the size of the array
                 // is known. If the size of the right hand side is known (is in
@@ -55,20 +54,26 @@ pub(crate) fn statement<'a>(
                     func_context.array_lengths_vars.insert(*pos, *to_add);
                 }
             }
+            let var_value = expression(init, bin, func_context, ns);
+            let alloca = if !param.ty.is_reference_type(ns) {
+                let alloca = bin.build_alloca(
+                    func_context.func_val,
+                    bin.llvm_var_ty(&param.ty, ns),
+                    param.name_as_str(),
+                );
 
-            let alloc = bin.build_alloca(
-                func_context.func_val,
-                bin.llvm_var_ty(&param.ty, ns),
-                param.name_as_str(),
-            );
+                bin.builder
+                    .build_store(alloca, var_value)
+                    .set_alignment(8)
+                    .unwrap();
+                alloca
+            } else {
+                var_value.into_pointer_value()
+            };
+
             func_context
                 .var_table
-                .insert(*pos, alloc.as_basic_value_enum());
-            let var_value = expression(init, bin, func_context, ns);
-            bin.builder
-                .build_store(alloc, var_value)
-                .set_alignment(8)
-                .unwrap();
+                .insert(*pos, alloca.as_basic_value_enum());
         }
 
         Statement::VariableDecl(loc, pos, param, None) => {
@@ -499,131 +504,6 @@ pub(crate) fn statement<'a>(
             }
         }
     }
-
-    // pub fn assign_single<'a>(
-    //     left: &Expression,
-    //     cfg_right: &Expression,
-    //     bin: &mut Binary<'a>,
-    //     contract_no: usize,
-    //     func: Option<&Function>,
-    //     func_context.func_val: FunctionValue<'a>,
-    //     ns: &Namespace,
-    //     var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
-    // ) -> Expression {
-    //     match left {
-    //         Expression::Variable { loc, ty, var_no } => {
-    //             cfg.add(
-    //                 vartab,
-    //                 Instr::Set {
-    //                     loc: *loc,
-    //                     res: *var_no,
-    //                     expr: cfg_right,
-    //                 },
-    //             );
-    //
-    //             Expression::Variable {
-    //                 loc: *loc,
-    //                 ty: ty.clone(),
-    //                 var_no: *var_no,
-    //             }
-    //         }
-    //         _ => {
-    //             let left_ty = left.ty();
-    //             let ty = left_ty.deref_memory();
-    //
-    //             let pos = vartab.temp_anonymous(ty);
-    //
-    //             // Set a subscript in storage bytes needs special handling
-    //             let set_storage_bytes = if let ast::Expression::Subscript {
-    // array_ty, .. } = &left {                 array_ty.is_storage_bytes()
-    //             } else {
-    //                 false
-    //             };
-    //
-    //             let dest = expression(left, cfg, contract_no, func, ns, vartab,
-    // opt);
-    //
-    //             let cfg_right =
-    //                 if !left_ty.is_contract_storage() &&
-    // cfg_right.ty().is_fixed_reference_type(ns) {
-    // Expression::Load {                         loc: pt::Loc::Codegen,
-    //                         ty: cfg_right.ty(),
-    //                         expr: Box::new(cfg_right),
-    //                     }
-    //                 } else {
-    //                     cfg_right
-    //                 };
-    //
-    //             cfg.add(
-    //                 vartab,
-    //                 Instr::Set {
-    //                     loc: pt::Loc::Codegen,
-    //                     res: pos,
-    //                     expr: cfg_right,
-    //                 },
-    //             );
-    //
-    //             match left_ty {
-    //                 Type::StorageRef(..) if set_storage_bytes => {
-    //                     if let Expression::Subscript {
-    //                         expr: array, index, ..
-    //                     } = dest
-    //                     {
-    //                         // Set a byte in a byte array
-    //                         cfg.add(
-    //                             vartab,
-    //                             Instr::SetStorageBytes {
-    //                                 value: Expression::Variable {
-    //                                     loc: left.loc(),
-    //                                     ty: ty.clone(),
-    //                                     var_no: pos,
-    //                                 },
-    //                                 storage: *array,
-    //                                 offset: *index,
-    //                             },
-    //                         );
-    //                     } else {
-    //                         unreachable!();
-    //                     }
-    //                 }
-    //                 Type::StorageRef(..) => {
-    //                     cfg.add(
-    //                         vartab,
-    //                         Instr::SetStorage {
-    //                             value: Expression::Variable {
-    //                                 loc: left.loc(),
-    //                                 ty: ty.clone(),
-    //                                 var_no: pos,
-    //                             },
-    //                             ty: ty.deref_any().clone(),
-    //                             storage: dest,
-    //                         },
-    //                     );
-    //                 }
-    //                 Type::Ref(_) => {
-    //                     cfg.add(
-    //                         vartab,
-    //                         Instr::Store {
-    //                             dest,
-    //                             data: Expression::Variable {
-    //                                 loc: Loc::Codegen,
-    //                                 ty: ty.clone(),
-    //                                 var_no: pos,
-    //                             },
-    //                         },
-    //                     );
-    //                 }
-    //                 _ => unreachable!(),
-    //             }
-    //
-    //             Expression::Variable {
-    //                 loc: left.loc(),
-    //                 ty: ty.clone(),
-    //                 var_no: pos,
-    //             }
-    //         }
-    //     }
-    // }
 
     impl Type {
         /// Default value for a type, e.g. an empty string. Some types cannot

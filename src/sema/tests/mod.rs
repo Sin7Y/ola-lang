@@ -342,3 +342,27 @@ fn test_person_contract() {
 
     assert_eq!(errors.len(), 0);
 }
+
+#[test]
+fn test_array_contract() {
+    let file = r#"
+    contract ArraySortExample {
+    
+        // fn main() {
+        //    u32[10] source = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
+        //    array_sort_test(source);
+        // }
+    
+        fn array_sort_test(u32[10] source) -> (u32[10]) {
+            u32[10] array_sorted = u32_array_sort(source);
+            return array_sorted;
+        }
+    }
+       
+
+        "#;
+    let ns = parse(file);
+    let errors = ns.diagnostics.errors();
+
+    assert_eq!(errors.len(), 0);
+}

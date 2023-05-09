@@ -681,6 +681,16 @@ impl Type {
         }
     }
 
+    /// Is this a reference to dynamic memory (arrays, strings)
+    pub fn is_dynamic_memory(&self) -> bool {
+        match self {
+            Type::Slice(_) => true,
+            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => true,
+            Type::Ref(ty) => ty.is_dynamic_memory(),
+            _ => false,
+        }
+    }
+
     /// Give the type of an storage array after dereference. This can only be
     /// used on array types and will cause a panic otherwise.
     #[must_use]

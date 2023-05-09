@@ -1,3 +1,4 @@
+use crate::irgen::array_boundary::handle_array_assign;
 use crate::irgen::binary::Binary;
 use crate::irgen::functions::FunctionContext;
 use crate::irgen::u32_op::{
@@ -6,7 +7,7 @@ use crate::irgen::u32_op::{
     u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
 use crate::irgen::unused_variable::should_remove_assignment;
-use crate::sema::ast::{Expression, Function, LibFunc, Namespace, RetrieveType, Type};
+use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, RetrieveType, Type};
 use crate::sema::diagnostics::Diagnostics;
 use crate::sema::expression::{bigint_to_expression, ResolveTo};
 use inkwell::types::{BasicType, BasicTypeEnum};
@@ -15,6 +16,7 @@ use inkwell::values::{
 };
 use inkwell::AddressSpace;
 use num_bigint::BigInt;
+use num_traits::ToPrimitive;
 use ola_parser::program;
 use std::collections::HashMap;
 use std::env::var;
@@ -49,12 +51,12 @@ pub fn expression<'a>(
         Expression::And(_, l, r) => u32_and(l, r, bin, func_context, ns),
         Expression::Power(_, _, l, r) => u32_power(l, r, bin, func_context, ns),
         // TODO refactor Decrement and Increment
-        Expression::Decrement(_, _, expr) => match **expr {
-            Expression::Variable(_, _, pos) => {
+        Expression::Decrement(_, _, expr) => match expr.as_ref() {
+            Expression::Variable(_, ty, pos) => {
                 let one = bin.context.i64_type().const_int(1, false);
-                let before_ptr = *func_context.var_table.get(&pos).unwrap();
+                let before_ptr = *func_context.var_table.get(pos).unwrap();
                 let before_val = bin.builder.build_load(
-                    bin.context.i64_type(),
+                    bin.llvm_type(&ty, ns),
                     before_ptr.into_pointer_value(),
                     "",
                 );
@@ -76,12 +78,12 @@ pub fn expression<'a>(
             }
             _ => unreachable!(),
         },
-        Expression::Increment(_, _, expr) => match **expr {
-            Expression::Variable(_, _, pos) => {
+        Expression::Increment(_, _, expr) => match expr.as_ref() {
+            Expression::Variable(_, ty, pos) => {
                 let one = bin.context.i64_type().const_int(1, false);
-                let before_ptr = *func_context.var_table.get(&pos).unwrap();
+                let before_ptr = *func_context.var_table.get(pos).unwrap();
                 let before_val = bin.builder.build_load(
-                    bin.context.i64_type(),
+                    bin.llvm_type(&ty, ns),
                     before_ptr.into_pointer_value(),
                     "",
                 );
@@ -106,30 +108,14 @@ pub fn expression<'a>(
                 return expression(r, bin, func_context, ns);
             }
 
-            let right = expression(r, bin, func_context, ns);
+            let right_value = expression(r, bin, func_context, ns);
 
-            // TODO handle array assignment
-            // // If an assignment where the left hand side is an array, call a helper
+            // If an assignment where the left hand side is an array, call a helper
             // function that updates the temp variable.
-            // if let ast::Expression::Variable {
-            //     ty: Type::Array(..),
-            //     var_no,
-            //     ..
-            // } = &**left
-            // {
-            //     // If cfg_right is an AllocDynamicArray(_,_,size,_), update it such that
-            // it becomes AllocDynamicArray(_,_,temp_var,_) to avoid repetitive expressions
-            // in the cfg.     cfg_right = handle_array_assign(cfg_right, cfg,
-            // vartab, *var_no); }
-            let left = match **l {
-                Expression::Variable(_, _, pos) => {
-                    let ret = *func_context.var_table.get(&pos).unwrap();
-                    ret
-                }
-                _ => unreachable!(),
-            };
-            bin.builder.build_store(left.into_pointer_value(), right);
-            left
+            if let Expression::Variable(_, Type::Array(..), var_no, ..) = &**l {
+                handle_array_assign(r, bin, func_context, *var_no, ns);
+            }
+            assign_single(l, right_value, bin, func_context, ns)
         }
         Expression::FunctionCall { .. } => {
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
@@ -137,13 +123,24 @@ pub fn expression<'a>(
         }
         Expression::NumberLiteral(_, ty, n) => bin.number_literal(ty, n, ns).into(),
 
-        Expression::Variable(_, _, var_no) => {
+        Expression::Variable(_, ty, var_no) => {
             let ptr = func_context
                 .var_table
                 .get(var_no)
                 .unwrap()
                 .as_basic_value_enum();
-            ptr
+            if ty.is_reference_type(ns) {
+                return ptr;
+            }
+            let load_var =
+                bin.builder
+                    .build_load(bin.llvm_type(&ty, ns), ptr.into_pointer_value(), "");
+            load_var
+                .as_instruction_value()
+                .unwrap()
+                .set_alignment(8)
+                .unwrap();
+            load_var
         }
 
         Expression::LibFunction(_, _, LibFunc::U32Sqrt, args) => {
@@ -337,26 +334,28 @@ pub fn expression<'a>(
             }
         }
         Expression::LibFunction(loc, ty, LibFunc::ArrayLength, args) => {
-            if args[0].ty().is_contract_storage() {
-                // TODO Add support for storage type arrays
-                unimplemented!();
-            } else {
-                let second_arg = if args.len() > 1 {
-                    expression(&args[1], bin, func_context, ns)
-                } else {
-                    unimplemented!()
-                };
-                unimplemented!()
-            }
+            let array = expression(&args[0], bin, func_context, ns);
+
+            bin.vector_len(array).into()
         }
         Expression::LibFunction(loc, ty, LibFunc::ArraySort, args) => {
-            if args[0].ty().is_contract_storage() {
-                // TODO Add support for storage type arrays
-                unimplemented!();
-            } else {
-                // TODO Add memory array push support
-                unimplemented!();
-            }
+            let array = expression(&args[0], bin, func_context, ns);
+            let array_length = expression(&args[1], bin, func_context, ns);
+
+            let array_sorted = bin
+                .builder
+                .build_call(
+                    bin.module
+                        .get_function("u32_array_sort")
+                        .expect("u32_array_sort should have been defined before"),
+                    &[array.into(), array_length.into()],
+                    "",
+                )
+                .try_as_basic_value()
+                .left()
+                .expect("Should have a left return value");
+
+            array_sorted.into()
         }
         Expression::AllocDynamicArray {
             loc,
@@ -364,7 +363,14 @@ pub fn expression<'a>(
             length: size,
             init,
         } => {
-            unimplemented!()
+            let size = expression(size, bin, func_context, ns).into_int_value();
+            let elem = ty.array_elem();
+            let elem_size = bin
+                .llvm_type(&elem, ns)
+                .size_of()
+                .unwrap()
+                .const_cast(bin.context.i64_type(), false);
+            bin.vector_new(size, elem_size, init.as_ref()).into()
         }
         Expression::ConditionalOperator(loc, ty, cond, left, right) => {
             conditional_operator(bin, ty, cond, func_context, ns, left, right)
@@ -421,9 +427,7 @@ pub fn emit_function_call<'a>(
                 let ret = &callee.returns[0];
 
                 if ret.ty.is_reference_type(ns) {
-                    let ret_ptr = bin
-                        .builder
-                        .build_alloca(bin.llvm_type(&ret.ty, ns), &ret.id.clone().unwrap().name);
+                    let ret_ptr = bin.builder.build_alloca(bin.llvm_type(&ret.ty, ns), "");
 
                     bin.builder.build_store(ret_ptr, ret_value);
                     (ret_ptr.into(), true)
@@ -449,8 +453,9 @@ pub fn emit_function_call<'a>(
         } else {
             unimplemented!()
         }
-    } else { unimplemented!() }
-
+    } else {
+        unimplemented!()
+    }
 }
 
 fn conditional_operator<'a>(
@@ -508,7 +513,6 @@ fn array_subscript<'a>(
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    let array_type = bin.llvm_type(array_ty, ns);
     let array_ptr = expression(array, bin, func_context, ns);
     let index = expression(index, bin, func_context, ns);
     let array_length = match array_ty.deref_any() {
@@ -517,11 +521,29 @@ fn array_subscript<'a>(
                 if let Type::StorageRef(..) = array_ty {
                     unimplemented!("storage array subscript")
                 } else {
+                    // If a subscript is encountered array length will be called
+                    // Return array length by default
+                    let array_length_expr = Expression::LibFunction(
+                        *loc,
+                        vec![Type::Uint(32)],
+                        LibFunc::ArrayLength,
+                        vec![array.clone()],
+                    );
                     let mut returned = bin.context.i64_type().const_zero();
                     if let Expression::Variable(_, _, num) = &array {
                         // If the size is known, do the replacement
                         if let Some(array_length_var) = func_context.array_lengths_vars.get(num) {
-                            returned = array_length_var.into_int_value();
+                            returned = bin
+                                .builder
+                                .build_load(
+                                    bin.context.i64_type(),
+                                    array_length_var.into_pointer_value(),
+                                    "array_length",
+                                )
+                                .into_int_value();
+                        } else {
+                            returned = expression(&array_length_expr, bin, func_context, ns)
+                                .into_int_value();
                         }
                     }
                     returned.into()
@@ -545,21 +567,34 @@ fn array_subscript<'a>(
         }
     };
 
-    let index_sub_array_length: BasicValueEnum = bin
+    if array_ty.is_dynamic_memory() {
+        return unsafe {
+            bin.builder.build_gep(
+                bin.context.i8_type(),
+                bin.vector_bytes(array_ptr),
+                &[index.into_int_value()],
+                "index_access",
+            )
+        }
+        .into();
+    }
+
+    let array_length_sub_index: BasicValueEnum = bin
         .builder
-        .build_int_sub(index.into_int_value(), array_length.into_int_value(), "")
+        .build_int_sub(array_length.into_int_value(), index.into_int_value(), "")
         .into();
     // check if index is out of bounds
     bin.builder.build_call(
         bin.module
             .get_function("builtin_range_check")
             .expect("builtin_range_check should have been defined before"),
-        &[index_sub_array_length.into()],
+        &[array_length_sub_index.into()],
         "",
     );
 
     // Create the gep (get element pointer) instruction to compute the pointer to
     // the desired element
+    let array_type = bin.llvm_type(array_ty.deref_memory(), ns);
     let element_ptr = unsafe {
         bin.builder.build_gep(
             array_type,
@@ -569,32 +604,120 @@ fn array_subscript<'a>(
         )
     };
 
-    let element_ty = bin.llvm_type(elem_ty, ns);
-
-    let element_value = bin
-        .builder
-        .build_load(element_ty, element_ptr, "");
-
-    element_value
+    element_ptr.as_basic_value_enum()
 }
 
-// fn alloc_dynamic_array<'a>(
-//     size: &Expression,
-//     ty: &Type,
-//     init: &Option<Vec<u8>>,
-//     bin: &Binary<'a>,
-//     func_context: &mut FunctionContext<'a>,
+pub fn assign_single<'a>(
+    left: &Expression,
+    right_value: BasicValueEnum<'a>,
+    bin: &Binary<'a>,
+    func_context: &mut FunctionContext<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    match left {
+        Expression::Variable(loc, ty, var_no) => {
+            let var_ptr = *func_context.var_table.get(var_no).unwrap();
+            bin.builder
+                .build_store(var_ptr.into_pointer_value(), right_value);
+            var_ptr
+        }
+        _ => {
+            let left_ty = left.ty();
+
+            let dest = expression(left, bin, func_context, ns);
+
+            match left_ty {
+                Type::StorageRef(..) => {
+                    unimplemented!()
+                }
+                Type::Ref(_) => {
+                    bin.builder
+                        .build_store(dest.into_pointer_value(), right_value);
+                }
+                _ => unreachable!(),
+            }
+
+            dest
+        }
+    }
+}
+
+// fn verify_sorted_array(
+//     array: BasicValueEnum,
+//     bin: &Binary,
+//     func_context: &FunctionContext,
 //     ns: &Namespace,
-// ) -> Expression {
-//     let size = expression(size, bin, func_context, ns);
-//
-//         let elem_ty = ty.elem_ty();
-//
-//         let elem_size = bin
-//             .llvm_type(&elem, ns)
-//             .size_of()
-//             .unwrap()
-//             .const_cast(bin.context.i64_type(), false);
-//
-//         bin.vector_new(size, elem_size, initializer.as_ref()).into()
+// ) {
+//     let array_type = array.get_type();
+//     let array_len = array_type.array_length();
+
+//     let start_block = bin
+//         .context
+//         .append_basic_block(func_context.function, "start");
+//     let loop_block = bin
+//         .context
+//         .append_basic_block(func_context.function, "loop");
+//     let end_block = bin.context.append_basic_block(func_context.function,
+// "end");
+
+//     // Start block
+//     bin.builder.position_at_end(start_block);
+//     bin.builder.build_unconditional_branch(loop_block);
+
+//     // Loop block
+//     bin.builder.position_at_end(loop_block);
+
+//     let index = bin.builder.build_phi(bin.context.i32_type(), "index");
+//     index.add_incoming(&[(bin.context.i32_type().const_zero(),
+// start_block)]);
+
+//     let current_element_ptr = unsafe {
+//         bin.builder.build_gep(
+//             array.into_array_value(),
+//             &[index.as_basic_value()],
+//             "current_element_ptr",
+//         )
+//     };
+//     let current_element = bin
+//         .builder
+//         .build_load(current_element_ptr, "current_element");
+
+//     let next_index = bin.builder.build_int_add(
+//         index.as_basic_value().into_int_value(),
+//         bin.context.i32_type().const_int(1, false),
+//         "next_index",
+//     );
+//     let next_element_ptr = unsafe {
+//         bin.builder
+//             .build_gep(array.into_array_value(), &[next_index],
+// "next_element_ptr")     };
+//     let next_element = bin.builder.build_load(next_element_ptr,
+// "next_element");
+
+//     let comparison = bin.builder.build_int_compare(
+//         IntPredicate::ULE,
+//         current_element.into_int_value(),
+//         next_element.into_int_value(),
+//         "comparison",
+//     );
+
+//     let continue_condition = bin.builder.build_int_compare(
+//         IntPredicate::ULT,
+//         next_index,
+//         bin.context.i32_type().const_int(array_len as u64, false),
+//         "continue_condition",
+//     );
+//     let is_sorted_condition =
+//         bin.builder
+//             .build_and(continue_condition, comparison,
+// "is_sorted_condition");
+
+//     index.add_incoming(&[(next_index, loop_block)]);
+
+//     bin.builder
+//         .build_conditional_branch(is_sorted_condition, loop_block,
+// end_block);
+
+//     // End block
+//     bin.builder.position_at_end(end_block);
 // }

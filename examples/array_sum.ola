@@ -1,0 +1,15 @@
+contract MemoryArrayExample {
+    
+    // 将一个整数数组的所有元素相加并返回总和
+    fn sum(u32[10] inputArray) -> (u32) {
+        u32[] tempArray = new u32[](inputArray.length); 
+        u32 totalSum = 0;
+        
+        for (u32 i = 0; i < inputArray.length; i++) {
+            tempArray[i] = inputArray[i]; // 将输入数组的值复制到 memory 数组中
+            totalSum += tempArray[i]; // 累加 memory 数组的值
+        }
+        
+        return totalSum;
+    }
+}

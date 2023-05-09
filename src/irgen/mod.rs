@@ -1,5 +1,5 @@
 use std::str;
-
+mod array_boundary;
 pub mod binary;
 mod corelib;
 mod expression;

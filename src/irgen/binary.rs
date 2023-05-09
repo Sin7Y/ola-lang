@@ -11,7 +11,10 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::types::{ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
+use inkwell::types::{
+    ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
+    StructType,
+};
 use inkwell::values::{BasicValueEnum, IntValue, PointerValue};
 use inkwell::AddressSpace;
 
@@ -163,9 +166,10 @@ impl<'a> Binary<'a> {
 
                 let mut aty = match dims.next().unwrap() {
                     ArrayLength::Fixed(d) => ty.array_type(d.to_u32().unwrap()),
-                    ArrayLength::Dynamic => {
-                        return self.module.get_struct_type("struct.vector").unwrap().into()
-                    }
+                    ArrayLength::Dynamic => match self.module.get_struct_type("struct.vector") {
+                        Some(vector) => return vector.into(),
+                        None => return self.create_struct_vector(),
+                    },
                     ArrayLength::AnyFixed => {
                         unreachable!()
                     }
@@ -175,7 +179,10 @@ impl<'a> Binary<'a> {
                     match dim {
                         ArrayLength::Fixed(d) => aty = aty.array_type(d.to_u32().unwrap()),
                         ArrayLength::Dynamic => {
-                            return self.module.get_struct_type("struct.vector").unwrap().into()
+                            match self.module.get_struct_type("struct.vector") {
+                                Some(vector) => return vector.into(),
+                                None => return self.create_struct_vector(),
+                            }
                         }
                         ArrayLength::AnyFixed => {
                             unreachable!()
@@ -254,4 +261,115 @@ impl<'a> Binary<'a> {
         res
     }
 
+    /// Allocate vector
+    pub(crate) fn vector_new(
+        &self,
+        size: IntValue<'a>,
+        elem_size: IntValue<'a>,
+        init: Option<&Vec<u8>>,
+    ) -> PointerValue<'a> {
+        // TODO use init and elem_size to initialize vector
+
+        self.builder
+            .build_call(
+                self.module.get_function("__malloc").unwrap(),
+                &[size.into()],
+                "",
+            )
+            .try_as_basic_value()
+            .left()
+            .unwrap()
+            .into_pointer_value()
+    }
+    pub(crate) fn create_struct_vector(&self) -> BasicTypeEnum<'a> {
+        let capacity_type = self.context.i64_type();
+        let length_type = self.context.i64_type();
+        let data_array_type = self.context.i64_type().array_type(0);
+
+        let struct_type = self.context.struct_type(
+            &[
+                capacity_type.into(),
+                length_type.into(),
+                data_array_type.into(),
+            ],
+            false,
+        );
+
+        struct_type.as_basic_type_enum()
+    }
+
+    /// Number of element in a vector
+    pub(crate) fn vector_len(&self, vector: BasicValueEnum<'a>) -> IntValue<'a> {
+        if vector.is_struct_value() {
+            // slice
+            let slice = vector.into_struct_value();
+
+            self.builder.build_int_truncate(
+                self.builder
+                    .build_extract_value(slice, 1, "slice_len")
+                    .unwrap()
+                    .into_int_value(),
+                self.context.i64_type(),
+                "len",
+            )
+        } else {
+            // field 0 is the length
+            let vector = vector.into_pointer_value();
+            let vector_type = match self.module.get_struct_type("struct.vector") {
+                Some(vector_ty) => vector_ty.into(),
+                None => self.create_struct_vector(),
+            };
+
+            let len = unsafe {
+                self.builder.build_gep(
+                    vector_type,
+                    vector,
+                    &[
+                        self.context.i32_type().const_zero(),
+                        self.context.i32_type().const_zero(),
+                    ],
+                    "vector_len",
+                )
+            };
+
+            self.builder
+                .build_select(
+                    self.builder.build_is_null(vector, "vector_is_null"),
+                    self.context.i32_type().const_zero(),
+                    self.builder
+                        .build_load(self.context.i32_type(), len, "vector_len")
+                        .into_int_value(),
+                    "length",
+                )
+                .into_int_value()
+        }
+    }
+
+    /// Return the pointer to the actual bytes in the vector
+    pub(crate) fn vector_bytes(&self, vector: BasicValueEnum<'a>) -> PointerValue<'a> {
+        if vector.is_struct_value() {
+            // slice
+            let slice = vector.into_struct_value();
+            self.builder
+                .build_extract_value(slice, 0, "slice_data")
+                .unwrap()
+                .into_pointer_value()
+        } else {
+            let vector_type = match self.module.get_struct_type("struct.vector") {
+                Some(vector) => vector.into(),
+                None => self.create_struct_vector(),
+            };
+            unsafe {
+                self.builder.build_gep(
+                    vector_type,
+                    vector.into_pointer_value(),
+                    &[
+                        self.context.i32_type().const_zero(),
+                        self.context.i32_type().const_int(2, false),
+                    ],
+                    "data",
+                )
+            }
+        }
+    }
 }

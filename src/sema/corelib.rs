@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use super::ast::{Diagnostic, Expression, LibFunc, Namespace, Type};
+use super::ast::{ArrayLength, Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
 use super::expression::{expression, ExprContext, ResolveTo};
 use super::symtable::Symtable;
-use ola_parser::program;
+use num_bigint::BigInt;
+use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 
 pub struct Prototype {
@@ -13,19 +14,31 @@ pub struct Prototype {
     pub name: &'static str,
     pub params: Vec<Type>,
     pub ret: Vec<Type>,
-    pub doc: &'static str,
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 1]> = Lazy::new(|| {
-    [Prototype {
-        libfunc: LibFunc::U32Sqrt,
-        namespace: None,
-        name: "u32_sqrt",
-        params: vec![Type::Uint(32)],
-        ret: vec![Type::Uint(32)],
-        doc: "Abort execution if argument evaluates to false",
-    }]
+static LIB_FUNCTIONS: Lazy<[Prototype; 2]> = Lazy::new(|| {
+    [
+        Prototype {
+            libfunc: LibFunc::U32Sqrt,
+            namespace: None,
+            name: "u32_sqrt",
+            params: vec![Type::Uint(32)],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::ArraySort,
+            namespace: None,
+            name: "u32_array_sort",
+            params: vec![
+                Type::Array(Box::new(Type::Uint(32)), vec![ArrayLength::AnyFixed]),
+            ],
+            ret: vec![Type::Array(
+                Box::new(Type::Uint(32)),
+                vec![ArrayLength::AnyFixed],
+            )],
+        },
+    ]
 });
 
 // A list of all Ola lib variables
@@ -130,8 +143,13 @@ pub fn resolve_call(
                 }
             };
 
-            if ty.is_some() {
-                cast_args.push(arg);
+            if let Some(ty) = ty {
+                match arg.cast(&arg.loc(), ty, ns, &mut errors) {
+                    Ok(expr) => cast_args.push(expr),
+                    Err(()) => {
+                        matches = false;
+                    }
+                }
             }
         }
 
