@@ -68,7 +68,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 }
                 (OperandData::Slot(slot), OperandData::Int32(imm)) => {
                     let off = function.slots.get(*slot).offset;
-                    let size = function.slots.arena.len() as i32 + (*imm - off as i32) / 4;
+                    let size = function.slots.arena.len() as i32 + (*imm - off as i32) / 4 + 1;
                     mem[2].data = OperandData::Int32(size);
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R8.into());
@@ -76,7 +76,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 (OperandData::Slot(slot), OperandData::Int64(imm)) => {
                     let off = function.slots.get(*slot).offset;
                     let size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4;
-                    mem[2].data = OperandData::Int64(-size);
+                    mem[2].data = OperandData::Int64(size);
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R8.into());
                 }

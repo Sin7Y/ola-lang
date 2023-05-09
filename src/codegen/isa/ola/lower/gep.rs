@@ -186,19 +186,18 @@ mod test {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "test_array:
 .LBL0_0:
   add r8 r8 3
   mov r0 1
-  mstore [r8,+0] r0
-  mov r1 2
-  mstore [r8,-1] r1
-  mov r2 3
-  mstore [r8,-2] r2
-  mload r0 [r8,-1]
+  mstore [r8,-1] r0
+  mov r0 2
+  mstore [r8,-2] r0
+  mov r0 3
+  mstore [r8,-3] r0
+  mload r0 [r8,-2]
   add r8 r8 -3
   ret
 "
