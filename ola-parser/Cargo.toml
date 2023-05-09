@@ -12,7 +12,7 @@ lalrpop-util = { version = "0.19.8", features = ["lexer"] }
 
 
 [build-dependencies]
-lalrpop = "0.19.8"
+lalrpop = "0.19.12"
 serde = { version = "1.0.150", features = ["derive"], optional = true }
 
 

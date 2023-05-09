@@ -2,6 +2,7 @@ use super::new_empty_inst_output;
 use crate::codegen::core::ir::{
     function::instruction::InstructionId, types::Type, value::ConstantValue,
 };
+use crate::codegen::isa::TargetIsa;
 use crate::codegen::{
     function::instruction::Instruction as MachInstruction,
     isa::ola::{
@@ -45,7 +46,10 @@ pub fn lower_alloca(
 
         return Ok(());
     }
-    let slot_id = ctx.slots.add_slot(tys[0], 4, 4);
+    let dl = ctx.isa.data_layout();
+    let sz = dl.get_size_of(ctx.types, tys[0]) as u32;
+    let align = dl.get_align_of(ctx.types, tys[0]) as u32;
+    let slot_id = ctx.slots.add_slot(tys[0], sz, align);
     ctx.inst_id_to_slot_id.insert(id, slot_id);
     Ok(())
 }
