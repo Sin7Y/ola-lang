@@ -329,7 +329,8 @@ pub(crate) fn statement<'a>(
                     false,
                 );
                 // Allocate the struct
-                let struct_ptr = bin.builder.build_alloca(struct_type, "list_struct");
+                let struct_ptr =
+                    bin.build_alloca(func_context.func_val, struct_type, "list_struct");
 
                 // Store the values in the struct
                 for (index, value) in res.into_iter().enumerate() {
@@ -414,7 +415,8 @@ pub(crate) fn statement<'a>(
                     values.iter().map(|val| val.get_type()).collect();
                 let struct_type = bin.context.struct_type(&struct_member_types, false);
                 // Create the struct instance and fill the members with the values
-                let struct_alloca = bin.builder.build_alloca(struct_type, "struct_alloca");
+                let struct_alloca =
+                    bin.build_alloca(func_context.func_val, struct_type, "struct_alloca");
                 for (i, value) in values.iter().enumerate() {
                     let field_ptr = bin.builder.build_struct_gep(
                         struct_type,

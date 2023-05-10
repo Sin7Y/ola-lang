@@ -18,8 +18,6 @@ use inkwell::AddressSpace;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
-use std::collections::HashMap;
-use std::env::var;
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -163,7 +161,7 @@ pub fn expression<'a>(
         Expression::StructLiteral(loc, ty, fields) => {
             let struct_ty = bin.llvm_type(ty, ns);
 
-            let struct_alloca = bin.builder.build_alloca(struct_ty, "struct_alloca");
+            let struct_alloca = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
 
             for (i, expr) in fields.iter().enumerate() {
                 let elemptr = unsafe {
@@ -298,7 +296,7 @@ pub fn expression<'a>(
                 let llvm_ty = bin.llvm_type(ty.deref_memory(), ns);
 
                 // TODO malloc a stack or heap struct?
-                let new_struct = bin.builder.build_alloca(llvm_ty, "struct_alloca");
+                let new_struct = bin.build_alloca(func_context.func_val, llvm_ty, "struct_alloca");
                 bin.builder.build_store(ptr, new_struct);
                 bin.builder.build_unconditional_branch(already_allocated);
                 bin.builder.position_at_end(already_allocated);
@@ -427,7 +425,8 @@ pub fn emit_function_call<'a>(
                 let ret = &callee.returns[0];
 
                 if ret.ty.is_reference_type(ns) {
-                    let ret_ptr = bin.builder.build_alloca(bin.llvm_type(&ret.ty, ns), "");
+                    let ret_ptr =
+                        bin.build_alloca(func_context.func_val, bin.llvm_type(&ret.ty, ns), "");
 
                     bin.builder.build_store(ret_ptr, ret_value);
                     (ret_ptr.into(), true)
@@ -446,7 +445,7 @@ pub fn emit_function_call<'a>(
                         false,
                     )
                     .as_basic_type_enum();
-                let ret_ptr = bin.builder.build_alloca(struct_ty, "struct_alloca");
+                let ret_ptr = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
                 bin.builder.build_store(ret_ptr, ret_value);
                 (ret_value, false)
             }

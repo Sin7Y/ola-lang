@@ -540,7 +540,7 @@ pub fn u32_or<'a>(
     bin.builder.position_at_end(current_bb);
 
     // Create a temporary variable to store the result
-    let result_ptr = bin.builder.build_alloca(bool_type, "");
+    let result_ptr = bin.build_alloca(func_context.func_val, bool_type, "");
 
     // Generate the OR expression using basic blocks
     bin.builder
@@ -586,7 +586,7 @@ pub fn u32_and<'a>(
     bin.builder.position_at_end(current_bb);
 
     // Create a temporary variable to store the result
-    let result_ptr = bin.builder.build_alloca(bool_type, "");
+    let result_ptr = bin.build_alloca(func_context.func_val, bool_type, "");
 
     // Generate the OR expression using basic blocks
     bin.builder
@@ -628,11 +628,11 @@ pub fn u32_power<'a>(
     let i64_type = bin.context.i64_type();
 
     // Initialize the accumulator with the value 1
-    let accumulator = bin.builder.build_alloca(i64_type, "");
+    let accumulator = bin.build_alloca(func_context.func_val, bin.context.i64_type(), "");
     bin.builder
         .build_store(accumulator, i64_type.const_int(1, false));
 
-    let current_right_value = bin.builder.build_alloca(i64_type, "");
+    let current_right_value = bin.build_alloca(func_context.func_val, bin.context.i64_type(), "");
     bin.builder.build_store(current_right_value, right_value);
 
     bin.builder.build_unconditional_branch(loop_block);
