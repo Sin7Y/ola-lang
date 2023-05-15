@@ -477,10 +477,6 @@ pub(crate) fn statement<'a>(
                     }
                 }
                 DestructureField::Expression(left) => {
-                    if should_remove_assignment(ns, left, func_context.func) {
-                        continue;
-                    }
-
                     let left = match left {
                         Expression::Variable(_, _, pos) => {
                             let ret = *func_context.var_table.get(pos).unwrap();

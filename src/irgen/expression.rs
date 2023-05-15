@@ -94,10 +94,6 @@ pub fn expression<'a>(
             _ => unreachable!(),
         },
         Expression::Assign(_, _, l, r) => {
-            if should_remove_assignment(ns, l, func_context.func) {
-                return expression(r, bin, func_context, ns);
-            }
-
             let right_value = expression(r, bin, func_context, ns);
 
             // If an assignment where the left hand side is an array, call a helper
@@ -418,7 +414,14 @@ pub fn emit_function_call<'a>(
                     (
                         unsafe {
                             bin.builder
-                                .build_gep(ret_ptr, &[bin.context.i64_type().const_zero()], "")
+                                .build_gep(
+                                    ret_ptr,
+                                    &[
+                                        bin.context.i64_type().const_zero(),
+                                        bin.context.i64_type().const_zero(),
+                                    ],
+                                    "",
+                                )
                                 .into()
                         },
                         true,

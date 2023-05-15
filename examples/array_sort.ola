@@ -1,10 +1,11 @@
 
 contract ArraySortExample {
     
-    fn main() -> (u32) {
+    fn main()  {
        u32[10] array = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
        u32[10] array_ss = array_sort_test(array);
-       return array_ss[9];
+       u32 a = array_ss[0];
+       array[0] = a;
 
     }
 
