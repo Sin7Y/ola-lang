@@ -15,7 +15,7 @@ pub(crate) fn handle_array_assign<'a>(
     if let Expression::AllocDynamicArray { .. } = right {
         let alloca = bin.build_alloca(
             func_context.func_val,
-            bin.llvm_var_ty(&Uint(32), ns),
+            bin.llvm_type(&Uint(32), ns),
             "array_length",
         );
         func_context.array_lengths_vars.insert(pos, alloca.into());

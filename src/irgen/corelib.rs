@@ -1,5 +1,7 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
+use inkwell::module::Linkage;
+use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::AddressSpace;
 use once_cell::sync::Lazy;
 
@@ -20,7 +22,7 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 5]> = Lazy::new(|| {
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
-        "__malloc",
+        "prophet_malloc",
     ]
 });
 
@@ -78,31 +80,6 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                 );
                 bin.builder.build_return(Some(&root));
             }
-            "u32_array_sort" => {
-                // build u32_array_sort function
-                let array_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
-                let array_length_type = bin.context.i64_type();
-                let ftype = array_ptr_type
-                    .fn_type(&[array_ptr_type.into(), array_length_type.into()], false);
-                let func = bin.module.add_function("u32_array_sort", ftype, None);
-                bin.builder
-                    .position_at_end(bin.context.append_basic_block(func, "entry"));
-                let array_value = func.get_first_param().unwrap().into();
-                let array_length = func.get_last_param().unwrap().into();
-                let array_sorted = bin
-                    .builder
-                    .build_call(
-                        bin.module
-                            .get_function("prophet_u32_array_sort")
-                            .expect("prophet_u32_array_sort should have been defined before"),
-                        &[array_value, array_length],
-                        "",
-                    )
-                    .try_as_basic_value()
-                    .left()
-                    .expect("Should have a left return value");
-                bin.builder.build_return(Some(&array_sorted));
-            }
             _ => {}
         }
     });
@@ -126,10 +103,10 @@ pub fn declare_prophets(bin: &mut Binary) {
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             bin.module.add_function("prophet_u32_mod", ftype, None);
         }
-        "__malloc" => {
+        "prophet_malloc" => {
             let i64_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
             let ftype = i64_ptr_type.fn_type(&[bin.context.i64_type().into()], false);
-            bin.module.add_function("__malloc", ftype, None);
+            bin.module.add_function("prophet_malloc", ftype, None);
         }
         "prophet_u32_array_sort" => {
             let array_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());

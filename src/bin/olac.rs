@@ -123,7 +123,6 @@ fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()>
         let filename_lossy = filename.to_string_lossy().clone();
         let filename_string = String::from(filename_lossy);
         let filename_stem = Path::new(&filename_string).file_prefix().unwrap();
-
         let binary = resolved_contract.binary(&ns, &context, &filename_string);
 
         match matches.get_one::<String>("Generate").map(|v| v.as_str()) {

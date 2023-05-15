@@ -1,18 +1,16 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
+use crate::sema;
 use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
+use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
 use std::collections::HashMap;
-use indexmap::IndexMap;
-use crate::sema;
-
 
 // IndexMap <ArrayVariable res , res of temp variable>
 pub type ArrayLengthVars<'a> = IndexMap<usize, BasicValueEnum<'a>>;
 
 pub type Vartable<'a> = IndexMap<usize, BasicValueEnum<'a>>;
-
 
 #[derive(Clone)]
 pub struct FunctionContext<'a> {
@@ -78,7 +76,9 @@ pub(super) fn gen_function<'a>(
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) {
-    let bb = bin.context.append_basic_block(func_context.func_val, "entry");
+    let bb: inkwell::basic_block::BasicBlock = bin
+        .context
+        .append_basic_block(func_context.func_val, "entry");
 
     bin.builder.position_at_end(bb);
 
@@ -96,17 +96,28 @@ pub(crate) fn populate_arguments<'a>(
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) {
-    for (i, arg) in func_context.func.get_symbol_table().arguments.iter().enumerate() {
+    for (i, arg) in func_context
+        .func
+        .get_symbol_table()
+        .arguments
+        .iter()
+        .enumerate()
+    {
         if let Some(pos) = arg {
             let var = &func_context.func.get_symbol_table().vars[pos];
             let arg_val = func_context.func_val.get_nth_param(i as u32).unwrap();
-            let alloc =
-                bin.build_alloca(func_context.func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());
+            if var.ty.is_reference_type(ns) {
+                // reference types are passed as pointers
+                func_context.var_table.insert(*pos, arg_val.into());
+                continue;
+            }
+            let alloc = bin.build_alloca(
+                func_context.func_val,
+                bin.llvm_args_ty(&var.ty, ns),
+                var.id.name.as_str(),
+            );
+            bin.builder.build_store(alloc, arg_val);
             func_context.var_table.insert(*pos, alloc.into());
-            bin.builder
-                .build_store(alloc, arg_val)
-                .set_alignment(8)
-                .unwrap();
         }
     }
 }
