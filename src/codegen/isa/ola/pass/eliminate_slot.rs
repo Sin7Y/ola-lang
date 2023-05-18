@@ -63,19 +63,39 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     let off = function.slots.get(*slot).offset;
                     mem[1].data = OperandData::None;
                     let size = off as i32 / 4 - 1 - function.slots.arena.len() as i32;
+                    println!(
+                        "slot pattern 1 len: {:?}, off: {:?}, size: {:?}",
+                        function.slots.arena.len() as i32,
+                        off,
+                        size
+                    );
                     mem[2].data = OperandData::Int32(size);
                     mem[3].data = OperandData::Reg(GR::R8.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int32(imm)) => {
                     let off = function.slots.get(*slot).offset;
-                    let size = function.slots.arena.len() as i32 + (*imm - off as i32) / 4 + 1;
+                    // let size = function.slots.arena.len() as i32 + (*imm - off as i32) / 4 + 1;
+                    let size = (*imm - off as i32) / 4;
+                    println!(
+                        "slot pattern 2 len: {:?}, off: {:?}, size: {:?}, imm {:?}",
+                        function.slots.arena.len() as i32,
+                        off,
+                        size,
+                        *imm
+                    );
                     mem[2].data = OperandData::Int32(size);
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R8.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int64(imm)) => {
                     let off = function.slots.get(*slot).offset;
-                    let size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4;
+                    let size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 + 1;
+                    println!(
+                        "slot pattern 3 len: {:?}, off: {:?}, size: {:?}",
+                        function.slots.arena.len() as i32,
+                        off,
+                        size
+                    );
                     mem[2].data = OperandData::Int64(size);
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R8.into());

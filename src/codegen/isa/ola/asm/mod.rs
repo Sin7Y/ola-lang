@@ -12,18 +12,34 @@ use std::{fmt, str};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AsmProgram {
     pub program: String,
     pub prophets: Vec<Prophet>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Prophet {
     pub label: String,
     pub code: String,
-    pub inputs: Vec<String>,
-    pub outputs: Vec<String>,
+    pub inputs: Vec<Input>,
+    pub outputs: Vec<Output>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Input {
+    pub name: String,
+    pub length: u64,
+    pub isRef: bool,
+    pub isInputOutput: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Output {
+    pub name: String,
+    pub length: u64,
+    pub isRef: bool,
+    pub isInputOutput: bool,
 }
 
 const SQRT: &'static str = "%{
@@ -59,31 +75,148 @@ const DIV_MOD: &'static str = "%{
     }
 %}";
 
+const ARR_SORT: &'static str = "%{
+    entry() {
+        cid.arrOut = sort(cid.arrIn);
+    }
+    function sort(felt[] arr) -> felt[] {
+        felt n = arr.length;
+        for (felt i = 0; i < n - 1; i++) {
+            for (felt j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    felt temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+        return arr;
+    }
+%}";
+
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
             code: SQRT.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: ["cid.x".to_string()].to_vec(),
-            outputs: ["cid.y".to_string()].to_vec(),
+            inputs: [Input {
+                name: "cid.x".to_string(),
+                length: 1,
+                isRef: false,
+                isInputOutput: false,
+            }]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.y".to_string(),
+                length: 1,
+                isRef: false,
+                isInputOutput: false,
+            }]
+            .to_vec(),
         },
         "prophet_u32_div" => Prophet {
             code: DIV.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
-            outputs: ["cid.q".to_string()].to_vec(),
+            inputs: [
+                Input {
+                    name: "cid.x".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+                Input {
+                    name: "cid.y".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+            ]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.q".to_string(),
+                length: 1,
+                isRef: false,
+                isInputOutput: false,
+            }]
+            .to_vec(),
         },
         "prophet_u32_mod" => Prophet {
             code: MOD.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
-            outputs: ["cid.r".to_string()].to_vec(),
+            inputs: [
+                Input {
+                    name: "cid.x".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+                Input {
+                    name: "cid.y".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+            ]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.r".to_string(),
+                length: 1,
+                isRef: false,
+                isInputOutput: false,
+            }]
+            .to_vec(),
         },
         "prophet_div_mod" => Prophet {
             code: DIV_MOD.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: ["cid.x".to_string(), "cid.y".to_string()].to_vec(),
-            outputs: ["cid.q".to_string(), "cid.r".to_string()].to_vec(),
+            inputs: [
+                Input {
+                    name: "cid.x".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+                Input {
+                    name: "cid.y".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+            ]
+            .to_vec(),
+            outputs: [
+                Output {
+                    name: "cid.q".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+                Output {
+                    name: "cid.r".to_string(),
+                    length: 1,
+                    isRef: false,
+                    isInputOutput: false,
+                },
+            ]
+            .to_vec(),
+        },
+        "prophet_u32_array_sort" => Prophet {
+            code: MOD.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [Input {
+                name: "cid.arrIn".to_string(),
+                length: 1,
+                isRef: true,
+                isInputOutput: false,
+            }]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.arrOut".to_string(),
+                length: 1,
+                isRef: true,
+                isInputOutput: false,
+            }]
+            .to_vec(),
         },
         e => todo!("{:?}", e),
     }
@@ -141,13 +274,17 @@ pub fn print_function(
                 }
                 code.push_str(&format!("{}", term));
             } else if inst.data.opcode == Opcode::PROPHET {
+                let name = write_operand(&inst.data.operands[1].data, fn_idx);
                 code.push_str(&format!(".PROPHET{}_{}:\n", fn_idx, prophet_index));
-
                 code.push_str(&format!("  mov r0 psp\n"));
+                if name == "prophet_u32_array_sort" {
+                    for idx in 1..7 {
+                        code.push_str(&format!("  mload r{} [r{},{}]\n", idx, idx, idx));
+                    }
+                }
                 code.push_str(&format!("  mload r0 [r0,0]\n"));
 
                 assert_eq!(inst.data.operands.len(), 2);
-                let name = write_operand(&inst.data.operands[1].data, fn_idx);
                 prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));
 
                 prophet_index += 1;

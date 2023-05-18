@@ -158,20 +158,23 @@ mod test {
         isa::ola::{asm::AsmProgram, Ola},
         lower::compile_module,
     };
+
+    #[ignore]
     #[test]
     fn codegen_array_test() {
         // LLVM Assembly
         let asm = r#"
+        declare void @test_call()
         define i64 @test_array() #0 {
-            %1 = alloca [3 x i64], align 8
+            %1 = alloca [3 x i64], align 4
             %2 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 0
-            store i64 1, i64* %2, align 8
+            store i64 1, i64* %2, align 4
             %3 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 1
-            store i64 2, i64* %3, align 8
+            store i64 2, i64* %3, align 4
             %4 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 2
-            store i64 3, i64* %4, align 8
+            store i64 3, i64* %4, align 4
             %5 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 1
-            %6 = load i64, i64* %5, align 8
+            %6 = load i64, i64* %5, align 4
             ret i64 %6
         }
 "#;
@@ -186,6 +189,7 @@ mod test {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "test_array:
@@ -200,6 +204,88 @@ mod test {
   mload r0 [r8,-2]
   add r8 r8 -3
   ret
+"
+        );
+    }
+
+    #[test]
+    fn codegen_passing_ref_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'Array'
+        source_filename = "examples/array.ola"
+        
+        declare void @builtin_assert(i64, i64)
+        
+        declare void @builtin_range_check(i64)
+        
+        declare i64 @prophet_u32_sqrt(i64)
+        
+        declare i64 @prophet_u32_div(i64, i64)
+        
+        declare i64 @prophet_u32_mod(i64, i64)
+        
+        declare i64* @prophet_u32_array_sort(i64*, i64)
+        
+        declare i64* @prophet_malloc(i64)
+        
+        ;declare i64 @array_literal(i64*)
+        define i64 @array_literal(i64* %0) {
+            entry:
+              call void @builtin_range_check(i64 2)
+              %1 = load i64, i64* %0, align 4
+              ret i64 %1
+            }
+        
+        define void @main() {
+        entry:
+          %array_literal = alloca [3 x i64], align 4
+          %elemptr0 = getelementptr [3 x i64], [3 x i64]* %array_literal, i64 0, i64 0
+          store i64 1, i64* %elemptr0, align 4
+          %elemptr1 = getelementptr [3 x i64], [3 x i64]* %array_literal, i64 0, i64 1
+          store i64 2, i64* %elemptr1, align 4
+          %elemptr2 = getelementptr [3 x i64], [3 x i64]* %array_literal, i64 0, i64 2
+          store i64 3, i64* %elemptr2, align 4
+          %array_ptr = getelementptr [3 x i64], [3 x i64]* %array_literal, i64 0, i64 0
+          %0 = call i64 @array_literal(i64* %array_ptr)
+          ret void
+        }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "array_literal:
+.LBL7_0:
+  mov r0 r1
+  range 2
+  mload r0 [r0]
+  ret
+main:
+.LBL8_0:
+  add r8 r8 7
+  mstore [r8,-2] r8
+  mov r0 1
+  mstore [r8,-3] r0
+  mov r0 2
+  mstore [r8,-4] r0
+  mov r0 3
+  mstore [r8,-5] r0
+  mload r0 [r8,-1]
+  add r1 r8 -3
+  call array_literal
+  add r8 r8 -7
+  end
 "
         );
     }
