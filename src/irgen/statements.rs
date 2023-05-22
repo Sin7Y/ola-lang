@@ -33,14 +33,11 @@ pub(crate) fn statement<'a>(
             }
         }
         Statement::VariableDecl(_, pos, param, Some(init)) => {
-            if should_remove_variable(*pos, func_context.func) {
-                return;
-            }
             // Let's check if the declaration is a declaration of a dynamic array
             if let Expression::AllocDynamicArray { .. } = init.as_ref() {
                 let alloca = bin.build_alloca(
                     func_context.func_val,
-                    bin.llvm_type(&Uint(32), ns),
+                    bin.llvm_var_ty(&Uint(32), ns),
                     "array_length",
                 );
                 func_context.array_lengths_vars.insert(*pos, alloca.into());
@@ -60,7 +57,7 @@ pub(crate) fn statement<'a>(
             } else {
                 let alloca = bin.build_alloca(
                     func_context.func_val,
-                    bin.llvm_type(&param.ty, ns),
+                    bin.llvm_var_ty(&param.ty, ns),
                     param.name_as_str(),
                 );
 
@@ -77,13 +74,14 @@ pub(crate) fn statement<'a>(
         }
 
         Statement::VariableDecl(loc, pos, param, None) => {
-            if should_remove_variable(*pos, func_context.func) {
-                return;
-            }
+            let default_expr = param.ty.default(ns).unwrap();
+            let default_value = expression(&default_expr, bin, func_context, ns);
+            func_context.var_table.insert(*pos, default_value);
+
             if matches!(param.ty, Type::Array(..)) {
                 let alloc = bin.build_alloca(
                     func_context.func_val,
-                    bin.llvm_type(&Uint(32), ns),
+                    bin.llvm_var_ty(&Uint(32), ns),
                     "array_length",
                 );
 
@@ -93,9 +91,6 @@ pub(crate) fn statement<'a>(
                     .unwrap();
 
                 func_context.array_lengths_vars.insert(*pos, alloc.into());
-            } else if let Some(default_expr) = param.ty.default(ns) {
-                let default_value = expression(&default_expr, bin, func_context, ns);
-                func_context.var_table.insert(*pos, default_value);
             }
         }
 
@@ -314,11 +309,7 @@ pub(crate) fn statement<'a>(
             }
             Expression::FunctionCall { .. } => {
                 let (ret, _) = emit_function_call(expr, bin, func_context, ns);
-                if ret.is_pointer_value() {
-                    bin.builder.build_load(ret.into_pointer_value(), "return")
-                } else {
-                    ret
-                }
+                ret
             }
             Expression::List(_, list) => {
                 let res = list
@@ -339,6 +330,7 @@ pub(crate) fn statement<'a>(
                 // Store the values in the struct
                 for (index, value) in res.into_iter().enumerate() {
                     let field_ptr = bin.builder.build_struct_gep(
+                        struct_type,
                         struct_ptr,
                         index as u32,
                         &format!("field_{}", index),
@@ -406,7 +398,8 @@ pub(crate) fn statement<'a>(
                     let elem = expression(expr, bin, func_context, ns);
                     let elem_ty = bin.llvm_type(&expr.ty(), ns);
                     let elem = if expr.ty().is_fixed_reference_type() {
-                        bin.builder.build_load(elem.into_pointer_value(), "elem")
+                        bin.builder
+                            .build_load(elem_ty, elem.into_pointer_value(), "elem")
                     } else {
                         elem
                     };
@@ -421,6 +414,7 @@ pub(crate) fn statement<'a>(
                     bin.build_alloca(func_context.func_val, struct_type, "struct_alloca");
                 for (i, value) in values.iter().enumerate() {
                     let field_ptr = bin.builder.build_struct_gep(
+                        struct_type,
                         struct_alloca,
                         i as u32,
                         &format!("field_ptr{}", i),
@@ -450,7 +444,7 @@ pub(crate) fn statement<'a>(
                     }
                     let alloc = bin.build_alloca(
                         func_context.func_val,
-                        bin.llvm_type(&param.ty, ns),
+                        bin.llvm_var_ty(&param.ty, ns),
                         param.name_as_str(),
                     );
                     func_context

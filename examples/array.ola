@@ -1,13 +1,13 @@
 
 contract Array {
 
-    fn array_literal(u32[3] a) -> (u32) {
+    fn array_literal() -> (u32) {
+        u32[3] a = [1, 2, 3];
         return a[1];
     }
 
     fn main() {
-       u32[3] a = [1, 2, 3];
-       array_literal(a);
+       array_literal();
     }
 
 

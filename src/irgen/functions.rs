@@ -113,7 +113,7 @@ pub(crate) fn populate_arguments<'a>(
             }
             let alloc = bin.build_alloca(
                 func_context.func_val,
-                bin.llvm_args_ty(&var.ty, ns),
+                bin.llvm_var_ty(&var.ty, ns),
                 var.id.name.as_str(),
             );
             bin.builder.build_store(alloc, arg_val);

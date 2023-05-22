@@ -53,7 +53,11 @@ pub fn expression<'a>(
             Expression::Variable(_, ty, pos) => {
                 let one = bin.context.i64_type().const_int(1, false);
                 let before_ptr = *func_context.var_table.get(pos).unwrap();
-                let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
+                let before_val = bin.builder.build_load(
+                    bin.llvm_type(&ty, ns),
+                    before_ptr.into_pointer_value(),
+                    "",
+                );
                 before_val
                     .as_instruction_value()
                     .unwrap()
@@ -76,7 +80,11 @@ pub fn expression<'a>(
             Expression::Variable(_, ty, pos) => {
                 let one = bin.context.i64_type().const_int(1, false);
                 let before_ptr = *func_context.var_table.get(pos).unwrap();
-                let before_val = bin.builder.build_load(before_ptr.into_pointer_value(), "");
+                let before_val = bin.builder.build_load(
+                    bin.llvm_type(&ty, ns),
+                    before_ptr.into_pointer_value(),
+                    "",
+                );
                 before_val
                     .as_instruction_value()
                     .unwrap()
@@ -118,7 +126,9 @@ pub fn expression<'a>(
             if ty.is_reference_type(ns) {
                 return ptr;
             }
-            let load_var = bin.builder.build_load(ptr.into_pointer_value(), "");
+            let load_var =
+                bin.builder
+                    .build_load(bin.llvm_type(&ty, ns), ptr.into_pointer_value(), "");
             load_var
                 .as_instruction_value()
                 .unwrap()
@@ -152,6 +162,7 @@ pub fn expression<'a>(
             for (i, expr) in fields.iter().enumerate() {
                 let elemptr = unsafe {
                     bin.builder.build_gep(
+                        struct_ty,
                         struct_alloca,
                         &[
                             bin.context.i64_type().const_zero(),
@@ -165,7 +176,8 @@ pub fn expression<'a>(
 
                 let elem = if expr.ty().is_fixed_reference_type() {
                     let load_type = bin.llvm_type(&expr.ty(), ns);
-                    bin.builder.build_load(elem.into_pointer_value(), "elem")
+                    bin.builder
+                        .build_load(load_type, elem.into_pointer_value(), "elem")
                 } else {
                     elem
                 };
@@ -178,14 +190,7 @@ pub fn expression<'a>(
 
         Expression::ArrayLiteral(loc, ty, dimensions, values) => {
             let array_ty = bin.llvm_type(ty, ns);
-            let num_elements: u32 = dimensions.iter().product();
-
-            let num_elements_value = bin.context.i64_type().const_int(num_elements as u64, false);
-            let array_alloca = bin.build_alloca(
-                func_context.func_val,
-                bin.llvm_type(ty, ns),
-                "array_literal",
-            );
+            let array_alloca = bin.build_alloca(func_context.func_val, array_ty, "array_literal");
 
             for (i, expr) in values.iter().enumerate() {
                 let mut ind = vec![bin.context.i64_type().const_zero()];
@@ -201,31 +206,25 @@ pub fn expression<'a>(
 
                 let elemptr = unsafe {
                     bin.builder
-                        .build_gep(array_alloca, &ind, &format!("elemptr{i}"))
+                        .build_gep(array_ty, array_alloca, &ind, &format!("elemptr{i}"))
                 };
 
                 let elem = expression(expr, bin, func_context, ns);
 
                 let elem = if expr.ty().is_fixed_reference_type() {
-                    bin.builder.build_load(elem.into_pointer_value(), "elem")
+                    bin.builder.build_load(
+                        bin.llvm_type(&expr.ty(), ns),
+                        elem.into_pointer_value(),
+                        "elem",
+                    )
                 } else {
                     elem
                 };
 
                 bin.builder.build_store(elemptr, elem);
             }
-            let elemptr = unsafe {
-                bin.builder.build_gep(
-                    array_alloca,
-                    &[
-                        bin.context.i64_type().const_zero(),
-                        bin.context.i64_type().const_zero(),
-                    ],
-                    "array_ptr",
-                )
-            };
 
-            elemptr.into()
+            array_alloca.into()
         }
         Expression::ConstArrayLiteral(loc, ty, dimensions, values) => {
             unimplemented!()
@@ -253,14 +252,15 @@ pub fn expression<'a>(
             let struct_ty = bin.llvm_type(expr.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_context, ns).into_pointer_value();
             bin.builder
-                .build_struct_gep(struct_ptr, *member as u32, "struct member")
+                .build_struct_gep(struct_ty, struct_ptr, *member as u32, "struct member")
                 .unwrap()
                 .into()
         }
         Expression::Load(loc, ty, expr) => {
             let ptr = expression(expr, bin, func_context, ns).into_pointer_value();
             if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
-                let value = bin.builder.build_load(ptr, "");
+                let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
+                let value = bin.builder.build_load(loaded_type, ptr, "");
                 // if the pointer is null, it needs to be allocated
                 let allocation_needed = bin
                     .builder
@@ -299,7 +299,8 @@ pub fn expression<'a>(
 
                 combined_struct_ptr.as_basic_value()
             } else {
-                bin.builder.build_load(ptr, "")
+                let loaded_type = bin.llvm_type(ty, ns);
+                bin.builder.build_load(loaded_type, ptr, "")
             }
         }
 
@@ -409,23 +410,10 @@ pub fn emit_function_call<'a>(
 
                 if ret.ty.is_reference_type(ns) {
                     let ret_ptr =
-                        bin.build_alloca(func_context.func_val, bin.llvm_type(&ret.ty, ns), "");
-                    bin.build_array_store(ret_value, ret_ptr, 10);
-                    (
-                        unsafe {
-                            bin.builder
-                                .build_gep(
-                                    ret_ptr,
-                                    &[
-                                        bin.context.i64_type().const_zero(),
-                                        bin.context.i64_type().const_zero(),
-                                    ],
-                                    "",
-                                )
-                                .into()
-                        },
-                        true,
-                    )
+                        bin.build_alloca(func_context.func_val, bin.llvm_var_ty(&ret.ty, ns), "");
+
+                    bin.builder.build_store(ret_ptr, ret_value);
+                    (ret_ptr.into(), true)
                 } else {
                     (ret_value, true)
                 }
@@ -530,7 +518,11 @@ fn array_subscript<'a>(
                         if let Some(array_length_var) = func_context.array_lengths_vars.get(num) {
                             returned = bin
                                 .builder
-                                .build_load(array_length_var.into_pointer_value(), "array_length")
+                                .build_load(
+                                    bin.context.i64_type(),
+                                    array_length_var.into_pointer_value(),
+                                    "array_length",
+                                )
                                 .into_int_value();
                         } else {
                             returned = expression(&array_length_expr, bin, func_context, ns)
@@ -558,27 +550,39 @@ fn array_subscript<'a>(
         }
     };
 
-    // if array_ty.is_dynamic_memory() {
-    //     return unsafe {
-    //         bin.builder.build_gep(
-    //             bin.vector_bytes(array_ptr),
-    //             &[index.into_int_value()],
-    //             "index_access",
-    //         )
-    //     }
-    //     .into();
-    // }
-
-    let array_length_sub_index: BasicValueEnum = bin
+    if array_ty.is_dynamic_memory() {
+        return unsafe {
+            bin.builder.build_gep(
+                bin.context.i8_type(),
+                bin.vector_bytes(array_ptr),
+                &[index.into_int_value()],
+                "index_access",
+            )
+        }
+        .into();
+    }
+    let array_length_sub_one: BasicValueEnum = bin
         .builder
-        .build_int_sub(array_length.into_int_value(), index.into_int_value(), "")
+        .build_int_sub(
+            array_length.into_int_value(),
+            bin.context.i64_type().const_int(1, false),
+            "",
+        )
+        .into();
+    let array_length_sub_one_sub_index: BasicValueEnum = bin
+        .builder
+        .build_int_sub(
+            array_length_sub_one.into_int_value(),
+            index.into_int_value(),
+            "",
+        )
         .into();
     // check if index is out of bounds
     bin.builder.build_call(
         bin.module
             .get_function("builtin_range_check")
             .expect("builtin_range_check should have been defined before"),
-        &[array_length_sub_index.into()],
+        &[array_length_sub_one_sub_index.into()],
         "",
     );
 
@@ -587,8 +591,9 @@ fn array_subscript<'a>(
     let array_type = bin.llvm_type(array_ty.deref_memory(), ns);
     let element_ptr = unsafe {
         bin.builder.build_gep(
+            array_type,
             array_ptr.into_pointer_value(),
-            &[index.into_int_value()],
+            &[bin.context.i64_type().const_zero(), index.into_int_value()],
             "index_access",
         )
     };

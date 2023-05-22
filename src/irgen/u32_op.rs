@@ -556,7 +556,7 @@ pub fn u32_or<'a>(
     bin.builder.build_unconditional_branch(merge_bb);
 
     bin.builder.position_at_end(merge_bb);
-    let result = bin.builder.build_load(result_ptr, "");
+    let result = bin.builder.build_load(bool_type, result_ptr, "");
 
     result
 }
@@ -602,7 +602,7 @@ pub fn u32_and<'a>(
     bin.builder.build_unconditional_branch(merge_bb);
 
     bin.builder.position_at_end(merge_bb);
-    let result = bin.builder.build_load(result_ptr, "");
+    let result = bin.builder.build_load(bool_type, result_ptr, "");
 
     result
 }
@@ -640,7 +640,7 @@ pub fn u32_power<'a>(
 
     let current_right_value_loaded = bin
         .builder
-        .build_load(current_right_value, "")
+        .build_load(i64_type, current_right_value, "")
         .into_int_value();
 
     let is_zero = bin.builder.build_int_compare(
@@ -655,7 +655,10 @@ pub fn u32_power<'a>(
     bin.builder.position_at_end(loop_block);
 
     // Update the accumulator
-    let acc_value = bin.builder.build_load(accumulator, "").into_int_value();
+    let acc_value = bin
+        .builder
+        .build_load(i64_type, accumulator, "")
+        .into_int_value();
     let new_acc_value = bin.builder.build_int_mul(acc_value, left_value, "");
     bin.builder.build_store(accumulator, new_acc_value);
 
@@ -669,7 +672,7 @@ pub fn u32_power<'a>(
     bin.builder.build_unconditional_branch(loop_block);
 
     bin.builder.position_at_end(exit_block);
-    let result = bin.builder.build_load(accumulator, "");
+    let result = bin.builder.build_load(i64_type, accumulator, "");
     bin.builder.build_call(
         bin.module
             .get_function("builtin_range_check")

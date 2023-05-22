@@ -82,7 +82,7 @@ impl<'a> Binary<'a> {
 
     /// Default empty value
     pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) -> BasicValueEnum<'a> {
-        let llvm_ty = self.llvm_type(ty, ns);
+        let llvm_ty = self.llvm_var_ty(ty, ns);
 
         // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
         if llvm_ty.is_pointer_type() {
@@ -108,20 +108,20 @@ impl<'a> Binary<'a> {
         // function parameters
         let args = params
             .iter()
-            .map(|ty| self.llvm_args_ty(ty, ns).into())
+            .map(|ty| self.llvm_var_ty(ty, ns).into())
             .collect::<Vec<BasicMetadataTypeEnum>>();
 
         return if returns.is_empty() {
             let void_type = self.context.void_type();
             void_type.fn_type(&args, false)
         } else if returns.len() == 1 {
-            let return_type = self.llvm_args_ty(&returns[0], ns);
+            let return_type = self.llvm_var_ty(&returns[0], ns);
             return_type.fn_type(&args, false)
         } else {
             // when function return multiple values, we need to return a struct
             let struct_returns = returns
                 .iter()
-                .map(|ty| self.llvm_type(ty, ns))
+                .map(|ty| self.llvm_var_ty(ty, ns).into())
                 .collect::<Vec<BasicTypeEnum>>();
             let struct_type = self.context.struct_type(&struct_returns, false);
             struct_type.fn_type(&args, false)
@@ -140,20 +140,6 @@ impl<'a> Binary<'a> {
         }
     }
 
-    /// Return the llvm type for a variable holding the type, not the type
-    /// itself
-    pub(crate) fn llvm_args_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
-        let llvm_ty = self.llvm_type(ty, ns);
-        match ty.deref_memory() {
-            Type::Struct(_) | Type::Array(..) => self
-                .context
-                .i64_type()
-                .ptr_type(AddressSpace::default())
-                .as_basic_type_enum(),
-            _ => llvm_ty,
-        }
-    }
-
     /// Return the llvm type for field in struct or array
     pub(crate) fn llvm_field_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
@@ -162,71 +148,6 @@ impl<'a> Binary<'a> {
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => llvm_ty,
-        }
-    }
-
-    pub(crate) fn build_array_store(
-        &self,
-        value: BasicValueEnum,
-        ptr: PointerValue,
-        array_len: u64,
-    ) {
-        match value {
-            BasicValueEnum::PointerValue(_) => {
-                let mut i = 0;
-                while i < array_len {
-                    let source_elem_ptr = unsafe {
-                        self.builder.build_gep(
-                            value.into_pointer_value(),
-                            &[self.context.i64_type().const_int(i, false)],
-                            "arrayidx",
-                        )
-                    };
-                    let source_elem = self.builder.build_load(source_elem_ptr, "");
-
-                    let dest_elem_ptr = unsafe {
-                        self.builder.build_gep(
-                            ptr,
-                            &[
-                                self.context.i64_type().const_zero(),
-                                self.context.i64_type().const_int(i, false),
-                            ],
-                            "arrayidx",
-                        )
-                    };
-
-                    self.builder.build_store(dest_elem_ptr, source_elem);
-
-                    i += 1;
-                }
-            }
-            BasicValueEnum::ArrayValue(_) => {
-                let mut i = 0;
-                while i < array_len {
-                    let source_elem =
-                        self.builder
-                            .build_extract_value(value.into_array_value(), i as u32, "");
-
-                    let dest_elem_ptr = unsafe {
-                        self.builder.build_gep(
-                            ptr,
-                            &[
-                                self.context.i64_type().const_zero(),
-                                self.context.i64_type().const_int(i, false),
-                            ],
-                            "arrayidx",
-                        )
-                    };
-
-                    self.builder
-                        .build_store(dest_elem_ptr, source_elem.unwrap());
-
-                    i += 1;
-                }
-            }
-            _ => {
-                unreachable!("build_store: not implemented")
-            }
         }
     }
 
@@ -353,7 +274,7 @@ impl<'a> Binary<'a> {
             )
             .try_as_basic_value()
             .left()
-            .expect("Should have a left return value")
+            .unwrap()
     }
     pub(crate) fn create_struct_vector(&self) -> BasicTypeEnum<'a> {
         let capacity_type = self.context.i64_type();
@@ -396,8 +317,12 @@ impl<'a> Binary<'a> {
 
             let len = unsafe {
                 self.builder.build_gep(
+                    vector_type,
                     vector,
-                    &[self.context.i32_type().const_zero()],
+                    &[
+                        self.context.i64_type().const_zero(),
+                        self.context.i64_type().const_zero(),
+                    ],
                     "vector_len",
                 )
             };
@@ -405,11 +330,41 @@ impl<'a> Binary<'a> {
             self.builder
                 .build_select(
                     self.builder.build_is_null(vector, "vector_is_null"),
-                    self.context.i32_type().const_zero(),
-                    self.builder.build_load(len, "vector_len").into_int_value(),
+                    self.context.i64_type().const_zero(),
+                    self.builder
+                        .build_load(self.context.i64_type(), len, "vector_len")
+                        .into_int_value(),
                     "length",
                 )
                 .into_int_value()
+        }
+    }
+
+    /// Return the pointer to the actual bytes in the vector
+    pub(crate) fn vector_bytes(&self, vector: BasicValueEnum<'a>) -> PointerValue<'a> {
+        if vector.is_struct_value() {
+            // slice
+            let slice = vector.into_struct_value();
+            self.builder
+                .build_extract_value(slice, 0, "slice_data")
+                .unwrap()
+                .into_pointer_value()
+        } else {
+            let vector_type = match self.module.get_struct_type("struct.vector") {
+                Some(vector) => vector.into(),
+                None => self.create_struct_vector(),
+            };
+            unsafe {
+                self.builder.build_gep(
+                    vector_type,
+                    vector.into_pointer_value(),
+                    &[
+                        self.context.i32_type().const_zero(),
+                        self.context.i32_type().const_int(2, false),
+                    ],
+                    "data",
+                )
+            }
         }
     }
 }
