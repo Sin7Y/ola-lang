@@ -49,58 +49,107 @@ pub fn expression<'a>(
         Expression::And(_, l, r) => u32_and(l, r, bin, func_context, ns),
         Expression::Power(_, _, l, r) => u32_power(l, r, bin, func_context, ns),
         // TODO refactor Decrement and Increment
-        Expression::Decrement(_, _, expr) => match expr.as_ref() {
-            Expression::Variable(_, ty, pos) => {
-                let one = bin.context.i64_type().const_int(1, false);
-                let before_ptr = *func_context.var_table.get(pos).unwrap();
-                let before_val = bin.builder.build_load(
-                    bin.llvm_type(&ty, ns),
-                    before_ptr.into_pointer_value(),
-                    "",
-                );
-                before_val
-                    .as_instruction_value()
-                    .unwrap()
-                    .set_alignment(8)
-                    .unwrap();
-                let after = bin.builder.build_int_sub(
-                    before_val.as_any_value_enum().into_int_value(),
-                    one,
-                    "",
-                );
-                bin.builder
-                    .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum())
-                    .set_alignment(8)
-                    .unwrap();
-                return before_ptr.as_basic_value_enum();
+        Expression::Decrement(loc, ty, expr) => {
+            let v = match expr.ty() {
+                Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
+                Type::StorageRef(ty) => unimplemented!(),
+                _ => *expr.clone(),
+            };
+            let one = bin.context.i64_type().const_int(1, false);
+            match expr.as_ref() {
+                Expression::Variable(_, ty, pos) => {
+                    let before_ptr = *func_context.var_table.get(pos).unwrap();
+                    let before_val = bin.builder.build_load(
+                        bin.llvm_type(&ty, ns),
+                        before_ptr.into_pointer_value(),
+                        "",
+                    );
+                    before_val
+                        .as_instruction_value()
+                        .unwrap()
+                        .set_alignment(8)
+                        .unwrap();
+                    let after = bin.builder.build_int_sub(
+                        before_val.as_any_value_enum().into_int_value(),
+                        one,
+                        "",
+                    );
+                    bin.builder
+                        .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum())
+                        .set_alignment(8)
+                        .unwrap();
+                    return before_ptr.as_basic_value_enum();
+                }
+                _ => {
+                    let dest = expression(expr, bin, func_context, ns);
+                    let value = expression(&v, bin, func_context, ns);
+                    match expr.ty() {
+                        Type::StorageRef(..) => {
+                            unimplemented!("storage ref")
+                        }
+                        Type::Ref(_) => {
+                            let after = bin.builder.build_int_sub(value.into_int_value(), one, "");
+                            bin.builder
+                                .build_store(dest.into_pointer_value(), after.as_basic_value_enum())
+                                .set_alignment(8)
+                                .unwrap();
+                            return dest.as_basic_value_enum();
+                        }
+                        _ => unreachable!(),
+                    }
+                }
             }
-            _ => unreachable!(),
-        },
-        Expression::Increment(_, _, expr) => match expr.as_ref() {
-            Expression::Variable(_, ty, pos) => {
-                let one = bin.context.i64_type().const_int(1, false);
-                let before_ptr = *func_context.var_table.get(pos).unwrap();
-                let before_val = bin.builder.build_load(
-                    bin.llvm_type(&ty, ns),
-                    before_ptr.into_pointer_value(),
-                    "",
-                );
-                before_val
-                    .as_instruction_value()
-                    .unwrap()
-                    .set_alignment(8)
-                    .unwrap();
-                let after = bin
-                    .builder
-                    .build_int_add(before_val.into_int_value(), one, "");
-                bin.builder
-                    .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum())
-                    .set_alignment(8)
-                    .unwrap();
-                return before_ptr.as_basic_value_enum();
+        }
+        Expression::Increment(loc, ty, expr) => {
+            let v = match expr.ty() {
+                Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
+                Type::StorageRef(ty) => unimplemented!(),
+                _ => *expr.clone(),
+            };
+            let one = bin.context.i64_type().const_int(1, false);
+            match expr.as_ref() {
+                Expression::Variable(_, ty, pos) => {
+                    let one = bin.context.i64_type().const_int(1, false);
+                    let before_ptr = *func_context.var_table.get(pos).unwrap();
+                    let before_val = bin.builder.build_load(
+                        bin.llvm_type(&ty, ns),
+                        before_ptr.into_pointer_value(),
+                        "",
+                    );
+                    before_val
+                        .as_instruction_value()
+                        .unwrap()
+                        .set_alignment(8)
+                        .unwrap();
+                    let after = bin
+                        .builder
+                        .build_int_add(before_val.into_int_value(), one, "");
+                    bin.builder
+                        .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum())
+                        .set_alignment(8)
+                        .unwrap();
+                    return before_ptr.as_basic_value_enum();
+                }
+                _ => {
+                    let dest = expression(expr, bin, func_context, ns);
+                    let value = expression(&v, bin, func_context, ns);
+                    match expr.ty() {
+                        Type::StorageRef(..) => {
+                            unimplemented!("storage ref")
+                        }
+                        Type::Ref(_) => {
+                            let after = bin.builder.build_int_add(value.into_int_value(), one, "");
+                            bin.builder
+                                .build_store(dest.into_pointer_value(), after.as_basic_value_enum())
+                                .set_alignment(8)
+                                .unwrap();
+                            return dest.as_basic_value_enum();
+                        }
+                        _ => unreachable!(),
+                    }
+                }
             }
-            _ => unreachable!(),
-        },
+        }
         Expression::Assign(_, _, l, r) => {
             let right_value = expression(r, bin, func_context, ns);
 
