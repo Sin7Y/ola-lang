@@ -17,8 +17,12 @@ declare ptr @prophet_malloc(i64)
 
 define i64 @array_sort_test(ptr %0) {
 entry:
+  %array_1 = alloca ptr, align 8
   %array_literal1 = alloca [10 x i64], align 8
+  %array_0 = alloca ptr, align 8
   %array_literal = alloca [10 x i64], align 8
+  %source = alloca ptr, align 8
+  store ptr %0, ptr %source, align 8
   %elemptr0 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 0
   store i64 0, ptr %elemptr0, align 4
   %elemptr1 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 1
@@ -39,6 +43,7 @@ entry:
   store i64 8, ptr %elemptr8, align 4
   %elemptr9 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 9
   store i64 9, ptr %elemptr9, align 4
+  store ptr %array_literal, ptr %array_0, align 8
   %elemptr02 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 0
   store i64 1, ptr %elemptr02, align 4
   %elemptr13 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 1
@@ -59,9 +64,12 @@ entry:
   store i64 9, ptr %elemptr810, align 4
   %elemptr911 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 9
   store i64 0, ptr %elemptr911, align 4
-  store ptr %array_literal, ptr %array_literal1, align 8
+  store ptr %array_literal1, ptr %array_1, align 8
+  %1 = load ptr, ptr %array_0, align 8
+  store ptr %1, ptr %array_1, align 8
+  %2 = load ptr, ptr %array_0, align 8
   call void @builtin_range_check(i64 7)
-  %index_access = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 2
-  %1 = load i64, ptr %index_access, align 4
-  ret i64 %1
+  %index_access = getelementptr [10 x i64], ptr %2, i64 0, i64 2
+  %3 = load i64, ptr %index_access, align 4
+  ret i64 %3
 }

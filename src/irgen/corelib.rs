@@ -1,6 +1,5 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
-use inkwell::module::Linkage;
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::AddressSpace;
 use once_cell::sync::Lazy;

@@ -106,11 +106,6 @@ pub(crate) fn populate_arguments<'a>(
         if let Some(pos) = arg {
             let var = &func_context.func.get_symbol_table().vars[pos];
             let arg_val = func_context.func_val.get_nth_param(i as u32).unwrap();
-            if var.ty.is_reference_type(ns) {
-                // reference types are passed as pointers
-                func_context.var_table.insert(*pos, arg_val.into());
-                continue;
-            }
             let alloc = bin.build_alloca(
                 func_context.func_val,
                 bin.llvm_var_ty(&var.ty, ns),

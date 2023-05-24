@@ -551,6 +551,7 @@ impl Recurse for Expression {
                         e.recurse(cx, f);
                     }
                 }
+                Expression::Load(_, _, expr) => expr.recurse(cx, f),
                 _ => (),
             }
         }

@@ -1911,7 +1911,7 @@ fn member_access(
         {
             return Ok(Expression::StructMember(
                 id.loc,
-                f.ty.clone(),
+                Type::Ref(Box::new(f.ty.clone())),
                 Box::new(expr),
                 i,
             ));

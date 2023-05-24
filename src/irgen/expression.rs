@@ -48,7 +48,6 @@ pub fn expression<'a>(
         Expression::Or(_, l, r) => u32_or(l, r, bin, func_context, ns),
         Expression::And(_, l, r) => u32_and(l, r, bin, func_context, ns),
         Expression::Power(_, _, l, r) => u32_power(l, r, bin, func_context, ns),
-        // TODO refactor Decrement and Increment
         Expression::Decrement(loc, ty, expr) => {
             let v = match expr.ty() {
                 Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
@@ -172,12 +171,9 @@ pub fn expression<'a>(
                 .get(var_no)
                 .unwrap()
                 .as_basic_value_enum();
-            if ty.is_reference_type(ns) {
-                return ptr;
-            }
             let load_var =
                 bin.builder
-                    .build_load(bin.llvm_type(&ty, ns), ptr.into_pointer_value(), "");
+                    .build_load(bin.llvm_var_ty(&ty, ns), ptr.into_pointer_value(), "");
             load_var
                 .as_instruction_value()
                 .unwrap()
@@ -213,10 +209,7 @@ pub fn expression<'a>(
                     bin.builder.build_gep(
                         struct_ty,
                         struct_alloca,
-                        &[
-                            bin.context.i64_type().const_zero(),
-                            bin.context.i64_type().const_int(i as u64, false),
-                        ],
+                        &[bin.context.i64_type().const_int(i as u64, false)],
                         "struct member",
                     )
                 };
@@ -298,7 +291,7 @@ pub fn expression<'a>(
             unimplemented!()
         }
         Expression::StructMember(loc, ty, var, member) => {
-            let struct_ty = bin.llvm_type(expr.ty().deref_memory(), ns);
+            let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_context, ns).into_pointer_value();
             bin.builder
                 .build_struct_gep(struct_ty, struct_ptr, *member as u32, "struct member")
@@ -406,12 +399,20 @@ pub fn expression<'a>(
         Expression::ConditionalOperator(loc, ty, cond, left, right) => {
             conditional_operator(bin, ty, cond, func_context, ns, left, right)
         }
-        Expression::BoolLiteral(loc, value) => {
-            unimplemented!()
-        }
+        Expression::BoolLiteral(loc, value) => bin
+            .context
+            .bool_type()
+            .const_int(*value as u64, false)
+            .into(),
 
-        Expression::GetRef(loc, ty, exp) => {
-            unimplemented!()
+        Expression::GetRef(loc, ty, expr) => {
+            let address = expression(expr, bin, func_context, ns).into_array_value();
+
+            let stack = bin.build_alloca(func_context.func_val, address.get_type(), "address");
+
+            bin.builder.build_store(stack, address);
+
+            stack.into()
         }
         Expression::StorageVariable(loc, _, var_contract_no, var_no) => {
             unimplemented!()
@@ -684,6 +685,8 @@ pub fn assign_single<'a>(
         }
     }
 }
+
+fn load_ref_var() {}
 
 // fn verify_sorted_array(
 //     array: BasicValueEnum,
