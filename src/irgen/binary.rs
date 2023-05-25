@@ -80,23 +80,23 @@ impl<'a> Binary<'a> {
         }
     }
 
-    /// Default empty value
-    pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) -> BasicValueEnum<'a> {
-        let llvm_ty = self.llvm_var_ty(ty, ns);
+    // /// Default empty value
+    // pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) ->
+    // BasicValueEnum<'a> {     let llvm_ty = self.llvm_var_ty(ty, ns);
 
-        // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
-        if llvm_ty.is_pointer_type() {
-            llvm_ty.into_pointer_type().const_null().into()
-        } else if llvm_ty.is_array_type() {
-            self.address_type(ns).const_zero().into()
-        } else {
-            BasicTypeEnum::IntType(self.context.custom_width_int_type(64 as u32)).const_zero()
-        }
-    }
+    //     // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
+    //     if llvm_ty.is_pointer_type() {
+    //         llvm_ty.into_pointer_type().const_null().into()
+    //     } else if llvm_ty.is_array_type() {
+    //         self.address_type(ns).const_zero().into()
+    //     } else {
+    //         BasicTypeEnum::IntType(self.context.custom_width_int_type(64 as
+    // u32)).const_zero()     }
+    // }
 
-    pub(crate) fn address_type(&self, ns: &Namespace) -> ArrayType<'a> {
-        self.context.i8_type().array_type(ns.address_length as u32)
-    }
+    // pub(crate) fn address_type(&self, ns: &Namespace) -> ArrayType<'a> {
+    //     self.context.i8_type().array_type(ns.address_length as u32)
+    // }
 
     /// Emit function prototype
     pub(crate) fn function_type(

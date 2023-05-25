@@ -1,18 +1,16 @@
 use inkwell::types::BasicTypeEnum;
-use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
+use inkwell::values::{BasicValue, BasicValueEnum};
 use num_bigint::BigInt;
 use num_traits::Zero;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use super::expression::expression;
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::emit_function_call;
-use crate::irgen::functions::{FunctionContext, Vartable};
-use crate::irgen::unused_variable::{should_remove_assignment, should_remove_variable};
+use crate::irgen::functions::FunctionContext;
 use crate::sema::ast::Type::Uint;
 use crate::sema::ast::{
-    ArrayLength, DestructureField, Expression, Function, Namespace, RetrieveType, Statement, Type,
+    ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
 use ola_parser::program;
 use ola_parser::program::CodeLocation;
@@ -58,17 +56,14 @@ pub(crate) fn statement<'a>(
                 param.name_as_str(),
             );
 
-            bin.builder
-                .build_store(alloca, var_value)
-                .set_alignment(8)
-                .unwrap();
+            bin.builder.build_store(alloca, var_value);
 
             func_context
                 .var_table
                 .insert(*pos, alloca.as_basic_value_enum());
         }
 
-        Statement::VariableDecl(loc, pos, param, None) => {
+        Statement::VariableDecl(_, pos, param, None) => {
             let default_expr = param.ty.default(ns).unwrap();
             let default_value = expression(&default_expr, bin, func_context, ns);
             func_context.var_table.insert(*pos, default_value);
@@ -81,9 +76,7 @@ pub(crate) fn statement<'a>(
                 );
 
                 bin.builder
-                    .build_store(alloc, bin.context.i64_type().const_zero())
-                    .set_alignment(8)
-                    .unwrap();
+                    .build_store(alloc, bin.context.i64_type().const_zero());
 
                 func_context.array_lengths_vars.insert(*pos, alloc.into());
             }
@@ -406,14 +399,13 @@ fn destructure<'a>(
         return;
     }
 
-    let mut value = match expr {
+    let value = match expr {
         // When the value of the expression on the right side is a List
         // We need to return a struct, which corresponds to handling multiple return values in
         // functions.
         Expression::List(_, list) => {
             let mut values = Vec::new();
             for expr in list {
-                let loc = expr.loc();
                 let elem = expression(expr, bin, func_context, ns);
                 let elem_ty = bin.llvm_type(&expr.ty(), ns);
                 let elem = if expr.ty().is_fixed_reference_type() {
@@ -458,9 +450,6 @@ fn destructure<'a>(
             }
             // (u32 a, u32 b) = returnTwoValues();
             DestructureField::VariableDecl(res, param) => {
-                if should_remove_variable(*res, func_context.func) {
-                    continue;
-                }
                 let alloc = bin.build_alloca(
                     func_context.func_val,
                     bin.llvm_var_ty(&param.ty, ns),
@@ -470,10 +459,7 @@ fn destructure<'a>(
                     .var_table
                     .insert(*res, alloc.as_basic_value_enum());
                 if is_single_value {
-                    bin.builder
-                        .build_store(alloc, value)
-                        .set_alignment(8)
-                        .unwrap();
+                    bin.builder.build_store(alloc, value);
                 } else {
                     let field = bin
                         .builder
@@ -483,10 +469,7 @@ fn destructure<'a>(
                             param.name_as_str(),
                         )
                         .unwrap();
-                    bin.builder
-                        .build_store(alloc, field)
-                        .set_alignment(8)
-                        .unwrap();
+                    bin.builder.build_store(alloc, field);
                 }
             }
             DestructureField::Expression(left) => {
@@ -498,19 +481,13 @@ fn destructure<'a>(
                     _ => unreachable!(),
                 };
                 if is_single_value {
-                    bin.builder
-                        .build_store(left.into_pointer_value(), value)
-                        .set_alignment(8)
-                        .unwrap();
+                    bin.builder.build_store(left.into_pointer_value(), value);
                 } else {
                     let field = bin
                         .builder
                         .build_extract_value(value.into_struct_value(), i as u32, "")
                         .unwrap();
-                    bin.builder
-                        .build_store(left.into_pointer_value(), field)
-                        .set_alignment(8)
-                        .unwrap();
+                    bin.builder.build_store(left.into_pointer_value(), field);
                 }
             }
         }

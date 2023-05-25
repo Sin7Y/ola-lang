@@ -1,5 +1,5 @@
 ; ModuleID = 'ArraySortExample'
-source_filename = "examples/array_1.ola"
+source_filename = "examples/source/array/array_1.ola"
 
 declare void @builtin_assert(i64, i64)
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::sema::ast::Type::Uint;
-use crate::sema::ast::{Expression, Namespace, Type};
+use crate::sema::ast::{Expression, Namespace};
 
 use super::{binary::Binary, functions::FunctionContext};
 

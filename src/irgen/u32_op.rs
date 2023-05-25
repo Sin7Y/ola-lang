@@ -2,12 +2,11 @@ use crate::irgen::binary::Binary;
 use crate::irgen::expression::expression;
 use crate::irgen::functions::FunctionContext;
 use crate::sema::ast::Expression::NumberLiteral;
-use crate::sema::ast::{Expression, Function, Namespace, Type};
-use inkwell::values::{BasicValueEnum, FunctionValue};
+use crate::sema::ast::{Expression, Namespace, Type};
+use inkwell::values::BasicValueEnum;
 use inkwell::IntPredicate;
 use num_bigint::BigInt;
 use ola_parser::program::Loc;
-use std::collections::HashMap;
 
 pub fn u32_add<'a>(
     l: &Expression,

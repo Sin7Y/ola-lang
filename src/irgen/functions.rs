@@ -5,7 +5,6 @@ use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
-use std::collections::HashMap;
 
 // IndexMap <ArrayVariable res , res of temp variable>
 pub type ArrayLengthVars<'a> = IndexMap<usize, BasicValueEnum<'a>>;

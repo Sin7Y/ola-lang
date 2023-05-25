@@ -19,9 +19,9 @@ define ptr @createBook() {
 entry:
   %myBook = alloca ptr, align 8
   %struct_alloca = alloca { i64, i64 }, align 8
-  %"struct member" = getelementptr { i64, i64 }, ptr %struct_alloca, i64 0
+  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
   store i64 1, ptr %"struct member", align 4
-  %"struct member1" = getelementptr { i64, i64 }, ptr %struct_alloca, i64 1
+  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
   store i64 3, ptr %"struct member1", align 4
   store ptr %struct_alloca, ptr %myBook, align 8
   %0 = load ptr, ptr %myBook, align 8
@@ -48,8 +48,8 @@ entry:
   %2 = load i64, ptr %"struct member", align 4
   %3 = add i64 %2, 1
   call void @builtin_range_check(i64 %3)
-  store i64 %3, ptr %b, align 8
-  %4 = load i64, ptr %b, align 8
+  store i64 %3, ptr %b, align 4
+  %4 = load i64, ptr %b, align 4
   ret i64 %4
 }
 
@@ -64,9 +64,9 @@ entry:
   store ptr %0, ptr %myBook, align 8
   %2 = load ptr, ptr %myBook, align 8
   %3 = call i64 @getBookName(ptr %2)
-  store i64 %3, ptr %bookTitle, align 8
+  store i64 %3, ptr %bookTitle, align 4
   %4 = load ptr, ptr %myBook, align 8
   %5 = call i64 @getBookId(ptr %4)
-  store i64 %5, ptr %bookId, align 8
+  store i64 %5, ptr %bookId, align 4
   ret void
 }

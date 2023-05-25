@@ -165,7 +165,7 @@ fn check_recursive_struct_field(node: usize, graph: &Graph, ns: &mut Namespace) 
 }
 
 /// check if a struct contains itself. This function calls itself recursively
-fn find_struct_recursion(struct_no: usize, structs_visited: &mut Vec<usize>, ns: &mut Namespace) {
+fn find_struct_recursion(ns: &mut Namespace) {
     let mut edges = HashSet::new();
     for n in 0..ns.structs.len() {
         collect_struct_edges(n, &mut edges, ns);
@@ -207,8 +207,7 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
 
     // struct can contain other structs, and we have to check for recursiveness,
     // i.e. "struct a { b f1; } struct b { a f1; }"
-    (0..ns.structs.len())
-        .for_each(|struct_no| find_struct_recursion(struct_no, &mut vec![struct_no], ns));
+    (0..ns.structs.len()).for_each(|struct_no| find_struct_recursion(ns));
 
     // Calculate the offset of each field in all the struct types
     struct_offsets(ns);
@@ -812,7 +811,6 @@ impl Type {
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
-            Type::StorageRef(ty) => ty.storage_size(ns),
             Type::Ref(ty) | Type::StorageRef(ty) => ty.storage_size(ns),
             Type::UserType(no) => ns.user_types[*no].ty.storage_size(ns),
             // Other types have the same size both in storage and in memory

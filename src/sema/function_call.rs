@@ -341,7 +341,6 @@ fn try_namespace(
 /// 3. Ok(None), when we have not received a function that is a method of a
 /// storage reference
 fn try_storage_reference(
-    loc: &program::Loc,
     var_expr: &Expression,
     func: &program::Identifier,
     args: &[program::Expression],
@@ -459,14 +458,12 @@ fn try_storage_reference(
 fn try_type_method(
     loc: &program::Loc,
     func: &program::Identifier,
-    var: &program::Expression,
     args: &[program::Expression],
     context: &ExprContext,
     var_expr: &Expression,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
-    resolve_to: ResolveTo,
 ) -> Result<Option<Expression>, ()> {
     let var_ty = var_expr.ty();
 
@@ -568,7 +565,6 @@ pub(super) fn method_call_pos_args(
     }
 
     if let Some(resolved_call) = try_storage_reference(
-        loc,
         &var_expr,
         func,
         args,
@@ -584,14 +580,12 @@ pub(super) fn method_call_pos_args(
     if let Some(resolved_call) = try_type_method(
         loc,
         func,
-        var,
         args,
         context,
         &var_expr,
         ns,
         symtable,
         diagnostics,
-        resolve_to,
     )? {
         return Ok(resolved_call);
     }

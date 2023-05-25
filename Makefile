@@ -1,3 +1,10 @@
+
+compile: 
+	./compile.sh
+
+clean:
+	rm -rf $(DST_DIR)
+
 help: ## Display this help screen
 	@grep -h \
 		-E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -14,4 +21,4 @@ clippy: ## Run clippy checks over all workspace members
 	@cargo check --all-features
 	@cargo clippy --all-features --all-targets
 
-.PHONY: fmt clippy doc help
+.PHONY: compile clean fmt clippy doc help

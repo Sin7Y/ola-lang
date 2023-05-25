@@ -6,17 +6,12 @@ use crate::irgen::u32_op::{
     u32_equal, u32_less, u32_less_equal, u32_mod, u32_more, u32_more_equal, u32_mul, u32_not,
     u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
-use crate::irgen::unused_variable::should_remove_assignment;
-use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, RetrieveType, Type};
+use crate::sema::ast::{Expression, LibFunc, Namespace, RetrieveType, Type};
 use crate::sema::diagnostics::Diagnostics;
 use crate::sema::expression::{bigint_to_expression, ResolveTo};
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{
-    AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue,
-};
+use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
 use inkwell::AddressSpace;
-use num_bigint::BigInt;
-use num_traits::ToPrimitive;
 use ola_parser::program;
 
 pub fn expression<'a>(
@@ -48,7 +43,7 @@ pub fn expression<'a>(
         Expression::Or(_, l, r) => u32_or(l, r, bin, func_context, ns),
         Expression::And(_, l, r) => u32_and(l, r, bin, func_context, ns),
         Expression::Power(_, _, l, r) => u32_power(l, r, bin, func_context, ns),
-        Expression::Decrement(loc, ty, expr) => {
+        Expression::Decrement(loc, _, expr) => {
             let v = match expr.ty() {
                 Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
                 Type::StorageRef(ty) => unimplemented!(),
@@ -63,20 +58,13 @@ pub fn expression<'a>(
                         before_ptr.into_pointer_value(),
                         "",
                     );
-                    before_val
-                        .as_instruction_value()
-                        .unwrap()
-                        .set_alignment(8)
-                        .unwrap();
                     let after = bin.builder.build_int_sub(
                         before_val.as_any_value_enum().into_int_value(),
                         one,
                         "",
                     );
                     bin.builder
-                        .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum())
-                        .set_alignment(8)
-                        .unwrap();
+                        .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
                     return before_ptr.as_basic_value_enum();
                 }
                 _ => {
@@ -88,10 +76,10 @@ pub fn expression<'a>(
                         }
                         Type::Ref(_) => {
                             let after = bin.builder.build_int_sub(value.into_int_value(), one, "");
-                            bin.builder
-                                .build_store(dest.into_pointer_value(), after.as_basic_value_enum())
-                                .set_alignment(8)
-                                .unwrap();
+                            bin.builder.build_store(
+                                dest.into_pointer_value(),
+                                after.as_basic_value_enum(),
+                            );
                             return dest.as_basic_value_enum();
                         }
                         _ => unreachable!(),
@@ -115,18 +103,11 @@ pub fn expression<'a>(
                         before_ptr.into_pointer_value(),
                         "",
                     );
-                    before_val
-                        .as_instruction_value()
-                        .unwrap()
-                        .set_alignment(8)
-                        .unwrap();
                     let after = bin
                         .builder
                         .build_int_add(before_val.into_int_value(), one, "");
                     bin.builder
-                        .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum())
-                        .set_alignment(8)
-                        .unwrap();
+                        .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
                     return before_ptr.as_basic_value_enum();
                 }
                 _ => {
@@ -138,10 +119,10 @@ pub fn expression<'a>(
                         }
                         Type::Ref(_) => {
                             let after = bin.builder.build_int_add(value.into_int_value(), one, "");
-                            bin.builder
-                                .build_store(dest.into_pointer_value(), after.as_basic_value_enum())
-                                .set_alignment(8)
-                                .unwrap();
+                            bin.builder.build_store(
+                                dest.into_pointer_value(),
+                                after.as_basic_value_enum(),
+                            );
                             return dest.as_basic_value_enum();
                         }
                         _ => unreachable!(),
@@ -171,15 +152,8 @@ pub fn expression<'a>(
                 .get(var_no)
                 .unwrap()
                 .as_basic_value_enum();
-            let load_var =
-                bin.builder
-                    .build_load(bin.llvm_var_ty(&ty, ns), ptr.into_pointer_value(), "");
-            load_var
-                .as_instruction_value()
-                .unwrap()
-                .set_alignment(8)
-                .unwrap();
-            load_var
+            bin.builder
+                .build_load(bin.llvm_var_ty(&ty, ns), ptr.into_pointer_value(), "")
         }
 
         Expression::LibFunction(_, _, LibFunc::U32Sqrt, args) => {
@@ -205,14 +179,10 @@ pub fn expression<'a>(
             let struct_alloca = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
 
             for (i, expr) in fields.iter().enumerate() {
-                let elemptr = unsafe {
-                    bin.builder.build_gep(
-                        struct_ty,
-                        struct_alloca,
-                        &[bin.context.i64_type().const_int(i as u64, false)],
-                        "struct member",
-                    )
-                };
+                let elemptr = bin
+                    .builder
+                    .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct member")
+                    .unwrap();
 
                 let elem = expression(expr, bin, func_context, ns);
 
@@ -284,13 +254,13 @@ pub fn expression<'a>(
         } => {
             unimplemented!()
         }
-        Expression::Subscript(loc, elem_ty, array_ty, array, index) => {
-            array_subscript(loc, elem_ty, array_ty, array, index, bin, func_context, ns)
+        Expression::Subscript(loc, _, array_ty, array, index) => {
+            array_subscript(loc, array_ty, array, index, bin, func_context, ns)
         }
-        Expression::StructMember(loc, ty, var, field_no) if ty.is_contract_storage() => {
+        Expression::StructMember(_, ty, var, field_no) if ty.is_contract_storage() => {
             unimplemented!()
         }
-        Expression::StructMember(loc, ty, var, member) => {
+        Expression::StructMember(_, ty, var, member) => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_context, ns).into_pointer_value();
             bin.builder
@@ -298,7 +268,7 @@ pub fn expression<'a>(
                 .unwrap()
                 .into()
         }
-        Expression::Load(loc, ty, expr) => {
+        Expression::Load(_, ty, expr) => {
             let ptr = expression(expr, bin, func_context, ns).into_pointer_value();
             if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
                 let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
@@ -396,16 +366,16 @@ pub fn expression<'a>(
             let size = expression(size, bin, func_context, ns).into_int_value();
             bin.vector_new(size)
         }
-        Expression::ConditionalOperator(loc, ty, cond, left, right) => {
+        Expression::ConditionalOperator(_, ty, cond, left, right) => {
             conditional_operator(bin, ty, cond, func_context, ns, left, right)
         }
-        Expression::BoolLiteral(loc, value) => bin
+        Expression::BoolLiteral(_, value) => bin
             .context
             .bool_type()
             .const_int(*value as u64, false)
             .into(),
 
-        Expression::GetRef(loc, ty, expr) => {
+        Expression::GetRef(_, ty, expr) => {
             let address = expression(expr, bin, func_context, ns).into_array_value();
 
             let stack = bin.build_alloca(func_context.func_val, address.get_type(), "address");
@@ -417,10 +387,10 @@ pub fn expression<'a>(
         Expression::StorageVariable(loc, _, var_contract_no, var_no) => {
             unimplemented!()
         }
-        Expression::StorageLoad(loc, ty, expr) => {
+        Expression::StorageLoad(_, ty, expr) => {
             unimplemented!()
         }
-        Expression::Cast { loc, to, expr }
+        Expression::Cast { to, expr, .. }
             if matches!(to, Type::Array(..))
                 && matches!(**expr, Expression::ArrayLiteral { .. }) =>
         {
@@ -538,7 +508,6 @@ fn conditional_operator<'a>(
 /// Codegen for an array subscript expression
 fn array_subscript<'a>(
     loc: &program::Loc,
-    elem_ty: &Type,
     array_ty: &Type,
     array: &Expression,
     index: &Expression,
@@ -659,7 +628,7 @@ pub fn assign_single<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     match left {
-        Expression::Variable(loc, ty, var_no) => {
+        Expression::Variable(_, _, var_no) => {
             let var_ptr = *func_context.var_table.get(var_no).unwrap();
             bin.builder
                 .build_store(var_ptr.into_pointer_value(), right_value);
@@ -685,8 +654,6 @@ pub fn assign_single<'a>(
         }
     }
 }
-
-fn load_ref_var() {}
 
 // fn verify_sorted_array(
 //     array: BasicValueEnum,

@@ -1,5 +1,5 @@
 ; ModuleID = 'Array5'
-source_filename = "examples/array_5.ola"
+source_filename = "examples/source/array/array_5.ola"
 
 declare void @builtin_assert(i64, i64)
 
@@ -50,7 +50,7 @@ entry:
   %index_access1 = getelementptr [10 x i64], ptr %2, i64 0, i64 3
   %3 = load i64, ptr %index_access1, align 4
   %4 = sub i64 %3, 1
-  store i64 %4, ptr %index_access, align 8
+  store i64 %4, ptr %index_access, align 4
   %5 = load ptr, ptr %array_0, align 8
   call void @builtin_range_check(i64 6)
   %index_access2 = getelementptr [10 x i64], ptr %5, i64 0, i64 3
@@ -59,7 +59,7 @@ entry:
   %index_access3 = getelementptr [10 x i64], ptr %6, i64 0, i64 3
   %7 = load i64, ptr %index_access3, align 4
   %8 = add i64 %7, 1
-  store i64 %8, ptr %index_access2, align 8
+  store i64 %8, ptr %index_access2, align 4
   %9 = load ptr, ptr %array_0, align 8
   call void @builtin_range_check(i64 6)
   %index_access4 = getelementptr [10 x i64], ptr %9, i64 0, i64 3

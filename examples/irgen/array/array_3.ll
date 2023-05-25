@@ -1,5 +1,5 @@
 ; ModuleID = 'ArraySortExample'
-source_filename = "examples/array_3.ola"
+source_filename = "examples/source/array/array_3.ola"
 
 declare void @builtin_assert(i64, i64)
 
@@ -44,7 +44,7 @@ entry:
   %elemptr9 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 9
   store i64 9, ptr %elemptr9, align 4
   store ptr %array_literal, ptr %array_0, align 8
-  store i64 0, ptr %array_length, align 8
+  store i64 0, ptr %array_length, align 4
   %1 = load ptr, ptr %array_literal1, align 8
   call void @builtin_range_check(i64 7)
   %index_access = getelementptr [10 x i64], ptr %1, i64 0, i64 2

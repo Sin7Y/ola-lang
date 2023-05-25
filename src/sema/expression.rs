@@ -1989,7 +1989,7 @@ fn member_access(
                     Err(())
                 }
             }
-            Type::Array(_, dim) => {
+            Type::Array(_, _) => {
                 if id.name == "length" {
                     let elem_ty = expr.ty().storage_array_elem().deref_into();
 

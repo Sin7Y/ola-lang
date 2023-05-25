@@ -30,9 +30,10 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 2]> = Lazy::new(|| {
             libfunc: LibFunc::ArraySort,
             namespace: None,
             name: "u32_array_sort",
-            params: vec![
-                Type::Array(Box::new(Type::Uint(32)), vec![ArrayLength::AnyFixed]),
-            ],
+            params: vec![Type::Array(
+                Box::new(Type::Uint(32)),
+                vec![ArrayLength::AnyFixed],
+            )],
             ret: vec![Type::Array(
                 Box::new(Type::Uint(32)),
                 vec![ArrayLength::AnyFixed],
