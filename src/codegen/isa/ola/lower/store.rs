@@ -1,4 +1,4 @@
-use super::{get_inst_output, get_operand_for_val};
+use super::{get_inst_output, get_operand_for_val, new_empty_inst_output};
 use crate::codegen::core::ir::{
     function::instruction::{InstructionId, Opcode as IrOpcode},
     types::Type,
@@ -8,9 +8,11 @@ use crate::codegen::{
     function::instruction::Instruction as MachInstruction,
     isa::ola::{
         instruction::{InstructionData, Opcode, Operand as MOperand, OperandData},
+        register::GR,
         Ola,
     },
     lower::{LoweringContext, LoweringError},
+    register::Reg,
 };
 use anyhow::Result;
 
@@ -46,6 +48,11 @@ pub fn lower_store(
     let vreg;
 
     let src = args[0];
+    println!(
+        "store src {:?}, src type {:?}",
+        ctx.ir_data.value_ref(src),
+        tys[0]
+    );
     match ctx.ir_data.value_ref(src) {
         Value::Constant(c) => {
             let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
@@ -72,7 +79,37 @@ pub fn lower_store(
             }
             vreg = Some(addr.into());
         }
-        Value::Instruction(id) => vreg = Some(get_inst_output(ctx, tys[0], *id)?),
+        Value::Instruction(id) => {
+            if tys[0].is_pointer(ctx.types) {
+                let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+                let inst = ctx.ir_data.inst_ref(*id);
+                println!("store pointer opcode {:?}", inst.opcode);
+                if inst.opcode == IrOpcode::Alloca {
+                    let fp: Reg = GR::R8.into();
+                    let mut src_slot = None;
+                    if let Some(slot_id) = ctx.inst_id_to_slot_id.get(id) {
+                        src_slot = Some(*slot_id);
+                    }
+                    println!("store pointer opcode {:?},slot {:?}", inst.opcode, src_slot);
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::ADDri,
+                            operands: vec![
+                                MOperand::output(addr.into()),
+                                MOperand::new(fp.into()),
+                                MOperand::new(OperandData::Slot(src_slot.unwrap())),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                }
+                // vreg = Some(addr.into());
+                // vreg = Some(get_inst_output(ctx, tys[0], *id)?);
+                vreg = Some(new_empty_inst_output(ctx, tys[0], *id).into());
+            } else {
+                vreg = Some(get_inst_output(ctx, tys[0], *id)?);
+            }
+        }
         Value::Argument(a) => vreg = ctx.arg_idx_to_vreg.get(&a.nth).copied(),
         e => return Err(LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into()),
     }

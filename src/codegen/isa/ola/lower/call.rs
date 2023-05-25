@@ -112,7 +112,7 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
 
     for (gpr_used, (&ty, &arg0)) in tys.iter().zip(args.iter()).enumerate() {
         println!(
-            "type pointer{:?},{:?},arg {:?}",
+            "type pointer {:?},{:?},arg {:?}",
             ty.is_pointer(ctx.types),
             ty,
             arg0
@@ -121,7 +121,8 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
         println!("1 type {:?},arg {:?}", ty, arg0);
         let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, ty));
 
-        if ty.is_pointer(ctx.types) {
+        // TODO: pointer with ref passing
+        /* if ty.is_pointer(ctx.types) {
             match &ctx.ir_data.values[arg0] {
                 Value::Instruction(addr_id) => {
                     let opcode = ctx.ir_data.instructions[*addr_id].opcode;
@@ -145,7 +146,7 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
                 ctx.block_map[&ctx.cur_block],
             ));
             continue;
-        }
+        } */
 
         let opcode = match &arg {
             OperandData::Int32(_) => Opcode::MOVri,
@@ -184,7 +185,7 @@ pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>
         let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
         assert!(ty.is_integer() || ty.is_pointer(ctx.types));
         let (reg, opcode) = match sz {
-            4 => (GR::R0.into(), Opcode::MOVrr),
+            4 | 8 => (GR::R0.into(), Opcode::MOVrr),
             _ => todo!(),
         };
         ctx.inst_seq.push(MachInstruction::new(

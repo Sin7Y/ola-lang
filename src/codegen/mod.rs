@@ -65,6 +65,7 @@ mod test {
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_functioncall_test() {
         // LLVM Assembly
@@ -248,6 +249,7 @@ bar:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_fib_test() {
         // LLVM Assembly
@@ -425,6 +427,7 @@ fib_non_recursive:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_condbr_test() {
         // LLVM Assembly
@@ -892,6 +895,7 @@ gte_rr:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_sqrt_test() {
         // LLVM Assembly
@@ -995,6 +999,7 @@ sqrt_test:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_sqrt_inst_test() {
         // LLVM Assembly

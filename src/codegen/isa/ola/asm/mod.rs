@@ -77,10 +77,10 @@ const DIV_MOD: &'static str = "%{
 
 const ARR_SORT: &'static str = "%{
     entry() {
-        cid.arrOut = sort(cid.arrIn);
+        cid.arrOut = sort(cid.arrIn, cid.len);
     }
-    function sort(felt[] arr) -> felt[] {
-        felt n = arr.length;
+    function sort(felt[] arr, felt len) -> felt[] {
+        felt n = len;
         for (felt i = 0; i < n - 1; i++) {
             for (felt j = 0; j < n - i - 1; j++) {
                 if (arr[j] > arr[j + 1]) {
@@ -201,14 +201,22 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             .to_vec(),
         },
         "prophet_u32_array_sort" => Prophet {
-            code: MOD.to_string(),
+            code: ARR_SORT.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: [Input {
-                name: "cid.arrIn".to_string(),
-                length: 1,
-                isRef: true,
-                isInputOutput: false,
-            }]
+            inputs: [
+                Input {
+                    name: "cid.arrIn".to_string(),
+                    length: 1,
+                    isRef: true,
+                    isInputOutput: false,
+                },
+                Input {
+                    name: "cid.len".to_string(),
+                    length: 1,
+                    isRef: true,
+                    isInputOutput: false,
+                },
+            ]
             .to_vec(),
             outputs: [Output {
                 name: "cid.arrOut".to_string(),
@@ -277,12 +285,12 @@ pub fn print_function(
                 let name = write_operand(&inst.data.operands[1].data, fn_idx);
                 code.push_str(&format!(".PROPHET{}_{}:\n", fn_idx, prophet_index));
                 code.push_str(&format!("  mov r0 psp\n"));
-                if name == "prophet_u32_array_sort" {
+                /* if name == "prophet_u32_array_sort" {
                     for idx in 1..7 {
                         code.push_str(&format!("  mload r{} [r{},{}]\n", idx, idx, idx));
                     }
                 }
-                code.push_str(&format!("  mload r0 [r0,0]\n"));
+                code.push_str(&format!("  mload r0 [r0,0]\n")); */
 
                 assert_eq!(inst.data.operands.len(), 2);
                 prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));
