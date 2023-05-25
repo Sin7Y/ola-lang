@@ -1,0 +1,15 @@
+
+contract MyContract {
+    struct MyStruct {
+        u32 field1;
+        u32 field2;
+    }
+
+    fn myFunction() -> (MyStruct) {
+        MyStruct myMemoryStruct;
+        myMemoryStruct.field1 = 42;
+        myMemoryStruct.field2 = 3;
+        return myMemoryStruct;
+
+    }
+}

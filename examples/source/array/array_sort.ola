@@ -1,0 +1,15 @@
+
+contract ArraySortExample {
+    
+    fn main() {
+       u32[10] source = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
+       u32[10] returned = array_sort_test(source);
+       returned[1] += 1;
+       returned[2] -= 1;
+    }
+
+    fn array_sort_test(u32[10] source) -> (u32[10]) {
+        u32[10] array_sorted = u32_array_sort(source);
+        return array_sorted;
+    }
+}

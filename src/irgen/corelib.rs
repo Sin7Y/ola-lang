@@ -1,5 +1,7 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
+use inkwell::types::{BasicType, BasicTypeEnum};
+use inkwell::AddressSpace;
 use once_cell::sync::Lazy;
 
 // const EPSILON: u64 = (1 << 32) - 1;
@@ -13,8 +15,15 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 3]> =
-    Lazy::new(|| ["prophet_u32_sqrt", "prophet_u32_div", "prophet_u32_mod"]);
+static PROPHET_FUNCTIONS: Lazy<[&str; 5]> = Lazy::new(|| {
+    [
+        "prophet_u32_sqrt",
+        "prophet_u32_div",
+        "prophet_u32_mod",
+        "prophet_u32_array_sort",
+        "prophet_malloc",
+    ]
+});
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 
@@ -70,7 +79,6 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                 );
                 bin.builder.build_return(Some(&root));
             }
-            "u32_sort" => {}
             _ => {}
         }
     });
@@ -93,6 +101,19 @@ pub fn declare_prophets(bin: &mut Binary) {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             bin.module.add_function("prophet_u32_mod", ftype, None);
+        }
+        "prophet_malloc" => {
+            let i64_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = i64_ptr_type.fn_type(&[bin.context.i64_type().into()], false);
+            bin.module.add_function("prophet_malloc", ftype, None);
+        }
+        "prophet_u32_array_sort" => {
+            let array_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let array_length_type = bin.context.i64_type();
+            let ftype =
+                array_ptr_type.fn_type(&[array_ptr_type.into(), array_length_type.into()], false);
+            bin.module
+                .add_function("prophet_u32_array_sort", ftype, None);
         }
         _ => {}
     });

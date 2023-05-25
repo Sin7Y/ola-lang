@@ -8,19 +8,13 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lalrpop-util = { version = "0.19.8", features = ["lexer"] }
-
+lalrpop-util = { version = "0.19.12", features = ["lexer"] }
+serde = { version = "1.0.150", features = ["derive"]}
 
 [build-dependencies]
-lalrpop = "0.19.8"
-serde = { version = "1.0.150", features = ["derive"], optional = true }
-
+lalrpop = "0.19.12"
 
 [dev-dependencies]
 walkdir = "2.3.2"
 pretty_assertions = "1.2"
 regex = "1.7.0"
-
-
-[features]
-program-serde = ["serde"]

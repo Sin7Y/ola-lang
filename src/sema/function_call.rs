@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{Expression, Function, Namespace, Type};
+use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, RetrieveType, Type};
 use crate::sema::diagnostics::Diagnostics;
 
 use crate::sema::corelib;
 use crate::sema::expression::{
-    expression, named_struct_literal, struct_literal, ExprContext, ResolveTo,
+    expression, named_struct_literal, new_array, struct_literal, ExprContext, ResolveTo,
 };
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::check_function_call;
@@ -334,6 +334,210 @@ fn try_namespace(
     Ok(None)
 }
 
+/// Check if the function is a method of a storage reference
+/// Returns:
+/// 1. Err, when there is an error
+/// 2. Ok(Some()), when we have indeed received a method of a storage reference
+/// 3. Ok(None), when we have not received a function that is a method of a
+/// storage reference
+fn try_storage_reference(
+    var_expr: &Expression,
+    func: &program::Identifier,
+    args: &[program::Expression],
+    context: &ExprContext,
+    diagnostics: &mut Diagnostics,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    resolve_to: &ResolveTo,
+) -> Result<Option<Expression>, ()> {
+    if let Type::StorageRef(ty) = &var_expr.ty() {
+        match ty.as_ref() {
+            Type::Array(_, dim) => {
+                if func.name == "push" {
+                    if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
+                        diagnostics.push(Diagnostic::error(
+                            func.loc,
+                            "method 'push()' not allowed on fixed length array".to_string(),
+                        ));
+                        return Err(());
+                    }
+
+                    let elem_ty = ty.array_elem();
+                    let mut builtin_args = vec![var_expr.clone()];
+
+                    let ret_ty = match args.len() {
+                        1 => {
+                            let expr = expression(
+                                &args[0],
+                                context,
+                                ns,
+                                symtable,
+                                diagnostics,
+                                ResolveTo::Type(&elem_ty),
+                            )?;
+
+                            builtin_args.push(expr.cast(
+                                &args[0].loc(),
+                                &elem_ty,
+                                ns,
+                                diagnostics,
+                            )?);
+
+                            Type::Void
+                        }
+                        0 => {
+                            if elem_ty.is_reference_type(ns) {
+                                Type::StorageRef(Box::new(elem_ty))
+                            } else {
+                                elem_ty
+                            }
+                        }
+                        _ => {
+                            diagnostics.push(Diagnostic::error(
+                                func.loc,
+                                "method 'push()' takes at most 1 argument".to_string(),
+                            ));
+                            return Err(());
+                        }
+                    };
+
+                    return Ok(Some(Expression::LibFunction(
+                        func.loc,
+                        vec![ret_ty],
+                        LibFunc::ArrayPush,
+                        builtin_args,
+                    )));
+                }
+                if func.name == "pop" {
+                    if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
+                        diagnostics.push(Diagnostic::error(
+                            func.loc,
+                            "method 'pop()' not allowed on fixed length array".to_string(),
+                        ));
+
+                        return Err(());
+                    }
+
+                    if !args.is_empty() {
+                        diagnostics.push(Diagnostic::error(
+                            func.loc,
+                            "method 'pop()' does not take any arguments".to_string(),
+                        ));
+                        return Err(());
+                    }
+
+                    let storage_elem = ty.storage_array_elem();
+                    let elem_ty = storage_elem.deref_any();
+
+                    let return_ty = if *resolve_to == ResolveTo::Discard {
+                        Type::Void
+                    } else {
+                        elem_ty.clone()
+                    };
+
+                    return Ok(Some(Expression::LibFunction(
+                        func.loc,
+                        vec![return_ty],
+                        LibFunc::ArrayPop,
+                        vec![var_expr.clone()],
+                    )));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(None)
+}
+
+/// Check if the function call is to a type's method
+/// Returns:
+/// 1. Err, when there is an error
+/// 2. Ok(Some()), when we have indeed received a method of a type
+/// 3. Ok(None), when we have received a function that is not a method of a type
+fn try_type_method(
+    loc: &program::Loc,
+    func: &program::Identifier,
+    args: &[program::Expression],
+    context: &ExprContext,
+    var_expr: &Expression,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> Result<Option<Expression>, ()> {
+    let var_ty = var_expr.ty();
+
+    match var_ty.deref_any() {
+        Type::Array(..) => {
+            if func.name == "push" {
+                let elem_ty = var_ty.array_elem();
+
+                let val = match args.len() {
+                    0 => {
+                        return Ok(Some(Expression::LibFunction(
+                            *loc,
+                            vec![elem_ty.clone()],
+                            LibFunc::ArrayPush,
+                            vec![var_expr.clone()],
+                        )));
+                    }
+                    1 => {
+                        let val_expr = expression(
+                            &args[0],
+                            context,
+                            ns,
+                            symtable,
+                            diagnostics,
+                            ResolveTo::Type(&elem_ty),
+                        )?;
+
+                        val_expr.cast(&args[0].loc(), &elem_ty, ns, diagnostics)?
+                    }
+                    _ => {
+                        diagnostics.push(Diagnostic::error(
+                            func.loc,
+                            "method 'push()' takes at most 1 argument".to_string(),
+                        ));
+                        return Err(());
+                    }
+                };
+
+                return Ok(Some(Expression::LibFunction(
+                    *loc,
+                    vec![elem_ty.clone()],
+                    LibFunc::ArrayPush,
+                    vec![var_expr.clone(), val],
+                )));
+            }
+            if func.name == "pop" {
+                if !args.is_empty() {
+                    diagnostics.push(Diagnostic::error(
+                        func.loc,
+                        "method 'pop()' does not take any arguments".to_string(),
+                    ));
+                    return Err(());
+                }
+
+                let elem_ty = match &var_ty {
+                    Type::Array(ty, _) => ty,
+                    _ => unreachable!(),
+                };
+
+                return Ok(Some(Expression::LibFunction(
+                    *loc,
+                    vec![*elem_ty.clone()],
+                    LibFunc::ArrayPop,
+                    vec![var_expr.clone()],
+                )));
+            }
+        }
+
+        _ => (),
+    }
+
+    Ok(None)
+}
+
 /// Resolve a method call with positional arguments
 pub(super) fn method_call_pos_args(
     loc: &program::Loc,
@@ -344,6 +548,7 @@ pub(super) fn method_call_pos_args(
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
+    resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     if let Some(resolved_call) =
         try_namespace(loc, var, func, args, context, ns, symtable, diagnostics)?
@@ -357,6 +562,32 @@ pub(super) fn method_call_pos_args(
         corelib::resolve_method_call(&var_expr, func, args, context, ns, symtable, diagnostics)?
     {
         return Ok(expr);
+    }
+
+    if let Some(resolved_call) = try_storage_reference(
+        &var_expr,
+        func,
+        args,
+        context,
+        diagnostics,
+        ns,
+        symtable,
+        &resolve_to,
+    )? {
+        return Ok(resolved_call);
+    }
+
+    if let Some(resolved_call) = try_type_method(
+        loc,
+        func,
+        args,
+        context,
+        &var_expr,
+        ns,
+        symtable,
+        diagnostics,
+    )? {
+        return Ok(resolved_call);
     }
 
     diagnostics.push(Diagnostic::error(
@@ -432,7 +663,6 @@ pub fn call_expr(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::Expression],
-    is_destructible: bool,
     context: &ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
@@ -477,6 +707,9 @@ pub fn call_expr(
     }
 
     let expr = match ty.remove_parenthesis() {
+        program::Expression::New(_, ty) => {
+            new_array(loc, ty, args, context, ns, symtable, diagnostics)?
+        }
         _ => function_call_expr(
             loc,
             ty,
@@ -490,14 +723,6 @@ pub fn call_expr(
     };
 
     check_function_call(ns, &expr, symtable);
-    if expr.tys().len() > 1 && !is_destructible {
-        diagnostics.push(Diagnostic::error(
-            *loc,
-            "destucturing statement needed for function that returns multiple values".to_string(),
-        ));
-        return Err(());
-    }
-
     Ok(expr)
 }
 
@@ -522,7 +747,17 @@ pub fn function_call_expr(
                 return Err(());
             }
 
-            method_call_pos_args(loc, member, func, args, context, ns, symtable, diagnostics)
+            method_call_pos_args(
+                loc,
+                member,
+                func,
+                args,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                resolve_to,
+            )
         }
         program::Expression::Variable(id) => {
             // is it a lib function call

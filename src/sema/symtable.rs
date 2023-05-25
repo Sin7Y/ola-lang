@@ -42,10 +42,6 @@ pub enum VariableUsage {
     AnonymousReturnVariable,
     LocalVariable,
     DestructureVariable,
-    TryCatchReturns,
-    TryCatchErrorString,
-    TryCatchErrorBytes,
-    YulLocalVariable,
 }
 
 #[derive(Debug, Clone)]

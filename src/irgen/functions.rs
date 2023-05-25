@@ -1,12 +1,38 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
+use crate::sema;
 use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
+use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
-use std::collections::HashMap;
+
+// IndexMap <ArrayVariable res , res of temp variable>
+pub type ArrayLengthVars<'a> = IndexMap<usize, BasicValueEnum<'a>>;
+
+pub type Vartable<'a> = IndexMap<usize, BasicValueEnum<'a>>;
+
+#[derive(Clone)]
+pub struct FunctionContext<'a> {
+    // A mapping between the res of an array and the res of the temp var holding its length.
+    pub array_lengths_vars: ArrayLengthVars<'a>,
+    pub var_table: Vartable<'a>,
+    pub func: &'a Function,
+    pub func_val: FunctionValue<'a>,
+}
+
+impl<'a> FunctionContext<'a> {
+    pub fn new(func: &'a Function, func_val: FunctionValue<'a>) -> Self {
+        Self {
+            array_lengths_vars: IndexMap::new(),
+            var_table: IndexMap::new(),
+            func,
+            func_val,
+        }
+    }
+}
 
 /// Emit all functions, constructors, fallback and receiver
-pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
+pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &'a sema::ast::Namespace) {
     // gen function prototype
     for (_, func) in ns.functions.iter().enumerate() {
         let ftype = bin.function_type(
@@ -35,7 +61,8 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
     // gen function definition
     for (_, func) in ns.functions.iter().enumerate() {
         if let Some(func_val) = bin.module.get_function(&func.name) {
-            gen_function(bin, func, func_val, ns);
+            let mut func_context = FunctionContext::new(func, func_val);
+            gen_function(bin, &mut func_context, ns);
         }
         if func.returns.is_empty() {
             bin.builder.build_return(None);
@@ -45,42 +72,46 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &Namespace) {
 
 pub(super) fn gen_function<'a>(
     bin: &mut Binary<'a>,
-    func: &Function,
-    func_val: FunctionValue<'a>,
+    func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) {
-    let bb = bin.context.append_basic_block(func_val, "entry");
+    let bb: inkwell::basic_block::BasicBlock = bin
+        .context
+        .append_basic_block(func_context.func_val, "entry");
 
     bin.builder.position_at_end(bb);
 
-    let mut var_table: HashMap<usize, BasicValueEnum<'a>> = HashMap::new();
     // populate the argument variables
-    populate_arguments(bin, func, func_val, &mut var_table, ns);
+    populate_arguments(bin, func_context, ns);
 
-    for stmt in &func.body {
-        statement(stmt, bin, func, func_val, &mut var_table, ns);
+    for stmt in &func_context.func.body {
+        statement(stmt, bin, func_context, ns);
     }
 }
 
 /// Populate the arguments of a function
 pub(crate) fn populate_arguments<'a>(
     bin: &mut Binary<'a>,
-    func: &Function,
-    func_val: FunctionValue<'a>,
-    var_table: &mut HashMap<usize, BasicValueEnum<'a>>,
+    func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) {
-    for (i, arg) in func.get_symbol_table().arguments.iter().enumerate() {
+    for (i, arg) in func_context
+        .func
+        .get_symbol_table()
+        .arguments
+        .iter()
+        .enumerate()
+    {
         if let Some(pos) = arg {
-            let var = &func.get_symbol_table().vars[pos];
-            let arg_val = func_val.get_nth_param(i as u32).unwrap();
-            let alloc =
-                bin.build_alloca(func_val, bin.llvm_var_ty(&var.ty, ns), var.id.name.as_str());
-            var_table.insert(*pos, alloc.into());
-            bin.builder
-                .build_store(alloc, arg_val)
-                .set_alignment(8)
-                .unwrap();
+            let var = &func_context.func.get_symbol_table().vars[pos];
+            let arg_val = func_context.func_val.get_nth_param(i as u32).unwrap();
+            let alloc = bin.build_alloca(
+                func_context.func_val,
+                bin.llvm_var_ty(&var.ty, ns),
+                var.id.name.as_str(),
+            );
+            bin.builder.build_store(alloc, arg_val);
+            func_context.var_table.insert(*pos, alloc.into());
         }
     }
 }

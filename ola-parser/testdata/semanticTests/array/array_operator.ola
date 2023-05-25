@@ -1,0 +1,46 @@
+contract Array {
+    // Several ways to initialize an array
+    u32[]  arr;
+    u32[]  arr2 = [1, 2, 3];
+    // Fixed sized array, all elements initialize to 0
+    u32[10] myFixedSizeArr;
+
+    fn get(u32 i) -> (u32) {
+        return arr[i];
+    }
+
+    // Solidity can return the entire array.
+    // But this fn should be avoided for
+    // arrays that can grow indefinitely in length.
+    fn getArr() -> (u32[] memory) {
+        return arr;
+    }
+
+    fn push(u32 i)  {
+        // Append to array
+        // This will increase the array length by 1.
+        arr.push(i);
+    }
+
+    fn pop() {
+        // Remove last element from array
+        // This will decrease the array length by 1
+        arr.pop();
+    }
+
+    fn getLength() -> (u32) {
+        return arr.length;
+    }
+
+    fn remove(u32 index) {
+        // Delete does not change the array length.
+        // It resets the value at index to it's default value,
+        // in this case 0
+        delete arr[index];
+    }
+
+    fn examples() {
+        // create array in memory, only fixed size can be created
+        u32[] a = new u32[](5);
+    }
+}

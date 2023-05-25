@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "program-serde")]
-use serde::{Deserialize, Serialize};
-
 use std::fmt::{self, Display};
 
 /// file no, start offset, end offset (in bytes)
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
+
 pub enum Loc {
     Builtin,
     CommandLine,
@@ -23,7 +20,7 @@ pub trait CodeLocation {
 
 /// Structs should implement this trait to return an optional location
 pub trait OptionalCodeLocation {
-    fn loc(&self) -> Option<Loc>;
+    fn loc_opt(&self) -> Option<Loc>;
 }
 
 impl Loc {
@@ -92,7 +89,7 @@ impl Loc {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
+
 pub struct Identifier {
     pub loc: Loc,
     pub name: String,
@@ -104,12 +101,21 @@ impl Display for Identifier {
     }
 }
 
+/// A qualified identifier.
+///
+/// `<identifiers>.*`
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
+pub struct IdentifierPath {
+    /// The code location.
+    pub loc: Loc,
+    /// The list of identifiers.
+    pub identifiers: Vec<Identifier>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SourceUnit(pub Vec<SourceUnitPart>);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum SourceUnitPart {
     ContractDefinition(Box<ContractDefinition>),
     ImportDirective(Import),
@@ -125,14 +131,12 @@ impl SourceUnitPart {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct StringLiteral {
     pub loc: Loc,
     pub string: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum Import {
     Plain(StringLiteral, Loc),
     GlobalSymbol(StringLiteral, Identifier, Loc),
@@ -150,13 +154,11 @@ impl Import {
 pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum Type {
     Bool,
     Uint(u16),
 }
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct VariableDeclaration {
     pub loc: Loc,
     pub ty: Expression,
@@ -164,7 +166,6 @@ pub struct VariableDeclaration {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 #[allow(clippy::vec_box)]
 pub struct StructDefinition {
     pub loc: Loc,
@@ -173,7 +174,6 @@ pub struct StructDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum ContractPart {
     StructDefinition(Box<StructDefinition>),
     EnumDefinition(Box<EnumDefinition>),
@@ -199,7 +199,6 @@ impl ContractPart {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct ContractDefinition {
     pub loc: Loc,
     pub name: Option<Identifier>,
@@ -207,7 +206,6 @@ pub struct ContractDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct EnumDefinition {
     pub loc: Loc,
     pub name: Option<Identifier>,
@@ -215,14 +213,12 @@ pub struct EnumDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum VariableAttribute {
     Constant(Loc),
     Mutable(Loc),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct VariableDefinition {
     pub loc: Loc,
     pub ty: Expression,
@@ -232,7 +228,6 @@ pub struct VariableDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct TypeDefinition {
     pub loc: Loc,
     pub name: Identifier,
@@ -240,7 +235,6 @@ pub struct TypeDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct NamedArgument {
     pub loc: Loc,
     pub name: Identifier,
@@ -248,10 +242,10 @@ pub struct NamedArgument {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub enum Expression {
     Increment(Loc, Box<Expression>),
     Decrement(Loc, Box<Expression>),
+    New(Loc, Box<Expression>),
     ArraySubscript(Loc, Box<Expression>, Option<Box<Expression>>),
     ArraySlice(
         Loc,
@@ -264,7 +258,8 @@ pub enum Expression {
     FunctionCall(Loc, Box<Expression>, Vec<Expression>),
     NamedFunctionCall(Loc, Box<Expression>, Vec<NamedArgument>),
     Not(Loc, Box<Expression>),
-    Complement(Loc, Box<Expression>),
+    BitwiseNot(Loc, Box<Expression>),
+    Delete(Loc, Box<Expression>),
     Power(Loc, Box<Expression>, Box<Expression>),
     Multiply(Loc, Box<Expression>, Box<Expression>),
     Divide(Loc, Box<Expression>, Box<Expression>),
@@ -310,6 +305,8 @@ impl CodeLocation for Expression {
         match self {
             Expression::Increment(loc, _)
             | Expression::Decrement(loc, _)
+            | Expression::New(loc, _)
+            | Expression::Delete(loc, _)
             | Expression::Parenthesis(loc, _)
             | Expression::ArraySubscript(loc, ..)
             | Expression::ArraySlice(loc, ..)
@@ -317,7 +314,7 @@ impl CodeLocation for Expression {
             | Expression::FunctionCall(loc, ..)
             | Expression::NamedFunctionCall(loc, ..)
             | Expression::Not(loc, _)
-            | Expression::Complement(loc, _)
+            | Expression::BitwiseNot(loc, _)
             | Expression::Power(loc, ..)
             | Expression::Multiply(loc, ..)
             | Expression::Divide(loc, ..)
@@ -381,7 +378,6 @@ impl Expression {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct Parameter {
     pub loc: Loc,
     pub ty: Expression,
@@ -389,7 +385,6 @@ pub struct Parameter {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 pub struct FunctionDefinition {
     pub loc: Loc,
     pub name: Option<Identifier>,
@@ -400,7 +395,6 @@ pub struct FunctionDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "program-serde", derive(Serialize, Deserialize))]
 #[allow(clippy::large_enum_variant, clippy::type_complexity)]
 pub enum Statement {
     Block {
@@ -410,6 +404,7 @@ pub enum Statement {
     },
     Args(Loc, Vec<NamedArgument>),
     If(Loc, Expression, Box<Statement>, Option<Box<Statement>>),
+    While(Loc, Expression, Box<Statement>),
     Expression(Loc, Expression),
     VariableDefinition(Loc, VariableDeclaration, Option<Expression>),
     For(
@@ -419,6 +414,7 @@ pub enum Statement {
         Option<Box<Statement>>,
         Option<Box<Statement>>,
     ),
+    DoWhile(Loc, Box<Statement>, Expression),
     Continue(Loc),
     Break(Loc),
     Error(Loc),
@@ -431,10 +427,12 @@ impl CodeLocation for Statement {
             Statement::Block { loc, .. }
             | Statement::Args(loc, ..)
             | Statement::If(loc, ..)
+            | Statement::While(loc, ..)
             | Statement::Expression(loc, ..)
             | Statement::VariableDefinition(loc, ..)
             | Statement::For(loc, ..)
             | Statement::Continue(loc)
+            | Statement::DoWhile(loc, ..)
             | Statement::Break(loc)
             | Statement::Error(loc)
             | Statement::Return(loc, ..) => *loc,
