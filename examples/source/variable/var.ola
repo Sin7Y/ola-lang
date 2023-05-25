@@ -1,0 +1,11 @@
+contract Fibonacci {
+
+
+    fn var_test(u32 n) -> (u32) {
+        u32 third = 1 + n;
+        u32 first = 2 + n;
+        u32 second = 3 + n;
+        return third + first + second;
+    }
+
+}

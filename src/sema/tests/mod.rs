@@ -18,22 +18,6 @@ pub(crate) fn parse(src: &'static str) -> ast::Namespace {
 fn test_statement_reachable() {
     let loc = Loc::File(0, 1, 2);
     let test_cases: Vec<(Statement, bool)> = vec![
-        (Statement::Underscore(loc), true),
-        (
-            Statement::VariableDecl(
-                loc,
-                0,
-                Parameter {
-                    loc,
-                    id: None,
-                    ty: Type::Bool,
-                    ty_loc: None,
-                    recursive: false,
-                },
-                None,
-            ),
-            true,
-        ),
         (Statement::Continue(loc), false),
         (Statement::Break(loc), false),
         (Statement::Return(loc, None), false),
@@ -351,6 +335,30 @@ fn test_person_contract() {
                 return p.age;
             }
     }
+
+        "#;
+    let ns = parse(file);
+    let errors = ns.diagnostics.errors();
+
+    assert_eq!(errors.len(), 0);
+}
+
+#[test]
+fn test_array_contract() {
+    let file = r#"
+    contract ArraySortExample {
+    
+        // fn main() {
+        //    u32[10] source = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
+        //    array_sort_test(source);
+        // }
+
+        fn array_sort_test(u32[10] source) -> (u32[10]) {
+            u32[10] array_sorted = u32_array_sort(source);
+            return array_sorted;
+        }
+    }
+       
 
         "#;
     let ns = parse(file);

@@ -26,7 +26,7 @@ impl Namespace {
             user_types: Vec::new(),
             functions: Vec::new(),
             constants: Vec::new(),
-            address_length: 0,
+            address_length: 32,
             variable_symbols: HashMap::new(),
             function_symbols: HashMap::new(),
             diagnostics: Diagnostics::default(),
@@ -339,7 +339,7 @@ impl Namespace {
         if corelib::is_reserved(&id.name) {
             self.diagnostics.push(Diagnostic::warning(
                 id.loc,
-                format!("'{}' shadows name of a builtin", id.name),
+                format!("'{}' shadows name of a corelib", id.name),
             ));
             return;
         }
@@ -464,7 +464,7 @@ impl Namespace {
                         return Err(());
                     } else if n > &u32::MAX.into() {
                         let msg = format!(
-                            "array dimension of {} exceeds the maximum of 4294967295 on Substrate",
+                            "array dimension of {} exceeds the maximum of 4294967295 on ola",
                             n
                         );
                         diagnostics.push(Diagnostic::decl_error(*loc, msg));
@@ -484,6 +484,8 @@ impl Namespace {
 
         if let program::Expression::Type(_, ty) = &id {
             assert!(namespace.is_empty());
+
+            // TODO Add Mapping type
 
             let ty = Type::from(ty);
 
@@ -741,6 +743,29 @@ impl Namespace {
                 }
             }
         }
+    }
+
+    /// Convert expression to IdentifierPath
+    pub fn expr_to_identifier_path(
+        &self,
+        mut expr: &program::Expression,
+    ) -> Option<program::IdentifierPath> {
+        let loc = expr.loc();
+        let mut identifiers = Vec::new();
+
+        while let program::Expression::MemberAccess(_, member, name) = expr {
+            identifiers.insert(0, name.clone());
+
+            expr = member.as_ref();
+        }
+
+        if let program::Expression::Variable(id) = expr {
+            identifiers.insert(0, id.clone());
+
+            return Some(program::IdentifierPath { loc, identifiers });
+        }
+
+        None
     }
 
     /// Resolve an expression which defines the array length, e.g. 2**8 in

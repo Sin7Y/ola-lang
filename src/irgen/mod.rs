@@ -1,11 +1,12 @@
 use std::str;
-
+mod array_boundary;
 pub mod binary;
 mod corelib;
 mod expression;
 mod functions;
 mod statements;
 pub mod u32_op;
+mod unused_variable;
 
 use crate::sema::ast;
 

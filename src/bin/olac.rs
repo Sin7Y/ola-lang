@@ -60,38 +60,33 @@ fn main() {
 fn compile(matches: &ArgMatches) {
     let mut namespaces = Vec::new();
 
+    let mut resolver = imports_arg(matches);
+
     let mut errors = false;
 
     for filename in matches.get_many::<OsString>("INPUT").unwrap() {
-        match process_file(filename, matches) {
-            Ok(ns) => namespaces.push(ns),
-            Err(_) => {
-                errors = true;
-            }
-        }
+        let ns = process_file(filename, &mut resolver, matches);
+        namespaces.push(ns);
     }
 
+    for ns in &namespaces {
+        ns.print_diagnostics(&resolver, true);
+        if ns.diagnostics.any_errors() {
+            errors = true;
+        }
+    }
     if errors {
-        eprintln!("error: not all contracts are valid");
         exit(1);
     }
 }
 
-fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()> {
-    let mut resolver = FileResolver::new();
-
-    for filename in matches.get_many::<OsString>("INPUT").unwrap() {
-        if let Ok(path) = PathBuf::from(filename).canonicalize() {
-            let _ = resolver.add_import_path(path.parent().unwrap());
-        }
-    }
-    if let Err(e) = resolver.add_import_path(&PathBuf::from(".")) {
-        eprintln!("error: cannot add current directory to import path: {e}");
-        exit(1);
-    }
-
+fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatches) -> Namespace {
     // resolve phase
-    let ns = ola_lang::parse_and_resolve(filename, &mut resolver);
+    let ns = ola_lang::parse_and_resolve(filename, resolver);
+
+    if ns.diagnostics.any_errors() {
+        return ns;
+    }
 
     // gen ast
     if let Some("ast") = matches.get_one::<String>("Generate").map(|v| v.as_str()) {
@@ -108,11 +103,7 @@ fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()>
             exit(1);
         }
 
-        return Ok(ns);
-    }
-
-    if ns.contracts.is_empty() || ns.diagnostics.any_errors() {
-        return Err(());
+        return ns;
     }
 
     // gen llvm ir、asm
@@ -152,7 +143,7 @@ fn process_file(filename: &OsStr, matches: &ArgMatches) -> Result<Namespace, ()>
         }
     }
 
-    Ok(ns)
+    ns
 }
 
 fn output_file(matches: &ArgMatches, stem: &str, ext: &str) -> PathBuf {
@@ -183,4 +174,21 @@ fn create_file(path: &Path) -> File {
             exit(1);
         }
     }
+}
+
+fn imports_arg(matches: &ArgMatches) -> FileResolver {
+    let mut resolver = FileResolver::new();
+
+    for filename in matches.get_many::<OsString>("INPUT").unwrap() {
+        if let Ok(path) = PathBuf::from(filename).canonicalize() {
+            let _ = resolver.add_import_path(path.parent().unwrap());
+        }
+    }
+
+    if let Err(e) = resolver.add_import_path(&PathBuf::from(".")) {
+        eprintln!("error: cannot add current directory to import path: {e}");
+        exit(1);
+    }
+
+    resolver
 }

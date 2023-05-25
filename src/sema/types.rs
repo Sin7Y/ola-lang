@@ -8,11 +8,18 @@ use super::{
     diagnostics::Diagnostics,
 };
 use indexmap::IndexMap;
+use itertools::Itertools;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
+use ola_parser::diagnostics::Note;
 use ola_parser::{program, program::CodeLocation};
+use petgraph::algo::{all_simple_paths, tarjan_scc};
+use petgraph::stable_graph::IndexType;
+use petgraph::Directed;
 use std::collections::HashSet;
 use std::{fmt::Write, ops::Mul};
+
+type Graph = petgraph::Graph<(), usize, Directed, usize>;
 
 /// List the types which should be resolved later
 pub struct ResolveFields<'a> {
@@ -66,6 +73,7 @@ fn type_decl(
     // - This would require resolving the types definition after all other types are
     //   resolved
     // - Need for circular checks (type a is b; type b is a;)
+    // TODO add address type
     if !matches!(ty, Type::Uint(_) | Type::Bool) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
@@ -93,33 +101,98 @@ fn type_decl(
     });
 }
 
+/// A struct field is considered to be of infinite size, if it contains itself
+/// infinite times (not in a vector).
+///
+/// This function sets the `infinitie_size` flag accordingly for all connections
+/// between `nodes`. `nodes` is assumed to be a set of strongly connected nodes
+/// from within the `graph`.
+///
+/// Any node (struct) can have one or more edges (types) to some other node
+/// (struct). A struct field is not of infinite size, if there are any 2
+/// connecting nodes, where all edges between the 2 connecting nodes are
+/// mappings or dynamic arrays.
+///
+/// ```solidity
+/// struct A { B b; }                           // finite memory size
+/// struct B { A[] a; mapping (uint => A) m; }  // finite memory size
+///
+/// struct C { D d; }                           // infinite memory size
+/// struct D { C[] c1; C c2; }                  // infinite memory size
+/// ```
+fn check_infinite_struct_size(graph: &Graph, nodes: Vec<usize>, ns: &mut Namespace) {
+    let mut infinite_size = true;
+    let mut offenders = HashSet::new();
+    for (a, b) in nodes.windows(2).map(|w| (w[0], w[1])) {
+        let mut infinite_edge = false;
+        for edge in graph.edges_connecting(a.into(), b.into()) {
+            match &ns.structs[a].fields[*edge.weight()].ty {
+                Type::Array(_, dims) if dims.first() != Some(&ArrayLength::Dynamic) => {}
+                Type::Struct(_) => {}
+                _ => continue,
+            }
+            infinite_edge = true;
+            offenders.insert((a, *edge.weight()));
+        }
+        infinite_size &= infinite_edge;
+    }
+    if infinite_size {
+        for (struct_no, field_no) in offenders {
+            ns.structs[struct_no].fields[field_no].infinite_size = true;
+        }
+    }
+}
+
+/// A struct field is recursive, if it is connected to a cyclic path.
+///
+/// This function checks all structs in the `ns` for any paths leading into the
+/// given `node`. `node` is supposed to be inside a cycle.
+/// All affected struct fields will be flagged as recursive (and infinite size
+/// as well, if they are).
+fn check_recursive_struct_field(node: usize, graph: &Graph, ns: &mut Namespace) {
+    for n in 0..ns.structs.len() {
+        for path in all_simple_paths::<Vec<_>, &Graph>(graph, n.into(), node.into(), 0, None) {
+            for (a, b) in path.windows(2).map(|a_b| (a_b[0], a_b[1])) {
+                for edge in graph.edges_connecting(a, b) {
+                    ns.structs[a.index()].fields[*edge.weight()].recursive = true;
+                    if ns.structs[b.index()].fields.iter().any(|f| f.infinite_size) {
+                        ns.structs[a.index()].fields[*edge.weight()].infinite_size = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// check if a struct contains itself. This function calls itself recursively
-fn find_struct_recursion(struct_no: usize, structs_visited: &mut Vec<usize>, ns: &mut Namespace) {
-    let def = ns.structs[struct_no].clone();
-    let mut types_seen: HashSet<usize> = HashSet::new();
-
-    for (field_no, field) in def.fields.iter().enumerate() {
-        if let Type::Struct(field_struct_no) = field.ty {
-            if types_seen.contains(&field_struct_no) {
-                continue;
-            }
-
-            types_seen.insert(field_struct_no);
-
-            if structs_visited.contains(&field_struct_no) {
-                ns.diagnostics.push(Diagnostic::error_with_note(
-                    def.loc,
-                    format!("struct '{}' has infinite size", def.name),
-                    field.loc,
-                    format!("recursive field '{}'", field.name_as_str()),
-                ));
-
-                ns.structs[struct_no].fields[field_no].recursive = true;
-            } else {
-                structs_visited.push(field_struct_no);
-                find_struct_recursion(field_struct_no, structs_visited, ns);
-                structs_visited.pop();
-            }
+fn find_struct_recursion(ns: &mut Namespace) {
+    let mut edges = HashSet::new();
+    for n in 0..ns.structs.len() {
+        collect_struct_edges(n, &mut edges, ns);
+    }
+    let graph = Graph::from_edges(edges);
+    for n in tarjan_scc(&graph).iter().flatten().dedup() {
+        // Don't use None. It'll default to `node_count() - 1` and fail to find path for
+        // graphs like this: `A <-> B`
+        let max_len = Some(graph.node_count());
+        if let Some(cycle) = all_simple_paths::<Vec<_>, &Graph>(&graph, *n, *n, 0, max_len).next() {
+            check_infinite_struct_size(&graph, cycle.iter().map(|p| p.index()).collect(), ns);
+            check_recursive_struct_field(n.index(), &graph, ns);
+        }
+    }
+    for n in 0..ns.structs.len() {
+        let mut notes = vec![];
+        for field in ns.structs[n].fields.iter().filter(|f| f.infinite_size) {
+            let loc = field.loc;
+            let message = format!("recursive field '{}'", field.name_as_str());
+            notes.push(Note { loc, message });
+        }
+        if !notes.is_empty() {
+            ns.diagnostics.push(Diagnostic::error_with_notes(
+                ns.structs[n].loc,
+                format!("struct '{}' has infinite size", ns.structs[n].name),
+                notes,
+            ));
         }
     }
 }
@@ -134,8 +207,7 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
 
     // struct can contain other structs, and we have to check for recursiveness,
     // i.e. "struct a { b f1; } struct b { a f1; }"
-    (0..ns.structs.len())
-        .for_each(|struct_no| find_struct_recursion(struct_no, &mut vec![struct_no], ns));
+    (0..ns.structs.len()).for_each(|struct_no| find_struct_recursion(ns));
 
     // Calculate the offset of each field in all the struct types
     struct_offsets(ns);
@@ -265,6 +337,7 @@ pub fn struct_decl(
             }),
             ty,
             ty_loc: Some(field.ty.loc()),
+            infinite_size: false,
             recursive: false,
         });
     }
@@ -280,6 +353,21 @@ pub fn struct_decl(
     }
 
     fields
+}
+
+/// Find all other structs a given user struct may reach.
+///
+/// `edges` is a set with tuples of 3 dimensions. The first two are the
+/// connecting nodes (struct numbers). The last dimension is the field number of
+/// the first struct where the connection originates.
+fn collect_struct_edges(no: usize, edges: &mut HashSet<(usize, usize, usize)>, ns: &Namespace) {
+    for (field_no, field) in ns.structs[no].fields.iter().enumerate() {
+        for reaching in field.ty.user_struct_no(ns) {
+            if edges.insert((no, reaching, field_no)) {
+                collect_struct_edges(reaching, edges, ns)
+            }
+        }
+    }
 }
 
 /// Parse enum declaration. If the declaration is invalid, it is still generated
@@ -410,7 +498,7 @@ fn struct_offsets(ns: &mut Namespace) {
             let mut largest_alignment = BigInt::zero();
 
             for field in &ns.structs[struct_no].fields {
-                if !field.recursive {
+                if !field.infinite_size {
                     let alignment = field.ty.storage_align(ns);
                     largest_alignment = std::cmp::max(alignment.clone(), largest_alignment.clone());
                     let remainder = offset.clone() % alignment.clone();
@@ -440,6 +528,18 @@ fn struct_offsets(ns: &mut Namespace) {
 }
 
 impl Type {
+    /// Return the set of user defined structs this type encapsulates.
+    pub fn user_struct_no(&self, ns: &Namespace) -> HashSet<usize> {
+        match self {
+            Type::Struct(n) => HashSet::from([*n]),
+            // TODO add mapping
+            Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(ty) => {
+                ty.user_struct_no(ns)
+            }
+            Type::UserType(no) => ns.user_types[*no].ty.user_struct_no(ns),
+            _ => HashSet::new(),
+        }
+    }
     pub fn to_string(&self, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
@@ -483,6 +583,7 @@ impl Type {
             }
             Type::Contract(n) => format!("contract {}", ns.contracts[*n].name),
             Type::UserType(n) => format!("usertype {}", ns.user_types[*n]),
+            Type::Ref(r) => r.to_string(ns),
             Type::StorageRef(ty) => format!("{} storage", ty.to_string(ns)),
             Type::Void => "void".to_owned(),
             Type::Unreachable => "unreachable".into(),
@@ -556,10 +657,12 @@ impl Type {
             Type::Uint(_) => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
-            Type::Array(_, dims) => matches!(dims.last(), Some(ArrayLength::Fixed(_))),
+            Type::Array(_, dims) => !dims.iter().any(|d| *d == ArrayLength::Dynamic),
             Type::Contract(_) => false,
             Type::Slice(_) => false,
             Type::Unresolved => false,
+            Type::Ref(_) => false,
+            Type::Function { .. } => false,
             Type::StorageRef(..) => false,
             _ => unreachable!("{:?}", self),
         }
@@ -577,11 +680,22 @@ impl Type {
         }
     }
 
+    /// Is this a reference to dynamic memory (arrays, strings)
+    pub fn is_dynamic_memory(&self) -> bool {
+        match self {
+            Type::Slice(_) => true,
+            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => true,
+            Type::Ref(ty) => ty.is_dynamic_memory(),
+            _ => false,
+        }
+    }
+
     /// Give the type of an storage array after dereference. This can only be
     /// used on array types and will cause a panic otherwise.
     #[must_use]
     pub fn storage_array_elem(&self) -> Self {
         match self {
+            // TODO add mapping
             Type::Array(ty, dim) if dim.len() > 1 => Type::StorageRef(Box::new(Type::Array(
                 ty.clone(),
                 dim[..dim.len() - 1].to_vec(),
@@ -597,6 +711,7 @@ impl Type {
     pub fn array_length(&self) -> Option<&BigInt> {
         match self {
             Type::StorageRef(ty) => ty.array_length(),
+            Type::Ref(ty) => ty.array_length(),
             Type::Array(_, dim) => dim.last().unwrap().array_length(),
             _ => panic!("array_length on non-array"),
         }
@@ -604,18 +719,27 @@ impl Type {
 
     /// Returns the size a type occupies in memory
     pub fn memory_size_of(&self, ns: &Namespace) -> BigInt {
-        match self {
+        self.memory_size_of_internal(ns, &mut HashSet::new())
+    }
+
+    pub fn memory_size_of_internal(
+        &self,
+        ns: &Namespace,
+        structs_visited: &mut HashSet<usize>,
+    ) -> BigInt {
+        self.guarded_recursion(structs_visited, 0.into(), |structs_visited| match self {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Contract(_) => BigInt::from(ns.address_length),
             Type::Uint(n) => BigInt::from(n / 8),
+            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::from(8),
             Type::Array(ty, dims) => {
-                let pointer_size = BigInt::one();
-                ty.memory_size_of(ns).mul(
+                let pointer_size = (BigInt::from(8)).into();
+                ty.memory_size_of_internal(ns, structs_visited).mul(
                     dims.iter()
                         .map(|d| match d {
-                            ArrayLength::Dynamic => &pointer_size,
                             ArrayLength::Fixed(n) => n,
+                            ArrayLength::Dynamic => &pointer_size,
                             ArrayLength::AnyFixed => unreachable!(),
                         })
                         .product::<BigInt>(),
@@ -624,13 +748,15 @@ impl Type {
             Type::Struct(n) => ns.structs[*n]
                 .fields
                 .iter()
-                .map(|d| d.ty.memory_size_of(ns))
+                .map(|d| d.ty.memory_size_of_internal(ns, structs_visited))
                 .sum::<BigInt>(),
-            Type::StorageRef(..) => BigInt::from(4),
+            Type::Ref(_) | Type::StorageRef(..) => BigInt::from(8),
             Type::Unresolved => BigInt::zero(),
-            Type::UserType(no) => ns.user_types[*no].ty.memory_size_of(ns),
+            Type::UserType(no) => ns.user_types[*no]
+                .ty
+                .memory_size_of_internal(ns, structs_visited),
             _ => unimplemented!("sizeof on {:?}", self),
-        }
+        })
     }
 
     /// Retrieve the alignment for each type, if it is a struct member.
@@ -685,7 +811,7 @@ impl Type {
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
-            Type::StorageRef(ty) => ty.storage_size(ns),
+            Type::Ref(ty) | Type::StorageRef(ty) => ty.storage_size(ns),
             Type::UserType(no) => ns.user_types[*no].ty.storage_size(ns),
             // Other types have the same size both in storage and in memory
             _ => self.memory_size_of(ns),
@@ -772,10 +898,12 @@ impl Type {
     #[must_use]
     pub fn array_deref(&self) -> Self {
         match self {
-            Type::Array(ty, dim) if dim.len() > 1 => {
-                Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())
-            }
-            Type::Array(ty, dim) if dim.len() == 1 => *ty.clone(),
+            Type::Ref(t) => t.array_deref(),
+            Type::Array(ty, dim) if dim.len() > 1 => Type::Ref(Box::new(Type::Array(
+                ty.clone(),
+                dim[..dim.len() - 1].to_vec(),
+            ))),
+            Type::Array(ty, dim) if dim.len() == 1 => Type::Ref(ty.clone()),
             _ => panic!("deref on non-array"),
         }
     }
@@ -830,21 +958,27 @@ impl Type {
 
     /// Does this type contain any types which are variable-length
     pub fn is_dynamic(&self, ns: &Namespace) -> bool {
-        match self {
+        self.is_dynamic_internal(ns, &mut HashSet::new())
+    }
+
+    fn is_dynamic_internal(&self, ns: &Namespace, structs_visited: &mut HashSet<usize>) -> bool {
+        self.guarded_recursion(structs_visited, false, |structs_visited| match self {
+            Type::Ref(r) => r.is_dynamic_internal(ns, structs_visited),
             Type::Array(ty, dim) => {
                 if dim.iter().any(|d| d == &ArrayLength::Dynamic) {
                     return true;
                 }
-
-                ty.is_dynamic(ns)
+                ty.is_dynamic_internal(ns, structs_visited)
             }
-            Type::Struct(n) => ns.structs[*n].fields.iter().any(|f| f.ty.is_dynamic(ns)),
-            Type::StorageRef(r) => r.is_dynamic(ns),
+            Type::Struct(n) => ns.structs[*n]
+                .fields
+                .iter()
+                .any(|f| f.ty.is_dynamic_internal(ns, structs_visited)),
+            Type::StorageRef(r) => r.is_dynamic_internal(ns, structs_visited),
             Type::Slice(_) => true,
             _ => false,
-        }
+        })
     }
-
     /// Is this a reference to contract storage?
     pub fn is_contract_storage(&self) -> bool {
         matches!(self, Type::StorageRef(..))
@@ -854,13 +988,7 @@ impl Type {
     pub fn deref_any(&self) -> &Self {
         match self {
             Type::StorageRef(r) => r,
-            _ => self,
-        }
-    }
-
-    /// If the type is Ref, get the underlying type
-    pub fn deref_memory(&self) -> &Self {
-        match self {
+            Type::Ref(r) => r,
             _ => self,
         }
     }
@@ -870,6 +998,15 @@ impl Type {
     pub fn deref_into(self) -> Self {
         match self {
             Type::StorageRef(r) => *r,
+            Type::Ref(r) => *r,
+            _ => self,
+        }
+    }
+
+    /// If the type is Ref, get the underlying type
+    pub fn deref_memory(&self) -> &Self {
+        match self {
+            Type::Ref(r) => r,
             _ => self,
         }
     }
@@ -877,6 +1014,29 @@ impl Type {
     /// Is it an address (with some sugar)
     pub fn is_address(&self) -> bool {
         matches!(self, Type::Contract(_))
+    }
+
+    pub fn is_recursive(&self, ns: &Namespace) -> bool {
+        match self {
+            Type::Struct(n) => ns.structs[*n].fields.iter().any(|f| f.recursive),
+            Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(ty) => {
+                ty.is_recursive(ns)
+            }
+            Type::UserType(no) => ns.user_types[*no].ty.is_recursive(ns),
+            _ => false,
+        }
+    }
+
+    fn guarded_recursion<F, O>(&self, structs_visited: &mut HashSet<usize>, bail: O, f: F) -> O
+    where
+        F: FnOnce(&mut HashSet<usize>) -> O,
+    {
+        if let Type::Struct(n) = self {
+            if !structs_visited.insert(*n) {
+                return bail;
+            }
+        }
+        f(structs_visited)
     }
 }
 

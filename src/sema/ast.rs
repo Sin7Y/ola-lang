@@ -7,7 +7,7 @@ use indexmap::IndexMap;
 use num_bigint::BigInt;
 pub use ola_parser::diagnostics::*;
 use ola_parser::program;
-use ola_parser::program::CodeLocation;
+use ola_parser::program::{CodeLocation, OptionalCodeLocation};
 use std::sync::Arc;
 use std::{
     collections::{BTreeMap, HashMap},
@@ -28,6 +28,7 @@ pub enum Type {
     Struct(usize),
     /// The usize is an index into contracts in the namespace
     Contract(usize),
+    Ref(Box<Type>),
     /// Reference to storage
     StorageRef(Box<Type>),
 
@@ -144,9 +145,10 @@ pub struct Parameter {
     /// The name can empty (e.g. in an event field or unnamed parameter/return)
     pub id: Option<program::Identifier>,
     pub ty: Type,
-    /// Yul function parameters may not have a type identifier
     pub ty_loc: Option<program::Loc>,
-
+    /// A recursive struct may contain itself which make the struct infinite
+    /// size in memory.
+    pub infinite_size: bool,
     /// A struct may contain itself which make the struct infinite size in
     /// memory. This boolean specifies which field introduces the recursion.
     pub recursive: bool,
@@ -399,6 +401,8 @@ pub enum Expression {
     Variable(program::Loc, Type, usize),
     ConstantVariable(program::Loc, Type, Option<usize>, usize),
     StorageVariable(program::Loc, Type, usize, usize),
+    Load(program::Loc, Type, Box<Expression>),
+    GetRef(program::Loc, Type, Box<Expression>),
     StorageLoad(program::Loc, Type, Box<Expression>),
     ZeroExt {
         loc: program::Loc,
@@ -427,9 +431,7 @@ pub enum Expression {
     NotEqual(program::Loc, Box<Expression>, Box<Expression>),
 
     Not(program::Loc, Box<Expression>),
-    Complement(program::Loc, Type, Box<Expression>),
-    UnaryMinus(program::Loc, Type, Box<Expression>),
-
+    BitwiseNot(program::Loc, Type, Box<Expression>),
     ConditionalOperator(
         program::Loc,
         Type,
@@ -439,6 +441,13 @@ pub enum Expression {
     ),
     Subscript(program::Loc, Type, Type, Box<Expression>, Box<Expression>),
     StructMember(program::Loc, Type, Box<Expression>, usize),
+
+    AllocDynamicArray {
+        loc: program::Loc,
+        ty: Type,
+        length: Box<Expression>,
+        init: Option<Vec<u8>>,
+    },
 
     StorageArrayLength {
         loc: program::Loc,
@@ -510,9 +519,9 @@ impl Recurse for Expression {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
-                Expression::Not(_, expr)
-                | Expression::Complement(_, _, expr)
-                | Expression::UnaryMinus(_, _, expr) => expr.recurse(cx, f),
+                Expression::Not(_, expr) | Expression::BitwiseNot(_, _, expr) => {
+                    expr.recurse(cx, f)
+                }
 
                 Expression::ConditionalOperator(_, _, cond, left, right) => {
                     cond.recurse(cx, f);
@@ -524,6 +533,7 @@ impl Recurse for Expression {
                     right.recurse(cx, f);
                 }
                 Expression::StructMember(_, _, expr, _) => expr.recurse(cx, f),
+                Expression::AllocDynamicArray { length, .. } => length.recurse(cx, f),
                 Expression::StorageArrayLength { array, .. } => array.recurse(cx, f),
                 Expression::Or(_, left, right) | Expression::And(_, left, right) => {
                     left.recurse(cx, f);
@@ -541,6 +551,7 @@ impl Recurse for Expression {
                         e.recurse(cx, f);
                     }
                 }
+                Expression::Load(_, _, expr) => expr.recurse(cx, f),
                 _ => (),
             }
         }
@@ -569,6 +580,8 @@ impl CodeLocation for Expression {
             | Expression::Variable(loc, ..)
             | Expression::ConstantVariable(loc, ..)
             | Expression::StorageVariable(loc, ..)
+            | Expression::Load(loc, ..)
+            | Expression::GetRef(loc, ..)
             | Expression::StorageLoad(loc, ..)
             | Expression::ZeroExt { loc, .. }
             | Expression::Trunc { loc, .. }
@@ -580,12 +593,12 @@ impl CodeLocation for Expression {
             | Expression::Equal(loc, ..)
             | Expression::NotEqual(loc, ..)
             | Expression::Not(loc, _)
-            | Expression::Complement(loc, ..)
-            | Expression::UnaryMinus(loc, ..)
+            | Expression::BitwiseNot(loc, ..)
             | Expression::ConditionalOperator(loc, ..)
             | Expression::Subscript(loc, ..)
             | Expression::StructMember(loc, ..)
             | Expression::Or(loc, ..)
+            | Expression::AllocDynamicArray { loc, .. }
             | Expression::StorageArrayLength { loc, .. }
             | Expression::Function { loc, .. }
             | Expression::FunctionCall { loc, .. }
@@ -606,11 +619,14 @@ impl CodeLocation for Statement {
             | Statement::VariableDecl(loc, ..)
             | Statement::If(loc, ..)
             | Statement::For { loc, .. }
+            | Statement::While(loc, ..)
+            | Statement::DoWhile(loc, ..)
+            | Statement::Destructure(loc, ..)
+            | Statement::Delete(loc, ..)
             | Statement::Expression(loc, ..)
             | Statement::Continue(loc, ..)
             | Statement::Break(loc, ..)
-            | Statement::Return(loc, ..)
-            | Statement::Underscore(loc, ..) => *loc,
+            | Statement::Return(loc, ..) => *loc,
         }
     }
 }
@@ -618,6 +634,10 @@ impl CodeLocation for Statement {
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum LibFunc {
     U32Sqrt,
+    ArrayPush,
+    ArrayPop,
+    ArrayLength,
+    ArraySort,
 }
 
 #[derive(Clone, Debug)]
@@ -635,6 +655,7 @@ pub enum Statement {
         Vec<Statement>,
         Vec<Statement>,
     ),
+    While(program::Loc, bool, Expression, Vec<Statement>),
     For {
         loc: program::Loc,
         reachable: bool,
@@ -643,11 +664,31 @@ pub enum Statement {
         next: Vec<Statement>,
         body: Vec<Statement>,
     },
+    DoWhile(program::Loc, bool, Vec<Statement>, Expression),
+    Delete(program::Loc, Type, Expression),
+    Destructure(program::Loc, Vec<DestructureField>, Expression),
     Expression(program::Loc, bool, Expression),
     Continue(program::Loc),
     Break(program::Loc),
     Return(program::Loc, Option<Expression>),
-    Underscore(program::Loc),
+}
+
+#[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
+pub enum DestructureField {
+    None,
+    Expression(Expression),
+    VariableDecl(usize, Parameter),
+}
+
+impl OptionalCodeLocation for DestructureField {
+    fn loc_opt(&self) -> Option<program::Loc> {
+        match self {
+            DestructureField::None => None,
+            DestructureField::Expression(e) => Some(e.loc()),
+            DestructureField::VariableDecl(_, p) => Some(p.loc),
+        }
+    }
 }
 
 impl Recurse for Statement {
@@ -691,19 +732,18 @@ impl Recurse for Statement {
 }
 
 impl Statement {
-    /// Shorthand for checking underscore
-    pub fn is_underscore(&self) -> bool {
-        matches!(&self, Statement::Underscore(_))
-    }
-
     pub fn reachable(&self) -> bool {
         match self {
             Statement::Block { statements, .. } => statements.iter().all(|s| s.reachable()),
-            Statement::Underscore(_) | Statement::VariableDecl(..) => true,
+            Statement::VariableDecl(..) | Statement::Delete(..) | Statement::Destructure(..) => {
+                true
+            }
 
             Statement::Continue(_) | Statement::Break(_) | Statement::Return(..) => false,
 
             Statement::If(_, reachable, ..)
+            | Statement::While(_, reachable, ..)
+            | Statement::DoWhile(_, reachable, ..)
             | Statement::Expression(_, reachable, _)
             | Statement::For { reachable, .. } => *reachable,
         }
