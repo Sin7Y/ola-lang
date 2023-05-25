@@ -1,6 +1,6 @@
 use super::{get_operand_for_val, get_vreg_for_val, new_empty_inst_output};
 use crate::codegen::core::ir::{
-    function::instruction::{InstructionId, Opcode as IrOpcode},
+    function::instruction::{InstructionId},
     module::name::Name,
     types::{CompoundType, FunctionType, Type},
     value::{ConstantValue, Value, ValueId},

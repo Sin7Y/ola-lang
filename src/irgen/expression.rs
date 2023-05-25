@@ -46,7 +46,7 @@ pub fn expression<'a>(
         Expression::Decrement(loc, _, expr) => {
             let v = match expr.ty() {
                 Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
-                Type::StorageRef(ty) => unimplemented!(),
+                Type::StorageRef(_ty) => unimplemented!(),
                 _ => *expr.clone(),
             };
             let one = bin.context.i64_type().const_int(1, false);
@@ -87,10 +87,10 @@ pub fn expression<'a>(
                 }
             }
         }
-        Expression::Increment(loc, ty, expr) => {
+        Expression::Increment(loc, _ty, expr) => {
             let v = match expr.ty() {
                 Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
-                Type::StorageRef(ty) => unimplemented!(),
+                Type::StorageRef(_ty) => unimplemented!(),
                 _ => *expr.clone(),
             };
             let one = bin.context.i64_type().const_int(1, false);
@@ -173,7 +173,7 @@ pub fn expression<'a>(
             root
         }
 
-        Expression::StructLiteral(loc, ty, fields) => {
+        Expression::StructLiteral(_loc, ty, fields) => {
             let struct_ty = bin.llvm_type(ty, ns);
 
             let struct_alloca = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
@@ -200,7 +200,7 @@ pub fn expression<'a>(
             struct_alloca.into()
         }
 
-        Expression::ArrayLiteral(loc, ty, dimensions, values) => {
+        Expression::ArrayLiteral(_loc, ty, dimensions, values) => {
             let array_ty = bin.llvm_type(ty, ns);
             let array_alloca = bin.build_alloca(func_context.func_val, array_ty, "array_literal");
 
@@ -238,29 +238,29 @@ pub fn expression<'a>(
 
             array_alloca.into()
         }
-        Expression::ConstArrayLiteral(loc, ty, dimensions, values) => {
+        Expression::ConstArrayLiteral(_loc, _ty, _dimensions, _values) => {
             unimplemented!()
         }
 
-        Expression::ConstantVariable(_, _, Some(var_contract_no), var_no) => {
+        Expression::ConstantVariable(_, _, Some(_var_contract_no), _var_no) => {
             unimplemented!()
         }
 
         Expression::StorageArrayLength {
-            loc,
-            ty,
-            array,
-            elem_ty,
+            loc: _,
+            ty: _,
+            array: _,
+            elem_ty: _,
         } => {
             unimplemented!()
         }
         Expression::Subscript(loc, _, array_ty, array, index) => {
             array_subscript(loc, array_ty, array, index, bin, func_context, ns)
         }
-        Expression::StructMember(_, ty, var, field_no) if ty.is_contract_storage() => {
+        Expression::StructMember(_, ty, _var, _field_no) if ty.is_contract_storage() => {
             unimplemented!()
         }
-        Expression::StructMember(_, ty, var, member) => {
+        Expression::StructMember(_, _ty, var, member) => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_context, ns).into_pointer_value();
             bin.builder
@@ -316,7 +316,7 @@ pub fn expression<'a>(
             }
         }
 
-        Expression::LibFunction(loc, tys, LibFunc::ArrayPush, args) => {
+        Expression::LibFunction(_loc, _tys, LibFunc::ArrayPush, args) => {
             if args[0].ty().is_contract_storage() {
                 // TODO Add support for storage type arrays
                 unimplemented!();
@@ -325,7 +325,7 @@ pub fn expression<'a>(
                 unimplemented!();
             }
         }
-        Expression::LibFunction(loc, ty, LibFunc::ArrayPop, args) => {
+        Expression::LibFunction(_loc, _ty, LibFunc::ArrayPop, args) => {
             if args[0].ty().is_contract_storage() {
                 // TODO Add support for storage type arrays
                 unimplemented!();
@@ -334,12 +334,12 @@ pub fn expression<'a>(
                 unimplemented!();
             }
         }
-        Expression::LibFunction(loc, ty, LibFunc::ArrayLength, args) => {
+        Expression::LibFunction(_loc, _ty, LibFunc::ArrayLength, args) => {
             let array = expression(&args[0], bin, func_context, ns);
 
             bin.vector_len(array).into()
         }
-        Expression::LibFunction(loc, ty, LibFunc::ArraySort, args) => {
+        Expression::LibFunction(_loc, _ty, LibFunc::ArraySort, args) => {
             let array = expression(&args[0], bin, func_context, ns);
             let array_length = expression(&args[1], bin, func_context, ns);
 
@@ -358,10 +358,10 @@ pub fn expression<'a>(
             array_sorted.into()
         }
         Expression::AllocDynamicArray {
-            loc,
-            ty,
+            loc: _,
+            ty: _,
             length: size,
-            init,
+            init: _,
         } => {
             let size = expression(size, bin, func_context, ns).into_int_value();
             bin.vector_new(size)
@@ -375,7 +375,7 @@ pub fn expression<'a>(
             .const_int(*value as u64, false)
             .into(),
 
-        Expression::GetRef(_, ty, expr) => {
+        Expression::GetRef(_, _ty, expr) => {
             let address = expression(expr, bin, func_context, ns).into_array_value();
 
             let stack = bin.build_alloca(func_context.func_val, address.get_type(), "address");
@@ -384,10 +384,10 @@ pub fn expression<'a>(
 
             stack.into()
         }
-        Expression::StorageVariable(loc, _, var_contract_no, var_no) => {
+        Expression::StorageVariable(_loc, _, _var_contract_no, _var_no) => {
             unimplemented!()
         }
-        Expression::StorageLoad(_, ty, expr) => {
+        Expression::StorageLoad(_, _ty, _expr) => {
             unimplemented!()
         }
         Expression::Cast { to, expr, .. }
