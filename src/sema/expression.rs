@@ -5,7 +5,7 @@ use super::corelib;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
 use super::symtable::Symtable;
-use crate::sema::ast::Expression::LibFunction;
+
 use crate::sema::ast::LibFunc;
 use crate::sema::function_call::{available_functions, call_expr, named_call_expr};
 use crate::sema::unused_variable::{

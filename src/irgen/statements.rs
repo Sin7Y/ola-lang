@@ -13,7 +13,7 @@ use crate::sema::ast::{
     ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
 use ola_parser::program;
-use ola_parser::program::CodeLocation;
+
 use ola_parser::program::Loc::IRgen;
 
 /// Resolve a statement, which might be a block of statements or an entire body
@@ -169,10 +169,10 @@ pub(crate) fn statement<'a>(
             bin.builder.position_at_end(end_block);
         }
         Statement::For {
-            init,
+            
             cond: None,
-            next,
-            body,
+            
+            
             ..
         } => {
             unimplemented!()
@@ -186,13 +186,13 @@ pub(crate) fn statement<'a>(
                 .build_unconditional_branch(bin.loops.last().unwrap().1);
         }
 
-        Statement::While(_, _, body_stmt, cond_expr) => {
+        Statement::While(_, _, _body_stmt, _cond_expr) => {
             unimplemented!()
         }
-        Statement::DoWhile(_, _, body_stmt, cond_expr) => {
+        Statement::DoWhile(_, _, _body_stmt, _cond_expr) => {
             unimplemented!()
         }
-        Statement::Delete(_, ty, expr) => {
+        Statement::Delete(_, _ty, _expr) => {
             unimplemented!()
         }
 
@@ -293,7 +293,7 @@ fn returns<'a>(
     // Can only be another function call without returns
     let uncast_values = match expr {
         // TODO ADD ConditionalOperator
-        Expression::ConditionalOperator(_, _, cond, true_option, false_option) => {
+        Expression::ConditionalOperator(_, _, _cond, _true_option, _false_option) => {
             unimplemented!()
         }
         Expression::FunctionCall { .. } => {
@@ -385,15 +385,15 @@ fn destructure<'a>(
 
         destructure(bin, fields, left, func_context, ns);
         bin.builder.build_unconditional_branch(done_block);
-        let left_block_end = bin.builder.get_insert_block().unwrap();
+        let _left_block_end = bin.builder.get_insert_block().unwrap();
         bin.builder.position_at_end(right_block);
 
         destructure(bin, fields, right, func_context, ns);
         bin.builder.build_unconditional_branch(done_block);
-        let right_block_end = bin.builder.get_insert_block().unwrap();
+        let _right_block_end = bin.builder.get_insert_block().unwrap();
         bin.builder.position_at_end(done_block);
 
-        let phi = bin.builder.build_phi(bin.llvm_type(&expr.ty(), ns), "phi");
+        let _phi = bin.builder.build_phi(bin.llvm_type(&expr.ty(), ns), "phi");
         bin.builder.position_at_end(done_block);
 
         return;

@@ -4,7 +4,7 @@ use super::ast::{ArrayLength, Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
 use super::expression::{expression, ExprContext, ResolveTo};
 use super::symtable::Symtable;
-use num_bigint::BigInt;
+
 use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 

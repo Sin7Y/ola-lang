@@ -207,7 +207,7 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
 
     // struct can contain other structs, and we have to check for recursiveness,
     // i.e. "struct a { b f1; } struct b { a f1; }"
-    (0..ns.structs.len()).for_each(|struct_no| find_struct_recursion(ns));
+    (0..ns.structs.len()).for_each(|_struct_no| find_struct_recursion(ns));
 
     // Calculate the offset of each field in all the struct types
     struct_offsets(ns);
