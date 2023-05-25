@@ -2,6 +2,7 @@ pub mod alloca;
 pub mod bin;
 pub mod br;
 pub mod call;
+pub mod gep;
 pub mod load;
 pub mod store;
 
@@ -32,6 +33,7 @@ use alloca::lower_alloca;
 use bin::lower_bin;
 use br::{lower_br, lower_condbr};
 use call::{lower_call, lower_return};
+use gep::lower_gep;
 use load::lower_load;
 use store::lower_store;
 
@@ -87,6 +89,7 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
             ref args,
             align,
         }) => lower_store(ctx, tys, args, align),
+        Operand::GetElementPtr(ref gep) => lower_gep(ctx, inst.id.unwrap(), gep),
         Operand::IntBinary(IntBinary { ty, ref args, .. }) => {
             lower_bin(ctx, inst.id.unwrap(), inst.opcode, ty, args)
         }

@@ -21,7 +21,7 @@ impl DataLayout {
                 CompoundType::Array(a) => {
                     self.get_size_of(types, a.inner) * a.num_elements as usize
                 }
-                CompoundType::Pointer(_) => 8,
+                CompoundType::Pointer(_) => 4,
                 CompoundType::Struct(s) => StructLayout::new(self, types, s).get_size(),
                 e => todo!("{:?}", e),
             },
@@ -30,8 +30,7 @@ impl DataLayout {
                 types::I1 => 1,
                 types::I8 => 1,
                 types::I16 => 2,
-                types::I32 => 4,
-                types::I64 => 8,
+                types::I32 | types::I64 => 4,
                 x => todo!("sizeof {:?}", x),
             },
         }
@@ -41,7 +40,7 @@ impl DataLayout {
         match types.get(ty) {
             Some(ty) => match &*ty {
                 CompoundType::Array(a) => self.get_size_of(types, a.inner),
-                CompoundType::Pointer(_) => 8,
+                CompoundType::Pointer(_) => 4,
                 CompoundType::Struct(s) => StructLayout::new(self, types, s).get_align(),
                 _ => todo!(),
             },
@@ -51,7 +50,7 @@ impl DataLayout {
                 types::I8 => 1,
                 types::I16 => 2,
                 types::I32 => 4,
-                types::I64 => 8,
+                types::I64 => 4,
                 x => todo!("sizeof {:?}", x),
             },
         }

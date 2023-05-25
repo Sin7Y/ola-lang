@@ -25,6 +25,8 @@ pub fn parse<'a: 'b, 'b>(
             parse_struct(source, types, true)?
         } else if let Ok((source, _)) = preceded(spaces, tag("opaque"))(source) {
             return Ok((source, types.base_mut().anonymous_struct(vec![], false)));
+        } else if let Ok((source, _)) = preceded(spaces, tag("ptr"))(source) {
+            return Ok((source, types.base_mut().pointer(I32)));
         } else if let Ok((source, name)) =
             preceded(spaces, preceded(char('%'), super::name::parse))(source)
         {

@@ -401,19 +401,7 @@ pub fn parse_getelementptr<'a, 'b>(
         }
         let inst = Opcode::GetElementPtr
             .with_block(ctx.cur_block)
-            .with_ty({
-                let inner = ctx
-                    .types
-                    .base()
-                    .element_at_(
-                        tys[1],
-                        args[1..]
-                            .iter()
-                            .map(|arg| val2idx(ctx.data.value_ref(*arg))),
-                    )
-                    .unwrap();
-                ctx.types.base_mut().pointer(inner)
-            })
+            .with_ty(ctx.types.base_mut().pointer(I32))
             .with_operand(Operand::GetElementPtr(GetElementPtr {
                 inbounds: inbounds.is_some(),
                 tys,

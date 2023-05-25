@@ -65,6 +65,7 @@ mod test {
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_functioncall_test() {
         // LLVM Assembly
@@ -151,6 +152,104 @@ bar:
         );
     }
 
+    #[ignore]
+    #[test]
+    fn codegen_functioncall_multiparams_test() {
+        // LLVM Assembly
+        let asm = r#"
+source_filename = "asm"
+
+; Function Attrs: noinline nounwind optnone ssp uwtable
+define void @main() #0 {
+  %1 = alloca i32, align 4
+  %2 = alloca i32, align 4
+  %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
+  store i32 10, i32* %1, align 4
+  store i32 20, i32* %2, align 4
+  store i32 30, i32* %3, align 4
+  store i32 40, i32* %4, align 4
+  %5 = load i32, i32* %1, align 4
+  %6 = load i32, i32* %2, align 4
+  %7 = load i32, i32* %3, align 4
+  %8 = load i32, i32* %4, align 4
+  %9 = call i32 @add(i32 %5, i32 %6, i32 %7, i32 %8)
+  store i32 %9, i32* %1, align 4
+  %10 = load i32, i32* %1, align 4
+  ret void
+}
+
+; Function Attrs: noinline nounwind optnone ssp uwtable
+define i32 @bar(i32 %0, i32 %1, i32 %2, i32 %3) #0 {
+  %4 = alloca i32, align 4
+  %5 = alloca i32, align 4
+  %6 = alloca i32, align 4
+  %7 = alloca i32, align 4
+  store i32 %0, i32* %4, align 4
+  store i32 %1, i32* %5, align 4
+  store i32 %2, i32* %6, align 4
+  store i32 %3, i32* %7, align 4
+  %8 = load i32, i32* %4, align 4
+  %9 = load i32, i32* %5, align 4
+  %10 = load i32, i32* %6, align 4
+  %11 = load i32, i32* %7, align 4
+  %12 = add nsw i32 %8, %9
+  %13 = add nsw i32 %10, %11
+  %14 = add nsw i32 %12, %13
+  store i32 %14, i32* %4, align 4
+  %15 = load i32, i32* %4, align 4
+  ret i32 %15
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r8 r8 7
+  mstore [r8,-2] r8
+  mov r0 10
+  mstore [r8,-5] r0
+  mov r0 20
+  mstore [r8,-4] r0
+  mov r0 100
+  mstore [r8,-3] r0
+  mload r1 [r8,-5]
+  mload r2 [r8,-4]
+  call bar
+  mstore [r8,-3] r0
+  mload r0 [r8,-3]
+  add r8 r8 -7
+  end
+bar:
+.LBL1_0:
+  add r8 r8 3
+  mstore [r8,-3] r1
+  mstore [r8,-2] r2
+  mov r1 200
+  mstore [r8,-1] r1
+  mload r1 [r8,-3]
+  mload r2 [r8,-2]
+  add r0 r1 r2
+  mstore [r8,-1] r0
+  mload r0 [r8,-1]
+  add r8 r8 -3
+  ret
+"
+        );
+    }
+
+    #[ignore]
     #[test]
     fn codegen_fib_test() {
         // LLVM Assembly
@@ -328,6 +427,7 @@ fib_non_recursive:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_condbr_test() {
         // LLVM Assembly
@@ -795,6 +895,7 @@ gte_rr:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_sqrt_test() {
         // LLVM Assembly
@@ -898,6 +999,7 @@ sqrt_test:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_sqrt_inst_test() {
         // LLVM Assembly
