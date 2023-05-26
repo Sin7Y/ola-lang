@@ -30,16 +30,16 @@ pub struct Prophet {
 pub struct Input {
     pub name: String,
     pub length: u64,
-    pub isRef: bool,
-    pub isInputOutput: bool,
+    pub is_ref: bool,
+    pub is_input_output: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Output {
     pub name: String,
     pub length: u64,
-    pub isRef: bool,
-    pub isInputOutput: bool,
+    pub is_ref: bool,
+    pub is_input_output: bool,
 }
 
 const SQRT: &'static str = "%{
@@ -102,15 +102,15 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             inputs: [Input {
                 name: "cid.x".to_string(),
                 length: 1,
-                isRef: false,
-                isInputOutput: false,
+                is_ref: false,
+                is_input_output: false,
             }]
             .to_vec(),
             outputs: [Output {
                 name: "cid.y".to_string(),
                 length: 1,
-                isRef: false,
-                isInputOutput: false,
+                is_ref: false,
+                is_input_output: false,
             }]
             .to_vec(),
         },
@@ -121,22 +121,22 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
                 Input {
                     name: "cid.x".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
                 Input {
                     name: "cid.y".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
             ]
             .to_vec(),
             outputs: [Output {
                 name: "cid.q".to_string(),
                 length: 1,
-                isRef: false,
-                isInputOutput: false,
+                is_ref: false,
+                is_input_output: false,
             }]
             .to_vec(),
         },
@@ -147,22 +147,22 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
                 Input {
                     name: "cid.x".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
                 Input {
                     name: "cid.y".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
             ]
             .to_vec(),
             outputs: [Output {
                 name: "cid.r".to_string(),
                 length: 1,
-                isRef: false,
-                isInputOutput: false,
+                is_ref: false,
+                is_input_output: false,
             }]
             .to_vec(),
         },
@@ -173,14 +173,14 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
                 Input {
                     name: "cid.x".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
                 Input {
                     name: "cid.y".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
             ]
             .to_vec(),
@@ -188,14 +188,14 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
                 Output {
                     name: "cid.q".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
                 Output {
                     name: "cid.r".to_string(),
                     length: 1,
-                    isRef: false,
-                    isInputOutput: false,
+                    is_ref: false,
+                    is_input_output: false,
                 },
             ]
             .to_vec(),
@@ -207,22 +207,22 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
                 Input {
                     name: "cid.arrIn".to_string(),
                     length: 1,
-                    isRef: true,
-                    isInputOutput: false,
+                    is_ref: true,
+                    is_input_output: false,
                 },
                 Input {
                     name: "cid.len".to_string(),
                     length: 1,
-                    isRef: true,
-                    isInputOutput: false,
+                    is_ref: true,
+                    is_input_output: false,
                 },
             ]
             .to_vec(),
             outputs: [Output {
                 name: "cid.arrOut".to_string(),
                 length: 1,
-                isRef: true,
-                isInputOutput: false,
+                is_ref: true,
+                is_input_output: false,
             }]
             .to_vec(),
         },
