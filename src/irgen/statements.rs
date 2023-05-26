@@ -168,13 +168,7 @@ pub(crate) fn statement<'a>(
 
             bin.builder.position_at_end(end_block);
         }
-        Statement::For {
-            
-            cond: None,
-            
-            
-            ..
-        } => {
+        Statement::For { cond: None, .. } => {
             unimplemented!()
         }
         Statement::Break(_) => {
