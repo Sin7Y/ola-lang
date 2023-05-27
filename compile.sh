@@ -2,24 +2,29 @@
 
 set -e
 
-src_dir="examples/source"
+compile_files() {
+    local src_dir="examples/source"
+    local gen_type=$1
 
-find "$src_dir" -name "*.ola" | while read src_file; do
-    base_name="${src_file%.*}"
+    find "$src_dir" -name "*.ola" | while read src_file; do
+        local base_name="${src_file%.*}"
 
-    sub_dir="$(dirname "$base_name")"
+        local sub_dir="$(dirname "$base_name")"
 
-    dst_dir="examples/irgen"
+        local dst_dir="examples/$gen_type"
 
-    if [ "$sub_dir" != "$src_dir" ]; then
+        if [ "$sub_dir" != "$src_dir" ]; then
+            sub_dir=${sub_dir#$src_dir/}
+            dst_dir="$dst_dir/$sub_dir"
+        fi
 
-        sub_dir=${sub_dir#$src_dir/}
-        dst_dir="$dst_dir/$sub_dir"
-    fi
+        mkdir -p "$dst_dir"
 
-    mkdir -p "$dst_dir"
+        ./target/debug/olac compile "$src_file" --gen "$gen_type" --output "$dst_dir"
+    done
+}
 
-    ./target/debug/olac compile "$src_file" --gen llvm-ir --output "$dst_dir"
+# Call the function with the command-line argument
+compile_files $1
 
-done
 

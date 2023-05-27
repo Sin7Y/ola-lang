@@ -1,0 +1,24 @@
+
+contract StructWithArrayExample {
+    struct Student {
+        u32 age;
+        u32[] grades;
+    }
+
+    fn createStudent() -> (Student) {
+        u32[] gradesArray = new u32[](3);
+        gradesArray[0] = 85;
+        gradesArray[1] = 90;
+        gradesArray[2] = 95;
+        Student myStudent = Student({
+            age: 20,
+            grades: gradesArray
+        });
+
+        return myStudent;
+    }
+
+    fn getFirstGrade(Student _student) -> (u32) {
+        return _student.grades[0];
+    }
+}

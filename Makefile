@@ -1,6 +1,12 @@
 
-compile: 
-	./compile.sh
+compile-llvm-ir: 
+	./compile.sh llvm-ir
+
+compile-asm: 
+	./compile.sh asm
+
+compile-ast:
+	./compile.sh ast
 
 clean:
 	rm -rf $(DST_DIR)
@@ -21,4 +27,4 @@ clippy: ## Run clippy checks over all workspace members
 	@cargo check --all-features
 	@cargo clippy --all-features --all-targets
 
-.PHONY: compile clean fmt clippy doc help
+.PHONY: compile-llvm-ir compile-asm compile-ast clean fmt clippy doc help
