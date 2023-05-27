@@ -1,0 +1,8 @@
+contract FixedArrayExample {
+    
+     fn array_call(u32[3] source) -> (u32[3]) {
+        u32[3] array1 = source;
+        array1[2] = 100;
+        return array1;
+    }
+}

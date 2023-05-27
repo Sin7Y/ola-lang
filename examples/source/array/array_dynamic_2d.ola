@@ -1,0 +1,19 @@
+
+
+contract DynamicTwoDimensionalArrayInMemory {
+    fn initialize(u32 rows, u32 columns) -> (u32[][] memory) {
+        u32[][] dynamicArray = new u32[][](rows);
+        for (u32 i = 0; i < rows; i++) {
+            dynamicArray[i] = new u32[](columns);
+        }
+        return dynamicArray;
+    }
+
+    fn setElement(u32[][] array, u32 row, u32 column, u32 value) {
+        array[row][column] = value;
+    }
+
+    fn getElement(u32[][] array, u32 row, u32 column) -> (u32) {
+        return array[row][column];
+    }
+}

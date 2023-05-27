@@ -31,32 +31,54 @@ pub(crate) fn statement<'a>(
             }
         }
         Statement::VariableDecl(_, pos, param, Some(init)) => {
-            // Let's check if the declaration is a declaration of a dynamic array
-            if let Expression::AllocDynamicArray { .. } = init.as_ref() {
+            // // Let's check if the declaration is a declaration of a dynamic array
+            // if let Expression::AllocDynamicArray { length, .. } = init.as_ref() {
+            //     let alloca = bin.build_alloca(
+            //         func_context.func_val,
+            //         bin.llvm_var_ty(&Uint(32), ns),
+            //         "array_length",
+            //     );
+            //     func_context.array_lengths_vars.insert(*pos, alloca.into());
+            //     let length_value = expression(length, bin, func_context, ns);
+            //     bin.builder.build_store(alloca, length_value);
+            // } else if let Expression::Cast { to, expr, .. } = init.as_ref() {
+            //     if matches!(to, Type::Array(..)) {
+            //         if let Expression::ArrayLiteral(_, _, _, val) = &**expr {
+            //             let alloca = bin.build_alloca(
+            //                 func_context.func_val,
+            //                 bin.llvm_var_ty(&Uint(32), ns),
+            //                 "array_length",
+            //             );
+            //             func_context.array_lengths_vars.insert(*pos, alloca.into());
+            //             let length_value =
+            //                 bin.context.i64_type().const_int(val.len() as u64, false);
+            //             bin.builder.build_store(alloca, length_value);
+            //         }
+            //     }
+            // } else if let Expression::Variable(_, _, var_no) = Arc::clone(&init).as_ref()
+            // {     // If declaration happens with an existing array, check if
+            // the size of the array     // is known. If the size of the right
+            // hand side is known (is in     // the array_length_map), make the
+            // left hand side track it     // Now, we will have two keys in the
+            // map that point to the same temporary     // variable
+            //     if let Some(to_add) = func_context.array_lengths_vars.get(var_no) {
+            //         func_context.array_lengths_vars.insert(*pos, *to_add);
+            //     }
+            // }
+            let var_value = expression(init, bin, func_context, ns);
+
+            let alloca = if param.ty.is_reference_type(ns) {
+                var_value.into_pointer_value()
+            } else {
                 let alloca = bin.build_alloca(
                     func_context.func_val,
-                    bin.llvm_var_ty(&Uint(32), ns),
-                    "array_length",
+                    bin.llvm_type(&param.ty, ns),
+                    param.name_as_str(),
                 );
-                func_context.array_lengths_vars.insert(*pos, alloca.into());
-            } else if let Expression::Variable(_, _, var_no) = Arc::clone(&init).as_ref() {
-                // If declaration happens with an existing array, check if the size of the array
-                // is known. If the size of the right hand side is known (is in
-                // the array_length_map), make the left hand side track it
-                // Now, we will have two keys in the map that point to the same temporary
-                // variable
-                if let Some(to_add) = func_context.array_lengths_vars.get(var_no) {
-                    func_context.array_lengths_vars.insert(*pos, *to_add);
-                }
-            }
-            let var_value = expression(init, bin, func_context, ns);
-            let alloca = bin.build_alloca(
-                func_context.func_val,
-                bin.llvm_var_ty(&param.ty, ns),
-                param.name_as_str(),
-            );
 
-            bin.builder.build_store(alloca, var_value);
+                bin.builder.build_store(alloca, var_value);
+                alloca
+            };
 
             func_context
                 .var_table
@@ -68,18 +90,18 @@ pub(crate) fn statement<'a>(
             let default_value = expression(&default_expr, bin, func_context, ns);
             func_context.var_table.insert(*pos, default_value);
 
-            if matches!(param.ty, Type::Array(..)) {
-                let alloc = bin.build_alloca(
-                    func_context.func_val,
-                    bin.llvm_var_ty(&Uint(32), ns),
-                    "array_length",
-                );
+            // if matches!(param.ty, Type::Array(..)) {
+            //     let alloc = bin.build_alloca(
+            //         func_context.func_val,
+            //         bin.llvm_var_ty(&Uint(32), ns),
+            //         "array_length",
+            //     );
 
-                bin.builder
-                    .build_store(alloc, bin.context.i64_type().const_zero());
+            //     bin.builder
+            //         .build_store(alloc, bin.context.i64_type().const_zero());
 
-                func_context.array_lengths_vars.insert(*pos, alloc.into());
-            }
+            //     func_context.array_lengths_vars.insert(*pos, alloc.into());
+            // }
         }
 
         Statement::Return(_, expr) => match expr {
