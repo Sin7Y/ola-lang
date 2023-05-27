@@ -21,7 +21,7 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 5]> = Lazy::new(|| {
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
-        "prophet_malloc",
+        "vector_new",
     ]
 });
 
@@ -102,10 +102,19 @@ pub fn declare_prophets(bin: &mut Binary) {
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             bin.module.add_function("prophet_u32_mod", ftype, None);
         }
-        "prophet_malloc" => {
-            let i64_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
-            let ftype = i64_ptr_type.fn_type(&[bin.context.i64_type().into()], false);
-            bin.module.add_function("prophet_malloc", ftype, None);
+        "vector_new" => {
+            let vector_ptr_type = bin.create_struct_vector().ptr_type(AddressSpace::default());
+            let ftype = vector_ptr_type.fn_type(
+                &[
+                    bin.context.i64_type().into(),
+                    bin.context
+                        .i64_type()
+                        .ptr_type(AddressSpace::default())
+                        .into(),
+                ],
+                false,
+            );
+            bin.module.add_function("vector_new", ftype, None);
         }
         "prophet_u32_array_sort" => {
             let array_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());

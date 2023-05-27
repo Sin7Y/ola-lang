@@ -686,9 +686,10 @@ impl Dot {
                     ns.loc_to_string(loc),
                 ];
 
-                if let Some(initializer) = init {
-                    labels.insert(1, format!("initializer: {}", hex::encode(initializer)));
-                }
+                //TODO
+                // if let Some(initializer) = init {
+                //     labels.insert(1, format!("initializer: {}", ));
+                // }
 
                 let node = self.add_node(
                     Node::new("alloc_array", labels),

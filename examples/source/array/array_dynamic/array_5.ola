@@ -1,0 +1,17 @@
+contract DynamicArrayExample {
+    
+    fn main() {
+       u32[] array = new u32[](5);
+       array[0] = 1;
+       u32 length = array_call(array);
+    }
+
+     fn array_call(u32[] source) -> (u32) {
+        u32[] array = source;
+        for (u32 i = 0; i < 5; i += 1) {
+            array[i] = i;
+        }
+        return array.length;
+        
+    }
+}

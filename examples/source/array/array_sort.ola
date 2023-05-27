@@ -3,13 +3,18 @@ contract ArraySortExample {
     
     fn main() {
        u32[10] source = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
-       u32[10] returned = array_sort_test(source);
-       returned[1] += 1;
-       returned[2] -= 1;
+       u32[] returned = array_sort_test(source);
+       returned[0] += 1;
+       returned[1] -= 1;
+
     }
 
-    fn array_sort_test(u32[10] source) -> (u32[10]) {
-        u32[10] array_sorted = u32_array_sort(source);
+    fn array_sort_test(u32[10] source) -> (u32[]) {
+        u32[] array = new u32[](10);
+        for (u32 i = 0; i < 10; i += 1) {
+            array[i] = source[i];
+        }
+        u32[] array_sorted = u32_array_sort(array);
         return array_sorted;
     }
 }

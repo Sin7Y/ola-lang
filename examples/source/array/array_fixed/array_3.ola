@@ -1,0 +1,9 @@
+contract FixedArrayExample {
+    
+    fn main() {
+       u32[3] array;    
+        array[2] = 3;  
+        array[1] += 1;  
+        array[2] -= 1;  
+    }
+}

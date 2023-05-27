@@ -1,0 +1,9 @@
+contract FixedArrayExample {
+    
+      fn array_call()  {
+        u32[2] array = [88, 99];
+        u32[2] array_1 = [1000, 1001];
+        array = array_1;
+        array[1] = 7;
+    }
+}

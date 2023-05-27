@@ -1,0 +1,22 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola" {
+	contract [label="contract DynamicArrayExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:1:1-6:2"]
+	main [label="main\ncontract: DynamicArrayExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:3:5-14\nsignature main()"]
+	var_decl [label="variable decl u32[] array\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:8-31"]
+	cast [label="cast u32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:22-31"]
+	array_literal [label="array literal: u32[3]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:22-31"]
+	number_literal [label="u32 literal: 1\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:23-24"]
+	number_literal_7 [label="u32 literal: 2\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:26-27"]
+	number_literal_8 [label="u32 literal: 3\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:29-30"]
+	diagnostic [label="found DynamicArrayExample \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:1:1-6:2"]
+	diagnostic_11 [label="local variable 'array' has been assigned, but never read\nlevel Warning\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/array_dynamic/array_1.ola:4:14-19"]
+	contracts -> contract
+	contract -> main [label="fn"]
+	main -> var_decl [label="body"]
+	var_decl -> cast [label="init"]
+	cast -> array_literal [label="expr"]
+	array_literal -> number_literal [label="arg #0"]
+	array_literal -> number_literal_7 [label="arg #1"]
+	array_literal -> number_literal_8 [label="arg #2"]
+	diagnostics -> diagnostic [label="Debug"]
+	diagnostics -> diagnostic_11 [label="Warning"]
+}

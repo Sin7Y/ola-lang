@@ -1,0 +1,6 @@
+contract DynamicArrayExample {
+    
+    fn main() {
+       u32[] array = [1, 2, 3]; 
+    }
+}

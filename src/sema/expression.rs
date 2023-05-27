@@ -267,46 +267,6 @@ impl Expression {
             {
                 Ok(self.clone())
             }
-            (Type::Array(from_elem, from_dim), Type::Array(to_elem, to_dim))
-                if from_elem == to_elem
-                    && from_dim.len() == to_dim.len()
-                    && from_dim.len() == 1
-                    && from_dim.iter().zip(to_dim.iter()).all(|(f, t)| {
-                        f == t || matches!((f, t), (ArrayLength::AnyFixed, ArrayLength::Fixed(_)))
-                    }) =>
-            {
-                if let Expression::LibFunction(loc, return_tys, LibFunc::ArraySort, args) = self {
-                    // For the sqrt function, only one-dimensional arrays are currently supported.
-                    let size = to_dim
-                        .iter()
-                        .map(|d| match d {
-                            ArrayLength::Dynamic => panic!("unknown length"),
-                            ArrayLength::Fixed(d) => d,
-                            ArrayLength::AnyFixed => {
-                                panic!("unknown length");
-                            }
-                        })
-                        .product::<BigInt>();
-                    let mut args = args.clone();
-                    args.push(Expression::NumberLiteral(*loc, Type::Uint(32), size));
-                    Ok(Expression::LibFunction(
-                        *loc,
-                        return_tys.clone(),
-                        LibFunc::ArraySort,
-                        args.clone(),
-                    ))
-                } else {
-                    diagnostics.push(Diagnostic::cast_error(
-                        *loc,
-                        format!(
-                            "conversion from {} to {} not possible",
-                            from.to_string(ns),
-                            to.to_string(ns)
-                        ),
-                    ));
-                    Err(())
-                }
-            }
 
             _ => {
                 diagnostics.push(Diagnostic::cast_error(
@@ -1861,7 +1821,6 @@ fn member_access(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    // is it a builtin special variable like "block.timestamp"
     if let program::Expression::Variable(namespace) = e {
         if corelib::lib_namespace(&namespace.name) {
             diagnostics.push(Diagnostic::error(

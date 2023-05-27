@@ -4,7 +4,6 @@ use super::ast::{ArrayLength, Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
 use super::expression::{expression, ExprContext, ResolveTo};
 use super::symtable::Symtable;
-use num_bigint::BigInt;
 use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 
@@ -32,11 +31,11 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 2]> = Lazy::new(|| {
             name: "u32_array_sort",
             params: vec![Type::Array(
                 Box::new(Type::Uint(32)),
-                vec![ArrayLength::AnyFixed],
+                vec![ArrayLength::Dynamic],
             )],
             ret: vec![Type::Array(
                 Box::new(Type::Uint(32)),
-                vec![ArrayLength::AnyFixed],
+                vec![ArrayLength::Dynamic],
             )],
         },
     ]
