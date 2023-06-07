@@ -131,12 +131,6 @@ impl SourceUnitPart {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct StringLiteral {
-    pub loc: Loc,
-    pub string: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Import {
     Plain(StringLiteral, Loc),
     GlobalSymbol(StringLiteral, Identifier, Loc),
@@ -157,11 +151,42 @@ pub type ParameterList = Vec<(Loc, Option<Parameter>)>;
 pub enum Type {
     Bool,
     Uint(u16),
+    Address,
+    String,
+    /// `mapping(<key> [key_name] => <value> [value_name])`
+    Mapping {
+        /// The code location.
+        loc: Loc,
+        /// The key expression.
+        ///
+        /// This is only allowed to be an elementary type or a user defined
+        /// type.
+        key: Box<Expression>,
+        /// The optional key identifier.
+        key_name: Option<Identifier>,
+        /// The value expression.
+        value: Box<Expression>,
+        /// The optional value identifier.
+        value_name: Option<Identifier>,
+    },
 }
+
+/// Dynamic type location.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum StorageLocation {
+    /// `memory`
+    Memory(Loc),
+
+    /// `storage`
+    Storage(Loc),
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct VariableDeclaration {
     pub loc: Loc,
     pub ty: Expression,
+    /// The optional memory location.
+    pub storage: Option<StorageLocation>,
     pub name: Option<Identifier>,
 }
 
@@ -235,6 +260,12 @@ pub struct TypeDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct StringLiteral {
+    pub loc: Loc,
+    pub string: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct NamedArgument {
     pub loc: Loc,
     pub name: Identifier,
@@ -294,6 +325,8 @@ pub enum Expression {
     BoolLiteral(Loc, bool),
     NumberLiteral(Loc, String),
     HexNumberLiteral(Loc, String),
+    StringLiteral(Vec<StringLiteral>),
+    AddressLiteral(Loc, String),
     Type(Loc, Type),
     Variable(Identifier),
     List(Loc, ParameterList),
@@ -353,6 +386,8 @@ impl CodeLocation for Expression {
             | Expression::List(loc, _)
             | Expression::Type(loc, _)
             | Expression::Variable(Identifier { loc, .. }) => *loc,
+            Expression::StringLiteral(v) => v[0].loc,
+            Expression::AddressLiteral(loc, _) => *loc,
         }
     }
 }
@@ -368,6 +403,7 @@ impl Display for Expression {
 }
 
 impl Expression {
+    #[inline]
     pub fn remove_parenthesis(&self) -> &Expression {
         if let Expression::Parenthesis(_, expr) = self {
             expr
