@@ -22,8 +22,24 @@ Type: Type = {
     "u32" => Type::Uint(32),
     "u64" => Type::Uint(64),
     "u256" => Type::Uint(256),
+    "address" => Type::Address,
+    "string" => Type::String,
+        <l:@L> "mapping" "(" <k:Precedence0> <key_name:Identifier?> "=>" <v:Precedence0> <value_name:Identifier?> ")" <r:@R> => {
+        Type::Mapping {
+            loc: Loc::File(file_no, l, r),
+            key: Box::new(k),
+            key_name,
+            value: Box::new(v),
+            value_name }
+    },
 
 }
+
+StorageLocation: StorageLocation = {
+    <l:@L> "memory" <r:@R> => StorageLocation::Memory(Loc::File(file_no, l, r)),
+    <l:@L> "storage" <r:@R> => StorageLocation::Storage(Loc::File(file_no, l, r)),
+}
+
 
 
 IdentifierOrError: Option<Identifier> = {
@@ -35,8 +51,8 @@ IdentifierOrError: Option<Identifier> = {
 }
 
 VariableDeclaration: VariableDeclaration = {
-    <l:@L> <ty:Precedence0> <name:IdentifierOrError> <r:@R> => VariableDeclaration {
-        loc: Loc::File(file_no, l, r), ty, name
+    <l:@L> <ty:Precedence0> <storage:StorageLocation?> <name:IdentifierOrError> <r:@R> => VariableDeclaration {
+        loc: Loc::File(file_no, l, r), ty, storage, name
     },
 }
 StructDefinition: Box<StructDefinition> = {
@@ -191,6 +207,11 @@ Precedence2: Expression = {
 NamedArgument: NamedArgument = {
     <l:@L> <name:Identifier> ":" <expr:Expression> <r:@R> => {
         NamedArgument{ loc: Loc::File(file_no, l, r), name, expr }
+    },
+    <l:@L> "address" <ar:@R> ":" <expr:Expression> <r:@R> => {
+        let name = Identifier { loc:  Loc::File(file_no, l, ar), name: "address".into() };
+
+        NamedArgument{ loc: Loc::File(file_no, l, r), name, expr }
     }
 }
 
@@ -232,13 +253,16 @@ LiteralExpression: Expression = {
     <a:@L> "true" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), true),
     <a:@L> "false" <b:@R> => Expression::BoolLiteral(Loc::File(file_no, a, b), false),
     <l:@L> <n: Number> <r:@R> =>  {
-      Expression::NumberLiteral(Loc::File(file_no, l, r), n)
-    },
+        Expression::NumberLiteral(Loc::File(file_no, l, r), n)
+      },
     <l:@L> <n: HexNumber> <r:@R> =>  {
-      Expression::HexNumberLiteral(Loc::File(file_no, l, r), n)
+        Expression::HexNumberLiteral(Loc::File(file_no, l, r), n)
+    },
+    <StringLiteral+> => Expression::StringLiteral(<>),
+    <l:@L> <a: AddressLiteral> <r:@R> => {
+        Expression::AddressLiteral(Loc::File(file_no, l, r), a.chars().skip(2).filter(|c|  *c != '"' && *c != '\'').collect())
     },
 }
-
 
 
 // A parameter list is used for function arguments, returns, and destructuring statements.
@@ -382,22 +406,26 @@ CommaTwo<T>: Vec<T> = {
     }
 };
 
+Identifier: Identifier = {
+    <l:@L> <s: r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"#> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: s.to_string()}
+}
+
 Number: String = {
-    r#"([1-9][0-9]*|0)(u|ll|l)?"# => <>.to_string(),
+    r#"([1-9][0-9]*|0)"# => <>.to_string(),
 }
 
 HexNumber: String = {
-   r#"0x[0-9A-Fa-f]*(u|ll|l)?"# => <>.to_string(),
+    r#"0x[0-9A-Fa-f]{1,63}"# => <>.to_string()
 }
 
-Identifier: Identifier = {
-    <l:@L> <s: r#"[$_]*[a-zA-Z][a-zA-Z$_0-9]*"#> <r:@R> => Identifier{loc: Loc::File(file_no, l, r), name: s.to_string()}
+AddressLiteral: String = {
+    r#"0x[0-9A-Fa-f]{64}"# => <>.to_string(),
 }
 
 
 StringLiteral: StringLiteral = {
     <l:@L> <s:r#""[^"]*""#> <r:@R> => {
-        StringLiteral{ loc: Loc::File(file_no, l, r), string: String::from(&s[1..s.len()-1])}
+        StringLiteral{ loc: Loc::File(file_no, l, r), string: s.to_string()}
     }
 }
 

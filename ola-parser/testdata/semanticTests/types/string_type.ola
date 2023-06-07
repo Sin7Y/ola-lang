@@ -1,0 +1,14 @@
+
+contract StringExample {
+    string myString;
+
+    
+    fn setMyString(string newString) {
+        myString = newString;
+    }
+
+    fn setMyString() {
+        myString = "1234";
+    }
+
+}

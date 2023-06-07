@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt;
+
 use crate::program;
 use crate::program::Loc;
 

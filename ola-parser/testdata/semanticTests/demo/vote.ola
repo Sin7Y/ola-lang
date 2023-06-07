@@ -1,0 +1,53 @@
+contract Voting {
+ 
+    struct Proposal {
+        string name;  
+        u32 voteCount;
+    }
+
+    address chairperson;
+
+    struct Voter {
+        bool voted;  
+        u32 vote;   
+    }
+
+    mapping(address => Voter) voters;
+
+    Proposal[] proposals;
+
+    fn init(string proposalNames) {
+        chairperson = get_caller();
+        for (u32 i = 0; i < proposalNames.length; i++) {
+            proposals.push(Proposal({
+                name: proposalNames[i],
+                voteCount: 0
+            }));
+        }
+    }
+
+    fn vote(u32 proposal)  {
+        address msgSender = get_caller();
+        Voter storage sender = voters[msgSender];
+        //require(!sender.voted, "Already voted.");
+        sender.voted = true;
+        sender.vote = proposal;
+
+        proposals[proposal].voteCount += 1;
+    }
+
+
+    fn winningProposal() -> (u32 winningProposal_) {
+        u32 winningVoteCount = 0;
+        for (u32 p = 0; p < proposals.length; p++) {
+            if (proposals[p].voteCount > winningVoteCount) {
+                winningVoteCount = proposals[p].voteCount;
+                winningProposal_ = p;
+            }
+        }
+    }
+
+    fn winnerName() -> (string winnerName_) {
+        winnerName_ = proposals[winningProposal()].name;
+    }
+}
