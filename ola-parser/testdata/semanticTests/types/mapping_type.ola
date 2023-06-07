@@ -1,0 +1,11 @@
+contract SimpleMappingExample {
+    mapping(address => u256) users;
+
+    fn add_mapping(address name, u256 number)  {
+        users[name] = number;
+    }
+
+    fn get_mapping(address name) -> (u256) {
+        return users[name];
+    }
+}

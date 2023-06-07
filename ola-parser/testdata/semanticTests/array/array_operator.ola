@@ -12,7 +12,7 @@ contract Array {
     // Solidity can return the entire array.
     // But this fn should be avoided for
     // arrays that can grow indefinitely in length.
-    fn getArr() -> (u32[] memory) {
+    fn getArr() -> (u32[]) {
         return arr;
     }
 
