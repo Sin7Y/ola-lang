@@ -1,7 +1,7 @@
 
 
 contract DynamicTwoDimensionalArrayInMemory {
-    fn initialize(u32 rows, u32 columns) -> (u32[][] memory) {
+    fn initialize(u32 rows, u32 columns) -> (u32[][]) {
         u32[][] dynamicArray = new u32[][](rows);
         for (u32 i = 0; i < rows; i++) {
             dynamicArray[i] = new u32[](columns);

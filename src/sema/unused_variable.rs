@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-
-use crate::sema::ast::{Diagnostic, Expression, LibFunc, Namespace};
+use crate::sema::ast::{Diagnostic, Expression, LibFunc, Namespace, RetrieveType};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
 
@@ -8,26 +7,34 @@ use crate::sema::{ast, symtable};
 /// or in the Namespace (for storage variables)
 pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::StorageVariable(_, _, contract_no, offset) => {
-            ns.contracts[*contract_no].variables[*offset].assigned = true;
+        Expression::StorageVariable {
+            contract_no,
+            var_no,
+            ..
+        } => {
+            ns.contracts[*contract_no].variables[*var_no].assigned = true;
         }
 
-        Expression::Variable(_, _, offset) => {
-            let var = symtable.vars.get_mut(offset).unwrap();
+        Expression::Variable { var_no, .. } => {
+            let var = symtable.vars.get_mut(var_no).unwrap();
             var.assigned = true;
         }
 
-        Expression::StructMember(_, _, str, _) => {
-            assigned_variable(ns, str, symtable);
+        Expression::StructMember { expr, .. } => {
+            assigned_variable(ns, expr, symtable);
         }
 
-        Expression::Subscript(_, _, _, array, index) => {
-            assigned_variable(ns, array, symtable);
+        Expression::Subscript { array, index, .. } => {
+            if array.ty().is_contract_storage() {
+                subscript_variable(ns, array, symtable);
+            } else {
+                assigned_variable(ns, array, symtable);
+            }
             used_variable(ns, index, symtable);
         }
 
-        Expression::StorageLoad(_, _, expr)
-        | Expression::Load(.., expr)
+        Expression::StorageLoad { expr, .. }
+        | Expression::Load { expr, .. }
         | Expression::Trunc { expr, .. }
         | Expression::Cast { expr, .. } => {
             assigned_variable(ns, expr, symtable);
@@ -37,58 +44,119 @@ pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Sy
     }
 }
 
+// We have two cases here
+//  contract c {
+//      u32[2] case1;
+//
+//      function f(u32[2] case2) {
+//          case1[0] = 1;
+//          case2[0] = 1;
+//      }
+//  }
+//  The subscript for case1 is an assignment
+//  The subscript for case2 is a read
+fn subscript_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
+    match &exp {
+        Expression::StorageVariable {
+            contract_no,
+            var_no,
+            ..
+        } => {
+            ns.contracts[*contract_no].variables[*var_no].assigned = true;
+        }
+
+        Expression::Variable { var_no, .. } => {
+            let var = symtable.vars.get_mut(var_no).unwrap();
+            var.read = true;
+        }
+
+        Expression::StructMember { expr, .. } => {
+            subscript_variable(ns, expr, symtable);
+        }
+
+        Expression::Subscript { array, index, .. } => {
+            subscript_variable(ns, array, symtable);
+            subscript_variable(ns, index, symtable);
+        }
+
+        Expression::FunctionCall { .. } => {
+            check_function_call(ns, exp, symtable);
+        }
+
+        _ => (),
+    }
+}
+
 /// Mark variables as used, either in the symbol table (for local variables) or
 /// in the Namespace (for global constants and storage variables)
 /// The functions handles complex expressions in a recursive fashion, such as
 /// array length call, assign expressions and array subscripts.
 pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::StorageVariable(_, _, contract_no, offset) => {
-            ns.contracts[*contract_no].variables[*offset].read = true;
+        Expression::StorageVariable {
+            contract_no,
+            var_no,
+            ..
+        } => {
+            ns.contracts[*contract_no].variables[*var_no].read = true;
         }
 
-        Expression::Variable(_, _, offset) => {
-            let var = symtable.vars.get_mut(offset).unwrap();
+        Expression::Variable { var_no, .. } => {
+            let var = symtable.vars.get_mut(var_no).unwrap();
             var.read = true;
         }
 
-        Expression::ConstantVariable(_, _, Some(contract_no), offset) => {
-            ns.contracts[*contract_no].variables[*offset].read = true;
+        Expression::ConstantVariable {
+            contract_no: Some(contract_no),
+            var_no,
+            ..
+        } => {
+            ns.contracts[*contract_no].variables[*var_no].read = true;
         }
 
-        Expression::ConstantVariable(_, _, None, offset) => {
-            ns.constants[*offset].read = true;
+        Expression::ConstantVariable {
+            contract_no: Some(contract_no),
+            var_no,
+            ..
+        } => {
+            ns.contracts[*contract_no].variables[*var_no].read = true;
         }
 
-        Expression::StructMember(_, _, str, _) => {
-            used_variable(ns, str, symtable);
+        Expression::ConstantVariable {
+            contract_no: None,
+            var_no,
+            ..
+        } => {
+            ns.constants[*var_no].read = true;
         }
 
-        Expression::Subscript(_, _, _, array, index) => {
+        Expression::StructMember { expr, .. } => {
+            used_variable(ns, expr, symtable);
+        }
+
+        Expression::Subscript { array, index, .. } => {
             used_variable(ns, array, symtable);
             used_variable(ns, index, symtable);
         }
-        Expression::LibFunction(_, _, LibFunc::ArrayLength, args) => {
+        Expression::LibFunction {
+            kind: LibFunc::ArrayLength,
+            args,
+            ..
+        } => {
             // We should not eliminate an array from the code when 'length' is called
             // So the variable is also assigned
             assigned_variable(ns, &args[0], symtable);
             used_variable(ns, &args[0], symtable);
         }
 
-        Expression::StorageArrayLength {
-            loc: _,
-            ty: _,
-            array,
-            ..
-        } => {
-            //We should not eliminate an array from the code when 'length' is called
-            //So the variable is also assigned
+        Expression::StorageArrayLength { array, .. } => {
+            // We should not eliminate an array from the code when 'length' is called
+            // So the variable is also assigned
             assigned_variable(ns, array, symtable);
             used_variable(ns, array, symtable);
         }
-
-        Expression::StorageLoad(_, _, expr)
-        | Expression::Load(.., expr)
+        Expression::StorageLoad { expr, .. }
+        | Expression::Load { expr, .. }
         | Expression::ZeroExt { expr, .. }
         | Expression::Trunc { expr, .. }
         | Expression::Cast { expr, .. } => {
@@ -107,7 +175,7 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
 /// variable, mark the usage of the latter as well
 pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
     match &exp {
-        Expression::Load { .. } | Expression::StorageLoad(..) | Expression::Variable(..) => {
+        Expression::Load { .. } | Expression::StorageLoad { .. } | Expression::Variable { .. } => {
             used_variable(ns, exp, symtable);
         }
         Expression::FunctionCall {
@@ -121,7 +189,11 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
             }
             check_function_call(ns, function, symtable);
         }
-        Expression::LibFunction(_, _, expr_type, args) => match expr_type {
+        Expression::LibFunction {
+            kind: expr_type,
+            args,
+            ..
+        } => match expr_type {
             LibFunc::ArrayPush => {
                 assigned_variable(ns, &args[0], symtable);
                 if args.len() > 1 {

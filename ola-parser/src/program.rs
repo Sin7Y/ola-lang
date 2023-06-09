@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::fmt::{self, Display};
+use std::fmt::{self, Display, Formatter, Result};
 
 /// file no, start offset, end offset (in bytes)
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
@@ -179,6 +179,30 @@ pub enum StorageLocation {
 
     /// `storage`
     Storage(Loc),
+}
+
+impl Display for StorageLocation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        f.write_str(self.as_str())
+    }
+}
+impl StorageLocation {
+    /// Returns the string representation of this type.
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Memory(_) => "memory",
+            Self::Storage(_) => "storage",
+        }
+    }
+}
+
+impl CodeLocation for StorageLocation {
+    fn loc(&self) -> Loc {
+        match self {
+            Self::Memory(loc) => *loc,
+            Self::Storage(loc) => *loc,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -447,7 +471,7 @@ pub enum Statement {
         Loc,
         Option<Box<Statement>>,
         Option<Box<Expression>>,
-        Option<Box<Statement>>,
+        Option<Box<Expression>>,
         Option<Box<Statement>>,
     ),
     DoWhile(Loc, Box<Statement>, Expression),

@@ -3,10 +3,11 @@
 use super::{
     ast::{Diagnostic, Namespace, Symbol, Variable},
     diagnostics::Diagnostics,
-    expression::{expression, ExprContext, ResolveTo},
+    expression::{ExprContext, ResolveTo},
     symtable::Symtable,
 };
 use crate::sema::eval::check_term_for_constant_overflow;
+use crate::sema::expression::resolve_expression::expression;
 use crate::sema::Recurse;
 use ola_parser::program::{self, CodeLocation};
 
