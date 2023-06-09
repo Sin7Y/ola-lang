@@ -174,9 +174,9 @@ impl Dot {
         parent_rel: String,
     ) {
         match expr {
-            Expression::BoolLiteral(loc, val) => {
+            Expression::BoolLiteral { loc, value } => {
                 let labels = vec![
-                    format!("bool literal: {}", if *val { "true" } else { "false" }),
+                    format!("bool literal: {}", if *value { "true" } else { "false" }),
                     ns.loc_to_string(loc),
                 ];
 
@@ -187,9 +187,9 @@ impl Dot {
                 );
             }
 
-            Expression::NumberLiteral(loc, ty, val) => {
+            Expression::NumberLiteral { loc, ty, value } => {
                 let labels = vec![
-                    format!("{} literal: {}", ty.to_string(ns), val),
+                    format!("{} literal: {}", ty.to_string(ns), value),
                     ns.loc_to_string(loc),
                 ];
 
@@ -200,7 +200,7 @@ impl Dot {
                 );
             }
 
-            Expression::StructLiteral(loc, ty, args) => {
+            Expression::StructLiteral { loc, ty, values } => {
                 let labels = vec![
                     format!("struct literal: {}", ty.to_string(ns)),
                     ns.loc_to_string(loc),
@@ -212,11 +212,13 @@ impl Dot {
                     Some(parent_rel),
                 );
 
-                for (no, arg) in args.iter().enumerate() {
+                for (no, arg) in values.iter().enumerate() {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));
                 }
             }
-            Expression::ArrayLiteral(loc, ty, _, args) => {
+            Expression::ArrayLiteral {
+                loc, ty, values, ..
+            } => {
                 let labels = vec![
                     format!("array literal: {}", ty.to_string(ns)),
                     ns.loc_to_string(loc),
@@ -228,11 +230,13 @@ impl Dot {
                     Some(parent_rel),
                 );
 
-                for (no, arg) in args.iter().enumerate() {
+                for (no, arg) in values.iter().enumerate() {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));
                 }
             }
-            Expression::ConstArrayLiteral(loc, ty, _, args) => {
+            Expression::ConstArrayLiteral {
+                loc, ty, values, ..
+            } => {
                 let labels = vec![
                     format!("array literal: {}", ty.to_string(ns)),
                     ns.loc_to_string(loc),
@@ -244,10 +248,284 @@ impl Dot {
                     Some(parent_rel),
                 );
 
-                for (no, arg) in args.iter().enumerate() {
+                for (no, arg) in values.iter().enumerate() {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));
                 }
             }
+
+            Expression::Add {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
+                let node = self.add_node(Node::new("add", labels), Some(parent), Some(parent_rel));
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::Subtract {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("subtract"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("subtract", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::Multiply {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("multiply"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("multiply", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::Divide {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("divide"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node =
+                    self.add_node(Node::new("divide", labels), Some(parent), Some(parent_rel));
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::Modulo {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("modulo"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node =
+                    self.add_node(Node::new("modulo", labels), Some(parent), Some(parent_rel));
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::Power { loc, ty, base, exp } => {
+                let labels = vec![
+                    String::from("power"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node =
+                    self.add_node(Node::new("power", labels), Some(parent), Some(parent_rel));
+
+                self.add_expression(base, func, ns, node, String::from("left"));
+                self.add_expression(exp, func, ns, node, String::from("right"));
+            }
+            Expression::BitwiseOr {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("bitwise or"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("bitwise_or", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::BitwiseAnd {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("bitwise and"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("bitwise_and", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::BitwiseXor {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("bitwise xor"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("bitwise_xor", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::ShiftLeft {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let labels = vec![
+                    String::from("shift left"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("shift_left", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::ShiftRight {
+                loc,
+                ty,
+                left,
+                right,
+                ..
+            } => {
+                let labels = vec![
+                    String::from("shift right"),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+                let node = self.add_node(
+                    Node::new("shift_right", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(left, func, ns, node, String::from("left"));
+                self.add_expression(right, func, ns, node, String::from("right"));
+            }
+            Expression::ConstantVariable {
+                loc,
+                ty,
+                contract_no,
+                var_no,
+            } => {
+                self.add_constant_variable(loc, ty, contract_no, var_no, parent, parent_rel, ns);
+            }
+            Expression::Variable { loc, ty, var_no } => {
+                let labels = vec![
+                    format!("variable: {}", func.unwrap().symtable.vars[var_no].id.name),
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+
+                self.add_node(
+                    Node::new("variable", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+            }
+            Expression::StorageVariable {
+                loc,
+                ty,
+                contract_no,
+                var_no,
+            } => {
+                self.add_storage_variable(loc, ty, contract_no, var_no, parent, parent_rel, ns);
+            }
+
+            Expression::Load { loc, ty, expr } => {
+                let node = self.add_node(
+                    Node::new(
+                        "load",
+                        vec![format!("load {}", ty.to_string(ns)), ns.loc_to_string(loc)],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+            Expression::GetRef { loc, ty, expr } => {
+                let node = self.add_node(
+                    Node::new(
+                        "getref",
+                        vec![
+                            format!("getref {}", ty.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+
+            Expression::StorageLoad { loc, ty, expr } => {
+                let node = self.add_node(
+                    Node::new(
+                        "storage_load",
+                        vec![
+                            format!("storage load {}", ty.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+
             Expression::ZeroExt { loc, to, expr } => {
                 let node = self.add_node(
                     Node::new(
@@ -290,219 +568,8 @@ impl Dot {
 
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
-            Expression::Add(loc, ty, left, right) => {
-                let labels = vec![String::from("add"), ty.to_string(ns), ns.loc_to_string(loc)];
-                let node = self.add_node(Node::new("add", labels), Some(parent), Some(parent_rel));
 
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::Subtract(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("subtract"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("subtract", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::Multiply(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("multiply"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("multiply", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::Divide(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("divide"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node =
-                    self.add_node(Node::new("divide", labels), Some(parent), Some(parent_rel));
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::Modulo(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("modulo"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node =
-                    self.add_node(Node::new("modulo", labels), Some(parent), Some(parent_rel));
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::Power(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("power"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node =
-                    self.add_node(Node::new("power", labels), Some(parent), Some(parent_rel));
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::BitwiseOr(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("bitwise or"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("bitwise_or", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::BitwiseAnd(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("bitwise and"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("bitwise_and", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::BitwiseXor(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("bitwise xor"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("bitwise_xor", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::ShiftLeft(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("shift left"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("shift_left", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::ShiftRight(loc, ty, left, right) => {
-                let labels = vec![
-                    String::from("shift right"),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-                let node = self.add_node(
-                    Node::new("shift_right", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(left, func, ns, node, String::from("left"));
-                self.add_expression(right, func, ns, node, String::from("right"));
-            }
-            Expression::ConstantVariable(loc, ty, contract, var_no) => {
-                self.add_constant_variable(loc, ty, contract, var_no, parent, parent_rel, ns);
-            }
-            Expression::Variable(loc, ty, var_no) => {
-                let labels = vec![
-                    format!("variable: {}", func.unwrap().symtable.vars[var_no].id.name),
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
-
-                self.add_node(
-                    Node::new("variable", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-            }
-            Expression::StorageVariable(loc, ty, contract, var_no) => {
-                self.add_storage_variable(loc, ty, contract, var_no, parent, parent_rel, ns);
-            }
-
-            Expression::Load(loc, ty, expr) => {
-                let node = self.add_node(
-                    Node::new(
-                        "load",
-                        vec![format!("load {}", ty.to_string(ns)), ns.loc_to_string(loc)],
-                    ),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(expr, func, ns, node, String::from("expr"));
-            }
-            Expression::GetRef(loc, ty, expr) => {
-                let node = self.add_node(
-                    Node::new(
-                        "getref",
-                        vec![
-                            format!("getref {}", ty.to_string(ns)),
-                            ns.loc_to_string(loc),
-                        ],
-                    ),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(expr, func, ns, node, String::from("expr"));
-            }
-
-            Expression::StorageLoad(loc, ty, expr) => {
-                let node = self.add_node(
-                    Node::new(
-                        "storage_load",
-                        vec![
-                            format!("storage load {}", ty.to_string(ns)),
-                            ns.loc_to_string(loc),
-                        ],
-                    ),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_expression(expr, func, ns, node, String::from("expr"));
-            }
-
-            Expression::Increment(loc, ty, expr) => {
+            Expression::Increment { loc, ty, expr } => {
                 let labels = vec![
                     String::from("pre increment"),
                     ty.to_string(ns),
@@ -516,7 +583,7 @@ impl Dot {
 
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
-            Expression::Decrement(loc, ty, expr) => {
+            Expression::Decrement { loc, ty, expr } => {
                 let labels = vec![
                     String::from("pre decrement"),
                     ty.to_string(ns),
@@ -531,7 +598,12 @@ impl Dot {
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
 
-            Expression::Assign(loc, ty, left, right) => {
+            Expression::Assign {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
                 let labels = vec![
                     String::from("assign"),
                     ty.to_string(ns),
@@ -544,21 +616,21 @@ impl Dot {
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
 
-            Expression::More(loc, left, right) => {
+            Expression::More { loc, left, right } => {
                 let labels = vec![String::from("more"), ns.loc_to_string(loc)];
                 let node = self.add_node(Node::new("more", labels), Some(parent), Some(parent_rel));
 
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::Less(loc, left, right) => {
+            Expression::Less { loc, left, right } => {
                 let labels = vec![String::from("less"), ns.loc_to_string(loc)];
                 let node = self.add_node(Node::new("less", labels), Some(parent), Some(parent_rel));
 
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::MoreEqual(loc, left, right) => {
+            Expression::MoreEqual { loc, left, right } => {
                 let labels = vec![String::from("more equal"), ns.loc_to_string(loc)];
                 let node = self.add_node(
                     Node::new("more_equal", labels),
@@ -569,7 +641,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::LessEqual(loc, left, right) => {
+            Expression::LessEqual { loc, left, right } => {
                 let labels = vec![String::from("less equal"), ns.loc_to_string(loc)];
                 let node = self.add_node(
                     Node::new("less_equal", labels),
@@ -580,7 +652,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::Equal(loc, left, right) => {
+            Expression::Equal { loc, left, right } => {
                 let labels = vec![String::from("equal"), ns.loc_to_string(loc)];
                 let node =
                     self.add_node(Node::new("equal", labels), Some(parent), Some(parent_rel));
@@ -588,7 +660,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::NotEqual(loc, left, right) => {
+            Expression::NotEqual { loc, left, right } => {
                 let labels = vec![String::from("not equal"), ns.loc_to_string(loc)];
                 let node = self.add_node(
                     Node::new("not_qual", labels),
@@ -600,7 +672,7 @@ impl Dot {
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
 
-            Expression::Not(loc, expr) => {
+            Expression::Not { loc, expr } => {
                 let node = self.add_node(
                     Node::new("not", vec![String::from("not"), ns.loc_to_string(loc)]),
                     Some(parent),
@@ -609,7 +681,7 @@ impl Dot {
 
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
-            Expression::BitwiseNot(loc, ty, expr) => {
+            Expression::BitwiseNot { loc, ty, expr } => {
                 let node = self.add_node(
                     Node::new(
                         "complement",
@@ -625,7 +697,13 @@ impl Dot {
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
 
-            Expression::ConditionalOperator(loc, ty, cond, left, right) => {
+            Expression::ConditionalOperator {
+                loc,
+                ty,
+                cond,
+                true_option: left,
+                false_option: right,
+            } => {
                 let node = self.add_node(
                     Node::new(
                         "conditional",
@@ -642,12 +720,18 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::Subscript(loc, _, ty, array, index) => {
+            Expression::Subscript {
+                loc,
+                array_ty,
+                array,
+                index,
+                ..
+            } => {
                 let node = self.add_node(
                     Node::new(
                         "subscript",
                         vec![
-                            format!("subscript {}", ty.to_string(ns)),
+                            format!("subscript {}", array_ty.to_string(ns)),
                             ns.loc_to_string(loc),
                         ],
                     ),
@@ -659,12 +743,17 @@ impl Dot {
                 self.add_expression(index, func, ns, node, String::from("index"));
             }
 
-            Expression::StructMember(loc, ty, var, member) => {
+            Expression::StructMember {
+                loc,
+                ty,
+                expr,
+                field,
+            } => {
                 let node = self.add_node(
                     Node::new(
                         "structmember",
                         vec![
-                            format!("struct member #{} {}", member, ty.to_string(ns)),
+                            format!("struct member #{} {}", field, ty.to_string(ns)),
                             ns.loc_to_string(loc),
                         ],
                     ),
@@ -672,10 +761,10 @@ impl Dot {
                     Some(parent_rel),
                 );
 
-                self.add_expression(var, func, ns, node, String::from("var"));
+                self.add_expression(expr, func, ns, node, String::from("var"));
             }
 
-            Expression::AllocDynamicArray {
+            Expression::AllocDynamicBytes {
                 loc,
                 ty,
                 length,
@@ -686,10 +775,9 @@ impl Dot {
                     ns.loc_to_string(loc),
                 ];
 
-                //TODO
-                // if let Some(initializer) = init {
-                //     labels.insert(1, format!("initializer: {}", ));
-                // }
+                if let Some(initializer) = init {
+                    labels.insert(1, format!("initializer: {:?}", initializer));
+                }
 
                 let node = self.add_node(
                     Node::new("alloc_array", labels),
@@ -722,7 +810,42 @@ impl Dot {
                 self.add_expression(array, func, ns, node, String::from("array"));
             }
 
-            Expression::Or(loc, left, right) => {
+            Expression::StringCompare { loc, left, right } => {
+                let node = self.add_node(
+                    Node::new(
+                        "string_cmp",
+                        vec![String::from("string compare"), ns.loc_to_string(loc)],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_string_location(left, func, ns, node, String::from("left"));
+                self.add_string_location(right, func, ns, node, String::from("right"));
+            }
+            Expression::StringConcat {
+                loc,
+                ty,
+                left,
+                right,
+            } => {
+                let node = self.add_node(
+                    Node::new(
+                        "string_concat",
+                        vec![
+                            format!("string concat {}", ty.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_string_location(left, func, ns, node, String::from("left"));
+                self.add_string_location(right, func, ns, node, String::from("right"));
+            }
+
+            Expression::Or { loc, left, right } => {
                 let labels = vec![String::from("logical or"), ns.loc_to_string(loc)];
                 let node = self.add_node(
                     Node::new("logical_or", labels),
@@ -733,7 +856,7 @@ impl Dot {
                 self.add_expression(left, func, ns, node, String::from("left"));
                 self.add_expression(right, func, ns, node, String::from("right"));
             }
-            Expression::And(loc, left, right) => {
+            Expression::And { loc, left, right } => {
                 let labels = vec![String::from("logical and"), ns.loc_to_string(loc)];
                 let node = self.add_node(
                     Node::new("logical_and", labels),
@@ -798,8 +921,10 @@ impl Dot {
                 }
             }
 
-            Expression::LibFunction(loc, _, libfunc, args) => {
-                let labels = vec![format!("libfunc {:?}", libfunc), ns.loc_to_string(loc)];
+            Expression::LibFunction {
+                loc, kind, args, ..
+            } => {
+                let labels = vec![format!("libfunc {kind:?}"), ns.loc_to_string(loc)];
 
                 let node =
                     self.add_node(Node::new("libfunc", labels), Some(parent), Some(parent_rel));
@@ -809,7 +934,7 @@ impl Dot {
                 }
             }
 
-            Expression::List(loc, list) => {
+            Expression::List { loc, list } => {
                 let labels = vec![String::from("list"), ns.loc_to_string(loc)];
 
                 let node = self.add_node(Node::new("list", labels), Some(parent), Some(parent_rel));
@@ -817,6 +942,31 @@ impl Dot {
                 for (no, expr) in list.iter().enumerate() {
                     self.add_expression(expr, func, ns, node, format!("entry #{}", no));
                 }
+            }
+        }
+    }
+
+    fn add_string_location(
+        &mut self,
+        loc: &StringLocation<Expression>,
+        func: Option<&Function>,
+        ns: &Namespace,
+        parent: usize,
+        parent_rel: String,
+    ) {
+        match loc {
+            StringLocation::CompileTime(val) => {
+                self.add_node(
+                    Node::new(
+                        "compile_time_string",
+                        vec![format!("const string {}", hex::encode(val))],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+            }
+            StringLocation::RunTime(expr) => {
+                self.add_expression(expr, func, ns, parent, parent_rel);
             }
         }
     }
@@ -897,7 +1047,9 @@ impl Dot {
                     if let Some(cond) = cond {
                         self.add_expression(cond, Some(func), ns, parent, String::from("cond"));
                     }
-                    self.add_statement(next, func, ns, parent, String::from("next"));
+                    if let Some(next) = next {
+                        self.add_expression(next, Some(func), ns, parent, String::from("next"));
+                    }
                     self.add_statement(body, func, ns, parent, String::from("body"));
                 }
                 Statement::DoWhile(loc, _, body, cond) => {

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::irgen;
-use ola_parser::program::{self, Statement};
+use num_bigint::BigInt;
+use num_traits::Zero;
+use ola_parser::program::{self};
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 use tiny_keccak::{Hasher, Keccak};
@@ -22,6 +24,8 @@ impl ast::Contract {
             initializer: None,
             code: Vec::new(),
             dispatch_no: 0,
+            layout: Vec::new(),
+            fixed_layout_size: BigInt::zero(),
         }
     }
 
@@ -128,11 +132,29 @@ fn resolve_declarations<'a>(
                     function_no_bodies.push(function_no);
                 }
             }
-
-            if let Some(Statement::Block { .. }) = &f.body {
-                continue;
-            }
         }
+    }
+
+    if !function_no_bodies.is_empty() {
+        let notes = function_no_bodies
+            .into_iter()
+            .map(|function_no| ast::Note {
+                loc: ns.functions[function_no].loc,
+                message: format!(
+                    "location of function '{}' with no body",
+                    ns.functions[function_no].name
+                ),
+            })
+            .collect::<Vec<ast::Note>>();
+
+        ns.diagnostics.push(ast::Diagnostic::error_with_notes(
+                    def.loc,
+                    format!(
+                        "contract should be marked 'abstract contract' since it has {} functions with no body",
+                        notes.len()
+                    ),
+                    notes,
+                ));
     }
 }
 

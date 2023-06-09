@@ -4,9 +4,10 @@ use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, Re
 use crate::sema::diagnostics::Diagnostics;
 
 use crate::sema::corelib;
-use crate::sema::expression::{
-    expression, named_struct_literal, new_array, struct_literal, ExprContext, ResolveTo,
-};
+use crate::sema::expression::constructor::new;
+use crate::sema::expression::literals::{named_struct_literal, struct_literal};
+use crate::sema::expression::resolve_expression::expression;
+use crate::sema::expression::{ExprContext, ResolveTo};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::check_function_call;
 use ola_parser::diagnostics::Diagnostic;
@@ -51,6 +52,14 @@ pub fn function_call_pos_args(
     let mut name_matches = 0;
     let mut errors = Diagnostics::default();
 
+    if context.constant {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            "cannot call function in constant expression".to_string(),
+        ));
+        return Err(());
+    }
+
     // Try to resolve as a function call
     for function_no in &function_nos {
         let func = &ns.functions[*function_no];
@@ -78,27 +87,8 @@ pub fn function_call_pos_args(
         for (i, arg) in args.iter().enumerate() {
             let ty = ns.functions[*function_no].params[i].ty.clone();
 
-            let arg = match expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                &mut errors,
-                ResolveTo::Type(&ty),
-            ) {
-                Ok(e) => e,
-                Err(_) => {
-                    matches = false;
-                    continue;
-                }
-            };
-
-            match arg.cast(&arg.loc(), &ty, ns, &mut errors) {
-                Ok(expr) => cast_args.push(expr),
-                Err(_) => {
-                    matches = false;
-                }
-            }
+            matches &=
+                evaluate_argument(arg, context, ns, symtable, &ty, &mut errors, &mut cast_args);
         }
 
         if !matches {
@@ -239,27 +229,8 @@ fn function_call_named_args(
 
             let ty = param.ty.clone();
 
-            let arg = match expression(
-                arg,
-                context,
-                ns,
-                symtable,
-                &mut errors,
-                ResolveTo::Type(&ty),
-            ) {
-                Ok(e) => e,
-                Err(()) => {
-                    matches = false;
-                    continue;
-                }
-            };
-
-            match arg.cast(&arg.loc(), &ty, ns, &mut errors) {
-                Ok(expr) => cast_args.push(expr),
-                Err(_) => {
-                    matches = false;
-                }
-            }
+            matches &=
+                evaluate_argument(arg, context, ns, symtable, &ty, &mut errors, &mut cast_args);
         }
 
         if !matches {
@@ -401,12 +372,12 @@ fn try_storage_reference(
                         }
                     };
 
-                    return Ok(Some(Expression::LibFunction(
-                        func.loc,
-                        vec![ret_ty],
-                        LibFunc::ArrayPush,
-                        builtin_args,
-                    )));
+                    return Ok(Some(Expression::LibFunction {
+                        loc: func.loc,
+                        tys: vec![ret_ty],
+                        kind: LibFunc::ArrayPush,
+                        args: builtin_args,
+                    }));
                 }
                 if func.name == "pop" {
                     if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
@@ -435,12 +406,12 @@ fn try_storage_reference(
                         elem_ty.clone()
                     };
 
-                    return Ok(Some(Expression::LibFunction(
-                        func.loc,
-                        vec![return_ty],
-                        LibFunc::ArrayPop,
-                        vec![var_expr.clone()],
-                    )));
+                    return Ok(Some(Expression::LibFunction {
+                        loc: func.loc,
+                        tys: vec![return_ty],
+                        kind: LibFunc::ArrayPop,
+                        args: vec![var_expr.clone()],
+                    }));
                 }
             }
             _ => {}
@@ -474,12 +445,12 @@ fn try_type_method(
 
                 let val = match args.len() {
                     0 => {
-                        return Ok(Some(Expression::LibFunction(
-                            *loc,
-                            vec![elem_ty.clone()],
-                            LibFunc::ArrayPush,
-                            vec![var_expr.clone()],
-                        )));
+                        return Ok(Some(Expression::LibFunction {
+                            loc: *loc,
+                            tys: vec![elem_ty.clone()],
+                            kind: LibFunc::ArrayPush,
+                            args: vec![var_expr.clone()],
+                        }));
                     }
                     1 => {
                         let val_expr = expression(
@@ -502,12 +473,12 @@ fn try_type_method(
                     }
                 };
 
-                return Ok(Some(Expression::LibFunction(
-                    *loc,
-                    vec![elem_ty.clone()],
-                    LibFunc::ArrayPush,
-                    vec![var_expr.clone(), val],
-                )));
+                return Ok(Some(Expression::LibFunction {
+                    loc: *loc,
+                    tys: vec![elem_ty.clone()],
+                    kind: LibFunc::ArrayPush,
+                    args: vec![var_expr.clone(), val],
+                }));
             }
             if func.name == "pop" {
                 if !args.is_empty() {
@@ -523,12 +494,12 @@ fn try_type_method(
                     _ => unreachable!(),
                 };
 
-                return Ok(Some(Expression::LibFunction(
-                    *loc,
-                    vec![*elem_ty.clone()],
-                    LibFunc::ArrayPop,
-                    vec![var_expr.clone()],
-                )));
+                return Ok(Some(Expression::LibFunction {
+                    loc: *loc,
+                    tys: vec![*elem_ty.clone()],
+                    kind: LibFunc::ArrayPop,
+                    args: vec![var_expr.clone()],
+                }));
             }
         }
 
@@ -707,9 +678,7 @@ pub fn call_expr(
     }
 
     let expr = match ty.remove_parenthesis() {
-        program::Expression::New(_, ty) => {
-            new_array(loc, ty, args, context, ns, symtable, diagnostics)?
-        }
+        program::Expression::New(_, ty) => new(loc, ty, args, context, ns, symtable, diagnostics)?,
         _ => function_call_expr(
             loc,
             ty,
@@ -873,4 +842,21 @@ pub(crate) fn function_type(func: &Function, resolve_to: ResolveTo) -> Type {
     let returns = function_returns(func, resolve_to);
 
     Type::Function { params, returns }
+}
+
+/// This function evaluates the arguments of a function call with either
+/// positional arguments or named arguments.
+fn evaluate_argument(
+    arg: &program::Expression,
+    context: &ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    arg_ty: &Type,
+    errors: &mut Diagnostics,
+    cast_args: &mut Vec<Expression>,
+) -> bool {
+    expression(arg, context, ns, symtable, errors, ResolveTo::Type(arg_ty))
+        .and_then(|arg| arg.cast(&arg.loc(), arg_ty, ns, errors))
+        .map(|expr| cast_args.push(expr))
+        .is_ok()
 }

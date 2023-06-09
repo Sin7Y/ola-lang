@@ -10,7 +10,7 @@ use crate::irgen::expression::emit_function_call;
 use crate::irgen::functions::FunctionContext;
 use crate::sema::ast::Type::Uint;
 use crate::sema::ast::{
-    ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
+    self, ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
 use ola_parser::program;
 use ola_parser::program::CodeLocation;
@@ -178,10 +178,10 @@ pub(crate) fn statement<'a>(
 
             let mut next_reachable = true;
 
-            for stmt in next {
-                statement(stmt, bin, func_context, ns);
+            if let Some(next) = next {
+                expression(next, bin, func_context, ns);
 
-                next_reachable = stmt.reachable();
+                next_reachable = next.ty() != Type::Unreachable;
             }
 
             if next_reachable {
@@ -315,14 +315,19 @@ fn returns<'a>(
     // Can only be another function call without returns
     let uncast_values = match expr {
         // TODO ADD ConditionalOperator
-        Expression::ConditionalOperator(_, _, cond, true_option, false_option) => {
+        ast::Expression::ConditionalOperator {
+            cond,
+            true_option: left,
+            false_option: right,
+            ..
+        } => {
             unimplemented!()
         }
-        Expression::FunctionCall { .. } => {
+        ast::Expression::FunctionCall { .. } => {
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
             ret
         }
-        Expression::List(_, list) => {
+        ast::Expression::List { list, .. } => {
             let res = list
                 .iter()
                 .map(|e| expression(e, bin, func_context, ns))
@@ -388,7 +393,13 @@ fn destructure<'a>(
     ns: &Namespace,
 ) {
     let mut is_single_value = false;
-    if let Expression::ConditionalOperator(_, _, cond, left, right) = expr {
+    if let ast::Expression::ConditionalOperator {
+        cond,
+        true_option: left,
+        false_option: right,
+        ..
+    } = expr
+    {
         let cond = expression(cond, bin, func_context, ns);
         let left_block = bin
             .context
@@ -425,7 +436,7 @@ fn destructure<'a>(
         // When the value of the expression on the right side is a List
         // We need to return a struct, which corresponds to handling multiple return values in
         // functions.
-        Expression::List(_, list) => {
+        ast::Expression::List { list, .. } => {
             let mut values = Vec::new();
             for expr in list {
                 let elem = expression(expr, bin, func_context, ns);
@@ -496,8 +507,8 @@ fn destructure<'a>(
             }
             DestructureField::Expression(left) => {
                 let left = match left {
-                    Expression::Variable(_, _, pos) => {
-                        let ret = *func_context.var_table.get(pos).unwrap();
+                    Expression::Variable { loc, ty, var_no } => {
+                        let ret = *func_context.var_table.get(var_no).unwrap();
                         ret
                     }
                     _ => unreachable!(),
@@ -522,12 +533,15 @@ impl Type {
     /// in storage.
     pub fn default(&self, ns: &Namespace) -> Option<Expression> {
         match self {
-            Type::Uint(32) => Some(Expression::NumberLiteral(
-                program::Loc::IRgen,
-                self.clone(),
-                BigInt::from(0),
-            )),
-            Type::Bool => Some(Expression::BoolLiteral(program::Loc::IRgen, false)),
+            Type::Uint(32) => Some(Expression::NumberLiteral {
+                loc: IRgen,
+                ty: self.clone(),
+                value: BigInt::from(0),
+            }),
+            Type::Bool => Some(Expression::BoolLiteral {
+                loc: IRgen,
+                value: false,
+            }),
             Type::Enum(e) => ns.enums[*e].ty.default(ns),
             Type::Struct(n) => {
                 // make sure all our fields have default values
@@ -535,47 +549,47 @@ impl Type {
                     field.ty.default(ns)?;
                 }
 
-                Some(Expression::StructLiteral(
-                    program::Loc::IRgen,
-                    self.clone(),
-                    Vec::new(),
-                ))
+                Some(Expression::StructLiteral {
+                    loc: program::Loc::IRgen,
+                    ty: self.clone(),
+                    values: Vec::new(),
+                })
             }
-            // Type::Ref(ty) => {
-            //     assert!(matches!(ty.as_ref(), Type::Address(_)));
-            //
-            //     Some(Expression::GetRef(
-            //         program::Loc::IRgen,
-            //         Type::Ref(Box::new(ty.as_ref().clone())),
-            //         Box::new(Expression::NumberLiteral(
-            //             program::Loc::IRgen,
-            //             ty.as_ref().clone(),
-            //             BigInt::from(0),
-            //         ),
-            //     )
-            // }
+            Type::Ref(ty) => {
+                assert!(matches!(ty.as_ref(), Type::Address));
+
+                Some(Expression::GetRef {
+                    loc: IRgen,
+                    ty: Type::Ref(Box::new(ty.as_ref().clone())),
+                    expr: Box::new(Expression::NumberLiteral {
+                        loc: IRgen,
+                        ty: ty.as_ref().clone(),
+                        value: BigInt::from(0),
+                    }),
+                })
+            }
             Type::StorageRef(..) => None,
             Type::Array(ty, dims) => {
                 ty.default(ns)?;
 
                 if dims.last() == Some(&ArrayLength::Dynamic) {
-                    Some(Expression::AllocDynamicArray {
+                    Some(Expression::AllocDynamicBytes {
                         loc: IRgen,
                         ty: self.clone(),
-                        length: Box::new(Expression::NumberLiteral(
-                            IRgen,
-                            Uint(32),
-                            BigInt::zero(),
-                        )),
+                        length: Box::new(Expression::NumberLiteral {
+                            loc: IRgen,
+                            ty: Uint(32),
+                            value: BigInt::zero(),
+                        }),
                         init: None,
                     })
                 } else {
-                    Some(Expression::ArrayLiteral(
-                        IRgen,
-                        self.clone(),
-                        Vec::new(),
-                        Vec::new(),
-                    ))
+                    Some(Expression::ArrayLiteral {
+                        loc: IRgen,
+                        ty: self.clone(),
+                        dimensions: Vec::new(),
+                        values: Vec::new(),
+                    })
                 }
             }
             Type::Function { .. } => None,

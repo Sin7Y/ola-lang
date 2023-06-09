@@ -300,7 +300,11 @@ pub fn u32_shift_left<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     let left = expression(l, bin, func_context, ns).into_int_value();
-    let base_two = NumberLiteral(Loc::IRgen, Type::Uint(32), BigInt::from(2));
+    let base_two = NumberLiteral {
+        loc: Loc::IRgen,
+        ty: Type::Uint(32),
+        value: BigInt::from(2),
+    };
     let pow_two = u32_power(&base_two, r, bin, func_context, ns).into_int_value();
     let result: BasicValueEnum = bin.builder.build_int_mul(left, pow_two, "").into();
     bin.builder.build_call(
@@ -321,7 +325,11 @@ pub fn u32_shift_right<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     let left = expression(l, bin, func_context, ns).into_int_value();
-    let base_two = NumberLiteral(Loc::IRgen, Type::Uint(32), BigInt::from(2));
+    let base_two = NumberLiteral {
+        loc: Loc::IRgen,
+        ty: Type::Uint(32),
+        value: BigInt::from(2),
+    };
     let right = u32_power(&base_two, r, bin, func_context, ns).into_int_value();
     let remainder = bin
         .builder
@@ -510,7 +518,11 @@ pub fn u32_bitwise_not<'a>(
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    let u32_max = NumberLiteral(Loc::IRgen, Type::Uint(32), BigInt::from(u32::MAX));
+    let u32_max = NumberLiteral {
+        loc: Loc::IRgen,
+        ty: Type::Uint(32),
+        value: BigInt::from(u32::MAX),
+    };
     u32_sub(&u32_max, expr, bin, func_context, ns)
 }
 

@@ -3,10 +3,13 @@
 use super::ast::*;
 use super::diagnostics::Diagnostics;
 use super::eval::check_term_for_constant_overflow;
-use super::function_call::{call_expr, named_call_expr};
+use super::expression::{
+    function_call::{call_expr, named_call_expr},
+    ExprContext, ResolveTo,
+};
 use super::symtable::{LoopScopes, Symtable};
-use crate::sema::expression::{expression, ExprContext, ResolveTo};
-use crate::sema::function_call::{function_call_expr, named_function_call_expr};
+use crate::sema::expression::function_call::{function_call_expr, named_function_call_expr};
+use crate::sema::expression::resolve_expression::expression;
 use crate::sema::symtable::{VariableInitializer, VariableUsage};
 use crate::sema::unused_variable::{assigned_variable, check_function_call, used_variable};
 use crate::sema::Recurse;
@@ -42,6 +45,7 @@ pub fn resolve_function_body(
                 ns,
                 VariableInitializer::Ola(None),
                 VariableUsage::Parameter,
+                None,
             ) {
                 ns.check_shadowing(file_no, contract_no, name);
 
@@ -53,7 +57,7 @@ pub fn resolve_function_body(
     }
 
     // a function with no return values does not need a return statement
-    let mut return_required = !def.returns.is_empty();
+    let mut return_required = false;
 
     // If any of the return values are named, then the return statement can be
     // omitted at the end of the function, and return values may be omitted too.
@@ -70,11 +74,15 @@ pub fn resolve_function_body(
                 ns,
                 VariableInitializer::Ola(None),
                 VariableUsage::ReturnVariable,
+                None,
             ) {
                 ns.check_shadowing(file_no, contract_no, name);
                 symtable.returns.push(pos);
             }
         } else {
+            if ret.ty.is_contract_storage() {
+                return_required = true;
+            }
             // anonymous return
             let id = program::Identifier {
                 loc: p.0,
@@ -88,6 +96,7 @@ pub fn resolve_function_body(
                     ns,
                     VariableInitializer::Ola(None),
                     VariableUsage::AnonymousReturnVariable,
+                    None,
                 )
                 .unwrap();
 
@@ -115,11 +124,14 @@ pub fn resolve_function_body(
     ns.diagnostics.extend(diagnostics);
 
     if reachable? && return_required {
-        ns.diagnostics.push(Diagnostic::error(
-            body.loc().end_range(),
-            "missing return statement".to_string(),
-        ));
-        return Err(());
+        for param in ns.functions[function_no].returns.iter() {
+            if param.id.is_none() && param.ty.is_contract_storage() {
+                ns.diagnostics.push(Diagnostic::error(
+                    param.loc,
+                    "storage reference must be given value with a return statement".to_string(),
+                ));
+            }
+        }
     }
 
     ns.functions[function_no].body = res;
@@ -142,7 +154,8 @@ fn statement(
 ) -> Result<bool, ()> {
     match stmt {
         program::Statement::VariableDefinition(loc, decl, initializer) => {
-            let (var_ty, ty_loc) = resolve_var_decl_ty(&decl.ty, context, ns, diagnostics)?;
+            let (var_ty, ty_loc) =
+                resolve_var_decl_ty(&decl.ty, &decl.storage, context, ns, diagnostics)?;
 
             let initializer = if let Some(init) = initializer {
                 let expr = expression(
@@ -173,6 +186,7 @@ fn statement(
                 ns,
                 VariableInitializer::Ola(initializer.clone()),
                 VariableUsage::LocalVariable,
+                decl.storage.clone(),
             ) {
                 ns.check_shadowing(
                     context.file_no,
@@ -360,7 +374,7 @@ fn statement(
             ));
             Err(())
         }
-        program::Statement::For(loc, init_stmt, None, next_stmt, body_stmt) => {
+        program::Statement::For(loc, init_stmt, None, next_expr, body_stmt) => {
             symtable.new_scope();
 
             let mut init = Vec::new();
@@ -395,18 +409,17 @@ fn statement(
 
             let control = loops.leave_scope();
             let reachable = control.no_breaks > 0;
-            let mut next = Vec::new();
+            let mut next = None;
 
-            if let Some(next_stmt) = next_stmt {
-                statement(
-                    next_stmt,
-                    &mut next,
+            if let Some(next_expr) = next_expr {
+                next = Some(expression(
+                    next_expr,
                     context,
-                    symtable,
-                    loops,
                     ns,
+                    symtable,
                     diagnostics,
-                )?;
+                    ResolveTo::Type(&Type::Bool),
+                )?);
             }
 
             symtable.leave_scope();
@@ -422,12 +435,12 @@ fn statement(
 
             Ok(reachable)
         }
-        program::Statement::For(loc, init_stmt, Some(cond_expr), next_stmt, body_stmt) => {
+        program::Statement::For(loc, init_stmt, Some(cond_expr), next_expr, body_stmt) => {
             symtable.new_scope();
 
             let mut init = Vec::new();
             let mut body = Vec::new();
-            let mut next = Vec::new();
+            let mut next = None;
 
             if let Some(init_stmt) = init_stmt {
                 statement(
@@ -475,16 +488,17 @@ fn statement(
             }
 
             if body_reachable {
-                if let Some(next_stmt) = next_stmt {
-                    statement(
-                        next_stmt,
-                        &mut next,
-                        context,
-                        symtable,
-                        loops,
-                        ns,
-                        diagnostics,
-                    )?;
+                if let Some(next_expr) = next_expr {
+                    if body_reachable {
+                        next = Some(expression(
+                            next_expr,
+                            context,
+                            ns,
+                            symtable,
+                            diagnostics,
+                            ResolveTo::Type(&Type::Bool),
+                        )?);
+                    }
                 }
             }
 
@@ -541,6 +555,13 @@ fn statement(
                         expression(expr, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
                     used_variable(ns, &expr, symtable);
                     return if let Type::StorageRef(ty) = expr.ty() {
+                        if expr.ty().is_mapping() {
+                            ns.diagnostics.push(Diagnostic::error(
+                                *loc,
+                                "'delete' cannot be applied to mapping type".to_string(),
+                            ));
+                            return Err(());
+                        }
                         res.push(Statement::Delete(*loc, ty.as_ref().clone(), expr));
 
                         Ok(true)
@@ -650,13 +671,28 @@ fn destructure(
                 let e = expression(ty, &lcontext, ns, symtable, diagnostics, ResolveTo::Unknown)?;
 
                 match &e {
-                    Expression::ConstantVariable(_, _, Some(contract_no), var_no) => {
+                    Expression::ConstantVariable {
+                        contract_no: Some(contract_no),
+                        var_no,
+                        ..
+                    } => {
                         diagnostics.push(Diagnostic::error(
                             *loc,
                             format!(
                                 "cannot assign to constant '{}'",
                                 ns.contracts[*contract_no].variables[*var_no].name
                             ),
+                        ));
+                        return Err(());
+                    }
+                    Expression::ConstantVariable {
+                        contract_no: None,
+                        var_no,
+                        ..
+                    } => {
+                        diagnostics.push(Diagnostic::error(
+                            *loc,
+                            format!("cannot assign to constant '{}'", ns.constants[*var_no].name),
                         ));
                         return Err(());
                     }
@@ -683,7 +719,7 @@ fn destructure(
                 ty,
                 name: Some(name),
             }) => {
-                let (ty, ty_loc) = resolve_var_decl_ty(ty, context, ns, diagnostics)?;
+                let (ty, ty_loc) = resolve_var_decl_ty(ty, &None, context, ns, diagnostics)?;
 
                 if let Some(pos) = symtable.add(
                     name,
@@ -691,6 +727,7 @@ fn destructure(
                     ns,
                     VariableInitializer::Ola(None),
                     VariableUsage::DestructureVariable,
+                    None,
                 ) {
                     ns.check_shadowing(context.file_no, context.contract_no, name);
 
@@ -799,13 +836,13 @@ fn destructure_values(
             )?;
             used_variable(ns, &right, symtable);
 
-            return Ok(Expression::ConditionalOperator(
-                *loc,
-                Type::Unreachable,
-                Box::new(cond),
-                Box::new(left),
-                Box::new(right),
-            ));
+            return Ok(Expression::ConditionalOperator {
+                loc: *loc,
+                ty: Type::Unreachable,
+                cond: Box::new(cond),
+                true_option: Box::new(left),
+                false_option: Box::new(right),
+            });
         }
         _ => {
             let mut list = Vec::new();
@@ -853,7 +890,7 @@ fn destructure_values(
                 list.push(e);
             }
 
-            Expression::List(*loc, list)
+            Expression::List { loc: *loc, list }
         }
     };
 
@@ -880,12 +917,12 @@ fn destructure_values(
     for (i, field) in fields.iter().enumerate() {
         if let Some(left_ty) = &left_tys[i] {
             let loc = field.loc_opt().unwrap();
-            let _ = Expression::Variable(loc, right_tys[i].clone(), i).cast(
-                &loc,
-                left_ty.deref_memory(),
-                ns,
-                diagnostics,
-            )?;
+            let _ = Expression::Variable {
+                loc,
+                ty: right_tys[i].clone(),
+                var_no: i,
+            }
+            .cast(&loc, left_ty.deref_memory(), ns, diagnostics)?;
         }
     }
     Ok(expr)
@@ -894,12 +931,46 @@ fn destructure_values(
 /// Resolve the type of a variable declaration
 fn resolve_var_decl_ty(
     ty: &program::Expression,
+    storage: &Option<program::StorageLocation>,
     context: &ExprContext,
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<(Type, program::Loc), ()> {
-    let loc_ty = ty.loc();
-    let var_ty = ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
+    let mut loc_ty = ty.loc();
+    let mut var_ty = ns.resolve_type(context.file_no, context.contract_no, ty, diagnostics)?;
+    if let Some(storage) = storage {
+        if !var_ty.can_have_data_location() {
+            diagnostics.push(Diagnostic::error(
+                storage.loc(),
+                format!("data location '{storage}' only allowed for array, struct or mapping type"),
+            ));
+            return Err(());
+        }
+
+        if let program::StorageLocation::Storage(loc) = storage {
+            loc_ty.use_end_from(loc);
+            var_ty = Type::StorageRef(Box::new(var_ty));
+        }
+
+        // Note we are completely ignoring memory or calldata data locations.
+        // Everything will be stored in memory.
+    }
+
+    if var_ty.contains_mapping(ns) && !var_ty.is_contract_storage() {
+        diagnostics.push(Diagnostic::error(
+            ty.loc(),
+            "mapping only allowed in storage".to_string(),
+        ));
+        return Err(());
+    }
+
+    if !var_ty.is_contract_storage() && !var_ty.fits_in_memory(ns) {
+        diagnostics.push(Diagnostic::error(
+            ty.loc(),
+            "type is too large to fit into memory".to_string(),
+        ));
+        return Err(());
+    }
     Ok((var_ty, loc_ty))
 }
 
@@ -963,13 +1034,13 @@ fn return_with_values(
                 return_with_values(right, &right.loc(), context, symtable, ns, diagnostics)?;
             used_variable(ns, &right, symtable);
 
-            return Ok(Expression::ConditionalOperator(
-                *loc,
-                Type::Unreachable,
-                Box::new(cond),
-                Box::new(left),
-                Box::new(right),
-            ));
+            return Ok(Expression::ConditionalOperator {
+                loc: *loc,
+                ty: Type::Unreachable,
+                cond: Box::new(cond),
+                true_option: Box::new(left),
+                false_option: Box::new(right),
+            });
         }
         _ => {
             let returns = parameter_list_to_expr_list(returns, diagnostics)?;
@@ -1030,7 +1101,10 @@ fn return_with_values(
             return Ok(if exprs.len() == 1 {
                 exprs[0].clone()
             } else {
-                Expression::List(*loc, exprs)
+                Expression::List {
+                    loc: *loc,
+                    list: exprs,
+                }
             });
         }
     };
@@ -1086,12 +1160,12 @@ fn return_with_values(
         .zip(func_returns_tys)
         .enumerate()
         .map(|(i, (expr_return_ty, func_return_ty))| {
-            Expression::Variable(expr_returns.loc(), expr_return_ty, i).cast(
-                &expr_returns.loc(),
-                &func_return_ty,
-                ns,
-                diagnostics,
-            )
+            Expression::Variable {
+                loc: expr_returns.loc(),
+                ty: expr_return_ty,
+                var_no: i,
+            }
+            .cast(&expr_returns.loc(), &func_return_ty, ns, diagnostics)
         })
         .collect::<Result<Vec<_>, _>>()?;
 

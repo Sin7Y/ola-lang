@@ -2,8 +2,9 @@
 
 use super::ast::{ArrayLength, Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
-use super::expression::{expression, ExprContext, ResolveTo};
+use super::expression::{ExprContext, ResolveTo};
 use super::symtable::Symtable;
+use crate::sema::expression::resolve_expression::expression;
 use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 
@@ -159,12 +160,12 @@ pub fn resolve_call(
             }
         } else {
             ns.called_lib_functions.push(id.to_string());
-            return Ok(Expression::LibFunction(
-                *loc,
-                func.ret.to_vec(),
-                func.libfunc,
-                cast_args,
-            ));
+            return Ok(Expression::LibFunction {
+                loc: *loc,
+                tys: func.ret.to_vec(),
+                kind: func.libfunc,
+                args: cast_args,
+            });
         }
     }
 
@@ -263,12 +264,12 @@ pub fn resolve_method_call(
                 func.ret.to_vec()
             };
 
-            return Ok(Some(Expression::LibFunction(
-                id.loc,
-                returns,
-                func.libfunc,
-                cast_args,
-            )));
+            return Ok(Some(Expression::LibFunction {
+                loc: id.loc,
+                tys: returns,
+                kind: func.libfunc,
+                args: cast_args,
+            }));
         }
     }
 

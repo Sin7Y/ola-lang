@@ -22,18 +22,64 @@ fn test_statement_reachable() {
         (Statement::Break(loc), false),
         (Statement::Return(loc, None), false),
         (
+            Statement::Destructure(loc, vec![], Expression::BoolLiteral { loc, value: true }),
+            true,
+        ),
+        (
+            Statement::VariableDecl(
+                loc,
+                0,
+                Parameter {
+                    loc,
+                    id: None,
+                    ty: Type::Bool,
+                    ty_loc: None,
+                    infinite_size: false,
+                    recursive: false,
+                },
+                None,
+            ),
+            true,
+        ),
+        (
+            Statement::Delete(
+                loc,
+                Type::Bool,
+                Expression::BoolLiteral { loc, value: true },
+            ),
+            true,
+        ),
+        (
             Statement::If(
                 loc,
                 false,
-                Expression::BoolLiteral(loc, false),
+                Expression::BoolLiteral { loc, value: false },
                 vec![],
                 vec![],
             ),
             false,
         ),
         (
-            Statement::Expression(loc, true, Expression::BoolLiteral(loc, false)),
+            Statement::While(
+                loc,
+                true,
+                Expression::BoolLiteral { loc, value: false },
+                vec![],
+            ),
             true,
+        ),
+        (
+            Statement::Expression(loc, true, Expression::BoolLiteral { loc, value: false }),
+            true,
+        ),
+        (
+            Statement::DoWhile(
+                loc,
+                false,
+                vec![],
+                Expression::BoolLiteral { loc, value: true },
+            ),
+            false,
         ),
         (
             Statement::For {
@@ -41,7 +87,7 @@ fn test_statement_reachable() {
                 reachable: false,
                 init: vec![],
                 cond: None,
-                next: vec![],
+                next: None,
                 body: vec![],
             },
             false,
