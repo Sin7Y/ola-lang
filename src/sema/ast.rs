@@ -8,6 +8,7 @@ use num_bigint::BigInt;
 pub use ola_parser::diagnostics::*;
 use ola_parser::program;
 use ola_parser::program::{CodeLocation, OptionalCodeLocation};
+use std::hash;
 use std::sync::Arc;
 use std::{
     collections::{BTreeMap, HashMap},
@@ -20,12 +21,14 @@ use tiny_keccak::{Hasher, Keccak};
 pub enum Type {
     Bool,
     Uint(u16),
-
+    Address,
+    String,
     Array(Box<Type>, Vec<ArrayLength>),
     /// The usize is an index into enums in the namespace
     Enum(usize),
     /// The usize is an index into contracts in the namespace
     Struct(usize),
+    Mapping(Mapping),
     /// The usize is an index into contracts in the namespace
     Contract(usize),
     Ref(Box<Type>),
@@ -50,6 +53,28 @@ pub enum Type {
     /// e.g. Type::Bytes is a pointer to struct.vector. When we advance it, it
     /// is a pointer to latter's data region.
     BufferPointer,
+}
+
+#[derive(Eq, Clone, Debug)]
+pub struct Mapping {
+    pub key: Box<Type>,
+    pub key_name: Option<program::Identifier>,
+    pub value: Box<Type>,
+    pub value_name: Option<program::Identifier>,
+}
+
+// Ensure the key_name and value_name is not used for comparison or hashing
+impl PartialEq for Mapping {
+    fn eq(&self, other: &Mapping) -> bool {
+        self.key == other.key && self.value == other.value
+    }
+}
+
+impl hash::Hash for Mapping {
+    fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
+        self.key.hash(hasher);
+        self.value.hash(hasher);
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
@@ -126,6 +151,8 @@ pub struct StructDecl {
     pub fields: Vec<Parameter>,
     // List of offsets of the fields, last entry is the offset for the struct overall size
     pub offsets: Vec<BigInt>,
+    // Same, but now in storage
+    pub storage_offsets: Vec<BigInt>,
 }
 
 impl fmt::Display for StructDecl {
@@ -269,7 +296,10 @@ impl From<&program::Type> for Type {
     fn from(p: &program::Type) -> Type {
         match p {
             program::Type::Bool => Type::Bool,
+            program::Type::Address => Type::Address,
             program::Type::Uint(n) => Type::Uint(*n),
+            program::Type::String => Type::String,
+            program::Type::Mapping { .. } => unimplemented!(),
         }
     }
 }
@@ -352,8 +382,6 @@ pub struct Namespace {
 
     /// Global constants
     pub constants: Vec<Variable>,
-    /// address length in bytes
-    pub address_length: usize,
 
     pub diagnostics: Diagnostics,
     /// There is a separate namespace for functions and non-functions
@@ -366,10 +394,18 @@ pub struct Namespace {
     pub called_lib_functions: Vec<String>,
 }
 
+pub struct Layout {
+    pub slot: BigInt,
+    pub contract_no: usize,
+    pub var_no: usize,
+    pub ty: Type,
+}
+
 pub struct Contract {
     pub loc: program::Loc,
     pub name: String,
-
+    pub layout: Vec<Layout>,
+    pub fixed_layout_size: BigInt,
     pub functions: Vec<usize>,
     pub all_functions: BTreeMap<usize, usize>,
     pub variables: Vec<Variable>,
@@ -382,28 +418,131 @@ pub struct Contract {
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Expression {
-    BoolLiteral(program::Loc, bool),
-    NumberLiteral(program::Loc, Type, BigInt),
-    StructLiteral(program::Loc, Type, Vec<Expression>),
-    ArrayLiteral(program::Loc, Type, Vec<u32>, Vec<Expression>),
-    ConstArrayLiteral(program::Loc, Type, Vec<u32>, Vec<Expression>),
-    Add(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Subtract(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Multiply(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Divide(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Modulo(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Power(program::Loc, Type, Box<Expression>, Box<Expression>),
-    BitwiseOr(program::Loc, Type, Box<Expression>, Box<Expression>),
-    BitwiseAnd(program::Loc, Type, Box<Expression>, Box<Expression>),
-    BitwiseXor(program::Loc, Type, Box<Expression>, Box<Expression>),
-    ShiftLeft(program::Loc, Type, Box<Expression>, Box<Expression>),
-    ShiftRight(program::Loc, Type, Box<Expression>, Box<Expression>),
-    Variable(program::Loc, Type, usize),
-    ConstantVariable(program::Loc, Type, Option<usize>, usize),
-    StorageVariable(program::Loc, Type, usize, usize),
-    Load(program::Loc, Type, Box<Expression>),
-    GetRef(program::Loc, Type, Box<Expression>),
-    StorageLoad(program::Loc, Type, Box<Expression>),
+    BoolLiteral {
+        loc: program::Loc,
+        value: bool,
+    },
+    NumberLiteral {
+        loc: program::Loc,
+        ty: Type,
+        value: BigInt,
+    },
+    StructLiteral {
+        loc: program::Loc,
+        ty: Type,
+        values: Vec<Expression>,
+    },
+
+    ArrayLiteral {
+        loc: program::Loc,
+        ty: Type,
+        dimensions: Vec<u32>,
+        values: Vec<Expression>,
+    },
+    ConstArrayLiteral {
+        loc: program::Loc,
+        ty: Type,
+        dimensions: Vec<u32>,
+        values: Vec<Expression>,
+    },
+    Add {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Subtract {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Multiply {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Divide {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Modulo {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Power {
+        loc: program::Loc,
+        ty: Type,
+        base: Box<Expression>,
+        exp: Box<Expression>,
+    },
+    BitwiseOr {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    BitwiseAnd {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    BitwiseXor {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    ShiftLeft {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    ShiftRight {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Variable {
+        loc: program::Loc,
+        ty: Type,
+        var_no: usize,
+    },
+    ConstantVariable {
+        loc: program::Loc,
+        ty: Type,
+        contract_no: Option<usize>,
+        var_no: usize,
+    },
+    StorageVariable {
+        loc: program::Loc,
+        ty: Type,
+        contract_no: usize,
+        var_no: usize,
+    },
+    Load {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+    },
+    GetRef {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+    },
+    StorageLoad {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+    },
     ZeroExt {
         loc: program::Loc,
         to: Type,
@@ -419,34 +558,88 @@ pub enum Expression {
         to: Type,
         expr: Box<Expression>,
     },
-    Increment(program::Loc, Type, Box<Expression>),
-    Decrement(program::Loc, Type, Box<Expression>),
-    Assign(program::Loc, Type, Box<Expression>, Box<Expression>),
+    Increment {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+    },
+    Decrement {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+    },
+    Assign {
+        loc: program::Loc,
+        ty: Type,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    More {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Less {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    MoreEqual {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    LessEqual {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Equal {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    NotEqual {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    Not {
+        loc: program::Loc,
+        expr: Box<Expression>,
+    },
+    BitwiseNot {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+    },
+    ConditionalOperator {
+        loc: program::Loc,
+        ty: Type,
+        cond: Box<Expression>,
+        true_option: Box<Expression>,
+        false_option: Box<Expression>,
+    },
+    Subscript {
+        loc: program::Loc,
+        ty: Type,
+        array_ty: Type,
+        array: Box<Expression>,
+        index: Box<Expression>,
+    },
 
-    More(program::Loc, Box<Expression>, Box<Expression>),
-    Less(program::Loc, Box<Expression>, Box<Expression>),
-    MoreEqual(program::Loc, Box<Expression>, Box<Expression>),
-    LessEqual(program::Loc, Box<Expression>, Box<Expression>),
-    Equal(program::Loc, Box<Expression>, Box<Expression>),
-    NotEqual(program::Loc, Box<Expression>, Box<Expression>),
+    StructMember {
+        loc: program::Loc,
+        ty: Type,
+        expr: Box<Expression>,
+        field: usize,
+    },
 
-    Not(program::Loc, Box<Expression>),
-    BitwiseNot(program::Loc, Type, Box<Expression>),
-    ConditionalOperator(
-        program::Loc,
-        Type,
-        Box<Expression>,
-        Box<Expression>,
-        Box<Expression>,
-    ),
-    Subscript(program::Loc, Type, Type, Box<Expression>, Box<Expression>),
-    StructMember(program::Loc, Type, Box<Expression>, usize),
-
-    AllocDynamicArray {
+    AllocDynamicBytes {
         loc: program::Loc,
         ty: Type,
         length: Box<Expression>,
-        init: Option<Vec<u64>>,
+        init: Option<Vec<u32>>,
     },
 
     StorageArrayLength {
@@ -455,9 +648,29 @@ pub enum Expression {
         array: Box<Expression>,
         elem_ty: Type,
     },
+    StringCompare {
+        loc: program::Loc,
+        left: StringLocation<Expression>,
+        right: StringLocation<Expression>,
+    },
+    StringConcat {
+        loc: program::Loc,
+        ty: Type,
+        left: StringLocation<Expression>,
+        right: StringLocation<Expression>,
+    },
 
-    Or(program::Loc, Box<Expression>, Box<Expression>),
-    And(program::Loc, Box<Expression>, Box<Expression>),
+    Or {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+
+    And {
+        loc: program::Loc,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
     Function {
         loc: program::Loc,
         ty: Type,
@@ -472,8 +685,16 @@ pub enum Expression {
         args: Vec<Expression>,
     },
 
-    LibFunction(program::Loc, Vec<Type>, LibFunc, Vec<Expression>),
-    List(program::Loc, Vec<Expression>),
+    LibFunction {
+        loc: program::Loc,
+        tys: Vec<Type>,
+        kind: LibFunc,
+        args: Vec<Expression>,
+    },
+    List {
+        loc: program::Loc,
+        list: Vec<Expression>,
+    },
 }
 
 impl Recurse for Expression {
@@ -481,64 +702,81 @@ impl Recurse for Expression {
     fn recurse<T>(&self, cx: &mut T, f: fn(expr: &Expression, ctx: &mut T) -> bool) {
         if f(self, cx) {
             match self {
-                Expression::StructLiteral(_, _, exprs)
-                | Expression::ArrayLiteral(_, _, _, exprs)
-                | Expression::ConstArrayLiteral(_, _, _, exprs) => {
-                    for e in exprs {
+                Expression::StructLiteral { values, .. }
+                | Expression::ArrayLiteral { values, .. }
+                | Expression::ConstArrayLiteral { values, .. } => {
+                    for e in values {
                         e.recurse(cx, f);
                     }
                 }
-                Expression::Add(_, _, left, right)
-                | Expression::Subtract(_, _, left, right)
-                | Expression::Multiply(_, _, left, right)
-                | Expression::Divide(_, _, left, right)
-                | Expression::Modulo(_, _, left, right)
-                | Expression::Power(_, _, left, right)
-                | Expression::BitwiseOr(_, _, left, right)
-                | Expression::BitwiseAnd(_, _, left, right)
-                | Expression::BitwiseXor(_, _, left, right)
-                | Expression::ShiftLeft(_, _, left, right)
-                | Expression::ShiftRight(_, _, left, right) => {
-                    left.recurse(cx, f);
-                    right.recurse(cx, f);
-                }
-                Expression::StorageLoad(_, _, expr)
+                Expression::Load { expr, .. }
+                | Expression::StorageLoad { expr, .. }
                 | Expression::ZeroExt { expr, .. }
                 | Expression::Trunc { expr, .. }
                 | Expression::Cast { expr, .. }
-                | Expression::Increment(_, _, expr)
-                | Expression::Decrement(_, _, expr) => expr.recurse(cx, f),
+                | Expression::Increment { expr, .. }
+                | Expression::Decrement { expr, .. }
+                | Expression::StructMember { expr, .. }
+                | Expression::Not { expr, .. }
+                | Expression::BitwiseNot { expr, .. } => expr.recurse(cx, f),
 
-                Expression::Assign(_, _, left, right)
-                | Expression::More(_, left, right)
-                | Expression::Less(_, left, right)
-                | Expression::MoreEqual(_, left, right)
-                | Expression::LessEqual(_, left, right)
-                | Expression::Equal(_, left, right)
-                | Expression::NotEqual(_, left, right) => {
+                Expression::Add { left, right, .. }
+                | Expression::Subtract { left, right, .. }
+                | Expression::Multiply { left, right, .. }
+                | Expression::Divide { left, right, .. }
+                | Expression::Modulo { left, right, .. }
+                | Expression::Power {
+                    base: left,
+                    exp: right,
+                    ..
+                }
+                | Expression::BitwiseOr { left, right, .. }
+                | Expression::BitwiseAnd { left, right, .. }
+                | Expression::BitwiseXor { left, right, .. }
+                | Expression::ShiftLeft { left, right, .. }
+                | Expression::ShiftRight { left, right, .. }
+                | Expression::Assign { left, right, .. }
+                | Expression::More { left, right, .. }
+                | Expression::Less { left, right, .. }
+                | Expression::MoreEqual { left, right, .. }
+                | Expression::LessEqual { left, right, .. }
+                | Expression::Equal { left, right, .. }
+                | Expression::NotEqual { left, right, .. }
+                | Expression::Or { left, right, .. }
+                | Expression::And { left, right, .. } => {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
-                Expression::Not(_, expr) | Expression::BitwiseNot(_, _, expr) => {
-                    expr.recurse(cx, f)
-                }
-
-                Expression::ConditionalOperator(_, _, cond, left, right) => {
+                Expression::ConditionalOperator {
+                    cond,
+                    true_option: left,
+                    false_option: right,
+                    ..
+                } => {
                     cond.recurse(cx, f);
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
-                Expression::Subscript(_, _, _, left, right) => {
+                Expression::Subscript {
+                    array: left,
+                    index: right,
+                    ..
+                } => {
                     left.recurse(cx, f);
                     right.recurse(cx, f);
                 }
-                Expression::StructMember(_, _, expr, _) => expr.recurse(cx, f),
-                Expression::AllocDynamicArray { length, .. } => length.recurse(cx, f),
+                Expression::AllocDynamicBytes { length, .. } => length.recurse(cx, f),
                 Expression::StorageArrayLength { array, .. } => array.recurse(cx, f),
-                Expression::Or(_, left, right) | Expression::And(_, left, right) => {
-                    left.recurse(cx, f);
-                    right.recurse(cx, f);
+                Expression::StringCompare { left, right, .. }
+                | Expression::StringConcat { left, right, .. } => {
+                    if let StringLocation::RunTime(expr) = left {
+                        expr.recurse(cx, f);
+                    }
+                    if let StringLocation::RunTime(expr) = right {
+                        expr.recurse(cx, f);
+                    }
                 }
+
                 Expression::FunctionCall { function, args, .. } => {
                     function.recurse(cx, f);
 
@@ -546,12 +784,12 @@ impl Recurse for Expression {
                         e.recurse(cx, f);
                     }
                 }
-                Expression::LibFunction(_, _, _, exprs) | Expression::List(_, exprs) => {
+                Expression::LibFunction { args: exprs, .. }
+                | Expression::List { list: exprs, .. } => {
                     for e in exprs {
                         e.recurse(cx, f);
                     }
                 }
-                Expression::Load(_, _, expr) => expr.recurse(cx, f),
                 _ => (),
             }
         }
@@ -561,53 +799,55 @@ impl Recurse for Expression {
 impl CodeLocation for Expression {
     fn loc(&self) -> program::Loc {
         match self {
-            Expression::BoolLiteral(loc, _)
-            | Expression::NumberLiteral(loc, ..)
-            | Expression::StructLiteral(loc, ..)
-            | Expression::ArrayLiteral(loc, ..)
-            | Expression::ConstArrayLiteral(loc, ..)
-            | Expression::Add(loc, ..)
-            | Expression::Subtract(loc, ..)
-            | Expression::Multiply(loc, ..)
-            | Expression::Divide(loc, ..)
-            | Expression::Modulo(loc, ..)
-            | Expression::Power(loc, ..)
-            | Expression::BitwiseOr(loc, ..)
-            | Expression::BitwiseAnd(loc, ..)
-            | Expression::BitwiseXor(loc, ..)
-            | Expression::ShiftLeft(loc, ..)
-            | Expression::ShiftRight(loc, ..)
-            | Expression::Variable(loc, ..)
-            | Expression::ConstantVariable(loc, ..)
-            | Expression::StorageVariable(loc, ..)
-            | Expression::Load(loc, ..)
-            | Expression::GetRef(loc, ..)
-            | Expression::StorageLoad(loc, ..)
+            Expression::BoolLiteral { loc, .. }
+            | Expression::NumberLiteral { loc, .. }
+            | Expression::StructLiteral { loc, .. }
+            | Expression::ArrayLiteral { loc, .. }
+            | Expression::ConstArrayLiteral { loc, .. }
+            | Expression::Add { loc, .. }
+            | Expression::Subtract { loc, .. }
+            | Expression::Multiply { loc, .. }
+            | Expression::Divide { loc, .. }
+            | Expression::Modulo { loc, .. }
+            | Expression::Power { loc, .. }
+            | Expression::BitwiseOr { loc, .. }
+            | Expression::BitwiseAnd { loc, .. }
+            | Expression::BitwiseXor { loc, .. }
+            | Expression::ShiftLeft { loc, .. }
+            | Expression::ShiftRight { loc, .. }
+            | Expression::Variable { loc, .. }
+            | Expression::ConstantVariable { loc, .. }
+            | Expression::StorageVariable { loc, .. }
+            | Expression::Load { loc, .. }
+            | Expression::GetRef { loc, .. }
+            | Expression::StorageLoad { loc, .. }
             | Expression::ZeroExt { loc, .. }
             | Expression::Trunc { loc, .. }
             | Expression::Cast { loc, .. }
-            | Expression::More(loc, ..)
-            | Expression::Less(loc, ..)
-            | Expression::MoreEqual(loc, ..)
-            | Expression::LessEqual(loc, ..)
-            | Expression::Equal(loc, ..)
-            | Expression::NotEqual(loc, ..)
-            | Expression::Not(loc, _)
-            | Expression::BitwiseNot(loc, ..)
-            | Expression::ConditionalOperator(loc, ..)
-            | Expression::Subscript(loc, ..)
-            | Expression::StructMember(loc, ..)
-            | Expression::Or(loc, ..)
-            | Expression::AllocDynamicArray { loc, .. }
+            | Expression::More { loc, .. }
+            | Expression::Less { loc, .. }
+            | Expression::MoreEqual { loc, .. }
+            | Expression::LessEqual { loc, .. }
+            | Expression::Equal { loc, .. }
+            | Expression::NotEqual { loc, .. }
+            | Expression::Not { loc, .. }
+            | Expression::BitwiseNot { loc, .. }
+            | Expression::ConditionalOperator { loc, .. }
+            | Expression::Subscript { loc, .. }
+            | Expression::StructMember { loc, .. }
+            | Expression::Or { loc, .. }
+            | Expression::AllocDynamicBytes { loc, .. }
             | Expression::StorageArrayLength { loc, .. }
+            | Expression::StringCompare { loc, .. }
+            | Expression::StringConcat { loc, .. }
             | Expression::Function { loc, .. }
             | Expression::FunctionCall { loc, .. }
-            | Expression::Increment(loc, ..)
-            | Expression::Decrement(loc, ..)
-            | Expression::LibFunction(loc, ..)
-            | Expression::Assign(loc, ..)
-            | Expression::List(loc, _)
-            | Expression::And(loc, ..) => *loc,
+            | Expression::Increment { loc, .. }
+            | Expression::Decrement { loc, .. }
+            | Expression::LibFunction { loc, .. }
+            | Expression::Assign { loc, .. }
+            | Expression::List { loc, .. }
+            | Expression::And { loc, .. } => *loc,
         }
     }
 }
@@ -629,6 +869,12 @@ impl CodeLocation for Statement {
             | Statement::Return(loc, ..) => *loc,
         }
     }
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub enum StringLocation<T> {
+    CompileTime(Vec<u8>),
+    RunTime(Box<T>),
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -661,7 +907,7 @@ pub enum Statement {
         reachable: bool,
         init: Vec<Statement>,
         cond: Option<Expression>,
-        next: Vec<Statement>,
+        next: Option<Expression>,
         body: Vec<Statement>,
     },
     DoWhile(program::Loc, bool, Vec<Statement>, Expression),
@@ -710,18 +956,12 @@ impl Recurse for Statement {
                         stmt.recurse(cx, f);
                     }
                 }
-                Statement::For {
-                    init, next, body, ..
-                } => {
+                Statement::For { init, body, .. } => {
                     for stmt in init {
                         stmt.recurse(cx, f);
                     }
 
                     for stmt in body {
-                        stmt.recurse(cx, f);
-                    }
-
-                    for stmt in next {
                         stmt.recurse(cx, f);
                     }
                 }

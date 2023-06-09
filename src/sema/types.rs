@@ -2,8 +2,8 @@
 
 use super::{
     ast::{
-        ArrayLength, Contract, Diagnostic, EnumDecl, Namespace, Parameter, StructDecl, Symbol,
-        Type, UserTypeDecl,
+        ArrayLength, Contract, Diagnostic, EnumDecl, Mapping, Namespace, Parameter, StructDecl,
+        Symbol, Type, UserTypeDecl,
     },
     diagnostics::Diagnostics,
 };
@@ -73,8 +73,7 @@ fn type_decl(
     // - This would require resolving the types definition after all other types are
     //   resolved
     // - Need for circular checks (type a is b; type b is a;)
-    // TODO add address type
-    if !matches!(ty, Type::Uint(_) | Type::Bool) {
+    if !matches!(ty, Type::Address | Type::Uint(_) | Type::Bool) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
             format!("'{}' is not an elementary value type", ty.to_string(ns)),
@@ -264,6 +263,7 @@ fn resolve_contract<'a>(
                         contract: Some(def.name.as_ref().unwrap().name.to_owned()),
                         fields: Vec::new(),
                         offsets: Vec::new(),
+                        storage_offsets: Vec::new(),
                     });
 
                     delay.structs.push(ResolveStructFields {
@@ -327,6 +327,12 @@ pub fn struct_decl(
                 ),
             ));
             continue;
+        }
+        if let Some(storage) = &field.storage {
+            ns.diagnostics.push(Diagnostic::error(
+                storage.loc(),
+                format!("storage location '{storage}' not allowed for struct field"),
+            ));
         }
 
         fields.push(Parameter {
@@ -494,6 +500,7 @@ fn struct_offsets(ns: &mut Namespace) {
                 changes = true;
             }
 
+            let mut storage_offsets = Vec::new();
             let mut offset = BigInt::zero();
             let mut largest_alignment = BigInt::zero();
 
@@ -506,6 +513,7 @@ fn struct_offsets(ns: &mut Namespace) {
                     if remainder > BigInt::zero() {
                         offset += alignment - remainder;
                     }
+                    storage_offsets.push(offset.clone());
 
                     offset += field.ty.storage_slots(ns);
                 }
@@ -518,6 +526,12 @@ fn struct_offsets(ns: &mut Namespace) {
                 if remainder > BigInt::zero() {
                     offset += largest_alignment - remainder;
                 }
+            }
+            storage_offsets.push(offset);
+
+            if ns.structs[struct_no].storage_offsets != storage_offsets {
+                ns.structs[struct_no].storage_offsets = storage_offsets;
+                changes = true;
             }
         }
 
@@ -532,6 +546,11 @@ impl Type {
     pub fn user_struct_no(&self, ns: &Namespace) -> HashSet<usize> {
         match self {
             Type::Struct(n) => HashSet::from([*n]),
+            Type::Mapping(Mapping { key, value, .. }) => {
+                let mut result = key.user_struct_no(ns);
+                result.extend(value.user_struct_no(ns));
+                result
+            }
             // TODO add mapping
             Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(ty) => {
                 ty.user_struct_no(ns)
@@ -543,7 +562,9 @@ impl Type {
     pub fn to_string(&self, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
+            Type::Address => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
+            Type::String => "string".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
             Type::Array(ty, len) => format!(
@@ -556,6 +577,22 @@ impl Type {
                     })
                     .collect::<String>()
             ),
+            Type::Mapping(Mapping {
+                key,
+                key_name,
+                value,
+                value_name,
+            }) => {
+                format!(
+                    "mapping({}{}{} => {}{}{})",
+                    key.to_string(ns),
+                    if key_name.is_some() { " " } else { "" },
+                    key_name.as_ref().map(|id| id.name.as_str()).unwrap_or(""),
+                    value.to_string(ns),
+                    if value_name.is_some() { " " } else { "" },
+                    value_name.as_ref().map(|id| id.name.as_str()).unwrap_or(""),
+                )
+            }
             Type::Function { params, returns } => {
                 let mut s = format!(
                     "fn({}) ",
@@ -597,7 +634,9 @@ impl Type {
     pub fn is_primitive(&self) -> bool {
         match self {
             Type::Bool => true,
+            Type::Address => true,
             Type::Uint(_) => true,
+            Type::Ref(r) => r.is_primitive(),
             Type::StorageRef(r) => r.is_primitive(),
             _ => false,
         }
@@ -607,8 +646,9 @@ impl Type {
     pub fn to_signature_string(&self, say_tuple: bool, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
-            Type::Contract(_) => "address".to_string(),
+            Type::Contract(_) | Type::Address => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
+            Type::String => "string".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(
                 "{}{}",
@@ -620,6 +660,7 @@ impl Type {
                     })
                     .collect::<String>()
             ),
+            Type::Ref(r) => r.to_string(ns),
             Type::StorageRef(r) => r.to_string(ns),
             Type::Struct(_) if say_tuple => "tuple".to_string(),
             Type::Struct(n) => {
@@ -654,11 +695,14 @@ impl Type {
     pub fn is_fixed_reference_type(&self) -> bool {
         match self {
             Type::Bool => false,
+            Type::Address => false,
             Type::Uint(_) => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
             Type::Array(_, dims) => !dims.iter().any(|d| *d == ArrayLength::Dynamic),
             Type::Contract(_) => false,
+            Type::String => false,
+            Type::Mapping(..) => false,
             Type::Slice(_) => false,
             Type::Unresolved => false,
             Type::Ref(_) => false,
@@ -680,22 +724,12 @@ impl Type {
         }
     }
 
-    /// Is this a reference to dynamic memory (arrays, strings)
-    pub fn is_dynamic_memory(&self) -> bool {
-        match self {
-            Type::Slice(_) => true,
-            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => true,
-            Type::Ref(ty) => ty.is_dynamic_memory(),
-            _ => false,
-        }
-    }
-
     /// Give the type of an storage array after dereference. This can only be
     /// used on array types and will cause a panic otherwise.
     #[must_use]
     pub fn storage_array_elem(&self) -> Self {
         match self {
-            // TODO add mapping
+            Type::Mapping(Mapping { value, .. }) => Type::StorageRef(value.clone()),
             Type::Array(ty, dim) if dim.len() > 1 => Type::StorageRef(Box::new(Type::Array(
                 ty.clone(),
                 dim[..dim.len() - 1].to_vec(),
@@ -730,7 +764,7 @@ impl Type {
         self.guarded_recursion(structs_visited, 0.into(), |structs_visited| match self {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
-            Type::Contract(_) => BigInt::from(ns.address_length),
+            Type::Contract(_) | Type::Address => BigInt::from(32),
             Type::Uint(n) => BigInt::from(n / 8),
             Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::from(8),
             Type::Array(ty, dims) => {
@@ -750,7 +784,7 @@ impl Type {
                 .iter()
                 .map(|d| d.ty.memory_size_of_internal(ns, structs_visited))
                 .sum::<BigInt>(),
-            Type::Ref(_) | Type::StorageRef(..) => BigInt::from(8),
+            Type::String | Type::Ref(_) | Type::Slice(_) | Type::StorageRef(..) => BigInt::from(8),
             Type::Unresolved => BigInt::zero(),
             Type::UserType(no) => ns.user_types[*no]
                 .ty
@@ -768,11 +802,13 @@ impl Type {
             Type::Bool
             // Contract and address are arrays of u8, so they align with one.
             | Type::Contract(_)
+            | Type::Address
             | Type::Enum(_) => BigInt::one(),
 
+            Type::Uint(n) => BigInt::from(n / 8),
             Type::Array(ty, dims) => {
                 if dims.iter().any(|d| *d == ArrayLength::Dynamic) {
-                    BigInt::one()
+                    BigInt::from(8)
                 } else {
                     ty.struct_elem_alignment(ns)
                 }
@@ -781,7 +817,9 @@ impl Type {
             Type::Struct(n) => {
                 ns.structs[*n].fields.iter().map(|d| d.ty.struct_elem_alignment(ns)).max().unwrap()
             }
-            Type::StorageRef(..) => BigInt::from(4),
+            Type::String
+            | Type::Ref(_)
+            | Type::StorageRef(..) => BigInt::from(8),
             Type::UserType(no) => ns.user_types[*no].ty.struct_elem_alignment(ns),
 
             _ => unreachable!("Type should not appear on a struct"),
@@ -811,6 +849,7 @@ impl Type {
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
+            Type::String => BigInt::from(4),
             Type::Ref(ty) | Type::StorageRef(ty) => ty.storage_size(ns),
             Type::UserType(no) => ns.user_types[*no].ty.storage_size(ns),
             // Other types have the same size both in storage and in memory
@@ -826,8 +865,7 @@ impl Type {
     /// Calculate the alignment
     pub fn align_of(&self, ns: &Namespace) -> usize {
         match self {
-            Type::Uint(32) => 1,
-            Type::Uint(256) => 8,
+            Type::Uint(n) => (*n / 32).into(),
             Type::Struct(n) => ns.structs[*n]
                 .fields
                 .iter()
@@ -840,19 +878,22 @@ impl Type {
 
     pub fn bits(&self, ns: &Namespace) -> u16 {
         match self {
-            Type::Contract(_) => ns.address_length as u16 * 8,
+            Type::Address | Type::Contract(_) => 256 as u16,
             Type::Bool => 1,
             Type::Uint(n) => *n,
+            Type::Ref(ty) => ty.bits(ns),
             Type::StorageRef(..) => Type::Uint(32).bits(ns),
             Type::Enum(n) => ns.enums[*n].ty.bits(ns),
             _ => panic!("type not allowed"),
         }
     }
 
-    pub fn is_integer(&self) -> bool {
+    pub fn is_integer(&self, ns: &Namespace) -> bool {
         match self {
             Type::Uint(_) => true,
-            Type::StorageRef(r) => r.is_integer(),
+            Type::Ref(r) => r.is_integer(ns),
+            Type::StorageRef(r) => r.is_integer(ns),
+            Type::UserType(user) => ns.user_types[*user].ty.is_integer(ns),
             _ => false,
         }
     }
@@ -861,36 +902,29 @@ impl Type {
     /// arrays can be very large
     pub fn storage_slots(&self, ns: &Namespace) -> BigInt {
         match self {
-            Type::Enum(_) => BigInt::one(),
-            Type::Bool => BigInt::one(),
-            Type::Contract(_) => BigInt::from(ns.address_length),
-            Type::Uint(n) => BigInt::from(n / 8),
-            Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
+            Type::StorageRef(r) | Type::Ref(r) => r.storage_slots(ns),
+            Type::Struct(no) => ns.structs[*no]
+                .fields
+                .iter()
+                .filter(|f| !f.infinite_size)
+                .map(|f| f.ty.storage_slots(ns))
+                .sum(),
+            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => 1.into(),
             Type::Array(ty, dims) => {
-                let pointer_size = BigInt::from(4);
-
-                ty.storage_slots(ns).mul(
-                    dims.iter()
-                        .map(|d| match d {
-                            ArrayLength::Dynamic => &pointer_size,
-                            ArrayLength::Fixed(d) => d,
+                let one = 1.into();
+                ty.storage_slots(ns)
+                    * dims
+                        .iter()
+                        .map(|len| match len {
+                            ArrayLength::Dynamic => &one,
+                            ArrayLength::Fixed(len) => len,
                             ArrayLength::AnyFixed => {
-                                panic!("unknown length");
+                                unreachable!("unknown length")
                             }
                         })
-                        .product::<BigInt>(),
-                )
+                        .product::<BigInt>()
             }
-            // TODO add struct storage offsets
-            // Type::Struct(n) => ns.structs[*n]
-            //     .storage_offsets
-            //     .last()
-            //     .cloned()
-            //     .unwrap_or_else(BigInt::zero),
-            Type::Function { .. } => BigInt::from(4),
-            Type::Unresolved => BigInt::one(),
-            Type::StorageRef(ty) => ty.storage_slots(ns),
-            _ => unimplemented!(),
+            _ => BigInt::one(),
         }
     }
 
@@ -898,57 +932,35 @@ impl Type {
     #[must_use]
     pub fn array_deref(&self) -> Self {
         match self {
+            Type::String => Type::Ref(Box::new(Type::Uint(32))),
             Type::Ref(t) => t.array_deref(),
             Type::Array(ty, dim) if dim.len() > 1 => Type::Ref(Box::new(Type::Array(
                 ty.clone(),
                 dim[..dim.len() - 1].to_vec(),
             ))),
             Type::Array(ty, dim) if dim.len() == 1 => Type::Ref(ty.clone()),
+            Type::Slice(ty) => Type::Ref(Box::new(*ty.clone())),
             _ => panic!("deref on non-array"),
         }
     }
 
     /// Alignment of elements in storage
     pub fn storage_align(&self, ns: &Namespace) -> BigInt {
-        let length = match self {
-            Type::Enum(_) => BigInt::one(),
-            Type::Bool => BigInt::one(),
-            Type::Contract(_) => BigInt::from(ns.address_length),
-            Type::Uint(n) => BigInt::from(n / 8),
-            Type::Array(_, dims) if dims.last() == Some(&ArrayLength::Dynamic) => BigInt::from(4),
-            Type::Array(ty, _) => ty.storage_align(ns),
-            Type::Struct(n) => ns.structs[*n]
-                .fields
-                .iter()
-                .map(|field| {
-                    if field.recursive {
-                        BigInt::one()
-                    } else {
-                        field.ty.storage_align(ns)
-                    }
-                })
-                .max()
-                .unwrap(),
-            Type::Unresolved => BigInt::one(),
-            Type::StorageRef(ty) => ty.storage_align(ns),
-            _ => unimplemented!(),
-        };
-
-        if length > BigInt::from(8) {
-            BigInt::from(8)
-        } else {
-            length
-        }
+        BigInt::one()
     }
 
     pub fn is_reference_type(&self, ns: &Namespace) -> bool {
         match self {
             Type::Bool => false,
+            Type::Address => false,
             Type::Uint(_) => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
             Type::Array(..) => true,
+            Type::String => true,
+            Type::Mapping(..) => true,
             Type::Contract(_) => false,
+            Type::Ref(r) => r.is_reference_type(ns),
             Type::StorageRef(r) => r.is_reference_type(ns),
             Type::Function { .. } => false,
             Type::UserType(no) => ns.user_types[*no].ty.is_reference_type(ns),
@@ -963,6 +975,7 @@ impl Type {
 
     fn is_dynamic_internal(&self, ns: &Namespace, structs_visited: &mut HashSet<usize>) -> bool {
         self.guarded_recursion(structs_visited, false, |structs_visited| match self {
+            Type::String => true,
             Type::Ref(r) => r.is_dynamic_internal(ns, structs_visited),
             Type::Array(ty, dim) => {
                 if dim.iter().any(|d| d == &ArrayLength::Dynamic) {
@@ -979,9 +992,66 @@ impl Type {
             _ => false,
         })
     }
+
+    /// Can this type have a calldata, memory, or storage location. This is to
+    /// be compatible with ethereum solidity. Opinions on whether other
+    /// types should be allowed be storage are welcome.
+    pub fn can_have_data_location(&self) -> bool {
+        matches!(
+            self,
+            Type::Array(..) | Type::Struct(_) | Type::Mapping(..) | Type::String
+        )
+    }
+
     /// Is this a reference to contract storage?
     pub fn is_contract_storage(&self) -> bool {
         matches!(self, Type::StorageRef(..))
+    }
+
+    /// Is this a reference to dynamic memory (arrays, strings)
+    pub fn is_dynamic_memory(&self) -> bool {
+        match self {
+            Type::String | Type::Slice(_) => true,
+            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => true,
+            Type::Ref(ty) => ty.is_dynamic_memory(),
+            _ => false,
+        }
+    }
+
+    /// Is this a mapping
+    pub fn is_mapping(&self) -> bool {
+        match self {
+            Type::Mapping(..) => true,
+            Type::StorageRef(ty) => ty.is_mapping(),
+            _ => false,
+        }
+    }
+
+    /// Is it an address (with some sugar)
+    pub fn is_address(&self) -> bool {
+        matches!(self, Type::Address | Type::Contract(_))
+    }
+
+    /// Does the type contain any mapping type
+    pub fn contains_mapping(&self, ns: &Namespace) -> bool {
+        self.contains_mapping_internal(ns, &mut HashSet::new())
+    }
+
+    fn contains_mapping_internal(
+        &self,
+        ns: &Namespace,
+        structs_visited: &mut HashSet<usize>,
+    ) -> bool {
+        self.guarded_recursion(structs_visited, false, |structs_visited| match self {
+            Type::Mapping(..) => true,
+            Type::Array(ty, _) => ty.contains_mapping_internal(ns, structs_visited),
+            Type::Struct(no) => ns.structs[*no]
+                .fields
+                .iter()
+                .any(|f| f.ty.contains_mapping_internal(ns, structs_visited)),
+            Type::StorageRef(r) | Type::Ref(r) => r.contains_mapping_internal(ns, structs_visited),
+            _ => false,
+        })
     }
 
     /// If the type is Ref or StorageRef, get the underlying type
@@ -1011,14 +1081,12 @@ impl Type {
         }
     }
 
-    /// Is it an address (with some sugar)
-    pub fn is_address(&self) -> bool {
-        matches!(self, Type::Contract(_))
-    }
-
     pub fn is_recursive(&self, ns: &Namespace) -> bool {
         match self {
             Type::Struct(n) => ns.structs[*n].fields.iter().any(|f| f.recursive),
+            Type::Mapping(Mapping { key, value, .. }) => {
+                key.is_recursive(ns) || value.is_recursive(ns)
+            }
             Type::Array(ty, _) | Type::Ref(ty) | Type::Slice(ty) | Type::StorageRef(ty) => {
                 ty.is_recursive(ns)
             }

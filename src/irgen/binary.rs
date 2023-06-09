@@ -254,7 +254,7 @@ impl<'a> Binary<'a> {
     pub(crate) fn vector_new(
         &self,
         size: IntValue<'a>,
-        init: Option<&Vec<u64>>,
+        init: Option<&Vec<u32>>,
     ) -> PointerValue<'a> {
         if let Some(init) = init {
             if init.is_empty() {

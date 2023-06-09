@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::sema::ast::Mapping;
+
 use super::{
     ast::{ArrayLength, Diagnostic, Namespace, Note, Parameter, RetrieveType, Symbol, Type},
     corelib,
     diagnostics::Diagnostics,
     eval::eval_const_number,
-    expression::{expression, ExprContext, ResolveTo},
+    expression::{ExprContext, ResolveTo},
     symtable::Symtable,
     ArrayDimension,
 };
+use crate::sema::expression::resolve_expression::expression;
 use num_bigint::BigInt;
 use num_traits::Signed;
 use num_traits::Zero;
@@ -26,7 +29,6 @@ impl Namespace {
             user_types: Vec::new(),
             functions: Vec::new(),
             constants: Vec::new(),
-            address_length: 32,
             variable_symbols: HashMap::new(),
             function_symbols: HashMap::new(),
             diagnostics: Diagnostics::default(),
@@ -487,7 +489,50 @@ impl Namespace {
 
             // TODO Add Mapping type
 
-            let ty = Type::from(ty);
+            let ty = match ty {
+                program::Type::Mapping {
+                    key,
+                    key_name,
+                    value,
+                    value_name,
+                    ..
+                } => {
+                    let key_ty = self.resolve_type(file_no, contract_no, key, diagnostics)?;
+                    let value_ty = self.resolve_type(file_no, contract_no, value, diagnostics)?;
+
+                    match key_ty {
+                        Type::Mapping(..) => {
+                            diagnostics.push(Diagnostic::decl_error(
+                                key.loc(),
+                                "key of mapping cannot be another mapping type".to_string(),
+                            ));
+                            return Err(());
+                        }
+                        Type::Struct(_) => {
+                            diagnostics.push(Diagnostic::decl_error(
+                                key.loc(),
+                                "key of mapping cannot be struct type".to_string(),
+                            ));
+                            return Err(());
+                        }
+                        Type::Array(..) => {
+                            diagnostics.push(Diagnostic::decl_error(
+                                key.loc(),
+                                "key of mapping cannot be array type".to_string(),
+                            ));
+                            return Err(());
+                        }
+                        _ => Type::Mapping(Mapping {
+                            key: Box::new(key_ty),
+                            key_name: key_name.clone(),
+                            value: Box::new(value_ty),
+                            value_name: value_name.clone(),
+                        }),
+                    }
+                }
+
+                _ => Type::from(ty),
+            };
 
             return if dimensions.is_empty() {
                 Ok(ty)
@@ -807,14 +852,8 @@ impl Namespace {
             }
         }
 
-        match eval_const_number(&size_expr, self) {
-            Ok(n) => Ok(Some(n)),
-            Err(d) => {
-                diagnostics.push(d);
-
-                Err(())
-            }
-        }
+        let n = eval_const_number(&size_expr, self, diagnostics)?;
+        Ok(Some(n))
     }
 
     /// Generate the signature for the given name and parameters. Can be used

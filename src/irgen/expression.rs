@@ -5,14 +5,20 @@ use crate::irgen::u32_op::{
     u32_equal, u32_less, u32_less_equal, u32_mod, u32_more, u32_more_equal, u32_mul, u32_not,
     u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
-use crate::sema::ast::{Expression, LibFunc, Namespace, RetrieveType, Type};
-use crate::sema::diagnostics::Diagnostics;
-use crate::sema::expression::{bigint_to_expression, ResolveTo};
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
 use inkwell::AddressSpace;
 use num_traits::ToPrimitive;
 use ola_parser::program;
+
+use crate::sema::{
+    ast,
+    ast::{Expression, LibFunc, Namespace, RetrieveType, Type},
+    diagnostics::Diagnostics,
+    eval::eval_const_number,
+    expression::integers::bigint_to_expression,
+    expression::ResolveTo,
+};
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -21,38 +27,122 @@ pub fn expression<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     match expr {
-        Expression::Add(_, _, l, r) => u32_add(l, r, bin, func_context, ns),
-        Expression::Subtract(_, _, l, r) => u32_sub(l, r, bin, func_context, ns),
-        Expression::Multiply(_, _, l, r) => u32_mul(l, r, bin, func_context, ns),
-        Expression::Divide(_, _, l, r) => u32_div(l, r, bin, func_context, ns),
-        Expression::Modulo(_, _, l, r) => u32_mod(l, r, bin, func_context, ns),
-        Expression::BitwiseOr(_, _, l, r) => u32_bitwise_or(l, r, bin, func_context, ns),
-        Expression::BitwiseAnd(_, _, l, r) => u32_bitwise_and(l, r, bin, func_context, ns),
-        Expression::BitwiseXor(_, _, l, r) => u32_bitwise_xor(l, r, bin, func_context, ns),
-        Expression::ShiftLeft(_, _, l, r) => u32_shift_left(l, r, bin, func_context, ns),
-        Expression::ShiftRight(_, _, l, r) => u32_shift_right(l, r, bin, func_context, ns),
-        Expression::Equal(_, l, r) => u32_equal(l, r, bin, func_context, ns),
-        Expression::NotEqual(_, l, r) => u32_not_equal(l, r, bin, func_context, ns),
-        Expression::More(_, l, r) => u32_more(l, r, bin, func_context, ns),
-        Expression::MoreEqual(_, l, r) => u32_more_equal(l, r, bin, func_context, ns),
-        Expression::Less(_, l, r) => u32_less(l, r, bin, func_context, ns),
-        Expression::LessEqual(_, l, r) => u32_less_equal(l, r, bin, func_context, ns),
+        ast::Expression::StorageVariable {
+            loc,
+            contract_no: var_contract_no,
+            var_no,
+            ..
+        } => {
+            // // base storage variables should precede contract variables, not overlap
+            // ns.contracts[contract_no].get_storage_slot(*loc, *var_contract_no, *var_no,
+            // ns, None)
+            unimplemented!()
+        }
+        ast::Expression::StorageLoad { loc, ty, expr } => {
+            // let storage = expression(expr, cfg, contract_no, func, ns, vartab, opt);
 
-        Expression::Not(_, expr) => u32_not(expr, bin, func_context, ns),
-        Expression::BitwiseNot(_, _, expr) => u32_bitwise_not(expr, bin, func_context, ns),
-        Expression::Or(_, l, r) => u32_or(l, r, bin, func_context, ns),
-        Expression::And(_, l, r) => u32_and(l, r, bin, func_context, ns),
-        Expression::Power(_, _, l, r) => u32_power(l, r, bin, func_context, ns),
-        Expression::Decrement(loc, _, expr) => {
+            // load_storage(loc, ty, storage, cfg, vartab)
+            unimplemented!()
+        }
+        ast::Expression::Add {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_add(left, right, bin, func_context, ns),
+        ast::Expression::Subtract {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_sub(left, right, bin, func_context, ns),
+        ast::Expression::Multiply {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_mul(left, right, bin, func_context, ns),
+        ast::Expression::Divide {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_div(left, right, bin, func_context, ns),
+        ast::Expression::Modulo {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_mod(left, right, bin, func_context, ns),
+        ast::Expression::Power { loc, ty, base, exp } => {
+            u32_power(base, exp, bin, func_context, ns)
+        }
+        ast::Expression::BitwiseOr {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_bitwise_or(left, right, bin, func_context, ns),
+        ast::Expression::BitwiseAnd {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_bitwise_and(left, right, bin, func_context, ns),
+        ast::Expression::BitwiseXor {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_bitwise_xor(left, right, bin, func_context, ns),
+        ast::Expression::ShiftLeft {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_shift_left(left, right, bin, func_context, ns),
+        ast::Expression::ShiftRight {
+            loc,
+            ty,
+            left,
+            right,
+        } => u32_shift_right(left, right, bin, func_context, ns),
+        ast::Expression::Equal { loc, left, right } => {
+            u32_equal(left, right, bin, func_context, ns)
+        }
+        ast::Expression::NotEqual { loc, left, right } => {
+            u32_not_equal(left, right, bin, func_context, ns)
+        }
+        ast::Expression::More { loc, left, right } => u32_more(left, right, bin, func_context, ns),
+        ast::Expression::MoreEqual { loc, left, right } => {
+            u32_more_equal(left, right, bin, func_context, ns)
+        }
+        ast::Expression::Less { loc, left, right } => u32_less(left, right, bin, func_context, ns),
+        ast::Expression::LessEqual { loc, left, right } => {
+            u32_less_equal(left, right, bin, func_context, ns)
+        }
+
+        ast::Expression::Not { loc, expr } => u32_not(expr, bin, func_context, ns),
+        ast::Expression::BitwiseNot { loc, ty, expr } => {
+            u32_bitwise_not(expr, bin, func_context, ns)
+        }
+        ast::Expression::Or { loc, left, right } => u32_or(left, right, bin, func_context, ns),
+        ast::Expression::And { loc, left, right } => u32_and(left, right, bin, func_context, ns),
+
+        Expression::Decrement { loc, ty, expr } => {
             let v = match expr.ty() {
-                Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
-                Type::StorageRef(_ty) => unimplemented!(),
+                Type::Ref(ty) => Expression::Load {
+                    loc: *loc,
+                    ty: ty.as_ref().clone(),
+                    expr: expr.clone(),
+                },
+                Type::StorageRef(ty) => unimplemented!(),
                 _ => *expr.clone(),
             };
             let one = bin.context.i64_type().const_int(1, false);
             match expr.as_ref() {
-                Expression::Variable(_, ty, pos) => {
-                    let before_ptr = *func_context.var_table.get(pos).unwrap();
+                Expression::Variable { ty, var_no, .. } => {
+                    let before_ptr = *func_context.var_table.get(var_no).unwrap();
                     let before_val = bin.builder.build_load(
                         bin.llvm_type(&ty, ns),
                         before_ptr.into_pointer_value(),
@@ -87,17 +177,21 @@ pub fn expression<'a>(
                 }
             }
         }
-        Expression::Increment(loc, _ty, expr) => {
+        Expression::Increment { loc, ty, expr } => {
             let v = match expr.ty() {
-                Type::Ref(ty) => Expression::Load(*loc, ty.as_ref().clone(), expr.clone()),
-                Type::StorageRef(_ty) => unimplemented!(),
+                Type::Ref(ty) => Expression::Load {
+                    loc: *loc,
+                    ty: ty.as_ref().clone(),
+                    expr: expr.clone(),
+                },
+                Type::StorageRef(ty) => unimplemented!(),
                 _ => *expr.clone(),
             };
             let one = bin.context.i64_type().const_int(1, false);
             match expr.as_ref() {
-                Expression::Variable(_, ty, pos) => {
+                Expression::Variable { ty, var_no, .. } => {
                     let one = bin.context.i64_type().const_int(1, false);
-                    let before_ptr = *func_context.var_table.get(pos).unwrap();
+                    let before_ptr = *func_context.var_table.get(var_no).unwrap();
                     let before_val = bin.builder.build_load(
                         bin.llvm_type(&ty, ns),
                         before_ptr.into_pointer_value(),
@@ -130,21 +224,23 @@ pub fn expression<'a>(
                 }
             }
         }
-        Expression::Assign(_, _, l, r) => {
+        ast::Expression::Assign { left, right, .. } => {
             // // If an assignment where the left hand side is an array, call a helper
             // // function that updates the temp variable.
             // if let Expression::Variable(_, Type::Array(..), var_no, ..) = &**l {
             //     handle_array_assign(r, bin, func_context, *var_no, ns);
             // }
-            assign_single(l, r, bin, func_context, ns)
+            assign_single(left, right, bin, func_context, ns)
         }
         Expression::FunctionCall { .. } => {
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
             ret
         }
-        Expression::NumberLiteral(_, ty, n) => bin.number_literal(ty, n, ns).into(),
+        ast::Expression::NumberLiteral { ty, value, .. } => {
+            bin.number_literal(ty, value, ns).into()
+        }
 
-        Expression::Variable(_, ty, var_no) => {
+        ast::Expression::Variable { ty, var_no, .. } => {
             let ptr = func_context
                 .var_table
                 .get(var_no)
@@ -158,7 +254,11 @@ pub fn expression<'a>(
                 .build_load(bin.llvm_var_ty(&ty, ns), ptr.into_pointer_value(), "")
         }
 
-        Expression::LibFunction(_, _, LibFunc::U32Sqrt, args) => {
+        Expression::LibFunction {
+            kind: LibFunc::U32Sqrt,
+            args,
+            ..
+        } => {
             let value = expression(&args[0], bin, func_context, ns).into_int_value();
             let root = bin
                 .builder
@@ -175,12 +275,12 @@ pub fn expression<'a>(
             root
         }
 
-        Expression::StructLiteral(_loc, ty, fields) => {
+        ast::Expression::StructLiteral { ty, values, .. } => {
             let struct_ty = bin.llvm_type(ty, ns);
 
             let struct_alloca = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
 
-            for (i, expr) in fields.iter().enumerate() {
+            for (i, expr) in values.iter().enumerate() {
                 let elemptr = bin
                     .builder
                     .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct member")
@@ -202,7 +302,12 @@ pub fn expression<'a>(
             struct_alloca.into()
         }
 
-        Expression::ArrayLiteral(_loc, ty, dimensions, values) => {
+        ast::Expression::ArrayLiteral {
+            loc,
+            ty,
+            dimensions,
+            values,
+        } => {
             let array_ty = bin.llvm_type(ty, ns);
             let array_alloca = bin.build_alloca(func_context.func_val, array_ty, "array_literal");
 
@@ -240,37 +345,61 @@ pub fn expression<'a>(
 
             array_alloca.into()
         }
-        Expression::ConstArrayLiteral(_loc, _ty, _dimensions, _values) => {
+        ast::Expression::ConstArrayLiteral {
+            loc,
+            ty,
+            dimensions,
+            values,
+        } => {
             unimplemented!()
         }
 
-        Expression::ConstantVariable(_, _, Some(_var_contract_no), _var_no) => {
+        ast::Expression::ConstantVariable {
+            contract_no: Some(var_contract_no),
+            var_no,
+            ..
+        } => {
             unimplemented!()
         }
 
         Expression::StorageArrayLength {
-            loc: _,
-            ty: _,
-            array: _,
-            elem_ty: _,
+            loc,
+            ty,
+            array,
+            elem_ty,
         } => {
             unimplemented!()
         }
-        Expression::Subscript(loc, _, array_ty, array, index) => {
-            array_subscript(loc, array_ty, array, index, bin, func_context, ns)
-        }
-        Expression::StructMember(_, ty, _var, _field_no) if ty.is_contract_storage() => {
+        ast::Expression::Subscript {
+            loc,
+            ty: elem_ty,
+            array_ty,
+            array,
+            index,
+        } => array_subscript(loc, array_ty, array, index, bin, func_context, ns),
+
+        ast::Expression::StructMember {
+            loc,
+            ty,
+            expr: var,
+            field: field_no,
+        } if ty.is_contract_storage() => {
             unimplemented!()
         }
-        Expression::StructMember(_, _ty, var, member) => {
+        ast::Expression::StructMember {
+            loc,
+            ty,
+            expr: var,
+            field: field_no,
+        } => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_context, ns).into_pointer_value();
             bin.builder
-                .build_struct_gep(struct_ty, struct_ptr, *member as u32, "struct member")
+                .build_struct_gep(struct_ty, struct_ptr, *field_no as u32, "struct member")
                 .unwrap()
                 .into()
         }
-        Expression::Load(_, ty, expr) => {
+        ast::Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_context, ns).into_pointer_value();
             if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
                 let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
@@ -317,7 +446,12 @@ pub fn expression<'a>(
             }
         }
 
-        Expression::LibFunction(_loc, _tys, LibFunc::ArrayPush, args) => {
+        Expression::LibFunction {
+            tys,
+            kind: LibFunc::ArrayPush,
+            args,
+            ..
+        } => {
             if args[0].ty().is_contract_storage() {
                 // TODO Add support for storage type arrays
                 unimplemented!();
@@ -326,7 +460,12 @@ pub fn expression<'a>(
                 unimplemented!();
             }
         }
-        Expression::LibFunction(_loc, _ty, LibFunc::ArrayPop, args) => {
+        Expression::LibFunction {
+            tys,
+            kind: LibFunc::ArrayPop,
+            args,
+            ..
+        } => {
             if args[0].ty().is_contract_storage() {
                 // TODO Add support for storage type arrays
                 unimplemented!();
@@ -335,15 +474,29 @@ pub fn expression<'a>(
                 unimplemented!();
             }
         }
-        Expression::LibFunction(_loc, _ty, LibFunc::ArrayLength, args) => {
+        Expression::LibFunction {
+            tys,
+            kind: LibFunc::ArrayLength,
+            args,
+            ..
+        } => {
             let array = expression(&args[0], bin, func_context, ns);
 
             bin.vector_len(array).into()
         }
-        Expression::LibFunction(_loc, _ty, LibFunc::ArraySort, args) => {
+        Expression::LibFunction {
+            loc,
+            tys,
+            kind: LibFunc::ArraySort,
+            args,
+        } => {
             let array = expression(&args[0], bin, func_context, ns);
-            let vector_length_expr =
-                Expression::LibFunction(*loc, ty.clone(), LibFunc::ArrayLength, args.clone());
+            let vector_length_expr = Expression::LibFunction {
+                loc: *loc,
+                tys: tys.clone(),
+                kind: LibFunc::ArrayLength,
+                args: args.clone(),
+            };
             let array_length = expression(&vector_length_expr, bin, func_context, ns);
 
             let array_sorted = bin
@@ -360,25 +513,29 @@ pub fn expression<'a>(
                 .expect("Should have a left return value");
             array_sorted.into()
         }
-        Expression::AllocDynamicArray {
-            loc: _,
-            ty: _,
+        Expression::AllocDynamicBytes {
+            loc,
+            ty,
             length: size,
-            init: _,
+            init,
         } => {
             let size = expression(size, bin, func_context, ns).into_int_value();
             bin.vector_new(size, init.as_ref()).into()
         }
-        Expression::ConditionalOperator(_, ty, cond, left, right) => {
-            conditional_operator(bin, ty, cond, func_context, ns, left, right)
-        }
-        Expression::BoolLiteral(_, value) => bin
+        ast::Expression::ConditionalOperator {
+            loc,
+            ty,
+            cond,
+            true_option: left,
+            false_option: right,
+        } => conditional_operator(bin, ty, cond, func_context, ns, left, right),
+        ast::Expression::BoolLiteral { loc, value } => bin
             .context
             .bool_type()
             .const_int(*value as u64, false)
             .into(),
 
-        Expression::GetRef(_, _ty, expr) => {
+        ast::Expression::GetRef { loc, ty, expr: exp } => {
             let address = expression(expr, bin, func_context, ns).into_array_value();
 
             let stack = bin.build_alloca(func_context.func_val, address.get_type(), "address");
@@ -387,12 +544,7 @@ pub fn expression<'a>(
 
             stack.into()
         }
-        Expression::StorageVariable(_loc, _, _var_contract_no, _var_no) => {
-            unimplemented!()
-        }
-        Expression::StorageLoad(_, _ty, _expr) => {
-            unimplemented!()
-        }
+
         Expression::Cast { loc, to, expr }
             if matches!(to, Type::Array(..))
                 && matches!(**expr, Expression::ArrayLiteral { .. }) =>
@@ -422,8 +574,8 @@ pub fn array_literal_to_memory_array<'a>(
         None,
     );
 
-    let elements = if let Expression::ArrayLiteral(_, _, _, values) = expr {
-        values
+    let elements = if let Expression::ArrayLiteral { values: items, .. } = expr {
+        items
     } else {
         unreachable!()
     };
@@ -557,12 +709,12 @@ fn array_subscript<'a>(
                 } else {
                     // If a subscript is encountered array length will be called
                     // Return array length by default
-                    let array_length_expr = Expression::LibFunction(
-                        *loc,
-                        vec![Type::Uint(32)],
-                        LibFunc::ArrayLength,
-                        vec![array.clone()],
-                    );
+                    let array_length_expr = Expression::LibFunction {
+                        loc: *loc,
+                        tys: vec![Type::Uint(32)],
+                        kind: LibFunc::ArrayLength,
+                        args: vec![array.clone()],
+                    };
                     let returned =
                         expression(&array_length_expr, bin, func_context, ns).into_int_value();
                     returned.into()
@@ -648,7 +800,7 @@ pub fn assign_single<'a>(
 ) -> BasicValueEnum<'a> {
     let right_value = expression(right, bin, func_context, ns);
     match left {
-        Expression::Variable(_, ty, var_no) => {
+        ast::Expression::Variable { loc, ty, var_no } => {
             let right_value = match right_value {
                 BasicValueEnum::PointerValue(p) => {
                     func_context.var_table.insert(*var_no, right_value);
