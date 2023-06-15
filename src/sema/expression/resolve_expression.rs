@@ -67,7 +67,7 @@ pub fn expression(
         }
 
         program::Expression::AddressLiteral(loc, address) => {
-            address_literal(loc, address, ns, diagnostics)
+            address_literal(loc, address, diagnostics)
         }
 
         program::Expression::Variable(id) => {

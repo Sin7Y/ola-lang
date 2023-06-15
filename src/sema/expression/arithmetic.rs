@@ -319,12 +319,22 @@ pub(super) fn equal(
     let left_type = left.ty();
     let right_type = right.ty();
 
+    if let Some(expr) =
+        is_string_equal(loc, &left, &left_type, &right, &right_type, ns, diagnostics)?
+    {
+        return Ok(expr);
+    }
+
     let ty = coerce(&left_type, &l.loc(), &right_type, &r.loc(), ns, diagnostics)?;
-    Ok(Expression::Equal {
+    let left = expression(l, context, ns, symtable, diagnostics, ResolveTo::Type(&ty))?;
+    let right = expression(r, context, ns, symtable, diagnostics, ResolveTo::Type(&ty))?;
+    let expr = Expression::Equal {
         loc: *loc,
-        left: Box::new(left.cast(&l.loc(), &ty, ns, diagnostics)?),
-        right: Box::new(right.cast(&r.loc(), &ty, ns, diagnostics)?),
-    })
+        left: Box::new(left.cast(&left.loc(), &ty, ns, diagnostics)?),
+        right: Box::new(right.cast(&right.loc(), &ty, ns, diagnostics)?),
+    };
+
+    Ok(expr)
 }
 
 /// Test for equality; first check string equality, then integer equality

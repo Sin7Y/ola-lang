@@ -115,14 +115,6 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
         }
 
         Expression::ConstantVariable {
-            contract_no: Some(contract_no),
-            var_no,
-            ..
-        } => {
-            ns.contracts[*contract_no].variables[*var_no].read = true;
-        }
-
-        Expression::ConstantVariable {
             contract_no: None,
             var_no,
             ..

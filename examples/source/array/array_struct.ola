@@ -5,17 +5,14 @@ contract StructArrayExample {
     struct Book {
         u32 book_id;
         u32 book_name;
-        u32[5] book_pages;
     }
 
 
-    fn createBooks() -> (Book[2]) {
+    fn createBooks() -> (Book[]) {
        
-        Book[2] myBooks = [Book(0, 111, [1, 2, 3, 4, 5]), Book(0, 0, [0, 0, 0, 0, 0])];
+        Book[] myBooks = new Book[](1);
+        myBooks[0] = Book(99, 100);
         return myBooks;
     }
 
-    fn getFirstBookID(Book[2] _books) -> (u32) {
-        return _books[1].book_pages[1];
-    }
 }

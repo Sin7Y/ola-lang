@@ -2,7 +2,6 @@ use inkwell::types::BasicTypeEnum;
 use inkwell::values::{BasicValue, BasicValueEnum};
 use num_bigint::BigInt;
 use num_traits::Zero;
-use std::sync::Arc;
 
 use super::expression::expression;
 use crate::irgen::binary::Binary;
@@ -13,7 +12,6 @@ use crate::sema::ast::{
     self, ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
 use ola_parser::program;
-use ola_parser::program::CodeLocation;
 use ola_parser::program::Loc::IRgen;
 
 /// Resolve a statement, which might be a block of statements or an entire body
@@ -215,7 +213,10 @@ pub(crate) fn statement<'a>(
             unimplemented!()
         }
         Statement::Delete(_, ty, expr) => {
-            unimplemented!()
+            let mut slot = expression(expr, bin, func_context, ns).into_int_value();
+            // storage_delete(bin, ty, &mut slot, func_context.func_val,
+            // ns);storage_delete(bin, ty, &mut slot, func_context.func_val,
+            // ns);
         }
 
         Statement::Destructure(_, fields, expr) => destructure(bin, fields, expr, func_context, ns),

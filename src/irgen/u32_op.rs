@@ -3,7 +3,7 @@ use crate::irgen::expression::expression;
 use crate::irgen::functions::FunctionContext;
 use crate::sema::ast::Expression::NumberLiteral;
 use crate::sema::ast::{Expression, Namespace, Type};
-use inkwell::values::BasicValueEnum;
+use inkwell::values::{BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
 use num_bigint::BigInt;
 use ola_parser::program::Loc;

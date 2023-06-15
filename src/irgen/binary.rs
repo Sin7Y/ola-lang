@@ -11,9 +11,12 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
-use inkwell::values::{BasicValueEnum, IntValue, PointerValue};
-use inkwell::AddressSpace;
+use inkwell::types::{
+    ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
+    StructType,
+};
+use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
+use inkwell::{AddressSpace, IntPredicate};
 
 pub struct Binary<'a> {
     pub name: String,
@@ -340,6 +343,99 @@ impl<'a> Binary<'a> {
             self.builder
                 .build_struct_gep(vector_type, vector.into_pointer_value(), 1, "data")
                 .unwrap()
+        }
+    }
+
+    /// Emit a loop from `from` to `to`. The closure exists to insert the body
+    /// of the loop; the closure gets the loop variable passed to it as an
+    /// IntValue, and a userdata IntValue
+    pub(crate) fn emit_static_loop_with_int<F>(
+        &self,
+        function: FunctionValue,
+        from: IntValue<'a>,
+        to: IntValue<'a>,
+        data_ref: &mut IntValue<'a>,
+        mut insert_body: F,
+    ) where
+        F: FnMut(IntValue<'a>, &mut IntValue<'a>),
+    {
+        let body = self.context.append_basic_block(function, "body");
+        let done = self.context.append_basic_block(function, "done");
+        let entry = self.builder.get_insert_block().unwrap();
+
+        self.builder.build_unconditional_branch(body);
+        self.builder.position_at_end(body);
+
+        let loop_ty = from.get_type();
+        let loop_phi = self.builder.build_phi(loop_ty, "index");
+        let data_phi = self.builder.build_phi(data_ref.get_type(), "data");
+        let mut data = data_phi.as_basic_value().into_int_value();
+
+        let loop_var = loop_phi.as_basic_value().into_int_value();
+
+        // add loop body
+        insert_body(loop_var, &mut data);
+
+        let next = self
+            .builder
+            .build_int_add(loop_var, loop_ty.const_int(1, false), "next_index");
+
+        let comp = self
+            .builder
+            .build_int_compare(IntPredicate::ULT, next, to, "loop_cond");
+        self.builder.build_conditional_branch(comp, body, done);
+
+        let body = self.builder.get_insert_block().unwrap();
+        loop_phi.add_incoming(&[(&from, entry), (&next, body)]);
+        data_phi.add_incoming(&[(&*data_ref, entry), (&data, body)]);
+
+        self.builder.position_at_end(done);
+
+        *data_ref = data;
+    }
+
+    /// Dereference an array
+    pub(crate) fn array_subscript(
+        &self,
+        array_ty: &Type,
+        array: PointerValue<'a>,
+        index: IntValue<'a>,
+        ns: &Namespace,
+    ) -> PointerValue<'a> {
+        match array_ty {
+            Type::Array(_, dim) => {
+                if matches!(dim.last(), Some(ArrayLength::Fixed(_))) {
+                    // fixed size array
+                    let llvm_ty = self.llvm_type(array_ty, ns);
+                    unsafe {
+                        self.builder.build_gep(
+                            llvm_ty,
+                            array,
+                            &[self.context.i64_type().const_zero(), index],
+                            "index_access",
+                        )
+                    }
+                } else {
+                    let elem_ty = array_ty.array_deref();
+                    let llvm_elem_ty = self.llvm_type(elem_ty.deref_memory(), ns);
+
+                    let vector_type = self.create_struct_vector();
+
+                    unsafe {
+                        self.builder.build_gep(
+                            vector_type,
+                            array,
+                            &[
+                                self.context.i32_type().const_zero(),
+                                self.context.i32_type().const_int(1, false),
+                                index,
+                            ],
+                            "index_access",
+                        )
+                    }
+                }
+            }
+            _ => unreachable!(),
         }
     }
 }

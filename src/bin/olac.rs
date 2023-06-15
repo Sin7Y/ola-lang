@@ -2,11 +2,13 @@
 
 use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 
-use ola_lang::codegen::core::ir::module::Module;
+use num_bigint::BigInt;
+use num_traits::Zero;
 use ola_lang::codegen::isa::ola::Ola;
 use ola_lang::codegen::lower::compile_module;
 use ola_lang::file_resolver::FileResolver;
 use ola_lang::sema::ast::Namespace;
+use ola_lang::{codegen::core::ir::module::Module, sema::ast::Layout};
 use std::{
     ffi::{OsStr, OsString},
     fs::{create_dir_all, File},
@@ -82,10 +84,14 @@ fn compile(matches: &ArgMatches) {
 
 fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatches) -> Namespace {
     // resolve phase
-    let ns = ola_lang::parse_and_resolve(filename, resolver);
+    let mut ns = ola_lang::parse_and_resolve(filename, resolver);
 
     if ns.diagnostics.any_errors() {
         return ns;
+    }
+
+    for contract_no in 0..ns.contracts.len() {
+        layout(contract_no, &mut ns);
     }
 
     // gen ast
@@ -191,4 +197,27 @@ fn imports_arg(matches: &ArgMatches) -> FileResolver {
     }
 
     resolver
+}
+
+/// Layout the contract. We determine the layout of variables and deal with
+/// overriding variables
+fn layout(contract_no: usize, ns: &mut Namespace) {
+    let mut slot = BigInt::zero();
+
+    for var_no in 0..ns.contracts[contract_no].variables.len() {
+        if !ns.contracts[contract_no].variables[var_no].constant {
+            let ty = ns.contracts[contract_no].variables[var_no].ty.clone();
+
+            ns.contracts[contract_no].layout.push(Layout {
+                slot: slot.clone(),
+                contract_no: contract_no,
+                var_no,
+                ty: ty.clone(),
+            });
+
+            slot += ty.storage_slots(ns);
+        }
+    }
+
+    ns.contracts[contract_no].fixed_layout_size = slot;
 }
