@@ -204,9 +204,8 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
         ns.structs[resolve.struct_no].fields = fields;
     }
 
-    // struct can contain other structs, and we have to check for recursiveness,
-    // i.e. "struct a { b f1; } struct b { a f1; }"
-    (0..ns.structs.len()).for_each(|_struct_no| find_struct_recursion(ns));
+    // Handle recursive struct fields.
+    find_struct_recursion(ns);
 
     // Calculate the offset of each field in all the struct types
     struct_offsets(ns);
@@ -506,7 +505,7 @@ fn struct_offsets(ns: &mut Namespace) {
 
             for field in &ns.structs[struct_no].fields {
                 if !field.infinite_size {
-                    let alignment = field.ty.storage_align(ns);
+                    let alignment = BigInt::from(1);
                     largest_alignment = std::cmp::max(alignment.clone(), largest_alignment.clone());
                     let remainder = offset.clone() % alignment.clone();
 
@@ -942,11 +941,6 @@ impl Type {
             Type::Slice(ty) => Type::Ref(Box::new(*ty.clone())),
             _ => panic!("deref on non-array"),
         }
-    }
-
-    /// Alignment of elements in storage
-    pub fn storage_align(&self, ns: &Namespace) -> BigInt {
-        BigInt::one()
     }
 
     pub fn is_reference_type(&self, ns: &Namespace) -> bool {

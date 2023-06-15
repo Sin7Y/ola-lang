@@ -14,13 +14,16 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 5]> = Lazy::new(|| {
+static PROPHET_FUNCTIONS: Lazy<[&str; 8]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
         "vector_new",
+        "get_storage",
+        "set_storage",
+        "poseidon_hash",
     ]
 });
 
@@ -123,6 +126,67 @@ pub fn declare_prophets(bin: &mut Binary) {
             bin.module
                 .add_function("prophet_u32_array_sort", ftype, None);
         }
+        "get_storage" => {
+            let void_type = bin.context.void_type();
+            let i64_type = bin.context.i64_type();
+            let ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(
+                &[
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                ],
+                false,
+            );
+            bin.module.add_function("get_storage", ftype, None);
+        }
+        "set_storage" => {
+            let void_type = bin.context.void_type();
+            let i64_type = bin.context.i64_type();
+            let ftype = void_type.fn_type(
+                &[
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                ],
+                false,
+            );
+            bin.module.add_function("set_storage", ftype, None);
+        }
+        "poseidon_hash" => {
+            let void_type = bin.context.void_type();
+            let i64_type = bin.context.i64_type();
+            let ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(
+                &[
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    i64_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                ],
+                false,
+            );
+            bin.module.add_function("poseidon_hash", ftype, None);
+        }
+
         _ => {}
     });
 }
