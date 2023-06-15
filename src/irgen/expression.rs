@@ -1,24 +1,28 @@
 use crate::irgen::binary::Binary;
+use crate::irgen::functions;
 use crate::irgen::functions::FunctionContext;
 use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
     u32_equal, u32_less, u32_less_equal, u32_mod, u32_more, u32_more_equal, u32_mul, u32_not,
     u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
+use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
 use inkwell::AddressSpace;
+use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
 
 use crate::sema::{
-    ast,
     ast::{Expression, LibFunc, Namespace, RetrieveType, Type},
     diagnostics::Diagnostics,
     eval::eval_const_number,
     expression::integers::bigint_to_expression,
     expression::ResolveTo,
 };
+
+use super::storage::{storage_load, storage_store};
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -27,117 +31,149 @@ pub fn expression<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     match expr {
-        ast::Expression::StorageVariable {
+        Expression::StorageVariable {
             loc,
-            contract_no: var_contract_no,
+            contract_no,
             var_no,
             ..
         } => {
-            // // base storage variables should precede contract variables, not overlap
-            // ns.contracts[contract_no].get_storage_slot(*loc, *var_contract_no, *var_no,
-            // ns, None)
-            unimplemented!()
+            // base storage variables should precede contract variables, not overlap
+            ns.contracts[*contract_no].get_storage_slot(bin, *contract_no, *var_no)
         }
-        ast::Expression::StorageLoad { loc, ty, expr } => {
-            // let storage = expression(expr, cfg, contract_no, func, ns, vartab, opt);
-
-            // load_storage(loc, ty, storage, cfg, vartab)
-            unimplemented!()
+        Expression::StorageLoad { loc, ty, expr } => {
+            let mut slot = expression(expr, bin, func_context, ns);
+            storage_load(bin, ty, &mut slot, func_context.func_val, ns)
         }
-        ast::Expression::Add {
+        Expression::Add {
             loc,
             ty,
             left,
             right,
         } => u32_add(left, right, bin, func_context, ns),
-        ast::Expression::Subtract {
+        Expression::Subtract {
             loc,
             ty,
             left,
             right,
         } => u32_sub(left, right, bin, func_context, ns),
-        ast::Expression::Multiply {
+        Expression::Multiply {
             loc,
             ty,
             left,
             right,
         } => u32_mul(left, right, bin, func_context, ns),
-        ast::Expression::Divide {
+        Expression::Divide {
             loc,
             ty,
             left,
             right,
         } => u32_div(left, right, bin, func_context, ns),
-        ast::Expression::Modulo {
+        Expression::Modulo {
             loc,
             ty,
             left,
             right,
         } => u32_mod(left, right, bin, func_context, ns),
-        ast::Expression::Power { loc, ty, base, exp } => {
-            u32_power(base, exp, bin, func_context, ns)
-        }
-        ast::Expression::BitwiseOr {
+        Expression::Power { loc, ty, base, exp } => u32_power(base, exp, bin, func_context, ns),
+        Expression::BitwiseOr {
             loc,
             ty,
             left,
             right,
         } => u32_bitwise_or(left, right, bin, func_context, ns),
-        ast::Expression::BitwiseAnd {
+        Expression::BitwiseAnd {
             loc,
             ty,
             left,
             right,
         } => u32_bitwise_and(left, right, bin, func_context, ns),
-        ast::Expression::BitwiseXor {
+        Expression::BitwiseXor {
             loc,
             ty,
             left,
             right,
         } => u32_bitwise_xor(left, right, bin, func_context, ns),
-        ast::Expression::ShiftLeft {
+        Expression::ShiftLeft {
             loc,
             ty,
             left,
             right,
         } => u32_shift_left(left, right, bin, func_context, ns),
-        ast::Expression::ShiftRight {
+        Expression::ShiftRight {
             loc,
             ty,
             left,
             right,
         } => u32_shift_right(left, right, bin, func_context, ns),
-        ast::Expression::Equal { loc, left, right } => {
-            u32_equal(left, right, bin, func_context, ns)
+        Expression::Equal { loc, left, right } => {
+            if left.ty().is_address() {
+                //TODO compare addresses
+                unimplemented!()
+            } else {
+                u32_equal(left, right, bin, func_context, ns)
+            }
         }
-        ast::Expression::NotEqual { loc, left, right } => {
-            u32_not_equal(left, right, bin, func_context, ns)
+        Expression::NotEqual { loc, left, right } => {
+            if left.ty().is_address() {
+                //TODO compare addresses
+                unimplemented!()
+            } else {
+                u32_not_equal(left, right, bin, func_context, ns)
+            }
         }
-        ast::Expression::More { loc, left, right } => u32_more(left, right, bin, func_context, ns),
-        ast::Expression::MoreEqual { loc, left, right } => {
-            u32_more_equal(left, right, bin, func_context, ns)
+        Expression::More { loc, left, right } => {
+            if left.ty().is_address() {
+                //TODO compare addresses
+                unimplemented!()
+            } else {
+                u32_more(left, right, bin, func_context, ns)
+            }
         }
-        ast::Expression::Less { loc, left, right } => u32_less(left, right, bin, func_context, ns),
-        ast::Expression::LessEqual { loc, left, right } => {
-            u32_less_equal(left, right, bin, func_context, ns)
+        Expression::MoreEqual { loc, left, right } => {
+            if left.ty().is_address() {
+                //TODO compare addresses
+                unimplemented!()
+            } else {
+                u32_more_equal(left, right, bin, func_context, ns)
+            }
+        }
+        Expression::Less { loc, left, right } => {
+            if left.ty().is_address() {
+                //TODO compare addresses
+                unimplemented!()
+            } else {
+                u32_less(left, right, bin, func_context, ns)
+            }
+        }
+        Expression::LessEqual { loc, left, right } => {
+            if left.ty().is_address() {
+                //TODO compare addresses
+                unimplemented!()
+            } else {
+                u32_less_equal(left, right, bin, func_context, ns)
+            }
         }
 
-        ast::Expression::Not { loc, expr } => u32_not(expr, bin, func_context, ns),
-        ast::Expression::BitwiseNot { loc, ty, expr } => {
-            u32_bitwise_not(expr, bin, func_context, ns)
-        }
-        ast::Expression::Or { loc, left, right } => u32_or(left, right, bin, func_context, ns),
-        ast::Expression::And { loc, left, right } => u32_and(left, right, bin, func_context, ns),
+        Expression::Not { loc, expr } => u32_not(expr, bin, func_context, ns),
+        Expression::BitwiseNot { loc, ty, expr } => u32_bitwise_not(expr, bin, func_context, ns),
+        Expression::Or { loc, left, right } => u32_or(left, right, bin, func_context, ns),
+        Expression::And { loc, left, right } => u32_and(left, right, bin, func_context, ns),
 
         Expression::Decrement { loc, ty, expr } => {
             let v = match expr.ty() {
-                Type::Ref(ty) => Expression::Load {
-                    loc: *loc,
-                    ty: ty.as_ref().clone(),
-                    expr: expr.clone(),
-                },
-                Type::StorageRef(ty) => unimplemented!(),
-                _ => *expr.clone(),
+                Type::Ref(ty) => {
+                    let expr_load = Expression::Load {
+                        loc: *loc,
+                        ty: ty.as_ref().clone(),
+                        expr: expr.clone(),
+                    };
+                    expression(&expr_load, bin, func_context, ns)
+                }
+                Type::StorageRef(ty) => {
+                    let mut slot = expression(expr, bin, func_context, ns);
+                    storage_load(bin, ty.as_ref(), &mut slot, func_context.func_val, ns)
+                }
+                _ => expression(&expr, bin, func_context, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
             match expr.as_ref() {
@@ -158,14 +194,21 @@ pub fn expression<'a>(
                     return before_ptr.as_basic_value_enum();
                 }
                 _ => {
-                    let dest = expression(expr, bin, func_context, ns);
-                    let value = expression(&v, bin, func_context, ns);
+                    let mut dest = expression(expr, bin, func_context, ns);
+                    let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
-                            unimplemented!("storage ref")
+                            storage_store(
+                                bin,
+                                ty,
+                                &mut dest,
+                                after.as_basic_value_enum(),
+                                func_context.func_val,
+                                ns,
+                            );
+                            return dest.clone();
                         }
                         Type::Ref(_) => {
-                            let after = bin.builder.build_int_sub(value.into_int_value(), one, "");
                             bin.builder.build_store(
                                 dest.into_pointer_value(),
                                 after.as_basic_value_enum(),
@@ -179,13 +222,19 @@ pub fn expression<'a>(
         }
         Expression::Increment { loc, ty, expr } => {
             let v = match expr.ty() {
-                Type::Ref(ty) => Expression::Load {
-                    loc: *loc,
-                    ty: ty.as_ref().clone(),
-                    expr: expr.clone(),
-                },
-                Type::StorageRef(ty) => unimplemented!(),
-                _ => *expr.clone(),
+                Type::Ref(ty) => {
+                    let expr_load = Expression::Load {
+                        loc: *loc,
+                        ty: ty.as_ref().clone(),
+                        expr: expr.clone(),
+                    };
+                    expression(&expr_load, bin, func_context, ns)
+                }
+                Type::StorageRef(ty) => {
+                    let mut slot = expression(expr, bin, func_context, ns);
+                    storage_load(bin, ty.as_ref(), &mut slot, func_context.func_val, ns)
+                }
+                _ => expression(&expr, bin, func_context, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
             match expr.as_ref() {
@@ -205,14 +254,22 @@ pub fn expression<'a>(
                     return before_ptr.as_basic_value_enum();
                 }
                 _ => {
-                    let dest = expression(expr, bin, func_context, ns);
-                    let value = expression(&v, bin, func_context, ns);
+                    let mut dest = expression(expr, bin, func_context, ns);
+                    let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
-                            unimplemented!("storage ref")
+                            storage_store(
+                                bin,
+                                ty,
+                                &mut dest,
+                                after.as_basic_value_enum(),
+                                func_context.func_val,
+                                ns,
+                            );
+                            return dest.clone();
                         }
                         Type::Ref(_) => {
-                            let after = bin.builder.build_int_add(value.into_int_value(), one, "");
+                            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                             bin.builder.build_store(
                                 dest.into_pointer_value(),
                                 after.as_basic_value_enum(),
@@ -224,7 +281,7 @@ pub fn expression<'a>(
                 }
             }
         }
-        ast::Expression::Assign { left, right, .. } => {
+        Expression::Assign { left, right, .. } => {
             // // If an assignment where the left hand side is an array, call a helper
             // // function that updates the temp variable.
             // if let Expression::Variable(_, Type::Array(..), var_no, ..) = &**l {
@@ -236,11 +293,9 @@ pub fn expression<'a>(
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
             ret
         }
-        ast::Expression::NumberLiteral { ty, value, .. } => {
-            bin.number_literal(ty, value, ns).into()
-        }
+        Expression::NumberLiteral { ty, value, .. } => bin.number_literal(ty, value, ns).into(),
 
-        ast::Expression::Variable { ty, var_no, .. } => {
+        Expression::Variable { ty, var_no, .. } => {
             let ptr = func_context
                 .var_table
                 .get(var_no)
@@ -275,7 +330,7 @@ pub fn expression<'a>(
             root
         }
 
-        ast::Expression::StructLiteral { ty, values, .. } => {
+        Expression::StructLiteral { ty, values, .. } => {
             let struct_ty = bin.llvm_type(ty, ns);
 
             let struct_alloca = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
@@ -302,7 +357,7 @@ pub fn expression<'a>(
             struct_alloca.into()
         }
 
-        ast::Expression::ArrayLiteral {
+        Expression::ArrayLiteral {
             loc,
             ty,
             dimensions,
@@ -345,7 +400,7 @@ pub fn expression<'a>(
 
             array_alloca.into()
         }
-        ast::Expression::ConstArrayLiteral {
+        Expression::ConstArrayLiteral {
             loc,
             ty,
             dimensions,
@@ -354,7 +409,7 @@ pub fn expression<'a>(
             unimplemented!()
         }
 
-        ast::Expression::ConstantVariable {
+        Expression::ConstantVariable {
             contract_no: Some(var_contract_no),
             var_no,
             ..
@@ -368,9 +423,31 @@ pub fn expression<'a>(
             array,
             elem_ty,
         } => {
-            unimplemented!()
+            let array_ty = array.ty().deref_into();
+            let mut array = expression(array, bin, func_context, ns);
+            match array_ty {
+                Type::String => unimplemented!("string length"),
+                Type::Array(_, dim) => match dim.last().unwrap() {
+                    ArrayLength::Dynamic => {
+                        storage_load(bin, &Type::Uint(32), &mut array, func_context.func_val, ns)
+                    }
+                    ArrayLength::Fixed(length) => {
+                        let ast_expr = bigint_to_expression(
+                            loc,
+                            length,
+                            ns,
+                            &mut Diagnostics::default(),
+                            ResolveTo::Type(ty),
+                        )
+                        .unwrap();
+                        expression(&ast_expr, bin, func_context, ns)
+                    }
+                    _ => unreachable!(),
+                },
+                _ => unreachable!(),
+            }
         }
-        ast::Expression::Subscript {
+        Expression::Subscript {
             loc,
             ty: elem_ty,
             array_ty,
@@ -378,15 +455,33 @@ pub fn expression<'a>(
             index,
         } => array_subscript(loc, array_ty, array, index, bin, func_context, ns),
 
-        ast::Expression::StructMember {
+        Expression::StructMember {
             loc,
             ty,
             expr: var,
             field: field_no,
         } if ty.is_contract_storage() => {
-            unimplemented!()
+            if let Type::Struct(no) = var.ty().deref_any() {
+                let offset: BigInt = ns.structs[*no].fields[..*field_no]
+                    .iter()
+                    .filter(|field| !field.infinite_size)
+                    .map(|field| field.ty.storage_slots(ns))
+                    .sum();
+                let slot = expression(var, bin, func_context, ns).into_int_value();
+                bin.builder
+                    .build_int_add(
+                        slot,
+                        bin.context
+                            .i32_type()
+                            .const_int(offset.to_u64().unwrap(), false),
+                        "",
+                    )
+                    .into()
+            } else {
+                unreachable!();
+            }
         }
-        ast::Expression::StructMember {
+        Expression::StructMember {
             loc,
             ty,
             expr: var,
@@ -399,7 +494,7 @@ pub fn expression<'a>(
                 .unwrap()
                 .into()
         }
-        ast::Expression::Load { ty, expr, .. } => {
+        Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_context, ns).into_pointer_value();
             if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
                 let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
@@ -467,11 +562,12 @@ pub fn expression<'a>(
             ..
         } => {
             if args[0].ty().is_contract_storage() {
-                // TODO Add support for storage type arrays
-                unimplemented!();
+                // storage_slots_array_push(loc, args, cfg, contract_no, func,
+                // ns, vartab, opt)
+                unimplemented!()
             } else {
-                // TODO Add memory array pop support
-                unimplemented!();
+                // TODO implement memory array pop
+                unimplemented!()
             }
         }
         Expression::LibFunction {
@@ -522,20 +618,20 @@ pub fn expression<'a>(
             let size = expression(size, bin, func_context, ns).into_int_value();
             bin.vector_new(size, init.as_ref()).into()
         }
-        ast::Expression::ConditionalOperator {
+        Expression::ConditionalOperator {
             loc,
             ty,
             cond,
             true_option: left,
             false_option: right,
         } => conditional_operator(bin, ty, cond, func_context, ns, left, right),
-        ast::Expression::BoolLiteral { loc, value } => bin
+        Expression::BoolLiteral { loc, value } => bin
             .context
             .bool_type()
             .const_int(*value as u64, false)
             .into(),
 
-        ast::Expression::GetRef { loc, ty, expr: exp } => {
+        Expression::GetRef { loc, ty, expr: exp } => {
             let address = expression(expr, bin, func_context, ns).into_array_value();
 
             let stack = bin.build_alloca(func_context.func_val, address.get_type(), "address");
@@ -551,9 +647,8 @@ pub fn expression<'a>(
         {
             array_literal_to_memory_array(loc, &expr, to, bin, func_context, ns)
         }
-
         _ => {
-            unimplemented!()
+            unimplemented!("{:?}", expr)
         }
     }
 }
@@ -701,11 +796,26 @@ fn array_subscript<'a>(
 ) -> BasicValueEnum<'a> {
     let array_ptr = expression(array, bin, func_context, ns);
     let index = expression(index, bin, func_context, ns);
+    if array_ty.is_mapping() {
+        unimplemented!()
+    }
+
     let array_length = match array_ty.deref_any() {
         Type::Array(..) => match array_ty.array_length() {
             None => {
                 if let Type::StorageRef(..) = array_ty {
-                    unimplemented!("storage array subscript")
+                    // let array_length =
+                    //     load_storage(loc, &Type::Uint(256), array.clone(),
+                    // cfg, vartab);
+
+                    // array = Expression::Keccak256 {
+                    //     loc: *loc,
+                    //     ty: Type::Uint(256),
+                    //     exprs: vec![array],
+                    // };
+
+                    // array_length
+                    unimplemented!()
                 } else {
                     // If a subscript is encountered array length will be called
                     // Return array length by default
@@ -738,7 +848,9 @@ fn array_subscript<'a>(
         }
     };
 
-    if array_ty.is_dynamic_memory() {
+    if let Type::StorageRef(ty) = &array_ty {
+        index
+    } else if array_ty.is_dynamic_memory() {
         let array_type: BasicTypeEnum = bin.llvm_var_ty(array_ty, ns);
         let vector_ptr = bin.vector_data(array_ptr);
         return unsafe {
@@ -751,44 +863,44 @@ fn array_subscript<'a>(
                 )
                 .as_basic_value_enum()
         };
+    } else {
+        let array_type = bin.llvm_type(array_ty.deref_memory(), ns);
+        let array_length_sub_one: BasicValueEnum = bin
+            .builder
+            .build_int_sub(
+                array_length.into_int_value(),
+                bin.context.i64_type().const_int(1, false),
+                "",
+            )
+            .into();
+        let array_length_sub_one_sub_index: BasicValueEnum = bin
+            .builder
+            .build_int_sub(
+                array_length_sub_one.into_int_value(),
+                index.into_int_value(),
+                "",
+            )
+            .into();
+        // check if index is out of bounds
+        bin.builder.build_call(
+            bin.module
+                .get_function("builtin_range_check")
+                .expect("builtin_range_check should have been defined before"),
+            &[array_length_sub_one_sub_index.into()],
+            "",
+        );
+
+        let element_ptr = unsafe {
+            bin.builder.build_gep(
+                array_type,
+                array_ptr.into_pointer_value(),
+                &[bin.context.i64_type().const_zero(), index.into_int_value()],
+                "index_access",
+            )
+        };
+
+        return element_ptr.as_basic_value_enum();
     }
-
-    let array_type = bin.llvm_type(array_ty.deref_memory(), ns);
-    let array_length_sub_one: BasicValueEnum = bin
-        .builder
-        .build_int_sub(
-            array_length.into_int_value(),
-            bin.context.i64_type().const_int(1, false),
-            "",
-        )
-        .into();
-    let array_length_sub_one_sub_index: BasicValueEnum = bin
-        .builder
-        .build_int_sub(
-            array_length_sub_one.into_int_value(),
-            index.into_int_value(),
-            "",
-        )
-        .into();
-    // check if index is out of bounds
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
-        &[array_length_sub_one_sub_index.into()],
-        "",
-    );
-
-    let element_ptr = unsafe {
-        bin.builder.build_gep(
-            array_type,
-            array_ptr.into_pointer_value(),
-            &[bin.context.i64_type().const_zero(), index.into_int_value()],
-            "index_access",
-        )
-    };
-
-    element_ptr.as_basic_value_enum()
 }
 
 pub fn assign_single<'a>(
@@ -800,7 +912,7 @@ pub fn assign_single<'a>(
 ) -> BasicValueEnum<'a> {
     let right_value = expression(right, bin, func_context, ns);
     match left {
-        ast::Expression::Variable { loc, ty, var_no } => {
+        Expression::Variable { loc, ty, var_no } => {
             let right_value = match right_value {
                 BasicValueEnum::PointerValue(p) => {
                     func_context.var_table.insert(*var_no, right_value);
@@ -817,12 +929,31 @@ pub fn assign_single<'a>(
         }
         _ => {
             let left_ty = left.ty();
+            let ty = left_ty.deref_memory();
 
-            let dest = expression(left, bin, func_context, ns);
+            let mut dest = expression(left, bin, func_context, ns);
 
+            let expr_right =
+                if !left_ty.is_contract_storage() && right.ty().is_fixed_reference_type() {
+                    Expression::Load {
+                        loc: program::Loc::IRgen,
+                        ty: right.ty(),
+                        expr: Box::new(right.clone()),
+                    }
+                } else {
+                    right.clone()
+                };
+            let right_value = expression(&expr_right, bin, func_context, ns);
             match left_ty {
                 Type::StorageRef(..) => {
-                    unimplemented!()
+                    storage_store(
+                        bin,
+                        &ty.deref_any().clone(),
+                        &mut dest,
+                        right_value,
+                        func_context.func_val,
+                        ns,
+                    );
                 }
                 Type::Ref(_) => {
                     bin.builder

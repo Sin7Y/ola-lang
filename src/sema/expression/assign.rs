@@ -74,12 +74,7 @@ pub(super) fn assign_single(
             ));
             Err(())
         }
-        Expression::StorageVariable {
-            loc,
-            ty,
-            contract_no: var_contract_no,
-            var_no,
-        } => {
+        Expression::StorageVariable { loc, ty, .. } => {
             let ty = ty.deref_any();
             Ok(Expression::Assign {
                 loc: *loc,

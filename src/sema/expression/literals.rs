@@ -52,7 +52,6 @@ pub(super) fn string_literal(
 pub(super) fn address_literal(
     loc: &program::Loc,
     address: &str,
-    ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
     if address.starts_with("0x") && !address.chars().any(|c| c == '_') && address.len() == 66 {

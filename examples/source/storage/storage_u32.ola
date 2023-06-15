@@ -1,0 +1,12 @@
+contract SimpleVar {
+    u32 value;
+
+    /// This increments the value by `by`.
+    fn inc_simple() {
+        value += 2;
+    }
+
+    fn get() -> (u32) {
+        return value;
+    }
+}
