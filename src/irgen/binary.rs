@@ -11,10 +11,7 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::types::{
-    ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
-    StructType,
-};
+use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
 use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
 use inkwell::{AddressSpace, IntPredicate};
 
@@ -274,7 +271,7 @@ impl<'a> Binary<'a> {
                 .i64_type()
                 .ptr_type(AddressSpace::default())
                 .const_null(),
-            Some(s) => unimplemented!(),
+            Some(..) => unimplemented!(),
         };
 
         self.builder

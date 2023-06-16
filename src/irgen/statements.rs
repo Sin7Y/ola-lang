@@ -508,7 +508,7 @@ fn destructure<'a>(
             }
             DestructureField::Expression(left) => {
                 let left = match left {
-                    Expression::Variable { loc, ty, var_no } => {
+                    Expression::Variable { var_no, .. } => {
                         let ret = *func_context.var_table.get(var_no).unwrap();
                         ret
                     }
