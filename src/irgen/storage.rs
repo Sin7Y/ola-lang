@@ -1,16 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-
-use crate::codegen::core::ir::value;
-use crate::codegen::isa::ola::lower::bin;
 use crate::emit_context;
 use crate::irgen::binary::Binary;
-use crate::sema::ast::{self, ArrayLength, Contract, Namespace, Type};
-use inkwell::types::{BasicType, BasicTypeEnum, IntType};
-use inkwell::values::{ArrayValue, BasicValueEnum, FunctionValue, IntValue, PointerValue};
-use inkwell::{AddressSpace, IntPredicate};
-use num_bigint::BigInt;
-use num_traits::{One, ToPrimitive};
-use ola_parser::program;
+use crate::sema::ast::{Contract, Namespace, Type};
+use inkwell::values::{BasicValueEnum, FunctionValue, IntValue};
+use num_traits::ToPrimitive;
 
 impl Contract {
     /// Get the storage slot for a variable, possibly from base contract
