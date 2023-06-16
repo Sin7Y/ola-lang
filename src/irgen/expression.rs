@@ -1,5 +1,4 @@
 use crate::irgen::binary::Binary;
-use crate::irgen::functions;
 use crate::irgen::functions::FunctionContext;
 use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
@@ -32,7 +31,6 @@ pub fn expression<'a>(
 ) -> BasicValueEnum<'a> {
     match expr {
         Expression::StorageVariable {
-            loc,
             contract_no,
             var_no,
             ..
@@ -44,68 +42,28 @@ pub fn expression<'a>(
             let mut slot = expression(expr, bin, func_context, ns);
             storage_load(bin, ty, &mut slot, func_context.func_val, ns)
         }
-        Expression::Add {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_add(left, right, bin, func_context, ns),
-        Expression::Subtract {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_sub(left, right, bin, func_context, ns),
-        Expression::Multiply {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_mul(left, right, bin, func_context, ns),
-        Expression::Divide {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_div(left, right, bin, func_context, ns),
-        Expression::Modulo {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_mod(left, right, bin, func_context, ns),
+        Expression::Add { left, right, .. } => u32_add(left, right, bin, func_context, ns),
+        Expression::Subtract { left, right, .. } => u32_sub(left, right, bin, func_context, ns),
+        Expression::Multiply { left, right, .. } => u32_mul(left, right, bin, func_context, ns),
+        Expression::Divide { left, right, .. } => u32_div(left, right, bin, func_context, ns),
+        Expression::Modulo { left, right, .. } => u32_mod(left, right, bin, func_context, ns),
         Expression::Power { loc, ty, base, exp } => u32_power(base, exp, bin, func_context, ns),
-        Expression::BitwiseOr {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_bitwise_or(left, right, bin, func_context, ns),
-        Expression::BitwiseAnd {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_bitwise_and(left, right, bin, func_context, ns),
-        Expression::BitwiseXor {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_bitwise_xor(left, right, bin, func_context, ns),
-        Expression::ShiftLeft {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_shift_left(left, right, bin, func_context, ns),
-        Expression::ShiftRight {
-            loc,
-            ty,
-            left,
-            right,
-        } => u32_shift_right(left, right, bin, func_context, ns),
-        Expression::Equal { loc, left, right } => {
+        Expression::BitwiseOr { left, right, .. } => {
+            u32_bitwise_or(left, right, bin, func_context, ns)
+        }
+        Expression::BitwiseAnd { left, right, .. } => {
+            u32_bitwise_and(left, right, bin, func_context, ns)
+        }
+        Expression::BitwiseXor { left, right, .. } => {
+            u32_bitwise_xor(left, right, bin, func_context, ns)
+        }
+        Expression::ShiftLeft { left, right, .. } => {
+            u32_shift_left(left, right, bin, func_context, ns)
+        }
+        Expression::ShiftRight { left, right, .. } => {
+            u32_shift_right(left, right, bin, func_context, ns)
+        }
+        Expression::Equal { left, right, .. } => {
             if left.ty().is_address() {
                 //TODO compare addresses
                 unimplemented!()
@@ -113,7 +71,7 @@ pub fn expression<'a>(
                 u32_equal(left, right, bin, func_context, ns)
             }
         }
-        Expression::NotEqual { loc, left, right } => {
+        Expression::NotEqual { left, right, .. } => {
             if left.ty().is_address() {
                 //TODO compare addresses
                 unimplemented!()
@@ -121,7 +79,7 @@ pub fn expression<'a>(
                 u32_not_equal(left, right, bin, func_context, ns)
             }
         }
-        Expression::More { loc, left, right } => {
+        Expression::More { left, right, .. } => {
             if left.ty().is_address() {
                 //TODO compare addresses
                 unimplemented!()
@@ -129,7 +87,7 @@ pub fn expression<'a>(
                 u32_more(left, right, bin, func_context, ns)
             }
         }
-        Expression::MoreEqual { loc, left, right } => {
+        Expression::MoreEqual { left, right, .. } => {
             if left.ty().is_address() {
                 //TODO compare addresses
                 unimplemented!()
@@ -137,7 +95,7 @@ pub fn expression<'a>(
                 u32_more_equal(left, right, bin, func_context, ns)
             }
         }
-        Expression::Less { loc, left, right } => {
+        Expression::Less { left, right, .. } => {
             if left.ty().is_address() {
                 //TODO compare addresses
                 unimplemented!()
@@ -145,7 +103,7 @@ pub fn expression<'a>(
                 u32_less(left, right, bin, func_context, ns)
             }
         }
-        Expression::LessEqual { loc, left, right } => {
+        Expression::LessEqual { left, right, .. } => {
             if left.ty().is_address() {
                 //TODO compare addresses
                 unimplemented!()
@@ -156,8 +114,8 @@ pub fn expression<'a>(
 
         Expression::Not { loc, expr } => u32_not(expr, bin, func_context, ns),
         Expression::BitwiseNot { loc, ty, expr } => u32_bitwise_not(expr, bin, func_context, ns),
-        Expression::Or { loc, left, right } => u32_or(left, right, bin, func_context, ns),
-        Expression::And { loc, left, right } => u32_and(left, right, bin, func_context, ns),
+        Expression::Or { left, right, .. } => u32_or(left, right, bin, func_context, ns),
+        Expression::And { left, right, .. } => u32_and(left, right, bin, func_context, ns),
 
         Expression::Decrement { loc, ty, expr } => {
             let v = match expr.ty() {
@@ -358,10 +316,10 @@ pub fn expression<'a>(
         }
 
         Expression::ArrayLiteral {
-            loc,
             ty,
             dimensions,
             values,
+            ..
         } => {
             let array_ty = bin.llvm_type(ty, ns);
             let array_alloca = bin.build_alloca(func_context.func_val, array_ty, "array_literal");
@@ -401,10 +359,7 @@ pub fn expression<'a>(
             array_alloca.into()
         }
         Expression::ConstArrayLiteral {
-            loc,
-            ty,
-            dimensions,
-            values,
+            dimensions, values, ..
         } => {
             unimplemented!()
         }
@@ -417,12 +372,7 @@ pub fn expression<'a>(
             unimplemented!()
         }
 
-        Expression::StorageArrayLength {
-            loc,
-            ty,
-            array,
-            elem_ty,
-        } => {
+        Expression::StorageArrayLength { loc, ty, array, .. } => {
             let array_ty = array.ty().deref_into();
             let mut array = expression(array, bin, func_context, ns);
             match array_ty {
@@ -449,17 +399,17 @@ pub fn expression<'a>(
         }
         Expression::Subscript {
             loc,
-            ty: elem_ty,
             array_ty,
             array,
             index,
+            ..
         } => array_subscript(loc, array_ty, array, index, bin, func_context, ns),
 
         Expression::StructMember {
-            loc,
             ty,
             expr: var,
             field: field_no,
+            ..
         } if ty.is_contract_storage() => {
             if let Type::Struct(no) = var.ty().deref_any() {
                 let offset: BigInt = ns.structs[*no].fields[..*field_no]
@@ -482,10 +432,9 @@ pub fn expression<'a>(
             }
         }
         Expression::StructMember {
-            loc,
-            ty,
             expr: var,
             field: field_no,
+            ..
         } => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_context, ns).into_pointer_value();
@@ -542,7 +491,6 @@ pub fn expression<'a>(
         }
 
         Expression::LibFunction {
-            tys,
             kind: LibFunc::ArrayPush,
             args,
             ..
@@ -556,7 +504,6 @@ pub fn expression<'a>(
             }
         }
         Expression::LibFunction {
-            tys,
             kind: LibFunc::ArrayPop,
             args,
             ..
@@ -571,7 +518,6 @@ pub fn expression<'a>(
             }
         }
         Expression::LibFunction {
-            tys,
             kind: LibFunc::ArrayLength,
             args,
             ..
@@ -610,28 +556,25 @@ pub fn expression<'a>(
             array_sorted.into()
         }
         Expression::AllocDynamicBytes {
-            loc,
-            ty,
-            length: size,
-            init,
+            length: size, init, ..
         } => {
             let size = expression(size, bin, func_context, ns).into_int_value();
             bin.vector_new(size, init.as_ref()).into()
         }
         Expression::ConditionalOperator {
-            loc,
             ty,
             cond,
             true_option: left,
             false_option: right,
+            ..
         } => conditional_operator(bin, ty, cond, func_context, ns, left, right),
-        Expression::BoolLiteral { loc, value } => bin
+        Expression::BoolLiteral { value, .. } => bin
             .context
             .bool_type()
             .const_int(*value as u64, false)
             .into(),
 
-        Expression::GetRef { loc, ty, expr: exp } => {
+        Expression::GetRef { expr, .. } => {
             let address = expression(expr, bin, func_context, ns).into_array_value();
 
             let stack = bin.build_alloca(func_context.func_val, address.get_type(), "address");
@@ -641,11 +584,11 @@ pub fn expression<'a>(
             stack.into()
         }
 
-        Expression::Cast { loc, to, expr }
+        Expression::Cast { to, expr, .. }
             if matches!(to, Type::Array(..))
                 && matches!(**expr, Expression::ArrayLiteral { .. }) =>
         {
-            array_literal_to_memory_array(loc, &expr, to, bin, func_context, ns)
+            array_literal_to_memory_array(&expr, to, bin, func_context, ns)
         }
         _ => {
             unimplemented!("{:?}", expr)
@@ -654,7 +597,6 @@ pub fn expression<'a>(
 }
 
 pub fn array_literal_to_memory_array<'a>(
-    loc: &program::Loc,
     expr: &Expression,
     ty: &Type,
     bin: &Binary<'a>,
@@ -848,7 +790,7 @@ fn array_subscript<'a>(
         }
     };
 
-    if let Type::StorageRef(ty) = &array_ty {
+    if let Type::StorageRef(..) = &array_ty {
         index
     } else if array_ty.is_dynamic_memory() {
         let array_type: BasicTypeEnum = bin.llvm_var_ty(array_ty, ns);
@@ -912,7 +854,7 @@ pub fn assign_single<'a>(
 ) -> BasicValueEnum<'a> {
     let right_value = expression(right, bin, func_context, ns);
     match left {
-        Expression::Variable { loc, ty, var_no } => {
+        Expression::Variable { ty, var_no, .. } => {
             let right_value = match right_value {
                 BasicValueEnum::PointerValue(p) => {
                     func_context.var_table.insert(*var_no, right_value);

@@ -1,13 +1,10 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema;
-use crate::sema::ast::{Contract, Type};
+use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
-use ola_parser::program;
-use ola_parser::program::CodeLocation;
-use ola_parser::program::Loc;
 
 // IndexMap <ArrayVariable res , res of temp variable>
 pub type ArrayLengthVars<'a> = IndexMap<usize, BasicValueEnum<'a>>;
