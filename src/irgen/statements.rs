@@ -4,6 +4,7 @@ use num_bigint::BigInt;
 use num_traits::Zero;
 
 use super::expression::expression;
+use super::storage::storage_delete;
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::emit_function_call;
 use crate::irgen::functions::FunctionContext;
@@ -213,10 +214,8 @@ pub(crate) fn statement<'a>(
             unimplemented!()
         }
         Statement::Delete(_, ty, expr) => {
-            let mut slot = expression(expr, bin, func_context, ns).into_int_value();
-            // storage_delete(bin, ty, &mut slot, func_context.func_val,
-            // ns);storage_delete(bin, ty, &mut slot, func_context.func_val,
-            // ns);
+            let mut slot = expression(expr, bin, func_context, ns);
+            storage_delete(bin, ty, &mut slot, func_context.func_val, ns);
         }
 
         Statement::Destructure(_, fields, expr) => destructure(bin, fields, expr, func_context, ns),

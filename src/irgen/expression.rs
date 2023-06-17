@@ -21,7 +21,7 @@ use crate::sema::{
     expression::ResolveTo,
 };
 
-use super::storage::{storage_load, storage_store};
+use super::storage::{storage_array_pop, storage_array_push, storage_load, storage_store};
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -38,7 +38,7 @@ pub fn expression<'a>(
             // base storage variables should precede contract variables, not overlap
             ns.contracts[*contract_no].get_storage_slot(bin, *contract_no, *var_no)
         }
-        Expression::StorageLoad { loc, ty, expr } => {
+        Expression::StorageLoad { ty, expr, .. } => {
             let mut slot = expression(expr, bin, func_context, ns);
             storage_load(bin, ty, &mut slot, func_context.func_val, ns)
         }
@@ -47,7 +47,7 @@ pub fn expression<'a>(
         Expression::Multiply { left, right, .. } => u32_mul(left, right, bin, func_context, ns),
         Expression::Divide { left, right, .. } => u32_div(left, right, bin, func_context, ns),
         Expression::Modulo { left, right, .. } => u32_mod(left, right, bin, func_context, ns),
-        Expression::Power { loc, ty, base, exp } => u32_power(base, exp, bin, func_context, ns),
+        Expression::Power { base, exp, .. } => u32_power(base, exp, bin, func_context, ns),
         Expression::BitwiseOr { left, right, .. } => {
             u32_bitwise_or(left, right, bin, func_context, ns)
         }
@@ -112,8 +112,8 @@ pub fn expression<'a>(
             }
         }
 
-        Expression::Not { loc, expr } => u32_not(expr, bin, func_context, ns),
-        Expression::BitwiseNot { loc, ty, expr } => u32_bitwise_not(expr, bin, func_context, ns),
+        Expression::Not { expr, .. } => u32_not(expr, bin, func_context, ns),
+        Expression::BitwiseNot { expr, .. } => u32_bitwise_not(expr, bin, func_context, ns),
         Expression::Or { left, right, .. } => u32_or(left, right, bin, func_context, ns),
         Expression::And { left, right, .. } => u32_and(left, right, bin, func_context, ns),
 
@@ -496,22 +496,20 @@ pub fn expression<'a>(
             ..
         } => {
             if args[0].ty().is_contract_storage() {
-                // TODO Add support for storage type arrays
-                unimplemented!();
+                storage_array_push(bin, &args, func_context, ns)
             } else {
                 // TODO Add memory array push support
                 unimplemented!();
             }
         }
         Expression::LibFunction {
+            tys: ty,
             kind: LibFunc::ArrayPop,
             args,
             ..
         } => {
             if args[0].ty().is_contract_storage() {
-                // storage_slots_array_push(loc, args, cfg, contract_no, func,
-                // ns, vartab, opt)
-                unimplemented!()
+                storage_array_pop(bin, &args, &ty[0], func_context, ns)
             } else {
                 // TODO implement memory array pop
                 unimplemented!()
