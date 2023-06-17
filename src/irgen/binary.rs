@@ -11,7 +11,9 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
+use inkwell::types::{
+    ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
+};
 use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
 use inkwell::{AddressSpace, IntPredicate};
 
@@ -75,6 +77,11 @@ impl<'a> Binary<'a> {
             }
             _ => panic!("not implemented"),
         }
+    }
+
+    /// llvm address type
+    pub(crate) fn address_type(&self, ns: &Namespace) -> ArrayType<'a> {
+        self.context.i64_type().array_type(4 as u32)
     }
 
     // /// Default empty value
@@ -155,6 +162,7 @@ impl<'a> Binary<'a> {
             // Map all i32 data to a field-based data type, with the maximum value of field between
             // u63 and u64
             Type::Uint(32) => BasicTypeEnum::IntType(self.context.custom_width_int_type(64)),
+            Type::Contract(_) | Type::Address => BasicTypeEnum::ArrayType(self.address_type(ns)),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
             Type::Array(base_ty, dims) => {
                 let ty = self.llvm_field_ty(base_ty, ns);
@@ -181,6 +189,8 @@ impl<'a> Binary<'a> {
 
                 BasicTypeEnum::ArrayType(aty)
             }
+            Type::String => self.create_struct_vector(),
+            Type::Mapping(..) => self.llvm_type(&Type::Uint(32), ns),
             Type::Struct(n) => self
                 .context
                 .struct_type(
@@ -244,6 +254,31 @@ impl<'a> Binary<'a> {
         }
 
         let res = self.builder.build_alloca(ty, name);
+
+        self.builder.position_at_end(current);
+
+        res
+    }
+
+    pub(crate) fn build_array_alloca<T: BasicType<'a>>(
+        &self,
+        function: inkwell::values::FunctionValue<'a>,
+        ty: T,
+        length: IntValue<'a>,
+        name: &str,
+    ) -> PointerValue<'a> {
+        let entry = function
+            .get_first_basic_block()
+            .expect("function missing entry block");
+        let current = self.builder.get_insert_block().unwrap();
+
+        if let Some(instr) = entry.get_first_instruction() {
+            self.builder.position_before(&instr);
+        } else {
+            self.builder.position_at_end(entry);
+        }
+
+        let res = self.builder.build_array_alloca(ty, length, name);
 
         self.builder.position_at_end(current);
 
@@ -351,10 +386,10 @@ impl<'a> Binary<'a> {
         function: FunctionValue,
         from: IntValue<'a>,
         to: IntValue<'a>,
-        data_ref: &mut IntValue<'a>,
+        data_ref: &mut BasicValueEnum<'a>,
         mut insert_body: F,
     ) where
-        F: FnMut(IntValue<'a>, &mut IntValue<'a>),
+        F: FnMut(IntValue<'a>, &mut BasicValueEnum<'a>),
     {
         let body = self.context.append_basic_block(function, "body");
         let done = self.context.append_basic_block(function, "done");
@@ -366,7 +401,7 @@ impl<'a> Binary<'a> {
         let loop_ty = from.get_type();
         let loop_phi = self.builder.build_phi(loop_ty, "index");
         let data_phi = self.builder.build_phi(data_ref.get_type(), "data");
-        let mut data = data_phi.as_basic_value().into_int_value();
+        let mut data = data_phi.as_basic_value();
 
         let loop_var = loop_phi.as_basic_value().into_int_value();
 
@@ -389,6 +424,58 @@ impl<'a> Binary<'a> {
         self.builder.position_at_end(done);
 
         *data_ref = data;
+    }
+
+    /// Emit a loop from `from` to `to`, checking the condition _before_ the
+    /// body.
+    pub fn emit_loop_cond_first_with_int<F>(
+        &self,
+        function: FunctionValue,
+        from: IntValue<'a>,
+        to: IntValue<'a>,
+        data_ref: &mut BasicValueEnum<'a>,
+        mut insert_body: F,
+    ) where
+        F: FnMut(IntValue<'a>, &mut BasicValueEnum<'a>),
+    {
+        let cond = self.context.append_basic_block(function, "cond");
+        let body = self.context.append_basic_block(function, "body");
+        let done = self.context.append_basic_block(function, "done");
+        let entry = self.builder.get_insert_block().unwrap();
+
+        self.builder.build_unconditional_branch(cond);
+        self.builder.position_at_end(cond);
+
+        let loop_ty = from.get_type();
+        let loop_phi = self.builder.build_phi(loop_ty, "index");
+        let data_phi = self.builder.build_phi(data_ref.get_type(), "data");
+        let mut data = data_phi.as_basic_value();
+
+        let loop_var = loop_phi.as_basic_value().into_int_value();
+
+        let next = self
+            .builder
+            .build_int_add(loop_var, loop_ty.const_int(1, false), "next_index");
+
+        let comp = self
+            .builder
+            .build_int_compare(IntPredicate::ULT, loop_var, to, "loop_cond");
+        self.builder.build_conditional_branch(comp, body, done);
+
+        self.builder.position_at_end(body);
+        // add loop body
+        insert_body(loop_var, &mut data);
+
+        let body = self.builder.get_insert_block().unwrap();
+
+        loop_phi.add_incoming(&[(&from, entry), (&next, body)]);
+        data_phi.add_incoming(&[(&*data_ref, entry), (&data, body)]);
+
+        self.builder.build_unconditional_branch(cond);
+
+        self.builder.position_at_end(done);
+
+        *data_ref = data_phi.as_basic_value();
     }
 
     /// Dereference an array

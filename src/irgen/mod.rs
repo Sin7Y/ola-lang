@@ -33,13 +33,21 @@ macro_rules! emit_context {
                 $binary
                     .builder
                     .build_call($binary.module.get_function($name).unwrap(), $args, "")
+                    .try_as_basic_value()
+                    .left()
+                    .unwrap()
             };
             ($name:expr, $args:expr, $call_name:literal) => {
-                $binary.builder.build_call(
-                    $binary.module.get_function($name).unwrap(),
-                    $args,
-                    $call_name,
-                )
+                $binary
+                    .builder
+                    .build_call(
+                        $binary.module.get_function($name).unwrap(),
+                        $args,
+                        $call_name,
+                    )
+                    .try_as_basic_value()
+                    .left()
+                    .unwrap()
             };
         }
     };
