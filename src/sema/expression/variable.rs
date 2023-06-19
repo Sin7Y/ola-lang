@@ -1,5 +1,4 @@
 use crate::sema::ast::{Expression, Namespace, Symbol, Type};
-use crate::sema::corelib;
 use crate::sema::diagnostics::Diagnostics;
 use crate::sema::expression::function_call::available_functions;
 use crate::sema::expression::{ExprContext, ResolveTo};

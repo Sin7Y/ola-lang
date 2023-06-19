@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::diagnostics::{Diagnostic, ErrorType::ParserError, Level::Error};
-use crate::ola;
-use crate::program::*;
-use crate::Loc::File;
-use pretty_assertions::assert_eq;
+use crate::diagnostics::{ErrorType::ParserError, Level::Error};
 use std::sync::mpsc;
 use std::time::Duration;
 use std::{fs, path::Path, thread};

@@ -12,6 +12,9 @@ use ola_parser::diagnostics::Diagnostic;
 use ola_parser::program;
 use ola_parser::program::{CodeLocation, Loc};
 use std::str::FromStr;
+
+use super::FIELD_ORDER;
+
 pub(super) fn string_literal(
     v: &[program::StringLiteral],
     file_no: usize,
@@ -54,12 +57,26 @@ pub(super) fn address_literal(
     address: &str,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-    if address.starts_with("0x") && !address.chars().any(|c| c == '_') && address.len() == 66 {
-        let s: String = address.chars().skip(2).collect();
-        Ok(Expression::NumberLiteral {
+    if !address.chars().any(|c| c == '_') && address.len() == 64 {
+        let mut address_vec = Vec::new();
+        for (_, chunk) in address.as_bytes().chunks(16).enumerate() {
+            let address_chunk =
+                u64::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
+            // We need to check if each chunk exceeds the FIELD_ORDER.
+            if address_chunk > FIELD_ORDER {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!("address literal {} out of range", address),
+                ));
+                return Err(());
+            } else {
+                address_vec.push(BigInt::from_u64(address_chunk).unwrap());
+            }
+        }
+        Ok(Expression::AddressLiteral {
             loc: *loc,
             ty: Type::Address,
-            value: BigInt::from_str_radix(&s, 16).unwrap(),
+            value: address_vec,
         })
     } else {
         diagnostics.push(Diagnostic::error(

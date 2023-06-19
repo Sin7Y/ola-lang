@@ -16,6 +16,7 @@ impl RetrieveType for Expression {
             | Expression::StringCompare { .. } => Type::Bool,
             Expression::StringConcat { ty, .. }
             | Expression::NumberLiteral { ty, .. }
+            | Expression::AddressLiteral { ty, .. }
             | Expression::StructLiteral { ty, .. }
             | Expression::ArrayLiteral { ty, .. }
             | Expression::ConstArrayLiteral { ty, .. }
