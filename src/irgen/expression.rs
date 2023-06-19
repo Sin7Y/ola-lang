@@ -16,12 +16,13 @@ use ola_parser::program;
 use crate::sema::{
     ast::{Expression, LibFunc, Namespace, RetrieveType, Type},
     diagnostics::Diagnostics,
-    eval::eval_const_number,
     expression::integers::bigint_to_expression,
     expression::ResolveTo,
 };
 
-use super::storage::{storage_array_pop, storage_array_push, storage_load, storage_store};
+use super::storage::{
+    poseidon_hash, slot_hash, storage_array_pop, storage_array_push, storage_load, storage_store,
+};
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -251,7 +252,9 @@ pub fn expression<'a>(
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
             ret
         }
-        Expression::NumberLiteral { ty, value, .. } => bin.number_literal(ty, value, ns).into(),
+        Expression::NumberLiteral { ty, value, .. } => bin.number_literal(ty, value, ns),
+
+        Expression::AddressLiteral { value, .. } => bin.address_literal(value),
 
         Expression::Variable { ty, var_no, .. } => {
             let ptr = func_context
@@ -376,7 +379,9 @@ pub fn expression<'a>(
             let array_ty = array.ty().deref_into();
             let mut array = expression(array, bin, func_context, ns);
             match array_ty {
-                Type::String => unimplemented!("string length"),
+                Type::String => {
+                    storage_load(bin, &Type::Uint(32), &mut array, func_context.func_val, ns)
+                }
                 Type::Array(_, dim) => match dim.last().unwrap() {
                     ArrayLength::Dynamic => {
                         storage_load(bin, &Type::Uint(32), &mut array, func_context.func_val, ns)
@@ -728,34 +733,28 @@ fn conditional_operator<'a>(
 fn array_subscript<'a>(
     loc: &program::Loc,
     array_ty: &Type,
-    array: &Expression,
+    array_expr: &Expression,
     index: &Expression,
     bin: &Binary<'a>,
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    let array_ptr = expression(array, bin, func_context, ns);
+    let mut array = expression(array_expr, bin, func_context, ns);
     let index = expression(index, bin, func_context, ns);
     if array_ty.is_mapping() {
-        unimplemented!()
+        let mut inputs = vec![array, index];
+        return poseidon_hash(bin, func_context.func_val, &mut inputs);
     }
 
     let array_length = match array_ty.deref_any() {
         Type::Array(..) => match array_ty.array_length() {
             None => {
                 if let Type::StorageRef(..) = array_ty {
-                    // let array_length =
-                    //     load_storage(loc, &Type::Uint(256), array.clone(),
-                    // cfg, vartab);
+                    let array_length =
+                        storage_load(bin, &Type::Uint(32), &mut array, func_context.func_val, ns);
 
-                    // array = Expression::Keccak256 {
-                    //     loc: *loc,
-                    //     ty: Type::Uint(256),
-                    //     exprs: vec![array],
-                    // };
-
-                    // array_length
-                    unimplemented!()
+                    array = slot_hash(bin, func_context.func_val, array);
+                    array_length
                 } else {
                     // If a subscript is encountered array length will be called
                     // Return array length by default
@@ -763,7 +762,7 @@ fn array_subscript<'a>(
                         loc: *loc,
                         tys: vec![Type::Uint(32)],
                         kind: LibFunc::ArrayLength,
-                        args: vec![array.clone()],
+                        args: vec![array_expr.clone()],
                     };
                     let returned =
                         expression(&array_length_expr, bin, func_context, ns).into_int_value();
@@ -792,7 +791,7 @@ fn array_subscript<'a>(
         index
     } else if array_ty.is_dynamic_memory() {
         let array_type: BasicTypeEnum = bin.llvm_var_ty(array_ty, ns);
-        let vector_ptr = bin.vector_data(array_ptr);
+        let vector_ptr = bin.vector_data(array);
         return unsafe {
             bin.builder
                 .build_gep(
@@ -833,7 +832,7 @@ fn array_subscript<'a>(
         let element_ptr = unsafe {
             bin.builder.build_gep(
                 array_type,
-                array_ptr.into_pointer_value(),
+                array.into_pointer_value(),
                 &[bin.context.i64_type().const_zero(), index.into_int_value()],
                 "index_access",
             )
@@ -883,7 +882,6 @@ pub fn assign_single<'a>(
                 } else {
                     right.clone()
                 };
-            let right_value = expression(&expr_right, bin, func_context, ns);
             match left_ty {
                 Type::StorageRef(..) => {
                     storage_store(

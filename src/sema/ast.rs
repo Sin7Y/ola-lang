@@ -433,6 +433,14 @@ pub enum Expression {
         values: Vec<Expression>,
     },
 
+    // The address type is composed of 4 Filed elements in the underlying storage,
+    // totaling 256 bits.
+    AddressLiteral {
+        loc: program::Loc,
+        ty: Type,
+        value: Vec<BigInt>,
+    },
+
     ArrayLiteral {
         loc: program::Loc,
         ty: Type,
@@ -801,6 +809,7 @@ impl CodeLocation for Expression {
         match self {
             Expression::BoolLiteral { loc, .. }
             | Expression::NumberLiteral { loc, .. }
+            | Expression::AddressLiteral { loc, .. }
             | Expression::StructLiteral { loc, .. }
             | Expression::ArrayLiteral { loc, .. }
             | Expression::ConstArrayLiteral { loc, .. }

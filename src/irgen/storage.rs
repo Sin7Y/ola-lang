@@ -648,51 +648,6 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
     );
 }
 
-// /// Calculate length of storage dynamic bytes(string/bytes)
-// pub(crate) fn storage_array_length<'a>(
-//     binary: &Binary<'a>,
-//     _function: FunctionValue,
-//     slot: IntValue<'a>,
-//     _ty: &ast::Type,
-//     _ns: &ast::Namespace,
-// ) -> IntValue<'a> {
-//     emit_context!(binary);
-
-//     let slot_ptr = binary.builder.build_alloca(slot.get_type(), "slot");
-//     binary.builder.build_store(slot_ptr, slot);
-
-//     let (scratch_buf, scratch_len) = scratch_buf!();
-
-//     binary
-//         .builder
-//         .build_store(scratch_len, i64_const!(SCRATCH_SIZE as u64));
-
-//     let exists = seal_get_storage!(
-//         slot_ptr.into(),
-//         i64_const!(32).into(),
-//         scratch_buf.into(),
-//         scratch_len.into()
-//     );
-
-//     let exists =
-//         binary
-//             .builder
-//             .build_int_compare(IntPredicate::EQ, exists, i64_zero!(),
-// "storage_exists");
-
-//     binary
-//         .builder
-//         .build_select(
-//             exists,
-//             binary
-//                 .builder
-//                 .build_load(binary.context.i64_type(), scratch_len,
-// "string_len"),             i64_zero!().into(),
-//             "string_length",
-//         )
-//         .into_int_value()
-// }
-
 pub(crate) fn storage_load_internal<'a>(
     bin: &Binary<'a>,
     function: FunctionValue<'a>,
@@ -709,7 +664,7 @@ pub(crate) fn storage_load_internal<'a>(
             );
             let storage_key = bin
                 .builder
-                .build_load(bin.context.i64_type(), storage_key_ptr, "storage_key")
+                .build_load(array_type!(4), storage_key_ptr, "storage_key")
                 .into_array_value();
             for i in 0..3 {
                 bin.builder
@@ -739,7 +694,7 @@ pub(crate) fn storage_clear_internal<'a>(
             );
             let storage_key = bin
                 .builder
-                .build_load(bin.context.i64_type(), storage_key_ptr, "storage_key")
+                .build_load(array_type!(4), storage_key_ptr, "storage_key")
                 .into_array_value();
             for i in 0..3 {
                 bin.builder
@@ -759,7 +714,7 @@ pub(crate) fn storage_clear_internal<'a>(
     );
     let storage_value = bin
         .builder
-        .build_load(bin.context.i64_type(), storage_value_ptr, "storage_value")
+        .build_load(array_type!(4), storage_value_ptr, "storage_value")
         .into_array_value();
     for i in 0..4 {
         bin.builder
@@ -786,7 +741,7 @@ pub(crate) fn storage_store_internal<'a>(
             );
             let storage_key = bin
                 .builder
-                .build_load(bin.context.i64_type(), storage_key_ptr, "storage_key")
+                .build_load(array_type!(4), storage_key_ptr, "storage_key")
                 .into_array_value();
             for i in 0..3 {
                 bin.builder
@@ -807,7 +762,7 @@ pub(crate) fn storage_store_internal<'a>(
             );
             let storage_value = bin
                 .builder
-                .build_load(bin.context.i64_type(), storage_value_ptr, "storage_value")
+                .build_load(array_type!(4), storage_value_ptr, "storage_value")
                 .into_array_value();
             for i in 0..3 {
                 bin.builder
@@ -818,13 +773,17 @@ pub(crate) fn storage_store_internal<'a>(
         }
         _ => value,
     };
-    call!("set_storage", &[storage_key.into(), storage_value.into()]);
+    call!(
+        (),
+        "set_storage",
+        &[storage_key.into(), storage_value.into()]
+    );
 }
 
 pub(crate) fn slot_hash<'a>(
     bin: &Binary<'a>,
     function: FunctionValue<'a>,
-    slot: BasicValueEnum,
+    slot: BasicValueEnum<'a>,
 ) -> BasicValueEnum<'a> {
     let mut inputs = vec![slot];
     poseidon_hash(bin, function, &mut inputs)
@@ -833,7 +792,7 @@ pub(crate) fn slot_hash<'a>(
 pub(crate) fn poseidon_hash<'a>(
     bin: &Binary<'a>,
     function: FunctionValue<'a>,
-    inputs: &mut Vec<BasicValueEnum>,
+    inputs: &mut Vec<BasicValueEnum<'a>>,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
     let hash_src_ptr = bin.build_array_alloca(
@@ -844,7 +803,7 @@ pub(crate) fn poseidon_hash<'a>(
     );
     let hash_src = bin
         .builder
-        .build_load(bin.context.i64_type(), hash_src_ptr, "hash_src")
+        .build_load(array_type!(8), hash_src_ptr, "hash_src")
         .into_array_value();
     for i in 0..8 {
         bin.builder
