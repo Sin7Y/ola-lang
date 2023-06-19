@@ -64,43 +64,43 @@ impl<'a> Binary<'a> {
     }
 
     /// Convert a BigInt number to llvm const value
-    /// we should slice and dice into pointer array types.
-    /// Currently we only support u32 type data.
-    pub(crate) fn number_literal(&self, ty: &Type, n: &BigInt, _ns: &Namespace) -> IntValue<'a> {
+    pub(crate) fn number_literal(
+        &self,
+        ty: &Type,
+        n: &BigInt,
+        _ns: &Namespace,
+    ) -> BasicValueEnum<'a> {
         match ty {
             // Map all i32 data to a field-based data type,
             // with the maximum value of field between u63 and u64.
             Type::Uint(32) => {
                 let ty = self.context.i64_type();
                 let s = n.to_string();
-                ty.const_int_from_string(&s, StringRadix::Decimal).unwrap()
+                ty.const_int_from_string(&s, StringRadix::Decimal)
+                    .unwrap()
+                    .into()
             }
             _ => panic!("not implemented"),
         }
     }
 
-    /// llvm address type
-    pub(crate) fn address_type(&self, ns: &Namespace) -> ArrayType<'a> {
-        self.context.i64_type().array_type(4 as u32)
+    /// Convert a BigInt array to llvm const array value
+    pub(crate) fn address_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
+        let ty = self.context.i64_type();
+        let mut v = Vec::new();
+
+        for i in 0..4 {
+            let s = value[i].to_string();
+            v.push(ty.const_int_from_string(&s, StringRadix::Decimal).unwrap());
+        }
+
+        ty.const_array(&v).into()
     }
 
-    // /// Default empty value
-    // pub(crate) fn default_value(&self, ty: &Type, ns: &Namespace) ->
-    // BasicValueEnum<'a> {     let llvm_ty = self.llvm_var_ty(ty, ns);
-
-    //     // const_zero() on BasicTypeEnum yet. Should be coming to inkwell soon
-    //     if llvm_ty.is_pointer_type() {
-    //         llvm_ty.into_pointer_type().const_null().into()
-    //     } else if llvm_ty.is_array_type() {
-    //         self.address_type(ns).const_zero().into()
-    //     } else {
-    //         BasicTypeEnum::IntType(self.context.custom_width_int_type(64 as
-    // u32)).const_zero()     }
-    // }
-
-    // pub(crate) fn address_type(&self, ns: &Namespace) -> ArrayType<'a> {
-    //     self.context.i8_type().array_type(ns.address_length as u32)
-    // }
+    /// llvm address type
+    pub(crate) fn address_type(&self) -> ArrayType<'a> {
+        self.context.i64_type().array_type(4 as u32)
+    }
 
     /// Emit function prototype
     pub(crate) fn function_type(
@@ -151,6 +151,9 @@ impl<'a> Binary<'a> {
             Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
+            Type::String => llvm_ty
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
             _ => llvm_ty,
         }
     }
@@ -161,8 +164,8 @@ impl<'a> Binary<'a> {
             Type::Bool => BasicTypeEnum::IntType(self.context.bool_type()),
             // Map all i32 data to a field-based data type, with the maximum value of field between
             // u63 and u64
-            Type::Uint(32) => BasicTypeEnum::IntType(self.context.custom_width_int_type(64)),
-            Type::Contract(_) | Type::Address => BasicTypeEnum::ArrayType(self.address_type(ns)),
+            Type::Uint(32) => self.context.i64_type().into(),
+            Type::Contract(_) | Type::Address => BasicTypeEnum::ArrayType(self.address_type()),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
             Type::Array(base_ty, dims) => {
                 let ty = self.llvm_field_ty(base_ty, ns);

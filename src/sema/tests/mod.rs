@@ -412,3 +412,28 @@ fn test_array_contract() {
 
     assert_eq!(errors.len(), 0);
 }
+
+#[test]
+fn test_contract_address() {
+    let file = r#"
+    contract AddressExample {
+        address myaddress;
+    
+        fn addressFunction() {
+            myaddress = 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;
+        }
+        fn setAddress(address _address) {
+            myaddress = _address;
+        }
+    
+        fn getAddress() -> (address) {
+            return myaddress;
+        }
+    }
+
+        "#;
+    let ns = parse(file);
+    let errors = ns.diagnostics.errors();
+
+    assert_eq!(errors.len(), 0);
+}

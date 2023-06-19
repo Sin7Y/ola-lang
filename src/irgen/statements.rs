@@ -533,10 +533,15 @@ impl Type {
     /// in storage.
     pub fn default(&self, ns: &Namespace) -> Option<Expression> {
         match self {
-            Type::Uint(32) => Some(Expression::NumberLiteral {
+            Type::Uint(..) => Some(Expression::NumberLiteral {
                 loc: IRgen,
                 ty: self.clone(),
                 value: BigInt::from(0),
+            }),
+            Type::Address => Some(Expression::AddressLiteral {
+                loc: IRgen,
+                ty: self.clone(),
+                value: vec![BigInt::from(0); 4],
             }),
             Type::Bool => Some(Expression::BoolLiteral {
                 loc: IRgen,
@@ -593,6 +598,7 @@ impl Type {
                 }
             }
             Type::Function { .. } => None,
+
             _ => None,
         }
     }
