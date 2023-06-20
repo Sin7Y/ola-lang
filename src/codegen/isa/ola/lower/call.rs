@@ -62,6 +62,30 @@ pub fn lower_call(
         return Ok(());
     }
 
+    if name.as_str() == "set_storage" {
+        pass_sstore_args_to_regs(ctx, &tys[1..], &args[1..])?;
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode:Opcode::SSTORE,
+                operands: vec![],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
+    if name.as_str() == "get_storage" {
+        pass_sstore_args_to_regs(ctx, &tys[1..], &args[1..])?;
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode:Opcode::SLOAD,
+                operands: Vec::new(),
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
     // then lower general function calls and prophet separately:
     // for gfc insts pattern as args + call_inst + return
     // for prophet insts pattern as args + prophet_pseudo + return_prophet
@@ -133,7 +157,7 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
                 _ => return Err(LoweringError::Todo("Unsupported load pattern 1".into()).into()),
             }
 
-            let fp: Reg = GR::R8.into();
+            let fp: Reg = GR::R9.into();
             ctx.inst_seq.push(MachInstruction::new(
                 InstructionData {
                     opcode: Opcode::ADDri,
@@ -166,6 +190,37 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
                 }
             }
             e => return Err(LoweringError::Todo(format!("Unsupported argument: {:?}", e)).into()),
+        };
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode,
+                operands: vec![MO::output(out.into()), MO::input(arg)],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+    }
+
+    Ok(())
+}
+
+fn pass_sstore_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[ValueId]) -> Result<()> {
+    let gpru = RegInfo::str_arg_reg_list(&ctx.call_conv);
+
+    for (gpr_used, (&ty, &arg0)) in tys.iter().zip(args.iter().rev()).enumerate() {
+        println!(
+            "storage arg type pointer {:?},{:?}, arg {:?}",
+            ty.is_pointer(ctx.types),
+            ty,
+            arg0
+        );
+        let arg = get_operand_for_val(ctx, ty, arg0)?;
+        let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, ty));
+
+        let opcode = match &arg {
+            OperandData::Int32(_) => Opcode::MOVri,
+            OperandData::Reg(_) => Opcode::MOVrr,
+            OperandData::VReg(_) => Opcode::MOVrr,
+            e => return Err(LoweringError::Todo(format!("Unsupported storage argument: {:?}", e)).into()),
         };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {

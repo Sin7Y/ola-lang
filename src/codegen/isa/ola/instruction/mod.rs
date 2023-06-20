@@ -42,6 +42,10 @@ pub enum Opcode {
     RET,
     END,
 
+    SLOAD,
+    SSTORE,
+    POSEIDON,
+
     MLOADi,
     MLOADr,
     MSTOREi,

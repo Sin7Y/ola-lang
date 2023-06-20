@@ -65,6 +65,109 @@ mod test {
         );
     }
 
+    #[test]
+    fn codegen_str_binop_test() {
+        // LLVM Assembly
+        let asm = r#"
+  source_filename = "asm"
+  ; Function Attrs: noinline nounwind optnone uwtable
+  define dso_local i32 @main() #0 {
+    %a = alloca i32, align 4
+    store i32 10, i32* %a
+    %b = load i32, i32* %a
+    %c = add i32 %b, 20 ; 30
+    %d = add i32 %b, 30 ; 60
+    %e = mul i32 %c, %d ; 1800
+    ;%f = sub i32 %e, %d ; 1740
+    ;call void @ordinary_call(i64 100,i64 %b, i64 %e)
+    %d1 = add i32 %d, 1000
+    %d2 = add i32 %d1, 2000
+    %d3 = add i32 %d2, 3000
+    %d4 = add i32 %d3, 4000
+    %d5 = add i32 %d4, 5000
+    %d6 = add i32 %d5, 6000
+    %d7 = add i32 %d5, %d6
+    %d8 = add i32 %d5, %d7
+    %d9 = add i32 %d7, %d8
+    call void @set_storage(i64 %d9, i64 %b, i64 2, i64 3, i64 4, i64 5, i64 6, i64 %e)
+    ;call void @get_storage(i64 10, i64 20, i64 30, i64 40, i64 50, i64 60, i64 70, i64 %c)
+    %g = add i32 %d9, 666
+    ret i32 %g
+  }
+  attributes #0 = { noinline nounwind optnone uwtable }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}",code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r8 r8 12
+  mov r1 10
+  mstore [r8,-1] r1
+  mload r1 [r8,-1]
+  add r0 r1 20
+  add r2 r1 30
+  mstore [r8,-2] r2
+  mload r2 [r8,-2]
+  mul r7 r0 r2
+  mov r6 6
+  mov r5 5
+  mov r4 4
+  mov r3 3
+  mov r2 2
+  mload r0 [r8,-2]
+  add r0 r0 1000
+  mstore [r8,-3] r0
+  mload r0 [r8,-3]
+  add r0 r0 2000
+  mstore [r8,-4] r0
+  mload r0 [r8,-4]
+  add r0 r0 3000
+  mstore [r8,-5] r0
+  mload r0 [r8,-5]
+  add r0 r0 4000
+  mstore [r8,-6] r0
+  mload r0 [r8,-6]
+  add r0 r0 5000
+  mstore [r8,-8] r0
+  mload r0 [r8,-8]
+  add r0 r0 6000
+  mstore [r8,-7] r0
+  mload r0 [r8,-7]
+  mload r1 [r8,-8]
+  add r0 r1 r0
+  mstore [r8,-9] r0
+  mload r0 [r8,-8]
+  mload r1 [r8,-9]
+  add r0 r0 r1
+  mstore [r8,-10] r0
+  mload r0 [r8,-9]
+  mload r1 [r8,-10]
+  add r0 r0 r1
+  mstore [r8,-11] r0
+  mload r0 [r8,-11]
+  sstore 
+  mload r0 [r8,-11]
+  add r0 r0 666
+  mstore [r8,-12] r0
+  mload r0 [r8,-12]
+  add r8 r8 -12
+  end
+"
+        );
+    }
+
     #[ignore]
     #[test]
     fn codegen_functioncall_test() {

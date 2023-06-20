@@ -61,8 +61,8 @@ pub fn run_on_function(function: &mut Function<Ola>) {
             InstructionData {
                 opcode: Opcode::MSTOREr,
                 operands: vec![
-                    Operand::output(GR::R8.into()),
-                    Operand::input(GR::R8.into()),
+                    Operand::output(GR::R9.into()),
+                    Operand::input(GR::R9.into()),
                 ],
             },
             entry,
@@ -75,8 +75,8 @@ pub fn run_on_function(function: &mut Function<Ola>) {
             InstructionData {
                 opcode: Opcode::ADDri,
                 operands: vec![
-                    Operand::input_output(GR::R8.into()),
-                    Operand::input_output(GR::R8.into()),
+                    Operand::input_output(GR::R9.into()),
+                    Operand::input_output(GR::R9.into()),
                     Operand::input(adj.into()),
                 ],
             },
@@ -103,8 +103,8 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
-                        Operand::output(GR::R8.into()),
-                        Operand::input_output(GR::R8.into()),
+                        Operand::output(GR::R9.into()),
+                        Operand::input_output(GR::R9.into()),
                         Operand::input((-adj).into()),
                     ],
                 },

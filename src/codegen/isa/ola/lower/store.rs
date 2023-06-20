@@ -1,4 +1,4 @@
-use super::{get_inst_output, get_operand_for_val, new_empty_inst_output};
+use super::{get_inst_output, get_operand_for_val};
 use crate::codegen::core::ir::{
     function::instruction::{InstructionId, Opcode as IrOpcode},
     types::Type,
@@ -85,7 +85,7 @@ pub fn lower_store(
                 let inst = ctx.ir_data.inst_ref(*id);
                 println!("store pointer opcode {:?}", inst.opcode);
                 if inst.opcode == IrOpcode::Alloca {
-                    let fp: Reg = GR::R8.into();
+                    let fp: Reg = GR::R9.into();
                     let mut src_slot = None;
                     if let Some(slot_id) = ctx.inst_id_to_slot_id.get(id) {
                         src_slot = Some(*slot_id);
@@ -103,9 +103,7 @@ pub fn lower_store(
                         ctx.block_map[&ctx.cur_block],
                     ));
                 }
-                // vreg = Some(addr.into());
-                // vreg = Some(get_inst_output(ctx, tys[0], *id)?);
-                vreg = Some(new_empty_inst_output(ctx, tys[0], *id).into());
+                vreg = Some(addr.into());
             } else {
                 vreg = Some(get_inst_output(ctx, tys[0], *id)?);
             }

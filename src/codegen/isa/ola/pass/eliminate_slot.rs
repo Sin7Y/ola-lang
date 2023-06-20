@@ -94,7 +94,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                         size
                     );
                     mem[2].data = OperandData::Int32(size);
-                    mem[3].data = OperandData::Reg(GR::R8.into());
+                    mem[3].data = OperandData::Reg(GR::R9.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int32(imm)) => {
                     let off = function.slots.get(*slot).offset;
@@ -112,7 +112,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     );
                     mem[2].data = OperandData::Int32(size);
                     mem[1].data = OperandData::None;
-                    mem[3].data = OperandData::Reg(GR::R8.into());
+                    mem[3].data = OperandData::Reg(GR::R9.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int64(imm)) => {
                     let off = function.slots.get(*slot).offset;
@@ -125,7 +125,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     );
                     mem[2].data = OperandData::Int64(size);
                     mem[1].data = OperandData::None;
-                    mem[3].data = OperandData::Reg(GR::R8.into());
+                    mem[3].data = OperandData::Reg(GR::R9.into());
                 }
                 _ => todo!(),
             }

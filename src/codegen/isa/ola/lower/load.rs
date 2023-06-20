@@ -144,6 +144,7 @@ fn lower_load_gep(
             ]
         }
         [Value::Instruction(base_ptr), Const(Int(Int32(idx0))), Const(Int(Int32(idx1)))] => {
+            println!("load_gep: base_ptr {:?},idx0 {},idx1 {}",base_ptr,idx0,idx1);
             let base_ptr = ctx.inst_id_to_slot_id[base_ptr];
             let base_ty = gep.operand.types()[0];
             let offset = idx0 * ctx.isa.data_layout.get_size_of(ctx.types, base_ty) as i32

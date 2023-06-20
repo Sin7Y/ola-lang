@@ -270,7 +270,7 @@ pub fn print_function(
                 if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 8)))
                     && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 8)))
                 {
-                    code.push_str(&format!("  mstore [r8,-2] r8\n"));
+                    code.push_str(&format!("  mstore [r9,-2] r9\n"));
                     continue;
                 }
             }
@@ -346,6 +346,9 @@ impl fmt::Display for Opcode {
                 Self::CALL => "call",
                 Self::RET => "ret",
                 Self::Phi => "PHI",
+                Self::SSTORE => "sstore",
+                Self::SLOAD => "sload",
+                Self::POSEIDON => "poseidon",
                 Self::PROPHET => "prophet",
                 Self::MLOADi | Self::MLOADr => "mload",
                 Self::MSTOREi | Self::MSTOREr => "mstore",
