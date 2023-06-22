@@ -10,7 +10,7 @@ use crate::irgen::functions::gen_functions;
 use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
-use inkwell::module::Module;
+use inkwell::module::{Linkage, Module};
 use inkwell::types::{
     ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
 };
@@ -137,7 +137,7 @@ impl<'a> Binary<'a> {
     pub(crate) fn llvm_var_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {
-            Type::Struct(_) | Type::Array(..) => llvm_ty
+            Type::Struct(_) | Type::Array(..) | Type::String => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => llvm_ty,
@@ -309,7 +309,7 @@ impl<'a> Binary<'a> {
                 .i64_type()
                 .ptr_type(AddressSpace::default())
                 .const_null(),
-            Some(..) => unimplemented!(),
+            Some(s) => self.emit_global_string("const_string", s, true),
         };
 
         self.builder
@@ -396,37 +396,36 @@ impl<'a> Binary<'a> {
     {
         let body = self.context.append_basic_block(function, "body");
         let done = self.context.append_basic_block(function, "done");
-        let entry = self.builder.get_insert_block().unwrap();
+
+        let loop_ty = from.get_type();
+        // create an alloca for the loop variable
+        let index_alloca = self.builder.build_alloca(loop_ty, "index_alloca");
+        // initialize the loop variable with the starting value
+        self.builder.build_store(index_alloca, from);
 
         self.builder.build_unconditional_branch(body);
         self.builder.position_at_end(body);
-
-        let loop_ty = from.get_type();
-        let loop_phi = self.builder.build_phi(loop_ty, "index");
-        let data_phi = self.builder.build_phi(data_ref.get_type(), "data");
-        let mut data = data_phi.as_basic_value();
-
-        let loop_var = loop_phi.as_basic_value().into_int_value();
+        // load current value of the loop variable
+        let index_value = self
+            .builder
+            .build_load(loop_ty, index_alloca, "index_value")
+            .into_int_value();
 
         // add loop body
-        insert_body(loop_var, &mut data);
+        insert_body(index_value, data_ref);
 
-        let next = self
-            .builder
-            .build_int_add(loop_var, loop_ty.const_int(1, false), "next_index");
-
+        let next_index =
+            self.builder
+                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+        // store the incremented value back
+        self.builder.build_store(index_alloca, next_index);
         let comp = self
             .builder
-            .build_int_compare(IntPredicate::ULT, next, to, "loop_cond");
+            .build_int_compare(IntPredicate::ULT, next_index, to, "loop_cond");
         self.builder.build_conditional_branch(comp, body, done);
 
-        let body = self.builder.get_insert_block().unwrap();
-        loop_phi.add_incoming(&[(&from, entry), (&next, body)]);
-        data_phi.add_incoming(&[(&*data_ref, entry), (&data, body)]);
-
+        // insert at end of done block
         self.builder.position_at_end(done);
-
-        *data_ref = data;
     }
 
     /// Emit a loop from `from` to `to`, checking the condition _before_ the
@@ -444,41 +443,41 @@ impl<'a> Binary<'a> {
         let cond = self.context.append_basic_block(function, "cond");
         let body = self.context.append_basic_block(function, "body");
         let done = self.context.append_basic_block(function, "done");
-        let entry = self.builder.get_insert_block().unwrap();
+
+        let loop_ty = from.get_type();
+        // create an alloca for the loop variable
+        let index_alloca = self.builder.build_alloca(loop_ty, "index_alloca");
+        // initialize the loop variable with the starting value
+        self.builder.build_store(index_alloca, from);
 
         self.builder.build_unconditional_branch(cond);
         self.builder.position_at_end(cond);
 
-        let loop_ty = from.get_type();
-        let loop_phi = self.builder.build_phi(loop_ty, "index");
-        let data_phi = self.builder.build_phi(data_ref.get_type(), "data");
-        let mut data = data_phi.as_basic_value();
-
-        let loop_var = loop_phi.as_basic_value().into_int_value();
-
-        let next = self
+        // load current value of the loop variable
+        let index_value = self
             .builder
-            .build_int_add(loop_var, loop_ty.const_int(1, false), "next_index");
+            .build_load(loop_ty, index_alloca, "index_value")
+            .into_int_value();
 
         let comp = self
             .builder
-            .build_int_compare(IntPredicate::ULT, loop_var, to, "loop_cond");
+            .build_int_compare(IntPredicate::ULT, index_value, to, "loop_cond");
         self.builder.build_conditional_branch(comp, body, done);
 
+        // build the loop body
         self.builder.position_at_end(body);
-        // add loop body
-        insert_body(loop_var, &mut data);
+        insert_body(index_value, data_ref);
 
-        let body = self.builder.get_insert_block().unwrap();
+        let next_index =
+            self.builder
+                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
 
-        loop_phi.add_incoming(&[(&from, entry), (&next, body)]);
-        data_phi.add_incoming(&[(&*data_ref, entry), (&data, body)]);
+        // store the incremented value back
+        self.builder.build_store(index_alloca, next_index);
 
         self.builder.build_unconditional_branch(cond);
 
         self.builder.position_at_end(done);
-
-        *data_ref = data_phi.as_basic_value();
     }
 
     /// Dereference an array
@@ -505,24 +504,53 @@ impl<'a> Binary<'a> {
                 } else {
                     let elem_ty = array_ty.array_deref();
                     let llvm_elem_ty = self.llvm_type(elem_ty.deref_memory(), ns);
-
-                    let vector_type = self.create_struct_vector();
-
+                    let vector_ptr = self.vector_data(array.into());
                     unsafe {
-                        self.builder.build_gep(
-                            vector_type,
-                            array,
-                            &[
-                                self.context.i32_type().const_zero(),
-                                self.context.i32_type().const_int(1, false),
-                                index,
-                            ],
-                            "index_access",
-                        )
+                        self.builder
+                            .build_gep(llvm_elem_ty, vector_ptr, &[index], "index_access")
                     }
+                }
+            }
+            Type::String => {
+                let elem_ty = array_ty.array_deref();
+                let llvm_elem_ty = self.llvm_type(elem_ty.deref_memory(), ns);
+                let vector_ptr = self.vector_data(array.into());
+                unsafe {
+                    self.builder
+                        .build_gep(llvm_elem_ty, vector_ptr, &[index], "index_access")
                 }
             }
             _ => unreachable!(),
         }
+    }
+
+    /// Creates global string in the llvm module with initializer
+    pub(crate) fn emit_global_string(
+        &self,
+        name: &str,
+        data: &[u32],
+        constant: bool,
+    ) -> PointerValue<'a> {
+        let ty = self.context.i64_type().array_type(data.len() as u32);
+
+        let gv = self
+            .module
+            .add_global(ty, Some(AddressSpace::default()), name);
+
+        gv.set_linkage(Linkage::Internal);
+
+        let data = data
+            .iter()
+            .map(|c| self.context.i64_type().const_int(*c as u64, false))
+            .collect::<Vec<IntValue>>();
+
+        gv.set_initializer(&self.context.i64_type().const_array(&data));
+
+        if constant {
+            gv.set_constant(true);
+            gv.set_unnamed_addr(true);
+        }
+
+        gv.as_pointer_value()
     }
 }

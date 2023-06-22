@@ -1,0 +1,17 @@
+
+
+contract StorageToStorage {
+    
+    u32[] storageArray1;
+    u32[] storageArray2;
+    
+    fn setArray1(u32[] array)  {
+        // Resizing and copying from memory array to storage array
+        storageArray1 = array;
+    }
+    
+    // fn copyToStorage2() {
+    //     // Directly assigning one storage array to another
+    //     storageArray2 = storageArray1;
+    // }
+}

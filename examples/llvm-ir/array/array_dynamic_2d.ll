@@ -15,6 +15,12 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare ptr @vector_new(i64, ptr)
 
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
 define ptr @initialize(i64 %0, i64 %1) {
 entry:
   %i = alloca i64, align 8
@@ -46,8 +52,9 @@ body:                                             ; preds = %cond
 
 next:                                             ; preds = %body
   %10 = load i64, ptr %i, align 4
-  %11 = add i64 %10, 1
-  store i64 %11, ptr %i, align 4
+  %11 = load i64, ptr %i, align 4
+  %12 = add i64 %11, 1
+  store i64 %12, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %cond
