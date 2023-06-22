@@ -1,0 +1,20 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola" {
+	contract [label="contract StructExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:2:1-18:2"]
+	var [label="variable myData\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:9:5-16"]
+	getData [label="getData\ncontract: StructExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:15:5-26\nsignature getData()"]
+	returns [label="returns\nu32 "]
+	return [label="return\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:16:9-28"]
+	storage_load [label="storage load u32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:16:9-28"]
+	structmember [label="struct member #1 u32 storage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:16:23-28"]
+	storage_var [label="storage variable\nStructExample.myData\nstruct StructExample.Data storage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:16:16-22"]
+	diagnostic [label="found StructExample \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_struct.ola:2:1-18:2"]
+	contracts -> contract
+	contract -> var [label="variable"]
+	contract -> getData [label="fn"]
+	getData -> returns [label="returns"]
+	getData -> return [label="body"]
+	return -> storage_load [label="expr"]
+	storage_load -> structmember [label="expr"]
+	structmember -> storage_var [label="var"]
+	diagnostics -> diagnostic [label="Debug"]
+}

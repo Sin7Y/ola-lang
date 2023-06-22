@@ -1,0 +1,18 @@
+
+contract StructExample {
+
+    struct Data {
+        u32 id;
+        u32 value;
+    }
+    
+    Data myData;
+
+    fn setData(u32 _id, u32 _value)  {
+        myData = Data(_id, _value);
+    }
+
+    fn getData() -> (u32) {
+        return myData.value;
+    }
+}

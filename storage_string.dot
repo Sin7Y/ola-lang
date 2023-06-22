@@ -1,0 +1,20 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola" {
+	contract [label="contract AddressExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:1:1-15:2"]
+	var [label="variable str\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:2:5-15"]
+	setStringLiteral [label="setStringLiteral\ncontract: AddressExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:8:5-26\nsignature setStringLiteral()"]
+	expr [label="expression\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:9:9-22"]
+	assign [label="assign\nstring\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:9:9-12"]
+	storage_var [label="storage variable\nAddressExample.str\nstring storage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:9:9-12"]
+	alloc_array [label="alloc array string\ninitializer: [34, 104, 101, 108, 108, 111, 34]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:9:15-22"]
+	number_literal [label="u32 literal: 7\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:9:15-22"]
+	diagnostic [label="found AddressExample \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_string.ola:1:1-15:2"]
+	contracts -> contract
+	contract -> var [label="variable"]
+	contract -> setStringLiteral [label="fn"]
+	setStringLiteral -> expr [label="body"]
+	expr -> assign [label="expr"]
+	assign -> storage_var [label="left"]
+	assign -> alloc_array [label="right"]
+	alloc_array -> number_literal [label="length"]
+	diagnostics -> diagnostic [label="Debug"]
+}

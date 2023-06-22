@@ -15,6 +15,12 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare ptr @vector_new(i64, ptr)
 
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
 define void @main() {
 entry:
   %0 = call i64 @sqrt_test(i64 10000)
@@ -74,8 +80,9 @@ body:                                             ; preds = %cond
 
 next:                                             ; preds = %enif2
   %20 = load i64, ptr %i, align 4
-  %21 = add i64 %20, 1
-  store i64 %21, ptr %i, align 4
+  %21 = load i64, ptr %i, align 4
+  %22 = add i64 %21, 1
+  store i64 %22, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %then1, %cond
@@ -85,32 +92,32 @@ then1:                                            ; preds = %body
   br label %endfor
 
 enif2:                                            ; preds = %body
-  %22 = load i64, ptr %x, align 4
-  %23 = load i64, ptr %a, align 4
-  %24 = load i64, ptr %x, align 4
-  %25 = call i64 @prophet_u32_mod(i64 %23, i64 %24)
-  call void @builtin_range_check(i64 %25)
-  %26 = add i64 %25, 1
-  %27 = sub i64 %24, %26
-  call void @builtin_range_check(i64 %27)
-  %28 = call i64 @prophet_u32_div(i64 %23, i64 %24)
+  %23 = load i64, ptr %x, align 4
+  %24 = load i64, ptr %a, align 4
+  %25 = load i64, ptr %x, align 4
+  %26 = call i64 @prophet_u32_mod(i64 %24, i64 %25)
+  call void @builtin_range_check(i64 %26)
+  %27 = add i64 %26, 1
+  %28 = sub i64 %25, %27
   call void @builtin_range_check(i64 %28)
-  %29 = mul i64 %28, %24
-  %30 = add i64 %29, %25
-  call void @builtin_assert(i64 %30, i64 %23)
-  %31 = load i64, ptr %x, align 4
-  %32 = add i64 %28, %31
-  call void @builtin_range_check(i64 %32)
-  %33 = call i64 @prophet_u32_mod(i64 %32, i64 2)
+  %29 = call i64 @prophet_u32_div(i64 %24, i64 %25)
+  call void @builtin_range_check(i64 %29)
+  %30 = mul i64 %29, %25
+  %31 = add i64 %30, %26
+  call void @builtin_assert(i64 %31, i64 %24)
+  %32 = load i64, ptr %x, align 4
+  %33 = add i64 %29, %32
   call void @builtin_range_check(i64 %33)
-  %34 = add i64 %33, 1
-  %35 = sub i64 2, %34
-  call void @builtin_range_check(i64 %35)
-  %36 = call i64 @prophet_u32_div(i64 %32, i64 2)
+  %34 = call i64 @prophet_u32_mod(i64 %33, i64 2)
+  call void @builtin_range_check(i64 %34)
+  %35 = add i64 %34, 1
+  %36 = sub i64 2, %35
   call void @builtin_range_check(i64 %36)
-  %37 = mul i64 %36, 2
-  %38 = add i64 %37, %33
-  call void @builtin_assert(i64 %38, i64 %32)
+  %37 = call i64 @prophet_u32_div(i64 %33, i64 2)
+  call void @builtin_range_check(i64 %37)
+  %38 = mul i64 %37, 2
+  %39 = add i64 %38, %34
+  call void @builtin_assert(i64 %39, i64 %33)
   br label %next
 
 then3:                                            ; preds = %else

@@ -1,0 +1,6 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_address.ola" {
+	contract [label="contract AddressExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_address.ola:1:1-9:2"]
+	diagnostic [label="found AddressExample \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_address.ola:1:1-9:2"]
+	contracts -> contract
+	diagnostics -> diagnostic [label="Debug"]
+}

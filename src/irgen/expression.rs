@@ -427,7 +427,7 @@ pub fn expression<'a>(
                     .build_int_add(
                         slot,
                         bin.context
-                            .i32_type()
+                            .i64_type()
                             .const_int(offset.to_u64().unwrap(), false),
                         "",
                     )
@@ -514,7 +514,7 @@ pub fn expression<'a>(
             ..
         } => {
             if args[0].ty().is_contract_storage() {
-                storage_array_pop(bin, &args, &ty[0], func_context, ns)
+                storage_array_pop(bin, &args, func_context, ns)
             } else {
                 // TODO implement memory array pop
                 unimplemented!()
@@ -786,16 +786,16 @@ fn array_subscript<'a>(
             unreachable!()
         }
     };
-
     if let Type::StorageRef(..) = &array_ty {
         index
     } else if array_ty.is_dynamic_memory() {
-        let array_type: BasicTypeEnum = bin.llvm_var_ty(array_ty, ns);
+        let elem_ty = array_ty.array_deref();
+        let llvm_elem_ty = bin.llvm_type(elem_ty.deref_memory(), ns);
         let vector_ptr = bin.vector_data(array);
         return unsafe {
             bin.builder
                 .build_gep(
-                    array_type,
+                    llvm_elem_ty,
                     vector_ptr,
                     &[index.into_int_value()],
                     "index_access",
@@ -874,13 +874,18 @@ pub fn assign_single<'a>(
 
             let expr_right =
                 if !left_ty.is_contract_storage() && right.ty().is_fixed_reference_type() {
-                    Expression::Load {
-                        loc: program::Loc::IRgen,
-                        ty: right.ty(),
-                        expr: Box::new(right.clone()),
-                    }
+                    expression(
+                        &Expression::Load {
+                            loc: program::Loc::IRgen,
+                            ty: right.ty(),
+                            expr: Box::new(right.clone()),
+                        },
+                        bin,
+                        func_context,
+                        ns,
+                    )
                 } else {
-                    right.clone()
+                    right_value
                 };
             match left_ty {
                 Type::StorageRef(..) => {
@@ -888,14 +893,14 @@ pub fn assign_single<'a>(
                         bin,
                         &ty.deref_any().clone(),
                         &mut dest,
-                        right_value,
+                        expr_right,
                         func_context.func_val,
                         ns,
                     );
                 }
                 Type::Ref(_) => {
                     bin.builder
-                        .build_store(dest.into_pointer_value(), right_value);
+                        .build_store(dest.into_pointer_value(), expr_right);
                 }
                 _ => unreachable!(),
             }
