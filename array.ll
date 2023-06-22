@@ -1,5 +1,5 @@
-; ModuleID = 'DynamicArrayExample'
-source_filename = "examples/source/array/array_dynamic/array_2.ola"
+; ModuleID = 'Array'
+source_filename = "examples/source/array/array.ola"
 
 declare void @builtin_assert(i64, i64)
 
@@ -21,12 +21,13 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define void @main() {
+define i64 @array_dynamic_2() {
 entry:
-  %b = alloca i64, align 8
   %0 = call ptr @vector_new(i64 5, ptr null)
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
-  store i64 %length, ptr %b, align 4
-  ret void
+  %data = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
+  %index_access = getelementptr i64, ptr %data, i64 1
+  %1 = load i64, ptr %index_access, align 4
+  ret i64 %1
 }

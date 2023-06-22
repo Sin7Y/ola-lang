@@ -15,6 +15,12 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare ptr @vector_new(i64, ptr)
 
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
 define void @main() {
 entry:
   %0 = call i64 @fib_non_recursive(i64 10)
@@ -93,11 +99,12 @@ body:                                             ; preds = %cond
 
 next:                                             ; preds = %body
   %11 = load i64, ptr %i, align 4
-  %12 = add i64 %11, 1
-  store i64 %12, ptr %i, align 4
+  %12 = load i64, ptr %i, align 4
+  %13 = add i64 %12, 1
+  store i64 %13, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %cond
-  %13 = load i64, ptr %third, align 4
-  ret i64 %13
+  %14 = load i64, ptr %third, align 4
+  ret i64 %14
 }

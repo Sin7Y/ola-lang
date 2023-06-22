@@ -15,6 +15,12 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare ptr @vector_new(i64, ptr)
 
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
 define i64 @array_sort_test(ptr %0) {
 entry:
   %array_literal = alloca [10 x i64], align 8
@@ -42,20 +48,21 @@ entry:
   store i64 9, ptr %elemptr9, align 4
   call void @builtin_range_check(i64 6)
   %index_access = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
+  %1 = load i64, ptr %index_access, align 4
   call void @builtin_range_check(i64 6)
   %index_access1 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  %1 = load i64, ptr %index_access1, align 4
   %2 = sub i64 %1, 1
-  store i64 %2, ptr %index_access, align 4
+  store i64 %2, ptr %index_access1, align 4
   call void @builtin_range_check(i64 6)
   %index_access2 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
+  %3 = load i64, ptr %index_access2, align 4
   call void @builtin_range_check(i64 6)
   %index_access3 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  %3 = load i64, ptr %index_access3, align 4
   %4 = add i64 %3, 1
-  store i64 %4, ptr %index_access2, align 4
+  %5 = add i64 %3, 1
+  store i64 %5, ptr %index_access3, align 4
   call void @builtin_range_check(i64 6)
   %index_access4 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  %5 = load i64, ptr %index_access4, align 4
-  ret i64 %5
+  %6 = load i64, ptr %index_access4, align 4
+  ret i64 %6
 }

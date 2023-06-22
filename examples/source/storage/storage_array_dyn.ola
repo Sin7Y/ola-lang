@@ -1,0 +1,18 @@
+
+
+contract DynamicArrayExample {
+    
+    u32[] dynamicArray;
+    
+    fn addElement(u32 element)  {
+        dynamicArray.push(element);
+    }
+    
+    fn removeElement() {
+        dynamicArray.pop();
+    }
+    
+    fn getLength() -> (u32) {
+        return dynamicArray.length;
+    }
+}

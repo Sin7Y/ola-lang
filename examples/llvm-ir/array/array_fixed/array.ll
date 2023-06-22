@@ -15,6 +15,12 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare ptr @vector_new(i64, ptr)
 
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
 define void @main() {
 entry:
   %array_literal6 = alloca [3 x i64], align 8
