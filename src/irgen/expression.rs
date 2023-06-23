@@ -20,7 +20,7 @@ use crate::sema::{
 };
 
 use super::storage::{
-    array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
+    array_offset, poseidon_hash, slot_hash, storage_array_pop, storage_array_push, storage_load,
     storage_store,
 };
 
@@ -145,7 +145,7 @@ pub fn expression<'a>(
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_context, ns);
-
+                    let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -197,7 +197,7 @@ pub fn expression<'a>(
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_context, ns);
-
+                    let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -211,6 +211,7 @@ pub fn expression<'a>(
                             return dest.clone();
                         }
                         Type::Ref(_) => {
+                            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                             bin.builder.build_store(
                                 dest.into_pointer_value(),
                                 after.as_basic_value_enum(),
