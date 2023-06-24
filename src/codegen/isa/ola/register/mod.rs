@@ -43,14 +43,14 @@ const ARG_REGS: [RegUnit; 3] = [
 ];
 
 const STR_ARG_REGS: [RegUnit; 8] = [
-    RegUnit(RegClass::GR as u16, GR::R7 as u16),
-    RegUnit(RegClass::GR as u16, GR::R6 as u16),
-    RegUnit(RegClass::GR as u16, GR::R5 as u16),
-    RegUnit(RegClass::GR as u16, GR::R4 as u16),
-    RegUnit(RegClass::GR as u16, GR::R3 as u16),
-    RegUnit(RegClass::GR as u16, GR::R2 as u16),
     RegUnit(RegClass::GR as u16, GR::R1 as u16),
-    RegUnit(RegClass::GR as u16, GR::R0 as u16),
+    RegUnit(RegClass::GR as u16, GR::R2 as u16),
+    RegUnit(RegClass::GR as u16, GR::R3 as u16),
+    RegUnit(RegClass::GR as u16, GR::R4 as u16),
+    RegUnit(RegClass::GR as u16, GR::R5 as u16),
+    RegUnit(RegClass::GR as u16, GR::R6 as u16),
+    RegUnit(RegClass::GR as u16, GR::R7 as u16),
+    RegUnit(RegClass::GR as u16, GR::R8 as u16),
 ];
 
 const CSR: [RegUnit; 4] = [

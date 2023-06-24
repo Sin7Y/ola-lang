@@ -2,20 +2,22 @@ pub mod alloca;
 pub mod bin;
 pub mod br;
 pub mod call;
+pub mod extractv;
 pub mod gep;
+pub mod insertv;
 pub mod load;
 pub mod store;
 
 use crate::codegen::core::ir::{
     function::{
         instruction::{
-            Alloca, Br, Call, CondBr, Instruction as IrInstruction, InstructionId, IntBinary, Load,
-            Operand, Ret, Store,
+            Alloca, Br, Call, CondBr, ExtractValue, InsertValue, Instruction as IrInstruction,
+            InstructionId, IntBinary, Load, Operand, Ret, Store,
         },
         Parameter,
     },
     types::Type,
-    value::{ConstantExpr, ConstantInt, ConstantValue, Value, ValueId},
+    value::{ConstantArray, ConstantExpr, ConstantInt, ConstantValue, Value, ValueId},
 };
 use crate::codegen::{
     function::instruction::Instruction as MachInstruction,
@@ -33,7 +35,9 @@ use alloca::lower_alloca;
 use bin::lower_bin;
 use br::{lower_br, lower_condbr};
 use call::{lower_call, lower_return};
+use extractv::lower_extractvalue;
 use gep::lower_gep;
+use insertv::lower_insertvalue;
 use load::lower_load;
 use store::lower_store;
 
@@ -90,6 +94,12 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
             align,
         }) => lower_store(ctx, tys, args, align),
         Operand::GetElementPtr(ref gep) => lower_gep(ctx, inst.id.unwrap(), gep),
+        Operand::InsertValue(InsertValue { ref tys, ref args }) => {
+            lower_insertvalue(ctx, inst.id.unwrap(), tys, args)
+        }
+        Operand::ExtractValue(ExtractValue { ref ty, ref args }) => {
+            lower_extractvalue(ctx, inst.id.unwrap(), ty, args)
+        }
         Operand::IntBinary(IntBinary { ty, ref args, .. }) => {
             lower_bin(ctx, inst.id.unwrap(), inst.opcode, ty, args)
         }
@@ -148,6 +158,7 @@ fn get_operand_for_const(
     ty: Type,
     konst: &ConstantValue,
 ) -> Result<OperandData> {
+    println!("scalar const operand");
     match konst {
         ConstantValue::Int(ConstantInt::Int32(i)) => Ok(OperandData::Int32(*i)),
         ConstantValue::Int(ConstantInt::Int64(i)) => Ok(OperandData::Int64(*i)),
@@ -224,6 +235,77 @@ fn get_operand_for_const(
                 ctx.block_map[&ctx.cur_block],
             ));
             Ok(addr.into())
+        }
+        e => todo!("{:?}", e),
+    }
+}
+
+fn get_operands_for_val(
+    ctx: &mut LoweringContext<Ola>,
+    ty: Type,
+    val: ValueId,
+) -> Result<Vec<OperandData>> {
+    match ctx.ir_data.values[val] {
+        Value::Constant(ref konst) => get_operands_for_const(ctx, ty, konst),
+        ref e => Err(LoweringError::Todo(format!("Unsupported value: {:?}", e)).into()),
+    }
+}
+
+fn get_operands_for_const(
+    ctx: &mut LoweringContext<Ola>,
+    _ty: Type,
+    konst: &ConstantValue,
+) -> Result<Vec<OperandData>> {
+    println!("aggregation const operand");
+    match konst {
+        ConstantValue::Array(ConstantArray {
+            ty,
+            elem_ty,
+            ref elems,
+            ..
+        }) => {
+            println!("array const operand");
+            let mut inputs = vec![];
+            for (_idx, e) in elems.iter().enumerate() {
+                let addr = ctx.mach_data.vregs.add_vreg_data(*elem_ty);
+                let input: Result<MO, &str> = match e {
+                    ConstantValue::Int(ConstantInt::Int32(i)) => {
+                        Ok(MO::new(OperandData::Int32(*i)))
+                    }
+                    ConstantValue::Int(ConstantInt::Int64(i)) => {
+                        Ok(MO::new(OperandData::Int64(*i)))
+                    }
+                    e => todo!("{:?}", e),
+                };
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::MOVri,
+                        operands: vec![MO::output(addr.into()), input.unwrap()],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+                println!("array const operand vreg: {:?}", addr);
+                inputs.push(addr.into());
+            }
+            Ok(inputs)
+        }
+        ConstantValue::AggregateZero(ty) => {
+            println!("aggregate zero const operand");
+            let mut inputs = vec![];
+            let elm_ty = ctx.types.base().element(*ty).unwrap();
+            for _ in 0..4 {
+                let addr = ctx.mach_data.vregs.add_vreg_data(elm_ty);
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::MOVri,
+                        operands: vec![MO::output(addr.into()), MO::new(0.into())],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+                println!("aggregate zero const operand vreg {:?}", addr);
+                inputs.push(addr.into());
+            }
+            Ok(inputs)
         }
         e => todo!("{:?}", e),
     }

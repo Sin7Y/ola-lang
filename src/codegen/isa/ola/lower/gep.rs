@@ -257,7 +257,6 @@ mod test {
         println!("{}", code.program);
     }
 
-
     #[ignore]
     #[test]
     fn codegen_array_test() {

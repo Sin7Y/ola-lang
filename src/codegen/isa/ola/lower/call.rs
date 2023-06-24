@@ -1,4 +1,4 @@
-use super::{get_operand_for_val, get_vreg_for_val, new_empty_inst_output};
+use super::{get_operand_for_val, get_operands_for_val, get_vreg_for_val, new_empty_inst_output};
 use crate::codegen::core::ir::{
     function::instruction::InstructionId,
     module::name::Name,
@@ -66,7 +66,7 @@ pub fn lower_call(
         pass_sstore_args_to_regs(ctx, &tys[1..], &args[1..])?;
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode:Opcode::SSTORE,
+                opcode: Opcode::SSTORE,
                 operands: vec![],
             },
             ctx.block_map[&ctx.cur_block],
@@ -78,7 +78,7 @@ pub fn lower_call(
         pass_sstore_args_to_regs(ctx, &tys[1..], &args[1..])?;
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode:Opcode::SLOAD,
+                opcode: Opcode::SLOAD,
                 operands: Vec::new(),
             },
             ctx.block_map[&ctx.cur_block],
@@ -203,29 +203,36 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
     Ok(())
 }
 
-fn pass_sstore_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[ValueId]) -> Result<()> {
+fn pass_sstore_args_to_regs(
+    ctx: &mut LoweringContext<Ola>,
+    tys: &[Type],
+    args: &[ValueId],
+) -> Result<()> {
     let gpru = RegInfo::str_arg_reg_list(&ctx.call_conv);
+    let cur_ty = ctx.types.base().element(tys[0]).unwrap();
 
-    for (gpr_used, (&ty, &arg0)) in tys.iter().zip(args.iter().rev()).enumerate() {
-        println!(
-            "storage arg type pointer {:?},{:?}, arg {:?}",
-            ty.is_pointer(ctx.types),
-            ty,
-            arg0
-        );
-        let arg = get_operand_for_val(ctx, ty, arg0)?;
-        let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, ty));
+    let mut arg_str = get_operands_for_val(ctx, tys[0], args[0])?;
+    let v = get_operands_for_val(ctx, tys[0], args[1])?;
+    arg_str.extend(v);
+
+    for (gpr_used, arg) in arg_str.iter().enumerate() {
+        let cur_ty = ctx.types.base().element(tys[0]).unwrap();
+        let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, cur_ty));
 
         let opcode = match &arg {
             OperandData::Int32(_) => Opcode::MOVri,
             OperandData::Reg(_) => Opcode::MOVrr,
             OperandData::VReg(_) => Opcode::MOVrr,
-            e => return Err(LoweringError::Todo(format!("Unsupported storage argument: {:?}", e)).into()),
+            e => {
+                return Err(
+                    LoweringError::Todo(format!("Unsupported storage argument: {:?}", e)).into(),
+                )
+            }
         };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode,
-                operands: vec![MO::output(out.into()), MO::input(arg)],
+                operands: vec![MO::output(out.into()), MO::input(arg.clone())],
             },
             ctx.block_map[&ctx.cur_block],
         ));

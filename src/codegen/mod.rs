@@ -66,6 +66,80 @@ mod test {
     }
 
     #[test]
+    fn codegen_str_u32_binop_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'SimpleVar'
+source_filename = "examples/source/storage/storage_u32.ola"
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare ptr @vector_new(i64, ptr)
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+define void @set_str(i64 %0) {   ;mstore [r9,-1] r1 
+entry:
+  %a = alloca i64, align 8      ;[r9,-2]
+  store i64 %0, ptr %a, align 4     ;mload r0 [r9,-1]  mstore [r9,-2] r0  
+  %1 = load i64, ptr %a, align 4    ;mload r0 [r9,-2] 
+  ;%2 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %1, 3    ;mov r1 0, mov r2 0, mov r3 0,mov r4 r0
+  ;call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %2)   ;mov r5 0,mov r6 0,mov r7 0,mov r8 0
+  ;call void @set_storage([4 x i64] [i64 1, i64 2, i64 3, i64 4], [4 x i64] [i64 5, i64 6, i64 7, i64 8])
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 5, i64 6, i64 7, i64 8])
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "set_str:
+.LBL10_0:
+  add r9 r9 1
+  mov r0 r1
+  mstore [r9,-1] r0
+  mload r0 [r9,-1]
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 5
+  mov r6 6
+  mov r7 7
+  mov r8 8
+  sstore 
+  add r9 r9 -1
+  ret
+"
+        );
+    }
+
+    #[test]
     fn codegen_str_binop_test() {
         // LLVM Assembly
         let asm = r#"
@@ -107,7 +181,7 @@ mod test {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}",code.program);
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
