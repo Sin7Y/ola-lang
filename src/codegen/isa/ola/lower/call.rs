@@ -63,7 +63,7 @@ pub fn lower_call(
     }
 
     if name.as_str() == "set_storage" {
-        pass_sstore_args_to_regs(ctx, &tys[1..], &args[1..])?;
+        pass_str_args_to_regs(ctx, &tys[1..], &args[1..])?;
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::SSTORE,
@@ -74,12 +74,28 @@ pub fn lower_call(
         return Ok(());
     }
 
-    if name.as_str() == "get_storage" {
-        pass_sstore_args_to_regs(ctx, &tys[1..], &args[1..])?;
+    if name.as_str() == "get_storage" || name.as_str() == "poseidon_hash" {
+        pass_str_args_to_regs(ctx, &tys[1..], &args[1..])?;
+
+        let ret_reg0: Reg = GR::R1.into();
+        let ret_reg1: Reg = GR::R2.into();
+        let ret_reg2: Reg = GR::R3.into();
+        let ret_reg3: Reg = GR::R4.into();
+
+        let opcode = if name.as_str() == "get_storage" {
+            Opcode::SLOAD
+        } else {
+            Opcode::POSEIDON
+        };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode: Opcode::SLOAD,
-                operands: Vec::new(),
+                opcode,
+                operands: vec![
+                    MO::implicit_output(ret_reg0.into()),
+                    MO::implicit_output(ret_reg1.into()),
+                    MO::implicit_output(ret_reg2.into()),
+                    MO::implicit_output(ret_reg3.into()),
+                ],
             },
             ctx.block_map[&ctx.cur_block],
         ));
@@ -203,7 +219,7 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
     Ok(())
 }
 
-fn pass_sstore_args_to_regs(
+fn pass_str_args_to_regs(
     ctx: &mut LoweringContext<Ola>,
     tys: &[Type],
     args: &[ValueId],
@@ -212,8 +228,13 @@ fn pass_sstore_args_to_regs(
     let cur_ty = ctx.types.base().element(tys[0]).unwrap();
 
     let mut arg_str = get_operands_for_val(ctx, tys[0], args[0])?;
-    let v = get_operands_for_val(ctx, tys[0], args[1])?;
-    arg_str.extend(v);
+    // sstore: [key,value]
+    // sload: [key]
+    // poseidion: [params]
+    if args.len() > 1 {
+        let v = get_operands_for_val(ctx, tys[0], args[1])?;
+        arg_str.extend(v);
+    }
 
     for (gpr_used, arg) in arg_str.iter().enumerate() {
         let cur_ty = ctx.types.base().element(tys[0]).unwrap();

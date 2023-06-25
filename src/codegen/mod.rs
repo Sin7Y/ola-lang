@@ -69,7 +69,7 @@ mod test {
     fn codegen_str_u32_binop_test() {
         // LLVM Assembly
         let asm = r#"
-; ModuleID = 'SimpleVar'
+; ModuleID = 'StrImm'
 source_filename = "examples/source/storage/storage_u32.ola"
 
 declare void @builtin_assert(i64, i64)
@@ -92,7 +92,7 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define void @set_str(i64 %0) {   ;mstore [r9,-1] r1 
+define void @str_imm(i64 %0) {   ;mstore [r9,-1] r1 
 entry:
   %a = alloca i64, align 8      ;[r9,-2]
   store i64 %0, ptr %a, align 4     ;mload r0 [r9,-1]  mstore [r9,-2] r0  
@@ -101,6 +101,8 @@ entry:
   ;call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %2)   ;mov r5 0,mov r6 0,mov r7 0,mov r8 0
   ;call void @set_storage([4 x i64] [i64 1, i64 2, i64 3, i64 4], [4 x i64] [i64 5, i64 6, i64 7, i64 8])
   call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 5, i64 6, i64 7, i64 8])
+  %3 = call [4 x i64] @get_storage([4 x i64] [i64 1, i64 2, i64 3, i64 4])
+  %4 = call [4 x i64] @poseidon_hash([8 x i64] [i64 10, i64 20, i64 30, i64 40, i64 50, i64 60, i64 70, i64 80])
   ret void
 }
 "#;
@@ -118,7 +120,7 @@ entry:
         println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
-            "set_str:
+            "str_imm:
 .LBL10_0:
   add r9 r9 1
   mov r0 r1
@@ -133,6 +135,20 @@ entry:
   mov r7 7
   mov r8 8
   sstore 
+  mov r1 1
+  mov r2 2
+  mov r3 3
+  mov r4 4
+  sload 
+  mov r1 10
+  mov r2 20
+  mov r3 30
+  mov r4 40
+  mov r5 50
+  mov r6 60
+  mov r7 70
+  mov r8 80
+  poseidon 
   add r9 r9 -1
   ret
 "
