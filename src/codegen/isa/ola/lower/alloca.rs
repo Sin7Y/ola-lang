@@ -36,7 +36,7 @@ pub fn lower_alloca(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::MLOADr,
-                operands: vec![MO::output(output.into())]
+                operands: vec![MO::output(output[0].into())]
                     .into_iter()
                     .chain(mem.into_iter())
                     .collect(),

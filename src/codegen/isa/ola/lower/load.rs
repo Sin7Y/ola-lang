@@ -41,7 +41,7 @@ pub fn lower_load(
             gbl = Some(name);
         }
         Value::Argument(a) => {
-            vreg = ctx.arg_idx_to_vreg.get(&a.nth).copied();
+            vreg = Some(vec![ctx.arg_idx_to_vreg.get(&a.nth).copied().unwrap()]);
         }
         _ => return Err(LoweringError::Todo("Unsupported load pattern 1".into()).into()),
     }
@@ -75,7 +75,7 @@ pub fn lower_load(
             MOperand::new(OperandData::None),
             MOperand::new(OperandData::None),
             MOperand::new(OperandData::None),
-            MOperand::input(OperandData::VReg(vreg)),
+            MOperand::input(OperandData::VReg(vreg[0])),
             MOperand::input(OperandData::None),
             MOperand::new(OperandData::None),
         ]
@@ -87,7 +87,7 @@ pub fn lower_load(
     ctx.inst_seq.push(MachInstruction::new(
         InstructionData {
             opcode: Opcode::MLOADr,
-            operands: vec![MOperand::output(output.into())]
+            operands: vec![MOperand::output(output[0].into())]
                 .into_iter()
                 .chain(mem.into_iter())
                 .collect(),
@@ -202,7 +202,7 @@ fn lower_load_gep(
                 MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
                 MOperand::new(OperandData::Int32(-offset as i32)),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
-                MOperand::input(OperandData::VReg(idx1)),
+                MOperand::input(OperandData::VReg(idx1[0])),
                 MOperand::new(OperandData::Int32(
                     ctx.isa
                         .data_layout
@@ -223,7 +223,7 @@ fn lower_load_gep(
         ctx.inst_seq.append(&mut vec![MachInstruction::new(
             InstructionData {
                 opcode: Opcode::MLOADr,
-                operands: vec![MOperand::output(OperandData::VReg(output))]
+                operands: vec![MOperand::output(OperandData::VReg(output[0]))]
                     .into_iter()
                     .chain(mem.into_iter())
                     .collect(),

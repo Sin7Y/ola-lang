@@ -91,7 +91,7 @@ pub fn lower_gep(
             InstructionData {
                 opcode: Opcode::MLOADr,
                 operands: vec![
-                    MOperand::output(output.into()),
+                    MOperand::output(output[0].into()),
                     MOperand::new(OperandData::MemStart),
                     MOperand::new(OperandData::None),
                     MOperand::new(mem_slot),
@@ -110,7 +110,7 @@ pub fn lower_gep(
         InstructionData {
             opcode: Opcode::MLOADr,
             operands: vec![
-                MOperand::output(output.into()),
+                MOperand::output(output[0].into()),
                 MOperand::new(OperandData::MemStart),
                 MOperand::new(OperandData::None),
                 MOperand::new(mem_slot),
@@ -140,7 +140,7 @@ pub fn lower_gep(
             InstructionData {
                 opcode: Opcode::ADDrr,
                 operands: vec![
-                    MOperand::output(output.into()),
+                    MOperand::output(output[0].into()),
                     MOperand::input(mul_output.into()),
                 ],
             },

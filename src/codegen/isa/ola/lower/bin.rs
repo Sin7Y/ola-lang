@@ -63,7 +63,7 @@ pub fn lower_bin(
                 IrOpcode::Sub => InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(OperandData::Reg(GR::R7.into())),
                     ],
@@ -71,7 +71,7 @@ pub fn lower_bin(
                 IrOpcode::Add => InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -79,7 +79,7 @@ pub fn lower_bin(
                 IrOpcode::Mul => InstructionData {
                     opcode: Opcode::MULri,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -98,7 +98,7 @@ pub fn lower_bin(
                 IrOpcode::Sub => InstructionData {
                     opcode: Opcode::ADDrr,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(OperandData::Reg(GR::R7.into())),
                     ],
@@ -106,7 +106,7 @@ pub fn lower_bin(
                 IrOpcode::Add => InstructionData {
                     opcode: Opcode::ADDrr,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -114,7 +114,7 @@ pub fn lower_bin(
                 IrOpcode::Mul => InstructionData {
                     opcode: Opcode::MULrr,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],

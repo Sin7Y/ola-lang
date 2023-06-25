@@ -95,7 +95,7 @@ pub fn lower_condbr(
                         InstructionData {
                             opcode: Opcode::EQri,
                             operands: vec![
-                                MO::output(OperandData::VReg(output)),
+                                MO::output(OperandData::VReg(output[0])),
                                 MO::input(lhs.into()),
                                 MO::new(rhs.into()),
                             ],
@@ -108,7 +108,7 @@ pub fn lower_condbr(
                         InstructionData {
                             opcode: Opcode::NEQ,
                             operands: vec![
-                                MO::output(OperandData::VReg(output)),
+                                MO::output(OperandData::VReg(output[0])),
                                 MO::input(lhs.into()),
                                 MO::new(rhs.into()),
                             ],
@@ -121,7 +121,7 @@ pub fn lower_condbr(
                         InstructionData {
                             opcode: Opcode::GTE,
                             operands: vec![
-                                MO::output(OperandData::VReg(output)),
+                                MO::output(OperandData::VReg(output[0])),
                                 MO::input(lhs.into()),
                                 MO::new(rhs.into()),
                             ],
@@ -142,7 +142,7 @@ pub fn lower_condbr(
                         InstructionData {
                             opcode: Opcode::GTE,
                             operands: vec![
-                                MO::output(OperandData::VReg(output)),
+                                MO::output(OperandData::VReg(output[0])),
                                 MO::input(tmp_reg.into()),
                                 MO::new(lhs.into()),
                             ],
@@ -159,22 +159,25 @@ pub fn lower_condbr(
                         ctx.inst_seq.push(MachInstruction::new(
                             InstructionData {
                                 opcode: Opcode::MOVri,
-                                operands: vec![MO::output(OperandData::VReg(output)), op0.clone()],
+                                operands: vec![
+                                    MO::output(OperandData::VReg(output[0])),
+                                    op0.clone(),
+                                ],
                             },
                             ctx.block_map[&ctx.cur_block],
                         ));
-                        op0 = MO::input(OperandData::VReg(output));
+                        op0 = MO::input(OperandData::VReg(output[0]));
                     }
                     let inst = MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::GTE,
-                            operands: vec![MO::output(OperandData::VReg(output)), op0, op1],
+                            operands: vec![MO::output(OperandData::VReg(output[0])), op0, op1],
                         },
                         ctx.block_map[&ctx.cur_block],
                     );
                     ctx.inst_seq.push(inst);
                     let output2 = ctx.mach_data.vregs.add_vreg_data(*ty);
-                    ctx.inst_id_to_vreg.insert(icmp, output2);
+                    ctx.inst_id_to_vreg.insert(icmp, vec![output2]);
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::NEQ,
@@ -191,8 +194,8 @@ pub fn lower_condbr(
                         InstructionData {
                             opcode: Opcode::AND,
                             operands: vec![
-                                MO::output(OperandData::VReg(output)),
-                                MO::input_output(OperandData::VReg(output)),
+                                MO::output(OperandData::VReg(output[0])),
+                                MO::input_output(OperandData::VReg(output[0])),
                                 MO::input(OperandData::VReg(output2)),
                             ],
                         },
@@ -218,7 +221,7 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::EQrr,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
                                     MO::input(lhs.into()),
                                     MO::input(rhs_reg.into()),
                                 ],
@@ -231,7 +234,7 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::NEQ,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
                                     MO::input(lhs.into()),
                                     MO::input(rhs_reg.into()),
                                 ],
@@ -244,7 +247,7 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::GTE,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
                                     MO::input(lhs.into()),
                                     MO::input(rhs_reg.into()),
                                 ],
@@ -257,7 +260,7 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::GTE,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
                                     MO::input(rhs_reg.into()),
                                     MO::input(lhs.into()),
                                 ],
@@ -270,7 +273,7 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::GTE,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
                                     MO::input(lhs.into()),
                                     MO::input(rhs_reg.clone().into()),
                                 ],
@@ -279,7 +282,7 @@ pub fn lower_condbr(
                         );
                         ctx.inst_seq.push(inst);
                         let output2 = ctx.mach_data.vregs.add_vreg_data(*ty);
-                        ctx.inst_id_to_vreg.insert(icmp, output2);
+                        ctx.inst_id_to_vreg.insert(icmp, vec![output2]);
                         ctx.inst_seq.push(MachInstruction::new(
                             InstructionData {
                                 opcode: Opcode::NEQ,
@@ -296,8 +299,8 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::AND,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
-                                    MO::input_output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
+                                    MO::input_output(OperandData::VReg(output[0])),
                                     MO::input(OperandData::VReg(output2)),
                                 ],
                             },
@@ -309,7 +312,7 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::GTE,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
                                     MO::input(rhs_reg.clone().into()),
                                     MO::input(lhs.into()),
                                 ],
@@ -318,7 +321,7 @@ pub fn lower_condbr(
                         );
                         ctx.inst_seq.push(inst);
                         let output2 = ctx.mach_data.vregs.add_vreg_data(*ty);
-                        ctx.inst_id_to_vreg.insert(icmp, output2);
+                        ctx.inst_id_to_vreg.insert(icmp, vec![output2]);
                         ctx.inst_seq.push(MachInstruction::new(
                             InstructionData {
                                 opcode: Opcode::NEQ,
@@ -335,8 +338,8 @@ pub fn lower_condbr(
                             InstructionData {
                                 opcode: Opcode::AND,
                                 operands: vec![
-                                    MO::output(OperandData::VReg(output)),
-                                    MO::input_output(OperandData::VReg(output)),
+                                    MO::output(OperandData::VReg(output[0])),
+                                    MO::input_output(OperandData::VReg(output[0])),
                                     MO::input(OperandData::VReg(output2)),
                                 ],
                             },
@@ -352,7 +355,7 @@ pub fn lower_condbr(
             InstructionData {
                 opcode: Opcode::CJMPr,
                 operands: vec![
-                    MO::input(output.into()),
+                    MO::input(output[0].into()),
                     MO::new(OperandData::Block(ctx.block_map[&blocks[0]])),
                 ],
             },

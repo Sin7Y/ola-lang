@@ -41,7 +41,7 @@ pub struct LoweringContext<'a, 'isa: 'a, T: TargetIsa> {
     pub arg_idx_to_vreg: &'a mut FxHashMap<usize, VReg>,
     pub inst_seq: &'a mut Vec<MachInstruction<T::Inst>>,
     pub types: &'a Types,
-    pub inst_id_to_vreg: &'a mut FxHashMap<IrInstructionId, VReg>,
+    pub inst_id_to_vreg: &'a mut FxHashMap<IrInstructionId, Vec<VReg>>,
     pub merged_inst: &'a mut FxHashSet<IrInstructionId>,
     pub block_map: &'a FxHashMap<IrBasicBlockId, MachBasicBlockId>,
     pub call_conv: CallConvKind,
@@ -219,8 +219,8 @@ pub fn compile_function<'a, T: TargetIsa>(
 }
 
 impl<'a, 'b, T: TargetIsa> LoweringContext<'a, 'b, T> {
-    pub fn set_output_for_inst(&mut self, id: IrInstructionId, vreg: VReg) {
-        self.inst_id_to_vreg.insert(id, vreg);
+    pub fn set_output_for_inst(&mut self, id: IrInstructionId, vregs: Vec<VReg>) {
+        self.inst_id_to_vreg.insert(id, vregs);
     }
 
     pub fn mark_as_merged(&mut self, inst: IrInstructionId) {

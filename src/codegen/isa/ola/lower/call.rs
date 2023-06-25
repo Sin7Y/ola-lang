@@ -1,4 +1,9 @@
-use super::{get_operand_for_val, get_operands_for_val, get_vreg_for_val, new_empty_inst_output};
+use std::vec;
+
+use super::{
+    get_operand_for_val, get_operands_for_val, get_vreg_for_val, new_empty_inst_output,
+    new_empty_str_inst_output,
+};
 use crate::codegen::core::ir::{
     function::instruction::InstructionId,
     module::name::Name,
@@ -99,6 +104,28 @@ pub fn lower_call(
             },
             ctx.block_map[&ctx.cur_block],
         ));
+
+        let ret_ty = ctx.types.base().element(tys[0]).unwrap();
+        let res_reg: [Reg; 4] = [ret_reg0, ret_reg1, ret_reg2, ret_reg3];
+        let mut output = vec![];
+        let opcode = Opcode::MOVrr;
+        if !ctx.ir_data.users_of(id).is_empty() {
+            for _ in 0..4 {
+                output = new_empty_str_inst_output(ctx, ret_ty, id);
+            }
+            for idx in 0..4 {
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode,
+                        operands: vec![
+                            MO::output(output[idx].into()),
+                            MO::input(res_reg[idx].into()),
+                        ],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+            }
+        }
         return Ok(());
     }
 
@@ -138,7 +165,7 @@ pub fn lower_call(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode,
-                operands: vec![MO::output(output.into()), MO::input(result_reg.into())],
+                operands: vec![MO::output(output[0].into()), MO::input(result_reg.into())],
             },
             ctx.block_map[&ctx.cur_block],
         ));

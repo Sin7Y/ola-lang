@@ -114,9 +114,13 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
     }
 }
 
-fn get_inst_output(ctx: &mut LoweringContext<Ola>, ty: Type, id: InstructionId) -> Result<VReg> {
+fn get_inst_output(
+    ctx: &mut LoweringContext<Ola>,
+    ty: Type,
+    id: InstructionId,
+) -> Result<Vec<VReg>> {
     if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
-        return Ok(*vreg);
+        return Ok(vreg.to_vec());
     }
 
     if ctx.ir_data.inst_ref(id).parent != ctx.cur_block {
@@ -131,13 +135,43 @@ fn get_inst_output(ctx: &mut LoweringContext<Ola>, ty: Type, id: InstructionId) 
     Ok(new_empty_inst_output(ctx, ty, id))
 }
 
-fn new_empty_inst_output(ctx: &mut LoweringContext<Ola>, ty: Type, id: InstructionId) -> VReg {
+fn new_empty_inst_output(ctx: &mut LoweringContext<Ola>, ty: Type, id: InstructionId) -> Vec<VReg> {
     if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
-        return *vreg;
+        return vreg.to_vec();
     }
     let vreg = ctx.mach_data.vregs.add_vreg_data(ty);
-    ctx.inst_id_to_vreg.insert(id, vreg);
-    vreg
+    ctx.inst_id_to_vreg.insert(id, vec![vreg]);
+    vec![vreg]
+}
+
+fn get_str_inst_output(
+    ctx: &mut LoweringContext<Ola>,
+    ty: Type,
+    id: InstructionId,
+) -> Result<Vec<VReg>> {
+    if ctx.ir_data.inst_ref(id).parent != ctx.cur_block {
+        // The instruction indexed as `id` must be placed in another basic block
+        let vreg = new_empty_str_inst_output(ctx, ty, id);
+        return Ok(vreg);
+    }
+
+    Ok(new_empty_str_inst_output(ctx, ty, id))
+}
+
+fn new_empty_str_inst_output(
+    ctx: &mut LoweringContext<Ola>,
+    ty: Type,
+    id: InstructionId,
+) -> Vec<VReg> {
+    let mut vregs = if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
+        vreg.to_vec()
+    } else {
+        vec![]
+    };
+    let vreg = ctx.mach_data.vregs.add_vreg_data(ty);
+    vregs.push(vreg);
+    ctx.inst_id_to_vreg.insert(id, vregs.clone());
+    vregs
 }
 
 fn get_operand_for_val(
@@ -146,7 +180,10 @@ fn get_operand_for_val(
     val: ValueId,
 ) -> Result<OperandData> {
     match ctx.ir_data.values[val] {
-        Value::Instruction(id) => Ok(get_inst_output(ctx, ty, id)?.into()),
+        Value::Instruction(id) => {
+            let vreg = get_inst_output(ctx, ty, id)?;
+            Ok(vreg[0].into())
+        }
         Value::Argument(ref a) => Ok(ctx.arg_idx_to_vreg[&a.nth].into()),
         Value::Constant(ref konst) => get_operand_for_const(ctx, ty, konst),
         ref e => Err(LoweringError::Todo(format!("Unsupported value: {:?}", e)).into()),
@@ -246,6 +283,18 @@ fn get_operands_for_val(
     val: ValueId,
 ) -> Result<Vec<OperandData>> {
     match ctx.ir_data.values[val] {
+        Value::Instruction(id) => {
+            let elm_ty = ctx.types.base().element(ty).unwrap();
+            let mut vregs_dst: Vec<OperandData> = vec![];
+            let mut vregs_src: Vec<VReg> = vec![];
+            for _ in 0..4 {
+                vregs_src = get_str_inst_output(ctx, elm_ty, id)?;
+            }
+            for idx in 0..4 {
+                vregs_dst.push(vregs_src[idx].into());
+            }
+            Ok(vregs_dst)
+        }
         Value::Constant(ref konst) => get_operands_for_const(ctx, ty, konst),
         ref e => Err(LoweringError::Todo(format!("Unsupported value: {:?}", e)).into()),
     }

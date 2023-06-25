@@ -77,7 +77,7 @@ pub fn lower_store(
                     )
                 }
             }
-            vreg = Some(addr.into());
+            vreg = Some(vec![addr.into()]);
         }
         Value::Instruction(id) => {
             if tys[0].is_pointer(ctx.types) {
@@ -103,12 +103,12 @@ pub fn lower_store(
                         ctx.block_map[&ctx.cur_block],
                     ));
                 }
-                vreg = Some(addr.into());
+                vreg = Some(vec![addr.into()]);
             } else {
                 vreg = Some(get_inst_output(ctx, tys[0], *id)?);
             }
         }
-        Value::Argument(a) => vreg = ctx.arg_idx_to_vreg.get(&a.nth).copied(),
+        Value::Argument(a) => vreg = Some(vec![ctx.arg_idx_to_vreg.get(&a.nth).copied().unwrap()]),
         e => return Err(LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into()),
     }
 
@@ -125,7 +125,7 @@ pub fn lower_store(
                         MOperand::input(OperandData::None),
                         MOperand::input(OperandData::None),
                         MOperand::new(OperandData::None),
-                        MOperand::input(vreg.into()),
+                        MOperand::input(vreg[0].into()),
                     ],
                 },
                 ctx.block_map[&ctx.cur_block],
@@ -141,10 +141,10 @@ pub fn lower_store(
                         MOperand::new(OperandData::None),
                         MOperand::new(OperandData::None),
                         MOperand::new(OperandData::None),
-                        MOperand::input(dst.into()),
+                        MOperand::input(dst[0].into()),
                         MOperand::input(OperandData::None),
                         MOperand::new(OperandData::None),
-                        MOperand::input(vreg.into()),
+                        MOperand::input(vreg[0].into()),
                     ],
                 },
                 ctx.block_map[&ctx.cur_block],
@@ -277,7 +277,7 @@ fn lower_store_gep(
                 MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
                 MOperand::new(OperandData::Int32(-offset as i32)),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
-                MOperand::input(OperandData::VReg(idx1)),
+                MOperand::input(OperandData::VReg(idx1[0])),
                 MOperand::new(OperandData::Int32(
                     ctx.isa
                         .data_layout()
@@ -328,7 +328,7 @@ fn lower_store_gep(
                     opcode: Opcode::MSTOREr,
                     operands: mem
                         .into_iter()
-                        .chain(vec![MOperand::input(src.into())].into_iter())
+                        .chain(vec![MOperand::input(src[0].into())].into_iter())
                         .collect(),
                 },
                 ctx.block_map[&ctx.cur_block],
