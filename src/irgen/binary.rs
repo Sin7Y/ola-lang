@@ -161,7 +161,7 @@ impl<'a> Binary<'a> {
     /// Return the llvm type for the resolved type.
     pub(crate) fn llvm_type(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         match ty {
-            Type::Bool => BasicTypeEnum::IntType(self.context.bool_type()),
+            Type::Bool => self.context.i64_type().into(),
             // Map all i32 data to a field-based data type, with the maximum value of field between
             // u63 and u64
             Type::Uint(32) => self.context.i64_type().into(),
@@ -450,6 +450,11 @@ impl<'a> Binary<'a> {
         // initialize the loop variable with the starting value
         self.builder.build_store(index_alloca, from);
 
+        // Allocate a local variable for slot
+        let data = self.builder.build_alloca(data_ref.get_type(), "");
+
+        self.builder.build_store(data, *data_ref);
+
         self.builder.build_unconditional_branch(cond);
         self.builder.position_at_end(cond);
 
@@ -466,7 +471,13 @@ impl<'a> Binary<'a> {
 
         // build the loop body
         self.builder.position_at_end(body);
-        insert_body(index_value, data_ref);
+
+        // Load the slot
+        let mut data_val = self.builder.build_load(data_ref.get_type(), data, "");
+        insert_body(index_value, &mut data_val);
+
+        // Store the new slot
+        self.builder.build_store(data, data_val);
 
         let next_index =
             self.builder

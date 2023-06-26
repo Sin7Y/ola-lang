@@ -28,7 +28,7 @@ entry:
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 0
+  %index_access = getelementptr i64, ptr %data, i64 0
   store i64 1, ptr %index_access, align 4
   %1 = call i64 @array_call(ptr %0)
   store i64 %1, ptr %length1, align 4
@@ -54,7 +54,7 @@ body:                                             ; preds = %cond
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %source, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %source, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 %4
+  %index_access = getelementptr i64, ptr %data, i64 %4
   store i64 %3, ptr %index_access, align 4
   br label %next
 

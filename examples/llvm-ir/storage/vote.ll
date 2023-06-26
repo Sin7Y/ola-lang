@@ -45,22 +45,22 @@ body:                                             ; preds = %cond
   %6 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 3])
   %7 = extractvalue [4 x i64] %6, 3
   %8 = add i64 %7, %5
-  %9 = insertvalue [4 x i64] %6, i64 %8, 3 ;  %9 是下一个要push storage位置
+  %9 = insertvalue [4 x i64] %6, i64 %8, 3
   %"struct member" = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 0
   %10 = load i64, ptr %i, align 4
   %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
   %length2 = load i64, ptr %vector_len1, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 1
   %index_access = getelementptr { i64, ptr }, ptr %data, i64 %10
-  store ptr %index_access, ptr %"struct member", align 8  ;存储proposalNames
+  store ptr %index_access, ptr %"struct member", align 8
   %"struct member3" = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 1
-  store i64 0, ptr %"struct member3", align 4  ;存储voteCount
+  store i64 0, ptr %"struct member3", align 4
   %name = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 0
   %vector_len4 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 0
   %length5 = load i64, ptr %vector_len4, align 4
   %11 = call [4 x i64] @get_storage([4 x i64] %9)
-  %12 = extractvalue [4 x i64] %11, 3  ;proposals 的长度
-  %13 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length5, 3  
+  %12 = extractvalue [4 x i64] %11, 3
+  %13 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length5, 3
   call void @set_storage([4 x i64] %9, [4 x i64] %13)
   %14 = extractvalue [4 x i64] %9, 0
   %15 = extractvalue [4 x i64] %9, 1

@@ -1,10 +1,13 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema;
-use crate::sema::ast::Type;
+use crate::sema::ast::{Expression, Type};
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
+use ola_parser::program;
+
+use super::expression::expression;
 
 // IndexMap <ArrayVariable res , res of temp variable>
 pub type ArrayLengthVars<'a> = IndexMap<usize, BasicValueEnum<'a>>;
@@ -31,7 +34,7 @@ impl<'a> FunctionContext<'a> {
     }
 }
 
-/// Emit all functions, constructors, fallback and receiver
+/// Emit all functions
 pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &'a sema::ast::Namespace) {
     // gen function prototype
     for (_, func) in ns.functions.iter().enumerate() {
@@ -84,8 +87,32 @@ pub(super) fn gen_function<'a>(
     // populate the argument variables
     populate_arguments(bin, func_context, ns);
 
+    // named returns should be populated
+    populate_named_returns(bin, func_context, ns);
+
     for stmt in &func_context.func.body {
         statement(stmt, bin, func_context, ns);
+    }
+
+    if func_context
+        .func
+        .body
+        .last()
+        .map(|stmt| stmt.reachable())
+        .unwrap_or(true)
+    {
+        // TODO When multiple values are returned, they need to be converted into a
+        // struct for processing.
+        if func_context.func.returns.len() != 0 {
+            let pos = func_context.func.symtable.returns[0];
+            let ret_expr = Expression::Variable {
+                loc: program::Loc::IRgen,
+                ty: func_context.func.symtable.vars[pos].ty.clone(),
+                var_no: pos,
+            };
+            let ret_value = expression(&ret_expr, bin, func_context, ns);
+            bin.builder.build_return(Some(&ret_value));
+        }
     }
 }
 
@@ -112,6 +139,35 @@ pub(crate) fn populate_arguments<'a>(
             );
             bin.builder.build_store(alloc, arg_val);
             func_context.var_table.insert(*pos, alloc.into());
+        }
+    }
+}
+
+/// Populate the arguments of a function
+pub(crate) fn populate_named_returns<'a>(
+    bin: &mut Binary<'a>,
+    func_context: &mut FunctionContext<'a>,
+    ns: &Namespace,
+) {
+    for (i, pos) in func_context
+        .func
+        .get_symbol_table()
+        .returns
+        .iter()
+        .enumerate()
+    {
+        if let Some(name) = &func_context.func.get_returns()[i].id {
+            let return_var = &func_context.func.get_returns()[i];
+            if let Some(expr) = return_var.ty.default(ns) {
+                let alloc = bin.build_alloca(
+                    func_context.func_val,
+                    bin.llvm_var_ty(&return_var.ty, ns),
+                    name.name.as_str(),
+                );
+                bin.builder
+                    .build_store(alloc, expression(&expr, bin, func_context, ns));
+                func_context.var_table.insert(*pos, alloc.into());
+            }
         }
     }
 }

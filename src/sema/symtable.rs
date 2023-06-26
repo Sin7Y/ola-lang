@@ -76,18 +76,16 @@ struct VarScope(HashMap<String, usize>, Option<HashSet<usize>>);
 #[derive(Default, Debug, Clone)]
 pub struct Symtable {
     pub vars: IndexMap<usize, Variable>,
-    names: LinkedList<VarScope>,
+    names: Vec<VarScope>,
     pub arguments: Vec<Option<usize>>,
     pub returns: Vec<usize>,
 }
 
 impl Symtable {
     pub fn new() -> Self {
-        let mut list = LinkedList::new();
-        list.push_front(VarScope(HashMap::new(), None));
         Symtable {
             vars: IndexMap::new(),
-            names: list,
+            names: vec![VarScope(HashMap::new(), None)],
             arguments: Vec::new(),
             returns: Vec::new(),
         }
@@ -133,7 +131,7 @@ impl Symtable {
             }
 
             self.names
-                .front_mut()
+                .last_mut()
                 .unwrap()
                 .0
                 .insert(id.name.to_string(), pos);
@@ -179,11 +177,11 @@ impl Symtable {
     }
 
     pub fn new_scope(&mut self) {
-        self.names.push_front(VarScope(HashMap::new(), None));
+        self.names.push(VarScope(HashMap::new(), None));
     }
 
     pub fn leave_scope(&mut self) {
-        self.names.pop_front();
+        self.names.pop();
     }
 
     pub fn get_name(&self, pos: usize) -> &str {
@@ -196,7 +194,7 @@ pub struct LoopScope {
     pub no_continues: usize,
 }
 
-pub struct LoopScopes(LinkedList<LoopScope>);
+pub struct LoopScopes(Vec<LoopScope>);
 
 impl Default for LoopScopes {
     fn default() -> Self {
@@ -206,22 +204,22 @@ impl Default for LoopScopes {
 
 impl LoopScopes {
     pub fn new() -> Self {
-        LoopScopes(LinkedList::new())
+        LoopScopes(Vec::new())
     }
 
     pub fn new_scope(&mut self) {
-        self.0.push_front(LoopScope {
+        self.0.push(LoopScope {
             no_breaks: 0,
             no_continues: 0,
         })
     }
 
     pub fn leave_scope(&mut self) -> LoopScope {
-        self.0.pop_front().unwrap()
+        self.0.pop().unwrap()
     }
 
     pub fn do_break(&mut self) -> bool {
-        match self.0.front_mut() {
+        match self.0.last_mut() {
             Some(scope) => {
                 scope.no_breaks += 1;
                 true
@@ -231,7 +229,7 @@ impl LoopScopes {
     }
 
     pub fn do_continue(&mut self) -> bool {
-        match self.0.front_mut() {
+        match self.0.last_mut() {
             Some(scope) => {
                 scope.no_continues += 1;
                 true

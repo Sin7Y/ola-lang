@@ -46,7 +46,7 @@ body:                                             ; preds = %cond
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 %9
+  %index_access = getelementptr { i64, ptr }, ptr %data, i64 %9
   store ptr %8, ptr %index_access, align 8
   br label %next
 
@@ -63,8 +63,6 @@ endfor:                                           ; preds = %cond
 
 define void @setElement(ptr %0, i64 %1, i64 %2, i64 %3) {
 entry:
-  %struct_alloca8 = alloca { i64, ptr }, align 8
-  %struct_alloca = alloca { i64, ptr }, align 8
   %value = alloca i64, align 8
   %column = alloca i64, align 8
   %row = alloca i64, align 8
@@ -78,45 +76,23 @@ entry:
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 %5
-  %6 = load ptr, ptr %index_access, align 8
-  %allocation_needed = icmp eq ptr %6, null
-  br i1 %allocation_needed, label %allocate, label %already_allocated
-
-allocate:                                         ; preds = %entry
-  store ptr %struct_alloca, ptr %index_access, align 8
-  br label %already_allocated
-
-already_allocated:                                ; preds = %allocate, %entry
-  %"ptr_u32[]" = phi ptr [ %6, %entry ], [ %struct_alloca, %allocate ]
-  %7 = load i64, ptr %column, align 4
-  %8 = load i64, ptr %row, align 4
+  %index_access = getelementptr { i64, ptr }, ptr %data, i64 %5
+  %6 = load i64, ptr %column, align 4
+  %7 = load i64, ptr %row, align 4
   %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 0
   %length2 = load i64, ptr %vector_len1, align 4
   %data3 = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 1
-  %index_access4 = getelementptr ptr, ptr %data3, i64 %8
-  %9 = load ptr, ptr %index_access4, align 8
-  %allocation_needed5 = icmp eq ptr %9, null
-  br i1 %allocation_needed5, label %allocate6, label %already_allocated7
-
-allocate6:                                        ; preds = %already_allocated
-  store ptr %struct_alloca8, ptr %index_access4, align 8
-  br label %already_allocated7
-
-already_allocated7:                               ; preds = %allocate6, %already_allocated
-  %"ptr_u32[]9" = phi ptr [ %9, %already_allocated ], [ %struct_alloca8, %allocate6 ]
-  %vector_len10 = getelementptr inbounds { i64, ptr }, ptr %"ptr_u32[]9", i32 0, i32 0
-  %length11 = load i64, ptr %vector_len10, align 4
-  %data12 = getelementptr inbounds { i64, ptr }, ptr %"ptr_u32[]", i32 0, i32 1
-  %index_access13 = getelementptr ptr, ptr %data12, i64 %7
-  store i64 %4, ptr %index_access13, align 4
+  %index_access4 = getelementptr { i64, ptr }, ptr %data3, i64 %7
+  %vector_len5 = getelementptr inbounds { i64, ptr }, ptr %index_access4, i32 0, i32 0
+  %length6 = load i64, ptr %vector_len5, align 4
+  %data7 = getelementptr inbounds { i64, ptr }, ptr %index_access, i32 0, i32 1
+  %index_access8 = getelementptr i64, ptr %data7, i64 %6
+  store i64 %4, ptr %index_access8, align 4
   ret void
 }
 
 define i64 @getElement(ptr %0, i64 %1, i64 %2) {
 entry:
-  %struct_alloca8 = alloca { i64, ptr }, align 8
-  %struct_alloca = alloca { i64, ptr }, align 8
   %column = alloca i64, align 8
   %row = alloca i64, align 8
   %array = alloca ptr, align 8
@@ -127,37 +103,17 @@ entry:
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 %3
-  %4 = load ptr, ptr %index_access, align 8
-  %allocation_needed = icmp eq ptr %4, null
-  br i1 %allocation_needed, label %allocate, label %already_allocated
-
-allocate:                                         ; preds = %entry
-  store ptr %struct_alloca, ptr %index_access, align 8
-  br label %already_allocated
-
-already_allocated:                                ; preds = %allocate, %entry
-  %"ptr_u32[]" = phi ptr [ %4, %entry ], [ %struct_alloca, %allocate ]
-  %5 = load i64, ptr %column, align 4
-  %6 = load i64, ptr %row, align 4
+  %index_access = getelementptr { i64, ptr }, ptr %data, i64 %3
+  %4 = load i64, ptr %column, align 4
+  %5 = load i64, ptr %row, align 4
   %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 0
   %length2 = load i64, ptr %vector_len1, align 4
   %data3 = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 1
-  %index_access4 = getelementptr ptr, ptr %data3, i64 %6
-  %7 = load ptr, ptr %index_access4, align 8
-  %allocation_needed5 = icmp eq ptr %7, null
-  br i1 %allocation_needed5, label %allocate6, label %already_allocated7
-
-allocate6:                                        ; preds = %already_allocated
-  store ptr %struct_alloca8, ptr %index_access4, align 8
-  br label %already_allocated7
-
-already_allocated7:                               ; preds = %allocate6, %already_allocated
-  %"ptr_u32[]9" = phi ptr [ %7, %already_allocated ], [ %struct_alloca8, %allocate6 ]
-  %vector_len10 = getelementptr inbounds { i64, ptr }, ptr %"ptr_u32[]9", i32 0, i32 0
-  %length11 = load i64, ptr %vector_len10, align 4
-  %data12 = getelementptr inbounds { i64, ptr }, ptr %"ptr_u32[]", i32 0, i32 1
-  %index_access13 = getelementptr ptr, ptr %data12, i64 %5
-  %8 = load i64, ptr %index_access13, align 4
-  ret i64 %8
+  %index_access4 = getelementptr { i64, ptr }, ptr %data3, i64 %5
+  %vector_len5 = getelementptr inbounds { i64, ptr }, ptr %index_access4, i32 0, i32 0
+  %length6 = load i64, ptr %vector_len5, align 4
+  %data7 = getelementptr inbounds { i64, ptr }, ptr %index_access, i32 0, i32 1
+  %index_access8 = getelementptr i64, ptr %data7, i64 %4
+  %6 = load i64, ptr %index_access8, align 4
+  ret i64 %6
 }
