@@ -32,7 +32,7 @@ entry:
   %2 = extractvalue [4 x i64] %1, 3
   %3 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length, 3
   call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1], [4 x i64] %3)
-  %4 = call [4 x i64] @poseidon_hash([8 x i64] [i64 1, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0])
+  %4 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 1])
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
   %5 = alloca [4 x i64], align 8

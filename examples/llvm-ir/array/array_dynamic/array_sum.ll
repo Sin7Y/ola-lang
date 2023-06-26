@@ -62,12 +62,11 @@ body:                                             ; preds = %cond
 
 next:                                             ; preds = %body
   %12 = load i64, ptr %i, align 4
-  %13 = load i64, ptr %i, align 4
-  %14 = add i64 %13, 1
-  store i64 %14, ptr %i, align 4
+  %13 = add i64 %12, 1
+  store i64 %13, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %cond
-  %15 = load i64, ptr %totalSum, align 4
-  ret i64 %15
+  %14 = load i64, ptr %totalSum, align 4
+  ret i64 %14
 }

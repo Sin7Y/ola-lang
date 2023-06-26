@@ -43,7 +43,7 @@ pub(crate) fn storage_array_push<'a>(
     emit_context!(bin);
     let mut array_slot = expression(&args[0], bin, func_context, ns);
 
-    let array_length = storage_load_internal(
+    let array_length = storage_load(
         bin,
         &Type::Uint(32),
         &mut array_slot,
@@ -727,7 +727,7 @@ pub(crate) fn poseidon_hash<'a>(
         .into_iter()
         .for_each(|input| match input.get_type() {
             BasicTypeEnum::IntType(_) => input_vec.push(input),
-            BasicTypeEnum::ArrayType(array_type) => {
+            BasicTypeEnum::ArrayType(_) => {
                 for i in 0..4 {
                     let input_extra = bin
                         .builder
@@ -781,15 +781,26 @@ pub(crate) fn array_offset<'a>(
 
 pub(crate) fn slot_next<'a>(bin: &Binary<'a>, slot: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
     emit_context!(bin);
+    slot_offest(bin, slot, i64_const!(1).into())
+}
+
+pub(crate) fn slot_offest<'a>(
+    bin: &Binary<'a>,
+    slot: BasicValueEnum<'a>,
+    offset: BasicValueEnum<'a>,
+) -> BasicValueEnum<'a> {
+    emit_context!(bin);
     match slot.get_type() {
         BasicTypeEnum::ArrayType(..) => {
             let slot_0 = bin
                 .builder
                 .build_extract_value(slot.into_array_value(), 3, "");
 
-            let res =
-                bin.builder
-                    .build_int_add(slot_0.unwrap().into_int_value(), i64_const!(1), "");
+            let res = bin.builder.build_int_add(
+                slot_0.unwrap().into_int_value(),
+                offset.into_int_value(),
+                "",
+            );
 
             bin.builder
                 .build_insert_value(slot.into_array_value(), res, 3, "")
@@ -799,7 +810,7 @@ pub(crate) fn slot_next<'a>(bin: &Binary<'a>, slot: BasicValueEnum<'a>) -> Basic
         }
         _ => bin
             .builder
-            .build_int_add(slot.into_int_value(), i64_const!(1), "")
+            .build_int_add(slot.into_int_value(), offset.into_int_value(), "")
             .into(),
     }
 }

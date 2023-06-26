@@ -9,4 +9,9 @@ contract SimpleVar {
     fn get() -> (u32) {
         return value;
     }
+
+    fn main() {
+        inc_simple();
+        u32 x = get();
+    }
 }
