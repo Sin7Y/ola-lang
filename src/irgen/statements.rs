@@ -30,40 +30,6 @@ pub(crate) fn statement<'a>(
             }
         }
         Statement::VariableDecl(_, pos, param, Some(init)) => {
-            // // Let's check if the declaration is a declaration of a dynamic array
-            // if let Expression::AllocDynamicArray { length, .. } = init.as_ref() {
-            //     let alloca = bin.build_alloca(
-            //         func_context.func_val,
-            //         bin.llvm_var_ty(&Uint(32), ns),
-            //         "array_length",
-            //     );
-            //     func_context.array_lengths_vars.insert(*pos, alloca.into());
-            //     let length_value = expression(length, bin, func_context, ns);
-            //     bin.builder.build_store(alloca, length_value);
-            // } else if let Expression::Cast { to, expr, .. } = init.as_ref() {
-            //     if matches!(to, Type::Array(..)) {
-            //         if let Expression::ArrayLiteral(_, _, _, val) = &**expr {
-            //             let alloca = bin.build_alloca(
-            //                 func_context.func_val,
-            //                 bin.llvm_var_ty(&Uint(32), ns),
-            //                 "array_length",
-            //             );
-            //             func_context.array_lengths_vars.insert(*pos, alloca.into());
-            //             let length_value =
-            //                 bin.context.i64_type().const_int(val.len() as u64, false);
-            //             bin.builder.build_store(alloca, length_value);
-            //         }
-            //     }
-            // } else if let Expression::Variable(_, _, var_no) = Arc::clone(&init).as_ref()
-            // {     // If declaration happens with an existing array, check if
-            // the size of the array     // is known. If the size of the right
-            // hand side is known (is in     // the array_length_map), make the
-            // left hand side track it     // Now, we will have two keys in the
-            // map that point to the same temporary     // variable
-            //     if let Some(to_add) = func_context.array_lengths_vars.get(var_no) {
-            //         func_context.array_lengths_vars.insert(*pos, *to_add);
-            //     }
-            // }
             let var_value = expression(init, bin, func_context, ns);
 
             let alloca = if param.ty.is_reference_type(ns) && !param.ty.is_contract_storage() {
@@ -88,25 +54,12 @@ pub(crate) fn statement<'a>(
             let default_expr = param.ty.default(ns).unwrap();
             let default_value = expression(&default_expr, bin, func_context, ns);
             func_context.var_table.insert(*pos, default_value);
-
-            // if matches!(param.ty, Type::Array(..)) {
-            //     let alloc = bin.build_alloca(
-            //         func_context.func_val,
-            //         bin.llvm_var_ty(&Uint(32), ns),
-            //         "array_length",
-            //     );
-
-            //     bin.builder
-            //         .build_store(alloc, bin.context.i64_type().const_zero());
-
-            //     func_context.array_lengths_vars.insert(*pos, alloc.into());
-            // }
         }
 
         Statement::Return(_, expr) => match expr {
             Some(expr) => {
                 let ret_value = returns(expr, bin, func_context, ns);
-                bin.builder.build_return(Some(&ret_value));
+                bin.builder.build_return(Some(&ret_value.unwrap()));
             }
             None => {}
         },
@@ -311,7 +264,7 @@ fn returns<'a>(
     bin: &Binary<'a>,
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
-) -> BasicValueEnum<'a> {
+) -> Option<BasicValueEnum<'a>> {
     // Can only be another function call without returns
     let uncast_values = match expr {
         // TODO ADD ConditionalOperator
@@ -352,10 +305,10 @@ fn returns<'a>(
                 );
                 bin.builder.build_store(field_ptr.unwrap(), value);
             }
-            struct_ptr.into()
+            Some(struct_ptr.into())
         }
         // Can be any other expression
-        _ => expression(expr, bin, func_context, ns),
+        _ => Some(expression(expr, bin, func_context, ns)),
     };
 
     uncast_values
@@ -472,7 +425,7 @@ fn destructure<'a>(
             // function call may return multiple values, so we need to destructure them
             let (value, single_flag) = emit_function_call(expr, bin, func_context, ns);
             is_single_value = single_flag;
-            value
+            value.unwrap()
         }
     };
 
