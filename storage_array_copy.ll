@@ -1,7 +1,5 @@
-; ModuleID = 'AddressExample'
-source_filename = "examples/source/storage/storage_string.ola"
-
-@const_string = internal unnamed_addr constant [7 x i64] [i64 34, i64 104, i64 101, i64 108, i64 108, i64 111, i64 34]
+; ModuleID = 'StorageToStorage'
+source_filename = "examples/source/storage/storage_array_copy.ola"
 
 declare void @builtin_assert(i64, i64)
 
@@ -23,10 +21,11 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define void @setStringLiteral() {
+define void @setArray1(ptr %0) {
 entry:
-  %0 = call ptr @vector_new(i64 7, ptr @const_string)
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
+  %array = alloca ptr, align 8
+  store ptr %0, ptr %array, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %1 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
   %2 = extractvalue [4 x i64] %1, 3
@@ -46,7 +45,7 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %6 = load [4 x i64], ptr %5, align 4
-  %data = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
+  %data = getelementptr inbounds { i64, ptr }, ptr %array, i32 0, i32 1
   %index_access = getelementptr i64, ptr %data, i64 %index_value
   %7 = load i64, ptr %index_access, align 4
   %8 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %7, 3

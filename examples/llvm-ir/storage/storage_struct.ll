@@ -24,20 +24,16 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 define void @setData(i64 %0, i64 %1) {
 entry:
   %struct_alloca = alloca { i64, i64 }, align 8
-  %_value2 = alloca i64, align 8
-  %_id1 = alloca i64, align 8
   %_value = alloca i64, align 8
   %_id = alloca i64, align 8
   store i64 %0, ptr %_id, align 4
   store i64 %1, ptr %_value, align 4
-  store i64 %0, ptr %_id1, align 4
-  store i64 %1, ptr %_value2, align 4
   %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  %2 = load i64, ptr %_id1, align 4
+  %2 = load i64, ptr %_id, align 4
   store i64 %2, ptr %"struct member", align 4
-  %"struct member3" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  %3 = load i64, ptr %_value2, align 4
-  store i64 %3, ptr %"struct member3", align 4
+  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
+  %3 = load i64, ptr %_value, align 4
+  store i64 %3, ptr %"struct member1", align 4
   %id = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
   %4 = load i64, ptr %id, align 4
   %5 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %4, 3
@@ -46,8 +42,6 @@ entry:
   %6 = load i64, ptr %value, align 4
   %7 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %6, 3
   call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1], [4 x i64] %7)
-  %8 = load i64, ptr %_id1, align 4
-  ret i64 %8
   ret void
 }
 

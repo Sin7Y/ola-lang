@@ -48,26 +48,26 @@ entry:
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 0
+  %index_access = getelementptr i64, ptr %data, i64 0
   %1 = load i64, ptr %index_access, align 4
   %2 = add i64 %1, 1
   call void @builtin_range_check(i64 %2)
   %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length2 = load i64, ptr %vector_len1, align 4
   %data3 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access4 = getelementptr ptr, ptr %data3, i64 0
+  %index_access4 = getelementptr i64, ptr %data3, i64 0
   store i64 %2, ptr %index_access4, align 4
   %vector_len5 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length6 = load i64, ptr %vector_len5, align 4
   %data7 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access8 = getelementptr ptr, ptr %data7, i64 1
+  %index_access8 = getelementptr i64, ptr %data7, i64 1
   %3 = load i64, ptr %index_access8, align 4
   %4 = sub i64 %3, 1
   call void @builtin_range_check(i64 %4)
   %vector_len9 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length10 = load i64, ptr %vector_len9, align 4
   %data11 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access12 = getelementptr ptr, ptr %data11, i64 1
+  %index_access12 = getelementptr i64, ptr %data11, i64 1
   store i64 %4, ptr %index_access12, align 4
   ret void
 }
@@ -96,7 +96,7 @@ body:                                             ; preds = %cond
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access1 = getelementptr ptr, ptr %data, i64 %7
+  %index_access1 = getelementptr i64, ptr %data, i64 %7
   store i64 %6, ptr %index_access1, align 4
   br label %next
 

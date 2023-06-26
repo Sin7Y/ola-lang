@@ -66,7 +66,7 @@ pub(crate) fn statement<'a>(
             // }
             let var_value = expression(init, bin, func_context, ns);
 
-            let alloca = if param.ty.is_reference_type(ns) {
+            let alloca = if param.ty.is_reference_type(ns) && !param.ty.is_contract_storage() {
                 var_value.into_pointer_value()
             } else {
                 let alloca = bin.build_alloca(
