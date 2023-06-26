@@ -66,6 +66,106 @@ mod test {
     }
 
     #[test]
+    fn codegen_storage_contract_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'SimpleVar'
+source_filename = "examples/source/storage/storage_u32.ola"
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare ptr @vector_new(i64, ptr)
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+define void @inc_simple() {
+entry:
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 0, i64 0, i64 0, i64 100])
+  ret void
+}
+
+define i64 @get() {
+entry:
+  %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
+  %1 = extractvalue [4 x i64] %0, 3
+  ret i64 %1
+}
+
+define void @main() {
+entry:
+  %x = alloca i64, align 8
+  call void @inc_simple()
+  %0 = call i64 @get()
+  store i64 %0, ptr %x, align 4
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "inc_simple:
+.LBL10_0:
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 100
+  sstore 
+  ret
+get:
+.LBL11_0:
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sload 
+  mov r0 r1
+  mov r0 r2
+  mov r0 r3
+  mov r0 r4
+  ret
+main:
+.LBL12_0:
+  add r9 r9 5
+  mstore [r9,-2] r9
+  call inc_simple
+  call get
+  mstore [r9,-3] r0
+  add r9 r9 -5
+  end
+"
+        );
+    }
+
+    #[test]
     fn codegen_str_u32_imm_test() {
         // LLVM Assembly
         let asm = r#"

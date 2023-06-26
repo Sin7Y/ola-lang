@@ -267,8 +267,8 @@ pub fn print_function(
         for inst in function.layout.inst_iter(block) {
             let inst = function.data.inst_ref(inst);
             if Opcode::MSTOREr == inst.data.opcode {
-                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 8)))
-                    && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 8)))
+                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 9)))
+                    && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 9)))
                 {
                     code.push_str(&format!("  mstore [r9,-2] r9\n"));
                     continue;
