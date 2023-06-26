@@ -16,24 +16,24 @@ contract Voting {
 
     Proposal[] proposals;
 
-    fn init(string proposalNames) {
+    fn contract_init(string[] proposalNames_) {
         chairperson = get_caller();
-        for (u32 i = 0; i < proposalNames.length; i++) {
+        for (u32 i = 0; i < proposalNames_.length; i++) {
             proposals.push(Proposal({
-                name: proposalNames[i],
+                name: proposalNames_[i],
                 voteCount: 0
             }));
         }
     }
 
-    fn vote(u32 proposal)  {
+    fn vote_proposal(u32 proposal_)  {
         address msgSender = get_caller();
         Voter storage sender = voters[msgSender];
         //require(!sender.voted, "Already voted.");
         sender.voted = true;
-        sender.vote = proposal;
+        sender.vote = proposal_;
 
-        proposals[proposal].voteCount += 1;
+        proposals[proposal_].voteCount += 1;
     }
 
 
@@ -45,11 +45,13 @@ contract Voting {
                 winningProposal_ = p;
             }
         }
+        return winningProposal_;
     }
 
-    fn winnerName() -> (string winnerName_) {
-        winnerName_ = proposals[winningProposal()].name;
-    }
+     fn getWinnerName() -> (string) {
+         string winnerName = proposals[winningProposal()].name;
+         return winnerName;
+     }
 
     fn get_caller() -> (address) {
         return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;

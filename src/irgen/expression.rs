@@ -262,7 +262,7 @@ pub fn expression<'a>(
                 .get(var_no)
                 .unwrap()
                 .as_basic_value_enum();
-            if ty.is_reference_type(ns) {
+            if ty.is_reference_type(ns) && !ty.is_contract_storage() {
                 return ptr;
             }
 
@@ -451,44 +451,7 @@ pub fn expression<'a>(
         Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_context, ns).into_pointer_value();
             if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
-                let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
-                let value = bin.builder.build_load(loaded_type, ptr, "");
-                // if the pointer is null, it needs to be allocated
-                let allocation_needed = bin
-                    .builder
-                    .build_is_null(value.into_pointer_value(), "allocation_needed");
-                let allocate = bin
-                    .context
-                    .append_basic_block(func_context.func_val, "allocate");
-                let already_allocated = bin
-                    .context
-                    .append_basic_block(func_context.func_val, "already_allocated");
-                bin.builder.build_conditional_branch(
-                    allocation_needed,
-                    allocate,
-                    already_allocated,
-                );
-
-                let entry = bin.builder.get_insert_block().unwrap();
-
-                bin.builder.position_at_end(allocate);
-
-                // allocate a new struct
-                let ty = expr.ty();
-
-                let llvm_ty = bin.llvm_type(ty.deref_memory(), ns);
-
-                let new_struct = bin.build_alloca(func_context.func_val, llvm_ty, "struct_alloca");
-                bin.builder.build_store(ptr, new_struct);
-                bin.builder.build_unconditional_branch(already_allocated);
-                bin.builder.position_at_end(already_allocated);
-                let combined_struct_ptr = bin.builder.build_phi(
-                    llvm_ty.ptr_type(AddressSpace::default()),
-                    &format!("ptr_{}", ty.to_string(ns)),
-                );
-                combined_struct_ptr.add_incoming(&[(&value, entry), (&new_struct, allocate)]);
-
-                combined_struct_ptr.as_basic_value()
+                ptr.into()
             } else {
                 let loaded_type = bin.llvm_type(ty, ns);
                 bin.builder.build_load(loaded_type, ptr, "")
@@ -573,7 +536,7 @@ pub fn expression<'a>(
         } => conditional_operator(bin, ty, cond, func_context, ns, left, right),
         Expression::BoolLiteral { value, .. } => bin
             .context
-            .bool_type()
+            .i64_type()
             .const_int(*value as u64, false)
             .into(),
 
@@ -734,16 +697,16 @@ fn array_subscript<'a>(
     loc: &program::Loc,
     array_ty: &Type,
     array_expr: &Expression,
-    index: &Expression,
+    index_expr: &Expression,
     bin: &Binary<'a>,
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     let mut array = expression(array_expr, bin, func_context, ns);
-    let index = expression(index, bin, func_context, ns);
+    let index = expression(index_expr, bin, func_context, ns);
     if array_ty.is_mapping() {
-        let mut inputs = vec![array, index];
-        return poseidon_hash(bin, func_context.func_val, &mut inputs);
+        let inputs = vec![array, index];
+        return poseidon_hash(bin, func_context.func_val, inputs);
     }
 
     let array_length = match array_ty.deref_any() {

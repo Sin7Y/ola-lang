@@ -21,48 +21,13 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define i64 @array_literal() {
-entry:
-  %array_literal = alloca [3 x i64], align 8
-  %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
-  store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
-  store i64 3, ptr %elemptr2, align 4
-  call void @builtin_range_check(i64 1)
-  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  %0 = load i64, ptr %index_access, align 4
-  ret i64 %0
-}
-
-define i64 @array_dynamic_1() {
-entry:
-  %0 = call ptr @vector_new(i64 3, ptr null)
-  %data = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 0
-  store i64 1, ptr %index_access, align 4
-  %data1 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access2 = getelementptr ptr, ptr %data1, i64 1
-  store i64 2, ptr %index_access2, align 4
-  %data3 = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
-  %index_access4 = getelementptr ptr, ptr %data3, i64 2
-  store i64 3, ptr %index_access4, align 4
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
-  ret i64 %length
-}
-
 define i64 @array_dynamic_2() {
 entry:
   %0 = call ptr @vector_new(i64 5, ptr null)
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
-  ret i64 %length
-}
-
-define void @main() {
-entry:
-  %0 = call i64 @array_literal()
-  ret void
+  %data = getelementptr inbounds { i64, ptr }, ptr %0, i32 0, i32 1
+  %index_access = getelementptr i64, ptr %data, i64 1
+  %1 = load i64, ptr %index_access, align 4
+  ret i64 %1
 }

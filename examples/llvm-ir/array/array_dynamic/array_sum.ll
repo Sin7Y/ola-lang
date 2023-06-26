@@ -47,14 +47,14 @@ body:                                             ; preds = %cond
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
   %data = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access1 = getelementptr ptr, ptr %data, i64 %7
+  %index_access1 = getelementptr i64, ptr %data, i64 %7
   store i64 %6, ptr %index_access1, align 4
   %8 = load i64, ptr %totalSum, align 4
   %9 = load i64, ptr %i, align 4
   %vector_len2 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
   %length3 = load i64, ptr %vector_len2, align 4
   %data4 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access5 = getelementptr ptr, ptr %data4, i64 %9
+  %index_access5 = getelementptr i64, ptr %data4, i64 %9
   %10 = load i64, ptr %index_access5, align 4
   %11 = add i64 %8, %10
   call void @builtin_range_check(i64 %11)

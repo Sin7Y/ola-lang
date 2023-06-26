@@ -43,7 +43,7 @@ pub(crate) fn storage_array_push<'a>(
     emit_context!(bin);
     let mut array_slot = expression(&args[0], bin, func_context, ns);
 
-    let array_length = storage_load(
+    let array_length = storage_load_internal(
         bin,
         &Type::Uint(32),
         &mut array_slot,
@@ -228,14 +228,10 @@ pub(crate) fn storage_load<'a>(
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
                 let val = storage_load(bin, &field.ty, slot, function, ns);
 
-                let elem = unsafe {
-                    bin.builder.build_gep(
-                        llvm_ty,
-                        new_struct,
-                        &[i64_zero!(), i64_const!(i as u64)],
-                        field.name_as_str(),
-                    )
-                };
+                let elem = bin
+                    .builder
+                    .build_struct_gep(llvm_ty, new_struct, i as u32, field.name_as_str())
+                    .unwrap();
 
                 let val = if field.ty.deref_memory().is_fixed_reference_type() {
                     let load_ty = bin.llvm_type(field.ty.deref_memory(), ns);
@@ -263,7 +259,7 @@ pub(crate) fn storage_load<'a>(
             *slot = slot_next(bin, *slot);
             ret.into()
         }
-        Type::Uint(32) => {
+        Type::Uint(32) | Type::Bool => {
             let ret = storage_load_internal(bin, function, *slot);
             let value = bin
                 .builder
@@ -346,14 +342,8 @@ pub(crate) fn storage_store<'a>(
                     len,
                     &mut elem_slot,
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        let mut elem = unsafe {
-                            bin.builder.build_gep(
-                                bin.llvm_type(ty.deref_any(), ns),
-                                dest.into_pointer_value(),
-                                &[i64_zero!(), i64_const!(1), elem_no],
-                                "data",
-                            )
-                        };
+                        let mut elem =
+                            bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
 
                         if elem_ty.is_reference_type(ns)
                             && !elem_ty.deref_memory().is_fixed_reference_type()
@@ -391,26 +381,27 @@ pub(crate) fn storage_store<'a>(
         }
         Type::Struct(no) => {
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
-                let mut elem = unsafe {
-                    bin.builder.build_gep(
+                let elem = bin
+                    .builder
+                    .build_struct_gep(
                         bin.llvm_type(ty.deref_any(), ns),
                         dest.into_pointer_value(),
-                        &[bin.context.i64_type().const_int(i as u64, false)],
+                        i as u32,
                         field.name_as_str(),
                     )
-                };
+                    .unwrap()
+                    .into();
 
-                if field.ty.is_reference_type(ns) && !field.ty.is_fixed_reference_type() {
-                    let load_ty = bin
-                        .llvm_type(&field.ty, ns)
-                        .ptr_type(AddressSpace::default());
-                    elem = bin
-                        .builder
-                        .build_load(load_ty, elem, field.name_as_str())
-                        .into_pointer_value();
-                }
+                // if field.ty.is_reference_type(ns) && !field.ty.is_fixed_reference_type() {
+                //     let load_ty = bin
+                //         .llvm_type(&field.ty, ns)
+                //         .ptr_type(AddressSpace::default());
+                //     elem = bin
+                //         .builder
+                //         .build_load(load_ty, elem, field.name_as_str())
+                //         .into_pointer_value();
 
-                storage_store(bin, &field.ty, slot, elem.into(), function, ns);
+                storage_store(bin, &field.ty, slot, elem, function, ns);
 
                 if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) {
                     *slot = slot_next(bin, *slot);
@@ -420,7 +411,7 @@ pub(crate) fn storage_store<'a>(
         Type::String => {
             set_storage_dynamic_bytes(bin, &ty, slot, dest, function, ns);
         }
-        Type::Address | Type::Contract(_) | Type::Uint(32) => {
+        Type::Address | Type::Contract(_) | Type::Uint(32) | Type::Bool => {
             let dest = if dest.is_pointer_value() {
                 let m =
                     bin.builder
@@ -702,7 +693,7 @@ pub(crate) fn storage_store_internal<'a>(
             storage_value = bin
                 .builder
                 .build_insert_value(storage_value, value, 3, "")
-                .expect("Failed to insert value")
+                .unwrap()
                 .into_array_value();
             storage_value.into()
         }
@@ -720,30 +711,47 @@ pub(crate) fn slot_hash<'a>(
     function: FunctionValue<'a>,
     slot: BasicValueEnum<'a>,
 ) -> BasicValueEnum<'a> {
-    let mut inputs = vec![slot];
-    poseidon_hash(bin, function, &mut inputs)
+    let inputs = vec![slot];
+    poseidon_hash(bin, function, inputs)
 }
 
 pub(crate) fn poseidon_hash<'a>(
     bin: &Binary<'a>,
     function: FunctionValue<'a>,
-    inputs: &mut Vec<BasicValueEnum<'a>>,
+    hash_src: Vec<BasicValueEnum<'a>>,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
-    let mut hash_input = array_type!(8).get_undef();
+    let mut input_array = array_type!(8).get_undef();
+    let mut input_vec = vec![];
+    hash_src
+        .into_iter()
+        .for_each(|input| match input.get_type() {
+            BasicTypeEnum::IntType(_) => input_vec.push(input),
+            BasicTypeEnum::ArrayType(array_type) => {
+                for i in 0..4 {
+                    let input_extra = bin
+                        .builder
+                        .build_extract_value(input.into_array_value(), i, "")
+                        .unwrap();
+                    input_vec.push(input_extra);
+                }
+            }
+            _ => unreachable!(),
+        });
+
     for i in 0..8 {
-        hash_input = bin
+        input_array = bin
             .builder
             .build_insert_value(
-                hash_input,
-                inputs.pop().unwrap_or(i64_zero!().into()),
-                i,
+                input_array,
+                input_vec.pop().unwrap_or(i64_zero!().into()),
+                7 - i,
                 "",
             )
             .unwrap()
             .into_array_value();
     }
-    call!("poseidon_hash", &[hash_input.into()])
+    call!("poseidon_hash", &[input_array.into()])
 }
 
 pub(crate) fn array_offset<'a>(

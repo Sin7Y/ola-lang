@@ -21,13 +21,9 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define void @inc_simple(i64 %0) {
+define void @inc_simple() {
 entry:
-  %a = alloca i64, align 8
-  store i64 %0, ptr %a, align 4
-  %1 = load i64, ptr %a, align 4
-  %2 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %1, 3
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %2)
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 0, i64 0, i64 0, i64 100])
   ret void
 }
 
