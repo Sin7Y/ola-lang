@@ -52,9 +52,8 @@ body:                                             ; preds = %cond
 
 next:                                             ; preds = %body
   %10 = load i64, ptr %i, align 4
-  %11 = load i64, ptr %i, align 4
-  %12 = add i64 %11, 1
-  store i64 %12, ptr %i, align 4
+  %11 = add i64 %10, 1
+  store i64 %11, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %cond

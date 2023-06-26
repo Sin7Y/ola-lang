@@ -33,3 +33,12 @@ entry:
   %1 = extractvalue [4 x i64] %0, 3
   ret i64 %1
 }
+
+define void @main() {
+entry:
+  %x = alloca i64, align 8
+  call void @inc_simple()
+  %0 = call i64 @get()
+  store i64 %0, ptr %x, align 4
+  ret void
+}

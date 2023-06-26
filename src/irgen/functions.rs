@@ -94,26 +94,26 @@ pub(super) fn gen_function<'a>(
         statement(stmt, bin, func_context, ns);
     }
 
-    if func_context
-        .func
-        .body
-        .last()
-        .map(|stmt| stmt.reachable())
-        .unwrap_or(true)
-    {
-        // TODO When multiple values are returned, they need to be converted into a
-        // struct for processing.
-        if func_context.func.returns.len() != 0 {
-            let pos = func_context.func.symtable.returns[0];
-            let ret_expr = Expression::Variable {
-                loc: program::Loc::IRgen,
-                ty: func_context.func.symtable.vars[pos].ty.clone(),
-                var_no: pos,
-            };
-            let ret_value = expression(&ret_expr, bin, func_context, ns);
-            bin.builder.build_return(Some(&ret_value));
-        }
-    }
+    // if func_context
+    //     .func
+    //     .body
+    //     .last()
+    //     .map(|stmt| stmt.reachable())
+    //     .unwrap_or(true)
+    // {
+    //     // TODO When multiple values are returned, they need to be converted
+    // into a     // struct for processing.
+    //     if func_context.func.returns.len() != 0 {
+    //         let pos = func_context.func.symtable.returns[0];
+    //         let ret_expr = Expression::Variable {
+    //             loc: program::Loc::IRgen,
+    //             ty: func_context.func.symtable.vars[pos].ty.clone(),
+    //             var_no: pos,
+    //         };
+    //         let ret_value = expression(&ret_expr, bin, func_context, ns);
+    //         bin.builder.build_return(Some(&ret_value));
+    //     }
+    // }
 }
 
 /// Populate the arguments of a function

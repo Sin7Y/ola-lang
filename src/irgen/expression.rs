@@ -8,7 +8,6 @@ use crate::irgen::u32_op::{
 use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
-use inkwell::AddressSpace;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
@@ -21,7 +20,8 @@ use crate::sema::{
 };
 
 use super::storage::{
-    poseidon_hash, slot_hash, storage_array_pop, storage_array_push, storage_load, storage_store,
+    array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
+    storage_store,
 };
 
 pub fn expression<'a>(
@@ -135,26 +135,17 @@ pub fn expression<'a>(
                 _ => expression(&expr, bin, func_context, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
+            let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
             match expr.as_ref() {
                 Expression::Variable { ty, var_no, .. } => {
                     let before_ptr = *func_context.var_table.get(var_no).unwrap();
-                    let before_val = bin.builder.build_load(
-                        bin.llvm_type(&ty, ns),
-                        before_ptr.into_pointer_value(),
-                        "",
-                    );
-                    let after = bin.builder.build_int_sub(
-                        before_val.as_any_value_enum().into_int_value(),
-                        one,
-                        "",
-                    );
                     bin.builder
                         .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
                     return before_ptr.as_basic_value_enum();
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_context, ns);
-                    let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
+
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -196,25 +187,17 @@ pub fn expression<'a>(
                 _ => expression(&expr, bin, func_context, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
+            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
             match expr.as_ref() {
                 Expression::Variable { ty, var_no, .. } => {
-                    let one = bin.context.i64_type().const_int(1, false);
                     let before_ptr = *func_context.var_table.get(var_no).unwrap();
-                    let before_val = bin.builder.build_load(
-                        bin.llvm_type(&ty, ns),
-                        before_ptr.into_pointer_value(),
-                        "",
-                    );
-                    let after = bin
-                        .builder
-                        .build_int_add(before_val.into_int_value(), one, "");
                     bin.builder
                         .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
                     return before_ptr.as_basic_value_enum();
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_context, ns);
-                    let after = bin.builder.build_int_add(v.into_int_value(), one, "");
+
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -228,7 +211,6 @@ pub fn expression<'a>(
                             return dest.clone();
                         }
                         Type::Ref(_) => {
-                            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                             bin.builder.build_store(
                                 dest.into_pointer_value(),
                                 after.as_basic_value_enum(),
@@ -250,7 +232,7 @@ pub fn expression<'a>(
         }
         Expression::FunctionCall { .. } => {
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
-            ret
+            ret.unwrap_or(bin.context.i64_type().const_zero().into())
         }
         Expression::NumberLiteral { ty, value, .. } => bin.number_literal(ty, value, ns),
 
@@ -422,16 +404,15 @@ pub fn expression<'a>(
                     .filter(|field| !field.infinite_size)
                     .map(|field| field.ty.storage_slots(ns))
                     .sum();
-                let slot = expression(var, bin, func_context, ns).into_int_value();
-                bin.builder
-                    .build_int_add(
-                        slot,
-                        bin.context
-                            .i64_type()
-                            .const_int(offset.to_u64().unwrap(), false),
-                        "",
-                    )
-                    .into()
+                let slot = expression(var, bin, func_context, ns);
+                slot_offest(
+                    bin,
+                    slot,
+                    bin.context
+                        .i64_type()
+                        .const_int(offset.to_u64().unwrap(), false)
+                        .into(),
+                )
             } else {
                 unreachable!();
             }
@@ -606,7 +587,7 @@ pub fn emit_function_call<'a>(
     bin: &Binary<'a>,
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
-) -> (BasicValueEnum<'a>, bool) {
+) -> (Option<BasicValueEnum<'a>>, bool) {
     if let Expression::FunctionCall { function, args, .. } = expr {
         if let Expression::Function { function_no, .. } = function.as_ref() {
             let callee = &ns.functions[*function_no];
@@ -620,25 +601,32 @@ pub fn emit_function_call<'a>(
                 .builder
                 .build_call(callee_value, &params, "")
                 .try_as_basic_value()
-                .left()
-                .unwrap();
-            if callee.returns.len() == 1 {
-                (ret_value, true)
-            } else {
-                let struct_ty = bin
-                    .context
-                    .struct_type(
-                        &callee
-                            .returns
-                            .iter()
-                            .map(|f| bin.llvm_field_ty(&f.ty, ns))
-                            .collect::<Vec<BasicTypeEnum>>(),
-                        false,
-                    )
-                    .as_basic_type_enum();
-                let ret_ptr = bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
-                bin.builder.build_store(ret_ptr, ret_value);
-                (ret_value, false)
+                .left();
+            match ret_value {
+                Some(ret_value) => {
+                    if callee.returns.len() == 1 {
+                        (Some(ret_value), true)
+                    } else {
+                        let struct_ty = bin
+                            .context
+                            .struct_type(
+                                &callee
+                                    .returns
+                                    .iter()
+                                    .map(|f| bin.llvm_field_ty(&f.ty, ns))
+                                    .collect::<Vec<BasicTypeEnum>>(),
+                                false,
+                            )
+                            .as_basic_type_enum();
+                        let ret_ptr =
+                            bin.build_alloca(func_context.func_val, struct_ty, "struct_alloca");
+                        bin.builder.build_store(ret_ptr, ret_value);
+                        (Some(ret_value), false)
+                    }
+                }
+                None => {
+                    return (None, false);
+                }
             }
         } else {
             unimplemented!()
@@ -715,8 +703,6 @@ fn array_subscript<'a>(
                 if let Type::StorageRef(..) = array_ty {
                     let array_length =
                         storage_load(bin, &Type::Uint(32), &mut array, func_context.func_val, ns);
-
-                    array = slot_hash(bin, func_context.func_val, array);
                     array_length
                 } else {
                     // If a subscript is encountered array length will be called
@@ -750,7 +736,7 @@ fn array_subscript<'a>(
         }
     };
     if let Type::StorageRef(..) = &array_ty {
-        index
+        array_offset(bin, func_context.func_val, array, index)
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
         let llvm_elem_ty = bin.llvm_type(elem_ty.deref_memory(), ns);
