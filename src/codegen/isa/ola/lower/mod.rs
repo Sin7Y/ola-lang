@@ -154,6 +154,9 @@ fn get_str_inst_output(
         let vreg = new_empty_str_inst_output(ctx, ty, id);
         return Ok(vreg);
     }
+    // TODO: fix multi aggr value
+    // let inst = ctx.ir_data.inst_ref(id);
+    // lower(ctx, inst)?;
 
     Ok(new_empty_str_inst_output(ctx, ty, id))
 }
