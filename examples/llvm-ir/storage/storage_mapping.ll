@@ -42,10 +42,7 @@ entry:
   %14 = insertvalue [8 x i64] %13, i64 0, 1
   %15 = insertvalue [8 x i64] %14, i64 0, 0
   %16 = call [4 x i64] @poseidon_hash([8 x i64] %15)
-  %slot = alloca [4 x i64], align 8
-  store [4 x i64] %16, ptr %slot, align 4
-  %17 = load [4 x i64], ptr %slot, align 4
-  %18 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %2, 3
-  call void @set_storage([4 x i64] %17, [4 x i64] %18)
+  %17 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %2, 3
+  call void @set_storage([4 x i64] %16, [4 x i64] %17)
   ret void
 }
