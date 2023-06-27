@@ -23,23 +23,15 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define void @inc_simple() {
 entry:
-  %slot = alloca i64, align 8
-  store i64 0, ptr %slot, align 4
-  %0 = load i64, ptr %slot, align 4
-  %1 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %0, 3
-  call void @set_storage([4 x i64] %1, [4 x i64] [i64 0, i64 0, i64 0, i64 100])
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 0, i64 0, i64 0, i64 100])
   ret void
 }
 
 define i64 @get() {
 entry:
-  %slot = alloca i64, align 8
-  store i64 0, ptr %slot, align 4
-  %0 = load i64, ptr %slot, align 4
-  %1 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %0, 3
-  %2 = call [4 x i64] @get_storage([4 x i64] %1)
-  %3 = extractvalue [4 x i64] %2, 3
-  ret i64 %3
+  %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
+  %1 = extractvalue [4 x i64] %0, 3
+  ret i64 %1
 }
 
 define void @main() {
