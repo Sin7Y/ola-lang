@@ -34,43 +34,6 @@ impl Contract {
     }
 }
 
-pub(crate) fn storage_delete<'a>(
-    bin: &Binary<'a>,
-    ty: &Type,
-    slot: &mut BasicValueEnum<'a>,
-    function: FunctionValue<'a>,
-    ns: &Namespace,
-) {
-    let slot_ptr = bin.builder.build_alloca(slot.get_type(), "slot");
-
-    storage_delete_slot(bin, ty, slot, slot_ptr, function, ns);
-}
-
-pub(crate) fn storage_load<'a>(
-    bin: &Binary<'a>,
-    ty: &Type,
-    slot: &mut BasicValueEnum<'a>,
-    function: FunctionValue<'a>,
-    ns: &Namespace,
-) -> BasicValueEnum<'a> {
-    let slot_ptr = bin.builder.build_alloca(slot.get_type(), "slot");
-
-    storage_load_slot(bin, ty, slot, slot_ptr, function, ns)
-}
-
-pub(crate) fn storage_store<'a>(
-    bin: &Binary<'a>,
-    ty: &Type,
-    slot: &mut BasicValueEnum<'a>,
-    dest: BasicValueEnum<'a>,
-    function: FunctionValue<'a>,
-    ns: &Namespace,
-) {
-    let slot_ptr = bin.builder.build_alloca(slot.get_type(), "slot");
-
-    storage_store_slot(bin, ty, slot, slot_ptr, dest, function, ns);
-}
-
 /// Push() method on dynamic array in storage
 pub(crate) fn storage_array_push<'a>(
     bin: &Binary<'a>,
@@ -176,18 +139,17 @@ pub(crate) fn storage_array_pop<'a>(
     ret
 }
 
-pub(crate) fn storage_load_slot<'a>(
+pub(crate) fn storage_load<'a>(
     bin: &Binary<'a>,
     ty: &Type,
     slot: &mut BasicValueEnum<'a>,
-    slot_ptr: PointerValue<'a>,
     function: FunctionValue<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
 
     match ty {
-        Type::Ref(ty) => storage_load_slot(bin, ty, slot, slot_ptr, function, ns),
+        Type::Ref(ty) => storage_load(bin, ty, slot, function, ns),
         Type::Array(elem_ty, dim) => {
             if let Some(ArrayLength::Fixed(d)) = dim.last() {
                 let llvm_ty = bin.llvm_type(ty.deref_any(), ns);
@@ -211,7 +173,7 @@ pub(crate) fn storage_load_slot<'a>(
                             )
                         };
 
-                        let val = storage_load_slot(bin, &ty, slot, slot_ptr, function, ns);
+                        let val = storage_load(bin, &ty, slot, function, ns);
 
                         let val = if ty.deref_memory().is_fixed_reference_type() {
                             let load_ty = bin.llvm_type(ty.deref_any(), ns);
@@ -227,14 +189,7 @@ pub(crate) fn storage_load_slot<'a>(
 
                 new_array.into()
             } else {
-                let size = storage_load_slot(
-                    bin,
-                    &Type::Uint(32),
-                    &mut slot.clone(),
-                    slot_ptr,
-                    function,
-                    ns,
-                );
+                let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
                 let init = bin
                     .context
@@ -254,7 +209,7 @@ pub(crate) fn storage_load_slot<'a>(
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
                         let elem = bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
 
-                        let entry = storage_load_slot(bin, elem_ty, slot, slot_ptr, function, ns);
+                        let entry = storage_load(bin, elem_ty, slot, function, ns);
 
                         let entry = if elem_ty.deref_memory().is_fixed_reference_type() {
                             bin.builder.build_load(
@@ -278,7 +233,7 @@ pub(crate) fn storage_load_slot<'a>(
             let new_struct = bin.build_alloca(function, llvm_ty, "struct_alloca");
 
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
-                let val = storage_load_slot(bin, &field.ty, slot, slot_ptr, function, ns);
+                let val = storage_load(bin, &field.ty, slot, function, ns);
 
                 let elem = bin
                     .builder
@@ -294,34 +249,29 @@ pub(crate) fn storage_load_slot<'a>(
                 };
 
                 bin.builder.build_store(elem, val);
+                if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) {
+                    *slot = slot_next(bin, *slot);
+                }
             }
 
             new_struct.into()
         }
         Type::String => {
-            bin.builder.build_store(slot_ptr, *slot);
-            let ret = get_storage_dynamic_bytes(bin, &ty, slot, slot_ptr, function, ns);
-
-            *slot = slot_next(bin, *slot);
+            let ret = get_storage_dynamic_bytes(bin, &ty, slot, function, ns);
 
             ret.into()
         }
         Type::Address | Type::Contract(_) => {
-            bin.builder.build_store(slot_ptr, *slot);
             let ret = storage_load_internal(bin, function, *slot);
-
-            *slot = slot_next(bin, *slot);
             ret.into()
         }
         Type::Uint(32) => {
-            bin.builder.build_store(slot_ptr, *slot);
             let ret = storage_load_internal(bin, function, *slot);
             let value = bin
                 .builder
                 .build_extract_value(ret.into_array_value(), 3, "")
                 .unwrap();
             // After array pop, the slot does not need to be calculated here.
-            *slot = slot_next(bin, *slot);
             value
         }
         _ => {
@@ -330,11 +280,10 @@ pub(crate) fn storage_load_slot<'a>(
     }
 }
 
-pub(crate) fn storage_store_slot<'a>(
+pub(crate) fn storage_store<'a>(
     bin: &Binary<'a>,
     ty: &Type,
     slot: &mut BasicValueEnum<'a>,
-    slot_ptr: PointerValue<'a>,
     dest: BasicValueEnum<'a>,
     function: FunctionValue<'a>,
     ns: &Namespace,
@@ -369,7 +318,7 @@ pub(crate) fn storage_store_slot<'a>(
                                 .into_pointer_value();
                         }
 
-                        storage_store_slot(bin, elem_ty, slot, slot_ptr, elem.into(), function, ns);
+                        storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
                             *slot = slot_next(bin, *slot);
@@ -379,15 +328,9 @@ pub(crate) fn storage_store_slot<'a>(
             } else {
                 // get the length of the our in-memory array
                 let len = bin.vector_len(dest);
-                let previous_size = storage_load_slot(
-                    bin,
-                    &Type::Uint(32),
-                    &mut slot.clone(),
-                    slot_ptr,
-                    function,
-                    ns,
-                )
-                .into_int_value();
+                let previous_size =
+                    storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns)
+                        .into_int_value();
 
                 let llvm_elem_ty = bin.llvm_field_ty(elem_ty, ns);
 
@@ -414,7 +357,7 @@ pub(crate) fn storage_store_slot<'a>(
                                 .into_pointer_value();
                         }
 
-                        storage_store_slot(bin, elem_ty, slot, slot_ptr, elem.into(), function, ns);
+                        storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
                             *slot = slot_next(bin, *slot);
@@ -430,7 +373,7 @@ pub(crate) fn storage_store_slot<'a>(
                     previous_size,
                     &mut elem_slot,
                     |_: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        storage_delete_slot(bin, elem_ty, slot, slot_ptr, function, ns);
+                        storage_delete(bin, elem_ty, slot, function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
                             *slot = slot_next(bin, *slot);
@@ -459,19 +402,22 @@ pub(crate) fn storage_store_slot<'a>(
                 //         .builder
                 //         .build_load(load_ty, elem, field.name_as_str())
                 //         .into_pointer_value();
-                storage_store_slot(bin, &field.ty, slot, slot_ptr, elem.into(), function, ns);
+                storage_store(bin, &field.ty, slot, elem.into(), function, ns);
 
-                if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) {
+                // 当迭代到最后一个元素的时候，slot的值已经是最后一个元素的slot值了，
+                // 所以不需要再进行slot_next操作
+
+                if (!field.ty.is_reference_type(ns) || matches!(field.ty, Type::String))
+                    && (i != ns.structs[*no].fields.len() - 1)
+                {
                     *slot = slot_next(bin, *slot);
                 }
             }
         }
         Type::String => {
-            bin.builder.build_store(slot_ptr, *slot);
-            set_storage_dynamic_bytes(bin, &ty, slot, slot_ptr, dest, function, ns);
+            set_storage_dynamic_bytes(bin, &ty, slot, dest, function, ns);
         }
         Type::Address | Type::Contract(_) | Type::Uint(32) | Type::Bool => {
-            bin.builder.build_store(slot_ptr, *slot);
             let dest = if dest.is_pointer_value() {
                 let m =
                     bin.builder
@@ -488,11 +434,10 @@ pub(crate) fn storage_store_slot<'a>(
     }
 }
 
-pub(crate) fn storage_delete_slot<'a>(
+pub(crate) fn storage_delete<'a>(
     bin: &Binary<'a>,
     ty: &Type,
     slot: &mut BasicValueEnum<'a>,
-    slot_ptr: PointerValue<'a>,
     function: FunctionValue<'a>,
     ns: &Namespace,
 ) {
@@ -508,7 +453,7 @@ pub(crate) fn storage_delete_slot<'a>(
                     i64_const!(d.to_u64().unwrap()),
                     slot,
                     |_index: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        storage_delete_slot(bin, &ty, slot, slot_ptr, function, ns);
+                        storage_delete(bin, &ty, slot, function, ns);
 
                         if !ty.is_reference_type(ns) {
                             *slot = slot_next(bin, *slot);
@@ -518,16 +463,8 @@ pub(crate) fn storage_delete_slot<'a>(
             } else {
                 // dynamic length array.
                 // load length
-                bin.builder.build_store(slot_ptr, *slot);
-                let length = storage_load_slot(
-                    bin,
-                    &Type::Uint(32),
-                    &mut slot.clone(),
-                    slot_ptr,
-                    function,
-                    ns,
-                )
-                .into_int_value();
+                let length = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns)
+                    .into_int_value();
 
                 let mut elem_slot = slot_hash(bin, function, *slot);
 
@@ -538,7 +475,7 @@ pub(crate) fn storage_delete_slot<'a>(
                     length,
                     &mut elem_slot,
                     |_index: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        storage_delete_slot(bin, &ty, slot, slot_ptr, function, ns);
+                        storage_delete(bin, &ty, slot, function, ns);
 
                         if !ty.is_reference_type(ns) {
                             *slot = slot_next(bin, *slot);
@@ -547,12 +484,12 @@ pub(crate) fn storage_delete_slot<'a>(
                 );
 
                 // clear length itself
-                storage_delete_slot(bin, &Type::Uint(32), slot, slot_ptr, function, ns);
+                storage_delete(bin, &Type::Uint(32), slot, function, ns);
             }
         }
         Type::Struct(no) => {
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
-                storage_delete_slot(bin, &field.ty, slot, slot_ptr, function, ns);
+                storage_delete(bin, &field.ty, slot, function, ns);
 
                 if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) {
                     *slot = slot_next(bin, *slot);
@@ -563,7 +500,6 @@ pub(crate) fn storage_delete_slot<'a>(
             // nothing to do, step over it
         }
         _ => {
-            bin.builder.build_store(slot_ptr, *slot);
             storage_clear_internal(bin, function, *slot);
         }
     }
@@ -574,19 +510,11 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
     bin: &Binary<'a>,
     ty: &Type,
     slot: &mut BasicValueEnum<'a>,
-    slot_ptr: PointerValue<'a>,
     function: FunctionValue<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
-    let size = storage_load_slot(
-        bin,
-        &Type::Uint(32),
-        &mut slot.clone(),
-        slot_ptr,
-        function,
-        ns,
-    );
+    let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
     let init = bin
         .context
@@ -605,7 +533,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
         |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
             let elem = bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
 
-            let entry = storage_load_slot(bin, &Type::Uint(32), slot, slot_ptr, function, ns);
+            let entry = storage_load(bin, &Type::Uint(32), slot, function, ns);
 
             bin.builder.build_store(elem, entry);
         },
@@ -619,7 +547,6 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
     bin: &Binary<'a>,
     ty: &Type,
     slot: &mut BasicValueEnum<'a>,
-    slot_ptr: PointerValue<'a>,
     dest: BasicValueEnum<'a>,
     function: FunctionValue<'a>,
     ns: &Namespace,
@@ -628,15 +555,8 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
     // get the length of the our in-memory array
     let len = bin.vector_len(dest);
 
-    let previous_size = storage_load_slot(
-        bin,
-        &Type::Uint(32),
-        &mut slot.clone(),
-        slot_ptr,
-        function,
-        ns,
-    )
-    .into_int_value();
+    let previous_size =
+        storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns).into_int_value();
 
     // store new length
     storage_store_internal(bin, function, *slot, len.into());
@@ -650,15 +570,7 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
         &mut elem_slot,
         |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
             let elem = bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
-            storage_store_slot(
-                bin,
-                &Type::Uint(32),
-                slot,
-                slot_ptr,
-                elem.into(),
-                function,
-                ns,
-            );
+            storage_store(bin, &Type::Uint(32), slot, elem.into(), function, ns);
 
             *slot = slot_next(bin, *slot);
         },
@@ -672,7 +584,7 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
         previous_size,
         &mut elem_slot,
         |_: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-            storage_delete_slot(bin, &Type::Uint(32), slot, slot_ptr, function, ns);
+            storage_delete(bin, &Type::Uint(32), slot, function, ns);
 
             *slot = slot_next(bin, *slot);
         },
