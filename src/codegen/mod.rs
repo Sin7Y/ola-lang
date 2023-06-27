@@ -136,10 +136,10 @@ entry:
   mov r2 0
   mov r3 0
   mov r4 0
-  mov r5 0
-  mov r6 0
-  mov r7 0
-  mov r8 100
+  mov r5 100
+  mov r6 200
+  mov r7 300
+  mov r8 400
   sstore 
   ret
 get:
@@ -149,10 +149,10 @@ get:
   mov r3 0
   mov r4 0
   sload 
-  mov r0 r1
-  mov r0 r2
-  mov r0 r3
-  mov r0 r4
+  mov r1 r2
+  mov r1 r3
+  mov r2 r4
+  add r0 r1 r2
   ret
 main:
 .LBL12_0:
@@ -204,7 +204,7 @@ entry:
   ;call void @set_storage([4 x i64] [i64 1, i64 2, i64 3, i64 4], [4 x i64] [i64 5, i64 6, i64 7, i64 8])
   call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 5, i64 6, i64 7, i64 8])
   %3 = call [4 x i64] @get_storage([4 x i64] [i64 1, i64 2, i64 3, i64 4])
-  ;call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %3)
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %3)
   %4 = call [4 x i64] @poseidon_hash([8 x i64] [i64 10, i64 20, i64 30, i64 40, i64 50, i64 60, i64 70, i64 80])
   ret void
 }

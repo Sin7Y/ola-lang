@@ -44,17 +44,23 @@ pub fn lower_insertvalue(
     for _ in 0..4 {
         output = new_empty_str_inst_output(ctx, elm_ty, id);
     }
-
-    ctx.inst_seq.push(MachInstruction::new(
-        InstructionData {
-            opcode: Opcode::MOVrr,
-            operands: vec![
-                MO::output(output[idx as usize].into()),
-                MO::input(op_value.clone()),
-            ],
-        },
-        ctx.block_map[&ctx.cur_block],
-    ));
+    for ist_idx in 0..4 {
+        let input = if ist_idx == idx {
+            op_value.clone()
+        } else {
+            value[ist_idx as usize].clone()
+        };
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MOVrr,
+                operands: vec![
+                    MO::output(output[ist_idx as usize].into()),
+                    MO::input(input),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+    }
     Ok(())
 }
 
@@ -92,16 +98,17 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define void @insert(i64 %0) {
+define i64 @insert(i64 %0) {
     entry:
       %a = alloca i64, align 8
       store i64 %0, ptr %a, align 4
       %1 = load i64, ptr %a, align 4
       %2 = add i64 %1, 1
       call void @builtin_range_check(i64 %2)
-      %3 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 1], i64 %2, 3
-      call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %3)
-      ret void
+      %3 = insertvalue [4 x i64] [i64 10, i64 20, i64 30, i64 40], i64 %2, 2
+      %4 = extractvalue [4 x i64] %3, 2
+      ;call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %3)
+      ret i64 %4
     }
 "#;
 
@@ -125,15 +132,12 @@ define void @insert(i64 %0) {
   mload r1 [r9,-1]
   add r0 r1 1
   range r0
-  mov r1 0
-  mov r2 0
-  mov r3 0
-  mov r4 0
-  mov r5 0
-  mov r6 0
-  mov r7 0
-  mov r8 1
-  sstore 
+  mov r1 10
+  mov r2 20
+  mov r3 30
+  mov r4 40
+  mov r3 r0
+  mov r0 r3
   add r9 r9 -1
   ret
 "

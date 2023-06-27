@@ -149,14 +149,20 @@ fn get_str_inst_output(
     ty: Type,
     id: InstructionId,
 ) -> Result<Vec<VReg>> {
+    if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
+        if vreg.len() == 4 || vreg.len() == 8 {
+            return Ok(vreg.to_vec());
+        }
+    }
+
     if ctx.ir_data.inst_ref(id).parent != ctx.cur_block {
         // The instruction indexed as `id` must be placed in another basic block
         let vreg = new_empty_str_inst_output(ctx, ty, id);
         return Ok(vreg);
     }
     // TODO: fix multi aggr value
-    // let inst = ctx.ir_data.inst_ref(id);
-    // lower(ctx, inst)?;
+    let inst = ctx.ir_data.inst_ref(id);
+    lower(ctx, inst)?;
 
     Ok(new_empty_str_inst_output(ctx, ty, id))
 }
@@ -171,6 +177,9 @@ fn new_empty_str_inst_output(
     } else {
         vec![]
     };
+    if vregs.len() == 4 || vregs.len() == 8 {
+        return vregs;
+    }
     let vreg = ctx.mach_data.vregs.add_vreg_data(ty);
     vregs.push(vreg);
     ctx.inst_id_to_vreg.insert(id, vregs.clone());

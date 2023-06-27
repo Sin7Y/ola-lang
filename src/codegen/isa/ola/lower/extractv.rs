@@ -152,12 +152,25 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define i64 @get() {
+define i64 @get1() {
     entry:
       %1 = extractvalue [4 x i64] [i64 1,i64 2,i64 3,i64 4], 0
-      %2 = extractvalue [4 x i64] [i64 1,i64 2,i64 3,i64 4], 1
+      %2 = extractvalue [4 x i64] [i64 10,i64 20,i64 30,i64 40], 1
       %3 = extractvalue [4 x i64] [i64 5,i64 6,i64 7,i64 8], 2
-      %4 = extractvalue [4 x i64] [i64 5,i64 6,i64 7,i64 8], 3
+      %4 = extractvalue [4 x i64] [i64 50,i64 60,i64 70,i64 80], 3
+      %5 = add i64 %1, %2
+      %6 = mul i64 %3, %4
+      %7 = add i64 %5, %6
+      
+      ret i64 %7
+}
+
+define i64 @get2() {
+    entry:
+      %1 = extractvalue [4 x i64] [i64 10,i64 20,i64 30,i64 40], 0
+      %2 = extractvalue [4 x i64] [i64 10,i64 20,i64 30,i64 40], 1
+      %3 = extractvalue [4 x i64] [i64 10,i64 20,i64 30,i64 40], 2
+      %4 = extractvalue [4 x i64] [i64 10,i64 20,i64 30,i64 40], 3
       %5 = add i64 %1, %2
       %6 = mul i64 %3, %4
       %7 = add i64 %5, %6
@@ -179,25 +192,48 @@ define i64 @get() {
         println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
-            "get:
+            "get1:
 .LBL10_0:
   mov r3 1
   mov r4 2
   mov r4 3
   mov r4 4
-  mov r4 1
-  mov r4 2
-  mov r5 3
-  mov r5 4
+  mov r4 10
+  mov r4 20
+  mov r5 30
+  mov r5 40
   add r0 r3 r4
   mov r3 5
   mov r3 6
   mov r3 7
   mov r4 8
-  mov r4 5
-  mov r4 6
-  mov r4 7
-  mov r4 8
+  mov r4 50
+  mov r4 60
+  mov r4 70
+  mov r4 80
+  mul r1 r3 r4
+  add r2 r0 r1
+  mov r0 r2
+  ret
+get2:
+.LBL11_0:
+  mov r3 10
+  mov r4 20
+  mov r4 30
+  mov r4 40
+  mov r4 10
+  mov r4 20
+  mov r5 30
+  mov r5 40
+  add r0 r3 r4
+  mov r3 10
+  mov r3 20
+  mov r3 30
+  mov r4 40
+  mov r4 10
+  mov r4 20
+  mov r4 30
+  mov r4 40
   mul r1 r3 r4
   add r2 r0 r1
   mov r0 r2
