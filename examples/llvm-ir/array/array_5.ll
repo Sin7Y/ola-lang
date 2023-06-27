@@ -52,16 +52,19 @@ entry:
   %2 = sub i64 %1, 1
   call void @builtin_range_check(i64 6)
   %index_access1 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  store i64 %2, ptr %index_access1, align 4
+  %3 = sub i64 %1, 1
+  store i64 %3, ptr %index_access1, align 4
   call void @builtin_range_check(i64 6)
   %index_access2 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  %3 = load i64, ptr %index_access2, align 4
-  %4 = add i64 %3, 1
+  %4 = load i64, ptr %index_access2, align 4
+  %5 = add i64 %4, 1
   call void @builtin_range_check(i64 6)
   %index_access3 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  store i64 %4, ptr %index_access3, align 4
+  %6 = add i64 %4, 1
+  %7 = add i64 %4, 1
+  store i64 %7, ptr %index_access3, align 4
   call void @builtin_range_check(i64 6)
   %index_access4 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
-  %5 = load i64, ptr %index_access4, align 4
-  ret i64 %5
+  %8 = load i64, ptr %index_access4, align 4
+  ret i64 %8
 }
