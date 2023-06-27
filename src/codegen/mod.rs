@@ -94,15 +94,17 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define void @inc_simple() {
 entry:
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 0, i64 0, i64 0, i64 100])
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 100, i64 200, i64 300, i64 400])
   ret void
 }
 
 define i64 @get() {
 entry:
   %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  %1 = extractvalue [4 x i64] %0, 3
-  ret i64 %1
+  %1 = extractvalue [4 x i64] %0, 2
+  %2 = extractvalue [4 x i64] %0, 3
+  %3 = add i64 %1, %2
+  ret i64 %3
 }
 
 define void @main() {
