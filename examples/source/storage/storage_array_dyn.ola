@@ -8,11 +8,11 @@ contract DynamicArrayExample {
         dynamicArray.push(element);
     }
     
-    fn removeElement() {
-        dynamicArray.pop();
-    }
+    // fn removeElement() {
+    //     dynamicArray.pop();
+    // }
     
-    fn getLength() -> (u32) {
-        return dynamicArray.length;
-    }
+    // fn getLength() -> (u32) {
+    //     return dynamicArray.length;
+    // }
 }

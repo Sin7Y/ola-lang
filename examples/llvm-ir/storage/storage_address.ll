@@ -23,7 +23,11 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define void @addressFunction() {
 entry:
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 402443140940559753, i64 -5438528055523826848, i64 6500940582073311439, i64 -6711892513312253938])
+  %slot = alloca i64, align 8
+  store i64 0, ptr %slot, align 4
+  %0 = load i64, ptr %slot, align 4
+  %1 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %0, 3
+  call void @set_storage([4 x i64] %1, [4 x i64] [i64 402443140940559753, i64 -5438528055523826848, i64 6500940582073311439, i64 -6711892513312253938])
   ret void
 }
 
@@ -32,14 +36,22 @@ entry:
   %_address = alloca [4 x i64], align 8
   store [4 x i64] %0, ptr %_address, align 4
   %1 = load [4 x i64], ptr %_address, align 4
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %1)
+  %slot = alloca i64, align 8
+  store i64 0, ptr %slot, align 4
+  %2 = load i64, ptr %slot, align 4
+  %3 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %2, 3
+  call void @set_storage([4 x i64] %3, [4 x i64] %1)
   ret void
 }
 
 define [4 x i64] @getAddress() {
 entry:
-  %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  ret [4 x i64] %0
+  %slot = alloca i64, align 8
+  store i64 0, ptr %slot, align 4
+  %0 = load i64, ptr %slot, align 4
+  %1 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %0, 3
+  %2 = call [4 x i64] @get_storage([4 x i64] %1)
+  ret [4 x i64] %2
 }
 
 define [4 x i64] @get_caller() {
