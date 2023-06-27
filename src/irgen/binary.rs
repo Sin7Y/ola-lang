@@ -403,6 +403,11 @@ impl<'a> Binary<'a> {
         // initialize the loop variable with the starting value
         self.builder.build_store(index_alloca, from);
 
+        // Allocate a local variable for slot
+        let data = self.builder.build_alloca(data_ref.get_type(), "");
+
+        self.builder.build_store(data, *data_ref);
+
         self.builder.build_unconditional_branch(body);
         self.builder.position_at_end(body);
         // load current value of the loop variable
@@ -411,8 +416,12 @@ impl<'a> Binary<'a> {
             .build_load(loop_ty, index_alloca, "index_value")
             .into_int_value();
 
-        // add loop body
-        insert_body(index_value, data_ref);
+        // Load the slot
+        let mut data_val = self.builder.build_load(data_ref.get_type(), data, "");
+        insert_body(index_value, &mut data_val);
+
+        // Store the new slot
+        self.builder.build_store(data, data_val);
 
         let next_index =
             self.builder

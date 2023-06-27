@@ -25,41 +25,28 @@ define void @addElement(i64 %0) {
 entry:
   %element = alloca i64, align 8
   store i64 %0, ptr %element, align 4
-  %1 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  %2 = extractvalue [4 x i64] %1, 3
-  %3 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 1])
+  %slot = alloca i64, align 8
+  store i64 0, ptr %slot, align 4
+  %1 = load i64, ptr %slot, align 4
+  %2 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %1, 3
+  %3 = call [4 x i64] @get_storage([4 x i64] %2)
   %4 = extractvalue [4 x i64] %3, 3
-  %5 = add i64 %4, %2
-  %6 = insertvalue [4 x i64] %3, i64 %5, 3
-  %7 = load i64, ptr %element, align 4
-  %8 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %7, 3
-  call void @set_storage([4 x i64] %6, [4 x i64] %8)
-  %new_length = add i64 %2, 1
-  %9 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
-  call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1], [4 x i64] %9)
+  %5 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
+  %6 = extractvalue [4 x i64] %5, 3
+  %7 = add i64 %6, %4
+  %8 = insertvalue [4 x i64] %5, i64 %7, 3
+  %9 = load i64, ptr %element, align 4
+  %slot1 = alloca [4 x i64], align 8
+  store [4 x i64] %8, ptr %slot1, align 4
+  %10 = load [4 x i64], ptr %slot1, align 4
+  %11 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %9, 3
+  call void @set_storage([4 x i64] %10, [4 x i64] %11)
+  %new_length = add i64 %4, 1
+  %slot2 = alloca i64, align 8
+  store i64 0, ptr %slot2, align 4
+  %12 = load i64, ptr %slot2, align 4
+  %13 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %12, 3
+  %14 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
+  call void @set_storage([4 x i64] %13, [4 x i64] %14)
   ret void
-}
-
-define void @removeElement() {
-entry:
-  %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  %1 = extractvalue [4 x i64] %0, 3
-  %2 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 1])
-  %3 = extractvalue [4 x i64] %2, 3
-  %4 = add i64 %3, %1
-  %5 = insertvalue [4 x i64] %2, i64 %4, 3
-  %new_length = sub i64 %1, 1
-  %6 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
-  call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1], [4 x i64] %6)
-  %7 = call [4 x i64] @get_storage([4 x i64] %5)
-  %8 = extractvalue [4 x i64] %7, 3
-  call void @set_storage([4 x i64] %5, [4 x i64] zeroinitializer)
-  ret void
-}
-
-define i64 @getLength() {
-entry:
-  %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  %1 = extractvalue [4 x i64] %0, 3
-  ret i64 %1
 }

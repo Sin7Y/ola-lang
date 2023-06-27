@@ -20,8 +20,8 @@ use crate::sema::{
 };
 
 use super::storage::{
-    array_offset, poseidon_hash, slot_hash, storage_array_pop, storage_array_push, storage_load,
-    storage_store,
+    array_offset, poseidon_hash, slot_hash, slot_offest, storage_array_pop, storage_array_push,
+    storage_load, storage_store,
 };
 
 pub fn expression<'a>(
