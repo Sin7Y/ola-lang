@@ -6,6 +6,7 @@ use crate::codegen::{
         instruction::{InstructionData, Opcode, Operand as MO, OperandData},
         Ola,
     },
+    isa::TargetIsa,
     lower::{LoweringContext, LoweringError},
 };
 use anyhow::Result;
@@ -23,7 +24,7 @@ pub fn lower_insertvalue(
     let op_idx = get_operand_for_val(ctx, elm_ty, args[2])?;
 
     let idx = match op_idx {
-        OperandData::Int32(op_idx) => op_idx,
+        OperandData::Int32(op_idx) => op_idx as usize,
         e => {
             return Err(LoweringError::Todo(format!(
                 "Unsupported inserttvalue idx operand: {:?}",
@@ -33,8 +34,9 @@ pub fn lower_insertvalue(
         }
     };
     //let mut output = vec![];
-    let output = new_empty_str_inst_output(ctx, elm_ty, id);
-    for ist_idx in 0..4 {
+    let output: Vec<crate::codegen::register::VReg> = new_empty_str_inst_output(ctx, tys[0], id);
+    let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
+    for ist_idx in 0..sz {
         let input = if ist_idx == idx {
             op_value.clone()
         } else {

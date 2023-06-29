@@ -46,7 +46,7 @@ pub fn lower_alloca(
 
         return Ok(());
     }
-    let dl = ctx.isa.data_layout();
+    let dl: &crate::codegen::core::ir::module::data_layout::DataLayout = ctx.isa.data_layout();
     let sz = dl.get_size_of(ctx.types, tys[0]) as u32;
     let align = dl.get_align_of(ctx.types, tys[0]) as u32;
     let slot_id = ctx.slots.add_slot(tys[0], sz, align);

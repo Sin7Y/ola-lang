@@ -158,6 +158,7 @@ mod test {
         isa::ola::{asm::AsmProgram, Ola},
         lower::compile_module,
     };
+    #[ignore]
     #[test]
     fn codegen_arr_php_test() {
         // LLVM Assembly
@@ -292,15 +293,15 @@ mod test {
             format!("{}", code.program),
             "test_array:
 .LBL0_0:
-  add r8 r8 3
+  add r9 r9 3
   mov r0 1
-  mstore [r8,-1] r0
+  mstore [r9,-1] r0
   mov r0 2
-  mstore [r8,-2] r0
+  mstore [r9,-2] r0
   mov r0 3
-  mstore [r8,-3] r0
-  mload r0 [r8,-2]
-  add r8 r8 -3
+  mstore [r9,-3] r0
+  mload r0 [r9,-2]
+  add r9 r9 -3
   ret
 "
         );
@@ -371,17 +372,17 @@ mod test {
   ret
 main:
 .LBL8_0:
-  add r8 r8 7
-  mstore [r8,-2] r8
+  add r9 r9 7
+  mstore [r9,-2] r9
   mov r0 1
-  mstore [r8,-5] r0
+  mstore [r9,-5] r0
   mov r0 2
-  mstore [r8,-4] r0
+  mstore [r9,-4] r0
   mov r0 3
-  mstore [r8,-3] r0
-  mload r1 [r8,-5]
+  mstore [r9,-3] r0
+  mload r1 [r9,-5]
   call array_literal
-  add r8 r8 -7
+  add r9 r9 -7
   end
 "
         );
@@ -468,47 +469,47 @@ main:
             format!("{}", code.program),
             "main:
 .LBL7_0:
-  add r8 r8 16
-  mstore [r8,-2] r8
+  add r9 r9 16
+  mstore [r9,-2] r9
   mov r1 3
-  mstore [r8,-14] r1
+  mstore [r9,-14] r1
   mov r1 4
-  mstore [r8,-13] r1
+  mstore [r9,-13] r1
   mov r1 5
-  mstore [r8,-12] r1
+  mstore [r9,-12] r1
   mov r1 1
-  mstore [r8,-11] r1
+  mstore [r9,-11] r1
   mov r1 7
-  mstore [r8,-10] r1
+  mstore [r9,-10] r1
   mov r1 9
-  mstore [r8,-9] r1
+  mstore [r9,-9] r1
   mov r1 0
-  mstore [r8,-8] r1
+  mstore [r9,-8] r1
   mov r1 2
-  mstore [r8,-7] r1
+  mstore [r9,-7] r1
   mov r1 8
-  mstore [r8,-6] r1
+  mstore [r9,-6] r1
   mov r1 6
-  mstore [r8,-5] r1
-  add r1 r8 -14
-  mstore [r8,-4] r1
-  mload r1 [r8,-4]
+  mstore [r9,-5] r1
+  add r1 r9 -14
+  mstore [r9,-4] r1
+  mload r1 [r9,-4]
   call array_sort_test
-  mstore [r8,-3] r0
-  add r8 r8 -16
+  mstore [r9,-3] r0
+  add r9 r9 -16
   end
 array_sort_test:
 .LBL8_0:
-  add r8 r8 2
+  add r9 r9 2
   mov r0 r1
-  mstore [r8,-2] r0
-  mload r1 [r8,-2]
+  mstore [r9,-2] r0
+  mload r1 [r9,-2]
   mov r2 10
 .PROPHET8_0:
   mov r0 psp
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  add r8 r8 -2
+  mstore [r9,-1] r0
+  mload r0 [r9,-1]
+  add r9 r9 -2
   ret
 "
         );

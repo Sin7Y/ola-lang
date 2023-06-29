@@ -94,6 +94,7 @@ impl RegisterClass for RegClass {
                 RegClass::GR
             }
             _ if ty.is_pointer(types) => RegClass::GR,
+            _ if ty.is_array(types) => RegClass::GR,
             e => todo!("{}", types.to_string(e)),
         }
     }

@@ -26,6 +26,7 @@ use crate::codegen::{
         register::{RegClass, RegInfo, GR},
         Ola,
     },
+    isa::TargetIsa,
     lower::{Lower as LowerTrait, LoweringContext, LoweringError},
     register::{RegisterClass, RegisterInfo, VReg},
 };
@@ -149,8 +150,9 @@ fn get_str_inst_output(
     ty: Type,
     id: InstructionId,
 ) -> Result<Vec<VReg>> {
+    let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
     if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
-        if vreg.len() == 4 || vreg.len() == 8 {
+        if vreg.len() == sz {
             println!("storage insts vregs len: {:?}", vreg.len());
             return Ok(vreg.to_vec());
         }
@@ -178,10 +180,12 @@ fn new_empty_str_inst_output(
     } else {
         vec![]
     };
-    if vregs.len() == 4 || vregs.len() == 8 {
+
+    let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
+    if vregs.len() == sz {
         return vregs;
     }
-    for _ in 0..4 {
+    for _ in 0..sz {
         let vreg = ctx.mach_data.vregs.add_vreg_data(ty);
         vregs.push(vreg);
     }
@@ -299,10 +303,11 @@ fn get_operands_for_val(
 ) -> Result<Vec<OperandData>> {
     match ctx.ir_data.values[val] {
         Value::Instruction(id) => {
-            let elm_ty = ctx.types.base().element(ty).unwrap();
             let mut vregs_dst: Vec<OperandData> = vec![];
-            let vregs_src = get_str_inst_output(ctx, elm_ty, id)?;
-            for idx in 0..4 {
+            let vregs_src = get_str_inst_output(ctx, ty, id)?;
+            let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
+
+            for idx in 0..sz {
                 vregs_dst.push(vregs_src[idx].into());
             }
             Ok(vregs_dst)
@@ -320,15 +325,15 @@ fn get_operands_for_const(
     println!("aggregation const operand");
     match konst {
         ConstantValue::Array(ConstantArray {
-            ty: _,
-            elem_ty,
+            ty,
+            elem_ty: _,
             ref elems,
             ..
         }) => {
             println!("array const operand");
             let mut inputs = vec![];
             for (_idx, e) in elems.iter().enumerate() {
-                let addr = ctx.mach_data.vregs.add_vreg_data(*elem_ty);
+                let addr = ctx.mach_data.vregs.add_vreg_data(*ty);
                 let input: Result<MO, &str> = match e {
                     ConstantValue::Int(ConstantInt::Int32(i)) => {
                         Ok(MO::new(OperandData::Int32(*i)))
@@ -353,9 +358,9 @@ fn get_operands_for_const(
         ConstantValue::AggregateZero(ty) => {
             println!("aggregate zero const operand");
             let mut inputs = vec![];
-            let elm_ty = ctx.types.base().element(*ty).unwrap();
-            for _ in 0..4 {
-                let addr = ctx.mach_data.vregs.add_vreg_data(elm_ty);
+            let sz = ctx.isa.data_layout().get_size_of(ctx.types, *ty) / 4;
+            for _ in 0..sz {
+                let addr = ctx.mach_data.vregs.add_vreg_data(*ty);
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
                         opcode: Opcode::MOVri,

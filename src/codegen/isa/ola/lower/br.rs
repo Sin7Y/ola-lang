@@ -422,11 +422,11 @@ mod test {
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 1
   call eq
-  add r8 r8 -4
+  add r9 r9 -4
   end
 eq:
 .LBL1_0:
@@ -484,11 +484,11 @@ eq:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 1
   call ne
-  add r8 r8 -4
+  add r9 r9 -4
   end
 ne:
 .LBL1_0:
@@ -546,11 +546,11 @@ ne:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 1
   call ge
-  add r8 r8 -4
+  add r9 r9 -4
   end
 ge:
 .LBL1_0:
@@ -608,11 +608,11 @@ ge:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 1
   call gt
-  add r8 r8 -4
+  add r9 r9 -4
   end
 gt:
 .LBL1_0:
@@ -672,11 +672,11 @@ gt:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 1
   call lt
-  add r8 r8 -4
+  add r9 r9 -4
   end
 eq:
 .LBL1_0:
@@ -737,11 +737,11 @@ eq:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 1
   call le
-  add r8 r8 -4
+  add r9 r9 -4
   end
 le:
 .LBL1_0:

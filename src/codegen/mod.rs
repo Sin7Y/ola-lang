@@ -48,10 +48,10 @@ mod test {
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 1
+  add r9 r9 1
   mov r4 10
-  mstore [r8,-1] r4
-  mload r4 [r8,-1]
+  mstore [r9,-1] r4
+  mload r4 [r9,-1]
   add r0 r4 20
   add r1 r4 30
   mul r2 r0 r1
@@ -59,7 +59,7 @@ mod test {
   add r7 r7 1
   add r3 r2 r7
   mov r0 r3
-  add r8 r8 -1
+  add r9 r9 -1
   end
 "
         );
@@ -342,6 +342,96 @@ entry:
   mov r7 70
   mov r8 80
   poseidon 
+  ret
+"
+        );
+    }
+
+    #[test]
+    fn codegen_str_poseidon_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'StrImm'
+source_filename = "examples/source/storage/storage_u32.ola"
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare ptr @vector_new(i64, ptr)
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+define void @str_var(i64 %0) {   ;mstore [r9,-1] r1 
+entry:
+  %3 = call [4 x i64] @get_storage([4 x i64] [i64 1, i64 2, i64 3, i64 4])
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %3)
+  %4 = call [4 x i64] @poseidon_hash([8 x i64] [i64 10, i64 20, i64 30, i64 40, i64 50, i64 60, i64 70, i64 80])
+  call void @set_storage([4 x i64] [i64 5, i64 6, i64 7, i64 8], [4 x i64] %4)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "str_var:
+.LBL10_0:
+  mov r0 r1
+  mov r1 1
+  mov r2 2
+  mov r3 3
+  mov r4 4
+  sload 
+  mov r5 r1
+  mov r6 r2
+  mov r7 r3
+  mov r8 r4
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sstore 
+  mov r1 10
+  mov r2 20
+  mov r3 30
+  mov r4 40
+  mov r5 50
+  mov r6 60
+  mov r7 70
+  mov r8 80
+  poseidon 
+  mov r5 r1
+  mov r6 r2
+  mov r7 r3
+  mov r8 r4
+  mov r1 5
+  mov r2 6
+  mov r3 7
+  mov r4 8
+  sstore 
   ret
 "
         );

@@ -105,12 +105,12 @@ pub fn lower_call(
             ctx.block_map[&ctx.cur_block],
         ));
 
-        let ret_ty = ctx.types.base().element(tys[0]).unwrap();
+        let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
         let res_reg: [Reg; 4] = [ret_reg0, ret_reg1, ret_reg2, ret_reg3];
         let opcode = Opcode::MOVrr;
         if !ctx.ir_data.users_of(id).is_empty() {
-            let output = new_empty_str_inst_output(ctx, ret_ty, id);
-            for idx in 0..4 {
+            let output = new_empty_str_inst_output(ctx, tys[0], id);
+            for idx in 0..sz {
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
                         opcode,
