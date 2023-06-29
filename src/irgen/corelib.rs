@@ -15,13 +15,14 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 8]> = Lazy::new(|| {
+static PROPHET_FUNCTIONS: Lazy<[&str; 9]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
         "vector_new",
+        "contract_input",
         "get_storage",
         "set_storage",
         "poseidon_hash",
@@ -106,7 +107,7 @@ pub fn declare_prophets(bin: &mut Binary) {
             bin.module.add_function("prophet_u32_mod", ftype, None);
         }
         "vector_new" => {
-            let vector_ptr_type = bin.create_struct_vector().ptr_type(AddressSpace::default());
+            let vector_ptr_type = bin.struct_vector_type().ptr_type(AddressSpace::default());
             let ftype = vector_ptr_type.fn_type(
                 &[
                     bin.context.i64_type().into(),
@@ -119,6 +120,13 @@ pub fn declare_prophets(bin: &mut Binary) {
             );
             bin.module.add_function("vector_new", ftype, None);
         }
+
+        "contract_input" => {
+            let ret_type = bin.contract_input_type().ptr_type(AddressSpace::default());
+            let ftype = ret_type.fn_type(&[], false);
+            bin.module.add_function("contract_input", ftype, None);
+        }
+
         "prophet_u32_array_sort" => {
             let array_ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
             let array_length_type = bin.context.i64_type();

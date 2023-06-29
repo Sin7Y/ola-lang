@@ -7,7 +7,7 @@ use crate::irgen::u32_op::{
 };
 use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
+use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
@@ -20,8 +20,8 @@ use crate::sema::{
 };
 
 use super::storage::{
-    array_offset, poseidon_hash, slot_hash, slot_offest, storage_array_pop, storage_array_push,
-    storage_load, storage_store,
+    array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
+    storage_store,
 };
 
 pub fn expression<'a>(
@@ -137,7 +137,7 @@ pub fn expression<'a>(
             let one = bin.context.i64_type().const_int(1, false);
             let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
             match expr.as_ref() {
-                Expression::Variable { ty, var_no, .. } => {
+                Expression::Variable { var_no, .. } => {
                     let before_ptr = *func_context.var_table.get(var_no).unwrap();
                     bin.builder
                         .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
@@ -695,7 +695,7 @@ fn array_subscript<'a>(
     let index = expression(index_expr, bin, func_context, ns);
     if array_ty.is_mapping() {
         let inputs = vec![array, index];
-        return poseidon_hash(bin, func_context.func_val, inputs);
+        return poseidon_hash(bin, inputs);
     }
 
     let array_length = match array_ty.deref_any() {
@@ -737,7 +737,7 @@ fn array_subscript<'a>(
         }
     };
     if let Type::StorageRef(..) = &array_ty {
-        array_offset(bin, func_context.func_val, array, index)
+        array_offset(bin, array, index)
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
         let llvm_elem_ty = bin.llvm_type(elem_ty.deref_memory(), ns);
