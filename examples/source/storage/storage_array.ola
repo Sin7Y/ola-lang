@@ -1,0 +1,13 @@
+
+
+contract StaticArrayExample {
+    u32[5] myArray;
+
+    fn init() {
+        myArray = [1, 2, 3, 4, 5];
+    }
+
+    fn setElement(u32 index, u32 value) {
+        myArray[index] = value;
+    }
+}
