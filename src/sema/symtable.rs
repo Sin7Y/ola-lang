@@ -2,7 +2,7 @@
 
 use indexmap::IndexMap;
 use ola_parser::diagnostics::{ErrorType, Level, Note};
-use std::collections::{HashMap, HashSet, LinkedList};
+use std::collections::{HashMap, HashSet};
 use std::str;
 use std::sync::Arc;
 

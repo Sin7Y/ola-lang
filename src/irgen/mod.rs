@@ -1,6 +1,8 @@
 use std::str;
 pub mod binary;
 mod corelib;
+mod dispatch;
+mod encoding;
 mod expression;
 mod functions;
 mod statements;

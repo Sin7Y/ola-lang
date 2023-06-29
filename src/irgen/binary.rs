@@ -17,6 +17,8 @@ use inkwell::types::{
 use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
 use inkwell::{AddressSpace, IntPredicate};
 
+use super::dispatch::{gen_contract_entrance, gen_func_dispatch};
+
 pub struct Binary<'a> {
     pub name: String,
     pub module: Module<'a>,
@@ -36,6 +38,8 @@ impl<'a> Binary<'a> {
         let mut binary = Binary::new(context, &contract.name, filename);
         gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
+        gen_func_dispatch(&mut binary, ns);
+        gen_contract_entrance(None, &mut binary, ns);
         binary
     }
 
@@ -174,7 +178,7 @@ impl<'a> Binary<'a> {
 
                 let mut aty = match dims.next().unwrap() {
                     ArrayLength::Fixed(d) => ty.array_type(d.to_u32().unwrap()),
-                    ArrayLength::Dynamic => return self.create_struct_vector(),
+                    ArrayLength::Dynamic => return self.struct_vector_type(),
                     ArrayLength::AnyFixed => {
                         unreachable!()
                     }
@@ -183,7 +187,7 @@ impl<'a> Binary<'a> {
                 for dim in dims {
                     match dim {
                         ArrayLength::Fixed(d) => aty = aty.array_type(d.to_u32().unwrap()),
-                        ArrayLength::Dynamic => return self.create_struct_vector(),
+                        ArrayLength::Dynamic => return self.struct_vector_type(),
                         ArrayLength::AnyFixed => {
                             unreachable!()
                         }
@@ -192,7 +196,7 @@ impl<'a> Binary<'a> {
 
                 BasicTypeEnum::ArrayType(aty)
             }
-            Type::String => self.create_struct_vector(),
+            Type::String => self.struct_vector_type(),
             Type::Mapping(..) => self.llvm_type(&Type::Uint(32), ns),
             Type::Struct(n) => self
                 .context
@@ -297,7 +301,7 @@ impl<'a> Binary<'a> {
         if let Some(init) = init {
             if init.is_empty() {
                 return self
-                    .create_struct_vector()
+                    .struct_vector_type()
                     .ptr_type(AddressSpace::default())
                     .const_null();
             }
@@ -324,7 +328,7 @@ impl<'a> Binary<'a> {
             .into_pointer_value()
     }
 
-    pub(crate) fn create_struct_vector(&self) -> BasicTypeEnum<'a> {
+    pub(crate) fn struct_vector_type(&self) -> BasicTypeEnum<'a> {
         let length_type = self.context.i64_type();
         let data_array_type = self.context.i64_type().ptr_type(AddressSpace::default());
         let struct_type = self
@@ -332,6 +336,63 @@ impl<'a> Binary<'a> {
             .struct_type(&[length_type.into(), data_array_type.into()], false);
 
         struct_type.as_basic_type_enum()
+    }
+
+    pub(crate) fn contract_input_type(&self) -> BasicTypeEnum<'a> {
+        let length_type = self.context.i64_type();
+        let func_selector_type = self.context.i64_type();
+        let data_array_type = self.context.i64_type().ptr_type(AddressSpace::default());
+        let struct_type = self.context.struct_type(
+            &[
+                func_selector_type.into(),
+                length_type.into(),
+                data_array_type.into(),
+            ],
+            false,
+        );
+
+        struct_type.as_basic_type_enum()
+    }
+
+    pub(crate) fn contract_input(
+        &self,
+        input: BasicValueEnum<'a>,
+    ) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
+        let input_ty = self.contract_input_type();
+        let selector = self
+            .builder
+            .build_load(
+                self.context.i64_type(),
+                self.builder
+                    .build_struct_gep(input_ty, input.into_pointer_value(), 0, "input_selector")
+                    .unwrap(),
+                "selector",
+            )
+            .into_int_value();
+
+        let length = self
+            .builder
+            .build_load(
+                self.context.i64_type(),
+                self.builder
+                    .build_struct_gep(input_ty, input.into_pointer_value(), 1, "input_len")
+                    .unwrap(),
+                "len",
+            )
+            .into_int_value();
+
+        let data = self
+            .builder
+            .build_load(
+                self.context.i64_type().ptr_type(AddressSpace::default()),
+                self.builder
+                    .build_struct_gep(input_ty, input.into_pointer_value(), 2, "input_data")
+                    .unwrap(),
+                "data",
+            )
+            .into_pointer_value();
+
+        (selector, length, data)
     }
 
     /// Number of element in a vector
@@ -351,7 +412,7 @@ impl<'a> Binary<'a> {
         } else {
             // field 0 is the length
             let vector = vector.into_pointer_value();
-            let vector_type = self.create_struct_vector();
+            let vector_type = self.struct_vector_type();
 
             let len = self
                 .builder
@@ -374,7 +435,7 @@ impl<'a> Binary<'a> {
                 .unwrap()
                 .into_pointer_value()
         } else {
-            let vector_type = self.create_struct_vector();
+            let vector_type = self.struct_vector_type();
             self.builder
                 .build_struct_gep(vector_type, vector.into_pointer_value(), 1, "data")
                 .unwrap()

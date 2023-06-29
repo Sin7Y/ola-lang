@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::diagnostics::{ErrorType::ParserError, Level::Error};
 use std::sync::mpsc;
 use std::time::Duration;
 use std::{fs, path::Path, thread};

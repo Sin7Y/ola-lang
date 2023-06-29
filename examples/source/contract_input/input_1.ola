@@ -1,0 +1,14 @@
+contract InputExample {
+    fn foo() -> (u32) {
+        return 5;
+    }
+
+    fn main() {
+        u32 x = 5;
+        u32 y = foo();
+    }
+
+    fn bar() -> (u32) {
+        return 5 + 4;
+    }
+}
