@@ -107,12 +107,9 @@ pub fn lower_call(
 
         let ret_ty = ctx.types.base().element(tys[0]).unwrap();
         let res_reg: [Reg; 4] = [ret_reg0, ret_reg1, ret_reg2, ret_reg3];
-        let mut output = vec![];
         let opcode = Opcode::MOVrr;
         if !ctx.ir_data.users_of(id).is_empty() {
-            for _ in 0..4 {
-                output = new_empty_str_inst_output(ctx, ret_ty, id);
-            }
+            let output = new_empty_str_inst_output(ctx, ret_ty, id);
             for idx in 0..4 {
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
@@ -252,7 +249,6 @@ fn pass_str_args_to_regs(
     args: &[ValueId],
 ) -> Result<()> {
     let gpru = RegInfo::str_arg_reg_list(&ctx.call_conv);
-    let cur_ty = ctx.types.base().element(tys[0]).unwrap();
 
     let mut arg_str = get_operands_for_val(ctx, tys[0], args[0])?;
     // sstore: [key,value]

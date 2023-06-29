@@ -1,18 +1,12 @@
-use super::{get_inst_output, get_operand_for_val, get_operands_for_val, new_empty_inst_output};
-use crate::codegen::core::ir::{
-    function::instruction::{InstructionId, Opcode as IrOpcode},
-    types::Type,
-    value::{ConstantInt, ConstantValue, Value, ValueId},
-};
+use super::{get_operand_for_val, get_operands_for_val, new_empty_inst_output};
+use crate::codegen::core::ir::{function::instruction::InstructionId, types::Type, value::ValueId};
 use crate::codegen::{
     function::instruction::Instruction as MachInstruction,
     isa::ola::{
         instruction::{InstructionData, Opcode, Operand as MO, OperandData},
-        register::GR,
         Ola,
     },
     lower::{LoweringContext, LoweringError},
-    register::Reg,
 };
 use anyhow::Result;
 

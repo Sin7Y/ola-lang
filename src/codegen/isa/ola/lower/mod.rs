@@ -151,6 +151,7 @@ fn get_str_inst_output(
 ) -> Result<Vec<VReg>> {
     if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
         if vreg.len() == 4 || vreg.len() == 8 {
+            println!("storage insts vregs len: {:?}", vreg.len());
             return Ok(vreg.to_vec());
         }
     }
@@ -160,7 +161,7 @@ fn get_str_inst_output(
         let vreg = new_empty_str_inst_output(ctx, ty, id);
         return Ok(vreg);
     }
-    // TODO: fix multi aggr value
+
     let inst = ctx.ir_data.inst_ref(id);
     lower(ctx, inst)?;
 
@@ -180,8 +181,10 @@ fn new_empty_str_inst_output(
     if vregs.len() == 4 || vregs.len() == 8 {
         return vregs;
     }
-    let vreg = ctx.mach_data.vregs.add_vreg_data(ty);
-    vregs.push(vreg);
+    for _ in 0..4 {
+        let vreg = ctx.mach_data.vregs.add_vreg_data(ty);
+        vregs.push(vreg);
+    }
     ctx.inst_id_to_vreg.insert(id, vregs.clone());
     vregs
 }
@@ -298,10 +301,7 @@ fn get_operands_for_val(
         Value::Instruction(id) => {
             let elm_ty = ctx.types.base().element(ty).unwrap();
             let mut vregs_dst: Vec<OperandData> = vec![];
-            let mut vregs_src: Vec<VReg> = vec![];
-            for _ in 0..4 {
-                vregs_src = get_str_inst_output(ctx, elm_ty, id)?;
-            }
+            let vregs_src = get_str_inst_output(ctx, elm_ty, id)?;
             for idx in 0..4 {
                 vregs_dst.push(vregs_src[idx].into());
             }
@@ -320,7 +320,7 @@ fn get_operands_for_const(
     println!("aggregation const operand");
     match konst {
         ConstantValue::Array(ConstantArray {
-            ty,
+            ty: _,
             elem_ty,
             ref elems,
             ..

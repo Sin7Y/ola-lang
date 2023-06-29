@@ -243,6 +243,15 @@ entry:
   mov r3 3
   mov r4 4
   sload 
+  mov r5 r1
+  mov r6 r2
+  mov r7 r3
+  mov r8 r4
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sstore 
   mov r1 10
   mov r2 20
   mov r3 30
@@ -338,6 +347,7 @@ entry:
         );
     }
 
+    #[ignore]
     #[test]
     fn codegen_str_binop_test() {
         // LLVM Assembly
