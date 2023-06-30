@@ -1,11 +1,17 @@
 contract SimpleMappingExample {
     mapping(address => u32) users;
 
-    fn add_mapping(address name, u32 number)  {
+    fn add_mapping(address name, u32 number) {
         users[name] = number;
     }
 
-    // fn get_mapping(address name) -> (u32) {
-    //     return users[name];
-    // }
+    fn get_mapping(address name) -> (u32) {
+        return users[name];
+    }
+
+    fn main() {
+        address myaddress = 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;
+        add_mapping(myaddress, 1);
+        get_mapping(myaddress);
+    }
 }

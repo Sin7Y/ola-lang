@@ -107,17 +107,10 @@ pub fn declare_prophets(bin: &mut Binary) {
             bin.module.add_function("prophet_u32_mod", ftype, None);
         }
         "vector_new" => {
-            let vector_ptr_type = bin.struct_vector_type().ptr_type(AddressSpace::default());
-            let ftype = vector_ptr_type.fn_type(
-                &[
-                    bin.context.i64_type().into(),
-                    bin.context
-                        .i64_type()
-                        .ptr_type(AddressSpace::default())
-                        .into(),
-                ],
-                false,
-            );
+            let ftype = bin
+                .context
+                .i64_type()
+                .fn_type(&[bin.context.i64_type().into()], false);
             bin.module.add_function("vector_new", ftype, None);
         }
 

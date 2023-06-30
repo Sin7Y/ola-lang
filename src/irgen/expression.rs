@@ -564,19 +564,15 @@ pub fn array_literal_to_memory_array<'a>(
     } else {
         unreachable!()
     };
-
+    let vector_data = bin.vector_data(array_vector.as_basic_value_enum());
     for (item_no, item) in elements.iter().enumerate() {
         let item = expression(item, bin, func_context, ns);
 
         let index = bin.context.i64_type().const_int(item_no as u64, false);
         let array_type: BasicTypeEnum = bin.llvm_var_ty(ty, ns);
         let index_access = unsafe {
-            bin.builder.build_gep(
-                array_type,
-                bin.vector_data(array_vector.as_basic_value_enum()),
-                &[index],
-                "index_access",
-            )
+            bin.builder
+                .build_gep(array_type, vector_data, &[index], "index_access")
         };
         bin.builder.build_store(index_access, item);
     }
