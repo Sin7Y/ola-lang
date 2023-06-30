@@ -1,4 +1,5 @@
 use crate::sema::ast::{ArrayLength, Contract, Namespace, Type};
+use crate::sema::expression::FIELD_ORDER;
 use std::path::Path;
 use std::str;
 
@@ -14,10 +15,14 @@ use inkwell::module::{Linkage, Module};
 use inkwell::types::{
     ArrayType, BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
 };
-use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
+use inkwell::values::{BasicValueEnum, FunctionValue, GlobalValue, IntValue, PointerValue};
 use inkwell::{AddressSpace, IntPredicate};
 
 use super::dispatch::{gen_contract_entrance, gen_func_dispatch};
+
+pub const SAPN: u64 = 2 ^ 32 - 1;
+
+pub const HEAP_ADDRESS_START: u64 = FIELD_ORDER - 2 * SAPN;
 
 pub struct Binary<'a> {
     pub name: String,
@@ -25,6 +30,7 @@ pub struct Binary<'a> {
     pub builder: Builder<'a>,
     pub(crate) context: &'a Context,
     pub loops: Vec<(BasicBlock<'a>, BasicBlock<'a>)>,
+    pub heap_address: GlobalValue<'a>,
 }
 
 impl<'a> Binary<'a> {
@@ -38,8 +44,8 @@ impl<'a> Binary<'a> {
         let mut binary = Binary::new(context, &contract.name, filename);
         gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
-        gen_func_dispatch(&mut binary, ns);
-        gen_contract_entrance(None, &mut binary, ns);
+        // gen_func_dispatch(&mut binary, ns);
+        // gen_contract_entrance(None, &mut binary, ns);
         binary
     }
 
@@ -57,6 +63,13 @@ impl<'a> Binary<'a> {
         let builder = context.create_builder();
 
         module.set_source_file_name(filename);
+        let heap_address = module.add_global(
+            context.i64_type(),
+            Some(AddressSpace::default()),
+            "heap_address",
+        );
+        heap_address.set_linkage(Linkage::Internal);
+        heap_address.set_initializer(&context.i64_type().const_int(HEAP_ADDRESS_START, false));
 
         Binary {
             name: name.to_owned(),
@@ -64,6 +77,7 @@ impl<'a> Binary<'a> {
             builder,
             context,
             loops: Vec::new(),
+            heap_address: heap_address,
         }
     }
 
@@ -298,34 +312,75 @@ impl<'a> Binary<'a> {
         size: IntValue<'a>,
         init: Option<&Vec<u32>>,
     ) -> PointerValue<'a> {
-        if let Some(init) = init {
-            if init.is_empty() {
-                return self
-                    .struct_vector_type()
-                    .ptr_type(AddressSpace::default())
-                    .const_null();
-            }
-        }
-
-        let init = match init {
-            None => self
-                .context
-                .i64_type()
-                .ptr_type(AddressSpace::default())
-                .const_null(),
-            Some(s) => self.emit_global_string("const_string", s, true),
-        };
-
-        self.builder
+        let vector_address = self
+            .builder
             .build_call(
                 self.module.get_function("vector_new").unwrap(),
-                &[size.into(), init.into()],
+                &[size.into()],
                 "",
             )
             .try_as_basic_value()
             .left()
-            .unwrap()
-            .into_pointer_value()
+            .unwrap();
+        let allocated_size = self.builder.build_int_sub(
+            self.builder
+                .build_load(
+                    self.context.i64_type(),
+                    self.heap_address.as_pointer_value(),
+                    "",
+                )
+                .into_int_value(),
+            vector_address.into_int_value(),
+            "allocated_size",
+        );
+        self.builder.build_call(
+            self.module
+                .get_function("builtin_assert")
+                .expect("builtin_assert should have been defined before"),
+            &[allocated_size.into(), size.into()],
+            "",
+        );
+        self.builder
+            .build_store(self.heap_address.as_pointer_value(), vector_address);
+
+        let data = self.builder.build_int_to_ptr(
+            vector_address.into_int_value(),
+            self.context.i64_type().ptr_type(AddressSpace::default()),
+            "int_to_ptr",
+        );
+        let vector_type = self.struct_vector_type();
+        match init {
+            None => {}
+            Some(init) => {
+                for (item_no, item) in init.iter().enumerate() {
+                    let item = self.context.i64_type().const_int(*item as u64, false);
+                    let index = self.context.i64_type().const_int(item_no as u64, false);
+                    let index_access = unsafe {
+                        self.builder.build_gep(
+                            self.context.i64_type().ptr_type(AddressSpace::default()),
+                            data,
+                            &[index],
+                            "index_access",
+                        )
+                    };
+                    self.builder.build_store(index_access, item);
+                }
+            }
+        }
+        let vector_alloca = self
+            .builder
+            .build_alloca(self.struct_vector_type(), "vector_alloca");
+        let len = self
+            .builder
+            .build_struct_gep(vector_type, vector_alloca, 0, "vector_len")
+            .unwrap();
+        self.builder.build_store(len, size);
+        let data_ptr = self
+            .builder
+            .build_struct_gep(vector_type, vector_alloca, 1, "vector_data")
+            .unwrap();
+        self.builder.build_store(data_ptr, data);
+        vector_alloca
     }
 
     pub(crate) fn struct_vector_type(&self) -> BasicTypeEnum<'a> {

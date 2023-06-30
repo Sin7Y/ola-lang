@@ -20,6 +20,7 @@ use super::ast::{ArrayLength, Diagnostic, Expression, Namespace, RetrieveType, T
 use super::diagnostics::Diagnostics;
 
 pub const FIELD_ORDER: u64 = 0xFFFFFFFF00000001;
+
 /// When resolving an expression, what type are we looking for
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ResolveTo<'a> {

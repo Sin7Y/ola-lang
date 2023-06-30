@@ -1,10 +1,11 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema;
-use crate::sema::ast::Type;
+use crate::sema::ast::{Expression, Type};
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
+use ola_parser::program;
 
 use super::expression::expression;
 
@@ -101,7 +102,7 @@ pub(super) fn gen_function<'a>(
     //     .unwrap_or(true)
     // {
     //     // TODO When multiple values are returned, they need to be converted
-    // into a     // struct for processing.
+    // into struct     // for processing.
     //     if func_context.func.returns.len() != 0 {
     //         let pos = func_context.func.symtable.returns[0];
     //         let ret_expr = Expression::Variable {

@@ -190,13 +190,7 @@ pub(crate) fn storage_load<'a>(
             } else {
                 let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
-                let init = bin
-                    .context
-                    .i64_type()
-                    .ptr_type(AddressSpace::default())
-                    .const_null();
-
-                let dest = call!("vector_new", &[size.into(), init.into()]);
+                let dest = bin.vector_new(size.into_int_value(), None);
 
                 let mut elem_slot = slot_hash(bin, *slot);
 
@@ -206,7 +200,7 @@ pub(crate) fn storage_load<'a>(
                     size.into_int_value(),
                     &mut elem_slot,
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        let elem = bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
+                        let elem = bin.array_subscript(ty, dest, elem_no, ns);
 
                         let entry = storage_load(bin, elem_ty, slot, function, ns);
 
@@ -403,9 +397,6 @@ pub(crate) fn storage_store<'a>(
                 //         .into_pointer_value();
                 storage_store(bin, &field.ty, slot, elem.into(), function, ns);
 
-                // 当迭代到最后一个元素的时候，slot的值已经是最后一个元素的slot值了，
-                // 所以不需要再进行slot_next操作
-
                 if (!field.ty.is_reference_type(ns) || matches!(field.ty, Type::String))
                     && (i != ns.structs[*no].fields.len() - 1)
                 {
@@ -515,13 +506,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
     emit_context!(bin);
     let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
-    let init = bin
-        .context
-        .i64_type()
-        .ptr_type(AddressSpace::default())
-        .const_null();
-
-    let dest = call!("vector_new", &[size.into(), init.into()]);
+    let dest = bin.vector_new(size.into_int_value(), None);
     let mut elem_slot = slot_hash(bin, *slot);
 
     bin.emit_loop_cond_first_with_int(
@@ -530,7 +515,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
         size.into_int_value(),
         &mut elem_slot,
         |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-            let elem = bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
+            let elem = bin.array_subscript(ty, dest, elem_no, ns);
 
             let entry = storage_load(bin, &Type::Uint(32), slot, function, ns);
 
@@ -538,7 +523,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
         },
     );
     // load
-    dest
+    dest.into()
 }
 
 /// set string and bytes to storage
