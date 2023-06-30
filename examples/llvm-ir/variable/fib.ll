@@ -1,6 +1,8 @@
 ; ModuleID = 'Fibonacci'
 source_filename = "examples/source/variable/fib.ola"
 
+@heap_address = internal global i64 -4294967353
+
 declare void @builtin_assert(i64, i64)
 
 declare void @builtin_range_check(i64)
@@ -13,7 +15,9 @@ declare i64 @prophet_u32_mod(i64, i64)
 
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
-declare ptr @vector_new(i64, ptr)
+declare i64 @vector_new(i64)
+
+declare ptr @contract_input()
 
 declare [4 x i64] @get_storage([4 x i64])
 

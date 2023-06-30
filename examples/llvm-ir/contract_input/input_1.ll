@@ -1,5 +1,5 @@
-; ModuleID = 'MyContract'
-source_filename = "examples/source/struct/struct_2.ola"
+; ModuleID = 'InputExample'
+source_filename = "examples/source/contract_input/input_1.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -25,12 +25,23 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define ptr @myFunction() {
+define i64 @foo() {
 entry:
-  %struct_alloca = alloca { i64, i64 }, align 8
-  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  store i64 42, ptr %"struct member", align 4
-  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  store i64 3, ptr %"struct member1", align 4
-  ret ptr %struct_alloca
+  ret i64 5
+}
+
+define void @main() {
+entry:
+  %y = alloca i64, align 8
+  %x = alloca i64, align 8
+  store i64 5, ptr %x, align 4
+  %0 = call i64 @foo()
+  store i64 %0, ptr %y, align 4
+  ret void
+}
+
+define i64 @bar() {
+entry:
+  call void @builtin_range_check(i64 9)
+  ret i64 9
 }

@@ -1,8 +1,6 @@
 ; ModuleID = 'DynamicArrayExample'
 source_filename = "examples/source/storage/storage_array_dyn.ola"
 
-@heap_address = internal global i64 -4294967353
-
 declare void @builtin_assert(i64, i64)
 
 declare void @builtin_range_check(i64)

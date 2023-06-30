@@ -763,11 +763,11 @@ impl Type {
         self.guarded_recursion(structs_visited, 0.into(), |structs_visited| match self {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
-            Type::Contract(_) | Type::Address => BigInt::from(32),
-            Type::Uint(n) => BigInt::from(n / 8),
-            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::from(8),
+            Type::Contract(_) | Type::Address => BigInt::from(4),
+            Type::Uint(32) => BigInt::one(),
+            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::one(),
             Type::Array(ty, dims) => {
-                let pointer_size = (BigInt::from(8)).into();
+                let pointer_size = (BigInt::one()).into();
                 ty.memory_size_of_internal(ns, structs_visited).mul(
                     dims.iter()
                         .map(|d| match d {
@@ -783,7 +783,7 @@ impl Type {
                 .iter()
                 .map(|d| d.ty.memory_size_of_internal(ns, structs_visited))
                 .sum::<BigInt>(),
-            Type::String | Type::Ref(_) | Type::Slice(_) | Type::StorageRef(..) => BigInt::from(8),
+            Type::String | Type::Ref(_) | Type::Slice(_) | Type::StorageRef(..) => BigInt::one(),
             Type::Unresolved => BigInt::zero(),
             Type::UserType(no) => ns.user_types[*no]
                 .ty

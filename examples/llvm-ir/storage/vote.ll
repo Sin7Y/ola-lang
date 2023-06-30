@@ -1,6 +1,8 @@
 ; ModuleID = 'Voting'
 source_filename = "examples/source/storage/vote.ola"
 
+@heap_address = internal global i64 -4294967353
+
 declare void @builtin_assert(i64, i64)
 
 declare void @builtin_range_check(i64)
@@ -13,7 +15,9 @@ declare i64 @prophet_u32_mod(i64, i64)
 
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
-declare ptr @vector_new(i64, ptr)
+declare i64 @vector_new(i64)
+
+declare ptr @contract_input()
 
 declare [4 x i64] @get_storage([4 x i64])
 
@@ -287,24 +291,34 @@ entry:
   %9 = insertvalue [4 x i64] %6, i64 %8, 3
   %10 = call [4 x i64] @get_storage([4 x i64] %9)
   %11 = extractvalue [4 x i64] %10, 3
-  %12 = call ptr @vector_new(i64 %11, ptr null)
-  %13 = extractvalue [4 x i64] %9, 0
-  %14 = extractvalue [4 x i64] %9, 1
-  %15 = extractvalue [4 x i64] %9, 2
-  %16 = extractvalue [4 x i64] %9, 3
-  %17 = insertvalue [8 x i64] undef, i64 %16, 7
-  %18 = insertvalue [8 x i64] %17, i64 %15, 6
-  %19 = insertvalue [8 x i64] %18, i64 %14, 5
-  %20 = insertvalue [8 x i64] %19, i64 %13, 4
-  %21 = insertvalue [8 x i64] %20, i64 0, 3
-  %22 = insertvalue [8 x i64] %21, i64 0, 2
-  %23 = insertvalue [8 x i64] %22, i64 0, 1
-  %24 = insertvalue [8 x i64] %23, i64 0, 0
-  %25 = call [4 x i64] @poseidon_hash([8 x i64] %24)
+  %12 = call i64 @vector_new(i64 %11)
+  %13 = load i64, ptr @heap_address, align 4
+  %allocated_size = sub i64 %13, %12
+  call void @builtin_assert(i64 %allocated_size, i64 %11)
+  store i64 %12, ptr @heap_address, align 4
+  %int_to_ptr = inttoptr i64 %12 to ptr
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %11, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %int_to_ptr, ptr %vector_data, align 8
+  %14 = extractvalue [4 x i64] %9, 0
+  %15 = extractvalue [4 x i64] %9, 1
+  %16 = extractvalue [4 x i64] %9, 2
+  %17 = extractvalue [4 x i64] %9, 3
+  %18 = insertvalue [8 x i64] undef, i64 %17, 7
+  %19 = insertvalue [8 x i64] %18, i64 %16, 6
+  %20 = insertvalue [8 x i64] %19, i64 %15, 5
+  %21 = insertvalue [8 x i64] %20, i64 %14, 4
+  %22 = insertvalue [8 x i64] %21, i64 0, 3
+  %23 = insertvalue [8 x i64] %22, i64 0, 2
+  %24 = insertvalue [8 x i64] %23, i64 0, 1
+  %25 = insertvalue [8 x i64] %24, i64 0, 0
+  %26 = call [4 x i64] @poseidon_hash([8 x i64] %25)
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
-  %26 = alloca [4 x i64], align 8
-  store [4 x i64] %25, ptr %26, align 4
+  %27 = alloca [4 x i64], align 8
+  store [4 x i64] %26, ptr %27, align 4
   br label %cond
 
 cond:                                             ; preds = %body, %entry
@@ -313,19 +327,19 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %27 = load [4 x i64], ptr %26, align 4
-  %data = getelementptr inbounds { i64, ptr }, ptr %12, i32 0, i32 1
+  %28 = load [4 x i64], ptr %27, align 4
+  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
   %index_access = getelementptr i64, ptr %data, i64 %index_value
-  %28 = call [4 x i64] @get_storage([4 x i64] %27)
-  %29 = extractvalue [4 x i64] %28, 3
-  store i64 %29, ptr %index_access, align 4
-  store [4 x i64] %27, ptr %26, align 4
+  %29 = call [4 x i64] @get_storage([4 x i64] %28)
+  %30 = extractvalue [4 x i64] %29, 3
+  store i64 %30, ptr %index_access, align 4
+  store [4 x i64] %28, ptr %27, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  ret ptr %12
+  ret ptr %vector_alloca
 }
 
 define [4 x i64] @get_caller() {
