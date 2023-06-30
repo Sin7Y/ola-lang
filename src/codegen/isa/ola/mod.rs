@@ -31,7 +31,9 @@ impl TargetIsa for Ola {
     fn module_passes() -> Vec<for<'a, 'b> fn(&'b mut Module<'a, Self>) -> Result<()>> {
         vec![
             regalloc::run_on_module,
+            pass::add_peephole::run_on_module,
             pass::simple_reg_coalescing::run_on_module,
+            pass::add_peephole::run_on_module,
             pass::eliminate_slot::run_on_module,
             pass::pro_epi_inserter::run_on_module,
         ]

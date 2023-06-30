@@ -348,7 +348,7 @@ entry:
     }
 
     #[test]
-    fn codegen_str_poseidon_test() {
+    fn codegen_str_poseidon_imm_test() {
         // LLVM Assembly
         let asm = r#"
 ; ModuleID = 'StrImm'
@@ -435,6 +435,258 @@ entry:
   ret
 "
         );
+    }
+
+    #[test]
+    fn codegen_str_poseidon_var_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'StrImm'
+source_filename = "examples/source/storage/storage_u32.ola"
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare ptr @vector_new(i64, ptr)
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+define void @str_var(i64 %5, i64 %6, i64 %7) { 
+entry:
+  %8 = insertvalue [8 x i64] undef, i64 %7, 7
+  %9 = insertvalue [8 x i64] %8, i64 %6, 6
+  %10 = insertvalue [8 x i64] %9, i64 %5, 5
+  %11 = insertvalue [8 x i64] %10, i64 50, 4
+  %12 = insertvalue [8 x i64] %11, i64 40, 3
+  %13 = insertvalue [8 x i64] %12, i64 30, 2
+  %14 = insertvalue [8 x i64] %13, i64 20, 1
+  %15 = insertvalue [8 x i64] %14, i64 10, 0
+  %16 = call [4 x i64] @poseidon_hash([8 x i64] %15)
+  ;call void @set_storage([4 x i64] [i64 5, i64 6, i64 7, i64 8], [4 x i64] %9)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "str_var:
+.LBL10_0:
+  add r9 r9 21
+  mov r0 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mstore [r9,-1] r6
+  mov r6 0
+  mstore [r9,-2] r6
+  mov r6 0
+  mstore [r9,-3] r6
+  mov r6 0
+  mstore [r9,-4] r6
+  mov r6 0
+  mstore [r9,-5] r6
+  mload r6 [r9,-1]
+  mstore [r9,-6] r6
+  mload r6 [r9,-2]
+  mstore [r9,-7] r6
+  mload r6 [r9,-3]
+  mstore [r9,-8] r6
+  mload r6 [r9,-4]
+  mstore [r9,-9] r6
+  mload r6 [r9,-6]
+  mstore [r9,-10] r6
+  mload r6 [r9,-7]
+  mstore [r9,-11] r6
+  mload r6 [r9,-8]
+  mstore [r9,-12] r6
+  mload r6 [r9,-10]
+  mstore [r9,-13] r6
+  mload r6 [r9,-11]
+  mstore [r9,-14] r6
+  mload r6 [r9,-13]
+  mstore [r9,-15] r6
+  mov r6 50
+  mstore [r9,-16] r6
+  mov r5 40
+  mload r6 [r9,-16]
+  mstore [r9,-17] r6
+  mov r4 30
+  mload r6 [r9,-17]
+  mstore [r9,-18] r6
+  mov r3 20
+  mload r6 [r9,-18]
+  mstore [r9,-19] r6
+  mov r6 10
+  mstore [r9,-20] r6
+  mload r6 [r9,-19]
+  mstore [r9,-21] r6
+  add r6 r0 0
+  add r7 r1 0
+  add r8 r2 0
+  mload r0 [r9,-20]
+  mov r1 r0
+  mov r2 r3
+  mov r3 r4
+  mov r4 r5
+  mload r0 [r9,-21]
+  mov r5 r0
+  poseidon 
+  add r9 r9 -21
+  ret
+"
+        );
+        /*
+        str_var:
+        .LBL10_0:
+          add r9 r9 21
+          mov r0 r1
+          mov r1 r2
+          mov r2 r3
+          mov r3 0
+          mov r4 0
+          mov r5 0
+          mov r6 0
+          mstore [r9,-1] r6
+          mov r6 0
+          mstore [r9,-2] r6
+          mov r6 0
+          mstore [r9,-3] r6
+          mov r6 0
+          mstore [r9,-4] r6
+          mov r6 0
+          mstore [r9,-5] r6
+          add r3 r3 0
+          add r4 r4 0
+          add r5 r5 0
+          mload r6 [r9,-1]
+          add r6 r6 0
+          mstore [r9,-6] r6
+          mload r6 [r9,-2]
+          add r6 r6 0
+          mstore [r9,-7] r6
+          mload r6 [r9,-3]
+          add r6 r6 0
+          mstore [r9,-8] r6
+          mload r6 [r9,-4]
+          add r6 r6 0
+          mstore [r9,-9] r6
+          add r2 r2 0
+          add r3 r3 0
+          add r4 r4 0
+          add r5 r5 0
+          mload r6 [r9,-6]
+          add r6 r6 0
+          mstore [r9,-10] r6
+          mload r6 [r9,-7]
+          add r6 r6 0
+          mstore [r9,-11] r6
+          mload r6 [r9,-8]
+          add r6 r6 0
+          mstore [r9,-12] r6
+          add r1 r1 0
+          add r2 r2 0
+          add r3 r3 0
+          add r4 r4 0
+          add r5 r5 0
+          mload r6 [r9,-10]
+          add r6 r6 0
+          mstore [r9,-13] r6
+          mload r6 [r9,-11]
+          add r6 r6 0
+          mstore [r9,-14] r6
+          add r0 r0 0
+          add r1 r1 0
+          add r2 r2 0
+          add r3 r3 0
+          add r4 r4 0
+          add r5 r5 0
+          mload r6 [r9,-13]
+          add r6 r6 0
+          mstore [r9,-15] r6
+          add r6 50 0
+          mstore [r9,-16] r6
+          add r0 r0 0
+          add r1 r1 0
+          add r2 r2 0
+          add r3 r3 0
+          add r4 r4 0
+          add r5 r5 0
+          add r5 40 0
+          mload r6 [r9,-16]
+          add r6 r6 0
+          mstore [r9,-17] r6
+          add r0 r0 0
+          add r1 r1 0
+          add r2 r2 0
+          add r3 r3 0
+          add r4 r4 0
+          add r4 30 0
+          add r5 r5 0
+          mload r6 [r9,-17]
+          add r6 r6 0
+          mstore [r9,-18] r6
+          add r0 r0 0
+          add r1 r1 0
+          add r2 r2 0
+          add r3 r3 0
+          add r3 20 0
+          add r4 r4 0
+          add r5 r5 0
+          mload r6 [r9,-18]
+          add r6 r6 0
+          mstore [r9,-19] r6
+          add r0 r0 0
+          add r1 r1 0
+          add r2 r2 0
+          add r6 10 0
+          mstore [r9,-20] r6
+          add r3 r3 0
+          add r4 r4 0
+          add r5 r5 0
+          mload r6 [r9,-19]
+          add r6 r6 0
+          mstore [r9,-21] r6
+          add r6 r0 0
+          add r7 r1 0
+          add r8 r2 0
+          mload r0 [r9,-20]
+          mov r1 r0
+          mov r2 r3
+          mov r3 r4
+          mov r4 r5
+          mload r0 [r9,-21]
+          mov r5 r0
+          poseidon
+          add r9 r9 -21
+          ret
+         */
     }
 
     #[ignore]

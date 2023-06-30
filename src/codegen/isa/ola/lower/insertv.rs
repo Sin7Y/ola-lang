@@ -34,7 +34,7 @@ pub fn lower_insertvalue(
         }
     };
     //let mut output = vec![];
-    let output: Vec<crate::codegen::register::VReg> = new_empty_str_inst_output(ctx, tys[0], id);
+    let output = new_empty_str_inst_output(ctx, tys[0], id);
     let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
     for ist_idx in 0..sz {
         let input = if ist_idx == idx {
@@ -44,10 +44,11 @@ pub fn lower_insertvalue(
         };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode: Opcode::MOVrr,
+                opcode: Opcode::ADDri,
                 operands: vec![
                     MO::output(output[ist_idx as usize].into()),
                     MO::input(input),
+                    MO::input(0.into()),
                 ],
             },
             ctx.block_map[&ctx.cur_block],
