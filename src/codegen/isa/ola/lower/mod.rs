@@ -332,37 +332,45 @@ fn get_operands_for_const(
             ref elems,
             ..
         }) => {
-            println!("array const operand");
             let mut inputs = vec![];
             for (_idx, e) in elems.iter().enumerate() {
-                let addr = ctx.mach_data.vregs.add_vreg_data(*elem_ty);
-                let input: Result<MO, &str> = match e {
-                    ConstantValue::Int(ConstantInt::Int32(i)) => {
-                        Ok(MO::new(OperandData::Int32(*i)))
-                    }
-                    ConstantValue::Int(ConstantInt::Int64(i)) => {
-                        Ok(MO::new(OperandData::Int64(*i)))
-                    }
+                /*
+                    let addr = ctx.mach_data.vregs.add_vreg_data(*elem_ty);
+                    let input: Result<MO, &str> = match e {
+                        ConstantValue::Int(ConstantInt::Int32(i)) => {
+                            Ok(MO::new(OperandData::Int32(*i)))
+                        }
+                        ConstantValue::Int(ConstantInt::Int64(i)) => {
+                            Ok(MO::new(OperandData::Int64(*i)))
+                        }
+                        e => todo!("{:?}", e),
+                    };
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::MOVri,
+                            operands: vec![MO::output(addr.into()), input.unwrap()],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                    println!("array const operand vreg: {:?}", addr);
+                    inputs.push(addr.into());
+                */
+                let input = match e {
+                    ConstantValue::Int(ConstantInt::Int32(i)) => OperandData::Int32(*i),
+                    ConstantValue::Int(ConstantInt::Int64(i)) => OperandData::Int64(*i),
                     e => todo!("{:?}", e),
                 };
-                ctx.inst_seq.push(MachInstruction::new(
-                    InstructionData {
-                        opcode: Opcode::MOVri,
-                        operands: vec![MO::output(addr.into()), input.unwrap()],
-                    },
-                    ctx.block_map[&ctx.cur_block],
-                ));
-                println!("array const operand vreg: {:?}", addr);
-                inputs.push(addr.into());
+                println!("array const operand vreg: {:?}", input);
+                inputs.push(input);
             }
             Ok(inputs)
         }
         ConstantValue::AggregateZero(ty) | ConstantValue::Undef(ty) => {
-            println!("aggregate zero const operand");
             let mut inputs = vec![];
             let sz = ctx.isa.data_layout().get_size_of(ctx.types, *ty) / 4;
             let elem_ty = ctx.types.base().element(*ty).unwrap();
             for _ in 0..sz {
+                /*
                 let addr = ctx.mach_data.vregs.add_vreg_data(elem_ty);
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
@@ -373,6 +381,9 @@ fn get_operands_for_const(
                 ));
                 println!("aggregate zero const operand vreg {:?}", addr);
                 inputs.push(addr.into());
+                */
+                println!("aggregate zero const operand");
+                inputs.push(0.into());
             }
             Ok(inputs)
         }

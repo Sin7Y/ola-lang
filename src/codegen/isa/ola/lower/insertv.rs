@@ -42,13 +42,24 @@ pub fn lower_insertvalue(
         } else {
             value[ist_idx as usize].clone()
         };
+        println!("insert value operand data: {:?}", input);
+        let opcode = match input {
+            OperandData::Int32(_) => Opcode::MOVri,
+            OperandData::VReg(_) => Opcode::MOVrr,
+            e => {
+                return Err(LoweringError::Todo(format!(
+                    "Unsupported insertvalue idx operand data type: {:?}",
+                    e
+                ))
+                .into())
+            }
+        };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode: Opcode::ADDri,
+                opcode,
                 operands: vec![
                     MO::output(output[ist_idx as usize].into()),
                     MO::input(input),
-                    MO::input(0.into()),
                 ],
             },
             ctx.block_map[&ctx.cur_block],
