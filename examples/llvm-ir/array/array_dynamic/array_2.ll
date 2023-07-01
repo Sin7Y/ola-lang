@@ -34,6 +34,23 @@ entry:
   call void @builtin_assert(i64 %allocated_size, i64 5)
   store i64 %0, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %0 to ptr
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, 5
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
+  store i64 0, ptr %index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
   %vector_alloca = alloca { i64, ptr }, align 8
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   store i64 5, ptr %vector_len, align 4

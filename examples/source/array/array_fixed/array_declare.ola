@@ -1,0 +1,7 @@
+contract FixedArrayExample {
+    
+      fn array_dec() -> (u32) {
+        u32[2] array;
+        return array[0];
+    }
+}

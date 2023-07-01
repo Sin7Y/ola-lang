@@ -71,11 +71,13 @@ entry:
   store i64 %1, ptr %value, align 4
   %2 = load i64, ptr %value, align 4
   %3 = load i64, ptr %index, align 4
-  %4 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
-  %5 = extractvalue [4 x i64] %4, 3
-  %6 = add i64 %5, %3
-  %7 = insertvalue [4 x i64] %4, i64 %6, 3
-  %8 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %2, 3
-  call void @set_storage([4 x i64] %7, [4 x i64] %8)
+  %4 = sub i64 4, %3
+  call void @builtin_range_check(i64 %4)
+  %5 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
+  %6 = extractvalue [4 x i64] %5, 3
+  %7 = add i64 %6, %3
+  %8 = insertvalue [4 x i64] %5, i64 %7, 3
+  %9 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %2, 3
+  call void @set_storage([4 x i64] %8, [4 x i64] %9)
   ret void
 }
