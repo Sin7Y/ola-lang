@@ -51,6 +51,26 @@ entry:
   store i64 8, ptr %elemptr8, align 4
   %elemptr9 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 9
   store i64 9, ptr %elemptr9, align 4
+  %elemptr02 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 0
+  store i64 0, ptr %elemptr02, align 4
+  %elemptr13 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 1
+  store i64 0, ptr %elemptr13, align 4
+  %elemptr24 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 2
+  store i64 0, ptr %elemptr24, align 4
+  %elemptr35 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 3
+  store i64 0, ptr %elemptr35, align 4
+  %elemptr46 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 4
+  store i64 0, ptr %elemptr46, align 4
+  %elemptr57 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 5
+  store i64 0, ptr %elemptr57, align 4
+  %elemptr68 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 6
+  store i64 0, ptr %elemptr68, align 4
+  %elemptr79 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 7
+  store i64 0, ptr %elemptr79, align 4
+  %elemptr810 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 8
+  store i64 0, ptr %elemptr810, align 4
+  %elemptr911 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 9
+  store i64 0, ptr %elemptr911, align 4
   call void @builtin_range_check(i64 7)
   %index_access = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 2
   store i64 99, ptr %index_access, align 4

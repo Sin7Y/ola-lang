@@ -309,6 +309,7 @@ impl<'a> Binary<'a> {
     /// Allocate vector
     pub(crate) fn vector_new(
         &self,
+        function: FunctionValue<'a>,
         size: IntValue<'a>,
         init: Option<&Vec<u32>>,
     ) -> PointerValue<'a> {
@@ -349,8 +350,11 @@ impl<'a> Binary<'a> {
             "int_to_ptr",
         );
         let vector_type = self.struct_vector_type();
+
         match init {
-            None => {}
+            None => {
+                self.vector_zero_init(function, self.context.i64_type().const_zero(), size, data);
+            }
             Some(init) => {
                 for (item_no, item) in init.iter().enumerate() {
                     let item = self.context.i64_type().const_int(*item as u64, false);
@@ -495,6 +499,64 @@ impl<'a> Binary<'a> {
                 .build_struct_gep(vector_type, vector.into_pointer_value(), 1, "data")
                 .unwrap()
         }
+    }
+
+    pub fn vector_zero_init(
+        &self,
+        function: FunctionValue<'a>,
+        from: IntValue<'a>,
+        to: IntValue<'a>,
+        data_ref: PointerValue<'a>,
+    ) {
+        let cond = self.context.append_basic_block(function, "cond");
+        let body = self.context.append_basic_block(function, "body");
+        let done = self.context.append_basic_block(function, "done");
+
+        let loop_ty = from.get_type();
+        // create an alloca for the loop variable
+        let index_alloca = self.builder.build_alloca(loop_ty, "index_alloca");
+        // initialize the loop variable with the starting value
+        self.builder.build_store(index_alloca, from);
+
+        self.builder.build_unconditional_branch(cond);
+        self.builder.position_at_end(cond);
+
+        // load current value of the loop variable
+        let index_value = self
+            .builder
+            .build_load(loop_ty, index_alloca, "index_value")
+            .into_int_value();
+
+        let comp = self
+            .builder
+            .build_int_compare(IntPredicate::ULT, index_value, to, "loop_cond");
+        self.builder.build_conditional_branch(comp, body, done);
+
+        // build the loop body
+        self.builder.position_at_end(body);
+
+        let index_access = unsafe {
+            self.builder.build_gep(
+                self.context.i64_type().ptr_type(AddressSpace::default()),
+                data_ref,
+                &[index_value],
+                "index_access",
+            )
+        };
+
+        self.builder
+            .build_store(index_access, self.context.i64_type().const_zero());
+
+        let next_index =
+            self.builder
+                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+
+        // store the incremented value back
+        self.builder.build_store(index_alloca, next_index);
+
+        self.builder.build_unconditional_branch(cond);
+
+        self.builder.position_at_end(done);
     }
 
     /// Emit a loop from `from` to `to`. The closure exists to insert the body

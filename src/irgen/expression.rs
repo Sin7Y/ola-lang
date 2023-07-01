@@ -507,7 +507,8 @@ pub fn expression<'a>(
             length: size, init, ..
         } => {
             let size = expression(size, bin, func_context, ns).into_int_value();
-            bin.vector_new(size, init.as_ref()).into()
+            bin.vector_new(func_context.func_val, size, init.as_ref())
+                .into()
         }
         Expression::ConditionalOperator {
             ty,
@@ -553,6 +554,7 @@ pub fn array_literal_to_memory_array<'a>(
 ) -> BasicValueEnum<'a> {
     let dims = expr.ty().array_length().unwrap().clone();
     let array_vector = bin.vector_new(
+        func_context.func_val,
         bin.context
             .i64_type()
             .const_int(dims.to_u64().unwrap(), false),

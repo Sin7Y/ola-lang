@@ -1,7 +1,7 @@
 use inkwell::types::BasicTypeEnum;
 use inkwell::values::{BasicValue, BasicValueEnum};
 use num_bigint::BigInt;
-use num_traits::Zero;
+use num_traits::{ToPrimitive, Zero};
 
 use super::expression::expression;
 use super::storage::storage_delete;
@@ -12,6 +12,7 @@ use crate::sema::ast::Type::Uint;
 use crate::sema::ast::{
     self, ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
+use crate::sema::expression::integers::bigint_to_expression;
 use ola_parser::program;
 use ola_parser::program::Loc::IRgen;
 
@@ -542,11 +543,27 @@ impl Type {
                         init: None,
                     })
                 } else {
+                    let dims = dims
+                        .iter()
+                        .map(|d| match d {
+                            ArrayLength::Fixed(d) => d.to_u32().unwrap(),
+                            _ => unreachable!(),
+                        })
+                        .collect::<Vec<_>>();
+
+                    let values = vec![
+                        Expression::NumberLiteral {
+                            loc: IRgen,
+                            ty: Type::Uint(32),
+                            value: BigInt::zero(),
+                        };
+                        self.array_length().unwrap().to_usize().unwrap()
+                    ];
                     Some(Expression::ArrayLiteral {
                         loc: IRgen,
                         ty: self.clone(),
-                        dimensions: Vec::new(),
-                        values: Vec::new(),
+                        dimensions: dims.clone(),
+                        values: values,
                     })
                 }
             }

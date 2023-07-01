@@ -28,6 +28,12 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 define void @main() {
 entry:
   %array_literal = alloca [3 x i64], align 8
+  %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+  store i64 0, ptr %elemptr0, align 4
+  %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
+  store i64 0, ptr %elemptr1, align 4
+  %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  store i64 0, ptr %elemptr2, align 4
   call void @builtin_range_check(i64 0)
   %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
   store i64 3, ptr %index_access, align 4

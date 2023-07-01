@@ -50,9 +50,15 @@ entry:
   store i64 2, ptr %elemptr14, align 4
   %elemptr25 = getelementptr [3 x i64], ptr %array_literal2, i64 0, i64 2
   store i64 3, ptr %elemptr25, align 4
+  %elemptr07 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 0
+  store i64 0, ptr %elemptr07, align 4
+  %elemptr18 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 1
+  store i64 0, ptr %elemptr18, align 4
+  %elemptr29 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 2
+  store i64 0, ptr %elemptr29, align 4
   call void @builtin_range_check(i64 0)
-  %index_access7 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 2
-  store i64 99, ptr %index_access7, align 4
+  %index_access10 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 2
+  store i64 99, ptr %index_access10, align 4
   %2 = call ptr @array_call(ptr %array_literal6)
   ret void
 }
