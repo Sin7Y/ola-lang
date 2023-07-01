@@ -732,6 +732,32 @@ fn array_subscript<'a>(
             unreachable!()
         }
     };
+
+    let array_length_sub_one: BasicValueEnum = bin
+        .builder
+        .build_int_sub(
+            array_length.into_int_value(),
+            bin.context.i64_type().const_int(1, false),
+            "",
+        )
+        .into();
+    let array_length_sub_one_sub_index: BasicValueEnum = bin
+        .builder
+        .build_int_sub(
+            array_length_sub_one.into_int_value(),
+            index.into_int_value(),
+            "",
+        )
+        .into();
+    // check if index is out of bounds
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[array_length_sub_one_sub_index.into()],
+        "",
+    );
+
     if let Type::StorageRef(..) = &array_ty {
         array_offset(bin, array, index)
     } else if array_ty.is_dynamic_memory() {
@@ -750,30 +776,6 @@ fn array_subscript<'a>(
         };
     } else {
         let array_type = bin.llvm_type(array_ty.deref_memory(), ns);
-        let array_length_sub_one: BasicValueEnum = bin
-            .builder
-            .build_int_sub(
-                array_length.into_int_value(),
-                bin.context.i64_type().const_int(1, false),
-                "",
-            )
-            .into();
-        let array_length_sub_one_sub_index: BasicValueEnum = bin
-            .builder
-            .build_int_sub(
-                array_length_sub_one.into_int_value(),
-                index.into_int_value(),
-                "",
-            )
-            .into();
-        // check if index is out of bounds
-        bin.builder.build_call(
-            bin.module
-                .get_function("builtin_range_check")
-                .expect("builtin_range_check should have been defined before"),
-            &[array_length_sub_one_sub_index.into()],
-            "",
-        );
 
         let element_ptr = unsafe {
             bin.builder.build_gep(
