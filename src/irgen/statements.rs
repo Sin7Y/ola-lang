@@ -551,6 +551,16 @@ impl Type {
                 }
             }
             Type::Function { .. } => None,
+            Type::String => Some(Expression::AllocDynamicBytes {
+                loc: IRgen,
+                ty: self.clone(),
+                length: Box::new(Expression::NumberLiteral {
+                    loc: IRgen,
+                    ty: Uint(32),
+                    value: BigInt::zero(),
+                }),
+                init: None,
+            }),
 
             _ => None,
         }
