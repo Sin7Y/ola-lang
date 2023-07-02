@@ -64,9 +64,10 @@ impl LowerTrait<Ola> for Lower {
             if ty.is_array(ctx.types) {
                 let sz = ctx.isa.data_layout().get_size_of(ctx.types, *ty) / 4;
                 let e_ty = ctx.types.base().element(*ty).unwrap();
-                for nth in 0..sz {
-                    let reg = args[para_idx + nth].apply(&RegClass::for_type(ctx.types, e_ty));
-                    let output = ctx.mach_data.vregs.add_vreg_data(*ty);
+                let mut outputs = vec![];
+                for _ in 0..sz {
+                    let reg = args[gpr_used].apply(&RegClass::for_type(ctx.types, e_ty));
+                    let output = ctx.mach_data.vregs.add_vreg_data(e_ty);
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::MOVrr,
@@ -74,13 +75,12 @@ impl LowerTrait<Ola> for Lower {
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
-                    if nth == 0 {
-                        ctx.arg_idx_to_vreg.insert(para_idx, output);
-                    }
+                    outputs.push(output);
                     gpr_used += 1;
                 }
+                ctx.arg_idx_to_vreg.insert(para_idx, outputs);
             } else {
-                let reg = args[para_idx].apply(&RegClass::for_type(ctx.types, *ty));
+                let reg = args[gpr_used].apply(&RegClass::for_type(ctx.types, *ty));
                 // debug!(reg);
                 // Copy reg to new vreg
                 let output = ctx.mach_data.vregs.add_vreg_data(*ty);
@@ -93,7 +93,7 @@ impl LowerTrait<Ola> for Lower {
                     },
                     ctx.block_map[&ctx.cur_block],
                 ));
-                ctx.arg_idx_to_vreg.insert(para_idx, output);
+                ctx.arg_idx_to_vreg.insert(para_idx, vec![output]);
             }
         }
         Ok(())
@@ -228,7 +228,7 @@ fn get_operand_for_val(
             let vreg = get_inst_output(ctx, ty, id)?;
             Ok(vreg[0].into())
         }
-        Value::Argument(ref a) => Ok(ctx.arg_idx_to_vreg[&a.nth].into()),
+        Value::Argument(ref a) => Ok(ctx.arg_idx_to_vreg[&a.nth][0].into()),
         Value::Constant(ref konst) => get_operand_for_const(ctx, ty, konst),
         ref e => Err(LoweringError::Todo(format!("Unsupported value: {:?}", e)).into()),
     }
@@ -337,12 +337,14 @@ fn get_operands_for_val(
             }
             Ok(vregs_dst)
         }
-        Value::Argument(ref a) => Ok(vec![
-            ctx.arg_idx_to_vreg[&a.nth].into(),
-            ctx.arg_idx_to_vreg[&a.nth].into(),
-            ctx.arg_idx_to_vreg[&a.nth].into(),
-            ctx.arg_idx_to_vreg[&a.nth].into(),
-        ]),
+        Value::Argument(ref a) => {
+            let mut vregs = vec![];
+            let ops = ctx.arg_idx_to_vreg.get(&a.nth).unwrap();
+            for idx in 0..ops.len() {
+                vregs.push(ops[idx].into());
+            }
+            Ok(vregs)
+        }
         Value::Constant(ref konst) => get_operands_for_const(ctx, ty, konst),
         ref e => Err(LoweringError::Todo(format!("Unsupported value: {:?}", e)).into()),
     }
@@ -357,7 +359,7 @@ fn get_operands_for_const(
     match konst {
         ConstantValue::Array(ConstantArray {
             ty: _,
-            elem_ty,
+            elem_ty: _,
             ref elems,
             ..
         }) => {
@@ -398,7 +400,7 @@ fn get_operands_for_const(
         ConstantValue::AggregateZero(ty) | ConstantValue::Undef(ty) => {
             let mut inputs = vec![];
             let sz = ctx.isa.data_layout().get_size_of(ctx.types, *ty) / 4;
-            let elem_ty = ctx.types.base().element(*ty).unwrap();
+            // let elem_ty = ctx.types.base().element(*ty).unwrap();
             for _ in 0..sz {
                 /*
                 let addr = ctx.mach_data.vregs.add_vreg_data(elem_ty);

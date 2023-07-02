@@ -38,7 +38,7 @@ pub struct LoweringContext<'a, 'isa: 'a, T: TargetIsa> {
     pub mach_data: &'a mut Data<T::Inst>,
     pub slots: &'a mut Slots<'isa, T>,
     pub inst_id_to_slot_id: &'a mut FxHashMap<IrInstructionId, SlotId>,
-    pub arg_idx_to_vreg: &'a mut FxHashMap<usize, VReg>,
+    pub arg_idx_to_vreg: &'a mut FxHashMap<usize, Vec<VReg>>,
     pub inst_seq: &'a mut Vec<MachInstruction<T::Inst>>,
     pub types: &'a Types,
     pub inst_id_to_vreg: &'a mut FxHashMap<IrInstructionId, Vec<VReg>>,

@@ -108,7 +108,14 @@ pub fn lower_store(
                 vreg = Some(get_inst_output(ctx, tys[0], *id)?);
             }
         }
-        Value::Argument(a) => vreg = Some(vec![ctx.arg_idx_to_vreg.get(&a.nth).copied().unwrap()]),
+        Value::Argument(a) => {
+            let mut vregs = vec![];
+            let ops = ctx.arg_idx_to_vreg.get(&a.nth).unwrap();
+            for idx in 0..ops.len() {
+                vregs.push(ops[idx]);
+            }
+            vreg = Some(vregs);
+        }
         e => return Err(LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into()),
     }
 

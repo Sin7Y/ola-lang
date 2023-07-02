@@ -41,7 +41,12 @@ pub fn lower_load(
             gbl = Some(name);
         }
         Value::Argument(a) => {
-            vreg = Some(vec![ctx.arg_idx_to_vreg.get(&a.nth).copied().unwrap()]);
+            let mut vregs = vec![];
+            let ops = ctx.arg_idx_to_vreg.get(&a.nth).unwrap();
+            for idx in 0..ops.len() {
+                vregs.push(ops[idx]);
+            }
+            vreg = Some(vregs);
         }
         _ => return Err(LoweringError::Todo("Unsupported load pattern 1".into()).into()),
     }

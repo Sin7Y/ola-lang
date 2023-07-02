@@ -227,8 +227,66 @@ entry:
         println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
-            "main:
-
+            "add_mapping:
+.LBL11_0:
+  add r9 r9 10
+  mov r0 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 r4
+  mov r4 r5
+  mstore [r9,-1] r4
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mstore [r9,-2] r6
+  mov r6 0
+  mstore [r9,-3] r6
+  mov r6 0
+  mstore [r9,-4] r6
+  mov r6 0
+  mstore [r9,-5] r6
+  mov r6 0
+  mstore [r9,-6] r6
+  mov r8 r3
+  mov r3 r4
+  mov r4 r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-3]
+  mstore [r9,-7] r6
+  mload r6 [r9,-4]
+  mstore [r9,-8] r6
+  mload r6 [r9,-5]
+  mstore [r9,-9] r6
+  mov r7 r2
+  mov r2 r3
+  mov r3 r4
+  mov r4 r5
+  mload r5 [r9,-7]
+  mload r6 [r9,-8]
+  mstore [r9,-10] r6
+  mov r6 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 r4
+  mov r4 r5
+  mov r5 r0
+  mov r0 r1
+  mov r1 r2
+  mov r2 r3
+  mov r4 0
+  mov r3 0
+  mov r2 0
+  mov r1 0
+  poseidon 
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mload r0 [r9,-1]
+  mov r8 r0
+  sstore 
+  add r9 r9 -10
+  ret
 "
         );
     }

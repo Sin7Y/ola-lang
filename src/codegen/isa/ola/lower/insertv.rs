@@ -36,7 +36,7 @@ pub fn lower_insertvalue(
     //let mut output = vec![];
     let output = new_empty_str_inst_output(ctx, tys[0], id);
     let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
-    let mut opcode = Opcode::MOVrr;
+    let mut opcode;
     for ist_idx in 0..sz {
         let input = if ist_idx == idx {
             opcode = Opcode::MOV;

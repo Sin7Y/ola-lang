@@ -2,11 +2,9 @@ use crate::codegen::{
     function::Function,
     isa::ola::{
         instruction::{Opcode, OperandData},
-        register::RegInfo,
         Ola,
     },
     module::Module,
-    register::RegisterInfo,
 };
 use anyhow::Result;
 
