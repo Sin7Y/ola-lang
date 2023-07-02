@@ -25,6 +25,7 @@ pub fn lower_insertvalue(
 
     let idx = match op_idx {
         OperandData::Int32(op_idx) => op_idx as usize,
+        OperandData::Int64(op_idx) => op_idx as usize,
         e => {
             return Err(LoweringError::Todo(format!(
                 "Unsupported inserttvalue idx operand: {:?}",
@@ -47,7 +48,7 @@ pub fn lower_insertvalue(
         };
         println!("insert value operand data: {:?}", input);
         let opcode = match input {
-            OperandData::Int32(_) => Opcode::MOVri,
+            OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
             OperandData::VReg(_) => opcode,
             e => {
                 return Err(LoweringError::Todo(format!(

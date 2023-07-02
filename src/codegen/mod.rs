@@ -212,6 +212,14 @@ entry:
   call void @set_storage([4 x i64] %16, [4 x i64] %17)
   ret void
 }
+
+define void @main() {
+  entry:
+    ;0595c3e78A0Df589 B486778c4d81a360 5A37Fb041466a0CF A2DA9151fd6b580E
+    call void @add_mapping([4 x i64] [i64 402443140940559753, i64 -5438528055523826848, i64 6500940582073311439, i64 -6711892513312253938], i64 1)
+    ret void
+  }
+
 "#;
 
         // Parse the assembly and get a module
@@ -287,6 +295,18 @@ entry:
   sstore 
   add r9 r9 -10
   ret
+main:
+.LBL12_0:
+  add r9 r9 4
+  mstore [r9,-2] r9
+  mov r1 402443140940559753
+  mov r2 -5438528055523826848
+  mov r3 6500940582073311439
+  mov r4 -6711892513312253938
+  mov r5 1
+  call add_mapping
+  add r9 r9 -4
+  end
 "
         );
     }

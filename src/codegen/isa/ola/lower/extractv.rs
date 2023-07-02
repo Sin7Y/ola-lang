@@ -22,7 +22,8 @@ pub fn lower_extractvalue(
     let op_idx = get_operand_for_val(ctx, elm_ty, args[1])?;
 
     let idx = match op_idx {
-        OperandData::Int32(op_idx) => op_idx,
+        OperandData::Int32(i) => i as usize,
+        OperandData::Int64(i) => i as usize,
         e => {
             return Err(LoweringError::Todo(format!(
                 "Unsupported extractvalue idx operand: {:?}",

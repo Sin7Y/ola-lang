@@ -172,72 +172,107 @@ pub fn lower_call(
 }
 
 fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[ValueId]) -> Result<()> {
-    let gpru = RegInfo::arg_reg_list(&ctx.call_conv);
+    let gpru = RegInfo::str_arg_reg_list(&ctx.call_conv);
+    let mut gpr_used = 0;
 
-    for (gpr_used, (&ty, &arg0)) in tys.iter().zip(args.iter()).enumerate() {
+    for (_, (&ty, &arg0)) in tys.iter().zip(args.iter()).enumerate() {
         println!(
             "type pointer {:?},{:?},arg {:?}",
             ty.is_pointer(ctx.types),
             ty,
             arg0
         );
-        let arg = get_operand_for_val(ctx, ty, arg0)?;
-        println!("1 type {:?},arg {:?}", ty, arg0);
-        let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, ty));
+        assert!(ty.is_integer() || ty.is_pointer(ctx.types) || ty.is_array(ctx.types));
+        if ty.is_array(ctx.types) {
+            let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
+            let e_ty = ctx.types.base().element(ty).unwrap();
 
-        // TODO: pointer with ref passing
-        /* if ty.is_pointer(ctx.types) {
-            match &ctx.ir_data.values[arg0] {
-                Value::Instruction(addr_id) => {
-                    let opcode = ctx.ir_data.instructions[*addr_id].opcode;
-                    if opcode == IrOpcode::GetElementPtr {
-                        // ctx.mark_as_merged(*addr_id);
-                    }
-                }
-                _ => return Err(LoweringError::Todo("Unsupported load pattern 1".into()).into()),
-            }
-
-            let fp: Reg = GR::R9.into();
-            ctx.inst_seq.push(MachInstruction::new(
-                InstructionData {
-                    opcode: Opcode::ADDri,
-                    operands: vec![
-                        MO::output(out.into()),
-                        MO::input(fp.into()),
-                        MO::input((-3).into()),
-                    ],
-                },
-                ctx.block_map[&ctx.cur_block],
-            ));
-            continue;
-        } */
-
-        let opcode = match &arg {
-            OperandData::Int32(_) => Opcode::MOVri,
-            OperandData::Reg(_) => Opcode::MOVrr, // TODO: FIXME
-            OperandData::VReg(vreg) => {
-                let ty = ctx.mach_data.vregs.type_for(*vreg);
-                let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
-                match sz {
-                    4 | 8 => Opcode::MOVrr,
+            let arg = get_operands_for_val(ctx, ty, arg0)?;
+            for idx in 0..sz {
+                let reg = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, e_ty));
+                let opcode = match &arg[idx] {
+                    OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+                    OperandData::Reg(_) | OperandData::VReg(_) => Opcode::MOVrr,
                     e => {
                         return Err(LoweringError::Todo(format!(
-                            "Unsupported argument size: {:?}",
+                            "Unsupported actual argument: {:?}",
                             e
                         ))
                         .into())
                     }
-                }
+                };
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode,
+                        operands: vec![MO::output(reg.into()), MO::input(arg[idx].clone())],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+                gpr_used += 1;
             }
-            e => return Err(LoweringError::Todo(format!("Unsupported argument: {:?}", e)).into()),
-        };
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode,
-                operands: vec![MO::output(out.into()), MO::input(arg)],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
+        } else {
+            let arg = get_operand_for_val(ctx, ty, arg0)?;
+            let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, ty));
+            gpr_used += 1;
+
+            // TODO: pointer with ref passing
+            /* if ty.is_pointer(ctx.types) {
+                match &ctx.ir_data.values[arg0] {
+                    Value::Instruction(addr_id) => {
+                        let opcode = ctx.ir_data.instructions[*addr_id].opcode;
+                        if opcode == IrOpcode::GetElementPtr {
+                            // ctx.mark_as_merged(*addr_id);
+                        }
+                    }
+                    _ => return Err(LoweringError::Todo("Unsupported load pattern 1".into()).into()),
+                }
+
+                let fp: Reg = GR::R9.into();
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::ADDri,
+                        operands: vec![
+                            MO::output(out.into()),
+                            MO::input(fp.into()),
+                            MO::input((-3).into()),
+                        ],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+                continue;
+            } */
+
+            let opcode = match &arg {
+                OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+                OperandData::Reg(_) => Opcode::MOVrr,
+                OperandData::VReg(vreg) => {
+                    let ty = ctx.mach_data.vregs.type_for(*vreg);
+                    let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
+                    match sz {
+                        4 | 8 => Opcode::MOVrr,
+                        e => {
+                            return Err(LoweringError::Todo(format!(
+                                "Unsupported argument size: {:?}",
+                                e
+                            ))
+                            .into())
+                        }
+                    }
+                }
+                e => {
+                    return Err(
+                        LoweringError::Todo(format!("Unsupported argument: {:?}", e)).into(),
+                    )
+                }
+            };
+            ctx.inst_seq.push(MachInstruction::new(
+                InstructionData {
+                    opcode,
+                    operands: vec![MO::output(out.into()), MO::input(arg)],
+                },
+                ctx.block_map[&ctx.cur_block],
+            ));
+        }
     }
 
     Ok(())
@@ -264,7 +299,7 @@ fn pass_str_args_to_regs(
         let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, cur_ty));
 
         let opcode = match &arg {
-            OperandData::Int32(_) => Opcode::MOVri,
+            OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
             OperandData::Reg(_) => Opcode::MOVrr,
             OperandData::VReg(_) => Opcode::MOVrr,
             e => {
