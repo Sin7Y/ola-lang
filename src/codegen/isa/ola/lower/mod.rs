@@ -57,21 +57,44 @@ impl LowerTrait<Ola> for Lower {
     }
 
     fn copy_args_to_vregs(ctx: &mut LoweringContext<Ola>, params: &[Parameter]) -> Result<()> {
-        let args = RegInfo::arg_reg_list(&ctx.call_conv);
-        for (gpr_used, Parameter { name: _, ty, .. }) in params.iter().enumerate() {
-            let reg = args[gpr_used].apply(&RegClass::for_type(ctx.types, *ty));
-            // debug!(reg);
-            // Copy reg to new vreg
-            assert!(ty.is_integer() || ty.is_pointer(ctx.types));
-            let output = ctx.mach_data.vregs.add_vreg_data(*ty);
-            ctx.inst_seq.push(MachInstruction::new(
-                InstructionData {
-                    opcode: Opcode::MOVrr,
-                    operands: vec![MO::output(output.into()), MO::input(reg.into())],
-                },
-                ctx.block_map[&ctx.cur_block],
-            ));
-            ctx.arg_idx_to_vreg.insert(gpr_used, output);
+        let args = RegInfo::str_arg_reg_list(&ctx.call_conv);
+        let mut gpr_used = 0;
+        for (para_idx, Parameter { name: _, ty, .. }) in params.iter().enumerate() {
+            assert!(ty.is_integer() || ty.is_pointer(ctx.types) || ty.is_array(ctx.types));
+            if ty.is_array(ctx.types) {
+                let sz = ctx.isa.data_layout().get_size_of(ctx.types, *ty) / 4;
+                let e_ty = ctx.types.base().element(*ty).unwrap();
+                for nth in 0..sz {
+                    let reg = args[para_idx + nth].apply(&RegClass::for_type(ctx.types, e_ty));
+                    let output = ctx.mach_data.vregs.add_vreg_data(*ty);
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::MOVrr,
+                            operands: vec![MO::output(output.into()), MO::input(reg.into())],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                    if nth == 0 {
+                        ctx.arg_idx_to_vreg.insert(para_idx, output);
+                    }
+                    gpr_used += 1;
+                }
+            } else {
+                let reg = args[para_idx].apply(&RegClass::for_type(ctx.types, *ty));
+                // debug!(reg);
+                // Copy reg to new vreg
+                let output = ctx.mach_data.vregs.add_vreg_data(*ty);
+                gpr_used += 1;
+                assert!(gpr_used <= 8);
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::MOVrr,
+                        operands: vec![MO::output(output.into()), MO::input(reg.into())],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+                ctx.arg_idx_to_vreg.insert(para_idx, output);
+            }
         }
         Ok(())
     }
@@ -314,6 +337,12 @@ fn get_operands_for_val(
             }
             Ok(vregs_dst)
         }
+        Value::Argument(ref a) => Ok(vec![
+            ctx.arg_idx_to_vreg[&a.nth].into(),
+            ctx.arg_idx_to_vreg[&a.nth].into(),
+            ctx.arg_idx_to_vreg[&a.nth].into(),
+            ctx.arg_idx_to_vreg[&a.nth].into(),
+        ]),
         Value::Constant(ref konst) => get_operands_for_const(ctx, ty, konst),
         ref e => Err(LoweringError::Todo(format!("Unsupported value: {:?}", e)).into()),
     }
@@ -358,6 +387,7 @@ fn get_operands_for_const(
                 let input = match e {
                     ConstantValue::Int(ConstantInt::Int32(i)) => OperandData::Int32(*i),
                     ConstantValue::Int(ConstantInt::Int64(i)) => OperandData::Int64(*i),
+                    ConstantValue::Undef(_) => 0.into(),
                     e => todo!("{:?}", e),
                 };
                 println!("array const operand vreg: {:?}", input);

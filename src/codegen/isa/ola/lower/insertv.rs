@@ -36,16 +36,19 @@ pub fn lower_insertvalue(
     //let mut output = vec![];
     let output = new_empty_str_inst_output(ctx, tys[0], id);
     let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
+    let mut opcode = Opcode::MOVrr;
     for ist_idx in 0..sz {
         let input = if ist_idx == idx {
+            opcode = Opcode::MOV;
             op_value.clone()
         } else {
+            opcode = Opcode::MOVrr;
             value[ist_idx as usize].clone()
         };
         println!("insert value operand data: {:?}", input);
         let opcode = match input {
             OperandData::Int32(_) => Opcode::MOVri,
-            OperandData::VReg(_) => Opcode::MOVrr,
+            OperandData::VReg(_) => opcode,
             e => {
                 return Err(LoweringError::Todo(format!(
                     "Unsupported insertvalue idx operand data type: {:?}",
@@ -60,6 +63,7 @@ pub fn lower_insertvalue(
                 operands: vec![
                     MO::output(output[ist_idx as usize].into()),
                     MO::input(input),
+                    //MO::input(0.into()),
                 ],
             },
             ctx.block_map[&ctx.cur_block],

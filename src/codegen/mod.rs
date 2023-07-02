@@ -168,6 +168,72 @@ main:
     }
 
     #[test]
+    fn codegen_array_param_test() {
+        // LLVM Assembly
+        let asm = r#"
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare ptr @vector_new(i64, ptr)
+
+declare ptr @contract_input()
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+define void @add_mapping([4 x i64] %3, i64 %2) {
+entry:
+  %4 = extractvalue [4 x i64] %3, 0
+  %5 = extractvalue [4 x i64] %3, 1
+  %6 = extractvalue [4 x i64] %3, 2
+  %7 = extractvalue [4 x i64] %3, 3
+  %8 = insertvalue [8 x i64] undef, i64 %7, 7
+  %9 = insertvalue [8 x i64] %8, i64 %6, 6
+  %10 = insertvalue [8 x i64] %9, i64 %5, 5
+  %11 = insertvalue [8 x i64] %10, i64 %4, 4
+  %12 = insertvalue [8 x i64] %11, i64 0, 3
+  %13 = insertvalue [8 x i64] %12, i64 0, 2
+  %14 = insertvalue [8 x i64] %13, i64 0, 1
+  %15 = insertvalue [8 x i64] %14, i64 0, 0
+  %16 = call [4 x i64] @poseidon_hash([8 x i64] %15)
+  %17 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %2, 3
+  call void @set_storage([4 x i64] %16, [4 x i64] %17)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+
+"
+        );
+    }
+
+    #[test]
     fn codegen_str_u32_imm_test() {
         // LLVM Assembly
         let asm = r#"
@@ -467,9 +533,10 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 define void @str_var(i64 %6, i64 %7) { 
 entry:
   %0 = add i64 %6, 666
+  %1 = add i64 %0, 888
   %8 = insertvalue [8 x i64] undef, i64 %0, 7
   %9 = insertvalue [8 x i64] %8, i64 %6, 6
-  %10 = insertvalue [8 x i64] %9, i64 %0, 5
+  %10 = insertvalue [8 x i64] %9, i64 %1, 5
   %11 = insertvalue [8 x i64] %10, i64 100 , 4
   %12 = insertvalue [8 x i64] %11, i64 200, 3
   %13 = insertvalue [8 x i64] %12, i64 30, 2

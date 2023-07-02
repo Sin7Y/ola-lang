@@ -340,7 +340,7 @@ impl fmt::Display for Opcode {
             match self {
                 Self::ADDri | Self::ADDrr => "add",
                 Self::MULri | Self::MULrr => "mul",
-                Self::MOVri | Self::MOVrr => "mov",
+                Self::MOVri | Self::MOVrr | Self::MOV => "mov",
                 Self::JMPi | Self::JMPr => "jmp",
                 Self::CJMPi | Self::CJMPr => "cjmp",
                 Self::CALL => "call",

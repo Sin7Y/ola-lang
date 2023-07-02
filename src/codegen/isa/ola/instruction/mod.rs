@@ -33,6 +33,7 @@ pub enum Opcode {
 
     MOVri,
     MOVrr,
+    MOV,
 
     JMPi,
     JMPr,
