@@ -94,10 +94,6 @@ entry:
   %source = alloca ptr, align 8
   store ptr %0, ptr %source, align 8
   %1 = call i64 @vector_new(i64 10)
-  %2 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %2, %1
-  call void @builtin_assert(i64 %allocated_size, i64 10)
-  store i64 %1, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %1 to ptr
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
@@ -125,36 +121,36 @@ done:                                             ; preds = %cond
   br label %cond1
 
 cond1:                                            ; preds = %next, %done
-  %3 = load i64, ptr %i, align 4
-  %4 = icmp ult i64 %3, 10
-  br i1 %4, label %body2, label %endfor
+  %2 = load i64, ptr %i, align 4
+  %3 = icmp ult i64 %2, 10
+  br i1 %3, label %body2, label %endfor
 
 body2:                                            ; preds = %cond1
-  %5 = load i64, ptr %i, align 4
-  %6 = sub i64 9, %5
-  call void @builtin_range_check(i64 %6)
-  %index_access3 = getelementptr [10 x i64], ptr %source, i64 0, i64 %5
-  %7 = load i64, ptr %index_access3, align 4
-  %8 = load i64, ptr %i, align 4
+  %4 = load i64, ptr %i, align 4
+  %5 = sub i64 9, %4
+  call void @builtin_range_check(i64 %5)
+  %index_access3 = getelementptr [10 x i64], ptr %source, i64 0, i64 %4
+  %6 = load i64, ptr %index_access3, align 4
+  %7 = load i64, ptr %i, align 4
   %vector_len4 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length = load i64, ptr %vector_len4, align 4
-  %9 = sub i64 %length, 1
-  %10 = sub i64 %9, %8
-  call void @builtin_range_check(i64 %10)
+  %8 = sub i64 %length, 1
+  %9 = sub i64 %8, %7
+  call void @builtin_range_check(i64 %9)
   %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  %index_access5 = getelementptr i64, ptr %data, i64 %8
-  store i64 %7, ptr %index_access5, align 4
+  %index_access5 = getelementptr i64, ptr %data, i64 %7
+  store i64 %6, ptr %index_access5, align 4
   br label %next
 
 next:                                             ; preds = %body2
-  %11 = load i64, ptr %i, align 4
-  %12 = add i64 %11, 1
-  call void @builtin_range_check(i64 %12)
+  %10 = load i64, ptr %i, align 4
+  %11 = add i64 %10, 1
+  call void @builtin_range_check(i64 %11)
   br label %cond1
 
 endfor:                                           ; preds = %cond1
   %vector_len6 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length7 = load i64, ptr %vector_len6, align 4
-  %13 = call ptr @prophet_u32_array_sort(ptr %vector_alloca, i64 %length7)
-  ret ptr %13
+  %12 = call ptr @prophet_u32_array_sort(ptr %vector_alloca, i64 %length7)
+  ret ptr %12
 }

@@ -29,10 +29,6 @@ define void @main() {
 entry:
   %b = alloca i64, align 8
   %0 = call i64 @vector_new(i64 5)
-  %1 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %1, %0
-  call void @builtin_assert(i64 %allocated_size, i64 5)
-  store i64 %0, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %0 to ptr
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4

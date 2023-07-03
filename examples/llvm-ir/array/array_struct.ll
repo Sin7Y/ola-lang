@@ -30,10 +30,6 @@ entry:
   %struct_alloca4 = alloca { i64, i64 }, align 8
   %struct_alloca = alloca { i64, i64 }, align 8
   %0 = call i64 @vector_new(i64 1)
-  %1 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %1, %0
-  call void @builtin_assert(i64 %allocated_size, i64 1)
-  store i64 %0, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %0 to ptr
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
@@ -63,16 +59,16 @@ done:                                             ; preds = %cond
   store i64 100, ptr %"struct member1", align 4
   %vector_len2 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length = load i64, ptr %vector_len2, align 4
-  %2 = sub i64 %length, 1
-  %3 = sub i64 %2, 0
-  call void @builtin_range_check(i64 %3)
+  %1 = sub i64 %length, 1
+  %2 = sub i64 %1, 0
+  call void @builtin_range_check(i64 %2)
   %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
   %index_access3 = getelementptr { i64, i64 }, ptr %data, i64 0
   %"struct member5" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca4, i32 0, i32 0
   store i64 99, ptr %"struct member5", align 4
   %"struct member6" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca4, i32 0, i32 1
   store i64 100, ptr %"struct member6", align 4
-  %4 = load { i64, i64 }, ptr %struct_alloca4, align 4
-  store { i64, i64 } %4, ptr %index_access3, align 4
+  %3 = load { i64, i64 }, ptr %struct_alloca4, align 4
+  store { i64, i64 } %3, ptr %index_access3, align 4
   ret ptr %vector_alloca
 }

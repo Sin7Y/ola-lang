@@ -28,10 +28,6 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 5)
-  %1 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %1, %0
-  call void @builtin_assert(i64 %allocated_size, i64 5)
-  store i64 %0, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %0 to ptr
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
@@ -57,13 +53,13 @@ done:                                             ; preds = %cond
   store ptr %int_to_ptr, ptr %vector_data, align 8
   %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length = load i64, ptr %vector_len1, align 4
-  %2 = sub i64 %length, 1
-  %3 = sub i64 %2, 0
-  call void @builtin_range_check(i64 %3)
+  %1 = sub i64 %length, 1
+  %2 = sub i64 %1, 0
+  call void @builtin_range_check(i64 %2)
   %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
   %index_access2 = getelementptr i64, ptr %data, i64 0
   store i64 1, ptr %index_access2, align 4
-  %4 = call ptr @array_call(i64 5)
+  %3 = call ptr @array_call(i64 5)
   ret void
 }
 
@@ -73,10 +69,6 @@ entry:
   store i64 %0, ptr %length, align 4
   %1 = load i64, ptr %length, align 4
   %2 = call i64 @vector_new(i64 %1)
-  %3 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %3, %2
-  call void @builtin_assert(i64 %allocated_size, i64 %1)
-  store i64 %2, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %2 to ptr
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4

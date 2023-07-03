@@ -507,7 +507,7 @@ pub fn expression<'a>(
             length: size, init, ..
         } => {
             let size = expression(size, bin, func_context, ns).into_int_value();
-            bin.vector_new(func_context.func_val, size, init.as_ref())
+            bin.vector_new(func_context.func_val, size, init.as_ref(), true)
                 .into()
         }
         Expression::ConditionalOperator {
@@ -559,6 +559,7 @@ pub fn array_literal_to_memory_array<'a>(
             .i64_type()
             .const_int(dims.to_u64().unwrap(), false),
         None,
+        false,
     );
 
     let elements = if let Expression::ArrayLiteral { values: items, .. } = expr {
