@@ -29,10 +29,6 @@ define ptr @createStudent() {
 entry:
   %struct_alloca = alloca { i64, ptr }, align 8
   %0 = call i64 @vector_new(i64 3)
-  %1 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %1, %0
-  call void @builtin_assert(i64 %allocated_size, i64 3)
-  store i64 %0, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %0 to ptr
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
@@ -58,25 +54,25 @@ done:                                             ; preds = %cond
   store ptr %int_to_ptr, ptr %vector_data, align 8
   %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length = load i64, ptr %vector_len1, align 4
-  %2 = sub i64 %length, 1
-  %3 = sub i64 %2, 0
-  call void @builtin_range_check(i64 %3)
+  %1 = sub i64 %length, 1
+  %2 = sub i64 %1, 0
+  call void @builtin_range_check(i64 %2)
   %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
   %index_access2 = getelementptr i64, ptr %data, i64 0
   store i64 85, ptr %index_access2, align 4
   %vector_len3 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length4 = load i64, ptr %vector_len3, align 4
-  %4 = sub i64 %length4, 1
-  %5 = sub i64 %4, 1
-  call void @builtin_range_check(i64 %5)
+  %3 = sub i64 %length4, 1
+  %4 = sub i64 %3, 1
+  call void @builtin_range_check(i64 %4)
   %data5 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
   %index_access6 = getelementptr i64, ptr %data5, i64 1
   store i64 90, ptr %index_access6, align 4
   %vector_len7 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   %length8 = load i64, ptr %vector_len7, align 4
-  %6 = sub i64 %length8, 1
-  %7 = sub i64 %6, 2
-  call void @builtin_range_check(i64 %7)
+  %5 = sub i64 %length8, 1
+  %6 = sub i64 %5, 2
+  call void @builtin_range_check(i64 %6)
   %data9 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
   %index_access10 = getelementptr i64, ptr %data9, i64 2
   store i64 95, ptr %index_access10, align 4
