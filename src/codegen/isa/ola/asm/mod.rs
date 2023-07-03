@@ -374,13 +374,28 @@ fn write_operand(op: &OperandData, fn_idx: usize) -> String {
         OperandData::Slot(slot) => format!("{:?}", slot),
         OperandData::Int8(i) => format!("{}", i),
         OperandData::Int32(i) => format!("{}", i),
-        OperandData::Int64(i) => format!("{}", i),
+        OperandData::Int64(i) => {
+            if negative_as_field(*i) {
+                format!("{}", *i as usize)
+            } else {
+                format!("{}", *i)
+            }
+        }
         OperandData::Block(block) => format!(".LBL{}_{}", fn_idx, block.index()),
         OperandData::Label(name) => format!("{}", name),
         OperandData::MemStart => format!(""),
         OperandData::GlobalAddress(name) => format!("offset {}", name),
         OperandData::None => format!("none"),
     }
+}
+
+fn negative_as_field(immediate: i64) -> bool {
+    let imm = immediate as usize;
+    assert!(imm < 0xffffffffffffffff);
+    if imm > 0x7fffffffffffffff {
+        return true;
+    }
+    return false;
 }
 
 fn mem_size(_opcode: &Opcode) -> &'static str {

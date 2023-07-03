@@ -300,9 +300,9 @@ main:
   add r9 r9 4
   mstore [r9,-2] r9
   mov r1 402443140940559753
-  mov r2 -5438528055523826848
+  mov r2 13008216018185724768
   mov r3 6500940582073311439
-  mov r4 -6711892513312253938
+  mov r4 11734851560397297678
   mov r5 1
   call add_mapping
   add r9 r9 -4
@@ -341,7 +341,7 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 define void @str_imm(i64 %0) {   ;mstore [r9,-1] r1 
 entry:
   %a = alloca i64, align 8      ;[r9,-2]
-  store i64 %0, ptr %a, align 4     ;mload r0 [r9,-1]  mstore [r9,-2] r0  
+  store i64 %0, ptr %a, align 4     ;mload r0 [r9,-1]  mstore [r9,-2] r0
   %1 = load i64, ptr %a, align 4    ;mload r0 [r9,-2] 
   ;%2 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %1, 3    ;mov r1 0, mov r2 0, mov r3 0,mov r4 r0
   ;call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %2)   ;mov r5 0,mov r6 0,mov r7 0,mov r8 0
