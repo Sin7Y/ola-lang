@@ -310,13 +310,29 @@ entry:
   %12 = call [4 x i64] @get_storage([4 x i64] %11)
   %13 = extractvalue [4 x i64] %12, 3
   %14 = call i64 @vector_new(i64 %13)
-  %15 = load i64, ptr @heap_address, align 4
-  %allocated_size = sub i64 %15, %14
-  call void @builtin_assert(i64 %allocated_size, i64 %13)
-  store i64 %14, ptr @heap_address, align 4
   %int_to_ptr = inttoptr i64 %14 to ptr
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %13, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %int_to_ptr, ptr %vector_data, align 8
+  %15 = extractvalue [4 x i64] %11, 0
+  %16 = extractvalue [4 x i64] %11, 1
+  %17 = extractvalue [4 x i64] %11, 2
+  %18 = extractvalue [4 x i64] %11, 3
+  %19 = insertvalue [8 x i64] undef, i64 %18, 7
+  %20 = insertvalue [8 x i64] %19, i64 %17, 6
+  %21 = insertvalue [8 x i64] %20, i64 %16, 5
+  %22 = insertvalue [8 x i64] %21, i64 %15, 4
+  %23 = insertvalue [8 x i64] %22, i64 0, 3
+  %24 = insertvalue [8 x i64] %23, i64 0, 2
+  %25 = insertvalue [8 x i64] %24, i64 0, 1
+  %26 = insertvalue [8 x i64] %25, i64 0, 0
+  %27 = call [4 x i64] @poseidon_hash([8 x i64] %26)
   %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
+  %28 = alloca [4 x i64], align 8
+  store [4 x i64] %27, ptr %28, align 4
   br label %cond
 
 cond:                                             ; preds = %body, %entry
@@ -325,55 +341,18 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
-  store i64 0, ptr %index_access, align 4
+  %29 = load [4 x i64], ptr %28, align 4
+  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  %index_access = getelementptr i64, ptr %data, i64 %index_value
+  %30 = call [4 x i64] @get_storage([4 x i64] %29)
+  %31 = extractvalue [4 x i64] %30, 3
+  store i64 %31, ptr %index_access, align 4
+  store [4 x i64] %29, ptr %28, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %13, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %int_to_ptr, ptr %vector_data, align 8
-  %16 = extractvalue [4 x i64] %11, 0
-  %17 = extractvalue [4 x i64] %11, 1
-  %18 = extractvalue [4 x i64] %11, 2
-  %19 = extractvalue [4 x i64] %11, 3
-  %20 = insertvalue [8 x i64] undef, i64 %19, 7
-  %21 = insertvalue [8 x i64] %20, i64 %18, 6
-  %22 = insertvalue [8 x i64] %21, i64 %17, 5
-  %23 = insertvalue [8 x i64] %22, i64 %16, 4
-  %24 = insertvalue [8 x i64] %23, i64 0, 3
-  %25 = insertvalue [8 x i64] %24, i64 0, 2
-  %26 = insertvalue [8 x i64] %25, i64 0, 1
-  %27 = insertvalue [8 x i64] %26, i64 0, 0
-  %28 = call [4 x i64] @poseidon_hash([8 x i64] %27)
-  %index_alloca4 = alloca i64, align 8
-  store i64 0, ptr %index_alloca4, align 4
-  %29 = alloca [4 x i64], align 8
-  store [4 x i64] %28, ptr %29, align 4
-  br label %cond1
-
-cond1:                                            ; preds = %body2, %done
-  %index_value5 = load i64, ptr %index_alloca4, align 4
-  %loop_cond6 = icmp ult i64 %index_value5, %13
-  br i1 %loop_cond6, label %body2, label %done3
-
-body2:                                            ; preds = %cond1
-  %30 = load [4 x i64], ptr %29, align 4
-  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  %index_access7 = getelementptr i64, ptr %data, i64 %index_value5
-  %31 = call [4 x i64] @get_storage([4 x i64] %30)
-  %32 = extractvalue [4 x i64] %31, 3
-  store i64 %32, ptr %index_access7, align 4
-  store [4 x i64] %30, ptr %29, align 4
-  %next_index8 = add i64 %index_value5, 1
-  store i64 %next_index8, ptr %index_alloca4, align 4
-  br label %cond1
-
-done3:                                            ; preds = %cond1
   ret ptr %vector_alloca
 }
 

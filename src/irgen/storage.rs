@@ -190,7 +190,7 @@ pub(crate) fn storage_load<'a>(
             } else {
                 let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
-                let dest = bin.vector_new(function, size.into_int_value(), None);
+                let dest = bin.vector_new(function, size.into_int_value(), None, false);
 
                 let mut elem_slot = slot_hash(bin, *slot);
 
@@ -506,7 +506,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
     emit_context!(bin);
     let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
-    let dest = bin.vector_new(function, size.into_int_value(), None);
+    let dest = bin.vector_new(function, size.into_int_value(), None, false);
     let mut elem_slot = slot_hash(bin, *slot);
 
     bin.emit_loop_cond_first_with_int(

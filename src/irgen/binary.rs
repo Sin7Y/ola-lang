@@ -312,6 +312,7 @@ impl<'a> Binary<'a> {
         function: FunctionValue<'a>,
         size: IntValue<'a>,
         init: Option<&Vec<u32>>,
+        zero_init: bool,
     ) -> PointerValue<'a> {
         let vector_address = self
             .builder
@@ -323,26 +324,26 @@ impl<'a> Binary<'a> {
             .try_as_basic_value()
             .left()
             .unwrap();
-        let allocated_size = self.builder.build_int_sub(
-            self.builder
-                .build_load(
-                    self.context.i64_type(),
-                    self.heap_address.as_pointer_value(),
-                    "",
-                )
-                .into_int_value(),
-            vector_address.into_int_value(),
-            "allocated_size",
-        );
-        self.builder.build_call(
-            self.module
-                .get_function("builtin_assert")
-                .expect("builtin_assert should have been defined before"),
-            &[allocated_size.into(), size.into()],
-            "",
-        );
-        self.builder
-            .build_store(self.heap_address.as_pointer_value(), vector_address);
+        // let allocated_size = self.builder.build_int_sub(
+        //     self.builder
+        //         .build_load(
+        //             self.context.i64_type(),
+        //             self.heap_address.as_pointer_value(),
+        //             "",
+        //         )
+        //         .into_int_value(),
+        //     vector_address.into_int_value(),
+        //     "allocated_size",
+        // );
+        // self.builder.build_call(
+        //     self.module
+        //         .get_function("builtin_assert")
+        //         .expect("builtin_assert should have been defined before"),
+        //     &[allocated_size.into(), size.into()],
+        //     "",
+        // );
+        // self.builder
+        //     .build_store(self.heap_address.as_pointer_value(), vector_address);
 
         let data = self.builder.build_int_to_ptr(
             vector_address.into_int_value(),
@@ -353,7 +354,14 @@ impl<'a> Binary<'a> {
 
         match init {
             None => {
-                self.vector_zero_init(function, self.context.i64_type().const_zero(), size, data);
+                if zero_init {
+                    self.vector_zero_init(
+                        function,
+                        self.context.i64_type().const_zero(),
+                        size,
+                        data,
+                    );
+                }
             }
             Some(init) => {
                 for (item_no, item) in init.iter().enumerate() {
