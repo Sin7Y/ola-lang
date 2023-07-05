@@ -168,6 +168,65 @@ main:
     }
 
     #[test]
+    fn codegen_malloc_test() {
+        let asm = r#"
+define void @main() {
+entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %0 = call i64 @vector_new(i64 3)
+  %int_to_ptr = inttoptr i64 %0 to ptr
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 3, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %int_to_ptr, ptr %vector_data, align 8
+  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  %index_access = getelementptr ptr, ptr %data, i64 0
+  store i64 1, ptr %index_access, align 4
+  %index_access1 = getelementptr ptr, ptr %data, i64 1
+  store i64 2, ptr %index_access1, align 4
+  %index_access2 = getelementptr ptr, ptr %data, i64 2
+  store i64 3, ptr %index_access2, align 4
+  ret void
+}
+"#;
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        //println!("{:#?}",code);
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r9 r9 2
+  mov r1 3
+.PROPHET0_0:
+  mov r0 psp
+  mload r0 [r0,0]
+  mov r1 3
+  mstore [r9,-2] r1
+  mstore [r9,-1] r0
+  mload r0 [r9,-1]
+  mov r1 1
+  mstore [r0,+0] r1
+  mov r1 2
+  mstore [r0,+1] r1
+  mov r1 3
+  mstore [r0,+2] r1
+  add r9 r9 -2
+  end
+"
+        );
+    }
+
+    #[test]
     fn codegen_array_param_test() {
         // LLVM Assembly
         let asm = r#"

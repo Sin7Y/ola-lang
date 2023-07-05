@@ -218,7 +218,7 @@ fn lower_store_gep(
                     * ctx
                         .isa
                         .data_layout()
-                        .get_size_of(ctx.types, ctx.types.get_element(base_ty).unwrap())
+                        .get_size_of(ctx.types, gep.operand.types()[3])
                         as i64;
 
             vec![
@@ -227,6 +227,37 @@ fn lower_store_gep(
                 MOperand::new(OperandData::Slot(base_ptr)),
                 MOperand::new(OperandData::Int32(-offset as i32)),
                 MOperand::input(OperandData::None),
+                MOperand::input(OperandData::None),
+                MOperand::new(OperandData::None),
+            ]
+        }
+        [Value::Instruction(base_ptr), Const(Int(Int64(idx0)))] => {
+            let mut slot = None;
+            let mut base = None;
+            let base_ty = gep.operand.types()[0];
+            let mut offset =
+                -idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as i64 / 4;
+            if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
+                slot = Some(*p);
+            } else {
+                base = Some(get_operand_for_val(
+                    ctx,
+                    gep.operand.types()[1],
+                    gep.operand.args()[0],
+                )?);
+                offset = -offset;
+            }
+
+            // let base_ty = gep.operand.types()[0];
+            // let offset = idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as
+            // i64;
+
+            vec![
+                MOperand::new(OperandData::MemStart),
+                MOperand::new(OperandData::None),
+                MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
+                MOperand::new(OperandData::Int32(offset as i32)),
+                MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::None),
                 MOperand::new(OperandData::None),
             ]
@@ -300,7 +331,7 @@ fn lower_store_gep(
         }
     };
 
-    ctx.mark_as_merged(gep_id);
+    //ctx.mark_as_merged(gep_id);
 
     let src = args[0];
     let src_ty = tys[0];
@@ -313,6 +344,29 @@ fn lower_store_gep(
                     operands: vec![
                         MOperand::output(addr.into()),
                         MOperand::new(OperandData::Int32(*int)),
+                    ],
+                },
+                ctx.block_map[&ctx.cur_block],
+            ));
+            ctx.inst_seq.append(&mut vec![MachInstruction::new(
+                InstructionData {
+                    opcode: Opcode::MSTOREr,
+                    operands: mem
+                        .into_iter()
+                        .chain(vec![MOperand::input(addr.into())].into_iter())
+                        .collect(),
+                },
+                ctx.block_map[&ctx.cur_block],
+            )]);
+        }
+        Const(Int(Int64(int))) => {
+            let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+            ctx.inst_seq.push(MachInstruction::new(
+                InstructionData {
+                    opcode: Opcode::MOVri,
+                    operands: vec![
+                        MOperand::output(addr.into()),
+                        MOperand::new(OperandData::Int64(*int)),
                     ],
                 },
                 ctx.block_map[&ctx.cur_block],

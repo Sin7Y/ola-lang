@@ -11,8 +11,9 @@ pub mod store;
 use crate::codegen::core::ir::{
     function::{
         instruction::{
-            Alloca, Br, Call, CondBr, ExtractValue, InsertValue, Instruction as IrInstruction,
-            InstructionId, IntBinary, Load, Operand, Ret, Store,
+            Alloca, Br, Call, Cast, CondBr, ExtractValue, InsertValue,
+            Instruction as IrInstruction, InstructionId, IntBinary, Load, Opcode as IrOpcode,
+            Operand, Ret, Store,
         },
         Parameter,
     },
@@ -33,7 +34,7 @@ use crate::codegen::{
 use anyhow::Result;
 
 use alloca::lower_alloca;
-use bin::lower_bin;
+use bin::{lower_bin, lower_itp};
 use br::{lower_br, lower_condbr};
 use call::{lower_call, lower_return};
 use extractv::lower_extractvalue;
@@ -101,6 +102,7 @@ impl LowerTrait<Ola> for Lower {
 }
 
 fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
+    println!("lower opcode {:?}", inst.opcode);
     match inst.operand {
         Operand::Alloca(Alloca {
             ref tys,
@@ -126,6 +128,9 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
         }
         Operand::IntBinary(IntBinary { ty, ref args, .. }) => {
             lower_bin(ctx, inst.id.unwrap(), inst.opcode, ty, args)
+        }
+        Operand::Cast(Cast { ref tys, arg }) if inst.opcode == IrOpcode::IntToPtr => {
+            lower_itp(ctx, inst.id.unwrap(), tys, arg)
         }
         Operand::Br(Br { block }) => lower_br(ctx, block),
         Operand::CondBr(CondBr { arg, blocks }) => lower_condbr(ctx, arg, blocks),

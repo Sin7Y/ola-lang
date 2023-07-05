@@ -132,3 +132,26 @@ pub fn lower_bin(
 
     Ok(())
 }
+
+pub fn lower_itp(
+    ctx: &mut LoweringContext<Ola>,
+    self_id: InstructionId,
+    tys: &[Type; 2],
+    arg: ValueId,
+) -> Result<()> {
+    let from = tys[0];
+    let to = tys[1];
+
+    let val = get_operand_for_val(ctx, from, arg)?;
+    let output = new_empty_inst_output(ctx, to, self_id);
+
+    ctx.inst_seq.push(MachInstruction::new(
+        InstructionData {
+            opcode: Opcode::MOVrr,
+            operands: vec![MO::output(output[0].into()), MO::input(val.into())],
+        },
+        ctx.block_map[&ctx.cur_block],
+    ));
+
+    Ok(())
+}

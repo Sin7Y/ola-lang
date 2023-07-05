@@ -94,6 +94,12 @@ const ARR_SORT: &'static str = "%{
     }
 %}";
 
+const MALLOC: &'static str = "%{
+    entry() {
+        cid.addr = malloc(cid.len);
+    }
+%}";
+
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
@@ -226,6 +232,24 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             }]
             .to_vec(),
         },
+        "vector_new" => Prophet {
+            code: MALLOC.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [Input {
+                name: "cid.len".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.addr".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+        },
         e => todo!("{:?}", e),
     }
 }
@@ -289,8 +313,8 @@ pub fn print_function(
                     for idx in 1..7 {
                         code.push_str(&format!("  mload r{} [r{},{}]\n", idx, idx, idx));
                     }
-                }
-                code.push_str(&format!("  mload r0 [r0,0]\n")); */
+                } */
+                code.push_str(&format!("  mload r0 [r0,0]\n"));
 
                 assert_eq!(inst.data.operands.len(), 2);
                 prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));

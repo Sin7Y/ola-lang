@@ -219,7 +219,7 @@ fn lower_load_gep(
         e => todo!("Unsupported GEP pattern for load: {:?}", e),
     };
 
-    ctx.mark_as_merged(gep_id);
+    //ctx.mark_as_merged(gep_id);
 
     let output = new_empty_inst_output(ctx, tys[0], id);
 

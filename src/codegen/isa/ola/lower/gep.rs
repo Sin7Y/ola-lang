@@ -43,7 +43,7 @@ pub fn lower_gep(
             }
             cur_ty = ctx.types.base().element_at(cur_ty, idx).unwrap();
         } else {
-            cur_ty = ctx.types.get_element(cur_ty).unwrap();
+            //cur_ty = ctx.types.get_element(cur_ty).unwrap();
             let sz = ctx.isa.data_layout.get_size_of(ctx.types, cur_ty) as i64;
             if let Some(idx) = idx.sext_as_i64() {
                 if idx != 0 {
@@ -71,7 +71,9 @@ pub fn lower_gep(
     match &indices[..] {
         [] => {}
         [(1, x)] if x.sext_as_i64().is_some() => {
-            mem_imm = x.to_owned();
+            // mem_imm = x.to_owned();
+            let imm = x.sext_as_i64().unwrap();
+            mem_imm = (-imm).into();
         }
         [(_, x)] if x.sext_as_i64().is_some() => {
             unreachable!()
@@ -258,12 +260,11 @@ mod test {
         println!("{}", code.program);
     }
 
-    #[ignore]
+    //#[ignore]
     #[test]
     fn codegen_array_test() {
         // LLVM Assembly
         let asm = r#"
-        declare void @test_call()
         define i64 @test_array() #0 {
             %1 = alloca [3 x i64], align 4
             %2 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 0
@@ -272,7 +273,7 @@ mod test {
             store i64 2, i64* %3, align 4
             %4 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 2
             store i64 3, i64* %4, align 4
-            %5 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 1
+            %5 = getelementptr inbounds [3 x i64], [3 x i64]* %1, i64 0, i64 2
             %6 = load i64, i64* %5, align 4
             ret i64 %6
         }
