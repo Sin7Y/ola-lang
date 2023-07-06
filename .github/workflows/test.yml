@@ -108,7 +108,7 @@ jobs:
     - name: Extract LLVM
       run: 7z x c:\llvm.7z -oc:/
     - name: Add LLVM to Path
-      run: echo "c:\llvm15.0\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+      run: echo "c:\llvm\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
     - name: Build
       run: llvm-config.exe --version && cargo build --verbose
     - name: Run tests
