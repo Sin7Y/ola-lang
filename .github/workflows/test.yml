@@ -103,13 +103,12 @@ jobs:
         toolchain: nightly
         components: rustfmt, clippy
         override: true
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1
-      with:
-        version: "15.0"
-        download-url: "https://github.com/hyperledger/solang-llvm/releases/download/llvm15-1/llvm15.0-win.zip"
-    - name: Set LLVM env
-      run: echo "LLVM_SYS_150_PREFIX=${{ env.LLVM_PATH }}\bin" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+    - name: Download LLVM
+      run: curl -sSL -o c:\llvm.zip https://github.com/hyperledger/solang-llvm/releases/download/llvm15-1/llvm15.0-win.zip
+    - name: Extract LLVM
+      run: unzip c:\llvm.zip -d c:/
+    - name: Add LLVM to Path
+      run: echo "c:\llvm15.0\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
     - name: Build
       run: llvm-config.exe --version && cargo build --verbose
     - name: Run tests
