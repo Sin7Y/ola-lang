@@ -1,2 +1,2 @@
 [toolchain]
-channel = "nightly-aarch64-apple-darwin"
+channel = "nightly"
