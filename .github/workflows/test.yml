@@ -85,33 +85,7 @@ jobs:
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac-linux-arm64
-        path: ./target/debug/olac
-
-   mac-intel:
-    name: Mac Intel
-    runs-on: macos-12
-    steps:
-    - name: Checkout sources
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    - name: Rust nightly  
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-        override: true
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1
-      with:
-        version: 15      
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose --workspace
-    - uses: actions/upload-artifact@v3.1.0
-      with:
-        name: olac-mac-intel
-        path: ./target/debug/olac
+        path: ./target/debug/olac 
   mac-intel:
     name: Mac Intel
     runs-on: macos-12
@@ -136,8 +110,8 @@ jobs:
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac-mac-intel
-        path: ./target/debug/olac      
-   windows:
+        path: ./target/debug/olac     
+  windows:
     name: Windows
     runs-on: windows-latest
     steps:
