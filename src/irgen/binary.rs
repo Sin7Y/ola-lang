@@ -18,8 +18,6 @@ use inkwell::types::{
 use inkwell::values::{BasicValueEnum, FunctionValue, GlobalValue, IntValue, PointerValue};
 use inkwell::{AddressSpace, IntPredicate};
 
-use super::dispatch::{gen_contract_entrance, gen_func_dispatch};
-
 pub const SAPN: u64 = 2 ^ 32 - 1;
 
 pub const HEAP_ADDRESS_START: u64 = FIELD_ORDER - 2 * SAPN;
@@ -379,9 +377,7 @@ impl<'a> Binary<'a> {
                 }
             }
         }
-        let vector_alloca = self
-            .builder
-            .build_alloca(self.struct_vector_type(), "vector_alloca");
+        let vector_alloca = self.build_alloca(function, self.struct_vector_type(), "vector_alloca");
         let len = self
             .builder
             .build_struct_gep(vector_type, vector_alloca, 0, "vector_len")
@@ -522,7 +518,7 @@ impl<'a> Binary<'a> {
 
         let loop_ty = from.get_type();
         // create an alloca for the loop variable
-        let index_alloca = self.builder.build_alloca(loop_ty, "index_alloca");
+        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
         // initialize the loop variable with the starting value
         self.builder.build_store(index_alloca, from);
 
@@ -572,7 +568,7 @@ impl<'a> Binary<'a> {
     /// IntValue, and a userdata IntValue
     pub(crate) fn emit_static_loop_with_int<F>(
         &self,
-        function: FunctionValue,
+        function: FunctionValue<'a>,
         from: IntValue<'a>,
         to: IntValue<'a>,
         data_ref: &mut BasicValueEnum<'a>,
@@ -585,12 +581,12 @@ impl<'a> Binary<'a> {
 
         let loop_ty = from.get_type();
         // create an alloca for the loop variable
-        let index_alloca = self.builder.build_alloca(loop_ty, "index_alloca");
+        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
         // initialize the loop variable with the starting value
         self.builder.build_store(index_alloca, from);
 
         // Allocate a local variable for slot
-        let data = self.builder.build_alloca(data_ref.get_type(), "");
+        let data = self.build_alloca(function, data_ref.get_type(), "");
 
         self.builder.build_store(data, *data_ref);
 
@@ -627,7 +623,7 @@ impl<'a> Binary<'a> {
     /// body.
     pub fn emit_loop_cond_first_with_int<F>(
         &self,
-        function: FunctionValue,
+        function: FunctionValue<'a>,
         from: IntValue<'a>,
         to: IntValue<'a>,
         data_ref: &mut BasicValueEnum<'a>,
@@ -641,12 +637,12 @@ impl<'a> Binary<'a> {
 
         let loop_ty = from.get_type();
         // create an alloca for the loop variable
-        let index_alloca = self.builder.build_alloca(loop_ty, "index_alloca");
+        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
         // initialize the loop variable with the starting value
         self.builder.build_store(index_alloca, from);
 
         // Allocate a local variable for slot
-        let data = self.builder.build_alloca(data_ref.get_type(), "");
+        let data = self.build_alloca(function, data_ref.get_type(), "");
 
         self.builder.build_store(data, *data_ref);
 
