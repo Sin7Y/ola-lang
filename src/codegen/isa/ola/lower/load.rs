@@ -135,7 +135,7 @@ fn lower_load_gep(
                     * ctx
                         .isa
                         .data_layout
-                        .get_size_of(ctx.types, ctx.types.get_element(base_ty).unwrap())
+                        .get_size_of(ctx.types, gep.operand.types()[3])
                         as i64;
 
             vec![

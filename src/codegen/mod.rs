@@ -1865,7 +1865,6 @@ gte_rr:
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_sqrt_test() {
         // LLVM Assembly
@@ -1917,6 +1916,8 @@ gte_rr:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "u32_sqrt:
@@ -1932,23 +1933,23 @@ gte_rr:
   ret
 main:
 .LBL4_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 4
+  mstore [r9,-2] r9
   mov r1 4
   call sqrt_test
-  add r8 r8 -4
+  add r9 r9 -4
   end
 sqrt_test:
 .LBL5_0:
-  add r8 r8 6
-  mstore [r8,-2] r8
+  add r9 r9 6
+  mstore [r9,-2] r9
   mov r0 r1
-  mstore [r8,-3] r0
-  mload r1 [r8,-3]
+  mstore [r9,-4] r0
+  mload r1 [r9,-4]
   call u32_sqrt
-  mstore [r8,-4] r0
-  mload r0 [r8,-4]
-  add r8 r8 -6
+  mstore [r9,-3] r0
+  mload r0 [r9,-3]
+  add r9 r9 -6
   ret
 "
         );
@@ -1959,10 +1960,20 @@ sqrt_test:
         label: ".PROPHET3_0",
         code: "%{\n    entry() {\n        cid.y = sqrt(cid.x);\n    }\n%}",
         inputs: [
-            "cid.x",
+            Input {
+                name: "cid.x",
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            },
         ],
         outputs: [
-            "cid.y",
+            Output {
+                name: "cid.y",
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            },
         ],
     },
 ]"#
@@ -2292,6 +2303,93 @@ sqrt_test:
   jmp .LBL6_11
 .LBL6_11:
   jmp .LBL6_3
+"
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn codegen_vote_test() {
+        let asm = r#"                              
+          define ptr @getWinnerName() {
+          entry:
+            %0 = alloca [4 x i64], align 8
+            %index_alloca = alloca i64, align 8
+            %vector_alloca = alloca { i64, ptr }, align 8
+            %1 = call i64 @winningProposal()
+            %2 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+            %3 = extractvalue [4 x i64] %2, 3
+            %4 = sub i64 %3, 1
+            %5 = sub i64 %4, %1
+            call void @builtin_range_check(i64 %5)
+            %6 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2]) 
+            %7 = extractvalue [4 x i64] %6, 3
+            %8 = add i64 %7, %1
+            %9 = insertvalue [4 x i64] %6, i64 %8, 3
+            %10 = extractvalue [4 x i64] %9, 3
+            %11 = add i64 %10, 0
+            %12 = insertvalue [4 x i64] %9, i64 %11, 3 ;hash()+idx
+            %13 = call [4 x i64] @get_storage([4 x i64] %12) ;proposals[winningProposal()] struct {}
+            %14 = extractvalue [4 x i64] %13, 3
+            %15 = call i64 @vector_new(i64 %14)
+            %int_to_ptr = inttoptr i64 %15 to ptr
+            %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+            store i64 %14, ptr %vector_len, align 4
+            %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+            store ptr %int_to_ptr, ptr %vector_data, align 8
+            %16 = extractvalue [4 x i64] %12, 0
+            %17 = extractvalue [4 x i64] %12, 1
+            %18 = extractvalue [4 x i64] %12, 2
+            %19 = extractvalue [4 x i64] %12, 3
+            %20 = insertvalue [8 x i64] undef, i64 %19, 7
+            %21 = insertvalue [8 x i64] %20, i64 %18, 6
+            %22 = insertvalue [8 x i64] %21, i64 %17, 5
+            %23 = insertvalue [8 x i64] %22, i64 %16, 4
+            %24 = insertvalue [8 x i64] %23, i64 0, 3
+            %25 = insertvalue [8 x i64] %24, i64 0, 2
+            %26 = insertvalue [8 x i64] %25, i64 0, 1
+            %27 = insertvalue [8 x i64] %26, i64 0, 0
+            %28 = call [4 x i64] @poseidon_hash([8 x i64] %27)
+            store i64 0, ptr %index_alloca, align 4
+            store [4 x i64] %28, ptr %0, align 4
+            br label %cond
+          
+          cond:                                             ; preds = %body, %entry
+            %index_value = load i64, ptr %index_alloca, align 4
+            %loop_cond = icmp ult i64 %index_value, %14
+            br i1 %loop_cond, label %body, label %done
+          
+          body:                                             ; preds = %cond
+            %29 = load [4 x i64], ptr %0, align 4
+            %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+            %index_access = getelementptr i64, ptr %data, i64 %index_value
+            %30 = call [4 x i64] @get_storage([4 x i64] %29)
+            %31 = extractvalue [4 x i64] %30, 3
+            store i64 %31, ptr %index_access, align 4
+            store [4 x i64] %28, ptr %0, align 4
+            %next_index = add i64 %index_value, 1
+            store i64 %next_index, ptr %index_alloca, align 4
+            br label %cond
+          
+          done:                                             ; preds = %cond
+            ret ptr %vector_alloca
+          }    
+"#;
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        //println!("{:#?}",code);
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "
 "
         );
     }

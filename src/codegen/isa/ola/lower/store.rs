@@ -71,6 +71,20 @@ pub fn lower_store(
                     ));
                     //vreg = Some(addr.into());
                 }
+                ConstantValue::Int(ConstantInt::Int64(i)) => {
+                    //let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+                    ctx.inst_seq.push(MachInstruction::new(
+                        InstructionData {
+                            opcode: Opcode::MOVri,
+                            operands: vec![
+                                MOperand::output(addr.into()),
+                                MOperand::new(OperandData::Int64(*i)),
+                            ],
+                        },
+                        ctx.block_map[&ctx.cur_block],
+                    ));
+                    //vreg = Some(addr.into());
+                }
                 e => {
                     return Err(
                         LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into(),
@@ -260,6 +274,37 @@ fn lower_store_gep(
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::None),
                 MOperand::new(OperandData::None),
+            ]
+        }
+        [Value::Instruction(base_ptr), Value::Instruction(idx)] => {
+            let mut slot = None;
+            let mut base = None;
+            // let base_ty = gep.operand.types()[0];
+
+            let vregs = get_inst_output(ctx, gep.operand.types()[1], *idx)?;
+
+            if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
+                slot = Some(*p);
+            } else {
+                base = Some(get_operand_for_val(
+                    ctx,
+                    gep.operand.types()[1],
+                    gep.operand.args()[0],
+                )?);
+            }
+
+            // let base_ty = gep.operand.types()[0];
+            // let offset = idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as
+            // i64;
+
+            vec![
+                MOperand::new(OperandData::MemStart),
+                MOperand::new(OperandData::None),
+                MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
+                MOperand::new(OperandData::None),
+                MOperand::input(base.map_or(OperandData::None, |x| x)),
+                MOperand::input(OperandData::VReg(vregs[0])),
+                MOperand::new(OperandData::Int32(0)),
             ]
         }
         [Value::Instruction(base_ptr), Const(Int(Int32(idx0))), Const(Int(Int32(idx1)))] => {

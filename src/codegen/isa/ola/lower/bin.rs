@@ -54,7 +54,7 @@ pub fn lower_bin(
     };
 
     let data = match rhs {
-        OperandData::Int32(rhs) => {
+        OperandData::Int64(rhs) => {
             if IrOpcode::Sub == op {
                 insert_not(ctx);
                 insert_add(ctx);

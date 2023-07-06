@@ -140,32 +140,45 @@ pub fn lower_call(
     } else {
         tys[0]
     };
-    let output = new_empty_inst_output(ctx, result_ty, id);
 
     pass_args_to_regs(ctx, &tys[1..], &args[1..])?;
 
-    let result_reg: Reg = GR::R0.into();
+    let sz = ctx.isa.data_layout().get_size_of(ctx.types, result_ty) / 4;
+    let output;
+    let result_reg: Vec<Reg>;
+    let mut operands = vec![];
+    if sz > 1 {
+        output = new_empty_str_inst_output(ctx, result_ty, id);
+        result_reg = [GR::R0.into(), GR::R1.into(), GR::R2.into(), GR::R3.into()].to_vec();
+        for idx in 0..sz {
+            operands.push(MO::implicit_output(result_reg[idx].into()));
+        }
+    } else {
+        output = new_empty_inst_output(ctx, result_ty, id);
+        result_reg = [GR::R0.into()].to_vec();
+        operands.push(MO::implicit_output(result_reg[0].into()));
+    }
+    operands.push(MO::new(OperandData::Label(name)));
 
     ctx.inst_seq.push(MachInstruction::new(
-        InstructionData {
-            opcode,
-            operands: vec![
-                MO::implicit_output(result_reg.into()),
-                MO::new(OperandData::Label(name)),
-            ],
-        },
+        InstructionData { opcode, operands },
         ctx.block_map[&ctx.cur_block],
     ));
 
     if !ctx.ir_data.users_of(id).is_empty() {
         let opcode = Opcode::MOVrr;
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode,
-                operands: vec![MO::output(output[0].into()), MO::input(result_reg.into())],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
+        for idx in 0..sz {
+            ctx.inst_seq.push(MachInstruction::new(
+                InstructionData {
+                    opcode,
+                    operands: vec![
+                        MO::output(output[idx].into()),
+                        MO::input(result_reg[idx].into()),
+                    ],
+                },
+                ctx.block_map[&ctx.cur_block],
+            ));
+        }
     }
 
     Ok(())
@@ -322,20 +335,54 @@ fn pass_str_args_to_regs(
 
 pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>) -> Result<()> {
     if let Some((ty, value)) = arg {
-        let vreg = get_vreg_for_val(ctx, ty, value)?;
-        let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
-        assert!(ty.is_integer() || ty.is_pointer(ctx.types));
-        let (reg, opcode) = match sz {
-            4 | 8 => (GR::R0.into(), Opcode::MOVrr),
-            _ => todo!(),
-        };
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode,
-                operands: vec![MO::output(OperandData::Reg(reg)), MO::input(vreg.into())],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
+        let values = get_operands_for_val(ctx, ty, value)?;
+
+        let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
+        if sz > 1 {
+            let ret_reg0: Reg = GR::R0.into();
+            let ret_reg1: Reg = GR::R1.into();
+            let ret_reg2: Reg = GR::R2.into();
+            let ret_reg3: Reg = GR::R3.into();
+            let res_reg: [Reg; 4] = [ret_reg0, ret_reg1, ret_reg2, ret_reg3];
+            let opcode = match &values[0] {
+                OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+                OperandData::VReg(_) => Opcode::MOVrr,
+                e => {
+                    return Err(LoweringError::Todo(format!(
+                        "Unsupported return data type: {:?}",
+                        e
+                    ))
+                    .into())
+                }
+            };
+            for idx in 0..sz {
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode,
+                        operands: vec![
+                            MO::output(res_reg[idx].into()),
+                            MO::input(values[idx].clone().into()),
+                        ],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+            }
+        } else {
+            let vreg = get_vreg_for_val(ctx, ty, value)?;
+            let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
+            assert!(ty.is_integer() || ty.is_pointer(ctx.types));
+            let (reg, opcode) = match sz {
+                4 | 8 => (GR::R0.into(), Opcode::MOVrr),
+                _ => todo!(),
+            };
+            ctx.inst_seq.push(MachInstruction::new(
+                InstructionData {
+                    opcode,
+                    operands: vec![MO::output(OperandData::Reg(reg)), MO::input(vreg.into())],
+                },
+                ctx.block_map[&ctx.cur_block],
+            ));
+        }
     }
     ctx.inst_seq.push(MachInstruction::new(
         InstructionData {
