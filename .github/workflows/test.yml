@@ -110,7 +110,7 @@ jobs:
     - name: Set LLVM env
       run: echo "LLVM_SYS_150_PREFIX=${{ env.LLVM_PATH }}\bin" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
     - name: Build
-      run: echo "${{ env.LLVM_SYS_150_PREFIX }}" && cargo build --verbose
+      run: llvm-config.exe --version && cargo build --verbose
     - name: Run tests
       run:  argo test --verbose --workspace
     - uses: actions/upload-artifact@v3.1.0
