@@ -109,7 +109,7 @@ jobs:
         version: 15
         directory: ${{ runner.temp }}/llvm 
     - name: Set LLVM env
-      run: echo LLVM_SYS_150_PREFIX=C:\Program Files\LLVM
+      run: echo LLVM_SYS_150_PREFIX=${{ runner.temp }}/llvm
     - name: Build
       run: cargo build --verbose
     - name: Run tests
