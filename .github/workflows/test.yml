@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  LLVM_SYS_150_PREFIX: ${{ LLVM_PATH }}
 
 jobs:
   
