@@ -110,7 +110,6 @@ jobs:
         directory: ${{ runner.temp }}/llvm 
     - name: Set LLVM env
       run: echo "LLVM_SYS_150_PREFIX=C:\Program Files\LLVM" >> $env:GITHUB_ENV
-      shell: cmd
     - name: Build
       run: cargo build --verbose
     - name: Run tests
