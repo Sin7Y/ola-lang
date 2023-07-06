@@ -108,12 +108,10 @@ jobs:
       with:
         version: 15
         directory: ${{ runner.temp }}/llvm 
-    - name: Set LLVM env
-      run: echo LLVM_SYS_150_PREFIX=${{ runner.temp }}/llvm >> $GITHUB_ENV
     - name: Build
-      run: cargo build --verbose
+      run: "LLVM_SYS_150_PREFIX=$LLVM_PATH cargo build --verbose"
     - name: Run tests
-      run: cargo test --verbose --workspace
+      run: "LLVM_SYS_150_PREFIX=$LLVM_PATH cargo test --verbose --workspace"
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac.exe
