@@ -23,6 +23,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        components: rustfmt, clippy
         override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
@@ -48,6 +49,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        components: rustfmt, clippy
         override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
@@ -73,6 +75,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        components: rustfmt, clippy
         override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
@@ -98,6 +101,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        components: rustfmt, clippy
         override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
@@ -123,6 +127,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        components: rustfmt, clippy
         override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
