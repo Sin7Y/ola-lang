@@ -108,7 +108,7 @@ jobs:
       with:
         version: 15
     - name: Set LLVM env
-      run: echo ${{ env.LLVM_PATH }}\bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+      run: echo "env:LLVM_SYS_150_PREFIX=${{ env.LLVM_PATH }}\bin" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
     - name: Build
       run: cargo build --verbose
     - name: Run tests
