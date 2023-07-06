@@ -104,7 +104,7 @@ jobs:
         components: rustfmt, clippy
         override: true
     - name: Download LLVM
-      run: curl -sSL -o c:\llvm.zip https://github.com/hyperledger/solang-llvm/releases/download/llvm15-1/llvm15.0-win.zip
+      run: curl -sSL -o c:\llvm.zip https://github.com/c3lang/win-llvm/releases/download/llvm_15_0_6/llvm-15.0.6-windows-amd64-msvc17-libcmt-dbg.7z
     - name: Extract LLVM
       run: unzip c:\llvm.zip -d c:/
     - name: Add LLVM to Path
@@ -112,7 +112,7 @@ jobs:
     - name: Build
       run: llvm-config.exe --version && cargo build --verbose
     - name: Run tests
-      run:  argo test --verbose --workspace
+      run:  cargo test --verbose --workspace
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac.exe
