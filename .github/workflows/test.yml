@@ -108,7 +108,7 @@ jobs:
       with:
         version: 15
     - name: Set LLVM env
-      run: echo "LLVM_SYS_150_PREFIX=${{ env.LLVM_PATH }}/bin" >> $env:GITHUB_ENV
+      run: echo "LLVM_SYS_150_PREFIX=C:\\Program Files\\LLVM\\bin" >> $env:GITHUB_ENV
     - name: Build
       run: cargo build --verbose
     - name: Run tests
