@@ -802,12 +802,12 @@ impl Type {
             // Contract and address are arrays of u8, so they align with one.
             | Type::Contract(_)
             | Type::Address
-            | Type::Enum(_) => BigInt::one(),
+            | Type::Enum(_) => BigInt::from(4),
 
-            Type::Uint(n) => BigInt::from(n / 8),
+            Type::Uint(32) => BigInt::one(),
             Type::Array(ty, dims) => {
                 if dims.iter().any(|d| *d == ArrayLength::Dynamic) {
-                    BigInt::from(8)
+                    BigInt::one()
                 } else {
                     ty.struct_elem_alignment(ns)
                 }
@@ -818,7 +818,7 @@ impl Type {
             }
             Type::String
             | Type::Ref(_)
-            | Type::StorageRef(..) => BigInt::from(8),
+            | Type::StorageRef(..) => BigInt::one(),
             Type::UserType(no) => ns.user_types[*no].ty.struct_elem_alignment(ns),
 
             _ => unreachable!("Type should not appear on a struct"),
@@ -832,7 +832,7 @@ impl Type {
     pub fn storage_size(&self, ns: &Namespace) -> BigInt {
         match self {
             Type::Array(ty, dims) => {
-                let pointer_size = BigInt::from(4);
+                let pointer_size = BigInt::one();
                 ty.storage_size(ns).mul(
                     dims.iter()
                         .map(|d| match d {
@@ -848,7 +848,7 @@ impl Type {
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
-            Type::String => BigInt::from(4),
+            Type::String => BigInt::one(),
             Type::Ref(ty) | Type::StorageRef(ty) => ty.storage_size(ns),
             Type::UserType(no) => ns.user_types[*no].ty.storage_size(ns),
             // Other types have the same size both in storage and in memory
@@ -864,7 +864,6 @@ impl Type {
     /// Calculate the alignment
     pub fn align_of(&self, ns: &Namespace) -> usize {
         match self {
-            Type::Uint(n) => (*n / 32).into(),
             Type::Struct(n) => ns.structs[*n]
                 .fields
                 .iter()
