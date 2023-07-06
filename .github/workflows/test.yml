@@ -104,9 +104,9 @@ jobs:
         components: rustfmt, clippy
         override: true
     - name: Download LLVM
-      run: curl -sSL -o c:\llvm.zip https://github.com/c3lang/win-llvm/releases/download/llvm_15_0_6/llvm-15.0.6-windows-amd64-msvc17-libcmt-dbg.7z
+      run: curl -sSL -o c:\llvm.7z https://github.com/c3lang/win-llvm/releases/download/llvm_15_0_6/llvm-15.0.6-windows-amd64-msvc17-libcmt-dbg.7z
     - name: Extract LLVM
-      run: unzip c:\llvm.zip -d c:/
+      run: 7z x c:\llvm.7z -d c:/
     - name: Add LLVM to Path
       run: echo "c:\llvm15.0\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
     - name: Build
