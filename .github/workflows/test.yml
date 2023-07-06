@@ -137,7 +137,7 @@ jobs:
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}     
     - name: Build
       env:
-         LLVM_SYS_150_PREFIX: ${{ env.LLVM_PATH }}
+         LLVM_SYS_150_PREFIX: ${{ env.LLVM_PATH\bin }}
       run: cargo build --verbose
     - name: Run tests
       run:  argo test --verbose --workspace
