@@ -1,4 +1,6 @@
-use super::{get_inst_output, get_operand_for_val, new_empty_inst_output};
+use super::{
+    get_inst_output, get_operand_for_val, new_empty_inst_output, new_empty_str_inst_output,
+};
 use crate::codegen::core::ir::{
     function::instruction::{InstructionId, Opcode as IrOpcode},
     types::Type,
@@ -10,6 +12,7 @@ use crate::codegen::{
         instruction::{InstructionData, Opcode, Operand as MOperand, OperandData},
         Ola,
     },
+    isa::TargetIsa,
     lower::{LoweringContext, LoweringError},
 };
 use anyhow::Result;
@@ -51,7 +54,7 @@ pub fn lower_load(
         _ => return Err(LoweringError::Todo("Unsupported load pattern 1".into()).into()),
     }
 
-    let mem;
+    let mut mem;
     let src_ty = tys[0];
 
     if let Some(slot) = slot {
@@ -88,17 +91,26 @@ pub fn lower_load(
         return Err(LoweringError::Todo("Unsupported load pattern 2".into()).into());
     }
 
-    let output = new_empty_inst_output(ctx, src_ty, id);
-    ctx.inst_seq.push(MachInstruction::new(
-        InstructionData {
-            opcode: Opcode::MLOADr,
-            operands: vec![MOperand::output(output[0].into())]
-                .into_iter()
-                .chain(mem.into_iter())
-                .collect(),
-        },
-        ctx.block_map[&ctx.cur_block],
-    ));
+    let sz = ctx.isa.data_layout().get_size_of(ctx.types, src_ty) / 4;
+    let output;
+    if sz > 1 {
+        output = new_empty_str_inst_output(ctx, src_ty, id);
+    } else {
+        output = new_empty_inst_output(ctx, src_ty, id);
+    }
+    for idx in 0..sz {
+        mem[3] = MOperand::new(OperandData::Int64(-4 * idx as i64 + 1));
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MLOADr,
+                operands: vec![MOperand::output(output[idx].into())]
+                    .into_iter()
+                    .chain(mem.clone().into_iter())
+                    .collect(),
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+    }
 
     Ok(())
 }

@@ -21,6 +21,7 @@ pub fn lower_alloca(
     _align: u32,
 ) -> Result<()> {
     if let Some(slot_id) = ctx.inst_id_to_slot_id.get(&id) {
+        println!("alloca slot id exists");
         let mem = vec![
             MO::new(OperandData::MemStart),
             MO::new(OperandData::None),

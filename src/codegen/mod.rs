@@ -66,6 +66,59 @@ mod test {
     }
 
     #[test]
+    fn codegen_vec_ldrstr_test() {
+        // LLVM Assembly
+        let asm = r#"
+  source_filename = "asm"
+  ; Function Attrs: noinline nounwind optnone uwtable
+  define dso_local i64 @main() #0 {
+    %a = alloca [4xi64], align 4
+    ;%1 = load [4xi64], ptr %a, align 4
+    %1 = call [4xi64] @get_storage([4xi64] [i64 10,i64 20,i64 30,i64 40])
+    %2 = extractvalue [4 x i64] %1, 2
+    %3 = add i64 %2, 100
+    call void @set_storage([4xi64] %1, [4xi64] [i64 50,i64 60,i64 70,i64 80])
+    ret i64 %3
+  }
+
+  define dso_local i64 @codegen_vec_ldrstr_test() #0 {
+    %a = alloca [4xi64], align 4
+    %1 = load [4xi64], ptr %a, align 4
+    %2 = extractvalue [4 x i64] %1, 0
+    %3 = extractvalue [4 x i64] %1, 1
+    %4 = extractvalue [4 x i64] %1, 2
+    %5 = extractvalue [4 x i64] %1, 3
+    %6 = add i64 %2, %3
+    %7 = mul i64 %4, %6
+    %8 = add i64 %6, %7
+    ;call void @set_storage([4xi64] %1, [4xi64] [i64 50,i64 60,i64 70,i64 80])
+    ret i64 %8
+
+    ;store [4xi64] [i64 10,i64 20,i64 30,i64 40], ptr %a
+  }
+
+
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+"
+        );
+    }
+
+    #[test]
     fn codegen_storage_contract_test() {
         // LLVM Assembly
         let asm = r#"
@@ -2366,14 +2419,308 @@ sqrt_test:
             %30 = call [4 x i64] @get_storage([4 x i64] %29)
             %31 = extractvalue [4 x i64] %30, 3
             store i64 %31, ptr %index_access, align 4
-            store [4 x i64] %28, ptr %0, align 4
+            store [4 x i64] %29, ptr %0, align 4
             %next_index = add i64 %index_value, 1
             store i64 %next_index, ptr %index_alloca, align 4
             br label %cond
           
           done:                                             ; preds = %cond
             ret ptr %vector_alloca
-          }    
+          } 
+
+define void @vote_proposal(i64 %0) {
+entry:
+  %sender = alloca i64, align 8
+  %msgSender = alloca [4 x i64], align 8
+  %proposal_ = alloca i64, align 8
+  store i64 %0, ptr %proposal_, align 4
+  %1 = call [4 x i64] @get_caller()
+  store [4 x i64] %1, ptr %msgSender, align 4
+  %2 = load [4 x i64], ptr %msgSender, align 4
+  %3 = extractvalue [4 x i64] %2, 0
+  %4 = extractvalue [4 x i64] %2, 1
+  %5 = extractvalue [4 x i64] %2, 2
+  %6 = extractvalue [4 x i64] %2, 3
+  %7 = insertvalue [8 x i64] undef, i64 %6, 7
+  %8 = insertvalue [8 x i64] %7, i64 %5, 6
+  %9 = insertvalue [8 x i64] %8, i64 %4, 5
+  %10 = insertvalue [8 x i64] %9, i64 %3, 4
+  %11 = insertvalue [8 x i64] %10, i64 1, 3
+  %12 = insertvalue [8 x i64] %11, i64 0, 2
+  %13 = insertvalue [8 x i64] %12, i64 0, 1
+  %14 = insertvalue [8 x i64] %13, i64 0, 0
+  %15 = call [4 x i64] @poseidon_hash([8 x i64] %14)
+  store [4 x i64] %15, ptr %sender, align 4
+  %16 = load i64, ptr %sender, align 4
+  %17 = add i64 %16, 0
+  %18 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %17, 3
+  call void @set_storage([4 x i64] %18, [4 x i64] [i64 0, i64 0, i64 0, i64 1])
+  %19 = load i64, ptr %proposal_, align 4
+  %20 = load i64, ptr %sender, align 4
+  %21 = add i64 %20, 1
+  %22 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %21, 3
+  %23 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %19, 3
+  call void @set_storage([4 x i64] %22, [4 x i64] %23)
+  %24 = load i64, ptr %proposal_, align 4
+  %25 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+  %26 = extractvalue [4 x i64] %25, 3
+  %27 = sub i64 %26, 1
+  %28 = sub i64 %27, %24
+  call void @builtin_range_check(i64 %28)
+  %29 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
+  %30 = extractvalue [4 x i64] %29, 3
+  %31 = add i64 %30, %24
+  %32 = insertvalue [4 x i64] %29, i64 %31, 3
+  %33 = extractvalue [4 x i64] %32, 3
+  %34 = add i64 %33, 1
+  %35 = insertvalue [4 x i64] %32, i64 %34, 3
+  %36 = call [4 x i64] @get_storage([4 x i64] %35)
+  %37 = extractvalue [4 x i64] %36, 3
+  %38 = add i64 %37, 1
+  call void @builtin_range_check(i64 %38)
+  %39 = load i64, ptr %proposal_, align 4
+  %40 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+  %41 = extractvalue [4 x i64] %40, 3
+  %42 = sub i64 %41, 1
+  %43 = sub i64 %42, %39
+  call void @builtin_range_check(i64 %43)
+  %44 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
+  %45 = extractvalue [4 x i64] %44, 3
+  %46 = add i64 %45, %39
+  %47 = insertvalue [4 x i64] %44, i64 %46, 3
+  %48 = extractvalue [4 x i64] %47, 3
+  %49 = add i64 %48, 1
+  %50 = insertvalue [4 x i64] %47, i64 %49, 3
+  %51 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %38, 3
+  call void @set_storage([4 x i64] %50, [4 x i64] %51)
+  ret void
+}
+
+define i64 @winningProposal() {
+  entry:
+    %p = alloca i64, align 8
+    %winningVoteCount = alloca i64, align 8
+    %winningProposal_ = alloca i64, align 8
+    store i64 0, ptr %winningProposal_, align 4
+    store i64 0, ptr %winningVoteCount, align 4
+    store i64 0, ptr %p, align 4
+    br label %cond
+  
+  cond:                                             ; preds = %next, %entry
+    %0 = load i64, ptr %p, align 4
+    %1 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+    %2 = extractvalue [4 x i64] %1, 3
+    %3 = icmp ult i64 %0, %2
+    br i1 %3, label %body, label %endfor
+  
+  body:                                             ; preds = %cond
+    %4 = load i64, ptr %p, align 4
+    %5 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+    %6 = extractvalue [4 x i64] %5, 3
+    %7 = sub i64 %6, 1
+    %8 = sub i64 %7, %4
+    call void @builtin_range_check(i64 %8)
+    %9 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
+    %10 = extractvalue [4 x i64] %9, 3
+    %11 = add i64 %10, %4
+    %12 = insertvalue [4 x i64] %9, i64 %11, 3
+    %13 = extractvalue [4 x i64] %12, 3
+    %14 = add i64 %13, 1
+    %15 = insertvalue [4 x i64] %12, i64 %14, 3
+    %16 = call [4 x i64] @get_storage([4 x i64] %15)
+    %17 = extractvalue [4 x i64] %16, 3
+    %18 = load i64, ptr %winningVoteCount, align 4
+    %19 = icmp ugt i64 %17, %18
+    br i1 %19, label %then, label %enif
+  
+  next:                                             ; preds = %enif
+    %20 = load i64, ptr %p, align 4
+    %21 = add i64 %20, 1
+    store i64 %21, ptr %p, align 4
+    br label %cond
+  
+  endfor:                                           ; preds = %cond
+    %22 = load i64, ptr %winningProposal_, align 4
+    ret i64 %22
+  
+  then:                                             ; preds = %body
+    %23 = load i64, ptr %p, align 4
+    %24 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+    %25 = extractvalue [4 x i64] %24, 3
+    %26 = sub i64 %25, 1
+    %27 = sub i64 %26, %23
+    call void @builtin_range_check(i64 %27)
+    %28 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
+    %29 = extractvalue [4 x i64] %28, 3
+    %30 = add i64 %29, %23
+    %31 = insertvalue [4 x i64] %28, i64 %30, 3
+    %32 = extractvalue [4 x i64] %31, 3
+    %33 = add i64 %32, 1
+    %34 = insertvalue [4 x i64] %31, i64 %33, 3
+    %35 = call [4 x i64] @get_storage([4 x i64] %34)
+    %36 = extractvalue [4 x i64] %35, 3
+    %37 = load i64, ptr %p, align 4
+    br label %enif
+  
+  enif:                                             ; preds = %then, %body
+    br label %next
+  }
+
+define [4 x i64] @get_caller() {
+entry:
+  ret [4 x i64] [i64 402443140940559753, i64 -5438528055523826848, i64 6500940582073311439, i64 -6711892513312253938]
+}
+
+define void @main() {
+entry:
+  %vector_alloca52 = alloca { i64, ptr }, align 8
+  %vector_alloca32 = alloca { i64, ptr }, align 8
+  %vector_alloca14 = alloca { i64, ptr }, align 8
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %index_alloca = alloca i64, align 8
+  %0 = call i64 @vector_new(i64 3)
+  %int_to_ptr = inttoptr i64 %0 to ptr
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, 3
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
+  store i64 0, ptr %index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 3, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %int_to_ptr, ptr %vector_data, align 8
+  %1 = call i64 @vector_new(i64 12)
+  %int_to_ptr1 = inttoptr i64 %1 to ptr
+  %index_access2 = getelementptr ptr, ptr %int_to_ptr1, i64 0
+  store i64 34, ptr %index_access2, align 4
+  %index_access3 = getelementptr ptr, ptr %int_to_ptr1, i64 1
+  store i64 80, ptr %index_access3, align 4
+  %index_access4 = getelementptr ptr, ptr %int_to_ptr1, i64 2
+  store i64 114, ptr %index_access4, align 4
+  %index_access5 = getelementptr ptr, ptr %int_to_ptr1, i64 3
+  store i64 111, ptr %index_access5, align 4
+  %index_access6 = getelementptr ptr, ptr %int_to_ptr1, i64 4
+  store i64 112, ptr %index_access6, align 4
+  %index_access7 = getelementptr ptr, ptr %int_to_ptr1, i64 5
+  store i64 111, ptr %index_access7, align 4
+  %index_access8 = getelementptr ptr, ptr %int_to_ptr1, i64 6
+  store i64 115, ptr %index_access8, align 4
+  %index_access9 = getelementptr ptr, ptr %int_to_ptr1, i64 7
+  store i64 97, ptr %index_access9, align 4
+  %index_access10 = getelementptr ptr, ptr %int_to_ptr1, i64 8
+  store i64 108, ptr %index_access10, align 4
+  %index_access11 = getelementptr ptr, ptr %int_to_ptr1, i64 9
+  store i64 32, ptr %index_access11, align 4
+  %index_access12 = getelementptr ptr, ptr %int_to_ptr1, i64 10
+  store i64 49, ptr %index_access12, align 4
+  %index_access13 = getelementptr ptr, ptr %int_to_ptr1, i64 11
+  store i64 34, ptr %index_access13, align 4
+  %vector_len15 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca14, i32 0, i32 0
+  store i64 12, ptr %vector_len15, align 4
+  %vector_data16 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca14, i32 0, i32 1
+  store ptr %int_to_ptr1, ptr %vector_data16, align 8
+  %vector_len17 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  %length = load i64, ptr %vector_len17, align 4
+  %2 = sub i64 %length, 1
+  %3 = sub i64 %2, 0
+  call void @builtin_range_check(i64 %3)
+  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  %index_access18 = getelementptr { i64, ptr }, ptr %data, i64 0
+  store ptr %vector_alloca14, ptr %index_access18, align 8
+  %4 = call i64 @vector_new(i64 12)
+  %int_to_ptr19 = inttoptr i64 %4 to ptr
+  %index_access20 = getelementptr ptr, ptr %int_to_ptr19, i64 0
+  store i64 34, ptr %index_access20, align 4
+  %index_access21 = getelementptr ptr, ptr %int_to_ptr19, i64 1
+  store i64 80, ptr %index_access21, align 4
+  %index_access22 = getelementptr ptr, ptr %int_to_ptr19, i64 2
+  store i64 114, ptr %index_access22, align 4
+  %index_access23 = getelementptr ptr, ptr %int_to_ptr19, i64 3
+  store i64 111, ptr %index_access23, align 4
+  %index_access24 = getelementptr ptr, ptr %int_to_ptr19, i64 4
+  store i64 112, ptr %index_access24, align 4
+  %index_access25 = getelementptr ptr, ptr %int_to_ptr19, i64 5
+  store i64 111, ptr %index_access25, align 4
+  %index_access26 = getelementptr ptr, ptr %int_to_ptr19, i64 6
+  store i64 115, ptr %index_access26, align 4
+  %index_access27 = getelementptr ptr, ptr %int_to_ptr19, i64 7
+  store i64 97, ptr %index_access27, align 4
+  %index_access28 = getelementptr ptr, ptr %int_to_ptr19, i64 8
+  store i64 108, ptr %index_access28, align 4
+  %index_access29 = getelementptr ptr, ptr %int_to_ptr19, i64 9
+  store i64 32, ptr %index_access29, align 4
+  %index_access30 = getelementptr ptr, ptr %int_to_ptr19, i64 10
+  store i64 50, ptr %index_access30, align 4
+  %index_access31 = getelementptr ptr, ptr %int_to_ptr19, i64 11
+  store i64 34, ptr %index_access31, align 4
+  %vector_len33 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca32, i32 0, i32 0
+  store i64 12, ptr %vector_len33, align 4
+  %vector_data34 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca32, i32 0, i32 1
+  store ptr %int_to_ptr19, ptr %vector_data34, align 8
+  %vector_len35 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  %length36 = load i64, ptr %vector_len35, align 4
+  %5 = sub i64 %length36, 1
+  %6 = sub i64 %5, 1
+  call void @builtin_range_check(i64 %6)
+  %data37 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  %index_access38 = getelementptr { i64, ptr }, ptr %data37, i64 1
+  store ptr %vector_alloca32, ptr %index_access38, align 8
+  %7 = call i64 @vector_new(i64 12)
+  %int_to_ptr39 = inttoptr i64 %7 to ptr
+  %index_access40 = getelementptr ptr, ptr %int_to_ptr39, i64 0
+  store i64 34, ptr %index_access40, align 4
+  %index_access41 = getelementptr ptr, ptr %int_to_ptr39, i64 1
+  store i64 80, ptr %index_access41, align 4
+  %index_access42 = getelementptr ptr, ptr %int_to_ptr39, i64 2
+  store i64 114, ptr %index_access42, align 4
+  %index_access43 = getelementptr ptr, ptr %int_to_ptr39, i64 3
+  store i64 111, ptr %index_access43, align 4
+  %index_access44 = getelementptr ptr, ptr %int_to_ptr39, i64 4
+  store i64 112, ptr %index_access44, align 4
+  %index_access45 = getelementptr ptr, ptr %int_to_ptr39, i64 5
+  store i64 111, ptr %index_access45, align 4
+  %index_access46 = getelementptr ptr, ptr %int_to_ptr39, i64 6
+  store i64 115, ptr %index_access46, align 4
+  %index_access47 = getelementptr ptr, ptr %int_to_ptr39, i64 7
+  store i64 97, ptr %index_access47, align 4
+  %index_access48 = getelementptr ptr, ptr %int_to_ptr39, i64 8
+  store i64 108, ptr %index_access48, align 4
+  %index_access49 = getelementptr ptr, ptr %int_to_ptr39, i64 9
+  store i64 32, ptr %index_access49, align 4
+  %index_access50 = getelementptr ptr, ptr %int_to_ptr39, i64 10
+  store i64 51, ptr %index_access50, align 4
+  %index_access51 = getelementptr ptr, ptr %int_to_ptr39, i64 11
+  store i64 34, ptr %index_access51, align 4
+  %vector_len53 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca52, i32 0, i32 0
+  store i64 12, ptr %vector_len53, align 4
+  %vector_data54 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca52, i32 0, i32 1
+  store ptr %int_to_ptr39, ptr %vector_data54, align 8
+  %vector_len55 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  %length56 = load i64, ptr %vector_len55, align 4
+  %8 = sub i64 %length56, 1
+  %9 = sub i64 %8, 2
+  call void @builtin_range_check(i64 %9)
+  %data57 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  %index_access58 = getelementptr { i64, ptr }, ptr %data57, i64 2
+  store ptr %vector_alloca52, ptr %index_access58, align 8
+  call void @contract_init(ptr %vector_alloca)
+  call void @vote_proposal(i64 0)
+  call void @vote_proposal(i64 1)
+  call void @vote_proposal(i64 0)
+  %10 = call ptr @getWinnerName()
+  ret void
+}
 "#;
         // Parse the assembly and get a module
         let module = Module::try_from(asm).expect("failed to parse LLVM IR");

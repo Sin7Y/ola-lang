@@ -430,7 +430,7 @@ fn get_operands_for_const(
 
 fn get_vreg_for_val(ctx: &mut LoweringContext<Ola>, ty: Type, val: ValueId) -> Result<VReg> {
     match get_operand_for_val(ctx, ty, val)? {
-        OperandData::Int32(i) => {
+        OperandData::Int64(i) => {
             let output = ctx.mach_data.vregs.add_vreg_data(ty);
             ctx.inst_seq.push(MachInstruction::new(
                 InstructionData {

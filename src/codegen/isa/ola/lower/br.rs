@@ -89,7 +89,7 @@ pub fn lower_condbr(
         let rhs = ctx.ir_data.value_ref(args[1]);
         let output = new_empty_inst_output(ctx, *ty, icmp);
         match rhs {
-            Value::Constant(ConstantValue::Int(ConstantInt::Int32(rhs))) => match cond {
+            Value::Constant(ConstantValue::Int(ConstantInt::Int64(rhs))) => match cond {
                 ICmpCond::Eq => {
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {

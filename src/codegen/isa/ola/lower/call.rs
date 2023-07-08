@@ -335,10 +335,9 @@ fn pass_str_args_to_regs(
 
 pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>) -> Result<()> {
     if let Some((ty, value)) = arg {
-        let values = get_operands_for_val(ctx, ty, value)?;
-
         let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
         if sz > 1 {
+            let values = get_operands_for_val(ctx, ty, value)?;
             let ret_reg0: Reg = GR::R0.into();
             let ret_reg1: Reg = GR::R1.into();
             let ret_reg2: Reg = GR::R2.into();
