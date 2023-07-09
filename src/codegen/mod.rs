@@ -83,18 +83,17 @@ mod test {
 
   define dso_local i64 @codegen_vec_ldrstr_test() #0 {
     %a = alloca [4xi64], align 4
+    store [4xi64] [i64 10,i64 20,i64 30,i64 40], ptr %a
     %1 = load [4xi64], ptr %a, align 4
     %2 = extractvalue [4 x i64] %1, 0
     %3 = extractvalue [4 x i64] %1, 1
     %4 = extractvalue [4 x i64] %1, 2
     %5 = extractvalue [4 x i64] %1, 3
     %6 = add i64 %2, %3
-    %7 = mul i64 %4, %6
+    %7 = mul i64 %4, %5
     %8 = add i64 %6, %7
     ;call void @set_storage([4xi64] %1, [4xi64] [i64 50,i64 60,i64 70,i64 80])
     ret i64 %8
-
-    ;store [4xi64] [i64 10,i64 20,i64 30,i64 40], ptr %a
   }
 
 
@@ -114,6 +113,48 @@ mod test {
         assert_eq!(
             format!("{}", code.program),
             "main:
+.LBL0_0:
+  add r9 r9 5
+  mov r1 10
+  mov r2 20
+  mov r3 30
+  mov r4 40
+  sload 
+  mov r5 r3
+  mstore [r9,-5] r5
+  mload r5 [r9,-5]
+  mov r3 r5
+  mov r5 50
+  mov r6 60
+  mov r7 70
+  mov r8 80
+  sstore 
+  mload r5 [r9,-5]
+  add r0 r5 100
+  add r9 r9 -5
+  end
+codegen_vec_ldrstr_test:
+.LBL1_0:
+  add r9 r9 4
+  mov r7 10
+  mov r8 20
+  mov r1 30
+  mov r2 40
+  mstore [r9,-4] r2
+  mstore [r9,-3] r1
+  mstore [r9,-2] r8
+  mstore [r9,-1] r7
+  mload r7 [r9,-1]
+  mload r8 [r9,-2]
+  mload r1 [r9,-3]
+  mload r2 [r9,-4]
+  add r6 r7 r8
+  mov r7 r1
+  mov r8 r2
+  mul r5 r7 r8
+  add r0 r6 r5
+  add r9 r9 -4
+  ret
 "
         );
     }

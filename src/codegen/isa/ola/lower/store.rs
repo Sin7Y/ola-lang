@@ -1,4 +1,4 @@
-use super::{get_inst_output, get_operand_for_val};
+use super::{get_inst_output, get_operand_for_val, get_operands_for_const};
 use crate::codegen::core::ir::{
     function::instruction::{InstructionId, Opcode as IrOpcode},
     types::Type,
@@ -11,6 +11,7 @@ use crate::codegen::{
         register::GR,
         Ola,
     },
+    isa::TargetIsa,
     lower::{LoweringContext, LoweringError},
     register::Reg,
 };
@@ -45,53 +46,77 @@ pub fn lower_store(
     }
 
     let konst = None;
-    let vreg;
+    let mut vreg = None;
 
     let src = args[0];
     println!(
-        "store src {:?}, src type {:?}",
+        "store inst: src value {:?}, type {:?}",
         ctx.ir_data.value_ref(src),
         tys[0]
     );
+    let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
     match ctx.ir_data.value_ref(src) {
         Value::Constant(c) => {
-            let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
-            match c {
-                ConstantValue::Int(ConstantInt::Int32(i)) => {
-                    //let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+            if sz > 1 {
+                let elm_ty = ctx.types.base().element(tys[0]).unwrap();
+                let ops = get_operands_for_const(ctx, tys[0], c)?;
+                let mut addrs = vec![];
+                for idx in 0..sz {
+                    let addr = ctx.mach_data.vregs.add_vreg_data(elm_ty);
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::MOVri,
                             operands: vec![
                                 MOperand::output(addr.into()),
-                                MOperand::new(OperandData::Int32(*i)),
+                                MOperand::new(ops[idx].clone()),
                             ],
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
-                    //vreg = Some(addr.into());
+                    addrs.push(addr.into());
                 }
-                ConstantValue::Int(ConstantInt::Int64(i)) => {
-                    //let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
-                    ctx.inst_seq.push(MachInstruction::new(
-                        InstructionData {
-                            opcode: Opcode::MOVri,
-                            operands: vec![
-                                MOperand::output(addr.into()),
-                                MOperand::new(OperandData::Int64(*i)),
-                            ],
-                        },
-                        ctx.block_map[&ctx.cur_block],
-                    ));
-                    //vreg = Some(addr.into());
+                vreg = Some(addrs);
+            } else {
+                let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+                match c {
+                    ConstantValue::Int(ConstantInt::Int32(i)) => {
+                        //let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::MOVri,
+                                operands: vec![
+                                    MOperand::output(addr.into()),
+                                    MOperand::new(OperandData::Int32(*i)),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                        //vreg = Some(addr.into());
+                    }
+                    ConstantValue::Int(ConstantInt::Int64(i)) => {
+                        //let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+                        ctx.inst_seq.push(MachInstruction::new(
+                            InstructionData {
+                                opcode: Opcode::MOVri,
+                                operands: vec![
+                                    MOperand::output(addr.into()),
+                                    MOperand::new(OperandData::Int64(*i)),
+                                ],
+                            },
+                            ctx.block_map[&ctx.cur_block],
+                        ));
+                        //vreg = Some(addr.into());
+                    }
+                    e => {
+                        return Err(LoweringError::Todo(format!(
+                            "Unsupported store source: {:?}",
+                            e
+                        ))
+                        .into())
+                    }
                 }
-                e => {
-                    return Err(
-                        LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into(),
-                    )
-                }
+                vreg = Some(vec![addr.into()]);
             }
-            vreg = Some(vec![addr.into()]);
         }
         Value::Instruction(id) => {
             if tys[0].is_pointer(ctx.types) {
@@ -135,22 +160,24 @@ pub fn lower_store(
 
     match (dst_vreg, dst_slot, vreg, konst) {
         (None, Some(slot), Some(vreg), None) => {
-            ctx.inst_seq.append(&mut vec![MachInstruction::new(
-                InstructionData {
-                    opcode: Opcode::MSTOREr,
-                    operands: vec![
-                        MOperand::new(OperandData::MemStart),
-                        MOperand::new(OperandData::None),
-                        MOperand::new(OperandData::Slot(slot)),
-                        MOperand::new(OperandData::None),
-                        MOperand::input(OperandData::None),
-                        MOperand::input(OperandData::None),
-                        MOperand::new(OperandData::None),
-                        MOperand::input(vreg[0].into()),
-                    ],
-                },
-                ctx.block_map[&ctx.cur_block],
-            )]);
+            for idx in 0..sz {
+                ctx.inst_seq.append(&mut vec![MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::MSTOREr,
+                        operands: vec![
+                            MOperand::new(OperandData::MemStart),
+                            MOperand::new(OperandData::None),
+                            MOperand::new(OperandData::Slot(slot)),
+                            MOperand::new((4 * (idx as i64 - 2)).into()),
+                            MOperand::input(OperandData::None),
+                            MOperand::input(OperandData::None),
+                            MOperand::new(OperandData::None),
+                            MOperand::input(vreg[sz - idx - 1].into()),
+                        ],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                )]);
+            }
             Ok(())
         }
         (Some(dst), None, Some(vreg), None) => {
@@ -207,7 +234,6 @@ fn lower_store_gep(
     _align: u32,
     gep_id: InstructionId,
 ) -> Result<()> {
-    use crate::codegen::isa::TargetIsa;
     use {
         Constant as Const,
         ConstantInt::{Int32, Int64},
