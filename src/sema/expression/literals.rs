@@ -24,7 +24,7 @@ pub(super) fn string_literal(
     // Concatenate the strings
     let mut result = Vec::new();
     let mut loc = v[0].loc;
-
+    println!("string_literal: {:?}", v);
     for s in v {
         result.append(&mut unescape(
             &s.string,

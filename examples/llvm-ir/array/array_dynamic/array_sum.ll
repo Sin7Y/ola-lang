@@ -29,11 +29,12 @@ define i64 @sum(ptr %0) {
 entry:
   %i = alloca i64, align 8
   %totalSum = alloca i64, align 8
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %index_alloca = alloca i64, align 8
   %inputArray = alloca ptr, align 8
   store ptr %0, ptr %inputArray, align 8
   %1 = call i64 @vector_new(i64 10)
   %int_to_ptr = inttoptr i64 %1 to ptr
-  %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -43,14 +44,13 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
+  %index_access = getelementptr i64, ptr %int_to_ptr, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %vector_alloca = alloca { i64, ptr }, align 8
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   store i64 10, ptr %vector_len, align 4
   %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1

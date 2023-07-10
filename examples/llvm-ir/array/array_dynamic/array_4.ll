@@ -27,9 +27,10 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define void @main() {
 entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %index_alloca = alloca i64, align 8
   %0 = call i64 @vector_new(i64 5)
   %int_to_ptr = inttoptr i64 %0 to ptr
-  %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -39,14 +40,13 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
+  %index_access = getelementptr i64, ptr %int_to_ptr, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %vector_alloca = alloca { i64, ptr }, align 8
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   store i64 5, ptr %vector_len, align 4
   %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
@@ -65,12 +65,13 @@ done:                                             ; preds = %cond
 
 define ptr @array_call(i64 %0) {
 entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %index_alloca = alloca i64, align 8
   %length = alloca i64, align 8
   store i64 %0, ptr %length, align 4
   %1 = load i64, ptr %length, align 4
   %2 = call i64 @vector_new(i64 %1)
   %int_to_ptr = inttoptr i64 %2 to ptr
-  %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -80,14 +81,13 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
+  %index_access = getelementptr i64, ptr %int_to_ptr, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %vector_alloca = alloca { i64, ptr }, align 8
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   store i64 %1, ptr %vector_len, align 4
   %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
