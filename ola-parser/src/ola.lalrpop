@@ -425,7 +425,7 @@ AddressLiteral: String = {
 
 StringLiteral: StringLiteral = {
     <l:@L> <s:r#""[^"]*""#> <r:@R> => {
-        StringLiteral{ loc: Loc::File(file_no, l, r), string: s.to_string()}
+        StringLiteral{ loc: Loc::File(file_no, l, r), string: s[1..s.len()-1].to_string()}
     }
 }
 
