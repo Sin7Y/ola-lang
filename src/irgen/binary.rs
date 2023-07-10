@@ -367,7 +367,7 @@ impl<'a> Binary<'a> {
                     let index = self.context.i64_type().const_int(item_no as u64, false);
                     let index_access = unsafe {
                         self.builder.build_gep(
-                            self.context.i64_type().ptr_type(AddressSpace::default()),
+                            self.context.i64_type(),
                             data,
                             &[index],
                             "index_access",
@@ -541,7 +541,7 @@ impl<'a> Binary<'a> {
 
         let index_access = unsafe {
             self.builder.build_gep(
-                self.context.i64_type().ptr_type(AddressSpace::default()),
+                self.context.i64_type(),
                 data_ref,
                 &[index_value],
                 "index_access",
