@@ -27,7 +27,11 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define ptr @initialize(i64 %0, i64 %1) {
 entry:
+  %vector_alloca12 = alloca { i64, ptr }, align 8
+  %index_alloca7 = alloca i64, align 8
   %i = alloca i64, align 8
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %index_alloca = alloca i64, align 8
   %columns = alloca i64, align 8
   %rows = alloca i64, align 8
   store i64 %0, ptr %rows, align 4
@@ -35,7 +39,6 @@ entry:
   %2 = load i64, ptr %rows, align 4
   %3 = call i64 @vector_new(i64 %2)
   %int_to_ptr = inttoptr i64 %3 to ptr
-  %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -45,14 +48,13 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr ptr, ptr %int_to_ptr, i64 %index_value
+  %index_access = getelementptr i64, ptr %int_to_ptr, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %vector_alloca = alloca { i64, ptr }, align 8
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   store i64 %2, ptr %vector_len, align 4
   %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
@@ -70,7 +72,6 @@ body2:                                            ; preds = %cond1
   %7 = load i64, ptr %columns, align 4
   %8 = call i64 @vector_new(i64 %7)
   %int_to_ptr3 = inttoptr i64 %8 to ptr
-  %index_alloca7 = alloca i64, align 8
   store i64 0, ptr %index_alloca7, align 4
   br label %cond4
 
@@ -89,14 +90,13 @@ cond4:                                            ; preds = %body5, %body2
   br i1 %loop_cond9, label %body5, label %done6
 
 body5:                                            ; preds = %cond4
-  %index_access10 = getelementptr ptr, ptr %int_to_ptr3, i64 %index_value8
+  %index_access10 = getelementptr i64, ptr %int_to_ptr3, i64 %index_value8
   store i64 0, ptr %index_access10, align 4
   %next_index11 = add i64 %index_value8, 1
   store i64 %next_index11, ptr %index_alloca7, align 4
   br label %cond4
 
 done6:                                            ; preds = %cond4
-  %vector_alloca12 = alloca { i64, ptr }, align 8
   %vector_len13 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca12, i32 0, i32 0
   store i64 %7, ptr %vector_len13, align 4
   %vector_data14 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca12, i32 0, i32 1

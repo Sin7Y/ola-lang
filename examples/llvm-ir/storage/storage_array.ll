@@ -27,6 +27,8 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define void @init() {
 entry:
+  %0 = alloca i64, align 8
+  %index_alloca = alloca i64, align 8
   %array_literal = alloca [5 x i64], align 8
   %elemptr0 = getelementptr [5 x i64], ptr %array_literal, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
@@ -38,9 +40,7 @@ entry:
   store i64 4, ptr %elemptr3, align 4
   %elemptr4 = getelementptr [5 x i64], ptr %array_literal, i64 0, i64 4
   store i64 5, ptr %elemptr4, align 4
-  %index_alloca = alloca i64, align 8
   store i64 0, ptr %index_alloca, align 4
-  %0 = alloca i64, align 8
   store i64 0, ptr %0, align 4
   br label %body
 

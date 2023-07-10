@@ -27,9 +27,9 @@ declare [4 x i64] @poseidon_hash([8 x i64])
 
 define void @main() {
 entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
   %0 = call i64 @vector_new(i64 3)
   %int_to_ptr = inttoptr i64 %0 to ptr
-  %vector_alloca = alloca { i64, ptr }, align 8
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
   store i64 3, ptr %vector_len, align 4
   %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
