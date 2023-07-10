@@ -115,15 +115,20 @@ impl<'a, 'b, T: TargetIsa> Spiller<'a, 'b, T> {
         block: BasicBlockId,
     ) {
         let after_pp = self.liveness.inst_to_pp[&after];
-        let next_after = self.function.layout.next_inst_of(after).unwrap();
-        let next_after_pp = self.liveness.inst_to_pp[&next_after];
-        if let Some(inst_pp) = ProgramPoint::between(after_pp, next_after_pp) {
-            self.liveness.inst_to_pp.insert(inst, inst_pp);
-            self.function.layout.insert_inst_after(after, inst, block);
-        } else {
-            self.liveness
-                .recompute_program_points_after(after_pp, false);
-            self.insert_inst_after(after, inst, block);
+        println!(
+            "*************** after {:?} ",
+            self.function.data.inst_ref(after)
+        );
+        if let Some(next_after) = self.function.layout.next_inst_of(after) {
+            let next_after_pp = self.liveness.inst_to_pp[&next_after];
+            if let Some(inst_pp) = ProgramPoint::between(after_pp, next_after_pp) {
+                self.liveness.inst_to_pp.insert(inst, inst_pp);
+                self.function.layout.insert_inst_after(after, inst, block);
+            } else {
+                self.liveness
+                    .recompute_program_points_after(after_pp, false);
+                self.insert_inst_after(after, inst, block);
+            }
         }
     }
 

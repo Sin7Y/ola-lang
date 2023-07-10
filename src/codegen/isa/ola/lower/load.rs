@@ -140,7 +140,17 @@ fn lower_load_gep(
 
     let mem = match &gep_args[..] {
         [Value::Instruction(base_ptr), Const(Int(Int64(idx0))), Const(Int(Int64(idx1)))] => {
-            let base_ptr = ctx.inst_id_to_slot_id[base_ptr];
+            let mut slot = None;
+            let mut base = None;
+            if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
+                slot = Some(*p);
+            } else {
+                base = Some(get_operand_for_val(
+                    ctx,
+                    gep.operand.types()[1],
+                    gep.operand.args()[0],
+                )?);
+            }
             let base_ty = gep.operand.types()[0];
             let offset = idx0 * ctx.isa.data_layout.get_size_of(ctx.types, base_ty) as i64
                 + idx1
@@ -153,9 +163,9 @@ fn lower_load_gep(
             vec![
                 MOperand::new(OperandData::MemStart),
                 MOperand::new(OperandData::None),
-                MOperand::new(OperandData::Slot(base_ptr)),
+                MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
                 MOperand::new(OperandData::Int32(-offset as i32)),
-                MOperand::input(OperandData::None),
+                MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::None),
                 MOperand::new(OperandData::None),
             ]
@@ -226,6 +236,36 @@ fn lower_load_gep(
                         .get_size_of(ctx.types, ctx.types.get_element(base_ty).unwrap())
                         as i32,
                 )),
+            ]
+        }
+        [Value::Instruction(base_ptr), Value::Instruction(idx1)] => {
+            let mut slot = None;
+            let mut base = None;
+            if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
+                slot = Some(*p);
+            } else {
+                base = Some(get_operand_for_val(
+                    ctx,
+                    gep.operand.types()[1],
+                    gep.operand.args()[0],
+                )?);
+            }
+
+            // let base_ty = gep.operand.types()[0];
+            //let offset = idx0 * ctx.isa.data_layout.get_size_of(ctx.types, base_ty) as
+            // i64;
+
+            let idx1_ty = gep.operand.types()[2];
+            let idx1 = get_inst_output(ctx, idx1_ty, *idx1)?;
+
+            vec![
+                MOperand::new(OperandData::MemStart),
+                MOperand::new(OperandData::None),
+                MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
+                MOperand::new(OperandData::Int32(0 as i32)),
+                MOperand::input(base.map_or(OperandData::None, |x| x)),
+                MOperand::input(OperandData::VReg(idx1[0])),
+                MOperand::new(OperandData::Int32(4 as i32)),
             ]
         }
         e => todo!("Unsupported GEP pattern for load: {:?}", e),

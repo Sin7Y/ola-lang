@@ -46,7 +46,7 @@ pub fn lower_store(
     }
 
     let konst = None;
-    let mut vreg = None;
+    let vreg;
 
     let src = args[0];
     println!(

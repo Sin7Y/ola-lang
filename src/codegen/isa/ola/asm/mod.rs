@@ -508,6 +508,15 @@ fn mem_op(args: &[Operand]) -> String {
             format!("[{}+{}*{}]", reg_to_str(reg1), reg_to_str(reg2), mul)
         }
         (
+            OperandData::None,
+            OperandData::None,
+            OperandData::Reg(reg1),
+            OperandData::Reg(reg2),
+            OperandData::Int64(mul),
+        ) => {
+            format!("[{}+{}*{}]", reg_to_str(reg1), reg_to_str(reg2), mul)
+        }
+        (
             OperandData::Label(lbl),
             OperandData::None,
             OperandData::Reg(reg1),
