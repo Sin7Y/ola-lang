@@ -314,7 +314,7 @@ pub fn print_function(
                         code.push_str(&format!("  mload r{} [r{},{}]\n", idx, idx, idx));
                     }
                 } */
-                code.push_str(&format!("  mload r0 [r0,0]\n"));
+                code.push_str(&format!("  mload r0 [r0]\n"));
 
                 assert_eq!(inst.data.operands.len(), 2);
                 prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));
@@ -452,12 +452,16 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::None,
         ) => {
-            format!(
-                "[{},{}{}]",
-                reg_to_str(reg),
-                if *imm < 0 { "" } else { "+" },
-                *imm
-            )
+            if *imm == 0 {
+                format!("[{}]", reg_to_str(reg))
+            } else {
+                format!(
+                    "[{},{}{}]",
+                    reg_to_str(reg),
+                    if *imm < 0 { "" } else { "+" },
+                    *imm
+                )
+            }
         }
         (
             OperandData::None,
@@ -466,12 +470,16 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::None,
         ) => {
-            format!(
-                "[{},{}{}]",
-                reg_to_str(reg),
-                if *imm < 0 { "" } else { "+" },
-                *imm
-            )
+            if *imm == 0 {
+                format!("[{}]", reg_to_str(reg))
+            } else {
+                format!(
+                    "[{},{}{}]",
+                    reg_to_str(reg),
+                    if *imm < 0 { "" } else { "+" },
+                    *imm
+                )
+            }
         }
         (
             OperandData::None,
@@ -480,14 +488,43 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::Reg(reg2),
             OperandData::Int32(shift),
         ) => {
-            format!(
-                "[{}{}{}+{}*{}]",
-                reg_to_str(reg1),
-                if *imm < 0 { "" } else { "+" },
-                *imm,
-                reg_to_str(reg2),
-                shift
-            )
+            if *imm == 0 {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *shift < 0 { "" } else { "+" },
+                    *shift
+                )
+            } else {
+                if *shift == 0 {
+                    format!(
+                        "[{},{}{}]",
+                        reg_to_str(reg1),
+                        if *imm < 0 { "" } else { "+" },
+                        *imm
+                    )
+                } else {
+                    if *shift == 0 {
+                        format!(
+                            "[{},{}{}]",
+                            reg_to_str(reg1),
+                            if *imm < 0 { "" } else { "+" },
+                            *imm,
+                        )
+                    } else {
+                        format!(
+                            "[{},{}{},{},{}{}]",
+                            reg_to_str(reg1),
+                            if *imm < 0 { "" } else { "+" },
+                            *imm,
+                            reg_to_str(reg2),
+                            if *shift < 0 { "" } else { "+" },
+                            *shift
+                        )
+                    }
+                }
+            }
         }
         (
             OperandData::None,
@@ -496,7 +533,7 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::None,
         ) => {
-            format!("[{}]", reg_to_str(reg1),)
+            format!("[{}]", reg_to_str(reg1))
         }
         (
             OperandData::None,
@@ -505,7 +542,17 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::Reg(reg2),
             OperandData::Int32(mul),
         ) => {
-            format!("[{}+{}*{}]", reg_to_str(reg1), reg_to_str(reg2), mul)
+            if *mul == 0 {
+                format!("[{}]", reg_to_str(reg1),)
+            } else {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *mul < 0 { "" } else { "+" },
+                    *mul
+                )
+            }
         }
         (
             OperandData::None,
@@ -514,7 +561,17 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::Reg(reg2),
             OperandData::Int64(mul),
         ) => {
-            format!("[{}+{}*{}]", reg_to_str(reg1), reg_to_str(reg2), mul)
+            if *mul == 0 {
+                format!("[{}]", reg_to_str(reg1),)
+            } else {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *mul < 0 { "" } else { "+" },
+                    *mul
+                )
+            }
         }
         (
             OperandData::Label(lbl),
