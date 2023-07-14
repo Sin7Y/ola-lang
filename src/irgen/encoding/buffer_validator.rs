@@ -20,7 +20,7 @@ pub(crate) struct BufferValidator<'a> {
     /// Saves the codegen::Expression that contains the buffer length.
     buffer_length: IntValue<'a>,
     /// The types we are supposed to decode
-    types: &'a [Type],
+    types: Vec<Type>,
     /// The argument whose size has already been accounted for when verifying
     /// the buffer
     verified_until: Option<usize>,
@@ -29,7 +29,7 @@ pub(crate) struct BufferValidator<'a> {
 }
 
 impl<'a> BufferValidator<'a> {
-    pub fn new(buffer_size_var: IntValue<'a>, types: &'a [Type]) -> BufferValidator<'a> {
+    pub fn new(buffer_size_var: IntValue<'a>, types: Vec<Type>) -> BufferValidator<'a> {
         BufferValidator {
             buffer_length: buffer_size_var,
             types,
@@ -200,23 +200,20 @@ impl<'a> BufferValidator<'a> {
     }
 
     /// Create a new buffer validator to validate struct fields.
-    pub(super) fn create_sub_validator(&self, types: &'a [Type]) -> BufferValidator<'a> {
+    pub(crate) fn create_sub_validator(&self, types: Vec<Type>) -> BufferValidator<'a> {
         // If the struct has been previously validated, there is no need to validate it
         // again, so verified_until and current_arg are set to type.len() to
         // avoid any further validation.
+        let len = types.len();
         BufferValidator {
             buffer_length: self.buffer_length.clone(),
             types,
             verified_until: if self.validation_necessary() {
                 None
             } else {
-                Some(types.len())
+                Some(len)
             },
-            current_arg: if self.validation_necessary() {
-                0
-            } else {
-                types.len()
-            },
+            current_arg: if self.validation_necessary() { 0 } else { len },
         }
     }
 }
