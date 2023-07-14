@@ -1,14 +1,18 @@
+use std::{
+    any::Any,
+    ops::{AddAssign, MulAssign, Sub},
+};
+
 use inkwell::values::{
-    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue,
+    AnyValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue,
 };
-use num_traits::ToPrimitive;
+use num_bigint::BigInt;
+use num_integer::Integer;
+use num_traits::{One, ToPrimitive, Zero};
 
-use crate::{
-    codegen::isa::ola::lower::bin,
-    sema::ast::{ArrayLength, Function, Namespace, Type},
-};
+use crate::sema::ast::{ArrayLength, Function, Namespace, Type};
 
-use self::{buffer_validator::BufferValidator, encoding::ScaleEncoding};
+use self::buffer_validator::BufferValidator;
 
 use super::binary::Binary;
 
@@ -72,12 +76,12 @@ pub(super) fn abi_decode<'a>(
     bin: &Binary<'a>,
     input_length: IntValue<'a>,
     input: PointerValue<'a>,
-    types: &'a [Type],
+    types: &Vec<Type>,
     func: &Function,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> Vec<BasicMetadataValueEnum<'a>> {
-    let mut validator = BufferValidator::new(input_length, types);
+) -> Vec<BasicValueEnum<'a>> {
+    let mut validator = BufferValidator::new(input_length, types.clone());
 
     let mut read_items = vec![];
     let mut offset = bin.context.i64_type().const_zero();
@@ -108,12 +112,12 @@ fn read_from_buffer<'a>(
     validator: &mut BufferValidator<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (BasicMetadataValueEnum<'a>, IntValue<'a>) {
+) -> (BasicValueEnum<'a>, IntValue<'a>) {
     match ty {
         Type::Uint(32) | Type::Bool | Type::Enum(_) => {
             let size = bin.context.i64_type().const_int(1, false);
             validator.validate_offset_plus_size(bin, offset, size, func_value, ns);
-            let read_value = decode_uint(buffer, &mut offset.clone(), bin);
+            let read_value = decode_uint(buffer, offset.clone(), bin);
             (read_value.into(), size)
         }
 
@@ -132,7 +136,7 @@ fn read_from_buffer<'a>(
 
         Type::String => {
             // String and Dynamic bytes are encoded as size + elements
-            let array_length = decode_uint(buffer, &mut offset.clone(), bin);
+            let array_length = decode_uint(buffer, offset.clone(), bin);
             let total_size = bin.builder.build_int_add(
                 bin.context.i64_type().const_int(1, false),
                 array_length.into_int_value(),
@@ -187,10 +191,11 @@ fn read_from_buffer<'a>(
             )
         }
 
-        Type::Struct(struct_ty) => decode_struct(
+        Type::Struct(no) => decode_struct(
             buffer,
             &mut offset.clone(),
             ty,
+            *no,
             validator,
             bin,
             func_value,
@@ -203,12 +208,12 @@ fn read_from_buffer<'a>(
 
 fn decode_uint<'a>(
     buffer: PointerValue<'a>,
-    offset: &mut IntValue<'a>,
+    offset: IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
     let start = unsafe {
         bin.builder
-            .build_gep(bin.context.i64_type(), buffer, &[*offset], "start")
+            .build_gep(bin.context.i64_type(), buffer, &[offset], "start")
     };
 
     bin.builder
@@ -223,7 +228,7 @@ fn decode_address<'a>(
     let mut address = bin.context.i64_type().array_type(4).get_undef();
 
     for i in 0..4 {
-        let value = decode_uint(buffer, offset, bin);
+        let value = decode_uint(buffer, *offset, bin);
         bin.builder.build_insert_value(address, value, i, "");
         *offset =
             bin.builder
@@ -238,22 +243,265 @@ fn decode_array<'a>(
     array_ty: &Type,
     elem_ty: &Type,
     dims: &[ArrayLength],
-    validator: &mut BufferValidator,
+    validator: &mut BufferValidator<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (BasicMetadataValueEnum<'a>, IntValue<'a>) {
-    unimplemented!()
+) -> (BasicValueEnum<'a>, IntValue<'a>) {
+    // Checks if we can memcpy the elements from the buffer directly to the
+    // allocated array
+    if allow_memcpy(array_ty, ns) {
+        // Calculate number of elements
+        let (array_pointer, array_size) = if matches!(dims.last(), Some(&ArrayLength::Fixed(_))) {
+            let dims = dims
+                .iter()
+                .map(|d| match d {
+                    ArrayLength::Fixed(d) => d.to_u32().unwrap(),
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>();
+            fixed_array_copy(
+                buffer,
+                &mut offset.clone(),
+                array_ty,
+                elem_ty,
+                &dims,
+                bin,
+                func_value,
+                ns,
+            )
+        } else {
+            let array_length = decode_uint(buffer, offset.clone(), bin);
+            let array_start =
+                bin.builder
+                    .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
+            validator.validate_offset(bin, array_start.clone(), func_value, ns);
+            dynamic_array_copy(
+                buffer,
+                array_start.clone(),
+                array_length.into_int_value(),
+                bin,
+                func_value,
+                ns,
+            )
+        };
+
+        validator.validate_offset_plus_size(bin, *offset, array_size, func_value, ns);
+        (array_pointer, array_size)
+    } else {
+        unimplemented!("decode complex array not implemented.")
+    }
 }
 
 fn decode_struct<'a>(
     buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     ty: &Type,
-    validator: &mut BufferValidator,
+    struct_no: usize,
+    validator: &mut BufferValidator<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (BasicMetadataValueEnum<'a>, IntValue<'a>) {
+) -> (BasicValueEnum<'a>, IntValue<'a>) {
+    let struct_tys = ns.structs[struct_no]
+        .fields
+        .iter()
+        .map(|item| item.ty.clone())
+        .collect::<Vec<Type>>();
+
+    // If it was not possible to validate the struct beforehand, we validate each
+    // field during recursive calls to 'read_from_buffer'
+    let mut struct_validator = validator.create_sub_validator(struct_tys.clone());
+
+    let qty = ns.structs[struct_no].fields.len();
+    if validator.validation_necessary() {
+        struct_validator.initialize_validation(bin, *offset, func_value, ns);
+    }
+
+    let (mut read_expr, mut advance) = read_from_buffer(
+        buffer,
+        offset.clone(),
+        bin,
+        &struct_tys[0].clone(),
+        &mut struct_validator,
+        func_value,
+        ns,
+    );
+    let mut runtime_size = advance.clone();
+
+    let mut read_items: Vec<BasicValueEnum<'_>> = vec![];
+    read_items[0] = read_expr;
+    for i in 1..qty {
+        struct_validator.set_argument_number(i);
+        struct_validator.validate_buffer(bin, *offset, func_value, ns);
+        *offset = bin.builder.build_int_add(*offset, advance, "");
+        (read_expr, advance) = read_from_buffer(
+            buffer,
+            *offset,
+            bin,
+            &struct_tys[i].clone(),
+            &mut struct_validator,
+            func_value,
+            ns,
+        );
+        read_items[i] = read_expr;
+        runtime_size = bin.builder.build_int_add(runtime_size, advance, "");
+    }
+
+    let struct_var = struct_literal_copy(&ty, read_items, bin, func_value, ns);
+    (struct_var, runtime_size)
+}
+
+/// Check if we can MemCpy a type to/from a buffer
+fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
+    match ty {
+        Type::Struct(no) => {
+            if let Some(no_padded_size) = calculate_struct_non_padded_size(*no, ns) {
+                let padded_size = struct_padded_size(*no, ns);
+                // This remainder tells us if padding is needed between the elements of an array
+                let remainder = padded_size.mod_floor(&ty.struct_elem_alignment(ns));
+                let ty_allowed = ns.structs[*no]
+                    .fields
+                    .iter()
+                    .all(|f| allow_memcpy(&f.ty, ns));
+                return no_padded_size == padded_size && remainder.is_zero() && ty_allowed;
+            }
+
+            false
+        }
+        Type::Array(t, dims) if ty.is_dynamic(ns) => dims.len() == 1 && allow_memcpy(t, ns),
+        // If the array is not dynamic, we mempcy if its elements allow it
+        Type::Array(t, _) => allow_memcpy(t, ns),
+        Type::UserType(t) => allow_memcpy(&ns.user_types[*t].ty, ns),
+        _ => ty.is_primitive(),
+    }
+}
+
+pub fn fixed_array_copy<'a>(
+    buffer: PointerValue<'a>,
+    offset: &mut IntValue<'a>,
+    ty: &Type,
+    elem_ty: &Type,
+    dimensions: &Vec<u32>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> (BasicValueEnum<'a>, IntValue<'a>) {
+    let array_ty = bin.llvm_type(ty, ns);
+    let array_alloca = bin.build_alloca(func_value, array_ty, "array_literal");
+    let size = dimensions.iter().product();
+
+    for i in 0..size {
+        let mut ind = vec![bin.context.i64_type().const_zero()];
+
+        let mut e = i as u32;
+
+        // Mapping one-dimensional array indices to multi-dimensional array indices.
+        for d in dimensions {
+            ind.insert(1, bin.context.i64_type().const_int((e % *d).into(), false));
+
+            e /= *d;
+        }
+
+        let elemptr = unsafe {
+            bin.builder
+                .build_gep(array_ty, array_alloca, &ind, &format!("elemptr{i}"))
+        };
+
+        let elem = decode_uint(buffer, *offset, bin);
+
+        *offset = bin.builder.build_int_add(
+            *offset,
+            bin.context.i32_type().const_int(1, false),
+            "offset",
+        );
+
+        let elem = if elem_ty.is_fixed_reference_type() {
+            bin.builder.build_load(
+                bin.llvm_type(&elem_ty, ns),
+                elem.into_pointer_value(),
+                "elem",
+            )
+        } else {
+            elem
+        };
+
+        bin.builder.build_store(elemptr, elem);
+    }
+
+    let size = bin.context.i64_type().const_int(size as u64, false);
+
+    (array_alloca.into(), size)
+}
+
+pub fn dynamic_array_copy<'a>(
+    buffer: PointerValue<'a>,
+    offset: IntValue<'a>,
+    length: IntValue<'a>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> (BasicValueEnum<'a>, IntValue<'a>) {
     unimplemented!()
+}
+
+pub fn struct_literal_copy<'a>(
+    ty: &Type,
+    values: Vec<BasicValueEnum<'a>>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    let struct_ty = bin.llvm_type(ty, ns);
+
+    let struct_alloca = bin.build_alloca(func_value, struct_ty, "struct_alloca");
+
+    for (i, elem) in values.iter().enumerate() {
+        let elemptr = bin
+            .builder
+            .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct member")
+            .unwrap();
+        bin.builder.build_store(elemptr, elem.clone());
+    }
+
+    struct_alloca.into()
+}
+
+/// Checks if struct contains only primitive types and returns its memory
+/// non-padded size
+pub fn calculate_struct_non_padded_size(struct_no: usize, ns: &Namespace) -> Option<BigInt> {
+    let mut size = BigInt::from(0u8);
+    for field in &ns.structs[struct_no].fields {
+        let ty = field.ty.clone().unwrap_user_type(ns);
+        if !ty.is_primitive() {
+            // If a struct contains a non-primitive type, we cannot calculate its
+            // size during compile time
+            if let Type::Struct(struct_ty) = &field.ty {
+                if let Some(struct_size) = calculate_struct_non_padded_size(struct_no, ns) {
+                    size.add_assign(struct_size);
+                    continue;
+                }
+            }
+            return None;
+        } else {
+            size.add_assign(ty.memory_size_of(ns));
+        }
+    }
+
+    Some(size)
+}
+
+/// Calculate a struct size in memory considering the padding, if necessary
+pub fn struct_padded_size(struct_no: usize, ns: &Namespace) -> BigInt {
+    let mut total = BigInt::zero();
+    for item in &ns.structs[struct_no].fields {
+        let ty_align = item.ty.struct_elem_alignment(ns);
+        let remainder = total.mod_floor(&ty_align);
+        if !remainder.is_zero() {
+            let padding = ty_align.sub(remainder);
+            total.add_assign(padding);
+        }
+        total.add_assign(item.ty.memory_size_of(ns));
+    }
+    total
 }
