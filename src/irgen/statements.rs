@@ -12,7 +12,6 @@ use crate::sema::ast::Type::Uint;
 use crate::sema::ast::{
     self, ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
-use crate::sema::expression::integers::bigint_to_expression;
 use ola_parser::program;
 use ola_parser::program::Loc::IRgen;
 
@@ -82,10 +81,6 @@ pub(crate) fn statement<'a>(
             body,
             ..
         } => {
-            for stmt in init {
-                statement(stmt, bin, func_context, ns);
-            }
-
             let cond_block = bin
                 .context
                 .append_basic_block(func_context.func_val, "cond");
@@ -98,6 +93,9 @@ pub(crate) fn statement<'a>(
             let end_block = bin
                 .context
                 .append_basic_block(func_context.func_val, "endfor");
+            for stmt in init {
+                statement(stmt, bin, func_context, ns);
+            }
 
             bin.builder.build_unconditional_branch(cond_block);
             bin.builder.position_at_end(cond_block);
@@ -150,7 +148,60 @@ pub(crate) fn statement<'a>(
             body,
             ..
         } => {
-            unimplemented!()
+            let body_block = bin
+                .context
+                .append_basic_block(func_context.func_val, "body");
+            let next_block = bin
+                .context
+                .append_basic_block(func_context.func_val, "next");
+            let end_block = bin
+                .context
+                .append_basic_block(func_context.func_val, "endfor");
+
+            for stmt in init {
+                statement(stmt, bin, func_context, ns);
+            }
+
+            bin.builder.build_unconditional_branch(body_block);
+            bin.builder.position_at_end(body_block);
+
+            bin.loops.push((
+                end_block,
+                if next.is_none() {
+                    body_block
+                } else {
+                    next_block
+                },
+            ));
+            let mut body_reachable = true;
+            for stmt in body {
+                statement(stmt, bin, func_context, ns);
+
+                body_reachable = stmt.reachable();
+            }
+
+            if body_reachable {
+                // jump to next body
+                bin.builder.build_unconditional_branch(next_block);
+            }
+
+            bin.loops.pop();
+
+            if body_reachable {
+                // jump to next body
+                bin.builder.position_at_end(next_block);
+
+                if let Some(next) = next {
+                    expression(next, bin, func_context, ns);
+
+                    body_reachable = next.ty() != Type::Unreachable;
+                }
+                if body_reachable {
+                    bin.builder.build_unconditional_branch(body_block);
+                }
+            }
+
+            bin.builder.position_at_end(end_block);
         }
         Statement::Break(_) => {
             bin.builder
@@ -161,11 +212,85 @@ pub(crate) fn statement<'a>(
                 .build_unconditional_branch(bin.loops.last().unwrap().1);
         }
 
-        Statement::While(_, _, body_stmt, cond_expr) => {
-            unimplemented!()
+        Statement::While(_, _, cond_expr, body_stmt) => {
+            let body = bin
+                .context
+                .append_basic_block(func_context.func_val, "body");
+            let cond = bin
+                .context
+                .append_basic_block(func_context.func_val, "cond");
+
+            let end = bin
+                .context
+                .append_basic_block(func_context.func_val, "endwhile");
+
+            bin.builder.build_unconditional_branch(cond);
+
+            bin.builder.position_at_end(cond);
+
+            let cond_expr = expression(cond_expr, bin, func_context, ns);
+
+            bin.builder
+                .build_conditional_branch(cond_expr.into_int_value(), body, end);
+
+            bin.builder.position_at_end(body);
+
+            bin.loops.push((end, cond));
+
+            let mut body_reachable = true;
+
+            for stmt in body_stmt {
+                statement(stmt, bin, func_context, ns);
+
+                body_reachable = stmt.reachable();
+            }
+
+            if body_reachable {
+                bin.builder.build_unconditional_branch(cond);
+            }
+
+            bin.loops.pop();
+
+            bin.builder.position_at_end(end);
         }
         Statement::DoWhile(_, _, body_stmt, cond_expr) => {
-            unimplemented!()
+            let body = bin
+                .context
+                .append_basic_block(func_context.func_val, "body");
+            let cond = bin
+                .context
+                .append_basic_block(func_context.func_val, "cond");
+
+            let end = bin
+                .context
+                .append_basic_block(func_context.func_val, "enddowhile");
+
+            bin.builder.build_unconditional_branch(body);
+
+            bin.builder.position_at_end(body);
+
+            bin.loops.push((end, cond));
+
+            let mut body_reachable = true;
+
+            for stmt in body_stmt {
+                statement(stmt, bin, func_context, ns);
+
+                body_reachable = stmt.reachable();
+            }
+
+            if body_reachable {
+                bin.builder.build_unconditional_branch(cond);
+            }
+
+            bin.builder.position_at_end(cond);
+
+            let cond_expr = expression(cond_expr, bin, func_context, ns);
+
+            bin.builder
+                .build_conditional_branch(cond_expr.into_int_value(), body, end);
+
+            bin.builder.position_at_end(end);
         }
         Statement::Delete(_, ty, expr) => {
             let mut slot = expression(expr, bin, func_context, ns);
@@ -269,14 +394,6 @@ fn returns<'a>(
     // Can only be another function call without returns
     let uncast_values = match expr {
         // TODO ADD ConditionalOperator
-        ast::Expression::ConditionalOperator {
-            cond,
-            true_option: left,
-            false_option: right,
-            ..
-        } => {
-            unimplemented!()
-        }
         ast::Expression::FunctionCall { .. } => {
             let (ret, _) = emit_function_call(expr, bin, func_context, ns);
             ret
@@ -372,15 +489,14 @@ fn destructure<'a>(
 
         destructure(bin, fields, left, func_context, ns);
         bin.builder.build_unconditional_branch(done_block);
-        let left_block_end = bin.builder.get_insert_block().unwrap();
+
         bin.builder.position_at_end(right_block);
 
         destructure(bin, fields, right, func_context, ns);
         bin.builder.build_unconditional_branch(done_block);
-        let right_block_end = bin.builder.get_insert_block().unwrap();
+
         bin.builder.position_at_end(done_block);
 
-        let phi = bin.builder.build_phi(bin.llvm_type(&expr.ty(), ns), "phi");
         bin.builder.position_at_end(done_block);
 
         return;

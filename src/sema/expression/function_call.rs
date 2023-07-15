@@ -128,7 +128,7 @@ pub fn function_call_pos_args(
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
-                format!("cannot find overloaded fn which matches signature"),
+                format!("cannot find overloaded fn which matches signature").to_string(),
             ));
         }
     }

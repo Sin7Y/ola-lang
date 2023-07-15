@@ -1,13 +1,9 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::expression;
 use crate::irgen::functions::FunctionContext;
-use crate::sema::ast::Expression::NumberLiteral;
-use crate::sema::ast::{Expression, Namespace, Type};
-use inkwell::types::VectorType;
+use crate::sema::ast::{Expression, Namespace};
 use inkwell::values::BasicValueEnum;
 use inkwell::IntPredicate;
-use num_bigint::BigInt;
-use ola_parser::program::Loc;
 
 pub fn address_compare<'a>(
     l: &Expression,

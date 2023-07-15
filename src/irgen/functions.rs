@@ -1,11 +1,10 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema;
-use crate::sema::ast::{Expression, Type};
+use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
-use ola_parser::program;
 
 use super::expression::expression;
 
