@@ -40,7 +40,7 @@ pub(super) fn assign_single(
         ns,
         symtable,
         diagnostics,
-        ResolveTo::Type(&var_ty.deref_any()),
+        ResolveTo::Type(var_ty.deref_any()),
     )?;
 
     val.recurse(ns, check_term_for_constant_overflow);

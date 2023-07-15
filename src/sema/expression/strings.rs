@@ -32,7 +32,7 @@ pub(crate) fn unescape(
             Some((_, 't')) => s.push(b'\t' as u32),
             Some((_, 'v')) => s.push(b'\x0b' as u32),
             Some((i, 'x')) => match get_digits(&mut indeces, 2) {
-                Ok(ch) => s.push(ch as u32),
+                Ok(ch) => s.push(ch),
                 Err(offset) => {
                     diagnostics.push(Diagnostic::error(
                         program::Loc::File(

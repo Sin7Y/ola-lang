@@ -78,9 +78,8 @@ impl<'a> BufferValidator<'a> {
         bin: &Binary<'a>,
         offset: IntValue<'a>,
         func_value: FunctionValue<'a>,
-        ns: &Namespace,
     ) {
-        self.build_out_of_bounds_fail_branch(bin, offset, func_value, ns);
+        self.build_out_of_bounds_fail_branch(bin, offset, func_value);
     }
 
     /// Checks if a buffer validation is necessary
@@ -88,10 +87,10 @@ impl<'a> BufferValidator<'a> {
         self.verified_until.is_none() || self.current_arg > self.verified_until.unwrap()
     }
 
-    /// After an array validation, we do not need to re-check its elements.
-    pub(super) fn validate_array(&mut self) {
-        self.verified_until = Some(self.current_arg);
-    }
+    // /// After an array validation, we do not need to re-check its elements.
+    // pub(super) fn validate_array(&mut self) {
+    //     self.verified_until = Some(self.current_arg);
+    // }
 
     /// Validate if offset + size is within the buffer's boundaries
     pub(super) fn validate_offset_plus_size(
@@ -100,12 +99,11 @@ impl<'a> BufferValidator<'a> {
         offset: IntValue<'a>,
         size: IntValue<'a>,
         func_value: FunctionValue<'a>,
-        ns: &Namespace,
     ) {
         if self.validation_necessary() {
             let offset_to_validate = bin.builder.build_int_add(offset, size, "");
 
-            self.validate_offset(bin, offset_to_validate, func_value, ns);
+            self.validate_offset(bin, offset_to_validate, func_value);
         }
     }
 
@@ -115,7 +113,6 @@ impl<'a> BufferValidator<'a> {
         bin: &Binary<'a>,
         end_offset: IntValue<'a>,
         func_value: FunctionValue<'a>,
-        ns: &Namespace,
     ) {
         let cond = bin
             .builder
@@ -173,7 +170,7 @@ impl<'a> BufferValidator<'a> {
         );
 
         self.verified_until = Some(maximum_verifiable);
-        self.build_out_of_bounds_fail_branch(bin, reach, func_value, ns);
+        self.build_out_of_bounds_fail_branch(bin, reach, func_value);
     }
 
     /// Builds a branch for failing if we are out of bounds
@@ -182,7 +179,6 @@ impl<'a> BufferValidator<'a> {
         bin: &Binary<'a>,
         offset: IntValue<'a>,
         func_value: FunctionValue<'a>,
-        ns: &Namespace,
     ) {
         let cond = bin
             .builder

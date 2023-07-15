@@ -185,7 +185,7 @@ pub fn expression<'a>(
             let one = bin.context.i64_type().const_int(1, false);
             let after = bin.builder.build_int_add(v.into_int_value(), one, "");
             match expr.as_ref() {
-                Expression::Variable { ty, var_no, .. } => {
+                Expression::Variable { var_no, .. } => {
                     let before_ptr = *func_context.var_table.get(var_no).unwrap();
                     bin.builder
                         .build_store(before_ptr.into_pointer_value(), after.as_basic_value_enum());
@@ -456,7 +456,6 @@ pub fn expression<'a>(
             }
         }
         Expression::LibFunction {
-            tys: ty,
             kind: LibFunc::ArrayPop,
             args,
             ..
