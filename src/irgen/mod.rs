@@ -1,4 +1,5 @@
 use std::str;
+pub mod address_op;
 pub mod binary;
 mod corelib;
 mod dispatch;
