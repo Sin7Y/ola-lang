@@ -3,8 +3,9 @@ use std::{
     ops::{AddAssign, MulAssign, Sub},
 };
 
-use inkwell::values::{
-    AnyValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue,
+use inkwell::{
+    values::{AnyValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    IntPredicate,
 };
 use num_bigint::BigInt;
 use num_integer::Integer;
@@ -153,9 +154,17 @@ fn read_from_buffer<'a>(
 
             let allocated_array =
                 bin.vector_new(func_value, array_length.into_int_value(), None, false);
-
             let array_data = bin.vector_data(allocated_array.into());
-
+            set_dynamic_array_loop(
+                buffer,
+                array_start,
+                array_length.into_int_value(),
+                &Type::Uint(32),
+                array_data,
+                bin,
+                func_value,
+                ns,
+            );
             (allocated_array.into(), total_size)
         }
 
@@ -272,18 +281,30 @@ fn decode_array<'a>(
             )
         } else {
             let array_length = decode_uint(buffer, offset.clone(), bin);
+            let total_size = bin.builder.build_int_add(
+                bin.context.i64_type().const_int(1, false),
+                array_length.into_int_value(),
+                "",
+            );
             let array_start =
                 bin.builder
                     .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
             validator.validate_offset(bin, array_start.clone(), func_value, ns);
-            dynamic_array_copy(
+            let allocated_array =
+                bin.vector_new(func_value, array_length.into_int_value(), None, false);
+
+            let array_data = bin.vector_data(allocated_array.into());
+            set_dynamic_array_loop(
                 buffer,
-                array_start.clone(),
+                array_start,
                 array_length.into_int_value(),
+                elem_ty,
+                array_data.into(),
                 bin,
                 func_value,
                 ns,
-            )
+            );
+            (allocated_array.into(), total_size)
         };
 
         validator.validate_offset_plus_size(bin, *offset, array_size, func_value, ns);
@@ -434,17 +455,6 @@ pub fn fixed_array_copy<'a>(
     (array_alloca.into(), size)
 }
 
-pub fn dynamic_array_copy<'a>(
-    buffer: PointerValue<'a>,
-    offset: IntValue<'a>,
-    length: IntValue<'a>,
-    bin: &Binary<'a>,
-    func_value: FunctionValue<'a>,
-    ns: &Namespace,
-) -> (BasicValueEnum<'a>, IntValue<'a>) {
-    unimplemented!()
-}
-
 pub fn struct_literal_copy<'a>(
     ty: &Type,
     values: Vec<BasicValueEnum<'a>>,
@@ -504,4 +514,81 @@ pub fn struct_padded_size(struct_no: usize, ns: &Namespace) -> BigInt {
         total.add_assign(item.ty.memory_size_of(ns));
     }
     total
+}
+
+/// Currently, we can only handle one-dimensional arrays.
+/// The situation of multi-dimensional arrays has not been processed yet.
+pub fn set_dynamic_array_loop<'a>(
+    buffer: PointerValue<'a>,
+    offset: IntValue<'a>,
+    length: IntValue<'a>,
+    elem_ty: &Type,
+    dest: PointerValue<'a>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) {
+    let loop_body = bin.context.append_basic_block(func_value, "loop_body");
+    let loop_end = bin.context.append_basic_block(func_value, "loop_end");
+
+    // Initialize index before the loop
+    let index_ptr = bin
+        .builder
+        .build_alloca(bin.context.i64_type(), "index_ptr");
+    bin.builder.build_store(index_ptr, offset);
+
+    bin.builder.build_unconditional_branch(loop_body);
+    bin.builder.position_at_end(loop_body);
+
+    // Load index in every iteration
+    let index = bin
+        .builder
+        .build_load(bin.context.i64_type(), index_ptr, "index");
+
+    let elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.llvm_type(elem_ty, ns),
+            dest,
+            &[index.into_int_value()],
+            "element",
+        )
+    };
+
+    let elem = decode_uint(buffer, index.into_int_value(), bin);
+
+    let elem = if elem_ty.is_fixed_reference_type() {
+        bin.builder.build_load(
+            bin.llvm_type(&elem_ty, ns),
+            elem.into_pointer_value(),
+            "elem",
+        )
+    } else {
+        elem
+    };
+
+    bin.builder.build_store(elem_ptr, elem);
+
+    let next_index = bin.builder.build_int_add(
+        index.into_int_value(),
+        bin.context.i64_type().const_int(1, false),
+        "next_index",
+    );
+
+    // Store the next_index for the next iteration
+    bin.builder.build_store(index_ptr, next_index);
+
+    let cond = bin.builder.build_int_compare(
+        IntPredicate::ULT,
+        next_index,
+        bin.builder
+            .build_int_add(offset, length, "array_end")
+            .as_basic_value_enum()
+            .into_int_value(),
+        "index_cond",
+    );
+
+    bin.builder
+        .build_conditional_branch(cond, loop_body, loop_end);
+
+    bin.builder.position_at_end(loop_end);
 }
