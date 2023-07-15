@@ -409,94 +409,18 @@ pub fn u32_shift_right<'a>(
     quotient
 }
 
-pub fn u32_equal<'a>(
+pub fn u32_compare<'a>(
     l: &Expression,
     r: &Expression,
     bin: &Binary<'a>,
     func_context: &mut FunctionContext<'a>,
     ns: &Namespace,
+    op: IntPredicate,
 ) -> BasicValueEnum<'a> {
     let left = expression(l, bin, func_context, ns).into_int_value();
     let right = expression(r, bin, func_context, ns).into_int_value();
 
-    bin.builder
-        .build_int_compare(IntPredicate::EQ, left, right, "")
-        .into()
-}
-
-pub fn u32_not_equal<'a>(
-    l: &Expression,
-    r: &Expression,
-    bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
-    ns: &Namespace,
-) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_context, ns).into_int_value();
-    let right = expression(r, bin, func_context, ns).into_int_value();
-
-    bin.builder
-        .build_int_compare(IntPredicate::NE, left, right, "")
-        .into()
-}
-
-pub fn u32_more<'a>(
-    l: &Expression,
-    r: &Expression,
-    bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
-    ns: &Namespace,
-) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_context, ns).into_int_value();
-    let right = expression(r, bin, func_context, ns).into_int_value();
-
-    bin.builder
-        .build_int_compare(IntPredicate::UGT, left, right, "")
-        .into()
-}
-
-pub fn u32_more_equal<'a>(
-    l: &Expression,
-    r: &Expression,
-    bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
-    ns: &Namespace,
-) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_context, ns).into_int_value();
-    let right = expression(r, bin, func_context, ns).into_int_value();
-
-    bin.builder
-        .build_int_compare(IntPredicate::UGE, left, right, "")
-        .into()
-}
-
-pub fn u32_less<'a>(
-    l: &Expression,
-    r: &Expression,
-    bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
-    ns: &Namespace,
-) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_context, ns).into_int_value();
-    let right = expression(r, bin, func_context, ns).into_int_value();
-
-    bin.builder
-        .build_int_compare(IntPredicate::ULT, left, right, "")
-        .into()
-}
-
-pub fn u32_less_equal<'a>(
-    l: &Expression,
-    r: &Expression,
-    bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
-    ns: &Namespace,
-) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_context, ns).into_int_value();
-    let right = expression(r, bin, func_context, ns).into_int_value();
-
-    bin.builder
-        .build_int_compare(IntPredicate::ULE, left, right, "")
-        .into()
+    bin.builder.build_int_compare(op, left, right, "").into()
 }
 
 pub fn u32_not<'a>(
