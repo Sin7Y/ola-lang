@@ -127,6 +127,7 @@ impl<'a> BufferValidator<'a> {
 
         bin.builder.position_at_end(invaild);
         // TODO: This needs a proper error message
+        bin.builder.build_unreachable();
 
         bin.builder.position_at_end(valid);
     }
@@ -189,7 +190,7 @@ impl<'a> BufferValidator<'a> {
             .build_conditional_branch(cond, inbounds_block, out_of_bounds_block);
         bin.builder.position_at_end(out_of_bounds_block);
         // TODO: Add an error message here
-
+        bin.builder.build_unreachable();
         bin.builder.position_at_end(inbounds_block);
     }
 
