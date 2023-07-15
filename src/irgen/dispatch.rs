@@ -105,7 +105,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         .collect::<Vec<(IntValue, inkwell::basic_block::BasicBlock)>>();
     bin.builder.position_at_end(entry);
     bin.builder
-        .build_switch(selector, default_case, &selector_cases.as_ref());
+        .build_switch(selector, default_case, selector_cases.as_ref());
 
     bin.builder.position_at_end(default_case);
     bin.builder.build_unreachable();
@@ -155,7 +155,7 @@ fn dispatch_case<'a>(
             callee_value,
             &args
                 .iter()
-                .map(|arg| arg.clone().into())
+                .map(|arg| (*arg).into())
                 .collect::<Vec<BasicMetadataValueEnum>>(),
             "",
         )

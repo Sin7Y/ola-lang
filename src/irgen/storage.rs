@@ -69,11 +69,9 @@ pub(crate) fn storage_array_push<'a>(
     }
 
     // increase length
-    let new_length = bin.builder.build_int_add(
-        array_length.into_int_value(),
-        i64_const!(1).into(),
-        "new_length",
-    );
+    let new_length =
+        bin.builder
+            .build_int_add(array_length.into_int_value(), i64_const!(1), "new_length");
     storage_store(
         bin,
         &Type::Uint(32),
@@ -84,7 +82,7 @@ pub(crate) fn storage_array_push<'a>(
     );
 
     // Dynamic array return value is currently not used.
-    push_pos.into()
+    push_pos
 }
 
 /// Pop() method on dynamic array in storage
@@ -121,11 +119,9 @@ pub(crate) fn storage_array_pop<'a>(
     storage_delete(bin, &elem_ty, &mut pop_pos, func_context.func_val, ns);
 
     // set decrease length
-    let new_length = bin.builder.build_int_sub(
-        array_length.into_int_value(),
-        i64_const!(1).into(),
-        "new_length",
-    );
+    let new_length =
+        bin.builder
+            .build_int_sub(array_length.into_int_value(), i64_const!(1), "new_length");
     storage_store(
         bin,
         &Type::Uint(32),
@@ -250,13 +246,13 @@ pub(crate) fn storage_load<'a>(
             new_struct.into()
         }
         Type::String => {
-            let ret = get_storage_dynamic_bytes(bin, &ty, slot, function, ns);
+            let ret = get_storage_dynamic_bytes(bin, ty, slot, function, ns);
 
-            ret.into()
+            ret
         }
         Type::Address | Type::Contract(_) => {
             let ret = storage_load_internal(bin, *slot);
-            ret.into()
+            ret
         }
         Type::Uint(32) => {
             let ret = storage_load_internal(bin, *slot);
@@ -405,7 +401,7 @@ pub(crate) fn storage_store<'a>(
             }
         }
         Type::String => {
-            set_storage_dynamic_bytes(bin, &ty, slot, dest, function, ns);
+            set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
         Type::Address | Type::Contract(_) | Type::Uint(32) | Type::Bool => {
             let dest = if dest.is_pointer_value() {
