@@ -88,7 +88,7 @@ pub(super) fn abi_decode<'a>(
         validator.validate_buffer(bin, offset, func_value, ns);
         let (read_item, advance) =
             read_from_buffer(input, offset, bin, item, &mut validator, func_value, ns);
-        read_items[item_no] = read_item;
+        read_items.push(read_item);
         offset = bin.builder.build_int_add(offset, advance, "");
     }
 
@@ -345,7 +345,7 @@ fn decode_struct<'a>(
     let mut runtime_size = advance;
 
     let mut read_items: Vec<BasicValueEnum<'_>> = vec![];
-    read_items[0] = read_expr;
+    read_items.push(read_expr);
     for i in 1..qty {
         struct_validator.set_argument_number(i);
         struct_validator.validate_buffer(bin, *offset, func_value, ns);
@@ -359,7 +359,7 @@ fn decode_struct<'a>(
             func_value,
             ns,
         );
-        read_items[i] = read_expr;
+        read_items.push(read_expr);
         runtime_size = bin.builder.build_int_add(runtime_size, advance, "");
     }
 
@@ -427,7 +427,7 @@ pub fn fixed_array_copy<'a>(
 
         *offset = bin.builder.build_int_add(
             *offset,
-            bin.context.i32_type().const_int(1, false),
+            bin.context.i64_type().const_int(1, false),
             "offset",
         );
 

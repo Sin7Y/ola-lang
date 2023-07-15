@@ -102,3 +102,84 @@ endfor:                                           ; preds = %cond
   %length2 = load i64, ptr %vector_len1, align 4
   ret i64 %length2
 }
+
+define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  switch i64 %0, label %missing_function [
+    i64 3501063903, label %func_0_dispatch
+    i64 2934118673, label %func_1_dispatch
+  ]
+
+missing_function:                                 ; preds = %entry
+  unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  call void @main()
+
+func_1_dispatch:                                  ; preds = %entry
+  %start = getelementptr i64, ptr %2, i64 0
+  %value = load i64, ptr %start, align 4
+  %3 = add i64 1, %value
+  %4 = icmp ule i64 1, %1
+  br i1 %4, label %inbounds, label %out_of_bounds
+
+inbounds:                                         ; preds = %func_1_dispatch
+  %5 = call i64 @vector_new(i64 %value)
+  %int_to_ptr = inttoptr i64 %5 to ptr
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %value, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %int_to_ptr, ptr %vector_data, align 8
+  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  %index_ptr = alloca i64, align 8
+  store i64 1, ptr %index_ptr, align 4
+  br label %loop_body
+
+out_of_bounds:                                    ; preds = %func_1_dispatch
+  unreachable
+
+loop_body:                                        ; preds = %loop_body, %inbounds
+  %index = load i64, ptr %index_ptr, align 4
+  %element = getelementptr i64, ptr %data, i64 %index
+  %start1 = getelementptr i64, ptr %2, i64 %index
+  %value2 = load i64, ptr %start1, align 4
+  store i64 %value2, ptr %element, align 4
+  %next_index = add i64 %index, 1
+  store i64 %next_index, ptr %index_ptr, align 4
+  %array_end = add i64 1, %value
+  %index_cond = icmp ult i64 %next_index, %array_end
+  br i1 %index_cond, label %loop_body, label %loop_end
+
+loop_end:                                         ; preds = %loop_body
+  %6 = add i64 0, %3
+  %7 = icmp ule i64 %6, %1
+  br i1 %7, label %inbounds3, label %out_of_bounds4
+
+inbounds3:                                        ; preds = %loop_end
+  %8 = add i64 0, %3
+  %9 = icmp ult i64 %8, %1
+  br i1 %9, label %not_all_bytes_read, label %buffer_read
+
+out_of_bounds4:                                   ; preds = %loop_end
+  unreachable
+
+not_all_bytes_read:                               ; preds = %inbounds3
+  unreachable
+
+buffer_read:                                      ; preds = %inbounds3
+  %10 = call i64 @array_call(ptr %vector_alloca)
+}
+
+define void @call() {
+entry:
+  %0 = call ptr @contract_input()
+  %input_selector = getelementptr inbounds { i64, i64, ptr }, ptr %0, i32 0, i32 0
+  %selector = load i64, ptr %input_selector, align 4
+  %input_len = getelementptr inbounds { i64, i64, ptr }, ptr %0, i32 0, i32 1
+  %len = load i64, ptr %input_len, align 4
+  %input_data = getelementptr inbounds { i64, i64, ptr }, ptr %0, i32 0, i32 2
+  %data = load ptr, ptr %input_data, align 8
+  call void @function_dispatch(i64 %selector, i64 %len, ptr %data)
+  unreachable
+}
