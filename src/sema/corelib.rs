@@ -17,7 +17,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 2]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 4]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -38,6 +38,20 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 2]> = Lazy::new(|| {
                 Box::new(Type::Uint(32)),
                 vec![ArrayLength::Dynamic],
             )],
+        },
+        Prototype {
+            libfunc: LibFunc::Assert,
+            namespace: None,
+            name: "assert",
+            params: vec![Type::Bool],
+            ret: vec![Type::Void],
+        },
+        Prototype {
+            libfunc: LibFunc::Assert,
+            namespace: None,
+            name: "assert",
+            params: vec![Type::Bool, Type::String],
+            ret: vec![Type::Void],
         },
     ]
 });

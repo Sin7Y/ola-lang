@@ -24,7 +24,6 @@ pub(super) fn string_literal(
     // Concatenate the strings
     let mut result = Vec::new();
     let mut loc = v[0].loc;
-    println!("string_literal: {:?}", v);
     for s in v {
         result.append(&mut unescape(
             &s.string,
@@ -48,7 +47,16 @@ pub(super) fn string_literal(
             }),
             init: Some(result),
         },
-        _ => unimplemented!(),
+        _ => Expression::AllocDynamicBytes {
+            loc,
+            ty: Type::String,
+            length: Box::new(Expression::NumberLiteral {
+                loc,
+                ty: Type::Uint(32),
+                value: BigInt::from(length),
+            }),
+            init: Some(result),
+        },
     }
 }
 

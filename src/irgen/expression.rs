@@ -7,7 +7,7 @@ use crate::irgen::u32_op::{
 };
 use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum};
+use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
@@ -272,6 +272,26 @@ pub fn expression<'a>(
                 .left()
                 .expect("Should have a left return value");
             root
+        }
+
+        Expression::LibFunction {
+            kind: LibFunc::Assert,
+            args,
+            ..
+        } => {
+            let cond = expression(&args[0], bin, func_context, ns).into_int_value();
+            let true_ = bin
+                .context
+                .append_basic_block(func_context.func_val, "noassert");
+            let false_ = bin
+                .context
+                .append_basic_block(func_context.func_val, "doassert");
+            bin.builder.build_conditional_branch(cond, true_, false_);
+            bin.builder.position_at_end(false_);
+            // TODO add a call to abort
+            bin.builder.build_unreachable();
+            bin.builder.position_at_end(true_);
+            bin.context.i64_type().const_zero().into()
         }
 
         Expression::StructLiteral { ty, values, .. } => {
