@@ -678,8 +678,8 @@ impl Type {
                     Some(Expression::ArrayLiteral {
                         loc: IRgen,
                         ty: self.clone(),
-                        dimensions: dims.clone(),
-                        values: values,
+                        dimensions: dims,
+                        values,
                     })
                 }
             }

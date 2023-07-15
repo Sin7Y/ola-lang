@@ -114,10 +114,9 @@ impl<'a> BufferValidator<'a> {
         end_offset: IntValue<'a>,
         func_value: FunctionValue<'a>,
     ) {
-        let cond = bin
-            .builder
-            .build_int_compare(IntPredicate::ULT, end_offset, self.buffer_length, "")
-            .into();
+        let cond =
+            bin.builder
+                .build_int_compare(IntPredicate::ULT, end_offset, self.buffer_length, "");
 
         let invaild = bin
             .context
@@ -182,8 +181,7 @@ impl<'a> BufferValidator<'a> {
     ) {
         let cond = bin
             .builder
-            .build_int_compare(IntPredicate::ULE, offset, self.buffer_length, "")
-            .into();
+            .build_int_compare(IntPredicate::ULE, offset, self.buffer_length, "");
 
         let inbounds_block = bin.context.append_basic_block(func_value, "inbounds");
         let out_of_bounds_block = bin.context.append_basic_block(func_value, "out_of_bounds");
@@ -202,7 +200,7 @@ impl<'a> BufferValidator<'a> {
         // avoid any further validation.
         let len = types.len();
         BufferValidator {
-            buffer_length: self.buffer_length.clone(),
+            buffer_length: self.buffer_length,
             types,
             verified_until: if self.validation_necessary() {
                 None
