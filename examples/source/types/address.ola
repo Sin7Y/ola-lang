@@ -1,0 +1,9 @@
+contract AddressExample {
+    address myaddress;
+
+    fn compare_address(address _address) -> (bool) {
+        return myaddress == _address;
+    }
+
+
+}

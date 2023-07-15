@@ -2,12 +2,12 @@ use crate::irgen::binary::Binary;
 use crate::irgen::functions::FunctionContext;
 use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
-    u32_equal, u32_less, u32_less_equal, u32_mod, u32_more, u32_more_equal, u32_mul, u32_not,
-    u32_not_equal, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
+    u32_mod, u32_mul, u32_not, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
 use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum};
+use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum};
+use inkwell::IntPredicate;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
@@ -19,10 +19,12 @@ use crate::sema::{
     expression::ResolveTo,
 };
 
+use super::address_op::address_compare;
 use super::storage::{
     array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
     storage_store,
 };
+use super::u32_op::u32_compare;
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -66,50 +68,44 @@ pub fn expression<'a>(
         }
         Expression::Equal { left, right, .. } => {
             if left.ty().is_address() {
-                //TODO compare addresses
-                unimplemented!()
+                address_compare(left, right, bin, func_context, ns, IntPredicate::EQ)
             } else {
-                u32_equal(left, right, bin, func_context, ns)
+                u32_compare(left, right, bin, func_context, ns, IntPredicate::EQ)
             }
         }
         Expression::NotEqual { left, right, .. } => {
             if left.ty().is_address() {
-                //TODO compare addresses
-                unimplemented!()
+                address_compare(left, right, bin, func_context, ns, IntPredicate::NE)
             } else {
-                u32_not_equal(left, right, bin, func_context, ns)
+                u32_compare(left, right, bin, func_context, ns, IntPredicate::NE)
             }
         }
         Expression::More { left, right, .. } => {
             if left.ty().is_address() {
-                //TODO compare addresses
-                unimplemented!()
+                address_compare(left, right, bin, func_context, ns, IntPredicate::UGT)
             } else {
-                u32_more(left, right, bin, func_context, ns)
+                u32_compare(left, right, bin, func_context, ns, IntPredicate::UGT)
             }
         }
         Expression::MoreEqual { left, right, .. } => {
             if left.ty().is_address() {
-                //TODO compare addresses
-                unimplemented!()
+                address_compare(left, right, bin, func_context, ns, IntPredicate::UGE)
             } else {
-                u32_more_equal(left, right, bin, func_context, ns)
+                u32_compare(left, &right, bin, func_context, ns, IntPredicate::UGE)
             }
         }
         Expression::Less { left, right, .. } => {
             if left.ty().is_address() {
-                //TODO compare addresses
-                unimplemented!()
+                address_compare(left, &right, bin, func_context, ns, IntPredicate::ULT)
             } else {
-                u32_less(left, right, bin, func_context, ns)
+                u32_compare(left, &right, bin, func_context, ns, IntPredicate::ULT)
             }
         }
         Expression::LessEqual { left, right, .. } => {
             if left.ty().is_address() {
-                //TODO compare addresses
-                unimplemented!()
+                address_compare(left, &right, bin, func_context, ns, IntPredicate::ULE)
             } else {
-                u32_less_equal(left, right, bin, func_context, ns)
+                u32_compare(left, &right, bin, func_context, ns, IntPredicate::ULE)
             }
         }
 
@@ -363,19 +359,6 @@ pub fn expression<'a>(
             }
 
             array_alloca.into()
-        }
-        Expression::ConstArrayLiteral {
-            dimensions, values, ..
-        } => {
-            unimplemented!()
-        }
-
-        Expression::ConstantVariable {
-            contract_no: Some(var_contract_no),
-            var_no,
-            ..
-        } => {
-            unimplemented!()
         }
 
         Expression::StorageArrayLength { loc, ty, array, .. } => {
@@ -880,83 +863,3 @@ pub fn assign_single<'a>(
         }
     }
 }
-
-// fn verify_sorted_array(
-//     array: BasicValueEnum,
-//     bin: &Binary,
-//     func_context: &FunctionContext,
-//     ns: &Namespace,
-// ) {
-//     let array_type = array.get_type();
-//     let array_len = array_type.array_length();
-
-//     let start_block = bin
-//         .context
-//         .append_basic_block(func_context.function, "start");
-//     let loop_block = bin
-//         .context
-//         .append_basic_block(func_context.function, "loop");
-//     let end_block = bin.context.append_basic_block(func_context.function,
-// "end");
-
-//     // Start block
-//     bin.builder.position_at_end(start_block);
-//     bin.builder.build_unconditional_branch(loop_block);
-
-//     // Loop block
-//     bin.builder.position_at_end(loop_block);
-
-//     let index = bin.builder.build_phi(bin.context.i32_type(), "index");
-//     index.add_incoming(&[(bin.context.i32_type().const_zero(),
-// start_block)]);
-
-//     let current_element_ptr = unsafe {
-//         bin.builder.build_gep(
-//             array.into_array_value(),
-//             &[index.as_basic_value()],
-//             "current_element_ptr",
-//         )
-//     };
-//     let current_element = bin
-//         .builder
-//         .build_load(current_element_ptr, "current_element");
-
-//     let next_index = bin.builder.build_int_add(
-//         index.as_basic_value().into_int_value(),
-//         bin.context.i32_type().const_int(1, false),
-//         "next_index",
-//     );
-//     let next_element_ptr = unsafe {
-//         bin.builder
-//             .build_gep(array.into_array_value(), &[next_index],
-// "next_element_ptr")     };
-//     let next_element = bin.builder.build_load(next_element_ptr,
-// "next_element");
-
-//     let comparison = bin.builder.build_int_compare(
-//         IntPredicate::ULE,
-//         current_element.into_int_value(),
-//         next_element.into_int_value(),
-//         "comparison",
-//     );
-
-//     let continue_condition = bin.builder.build_int_compare(
-//         IntPredicate::ULT,
-//         next_index,
-//         bin.context.i32_type().const_int(array_len as u64, false),
-//         "continue_condition",
-//     );
-//     let is_sorted_condition =
-//         bin.builder
-//             .build_and(continue_condition, comparison,
-// "is_sorted_condition");
-
-//     index.add_incoming(&[(next_index, loop_block)]);
-
-//     bin.builder
-//         .build_conditional_branch(is_sorted_condition, loop_block,
-// end_block);
-
-//     // End block
-//     bin.builder.position_at_end(end_block);
-// }
