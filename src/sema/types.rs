@@ -767,7 +767,7 @@ impl Type {
             Type::Uint(32) => BigInt::one(),
             Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::one(),
             Type::Array(ty, dims) => {
-                let pointer_size = (BigInt::one()).into();
+                let pointer_size = BigInt::one();
                 ty.memory_size_of_internal(ns, structs_visited).mul(
                     dims.iter()
                         .map(|d| match d {
@@ -876,7 +876,7 @@ impl Type {
 
     pub fn bits(&self, ns: &Namespace) -> u16 {
         match self {
-            Type::Address | Type::Contract(_) => 256 as u16,
+            Type::Address | Type::Contract(_) => 256_u16,
             Type::Bool => 1,
             Type::Uint(n) => *n,
             Type::Ref(ty) => ty.bits(ns),

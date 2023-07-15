@@ -1,12 +1,12 @@
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    values::{BasicMetadataValueEnum, FunctionValue, IntValue, PointerValue},
     AddressSpace,
 };
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
 
-use crate::sema::ast::{Expression, Namespace, Type};
+use crate::sema::ast::Namespace;
 
 use super::{binary::Binary, encoding::abi_decode};
 
@@ -34,7 +34,7 @@ fn public_function_prelude<'a>(
 
 /// Emits the "deploy" function if `init` is `Some`, otherwise emits the "call"
 /// function.
-pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary, ns: &Namespace) {
+pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
     let ty = bin.context.void_type().fn_type(&[], false);
     let name = if init.is_some() { "deploy" } else { "call" };
     let func = bin.module.add_function(name, ty, None);
@@ -137,21 +137,20 @@ fn dispatch_case<'a>(
             input_length,
             input,
             &func.params.iter().map(|p| p.ty.clone()).collect::<Vec<_>>(),
-            func,
             func_value,
             ns,
         );
     }
 
-    let mut returns: Vec<usize> = Vec::with_capacity(func.returns.len());
-    let mut return_tys: Vec<Type> = Vec::with_capacity(func.returns.len());
-    let mut returns_expr: Vec<Expression> = Vec::with_capacity(func.returns.len());
+    // let mut returns: Vec<usize> = Vec::with_capacity(func.returns.len());
+    // let mut return_tys: Vec<Type> = Vec::with_capacity(func.returns.len());
+    // let mut returns_expr: Vec<Expression> =
+    // Vec::with_capacity(func.returns.len());
 
     // build call function
     let callee = &ns.functions[func_no];
     let callee_value = bin.module.get_function(&callee.name).unwrap();
-    let ret_value = bin
-        .builder
+    bin.builder
         .build_call(
             callee_value,
             &args

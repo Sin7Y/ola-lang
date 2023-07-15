@@ -18,6 +18,8 @@ use inkwell::types::{
 use inkwell::values::{BasicValueEnum, FunctionValue, GlobalValue, IntValue, PointerValue};
 use inkwell::{AddressSpace, IntPredicate};
 
+use super::dispatch::{gen_contract_entrance, gen_func_dispatch};
+
 pub const SAPN: u64 = 2 ^ 32 - 1;
 
 pub const HEAP_ADDRESS_START: u64 = FIELD_ORDER - 2 * SAPN;
@@ -42,8 +44,8 @@ impl<'a> Binary<'a> {
         let mut binary = Binary::new(context, &contract.name, filename);
         gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
-        // gen_func_dispatch(&mut binary, ns);
-        // gen_contract_entrance(None, &mut binary, ns);
+        gen_func_dispatch(&mut binary, ns);
+        gen_contract_entrance(None, &mut binary);
         binary
     }
 
@@ -273,31 +275,6 @@ impl<'a> Binary<'a> {
         }
 
         let res = self.builder.build_alloca(ty, name);
-
-        self.builder.position_at_end(current);
-
-        res
-    }
-
-    pub(crate) fn build_array_alloca<T: BasicType<'a>>(
-        &self,
-        function: inkwell::values::FunctionValue<'a>,
-        ty: T,
-        length: IntValue<'a>,
-        name: &str,
-    ) -> PointerValue<'a> {
-        let entry = function
-            .get_first_basic_block()
-            .expect("function missing entry block");
-        let current = self.builder.get_insert_block().unwrap();
-
-        if let Some(instr) = entry.get_first_instruction() {
-            self.builder.position_before(&instr);
-        } else {
-            self.builder.position_at_end(entry);
-        }
-
-        let res = self.builder.build_array_alloca(ty, length, name);
 
         self.builder.position_at_end(current);
 
@@ -724,35 +701,5 @@ impl<'a> Binary<'a> {
             }
             _ => unreachable!(),
         }
-    }
-
-    /// Creates global string in the llvm module with initializer
-    pub(crate) fn emit_global_string(
-        &self,
-        name: &str,
-        data: &[u32],
-        constant: bool,
-    ) -> PointerValue<'a> {
-        let ty = self.context.i64_type().array_type(data.len() as u32);
-
-        let gv = self
-            .module
-            .add_global(ty, Some(AddressSpace::default()), name);
-
-        gv.set_linkage(Linkage::Internal);
-
-        let data = data
-            .iter()
-            .map(|c| self.context.i64_type().const_int(*c as u64, false))
-            .collect::<Vec<IntValue>>();
-
-        gv.set_initializer(&self.context.i64_type().const_array(&data));
-
-        if constant {
-            gv.set_constant(true);
-            gv.set_unnamed_addr(true);
-        }
-
-        gv.as_pointer_value()
     }
 }

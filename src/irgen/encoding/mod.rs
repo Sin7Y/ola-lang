@@ -1,25 +1,20 @@
-use std::{
-    any::Any,
-    ops::{AddAssign, MulAssign, Sub},
-};
+use std::ops::{AddAssign, Sub};
 
 use inkwell::{
-    values::{AnyValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
     IntPredicate,
 };
 use num_bigint::BigInt;
 use num_integer::Integer;
-use num_traits::{One, ToPrimitive, Zero};
+use num_traits::{ToPrimitive, Zero};
 
-use crate::sema::ast::{ArrayLength, Function, Namespace, Type};
+use crate::sema::ast::{ArrayLength, Namespace, Type};
 
 use self::buffer_validator::BufferValidator;
 
 use super::binary::Binary;
 
 mod buffer_validator;
-
-mod encoding;
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
 /// Returns a pointer to the encoded data and the size as a 32bit integer.
@@ -78,7 +73,6 @@ pub(super) fn abi_decode<'a>(
     input_length: IntValue<'a>,
     input: PointerValue<'a>,
     types: &Vec<Type>,
-    func: &Function,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> Vec<BasicValueEnum<'a>> {
@@ -98,7 +92,7 @@ pub(super) fn abi_decode<'a>(
         offset = bin.builder.build_int_add(offset, advance, "");
     }
 
-    validator.validate_all_bytes_read(bin, offset, func_value, ns);
+    validator.validate_all_bytes_read(bin, offset, func_value);
 
     read_items
 }
@@ -117,7 +111,7 @@ fn read_from_buffer<'a>(
     match ty {
         Type::Uint(32) | Type::Bool | Type::Enum(_) => {
             let size = bin.context.i64_type().const_int(1, false);
-            validator.validate_offset_plus_size(bin, offset, size, func_value, ns);
+            validator.validate_offset_plus_size(bin, offset, size, func_value);
             let read_value = decode_uint(buffer, offset.clone(), bin);
             (read_value.into(), size)
         }
@@ -129,7 +123,7 @@ fn read_from_buffer<'a>(
                 .context
                 .i64_type()
                 .const_int(read_bytes.to_u64().unwrap(), false);
-            validator.validate_offset_plus_size(bin, offset, size, func_value, ns);
+            validator.validate_offset_plus_size(bin, offset, size, func_value);
 
             let read_value = decode_address(buffer, &mut offset.clone(), bin);
             (read_value.into(), size)
@@ -147,10 +141,10 @@ fn read_from_buffer<'a>(
                 bin.builder
                     .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
 
-            validator.validate_offset(bin, array_start.clone(), func_value, ns);
+            validator.validate_offset(bin, array_start.clone(), func_value);
 
             let total_size_offset = bin.builder.build_int_add(offset, total_size, "");
-            validator.validate_offset(bin, total_size_offset, func_value, ns);
+            validator.validate_offset(bin, total_size_offset, func_value);
 
             let allocated_array =
                 bin.vector_new(func_value, array_length.into_int_value(), None, false);
@@ -234,7 +228,7 @@ fn decode_address<'a>(
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
-    let mut address = bin.context.i64_type().array_type(4).get_undef();
+    let address = bin.context.i64_type().array_type(4).get_undef();
 
     for i in 0..4 {
         let value = decode_uint(buffer, *offset, bin);
@@ -289,7 +283,7 @@ fn decode_array<'a>(
             let array_start =
                 bin.builder
                     .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
-            validator.validate_offset(bin, array_start.clone(), func_value, ns);
+            validator.validate_offset(bin, array_start.clone(), func_value);
             let allocated_array =
                 bin.vector_new(func_value, array_length.into_int_value(), None, false);
 
@@ -307,7 +301,7 @@ fn decode_array<'a>(
             (allocated_array.into(), total_size)
         };
 
-        validator.validate_offset_plus_size(bin, *offset, array_size, func_value, ns);
+        validator.validate_offset_plus_size(bin, *offset, array_size, func_value);
         (array_pointer, array_size)
     } else {
         unimplemented!("decode complex array not implemented.")
@@ -486,8 +480,8 @@ pub fn calculate_struct_non_padded_size(struct_no: usize, ns: &Namespace) -> Opt
         if !ty.is_primitive() {
             // If a struct contains a non-primitive type, we cannot calculate its
             // size during compile time
-            if let Type::Struct(struct_ty) = &field.ty {
-                if let Some(struct_size) = calculate_struct_non_padded_size(struct_no, ns) {
+            if let Type::Struct(no) = &field.ty {
+                if let Some(struct_size) = calculate_struct_non_padded_size(*no, ns) {
                     size.add_assign(struct_size);
                     continue;
                 }

@@ -210,7 +210,7 @@ fn layout(contract_no: usize, ns: &mut Namespace) {
 
             ns.contracts[contract_no].layout.push(Layout {
                 slot: slot.clone(),
-                contract_no: contract_no,
+                contract_no,
                 var_no,
                 ty: ty.clone(),
             });
