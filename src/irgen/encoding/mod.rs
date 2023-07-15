@@ -112,8 +112,8 @@ fn read_from_buffer<'a>(
         Type::Uint(32) | Type::Bool | Type::Enum(_) => {
             let size = bin.context.i64_type().const_int(1, false);
             validator.validate_offset_plus_size(bin, offset, size, func_value);
-            let read_value = decode_uint(buffer, offset.clone(), bin);
-            (read_value.into(), size)
+            let read_value = decode_uint(buffer, offset, bin);
+            (read_value, size)
         }
 
         Type::Address | Type::Contract(_) => {
@@ -126,12 +126,12 @@ fn read_from_buffer<'a>(
             validator.validate_offset_plus_size(bin, offset, size, func_value);
 
             let read_value = decode_address(buffer, &mut offset.clone(), bin);
-            (read_value.into(), size)
+            (read_value, size)
         }
 
         Type::String => {
             // String and Dynamic bytes are encoded as size + elements
-            let array_length = decode_uint(buffer, offset.clone(), bin);
+            let array_length = decode_uint(buffer, offset, bin);
             let total_size = bin.builder.build_int_add(
                 bin.context.i64_type().const_int(1, false),
                 array_length.into_int_value(),
@@ -141,7 +141,7 @@ fn read_from_buffer<'a>(
                 bin.builder
                     .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
 
-            validator.validate_offset(bin, array_start.clone(), func_value);
+            validator.validate_offset(bin, array_start, func_value);
 
             let total_size_offset = bin.builder.build_int_add(offset, total_size, "");
             validator.validate_offset(bin, total_size_offset, func_value);
@@ -274,7 +274,7 @@ fn decode_array<'a>(
                 ns,
             )
         } else {
-            let array_length = decode_uint(buffer, offset.clone(), bin);
+            let array_length = decode_uint(buffer, *offset, bin);
             let total_size = bin.builder.build_int_add(
                 bin.context.i64_type().const_int(1, false),
                 array_length.into_int_value(),
@@ -283,7 +283,7 @@ fn decode_array<'a>(
             let array_start =
                 bin.builder
                     .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
-            validator.validate_offset(bin, array_start.clone(), func_value);
+            validator.validate_offset(bin, array_start, func_value);
             let allocated_array =
                 bin.vector_new(func_value, array_length.into_int_value(), None, false);
 
@@ -293,7 +293,7 @@ fn decode_array<'a>(
                 array_start,
                 array_length.into_int_value(),
                 elem_ty,
-                array_data.into(),
+                array_data,
                 bin,
                 func_value,
                 ns,
@@ -335,14 +335,14 @@ fn decode_struct<'a>(
 
     let (mut read_expr, mut advance) = read_from_buffer(
         buffer,
-        offset.clone(),
+        *offset,
         bin,
         &struct_tys[0].clone(),
         &mut struct_validator,
         func_value,
         ns,
     );
-    let mut runtime_size = advance.clone();
+    let mut runtime_size = advance;
 
     let mut read_items: Vec<BasicValueEnum<'_>> = vec![];
     read_items[0] = read_expr;
@@ -363,7 +363,7 @@ fn decode_struct<'a>(
         runtime_size = bin.builder.build_int_add(runtime_size, advance, "");
     }
 
-    let struct_var = struct_literal_copy(&ty, read_items, bin, func_value, ns);
+    let struct_var = struct_literal_copy(ty, read_items, bin, func_value, ns);
     (struct_var, runtime_size)
 }
 
@@ -409,7 +409,7 @@ pub fn fixed_array_copy<'a>(
     for i in 0..size {
         let mut ind = vec![bin.context.i64_type().const_zero()];
 
-        let mut e = i as u32;
+        let mut e = i;
 
         // Mapping one-dimensional array indices to multi-dimensional array indices.
         for d in dimensions {
@@ -433,7 +433,7 @@ pub fn fixed_array_copy<'a>(
 
         let elem = if elem_ty.is_fixed_reference_type() {
             bin.builder.build_load(
-                bin.llvm_type(&elem_ty, ns),
+                bin.llvm_type(elem_ty, ns),
                 elem.into_pointer_value(),
                 "elem",
             )
@@ -465,7 +465,7 @@ pub fn struct_literal_copy<'a>(
             .builder
             .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct member")
             .unwrap();
-        bin.builder.build_store(elemptr, elem.clone());
+        bin.builder.build_store(elemptr, *elem);
     }
 
     struct_alloca.into()
@@ -552,7 +552,7 @@ pub fn set_dynamic_array_loop<'a>(
 
     let elem = if elem_ty.is_fixed_reference_type() {
         bin.builder.build_load(
-            bin.llvm_type(&elem_ty, ns),
+            bin.llvm_type(elem_ty, ns),
             elem.into_pointer_value(),
             "elem",
         )

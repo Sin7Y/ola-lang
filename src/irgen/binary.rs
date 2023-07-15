@@ -77,7 +77,7 @@ impl<'a> Binary<'a> {
             builder,
             context,
             loops: Vec::new(),
-            heap_address: heap_address,
+            heap_address,
         }
     }
 
@@ -117,7 +117,7 @@ impl<'a> Binary<'a> {
 
     /// llvm address type
     pub(crate) fn address_type(&self) -> ArrayType<'a> {
-        self.context.i64_type().array_type(4 as u32)
+        self.context.i64_type().array_type(4_u32)
     }
 
     /// Emit function prototype
@@ -143,7 +143,7 @@ impl<'a> Binary<'a> {
             // when function return multiple values, we need to return a struct
             let struct_returns = returns
                 .iter()
-                .map(|ty| self.llvm_var_ty(ty, ns).into())
+                .map(|ty| self.llvm_var_ty(ty, ns))
                 .collect::<Vec<BasicTypeEnum>>();
             let struct_type = self.context.struct_type(&struct_returns, false);
             struct_type.fn_type(&args, false)

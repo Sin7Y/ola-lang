@@ -91,21 +91,21 @@ pub fn expression<'a>(
             if left.ty().is_address() {
                 address_compare(left, right, bin, func_context, ns, IntPredicate::UGE)
             } else {
-                u32_compare(left, &right, bin, func_context, ns, IntPredicate::UGE)
+                u32_compare(left, right, bin, func_context, ns, IntPredicate::UGE)
             }
         }
         Expression::Less { left, right, .. } => {
             if left.ty().is_address() {
-                address_compare(left, &right, bin, func_context, ns, IntPredicate::ULT)
+                address_compare(left, right, bin, func_context, ns, IntPredicate::ULT)
             } else {
-                u32_compare(left, &right, bin, func_context, ns, IntPredicate::ULT)
+                u32_compare(left, right, bin, func_context, ns, IntPredicate::ULT)
             }
         }
         Expression::LessEqual { left, right, .. } => {
             if left.ty().is_address() {
-                address_compare(left, &right, bin, func_context, ns, IntPredicate::ULE)
+                address_compare(left, right, bin, func_context, ns, IntPredicate::ULE)
             } else {
-                u32_compare(left, &right, bin, func_context, ns, IntPredicate::ULE)
+                u32_compare(left, right, bin, func_context, ns, IntPredicate::ULE)
             }
         }
 
@@ -128,7 +128,7 @@ pub fn expression<'a>(
                     let mut slot = expression(expr, bin, func_context, ns);
                     storage_load(bin, ty.as_ref(), &mut slot, func_context.func_val, ns)
                 }
-                _ => expression(&expr, bin, func_context, ns),
+                _ => expression(expr, bin, func_context, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
             let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
@@ -152,7 +152,7 @@ pub fn expression<'a>(
                                 func_context.func_val,
                                 ns,
                             );
-                            return dest.clone();
+                            dest
                         }
                         Type::Ref(_) => {
                             bin.builder.build_store(
@@ -180,7 +180,7 @@ pub fn expression<'a>(
                     let mut slot = expression(expr, bin, func_context, ns);
                     storage_load(bin, ty.as_ref(), &mut slot, func_context.func_val, ns)
                 }
-                _ => expression(&expr, bin, func_context, ns),
+                _ => expression(expr, bin, func_context, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
             let after = bin.builder.build_int_add(v.into_int_value(), one, "");
@@ -204,7 +204,7 @@ pub fn expression<'a>(
                                 func_context.func_val,
                                 ns,
                             );
-                            return dest.clone();
+                            dest
                         }
                         Type::Ref(_) => {
                             let after = bin.builder.build_int_add(v.into_int_value(), one, "");
@@ -246,7 +246,7 @@ pub fn expression<'a>(
             }
 
             bin.builder
-                .build_load(bin.llvm_var_ty(&ty, ns), ptr.into_pointer_value(), "")
+                .build_load(bin.llvm_var_ty(ty, ns), ptr.into_pointer_value(), "")
         }
 
         Expression::LibFunction {
@@ -449,7 +449,7 @@ pub fn expression<'a>(
             ..
         } => {
             if args[0].ty().is_contract_storage() {
-                storage_array_push(bin, &args, func_context, ns)
+                storage_array_push(bin, args, func_context, ns)
             } else {
                 // TODO Add memory array push support
                 unimplemented!();
@@ -461,7 +461,7 @@ pub fn expression<'a>(
             ..
         } => {
             if args[0].ty().is_contract_storage() {
-                storage_array_pop(bin, &args, func_context, ns)
+                storage_array_pop(bin, args, func_context, ns)
             } else {
                 // TODO implement memory array pop
                 unimplemented!()
@@ -503,7 +503,7 @@ pub fn expression<'a>(
                 .try_as_basic_value()
                 .left()
                 .expect("Should have a left return value");
-            array_sorted.into()
+            array_sorted
         }
         Expression::AllocDynamicBytes {
             length: size, init, ..
@@ -539,7 +539,7 @@ pub fn expression<'a>(
             if matches!(to, Type::Array(..))
                 && matches!(**expr, Expression::ArrayLiteral { .. }) =>
         {
-            array_literal_to_memory_array(&expr, to, bin, func_context, ns)
+            array_literal_to_memory_array(expr, to, bin, func_context, ns)
         }
         _ => {
             unimplemented!("{:?}", expr)
@@ -626,9 +626,7 @@ pub fn emit_function_call<'a>(
                         (Some(ret_value), false)
                     }
                 }
-                None => {
-                    return (None, false);
-                }
+                None => (None, false),
             }
         } else {
             unimplemented!()
