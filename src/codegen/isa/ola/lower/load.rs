@@ -99,7 +99,10 @@ pub fn lower_load(
         output = new_empty_inst_output(ctx, src_ty, id);
     }
     for idx in 0..sz {
-        mem[3] = MOperand::new(OperandData::Int64(-4 * idx as i64 + 1));
+        mem[3] = MOperand::new(OperandData::Int64(-4 * idx as i64 + 12));
+        if sz == 1 {
+            mem[3] = MOperand::new(OperandData::None);
+        }
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::MLOADr,

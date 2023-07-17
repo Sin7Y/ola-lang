@@ -422,17 +422,17 @@ mod test {
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 1
   call eq
-  add r9 r9 -4
+  add r9 r9 -2
   end
 eq:
 .LBL1_0:
-  mov r0 r1
-  eq r0 r0 1
-  cjmp r0 .LBL1_1
+  mov r5 r1
+  eq r5 r5 1
+  cjmp r5 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
@@ -484,17 +484,17 @@ eq:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 1
   call ne
-  add r9 r9 -4
+  add r9 r9 -2
   end
 ne:
 .LBL1_0:
-  mov r0 r1
-  neq r0 r0 1
-  cjmp r0 .LBL1_1
+  mov r5 r1
+  neq r5 r5 1
+  cjmp r5 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
@@ -546,17 +546,17 @@ ne:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 1
   call ge
-  add r9 r9 -4
+  add r9 r9 -2
   end
 ge:
 .LBL1_0:
-  mov r0 r1
-  gte r0 r0 1
-  cjmp r0 .LBL1_1
+  mov r5 r1
+  gte r5 r5 1
+  cjmp r5 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
@@ -608,19 +608,19 @@ ge:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 1
   call gt
-  add r9 r9 -4
+  add r9 r9 -2
   end
 gt:
 .LBL1_0:
-  mov r0 r1
-  gte r1 r0 1
-  neq r0 r0 1
-  and r1 r1 r0
-  cjmp r1 .LBL1_1
+  mov r5 r1
+  gte r6 r5 1
+  neq r5 r5 1
+  and r6 r6 r5
+  cjmp r6 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
@@ -672,20 +672,20 @@ gt:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 1
   call lt
-  add r9 r9 -4
+  add r9 r9 -2
   end
 eq:
 .LBL1_0:
-  mov r0 r1
-  mov r1 1
-  gte r1 r1 r0
-  neq r0 r0 1
-  and r1 r1 r0
-  cjmp r1 .LBL1_1
+  mov r5 r1
+  mov r6 1
+  gte r6 r6 r5
+  neq r5 r5 1
+  and r6 r6 r5
+  cjmp r6 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
@@ -737,18 +737,18 @@ eq:
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 1
   call le
-  add r9 r9 -4
+  add r9 r9 -2
   end
 le:
 .LBL1_0:
-  mov r0 r1
+  mov r5 r1
   mov r7 1
-  gte r0 r7 r0
-  cjmp r0 .LBL1_1
+  gte r5 r7 r5
+  cjmp r5 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2

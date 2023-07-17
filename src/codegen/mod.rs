@@ -49,16 +49,15 @@ mod test {
             "main:
 .LBL0_0:
   add r9 r9 1
-  mov r4 10
-  mstore [r9,-1] r4
-  mload r4 [r9,-1]
-  add r0 r4 20
-  add r1 r4 30
-  mul r2 r0 r1
-  not r7 r1
+  mov r7 10
+  mstore [r9,-1] r7
+  mload r7 [r9,-1]
+  add r5 r7 20
+  add r6 r7 30
+  mul r8 r5 r6
+  not r7 r6
   add r7 r7 1
-  add r3 r2 r7
-  mov r0 r3
+  add r0 r8 r7
   add r9 r9 -1
   end
 "

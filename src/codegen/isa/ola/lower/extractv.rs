@@ -34,9 +34,21 @@ pub fn lower_extractvalue(
     };
     let output = new_empty_inst_output(ctx, elm_ty, id);
 
+    let opcode = match value[idx as usize].clone() {
+        OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+        OperandData::VReg(_) => Opcode::MOVrr,
+        e => {
+            return Err(LoweringError::Todo(format!(
+                "Unsupported extractvalue idx operand data type: {:?}",
+                e
+            ))
+            .into())
+        }
+    };
+
     ctx.inst_seq.push(MachInstruction::new(
         InstructionData {
-            opcode: Opcode::MOVrr,
+            opcode,
             operands: vec![
                 MO::output(output[0].into()),
                 MO::input(value[idx as usize].clone()),
@@ -101,7 +113,6 @@ define i64 @get() {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "get:
@@ -111,10 +122,11 @@ define i64 @get() {
   mov r3 0
   mov r4 0
   sload 
-  mov r1 r2
-  mov r1 r3
-  mov r2 r4
-  add r0 r1 r2
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r6 r4
+  add r0 r5 r6
   ret
 "
         );
@@ -189,49 +201,23 @@ define i64 @get2() {
             format!("{}", code.program),
             "get1:
 .LBL10_0:
-  mov r3 1
-  mov r4 2
-  mov r4 3
-  mov r4 4
-  mov r4 10
-  mov r4 20
-  mov r5 30
-  mov r5 40
-  add r0 r3 r4
-  mov r3 5
-  mov r3 6
-  mov r3 7
-  mov r4 8
-  mov r4 50
-  mov r4 60
-  mov r4 70
-  mov r4 80
-  mul r1 r3 r4
-  add r2 r0 r1
-  mov r0 r2
+  mov r7 1
+  mov r8 20
+  add r6 r7 r8
+  mov r7 7
+  mov r8 80
+  mul r5 r7 r8
+  add r0 r6 r5
   ret
 get2:
 .LBL11_0:
-  mov r3 10
-  mov r4 20
-  mov r4 30
-  mov r4 40
-  mov r4 10
-  mov r4 20
-  mov r5 30
-  mov r5 40
-  add r0 r3 r4
-  mov r3 10
-  mov r3 20
-  mov r3 30
-  mov r4 40
-  mov r4 10
-  mov r4 20
-  mov r4 30
-  mov r4 40
-  mul r1 r3 r4
-  add r2 r0 r1
-  mov r0 r2
+  mov r7 10
+  mov r8 20
+  add r6 r7 r8
+  mov r7 30
+  mov r8 40
+  mul r5 r7 r8
+  add r0 r6 r5
   ret
 "
         );

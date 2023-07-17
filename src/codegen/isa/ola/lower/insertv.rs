@@ -138,10 +138,13 @@ define i64 @insert(i64 %0) {
             "insert:
 .LBL10_0:
   add r9 r9 2
-  mstore [r9,-1] r1
-  mload r1 [r9,-1]
-  add r0 r1 1
-  range r0
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
+  add r5 r5 1
+  mstore [r9,-2] r5
+  mload r5 [r9,-2]
+  range r5
   mov r1 100
   mov r2 200
   mov r3 300
@@ -151,15 +154,12 @@ define i64 @insert(i64 %0) {
   mov r7 700
   mov r8 800
   sstore 
-  mov r1 10
-  mov r2 20
-  mov r3 30
-  mov r3 40
-  mov r1 r2
-  mov r1 r3
-  add r0 r0 2
-  mstore [r9,-2] r0
-  mload r0 [r9,-2]
+  mov r5 10
+  mov r5 20
+  mload r5 [r9,-2]
+  mov r5 r5
+  mov r6 40
+  add r0 r5 2
   add r9 r9 -2
   ret
 "
@@ -221,22 +221,28 @@ define void @insert(i64 %0) {
             format!("{}", code.program),
             "insert:
 .LBL10_0:
-  add r9 r9 1
-  mov r0 r1
-  mstore [r9,-1] r0
-  mload r0 [r9,-1]
-  add r7 r0 1
-  range r7
+  add r9 r9 2
+  mov r6 r1
+  mstore [r9,-1] r6
+  mload r6 [r9,-1]
+  add r5 r6 1
+  range r5
+  mov r6 10
+  mov r7 20
+  mov r8 r5
+  mov r5 40
+  mstore [r9,-2] r5
   mov r1 0
   mov r2 0
   mov r3 0
   mov r4 0
-  mov r5 10
-  mov r6 20
-  mov r0 30
-  mov r8 40
+  mov r5 r6
+  mov r6 r7
+  mov r7 r8
+  mload r5 [r9,-2]
+  mov r8 r5
   sstore 
-  add r9 r9 -1
+  add r9 r9 -2
   ret
 "
         );

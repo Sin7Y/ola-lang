@@ -350,7 +350,7 @@ impl OperandData {
     pub fn as_reg(&self) -> &Reg {
         match self {
             Self::Reg(r) => r,
-            _ => todo!(),
+            e => todo!("{:?}", e),
         }
     }
 

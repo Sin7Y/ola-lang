@@ -122,12 +122,18 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 }
                 (OperandData::Slot(slot), OperandData::Int64(imm)) => {
                     let off = function.slots.get(*slot).offset;
-                    let mut size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 + 1;
+                    // let mut size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 +
+                    // 1;
+                    let mut size = (*imm - off as i64) / 4;
+                    if call {
+                        size -= 2;
+                    }
                     println!(
-                        "slot pattern 3 len: {:?}, off: {:?}, size: {:?}",
+                        "slot pattern 3 len: {:?}, off: {:?}, size: {:?}, imm : {:?}",
                         function.slots.arena.len() as i32,
                         off,
-                        size
+                        size,
+                        *imm
                     );
                     if size > 0 {
                         size = -size;

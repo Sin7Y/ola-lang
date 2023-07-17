@@ -168,7 +168,7 @@ pub fn lower_store(
                             MOperand::new(OperandData::MemStart),
                             MOperand::new(OperandData::None),
                             MOperand::new(OperandData::Slot(slot)),
-                            MOperand::new((4 * (idx as i64 - 2)).into()),
+                            MOperand::new((4 * (idx as i64)).into()),
                             MOperand::input(OperandData::None),
                             MOperand::input(OperandData::None),
                             MOperand::new(OperandData::None),
