@@ -2441,7 +2441,6 @@ sqrt_test:
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_vote_test() {
         let asm = r#"                              
@@ -2962,7 +2961,999 @@ done:                                             ; preds = %cond
         println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
-            "
+            "contract_init:
+.LBL11_0:
+  add r9 r9 53
+  mstore [r9,-2] r9
+  mov r5 r1
+  mstore [r9,-16] r5
+  call get_caller
+  mov r5 r0
+  mov r6 r1
+  mov r7 r2
+  mov r8 r3
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sstore 
+  mov r5 0
+  mstore [r9,-15] r5
+  jmp .LBL11_1
+.LBL11_1:
+  mload r5 [r9,-15]
+  mload r6 [r9,-16]
+  gte r7 r6 r5
+  neq r5 r5 r6
+  and r7 r7 r5
+  cjmp r7 .LBL11_2
+  jmp .LBL11_4
+.LBL11_2:
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  mstore [r9,-20] r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 2
+  poseidon 
+  mov r5 r4
+  mload r6 [r9,-20]
+  add r5 r5 r6
+  mstore [r9,-17] r5
+  mov r5 r1
+  mstore [r9,-21] r5
+  mov r5 r2
+  mstore [r9,-22] r5
+  mov r5 r3
+  mstore [r9,-23] r5
+  mload r5 [r9,-17]
+  mov r5 r5
+  mstore [r9,-24] r5
+  mload r5 [r9,-15]
+  mload r6 [r9,-16]
+  not r7 1
+  add r7 r7 1
+  add r6 r6 r7
+  mstore [r9,-18] r6
+  not r7 r5
+  add r7 r7 1
+  mload r6 [r9,-18]
+  add r6 r6 r7
+  mstore [r9,-19] r6
+  mload r6 [r9,-19]
+  range r6
+  mload r6 [r9,-17]
+  mload r5 [r6,r5,+4]
+  mstore [r9,-14] r5
+  mov r5 0
+  mstore [r9,-13] r5
+  mload r5 [r9,-14]
+  mstore [r9,-25] r5
+  mload r5 [r9,-25]
+  mload r5 [r5]
+  mstore [r9,-26] r5
+  mload r5 [r9,-21]
+  mov r1 r5
+  mload r5 [r9,-22]
+  mov r2 r5
+  mload r5 [r9,-23]
+  mov r3 r5
+  mload r5 [r9,-24]
+  mov r4 r5
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  mstore [r9,-27] r5
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mload r8 [r9,-26]
+  mov r8 r8
+  mload r1 [r9,-21]
+  mload r1 [r9,-22]
+  mov r2 r1
+  mload r1 [r9,-23]
+  mov r3 r1
+  mload r1 [r9,-24]
+  mov r4 r1
+  sstore 
+  mload r5 [r9,-24]
+  mov r6 0
+  mov r7 0
+  mov r8 0
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mstore [r9,-28] r4
+  mov r5 r5
+  mload r4 [r9,-23]
+  mstore [r9,-29] r4
+  mload r3 [r9,-29]
+  mov r3 r3
+  mload r4 [r9,-22]
+  mstore [r9,-30] r4
+  mload r2 [r9,-30]
+  mov r2 r2
+  mload r4 [r9,-21]
+  mstore [r9,-31] r4
+  mload r1 [r9,-31]
+  mov r1 r1
+  mov r4 0
+  mov r8 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 0
+  mov r7 r8
+  mov r8 r1
+  mov r1 r2
+  mov r2 0
+  mov r6 r7
+  mov r7 r8
+  mov r8 r1
+  mov r1 0
+  mstore [r9,-32] r5
+  mov r5 r6
+  mov r6 r7
+  mov r7 r8
+  mload r5 [r9,-32]
+  mov r8 r5
+  poseidon 
+  mov r5 r1
+  mstore [r9,-33] r5
+  mov r5 r2
+  mstore [r9,-34] r5
+  mov r5 r3
+  mstore [r9,-35] r5
+  mov r5 r4
+  mstore [r9,-36] r5
+  mov r5 0
+  mstore [r9,-12] r5
+  mload r5 [r9,-36]
+  mstore [r9,-11] r5
+  mload r5 [r9,-35]
+  mstore [r9,-10] r5
+  mload r5 [r9,-34]
+  mstore [r9,-9] r5
+  mload r5 [r9,-33]
+  mstore [r9,-8] r5
+  jmp .LBL11_5
+.LBL11_3:
+  mload r6 [r9,-15]
+  add r5 r6 1
+  mstore [r9,-15] r5
+  jmp .LBL11_1
+.LBL11_4:
+  add r9 r9 -53
+  ret
+.LBL11_5:
+  mload r5 [r9,-12]
+  mstore [r9,-37] r5
+  mload r5 [r9,-26]
+  mload r6 [r9,-37]
+  gte r5 r5 r6
+  mload r6 [r9,-26]
+  mload r7 [r9,-37]
+  neq r6 r7 r6
+  and r5 r5 r6
+  cjmp r5 .LBL11_6
+  jmp .LBL11_7
+.LBL11_6:
+  mload r5 [r9,-8]
+  mstore [r9,-40] r5
+  mload r5 [r9,-9]
+  mstore [r9,-41] r5
+  mload r5 [r9,-10]
+  mstore [r9,-42] r5
+  mload r5 [r9,-11]
+  mstore [r9,-43] r5
+  mload r5 [r9,-25]
+  mload r5 [r5,-4]
+  mload r6 [r9,-37]
+  mload r5 [r5,r6,+4]
+  mov r6 0
+  mov r7 0
+  mov r8 0
+  mov r5 r5
+  mstore [r9,-44] r5
+  mload r5 [r9,-40]
+  mov r1 r5
+  mload r5 [r9,-41]
+  mov r2 r5
+  mload r5 [r9,-42]
+  mov r3 r5
+  mload r5 [r9,-43]
+  mov r4 r5
+  mov r5 r6
+  mov r6 r7
+  mov r7 r8
+  mload r5 [r9,-44]
+  mov r8 r5
+  sstore 
+  mload r5 [r9,-43]
+  add r5 r5 1
+  mstore [r9,-38] r5
+  mload r5 [r9,-40]
+  mload r6 [r9,-41]
+  mload r7 [r9,-42]
+  mload r8 [r9,-38]
+  mov r8 r8
+  mstore [r9,-11] r8
+  mstore [r9,-10] r7
+  mstore [r9,-9] r6
+  mstore [r9,-8] r5
+  mload r5 [r9,-37]
+  add r5 r5 1
+  mstore [r9,-39] r5
+  mload r5 [r9,-39]
+  mstore [r9,-12] r5
+  jmp .LBL11_5
+.LBL11_7:
+  mload r5 [r9,-26]
+  mstore [r9,-7] r5
+  mload r5 [r9,-36]
+  mstore [r9,-6] r5
+  mload r5 [r9,-35]
+  mstore [r9,-5] r5
+  mload r5 [r9,-34]
+  mstore [r9,-4] r5
+  mload r5 [r9,-33]
+  mstore [r9,-3] r5
+  jmp .LBL11_8
+.LBL11_8:
+  mload r5 [r9,-7]
+  mstore [r9,-45] r5
+  mload r5 [r9,-27]
+  mload r6 [r9,-45]
+  gte r5 r5 r6
+  mload r6 [r9,-27]
+  mload r7 [r9,-45]
+  neq r6 r7 r6
+  and r5 r5 r6
+  cjmp r5 .LBL11_9
+  jmp .LBL11_10
+.LBL11_9:
+  mload r5 [r9,-3]
+  mstore [r9,-48] r5
+  mload r5 [r9,-4]
+  mstore [r9,-49] r5
+  mload r5 [r9,-5]
+  mstore [r9,-50] r5
+  mload r5 [r9,-6]
+  mstore [r9,-51] r5
+  mload r5 [r9,-48]
+  mov r1 r5
+  mload r5 [r9,-49]
+  mov r2 r5
+  mload r5 [r9,-50]
+  mov r3 r5
+  mload r5 [r9,-51]
+  mov r4 r5
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 0
+  sstore 
+  mload r5 [r9,-51]
+  add r5 r5 1
+  mstore [r9,-46] r5
+  mload r5 [r9,-48]
+  mload r6 [r9,-49]
+  mload r7 [r9,-50]
+  mload r8 [r9,-46]
+  mov r8 r8
+  mstore [r9,-6] r8
+  mstore [r9,-5] r7
+  mstore [r9,-4] r6
+  mstore [r9,-3] r5
+  mload r5 [r9,-45]
+  add r5 r5 1
+  mstore [r9,-47] r5
+  mload r5 [r9,-47]
+  mstore [r9,-7] r5
+  jmp .LBL11_8
+.LBL11_10:
+  mload r6 [r9,-13]
+  mload r7 [r9,-24]
+  add r5 r7 1
+  mload r7 [r9,-21]
+  mov r1 r7
+  mload r7 [r9,-22]
+  mov r2 r7
+  mload r7 [r9,-23]
+  mov r3 r7
+  mov r4 r5
+  mov r5 0
+  mov r7 0
+  mov r8 0
+  mov r6 r6
+  mstore [r9,-53] r6
+  mov r6 r7
+  mov r7 r8
+  mload r5 [r9,-53]
+  mov r8 r5
+  sstore 
+  mload r5 [r9,-20]
+  add r5 r5 1
+  mstore [r9,-52] r5
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mload r8 [r9,-52]
+  mov r8 r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sstore 
+  jmp .LBL11_3
+vote_proposal:
+.LBL12_0:
+  add r9 r9 32
+  mstore [r9,-2] r9
+  mov r5 r1
+  mstore [r9,-8] r5
+  call get_caller
+  mov r5 r0
+  mov r6 r1
+  mov r7 r2
+  mov r8 r3
+  mstore [r9,-7] r8
+  mstore [r9,-6] r7
+  mstore [r9,-5] r6
+  mstore [r9,-4] r5
+  mload r5 [r9,-4]
+  mload r6 [r9,-5]
+  mload r7 [r9,-6]
+  mload r8 [r9,-7]
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mstore [r9,-20] r4
+  mov r4 0
+  mstore [r9,-21] r4
+  mov r4 0
+  mstore [r9,-22] r4
+  mov r4 0
+  mstore [r9,-23] r4
+  mov r8 r8
+  mload r4 [r9,-20]
+  mstore [r9,-24] r4
+  mload r4 [r9,-21]
+  mstore [r9,-25] r4
+  mload r4 [r9,-22]
+  mstore [r9,-26] r4
+  mov r7 r7
+  mload r4 [r9,-24]
+  mstore [r9,-27] r4
+  mload r4 [r9,-25]
+  mstore [r9,-28] r4
+  mov r6 r6
+  mload r4 [r9,-27]
+  mstore [r9,-29] r4
+  mov r5 r5
+  mov r4 1
+  mov r3 0
+  mov r2 0
+  mov r1 0
+  poseidon 
+  mov r5 r1
+  mov r6 r2
+  mov r7 r3
+  mov r8 r4
+  mstore [r9,-3] r8
+  mstore [r9,-2] r7
+  mstore [r9,-1] r6
+  mstore [r9] r5
+  mload r5 [r9,-3]
+  mstore [r9,-16] r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mload r5 [r9,-16]
+  mov r4 r5
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 1
+  sstore 
+  mload r5 [r9,-8]
+  mload r6 [r9,-3]
+  add r6 r6 1
+  mstore [r9,-17] r6
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mload r6 [r9,-17]
+  mov r4 r6
+  mov r6 0
+  mov r7 0
+  mov r8 0
+  mov r5 r5
+  mstore [r9,-30] r5
+  mov r5 r6
+  mov r6 r7
+  mov r7 r8
+  mload r5 [r9,-30]
+  mov r8 r5
+  sstore 
+  mload r5 [r9,-8]
+  mstore [r9,-31] r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  not r7 1
+  add r7 r7 1
+  add r5 r5 r7
+  mstore [r9,-12] r5
+  mload r5 [r9,-31]
+  not r7 r5
+  add r7 r7 1
+  mload r5 [r9,-12]
+  add r5 r5 r7
+  mstore [r9,-11] r5
+  mload r5 [r9,-11]
+  range r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 2
+  poseidon 
+  mov r5 r4
+  mload r6 [r9,-31]
+  add r5 r5 r6
+  mstore [r9,-15] r5
+  mload r5 [r9,-15]
+  mov r5 r5
+  add r5 r5 1
+  mstore [r9,-10] r5
+  mload r5 [r9,-10]
+  mov r4 r5
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  add r5 r5 1
+  mstore [r9,-18] r5
+  mload r5 [r9,-18]
+  range r5
+  mload r5 [r9,-8]
+  mstore [r9,-32] r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  not r7 1
+  add r7 r7 1
+  add r5 r5 r7
+  mstore [r9,-19] r5
+  mload r5 [r9,-32]
+  not r7 r5
+  add r7 r7 1
+  mload r5 [r9,-19]
+  add r5 r5 r7
+  mstore [r9,-14] r5
+  mload r5 [r9,-14]
+  range r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 2
+  poseidon 
+  mov r5 r4
+  mload r6 [r9,-32]
+  add r5 r5 r6
+  mstore [r9,-9] r5
+  mload r5 [r9,-9]
+  mov r5 r5
+  add r5 r5 1
+  mstore [r9,-13] r5
+  mload r5 [r9,-13]
+  mov r4 r5
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mload r8 [r9,-18]
+  mov r8 r8
+  sstore 
+  add r9 r9 -32
+  ret
+winningProposal:
+.LBL13_0:
+  add r9 r9 9
+  mov r5 0
+  mstore [r9,-3] r5
+  mov r5 0
+  mstore [r9,-2] r5
+  mov r5 0
+  mstore [r9,-1] r5
+  jmp .LBL13_1
+.LBL13_1:
+  mload r5 [r9,-1]
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r6 r1
+  mov r6 r2
+  mov r6 r3
+  mov r6 r4
+  gte r7 r6 r5
+  neq r5 r5 r6
+  and r7 r7 r5
+  cjmp r7 .LBL13_2
+  jmp .LBL13_4
+.LBL13_2:
+  mload r7 [r9,-1]
+  mstore [r9,-6] r7
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r7 r1
+  mov r7 r2
+  mov r7 r3
+  mov r7 r4
+  mov r8 r7
+  not r7 1
+  add r7 r7 1
+  add r5 r8 r7
+  mload r7 [r9,-6]
+  not r7 r7
+  add r7 r7 1
+  add r6 r5 r7
+  range r6
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 2
+  poseidon 
+  mov r5 r4
+  mload r6 [r9,-6]
+  add r5 r5 r6
+  mstore [r9,-4] r5
+  mload r5 [r9,-4]
+  mov r5 r5
+  add r5 r5 1
+  mstore [r9,-5] r5
+  mload r5 [r9,-5]
+  mov r4 r5
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  mload r6 [r9,-2]
+  gte r7 r5 r6
+  neq r5 r5 r6
+  and r7 r7 r5
+  cjmp r7 .LBL13_5
+  jmp .LBL13_6
+.LBL13_3:
+  mload r6 [r9,-1]
+  add r5 r6 1
+  mstore [r9,-1] r5
+  jmp .LBL13_1
+.LBL13_4:
+  mload r0 [r9,-3]
+  add r9 r9 -9
+  ret
+.LBL13_5:
+  mload r7 [r9,-1]
+  mstore [r9,-9] r7
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r7 r1
+  mov r7 r2
+  mov r7 r3
+  mov r7 r4
+  mov r8 r7
+  not r7 1
+  add r7 r7 1
+  add r5 r8 r7
+  mload r7 [r9,-9]
+  not r7 r7
+  add r7 r7 1
+  add r6 r5 r7
+  range r6
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 2
+  poseidon 
+  mov r5 r4
+  mload r6 [r9,-9]
+  add r5 r5 r6
+  mstore [r9,-7] r5
+  mload r5 [r9,-7]
+  mov r5 r5
+  add r5 r5 1
+  mstore [r9,-8] r5
+  mload r5 [r9,-8]
+  mov r4 r5
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  mload r5 [r9,-1]
+  jmp .LBL13_6
+.LBL13_6:
+  jmp .LBL13_3
+getWinnerName:
+.LBL14_0:
+  add r9 r9 28
+  mstore [r9,-2] r9
+  call winningProposal
+  mov r5 r0
+  mstore [r9,-15] r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 2
+  sload 
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r5 r4
+  not r7 1
+  add r7 r7 1
+  add r5 r5 r7
+  mstore [r9,-12] r5
+  mload r5 [r9,-15]
+  not r7 r5
+  add r7 r7 1
+  mload r5 [r9,-12]
+  add r5 r5 r7
+  mstore [r9,-11] r5
+  mload r5 [r9,-11]
+  range r5
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 2
+  poseidon 
+  mov r5 r4
+  mload r6 [r9,-15]
+  add r5 r5 r6
+  mstore [r9,-13] r5
+  mload r5 [r9,-13]
+  mov r5 r5
+  mstore [r9,-10] r5
+  mov r5 r1
+  mov r6 r2
+  mov r7 r3
+  mload r8 [r9,-10]
+  mov r8 r8
+  mov r1 r5
+  mov r2 r6
+  mov r3 r7
+  mov r4 r8
+  sload 
+  mov r1 r2
+  mov r1 r3
+  mov r1 r4
+  mstore [r9,-16] r1
+  mload r1 [r9,-16]
+.PROPHET14_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  mload r2 [r9,-16]
+  mstore [r9,-9] r2
+  mstore [r9,-8] r1
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mstore [r9,-17] r4
+  mov r4 0
+  mstore [r9,-18] r4
+  mov r4 0
+  mstore [r9,-19] r4
+  mov r4 0
+  mstore [r9,-20] r4
+  mov r8 r8
+  mload r4 [r9,-17]
+  mstore [r9,-21] r4
+  mload r4 [r9,-18]
+  mstore [r9,-22] r4
+  mload r4 [r9,-19]
+  mstore [r9,-23] r4
+  mov r7 r7
+  mload r4 [r9,-21]
+  mstore [r9,-24] r4
+  mload r4 [r9,-22]
+  mstore [r9,-25] r4
+  mov r6 r6
+  mload r4 [r9,-24]
+  mstore [r9,-26] r4
+  mov r5 r5
+  mov r4 0
+  mov r3 0
+  mov r2 0
+  mov r1 0
+  poseidon 
+  mov r5 r1
+  mov r6 r2
+  mov r7 r3
+  mov r8 r4
+  mov r1 0
+  mstore [r9,-7] r1
+  mstore [r9,-6] r8
+  mstore [r9,-5] r7
+  mstore [r9,-4] r6
+  mstore [r9,-3] r5
+  jmp .LBL14_1
+.LBL14_1:
+  mload r5 [r9,-7]
+  mload r6 [r9,-16]
+  gte r6 r6 r5
+  mload r7 [r9,-16]
+  neq r7 r5 r7
+  and r6 r6 r7
+  cjmp r6 .LBL14_2
+  jmp .LBL14_3
+.LBL14_2:
+  mload r7 [r9,-3]
+  mload r8 [r9,-4]
+  mload r1 [r9,-5]
+  mstore [r9,-27] r1
+  mload r1 [r9,-6]
+  mstore [r9,-28] r1
+  mov r1 r7
+  mov r2 r8
+  mload r1 [r9,-27]
+  mov r3 r1
+  mload r1 [r9,-28]
+  mov r4 r1
+  sload 
+  mov r1 r2
+  mov r1 r3
+  mov r1 r4
+  mload r2 [r9,-10]
+  mstore [r2] r1
+  mload r1 [r9,-28]
+  mstore [r9,-6] r1
+  mload r1 [r9,-27]
+  mstore [r9,-5] r1
+  mstore [r9,-4] r8
+  mstore [r9,-3] r7
+  add r6 r5 1
+  mstore [r9,-7] r6
+  jmp .LBL14_1
+.LBL14_3:
+  mload r0 [r9,-14]
+  add r9 r9 -28
+  ret
+get_caller:
+.LBL15_0:
+  mov r0 402443140940559753
+  mov r1 13008216018185724768
+  mov r2 6500940582073311439
+  mov r3 11734851560397297678
+  ret
+main:
+.LBL16_0:
+  add r9 r9 18
+  mstore [r9,-2] r9
+  mov r1 3
+.PROPHET16_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r7 r0
+  mov r1 0
+  mstore [r9,-11] r1
+  jmp .LBL16_1
+.LBL16_1:
+  mload r1 [r9,-11]
+  mov r3 3
+  gte r3 r3 r1
+  neq r4 r1 3
+  mstore [r9,-12] r4
+  mload r4 [r9,-12]
+  and r3 r3 r4
+  cjmp r3 .LBL16_2
+  jmp .LBL16_3
+.LBL16_2:
+  mov r4 0
+  mstore [r9,-13] r4
+  mload r4 [r9,-13]
+  mstore [r7] r4
+  add r3 r1 1
+  mstore [r9,-11] r3
+  jmp .LBL16_1
+.LBL16_3:
+  mov r1 3
+  mstore [r9,-10] r1
+  mstore [r9,-9] r7
+  mov r1 10
+.PROPHET16_1:
+  mov r0 psp
+  mload r0 [r0]
+  mov r7 r0
+  mov r1 80
+  mstore [r7] r1
+  mov r1 114
+  mstore [r7,+1] r1
+  mov r1 111
+  mstore [r7,+2] r1
+  mov r1 112
+  mstore [r7,+3] r1
+  mov r1 111
+  mstore [r7,+4] r1
+  mov r1 115
+  mstore [r7,+5] r1
+  mov r1 97
+  mstore [r7,+6] r1
+  mov r1 108
+  mstore [r7,+7] r1
+  mov r1 32
+  mstore [r7,+8] r1
+  mov r1 49
+  mstore [r7,+9] r1
+  mov r1 10
+  mstore [r9,-8] r1
+  mstore [r9,-7] r7
+  mload r1 [r9,-10]
+  not r7 1
+  add r7 r7 1
+  add r3 r1 r7
+  not r7 0
+  add r7 r7 1
+  add r7 r3 r7
+  mstore [r9,-14] r7
+  mload r7 [r9,-14]
+  range r7
+  mload r7 [r9,-11]
+  mstore [r7] r5
+  mov r1 10
+.PROPHET16_2:
+  mov r0 psp
+  mload r0 [r0]
+  mov r5 r0
+  mov r7 80
+  mstore [r5] r7
+  mov r7 114
+  mstore [r5,+1] r7
+  mov r7 111
+  mstore [r5,+2] r7
+  mov r7 112
+  mstore [r5,+3] r7
+  mov r7 111
+  mstore [r5,+4] r7
+  mov r7 115
+  mstore [r5,+5] r7
+  mov r7 97
+  mstore [r5,+6] r7
+  mov r7 108
+  mstore [r5,+7] r7
+  mov r7 32
+  mstore [r5,+8] r7
+  mov r7 50
+  mstore [r5,+9] r7
+  mov r7 10
+  mstore [r9,-6] r7
+  mstore [r9,-5] r5
+  mload r5 [r9,-10]
+  not r7 1
+  add r7 r7 1
+  add r5 r5 r7
+  mstore [r9,-15] r5
+  not r7 1
+  add r7 r7 1
+  mload r5 [r9,-15]
+  add r5 r5 r7
+  mstore [r9,-16] r5
+  mload r5 [r9,-16]
+  range r5
+  mload r5 [r9,-11]
+  mstore [r5,+2] r6
+  mov r1 10
+.PROPHET16_3:
+  mov r0 psp
+  mload r0 [r0]
+  mov r5 r0
+  mov r6 80
+  mstore [r5] r6
+  mov r6 114
+  mstore [r5,+1] r6
+  mov r6 111
+  mstore [r5,+2] r6
+  mov r6 112
+  mstore [r5,+3] r6
+  mov r6 111
+  mstore [r5,+4] r6
+  mov r6 115
+  mstore [r5,+5] r6
+  mov r6 97
+  mstore [r5,+6] r6
+  mov r6 108
+  mstore [r5,+7] r6
+  mov r6 32
+  mstore [r5,+8] r6
+  mov r6 51
+  mstore [r5,+9] r6
+  mov r6 10
+  mstore [r9,-4] r6
+  mstore [r9,-3] r5
+  mload r5 [r9,-10]
+  not r7 1
+  add r7 r7 1
+  add r5 r5 r7
+  mstore [r9,-17] r5
+  not r7 2
+  add r7 r7 1
+  mload r5 [r9,-17]
+  add r5 r5 r7
+  mstore [r9,-18] r5
+  mload r5 [r9,-18]
+  range r5
+  mload r5 [r9,-11]
+  mstore [r5,+4] r8
+  mov r1 r2
+  call contract_init
+  mov r1 0
+  call vote_proposal
+  mov r1 1
+  call vote_proposal
+  mov r1 0
+  call vote_proposal
+  call getWinnerName
+  add r9 r9 -18
+  end
 "
         );
     }
