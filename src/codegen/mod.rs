@@ -245,19 +245,21 @@ get:
   mov r3 0
   mov r4 0
   sload 
-  mov r1 r2
-  mov r1 r3
-  mov r2 r4
-  add r0 r1 r2
+  mov r5 r1
+  mov r5 r2
+  mov r5 r3
+  mov r6 r4
+  add r0 r5 r6
   ret
 main:
 .LBL12_0:
-  add r9 r9 5
+  add r9 r9 3
   mstore [r9,-2] r9
   call inc_simple
   call get
-  mstore [r9,-3] r0
-  add r9 r9 -5
+  mov r5 r0
+  mstore [r9,-3] r5
+  add r9 r9 -3
   end
 "
         );
@@ -305,17 +307,18 @@ entry:
   mov r1 3
 .PROPHET0_0:
   mov r0 psp
-  mload r0 [r0,0]
-  mov r1 3
-  mstore [r9,-2] r1
-  mstore [r9,-1] r0
-  mload r0 [r9,-1]
-  mov r1 1
-  mstore [r0,+0] r1
-  mov r1 2
-  mstore [r0,+1] r1
-  mov r1 3
-  mstore [r0,+2] r1
+  mload r0 [r0]
+  mov r5 r0
+  mov r6 3
+  mstore [r9,-2] r6
+  mstore [r9,-1] r5
+  mload r5 [r9,-3]
+  mov r6 1
+  mstore [r5] r6
+  mov r6 2
+  mstore [r5,+1] r6
+  mov r6 3
+  mstore [r5,+2] r6
   add r9 r9 -2
   end
 "
@@ -392,67 +395,62 @@ define void @main() {
             format!("{}", code.program),
             "add_mapping:
 .LBL11_0:
-  add r9 r9 10
-  mov r0 r1
-  mov r1 r2
-  mov r2 r3
-  mov r3 r4
-  mov r4 r5
-  mstore [r9,-1] r4
-  mov r4 0
-  mov r5 0
-  mov r6 0
-  mstore [r9,-2] r6
-  mov r6 0
-  mstore [r9,-3] r6
-  mov r6 0
-  mstore [r9,-4] r6
-  mov r6 0
-  mstore [r9,-5] r6
-  mov r6 0
-  mstore [r9,-6] r6
-  mov r8 r3
-  mov r3 r4
-  mov r4 r5
-  mload r5 [r9,-2]
-  mload r6 [r9,-3]
-  mstore [r9,-7] r6
-  mload r6 [r9,-4]
-  mstore [r9,-8] r6
-  mload r6 [r9,-5]
-  mstore [r9,-9] r6
-  mov r7 r2
-  mov r2 r3
-  mov r3 r4
-  mov r4 r5
-  mload r5 [r9,-7]
-  mload r6 [r9,-8]
-  mstore [r9,-10] r6
+  add r9 r9 12
   mov r6 r1
-  mov r1 r2
-  mov r2 r3
-  mov r3 r4
-  mov r4 r5
-  mov r5 r0
-  mov r0 r1
-  mov r1 r2
-  mov r2 r3
+  mov r7 r2
+  mov r8 r3
+  mov r1 r4
+  mstore [r9,-1] r5
+  mov r5 r1
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mstore [r9,-2] r4
+  mov r4 0
+  mstore [r9,-3] r4
+  mov r4 0
+  mstore [r9,-4] r4
+  mov r4 0
+  mstore [r9,-5] r4
+  mov r5 r5
+  mload r4 [r9,-2]
+  mstore [r9,-6] r4
+  mload r4 [r9,-3]
+  mstore [r9,-7] r4
+  mload r4 [r9,-4]
+  mstore [r9,-8] r4
+  mov r8 r8
+  mload r4 [r9,-6]
+  mstore [r9,-9] r4
+  mload r4 [r9,-7]
+  mstore [r9,-10] r4
+  mov r7 r7
+  mload r4 [r9,-9]
+  mstore [r9,-11] r4
+  mov r6 r6
   mov r4 0
   mov r3 0
   mov r2 0
   mov r1 0
+  mstore [r9,-12] r5
+  mov r5 r6
+  mov r6 r7
+  mov r7 r8
+  mload r5 [r9,-12]
+  mov r8 r5
   poseidon 
   mov r5 0
   mov r6 0
   mov r7 0
-  mload r0 [r9,-1]
-  mov r8 r0
+  mload r8 [r9,-1]
+  mov r8 r8
   sstore 
-  add r9 r9 -10
+  add r9 r9 -12
   ret
 main:
 .LBL12_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 402443140940559753
   mov r2 13008216018185724768
@@ -460,7 +458,7 @@ main:
   mov r4 11734851560397297678
   mov r5 1
   call add_mapping
-  add r9 r9 -4
+  add r9 r9 -2
   end
 "
         );
@@ -525,9 +523,9 @@ entry:
             "str_imm:
 .LBL10_0:
   add r9 r9 1
-  mov r0 r1
-  mstore [r9,-1] r0
-  mload r0 [r9,-1]
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
   mov r1 0
   mov r2 0
   mov r3 0
@@ -617,7 +615,7 @@ entry:
             format!("{}", code.program),
             "str_var:
 .LBL10_0:
-  mov r0 r1
+  mov r5 r1
   mov r1 1
   mov r2 2
   mov r3 3
@@ -698,7 +696,7 @@ entry:
             format!("{}", code.program),
             "str_var:
 .LBL10_0:
-  mov r0 r1
+  mov r5 r1
   mov r1 1
   mov r2 2
   mov r3 3
@@ -796,27 +794,47 @@ entry:
             format!("{}", code.program),
             "str_var:
 .LBL10_0:
-  add r9 r9 2
+  add r9 r9 7
   mov r7 r1
-  mov r0 r2
-  add r8 r7 666
-  mov r0 0
+  mov r8 r2
+  add r5 r7 666
+  mov r8 0
   mov r1 0
   mov r2 0
   mov r3 0
   mov r4 0
-  mov r5 0
-  mov r6 0
-  mstore [r9,-1] r6
-  mov r6 r8
-  mstore [r9,-2] r6
-  mload r5 [r9,-2]
-  mov r6 r8
-  mov r8 r5
-  mov r5 100
+  mstore [r9,-1] r4
+  mov r4 0
+  mstore [r9,-2] r4
+  mov r4 0
+  mstore [r9,-3] r4
+  mov r4 r5
+  mstore [r9,-4] r4
+  mload r4 [r9,-1]
+  mstore [r9,-5] r4
+  mload r4 [r9,-2]
+  mstore [r9,-6] r4
+  mov r7 r7
+  mload r4 [r9,-4]
+  mstore [r9,-7] r4
+  add r6 r5 888
+  mov r5 r8
+  mov r8 r1
+  mov r1 r2
+  mov r2 r3
+  mload r3 [r9,-5]
+  mov r6 r6
+  mload r3 [r9,-7]
+  mov r2 100
   mov r4 200
+  mov r1 r2
+  mov r2 r3
   mov r3 30
+  mov r8 r1
+  mov r1 r2
   mov r2 20
+  mov r5 r8
+  mov r8 r1
   mov r1 10
   poseidon 
   mov r5 r1
@@ -828,7 +846,7 @@ entry:
   mov r3 7
   mov r4 8
   sstore 
-  add r9 r9 -2
+  add r9 r9 -7
   ret
 "
         );
@@ -1131,7 +1149,6 @@ entry:
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_functioncall_test() {
         // LLVM Assembly
@@ -1181,44 +1198,47 @@ define i32 @bar(i32 %0, i32 %1) #0 {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 7
-  mstore [r8,-2] r8
-  mov r0 10
-  mstore [r8,-5] r0
-  mov r0 20
-  mstore [r8,-4] r0
-  mov r0 100
-  mstore [r8,-3] r0
-  mload r1 [r8,-5]
-  mload r2 [r8,-4]
+  add r9 r9 5
+  mstore [r9,-2] r9
+  mov r5 10
+  mstore [r9,-3] r5
+  mov r5 20
+  mstore [r9,-4] r5
+  mov r5 100
+  mstore [r9,-5] r5
+  mload r1 [r9,-3]
+  mload r2 [r9,-4]
   call bar
-  mstore [r8,-3] r0
-  mload r0 [r8,-3]
-  add r8 r8 -7
+  mov r5 r0
+  mstore [r9,-5] r5
+  mload r5 [r9,-5]
+  add r9 r9 -5
   end
 bar:
 .LBL1_0:
-  add r8 r8 3
-  mstore [r8,-3] r1
-  mstore [r8,-2] r2
-  mov r1 200
-  mstore [r8,-1] r1
-  mload r1 [r8,-3]
-  mload r2 [r8,-2]
-  add r0 r1 r2
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  add r8 r8 -3
+  add r9 r9 3
+  mov r6 r1
+  mov r7 r2
+  mstore [r9,-1] r6
+  mstore [r9,-2] r7
+  mov r6 200
+  mstore [r9,-3] r6
+  mload r6 [r9,-1]
+  mload r7 [r9,-2]
+  add r5 r6 r7
+  mstore [r9,-3] r5
+  mload r0 [r9,-3]
+  add r9 r9 -3
   ret
 "
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_functioncall_multiparams_test() {
         // LLVM Assembly
@@ -1278,44 +1298,57 @@ define i32 @bar(i32 %0, i32 %1, i32 %2, i32 %3) #0 {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 7
-  mstore [r8,-2] r8
-  mov r0 10
-  mstore [r8,-5] r0
-  mov r0 20
-  mstore [r8,-4] r0
-  mov r0 100
-  mstore [r8,-3] r0
-  mload r1 [r8,-5]
-  mload r2 [r8,-4]
-  call bar
-  mstore [r8,-3] r0
-  mload r0 [r8,-3]
-  add r8 r8 -7
+  add r9 r9 6
+  mstore [r9,-2] r9
+  mov r5 10
+  mstore [r9,-3] r5
+  mov r5 20
+  mstore [r9,-4] r5
+  mov r5 30
+  mstore [r9,-5] r5
+  mov r5 40
+  mstore [r9,-6] r5
+  mload r1 [r9,-3]
+  mload r2 [r9,-4]
+  mload r3 [r9,-5]
+  mload r4 [r9,-6]
+  call add
+  mov r5 r0
+  mstore [r9,-3] r5
+  mload r5 [r9,-3]
+  add r9 r9 -6
   end
 bar:
 .LBL1_0:
-  add r8 r8 3
-  mstore [r8,-3] r1
-  mstore [r8,-2] r2
-  mov r1 200
-  mstore [r8,-1] r1
-  mload r1 [r8,-3]
-  mload r2 [r8,-2]
-  add r0 r1 r2
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  add r8 r8 -3
+  add r9 r9 4
+  mov r8 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 r4
+  mstore [r9,-1] r8
+  mstore [r9,-2] r1
+  mstore [r9,-3] r2
+  mstore [r9,-4] r3
+  mload r8 [r9,-1]
+  mload r1 [r9,-2]
+  mload r2 [r9,-3]
+  mload r3 [r9,-4]
+  add r5 r8 r1
+  add r6 r2 r3
+  add r7 r5 r6
+  mstore [r9,-1] r7
+  mload r0 [r9,-1]
+  add r9 r9 -4
   ret
 "
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_fib_test() {
         // LLVM Assembly
@@ -1405,95 +1438,97 @@ endfor:                                           ; preds = %cond
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 2
+  mstore [r9,-2] r9
   mov r1 10
   call fib_non_recursive
-  add r8 r8 -4
+  add r9 r9 -2
   end
 fib_recursive:
 .LBL1_0:
-  add r8 r8 9
-  mstore [r8,-2] r8
-  mov r0 r1
-  mstore [r8,-7] r0
-  mload r0 [r8,-7]
+  add r9 r9 7
+  mstore [r9,-2] r9
+  mov r5 r1
+  mstore [r9,-3] r5
+  mload r5 [r9,-3]
   mov r7 2
-  gte r0 r7 r0
-  cjmp r0 .LBL1_1
+  gte r5 r7 r5
+  cjmp r5 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 1
-  add r8 r8 -9
+  add r9 r9 -7
   ret
 .LBL1_2:
-  mload r0 [r8,-7]
+  mload r5 [r9,-3]
   not r7 1
   add r7 r7 1
-  add r1 r0 r7
+  add r1 r5 r7
   call fib_recursive
-  mstore [r8,-3] r0
-  mload r0 [r8,-7]
+  mov r5 r0
+  mstore [r9,-7] r5
+  mload r5 [r9,-3]
   not r7 2
   add r7 r7 1
-  add r0 r0 r7
-  mstore [r8,-5] r0
-  mload r1 [r8,-5]
+  add r5 r5 r7
+  mstore [r9,-5] r5
+  mload r1 [r9,-5]
   call fib_recursive
-  mload r1 [r8,-3]
-  add r0 r1 r0
-  mstore [r8,-6] r0
-  mload r0 [r8,-6]
-  add r8 r8 -9
+  mov r5 r0
+  mload r6 [r9,-7]
+  add r5 r6 r5
+  mstore [r9,-4] r5
+  mload r0 [r9,-4]
+  add r9 r9 -7
   ret
 fib_non_recursive:
 .LBL2_0:
-  add r8 r8 5
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 0
-  mstore [r8,-2] r0
-  mov r0 1
-  mstore [r8,-3] r0
-  mov r0 1
-  mstore [r8,-4] r0
-  mov r0 2
-  mstore [r8,-5] r0
+  add r9 r9 5
+  mov r5 r1
+  mstore [r9,-5] r5
+  mov r5 0
+  mstore [r9,-4] r5
+  mov r5 1
+  mstore [r9,-3] r5
+  mov r5 1
+  mstore [r9,-2] r5
+  mov r5 2
+  mstore [r9,-1] r5
   jmp .LBL2_1
 .LBL2_1:
-  mload r0 [r8,-5]
-  mload r1 [r8,-1]
-  gte r0 r1 r0
-  cjmp r0 .LBL2_2
+  mload r5 [r9,-1]
+  mload r6 [r9,-5]
+  gte r5 r6 r5
+  cjmp r5 .LBL2_2
   jmp .LBL2_4
 .LBL2_2:
-  mload r1 [r8,-2]
-  mload r2 [r8,-3]
-  add r0 r1 r2
-  mstore [r8,-4] r0
-  mload r0 [r8,-3]
-  mstore [r8,-2] r0
-  mload r0 [r8,-4]
-  mstore [r8,-3] r0
+  mload r6 [r9,-4]
+  mload r7 [r9,-3]
+  add r5 r6 r7
+  mstore [r9,-2] r5
+  mload r5 [r9,-3]
+  mstore [r9,-4] r5
+  mload r5 [r9,-2]
+  mstore [r9,-3] r5
   jmp .LBL2_3
 .LBL2_3:
-  mload r1 [r8,-5]
-  add r0 r1 1
-  mstore [r8,-5] r0
+  mload r6 [r9,-1]
+  add r5 r6 1
+  mstore [r9,-1] r5
   jmp .LBL2_1
 .LBL2_4:
-  mload r0 [r8,-4]
-  add r8 r8 -5
+  mload r0 [r9,-2]
+  add r9 r9 -5
   ret
 "
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_condbr_test() {
         // LLVM Assembly
@@ -1715,247 +1750,248 @@ enif:                                             ; preds = %entry
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
 .LBL0_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 2
+  mstore [r9,-2] r9
   mov r1 1
   call eq_rr
-  add r8 r8 -4
+  add r9 r9 -2
   end
 eq_ri:
 .LBL1_0:
-  add r8 r8 1
-  mov r0 r1
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  eq r0 r0 1
-  cjmp r0 .LBL1_1
+  add r9 r9 1
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
+  eq r5 r5 1
+  cjmp r5 .LBL1_1
   jmp .LBL1_2
 .LBL1_1:
   mov r0 2
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 .LBL1_2:
   mov r0 3
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 eq_rr:
 .LBL2_0:
-  add r8 r8 2
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 1
-  mstore [r8,-2] r0
-  mload r0 [r8,-1]
-  mload r1 [r8,-2]
-  eq r0 r0 r1
-  cjmp r0 .LBL2_1
+  add r9 r9 2
+  mov r5 r1
+  mstore [r9,-2] r5
+  mov r5 1
+  mstore [r9,-1] r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-1]
+  eq r5 r5 r6
+  cjmp r5 .LBL2_1
   jmp .LBL2_2
 .LBL2_1:
   mov r0 2
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 .LBL2_2:
   mov r0 3
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 neq_ri:
 .LBL3_0:
-  add r8 r8 1
-  mov r0 r1
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  neq r0 r0 1
-  cjmp r0 .LBL3_1
+  add r9 r9 1
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
+  neq r5 r5 1
+  cjmp r5 .LBL3_1
   jmp .LBL3_2
 .LBL3_1:
   mov r0 2
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 .LBL3_2:
   mov r0 3
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 neq_rr:
 .LBL4_0:
-  add r8 r8 2
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 1
-  mstore [r8,-2] r0
-  mload r0 [r8,-1]
-  mload r1 [r8,-2]
-  neq r0 r0 r1
-  cjmp r0 .LBL4_1
+  add r9 r9 2
+  mov r5 r1
+  mstore [r9,-2] r5
+  mov r5 1
+  mstore [r9,-1] r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-1]
+  neq r5 r5 r6
+  cjmp r5 .LBL4_1
   jmp .LBL4_2
 .LBL4_1:
   mov r0 2
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 .LBL4_2:
   mov r0 3
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 lt_ri:
 .LBL5_0:
-  add r8 r8 1
-  mov r0 r1
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  mov r1 1
-  gte r1 r1 r0
-  neq r0 r0 1
-  and r1 r1 r0
-  cjmp r1 .LBL5_1
+  add r9 r9 1
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
+  mov r6 1
+  gte r6 r6 r5
+  neq r5 r5 1
+  and r6 r6 r5
+  cjmp r6 .LBL5_1
   jmp .LBL5_2
 .LBL5_1:
   mov r0 2
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 .LBL5_2:
   mov r0 3
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 lt_rr:
 .LBL6_0:
-  add r8 r8 2
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 1
-  mstore [r8,-2] r0
-  mload r0 [r8,-1]
-  mload r1 [r8,-2]
-  gte r2 r1 r0
-  neq r0 r0 r1
-  and r2 r2 r0
-  cjmp r2 .LBL6_1
+  add r9 r9 2
+  mov r5 r1
+  mstore [r9,-2] r5
+  mov r5 1
+  mstore [r9,-1] r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-1]
+  gte r7 r6 r5
+  neq r5 r5 r6
+  and r7 r7 r5
+  cjmp r7 .LBL6_1
   jmp .LBL6_2
 .LBL6_1:
   mov r0 2
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 .LBL6_2:
   mov r0 3
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 lte_ri:
 .LBL7_0:
-  add r8 r8 1
-  mov r0 r1
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
+  add r9 r9 1
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
   mov r7 1
-  gte r0 r7 r0
-  cjmp r0 .LBL7_1
+  gte r5 r7 r5
+  cjmp r5 .LBL7_1
   jmp .LBL7_2
 .LBL7_1:
   mov r0 2
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 .LBL7_2:
   mov r0 3
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 lte_rr:
 .LBL8_0:
-  add r8 r8 2
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 1
-  mstore [r8,-2] r0
-  mload r0 [r8,-1]
-  mload r1 [r8,-2]
-  gte r0 r1 r0
-  cjmp r0 .LBL8_1
+  add r9 r9 2
+  mov r5 r1
+  mstore [r9,-2] r5
+  mov r5 1
+  mstore [r9,-1] r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-1]
+  gte r5 r6 r5
+  cjmp r5 .LBL8_1
   jmp .LBL8_2
 .LBL8_1:
   mov r0 2
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 .LBL8_2:
   mov r0 3
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 gt_ri:
 .LBL9_0:
-  add r8 r8 1
-  mov r0 r1
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  gte r1 r0 1
-  neq r0 r0 1
-  and r1 r1 r0
-  cjmp r1 .LBL9_1
+  add r9 r9 1
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
+  gte r6 r5 1
+  neq r5 r5 1
+  and r6 r6 r5
+  cjmp r6 .LBL9_1
   jmp .LBL9_2
 .LBL9_1:
   mov r0 2
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 .LBL9_2:
   mov r0 3
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 gt_rr:
 .LBL10_0:
-  add r8 r8 2
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 1
-  mstore [r8,-2] r0
-  mload r0 [r8,-1]
-  mload r1 [r8,-2]
-  gte r2 r0 r1
-  neq r0 r0 r1
-  and r2 r2 r0
-  cjmp r2 .LBL10_1
+  add r9 r9 2
+  mov r5 r1
+  mstore [r9,-2] r5
+  mov r5 1
+  mstore [r9,-1] r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-1]
+  gte r7 r5 r6
+  neq r5 r5 r6
+  and r7 r7 r5
+  cjmp r7 .LBL10_1
   jmp .LBL10_2
 .LBL10_1:
   mov r0 2
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 .LBL10_2:
   mov r0 3
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 gte_ri:
 .LBL11_0:
-  add r8 r8 1
-  mov r0 r1
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  gte r0 r0 1
-  cjmp r0 .LBL11_1
+  add r9 r9 1
+  mov r5 r1
+  mstore [r9,-1] r5
+  mload r5 [r9,-1]
+  gte r5 r5 1
+  cjmp r5 .LBL11_1
   jmp .LBL11_2
 .LBL11_1:
   mov r0 2
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 .LBL11_2:
   mov r0 3
-  add r8 r8 -1
+  add r9 r9 -1
   ret
 gte_rr:
 .LBL12_0:
-  add r8 r8 2
-  mov r0 r1
-  mstore [r8,-1] r0
-  mov r0 1
-  mstore [r8,-2] r0
-  mload r0 [r8,-1]
-  mload r1 [r8,-2]
-  gte r0 r0 r1
-  cjmp r0 .LBL12_1
+  add r9 r9 2
+  mov r5 r1
+  mstore [r9,-2] r5
+  mov r5 1
+  mstore [r9,-1] r5
+  mload r5 [r9,-2]
+  mload r6 [r9,-1]
+  gte r5 r5 r6
+  cjmp r5 .LBL12_1
   jmp .LBL12_2
 .LBL12_1:
   mov r0 2
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 .LBL12_2:
   mov r0 3
-  add r8 r8 -2
+  add r9 r9 -2
   ret
 "
         );
@@ -2018,34 +2054,35 @@ gte_rr:
             format!("{}", code.program),
             "u32_sqrt:
 .LBL3_0:
-  mov r3 r1
-  mov r1 r3
+  mov r6 r1
+  mov r1 r6
 .PROPHET3_0:
   mov r0 psp
-  mload r0 [r0,0]
+  mload r0 [r0]
   range r0
-  mul r2 r0 r0
-  assert r2 r3
+  mul r5 r0 r0
+  assert r5 r6
   ret
 main:
 .LBL4_0:
-  add r9 r9 4
+  add r9 r9 2
   mstore [r9,-2] r9
   mov r1 4
   call sqrt_test
-  add r9 r9 -4
+  add r9 r9 -2
   end
 sqrt_test:
 .LBL5_0:
-  add r9 r9 6
+  add r9 r9 4
   mstore [r9,-2] r9
-  mov r0 r1
-  mstore [r9,-4] r0
+  mov r5 r1
+  mstore [r9,-4] r5
   mload r1 [r9,-4]
   call u32_sqrt
-  mstore [r9,-3] r0
+  mov r5 r0
+  mstore [r9,-3] r5
   mload r0 [r9,-3]
-  add r9 r9 -6
+  add r9 r9 -4
   ret
 "
         );
@@ -2076,7 +2113,6 @@ sqrt_test:
         );
     }
 
-    #[ignore]
     #[test]
     fn codegen_sqrt_inst_test() {
         // LLVM Assembly
@@ -2214,188 +2250,190 @@ enif4:                                            ; preds = %then3, %else
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
 .LBL5_0:
-  add r8 r8 4
-  mstore [r8,-2] r8
+  add r9 r9 2
+  mstore [r9,-2] r9
   mov r1 4
   call sqrt_test
-  add r8 r8 -4
+  add r9 r9 -2
   end
 sqrt_test:
 .LBL6_0:
-  add r8 r8 17
-  mov r0 r1
-  mstore [r8,-14] r0
-  mov r0 0
-  mstore [r8,-15] r0
-  mload r0 [r8,-14]
-  gte r1 r0 3
-  neq r0 r0 3
-  and r1 r1 r0
-  cjmp r1 .LBL6_1
+  add r9 r9 15
+  mov r5 r1
+  mstore [r9,-4] r5
+  mov r5 0
+  mstore [r9,-3] r5
+  mload r5 [r9,-4]
+  gte r6 r5 3
+  neq r5 r5 3
+  and r6 r6 r5
+  cjmp r6 .LBL6_1
   jmp .LBL6_2
 .LBL6_1:
-  mload r0 [r8,-14]
-  mstore [r8,-15] r0
-  mload r0 [r8,-14]
-  mstore [r8,-11] r0
-  mload r0 [r8,-11]
-  mov r1 r0
+  mload r7 [r9,-4]
+  mstore [r9,-3] r7
+  mload r7 [r9,-4]
+  mstore [r9,-6] r7
+  mload r7 [r9,-6]
+  mov r1 r7
   mov r2 2
 .PROPHET6_0:
   mov r0 psp
-  mload r0 [r0,0]
-  mstore [r8,-10] r0
-  mload r0 [r8,-10]
-  range r0
-  mov r0 2
-  mload r1 [r8,-10]
-  add r3 r1 1
-  not r7 r3
+  mload r0 [r0]
+  mov r7 r0
+  mstore [r9,-7] r7
+  mload r7 [r9,-7]
+  range r7
+  mov r1 2
+  mload r7 [r9,-7]
+  add r5 r7 1
+  not r7 r5
   add r7 r7 1
-  add r4 r0 r7
-  range r4
-  mload r0 [r8,-11]
-  mov r1 r0
+  add r6 r1 r7
+  range r6
+  mload r5 [r9,-6]
+  mov r1 r5
   mov r2 2
 .PROPHET6_1:
   mov r0 psp
-  mload r0 [r0,0]
-  range r0
-  mul r5 r0 2
-  mload r1 [r8,-10]
-  add r1 r5 r1
-  mstore [r8,-13] r1
-  mload r1 [r8,-13]
-  mload r2 [r8,-11]
-  assert r1 r2
-  add r0 r0 1
-  mstore [r8,-12] r0
-  mload r0 [r8,-12]
-  range r0
-  mload r0 [r8,-12]
-  mstore [r8,-16] r0
-  mov r0 0
-  mstore [r8,-17] r0
+  mload r0 [r0]
+  mov r5 r0
+  range r5
+  mul r8 r5 2
+  mload r6 [r9,-7]
+  add r3 r8 r6
+  mload r6 [r9,-6]
+  assert r3 r6
+  add r5 r5 1
+  mstore [r9,-5] r5
+  mload r5 [r9,-5]
+  range r5
+  mload r5 [r9,-5]
+  mstore [r9,-2] r5
+  mov r5 0
+  mstore [r9,-1] r5
   jmp .LBL6_4
 .LBL6_2:
-  mload r0 [r8,-14]
-  neq r0 r0 0
-  cjmp r0 .LBL6_10
+  mload r5 [r9,-4]
+  neq r5 r5 0
+  cjmp r5 .LBL6_10
   jmp .LBL6_11
 .LBL6_3:
-  mload r0 [r8,-15]
-  add r8 r8 -17
+  mload r0 [r9,-3]
+  add r9 r9 -15
   ret
 .LBL6_4:
-  mload r0 [r8,-17]
-  mov r1 100
-  gte r1 r1 r0
-  neq r0 r0 100
-  and r1 r1 r0
-  cjmp r1 .LBL6_5
+  mload r5 [r9,-1]
+  mov r6 100
+  gte r6 r6 r5
+  neq r5 r5 100
+  and r6 r6 r5
+  cjmp r6 .LBL6_5
   jmp .LBL6_7
 .LBL6_5:
-  mload r0 [r8,-16]
-  mload r1 [r8,-15]
-  gte r0 r0 r1
-  cjmp r0 .LBL6_8
+  mload r5 [r9,-2]
+  mload r6 [r9,-3]
+  gte r5 r5 r6
+  cjmp r5 .LBL6_8
   jmp .LBL6_9
 .LBL6_6:
-  mload r1 [r8,-17]
-  add r0 r1 1
-  mstore [r8,-17] r0
+  mload r6 [r9,-1]
+  add r5 r6 1
+  mstore [r9,-1] r5
   jmp .LBL6_4
 .LBL6_7:
   jmp .LBL6_3
 .LBL6_8:
   jmp .LBL6_7
 .LBL6_9:
-  mload r0 [r8,-16]
-  mstore [r8,-15] r0
-  mload r0 [r8,-14]
-  mstore [r8,-3] r0
-  mload r0 [r8,-16]
-  mstore [r8,-2] r0
-  mload r0 [r8,-3]
-  mov r1 r0
-  mload r0 [r8,-2]
-  mov r2 r0
+  mload r7 [r9,-2]
+  mstore [r9,-3] r7
+  mload r7 [r9,-4]
+  mstore [r9,-13] r7
+  mload r7 [r9,-2]
+  mstore [r9,-14] r7
+  mload r7 [r9,-13]
+  mov r1 r7
+  mload r7 [r9,-14]
+  mov r2 r7
 .PROPHET6_2:
   mov r0 psp
-  mload r0 [r0,0]
-  mstore [r8,-1] r0
-  mload r0 [r8,-1]
-  range r0
-  mload r0 [r8,-1]
-  add r3 r0 1
-  not r7 r3
+  mload r0 [r0]
+  mov r7 r0
+  mstore [r9,-15] r7
+  mload r7 [r9,-15]
+  range r7
+  mload r7 [r9,-15]
+  add r5 r7 1
+  not r7 r5
   add r7 r7 1
-  mload r0 [r8,-2]
-  add r4 r0 r7
-  range r4
-  mload r0 [r8,-3]
-  mov r1 r0
-  mload r0 [r8,-2]
-  mov r2 r0
+  mload r5 [r9,-14]
+  add r6 r5 r7
+  range r6
+  mload r5 [r9,-13]
+  mov r1 r5
+  mload r5 [r9,-14]
+  mov r2 r5
 .PROPHET6_3:
   mov r0 psp
-  mload r0 [r0,0]
-  range r0
-  mload r1 [r8,-2]
-  mul r5 r0 r1
-  mload r1 [r8,-1]
-  add r1 r5 r1
-  mstore [r8,-9] r1
-  mload r1 [r8,-9]
-  mload r2 [r8,-3]
-  assert r1 r2
-  mload r1 [r8,-16]
-  add r0 r0 r1
-  mstore [r8,-5] r0
-  mload r0 [r8,-5]
-  range r0
-  mload r0 [r8,-5]
-  mov r1 r0
+  mload r0 [r0]
+  mov r5 r0
+  range r5
+  mload r6 [r9,-14]
+  mul r8 r5 r6
+  mload r6 [r9,-15]
+  add r3 r8 r6
+  mload r6 [r9,-13]
+  assert r3 r6
+  mload r6 [r9,-2]
+  add r5 r5 r6
+  mstore [r9,-11] r5
+  mload r5 [r9,-11]
+  range r5
+  mload r5 [r9,-11]
+  mov r1 r5
   mov r2 2
 .PROPHET6_4:
   mov r0 psp
-  mload r0 [r0,0]
-  mov r3 r0
-  range r3
-  mov r0 2
-  add r1 r3 1
-  mstore [r8,-8] r1
-  mload r1 [r8,-8]
-  not r7 r1
+  mload r0 [r0]
+  mov r5 r0
+  range r5
+  mov r6 2
+  add r7 r5 1
+  mstore [r9,-8] r7
+  mload r7 [r9,-8]
+  not r7 r7
   add r7 r7 1
-  add r0 r0 r7
-  mstore [r8,-7] r0
-  mload r0 [r8,-7]
-  range r0
-  mload r0 [r8,-5]
-  mov r1 r0
+  add r6 r6 r7
+  mstore [r9,-9] r6
+  mload r6 [r9,-9]
+  range r6
+  mload r6 [r9,-11]
+  mov r1 r6
   mov r2 2
 .PROPHET6_5:
   mov r0 psp
-  mload r0 [r0,0]
-  range r0
-  mul r1 r0 2
-  mstore [r8,-6] r1
-  mload r1 [r8,-6]
-  add r1 r1 r3
-  mstore [r8,-4] r1
-  mload r1 [r8,-5]
-  mload r2 [r8,-4]
-  assert r2 r1
-  mstore [r8,-16] r0
+  mload r0 [r0]
+  mov r6 r0
+  range r6
+  mul r7 r6 2
+  mstore [r9,-10] r7
+  mload r7 [r9,-10]
+  add r5 r7 r5
+  mstore [r9,-12] r5
+  mload r5 [r9,-11]
+  mload r7 [r9,-12]
+  assert r7 r5
+  mstore [r9,-2] r6
   jmp .LBL6_6
 .LBL6_10:
-  mov r0 1
-  mstore [r8,-15] r0
+  mov r5 1
+  mstore [r9,-3] r5
   jmp .LBL6_11
 .LBL6_11:
   jmp .LBL6_3

@@ -141,10 +141,14 @@ pub fn lower_store(
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
+                    vreg = Some(vec![addr.into()]);
+                } else {
+                    vreg = Some(get_inst_output(ctx, tys[0], *id)?);
+                    println!("store src ptr vreg: {:?}", vreg);
                 }
-                vreg = Some(vec![addr.into()]);
             } else {
                 vreg = Some(get_inst_output(ctx, tys[0], *id)?);
+                println!("store src vreg: {:?}", vreg);
             }
         }
         Value::Argument(a) => {

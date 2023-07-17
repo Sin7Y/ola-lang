@@ -260,7 +260,6 @@ mod test {
         println!("{}", code.program);
     }
 
-    //#[ignore]
     #[test]
     fn codegen_array_test() {
         // LLVM Assembly
@@ -295,13 +294,13 @@ mod test {
             "test_array:
 .LBL0_0:
   add r9 r9 3
-  mov r0 1
-  mstore [r9,-1] r0
-  mov r0 2
-  mstore [r9,-2] r0
-  mov r0 3
-  mstore [r9,-3] r0
-  mload r0 [r9,-2]
+  mov r5 1
+  mstore [r9,-3] r5
+  mov r5 2
+  mstore [r9,-2] r5
+  mov r5 3
+  mstore [r9,-1] r5
+  mload r0 [r9,-1]
   add r9 r9 -3
   ret
 "
@@ -367,23 +366,104 @@ mod test {
             format!("{}", code.program),
             "array_literal:
 .LBL7_0:
-  mov r0 r1
+  mov r5 r1
   range 2
-  mload r0 [r0]
+  mload r0 [r5]
   ret
 main:
 .LBL8_0:
-  add r9 r9 7
+  add r9 r9 5
   mstore [r9,-2] r9
-  mov r0 1
-  mstore [r9,-5] r0
-  mov r0 2
-  mstore [r9,-4] r0
-  mov r0 3
-  mstore [r9,-3] r0
+  mov r5 1
+  mstore [r9,-5] r5
+  mov r5 2
+  mstore [r9,-4] r5
+  mov r5 3
+  mstore [r9,-3] r5
   mload r1 [r9,-5]
   call array_literal
-  add r9 r9 -7
+  add r9 r9 -5
+  end
+"
+        );
+    }
+
+    #[test]
+    fn codegen_passing_ref_ptr_test() {
+        // LLVM Assembly
+        let asm = r#"
+        ; ModuleID = 'Array'
+        source_filename = "examples/array.ola"
+        
+        declare void @builtin_assert(i64, i64)
+        
+        declare void @builtin_range_check(i64)
+        
+        declare i64 @prophet_u32_sqrt(i64)
+        
+        declare i64 @prophet_u32_div(i64, i64)
+        
+        declare i64 @prophet_u32_mod(i64, i64)
+        
+        declare ptr @prophet_u32_array_sort(ptr, i64)
+        
+        declare ptr @prophet_malloc(i64)
+        
+        ;declare i64 @array_literal(ptr)
+        define i64 @array_literal(ptr %0) {
+            entry:
+              call void @builtin_range_check(i64 2)
+              %1 = load i64, ptr %0, align 4
+              ret i64 %1
+            }
+        
+        define void @main() {
+        entry:
+          %array_literal = alloca [3 x i64], align 4
+          %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+          store i64 1, ptr %elemptr0, align 4
+          %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
+          store i64 2, ptr %elemptr1, align 4
+          %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+          store i64 3, ptr %elemptr2, align 4
+          %array_ptr = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+          %0 = call i64 @array_literal(ptr %array_ptr)
+          ret void
+        }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "array_literal:
+.LBL7_0:
+  mov r5 r1
+  range 2
+  mload r0 [r5]
+  ret
+main:
+.LBL8_0:
+  add r9 r9 5
+  mstore [r9,-2] r9
+  mov r5 1
+  mstore [r9,-5] r5
+  mov r5 2
+  mstore [r9,-4] r5
+  mov r5 3
+  mstore [r9,-3] r5
+  mload r1 [r9,-5]
+  call array_literal
+  add r9 r9 -5
   end
 "
         );
@@ -441,7 +521,7 @@ main:
               store ptr %2, ptr %0, align 8
               ret void
             }
-        
+                    
         define ptr @array_sort_test(ptr %0) {
         entry:
           %array_sorted = alloca ptr, align 8
@@ -470,45 +550,48 @@ main:
             format!("{}", code.program),
             "main:
 .LBL7_0:
-  add r9 r9 16
+  add r9 r9 14
   mstore [r9,-2] r9
-  mov r1 3
-  mstore [r9,-14] r1
-  mov r1 4
-  mstore [r9,-13] r1
-  mov r1 5
-  mstore [r9,-12] r1
-  mov r1 1
-  mstore [r9,-11] r1
-  mov r1 7
-  mstore [r9,-10] r1
-  mov r1 9
-  mstore [r9,-9] r1
-  mov r1 0
-  mstore [r9,-8] r1
-  mov r1 2
-  mstore [r9,-7] r1
-  mov r1 8
-  mstore [r9,-6] r1
-  mov r1 6
-  mstore [r9,-5] r1
-  add r1 r9 -14
-  mstore [r9,-4] r1
+  mov r5 3
+  mstore [r9,-14] r5
+  mov r5 4
+  mstore [r9,-13] r5
+  mov r5 5
+  mstore [r9,-12] r5
+  mov r5 1
+  mstore [r9,-11] r5
+  mov r5 7
+  mstore [r9,-10] r5
+  mov r5 9
+  mstore [r9,-9] r5
+  mov r5 0
+  mstore [r9,-8] r5
+  mov r5 2
+  mstore [r9,-7] r5
+  mov r5 8
+  mstore [r9,-6] r5
+  mov r5 6
+  mstore [r9,-5] r5
+  add r5 r9 -14
+  mstore [r9,-4] r5
   mload r1 [r9,-4]
   call array_sort_test
-  mstore [r9,-3] r0
-  add r9 r9 -16
+  mov r5 r0
+  mstore [r9,-3] r5
+  add r9 r9 -14
   end
 array_sort_test:
 .LBL8_0:
   add r9 r9 2
-  mov r0 r1
-  mstore [r9,-2] r0
+  mov r5 r1
+  mstore [r9,-2] r5
   mload r1 [r9,-2]
   mov r2 10
 .PROPHET8_0:
   mov r0 psp
-  mstore [r9,-1] r0
+  mload r0 [r0]
+  mov r5 r0
+  mstore [r9,-1] r5
   mload r0 [r9,-1]
   add r9 r9 -2
   ret
