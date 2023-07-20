@@ -6,7 +6,9 @@ use crate::irgen::u32_op::{
 };
 use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum};
+use inkwell::values::{
+    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
+};
 use inkwell::IntPredicate;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -394,7 +396,11 @@ pub fn expression<'a>(
             array,
             index,
             ..
-        } => array_subscript(loc, array_ty, array, index, bin, func_context, ns),
+        } => {
+            let mut array = expression(array, bin, func_context, ns);
+            let index = expression(index, bin, func_context, ns);
+            array_subscript(loc, array_ty, array, index, bin, func_context.func_val, ns)
+        }
 
         Expression::StructMember {
             ty,
@@ -681,17 +687,15 @@ fn conditional_operator<'a>(
 }
 
 /// Codegen for an array subscript expression
-fn array_subscript<'a>(
+pub fn array_subscript<'a>(
     loc: &program::Loc,
     array_ty: &Type,
-    array_expr: &Expression,
-    index_expr: &Expression,
+    array: BasicValueEnum<'a>,
+    index: BasicValueEnum<'a>,
     bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    let mut array = expression(array_expr, bin, func_context, ns);
-    let index = expression(index_expr, bin, func_context, ns);
     if array_ty.is_mapping() {
         let inputs = vec![array, index];
         return poseidon_hash(bin, inputs);
@@ -702,34 +706,18 @@ fn array_subscript<'a>(
             None => {
                 if let Type::StorageRef(..) = array_ty {
                     let array_length =
-                        storage_load(bin, &Type::Uint(32), &mut array, func_context.func_val, ns);
+                        storage_load(bin, &Type::Uint(32), &mut array.clone(), func_value, ns);
                     array_length
                 } else {
-                    // If a subscript is encountered array length will be called
-                    // Return array length by default
-                    let array_length_expr = Expression::LibFunction {
-                        loc: *loc,
-                        tys: vec![Type::Uint(32)],
-                        kind: LibFunc::ArrayLength,
-                        args: vec![array_expr.clone()],
-                    };
-                    let returned =
-                        expression(&array_length_expr, bin, func_context, ns).into_int_value();
-                    returned.into()
+                    bin.vector_len(array).into()
                 }
             }
 
-            Some(l) => {
-                let ast_big_int = bigint_to_expression(
-                    loc,
-                    l,
-                    ns,
-                    &mut Diagnostics::default(),
-                    ResolveTo::Unknown,
-                )
-                .unwrap();
-                expression(&ast_big_int, bin, func_context, ns)
-            }
+            Some(l) => bin
+                .context
+                .i64_type()
+                .const_int(l.to_u64().unwrap(), false)
+                .into(),
         },
         _ => {
             unreachable!()
