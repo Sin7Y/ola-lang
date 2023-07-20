@@ -16,57 +16,13 @@ contract Voting {
 
     Proposal[] proposals;
 
-    fn contract_init(string[] proposalNames_) {
-        chairperson = get_caller();
-        for (u32 i = 0; i < proposalNames_.length; i++) {
-            proposals.push(Proposal({
-                name: proposalNames_[i],
-                voteCount: 0
-            }));
-        }
-    }
-
-    fn vote_proposal(u32 proposal_)  {
-        address msgSender = get_caller();
-        Voter storage sender = voters[msgSender];
-        sender.voted = true;
-        sender.vote = proposal_;
-
-        proposals[proposal_].voteCount += 1;
-    }
-
-
-    fn winningProposal() -> (u32 winningProposal_) {
-        u32 winningVoteCount = 0;
-        for (u32 p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[p].voteCount;
-                winningProposal_ = p;
-            }
-        }
-        return winningProposal_;
-    }
-
-     fn getWinnerName() -> (string) {
-         string winnerName = proposals[winningProposal()].name;
-         return winnerName;
-     }
-
-    fn get_caller() -> (address) {
-        return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;
-    }
 
     fn main() {
-
-        string[] proposalNames = new string[](3);
-        proposalNames[0] = "Proposal 1";
-        proposalNames[1] = "Proposal 2";
-        proposalNames[2] = "Proposal 3";
-
-        contract_init(proposalNames);
-        vote_proposal(0);
-        vote_proposal(1);
-        vote_proposal(0);
-        string winnerName = getWinnerName();
+        string[] proposals = new string[](5);
+        for (u32 i = 0; i < 5; i++) {
+            proposals[i] = "1";
+        }
+       
     }
+    
 }

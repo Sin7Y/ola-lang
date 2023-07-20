@@ -1,15 +1,18 @@
-use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
+use inkwell::{
+    values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    IntPredicate,
+};
 use num_traits::ToPrimitive;
 
 use crate::{
     codegen::isa::ola::lower::bin,
-    irgen::{binary::Binary, storage::storage_load},
+    irgen::{binary::Binary, encoding::decode::fixed_array_decode, storage::storage_load},
     sema::ast::{ArrayLength, Namespace, Type},
 };
 
 use super::{
-    calculate_struct_non_padded_size, dynamic_array_copy, finish_array_loop, index_array,
-    set_array_loop,
+    allow_memcpy, calculate_struct_non_padded_size, finish_array_loop, index_array, set_array_loop,
+    struct_padded_size,
 };
 
 /// Calculate the size of a set of arguments to encoding functions
@@ -218,6 +221,8 @@ fn calculate_array_size<'a>(
     } else {
         let mut index_vec: Vec<IntValue<'a>> = Vec::new();
         let size_var = bin.builder.build_alloca(bin.context.i64_type(), "size_var");
+        bin.builder
+            .build_store(size_var, bin.context.i64_type().const_zero());
         calculate_complex_array_size(
             bin,
             array,
@@ -266,9 +271,13 @@ fn calculate_complex_array_size<'a>(
             ns,
         );
         let size = bin.vector_len(arr);
-        let size = bin
-            .builder
-            .build_int_add(size, bin.context.i64_type().const_int(1, false), "");
+        let size = bin.builder.build_int_add(
+            size,
+            bin.builder
+                .build_load(bin.context.i64_type(), size_var, "")
+                .into_int_value(),
+            "",
+        );
         bin.builder.build_store(size_var, size);
     }
 
@@ -322,7 +331,7 @@ fn calculate_complex_array_size<'a>(
 fn encode<'a>(
     arg: BasicValueEnum<'a>,
     arg_ty: &Type,
-    buffer: BasicValueEnum<'a>,
+    buffer: PointerValue<'a>,
     offset: IntValue<'a>,
     arg_no: usize,
     bin: &Binary<'a>,
@@ -339,36 +348,70 @@ fn encode<'a>(
             bin.context.i64_type().const_int(1, false)
         }
 
-        Type::String => encode_bytes(expr, buffer, offset, ns, vartab, cfg),
+        Type::String => encode_bytes(arg, buffer, &mut offset, bin, func_value, ns),
 
-        Type::Struct(ty) => {
-            encode_struct(expr, buffer, offset.clone(), ty, arg_no, ns, vartab, cfg)
-        }
+        Type::Struct(struct_no) => encode_struct(
+            arg_no,
+            arg,
+            arg_ty,
+            buffer,
+            &mut offset,
+            *struct_no,
+            bin,
+            func_value,
+            ns,
+        ),
         Type::Slice(ty) => {
             let dims = &[ArrayLength::Dynamic];
             encode_array(
-                expr, expr_ty, ty, dims, arg_no, buffer, offset, ns, vartab, cfg,
+                bin,
+                arg,
+                arg_ty,
+                ty,
+                arg_no,
+                dims,
+                buffer,
+                &mut offset,
+                func_value,
+                ns,
             )
         }
         Type::Array(ty, dims) => encode_array(
-            expr, expr_ty, ty, dims, arg_no, buffer, offset, ns, vartab, cfg,
+            bin,
+            arg,
+            arg_ty,
+            ty,
+            arg_no,
+            dims,
+            buffer,
+            &mut offset,
+            func_value,
+            ns,
         ),
 
         Type::Ref(r) => {
-            if let Type::Struct(ty) = &**r {
+            if let Type::Struct(struct_no) = &**r {
                 // Structs references should not be dereferenced
-                return encode_struct(expr, buffer, offset.clone(), ty, arg_no, ns, vartab, cfg);
+                return encode_struct(
+                    arg_no,
+                    arg,
+                    arg_ty,
+                    buffer,
+                    &mut offset,
+                    *struct_no,
+                    bin,
+                    func_value,
+                    ns,
+                );
             }
-            let loaded = Expression::Load {
-                loc: Codegen,
-                ty: *r.clone(),
-                expr: expr.clone().into(),
-            };
-            encode(&loaded, buffer, offset, arg_no, ns, vartab, cfg)
+            let loaded = bin
+                .builder
+                .build_load(bin.llvm_type(r, ns), arg.into_pointer_value(), "");
+            encode(loaded, r, buffer, offset, arg_no, bin, func_value, ns)
         }
-        Type::StorageRef(..) => {
-            let loaded = self.storage_cache_remove(arg_no).unwrap();
-            self.encode(&loaded, buffer, offset, arg_no, ns, vartab, cfg)
+        Type::StorageRef(r) => {
+            let loaded = storage_load(bin, r, &mut arg, func_value, ns);
+            encode(loaded, r, buffer, offset, arg_no, bin, func_value, ns)
         }
         Type::UserType(_) | Type::Unresolved | Type::Unreachable => {
             unreachable!("Type should not exist in codegen")
@@ -405,7 +448,7 @@ fn encode_address<'a>(
         let value = bin
             .builder
             .build_extract_value(address.into_array_value(), i, "");
-        encode_uint(value.unwrap(), buffer, offset, bin);
+        encode_uint(value.unwrap(), buffer, *offset, bin);
         *offset =
             bin.builder
                 .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
@@ -415,7 +458,7 @@ fn encode_address<'a>(
 /// Encode `expr` into `buffer` as bytes.
 fn encode_bytes<'a>(
     string_value: BasicValueEnum<'a>,
-    buffer: BasicValueEnum<'a>,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
@@ -424,9 +467,9 @@ fn encode_bytes<'a>(
     let len = bin.vector_len(string_value);
     let data = bin.vector_data(string_value);
 
-    dynamic_array_copy(
+    encode_dynamic_array_loop(
         buffer,
-        array_start,
+        offset,
         len,
         &Type::Uint(32),
         buffer,
@@ -434,41 +477,18 @@ fn encode_bytes<'a>(
         func_value,
         ns,
     );
-
-    let (data_offset, size) = if self.is_packed() {
-        (offset.clone(), None)
-    } else {
-        let size = self.encode_size(&len, buffer, offset, ns, vartab, cfg);
-        (offset.clone().add_u32(size.clone()), Some(size))
-    };
-    // ptr + offset + size_of_integer
-    let dest_address = Expression::AdvancePointer {
-        pointer: buffer.clone().into(),
-        bytes_offset: data_offset.into(),
-    };
-    cfg.add(
-        vartab,
-        Instr::MemCopy {
-            source: expr.clone(),
-            destination: dest_address,
-            bytes: len.clone(),
-        },
-    );
-    if let Some(size) = size {
-        len.add_u32(size)
-    } else {
-        len
-    }
+    bin.builder
+        .build_int_add(len, bin.context.i64_type().const_int(1, false), "")
 }
 
 /// Currently, we can only handle one-dimensional arrays.
 /// The situation of multi-dimensional arrays has not been processed yet.
 pub fn encode_dynamic_array_loop<'a>(
-    buffer: PointerValue<'a>,
-    offset: IntValue<'a>,
+    array: PointerValue<'a>,
+    offset: &mut IntValue<'a>,
     length: IntValue<'a>,
     elem_ty: &Type,
-    dest: PointerValue<'a>,
+    buffer: PointerValue<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -480,7 +500,8 @@ pub fn encode_dynamic_array_loop<'a>(
     let index_ptr = bin
         .builder
         .build_alloca(bin.context.i64_type(), "index_ptr");
-    bin.builder.build_store(index_ptr, offset);
+    bin.builder
+        .build_store(index_ptr, bin.context.i64_type().const_zero());
 
     bin.builder.build_unconditional_branch(loop_body);
     bin.builder.position_at_end(loop_body);
@@ -493,13 +514,15 @@ pub fn encode_dynamic_array_loop<'a>(
     let elem_ptr = unsafe {
         bin.builder.build_gep(
             bin.llvm_type(elem_ty, ns),
-            dest,
+            array,
             &[index.into_int_value()],
             "element",
         )
     };
 
-    let elem = decode_uint(buffer, index.into_int_value(), bin);
+    let elem = bin
+        .builder
+        .build_load(bin.llvm_type(elem_ty, ns), elem_ptr, "");
 
     let elem = if elem_ty.is_fixed_reference_type() {
         bin.builder.build_load(
@@ -511,7 +534,13 @@ pub fn encode_dynamic_array_loop<'a>(
         elem
     };
 
-    bin.builder.build_store(elem_ptr, elem);
+    encode_uint(elem, buffer, *offset, bin);
+
+    *offset = bin.builder.build_int_add(
+        *offset,
+        bin.context.i64_type().const_int(1, false),
+        "offset",
+    );
 
     let next_index = bin.builder.build_int_add(
         index.into_int_value(),
@@ -522,15 +551,9 @@ pub fn encode_dynamic_array_loop<'a>(
     // Store the next_index for the next iteration
     bin.builder.build_store(index_ptr, next_index);
 
-    let cond = bin.builder.build_int_compare(
-        IntPredicate::ULT,
-        next_index,
-        bin.builder
-            .build_int_add(offset, length, "array_end")
-            .as_basic_value_enum()
-            .into_int_value(),
-        "index_cond",
-    );
+    let cond = bin
+        .builder
+        .build_int_compare(IntPredicate::ULT, next_index, length, "index_cond");
 
     bin.builder
         .build_conditional_branch(cond, loop_body, loop_end);
@@ -539,210 +562,126 @@ pub fn encode_dynamic_array_loop<'a>(
 }
 
 /// Encode `expr` into `buffer` as a struct type.
-fn encode_struct(
-    expr: &Expression,
-    buffer: &Expression,
-    mut offset: Expression,
-    struct_ty: &StructType,
+fn encode_struct<'a>(
     arg_no: usize,
+    struct_value: BasicValueEnum<'a>,
+    struct_ty: &Type,
+    buffer: PointerValue<'a>,
+    offset: &mut IntValue<'a>,
+    struct_no: usize,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
     ns: &Namespace,
-    vartab: &mut Vartable,
-    cfg: &mut ControlFlowGraph,
-) -> Expression {
-    let size = ns.calculate_struct_non_padded_size(struct_ty);
-    // If the size without padding equals the size with padding, memcpy this struct
-    // directly.
-    if let Some(no_padding_size) = size.as_ref().filter(|no_pad| {
-        *no_pad == &struct_ty.struct_padded_size(ns) && allow_memcpy(&expr.ty(), ns)
-    }) {
-        let size = Expression::NumberLiteral {
-            loc: Codegen,
-            ty: Uint(32),
-            value: no_padding_size.clone(),
-        };
-        let dest_address = Expression::AdvancePointer {
-            pointer: buffer.clone().into(),
-            bytes_offset: offset.into(),
-        };
-        cfg.add(
-            vartab,
-            Instr::MemCopy {
-                source: expr.clone(),
-                destination: dest_address,
-                bytes: size.clone(),
-            },
-        );
-        return size;
-    }
-    let size = size.map(|no_pad| Expression::NumberLiteral {
-        loc: Codegen,
-        ty: Uint(32),
-        value: no_pad,
-    });
+) -> IntValue<'a> {
+    let qty = ns.structs[struct_no].fields.len();
+    let first_ty = ns.structs[struct_no].fields[0].ty.clone();
+    let loaded = load_struct_member(bin, struct_ty, &first_ty, struct_value, 0, ns);
 
-    let qty = struct_ty.definition(ns).fields.len();
-    let first_ty = struct_ty.definition(ns).fields[0].ty.clone();
-    let loaded = load_struct_member(first_ty, expr.clone(), 0, ns);
-
-    let mut advance = self.encode(&loaded, buffer, &offset, arg_no, ns, vartab, cfg);
+    let mut advance = encode(
+        loaded, &first_ty, buffer, *offset, arg_no, bin, func_value, ns,
+    );
     let mut runtime_size = advance.clone();
     for i in 1..qty {
-        let ith_type = struct_ty.definition(ns).fields[i].ty.clone();
-        offset = Expression::Add {
-            loc: Codegen,
-            ty: Uint(32),
-            overflowing: false,
-            left: offset.clone().into(),
-            right: advance.into(),
-        };
-        let loaded = load_struct_member(ith_type.clone(), expr.clone(), i, ns);
+        let ith_type = ns.structs[struct_no].fields[i].ty.clone();
+        *offset = bin.builder.build_int_add(*offset, advance, "");
+        let loaded = load_struct_member(bin, struct_ty, &ith_type, struct_value, i, ns);
         // After fetching the struct member, we can encode it
-        advance = self.encode(&loaded, buffer, &offset, arg_no, ns, vartab, cfg);
-        runtime_size = Expression::Add {
-            loc: Codegen,
-            ty: Uint(32),
-            overflowing: false,
-            left: runtime_size.into(),
-            right: advance.clone().into(),
-        };
+        advance = encode(
+            loaded, &ith_type, buffer, *offset, arg_no, bin, func_value, ns,
+        );
+        runtime_size = bin.builder.build_int_add(runtime_size, advance, "");
     }
 
-    size.unwrap_or(runtime_size)
+    runtime_size
 }
 
 /// Encode `expr` into `buffer` as an array.
-fn encode_array(
-    array: &Expression,
+fn encode_array<'a>(
+    bin: &Binary<'a>,
+    array: BasicValueEnum<'a>,
     array_ty: &Type,
     elem_ty: &Type,
-    dims: &[ArrayLength],
     arg_no: usize,
-    buffer: &Expression,
-    offset: &Expression,
+    dims: &[ArrayLength],
+    buffer: PointerValue<'a>,
+    offset: &mut IntValue<'a>,
+    func_value: FunctionValue<'a>,
     ns: &Namespace,
-    vartab: &mut Vartable,
-    cfg: &mut ControlFlowGraph,
-) -> Expression {
+) -> IntValue<'a> {
     assert!(!dims.is_empty());
 
     if allow_memcpy(array_ty, ns) {
         // Calculate number of elements
-        let (bytes_size, offset, size_length) =
-            if matches!(dims.last(), Some(&ArrayLength::Fixed(_))) {
-                let elem_no = calculate_direct_copy_bytes_size(dims, elem_ty, ns);
-                (
-                    Expression::NumberLiteral {
-                        loc: Codegen,
-                        ty: Uint(32),
-                        value: elem_no,
-                    },
-                    offset.clone(),
-                    None,
-                )
-            } else {
-                let value = array_outer_length(array, vartab, cfg);
-
-                let (new_offset, size_length) = if self.is_packed() {
-                    (offset.clone(), None)
-                } else {
-                    let encoded_size = self.encode_size(&value, buffer, offset, ns, vartab, cfg);
-                    (
-                        offset.clone().add_u32(encoded_size.clone()),
-                        Some(encoded_size),
-                    )
-                };
-
-                if let Expression::Variable {
-                    var_no: size_temp, ..
-                } = value
-                {
-                    let size = calculate_array_bytes_size(size_temp, elem_ty, ns);
-                    (size, new_offset, size_length)
-                } else {
-                    unreachable!()
-                }
-            };
-
-        let dest_address = Expression::AdvancePointer {
-            pointer: buffer.clone().into(),
-            bytes_offset: offset.into(),
-        };
-
-        cfg.add(
-            vartab,
-            Instr::MemCopy {
-                source: array.clone(),
-                destination: dest_address,
-                bytes: bytes_size.clone(),
-            },
-        );
-
-        // If the array is dynamic, we have written into the buffer its size and its
-        // elements
-        return match (size_length, self.is_packed()) {
-            (Some(len), false) => Expression::Add {
-                loc: Codegen,
-                ty: Uint(32),
-                overflowing: false,
-                left: bytes_size.into(),
-                right: len.into(),
-            },
-            _ => bytes_size,
+        let size = if matches!(dims.last(), Some(&ArrayLength::Fixed(_))) {
+            let dims = dims
+                .iter()
+                .map(|d| match d {
+                    ArrayLength::Fixed(d) => d.to_u32().unwrap(),
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>();
+            fixed_array_encode(
+                array,
+                buffer,
+                &mut offset,
+                array_ty,
+                elem_ty,
+                &dims,
+                bin,
+                func_value,
+                ns,
+            )
+        } else {
+            // If the array is dynamic, we must save its size before all elements
+            let length = bin.vector_len(array);
+            encode_uint(length.into(), buffer, *offset, bin);
+            let array_start =
+                bin.builder
+                    .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
+            encode_dynamic_array_loop(
+                array.into_pointer_value(),
+                &mut array_start,
+                length,
+                elem_ty,
+                buffer,
+                bin,
+                func_value,
+                ns,
+            );
+            length
         };
     }
 
     // In all other cases, we must loop through the array
-    let mut indexes: Vec<usize> = Vec::new();
-    let offset_var_no = vartab.temp_anonymous(&Uint(32));
-    cfg.add(
-        vartab,
-        Instr::Set {
-            loc: Codegen,
-            res: offset_var_no,
-            expr: offset.clone(),
-        },
-    );
-    self.encode_complex_array(
+    let mut indexes: Vec<IntValue<'a>> = Vec::new();
+    let offset_var_no = bin
+        .builder
+        .build_alloca(bin.context.i64_type(), "offset_var_no");
+    bin.builder
+        .build_store(offset_var_no, bin.context.i64_type().const_zero());
+    encode_complex_array(
+        bin,
         array,
+        buffer,
+        array_ty,
+        elem_ty,
         arg_no,
         dims,
-        buffer,
-        offset_var_no,
         dims.len() - 1,
+        offset_var_no,
+        func_value,
         ns,
-        vartab,
-        cfg,
         &mut indexes,
     );
 
     // The offset variable minus the original offset obtains the vector size in
     // bytes
-    let offset_var = Expression::Variable {
-        loc: Codegen,
-        ty: Uint(32),
-        var_no: offset_var_no,
-    }
-    .into();
-    let sub = Expression::Subtract {
-        loc: Codegen,
-        ty: Uint(32),
-        overflowing: false,
-        left: offset_var,
-        right: offset.clone().into(),
-    };
-    cfg.add(
-        vartab,
-        Instr::Set {
-            loc: Codegen,
-            res: offset_var_no,
-            expr: sub,
-        },
-    );
-    Expression::Variable {
-        loc: Codegen,
-        ty: Uint(32),
-        var_no: offset_var_no,
-    }
+    let offset_var = bin
+        .builder
+        .build_load(bin.context.i64_type(), offset_var_no, "");
+
+    bin.builder
+        .build_int_sub(offset_var.into_int_value(), offset, "")
 }
 
 /// Encode `expr` into `buffer` as a complex array.
@@ -750,20 +689,22 @@ fn encode_array(
 ///
 /// Note: In the default implementation, `encode_array` decides when to use this
 /// method for you.
-fn encode_complex_array(
-    arr: &Expression,
+fn encode_complex_array<'a>(
+    bin: &Binary<'a>,
+    array: BasicValueEnum<'a>,
+    buffer: PointerValue<'a>,
+    array_ty: &Type,
+    elem_ty: &Type,
     arg_no: usize,
     dims: &[ArrayLength],
-    buffer: &Expression,
-    offset_var: usize,
     dimension: usize,
+    offset_var: PointerValue<'a>,
+    func_value: FunctionValue<'a>,
     ns: &Namespace,
-    vartab: &mut Vartable,
-    cfg: &mut ControlFlowGraph,
-    indexes: &mut Vec<usize>,
+    indexes: &mut Vec<IntValue<'a>>,
 ) {
     // If this dimension is dynamic, we must save its length before all elements
-    if dims[dimension] == ArrayLength::Dynamic && !self.is_packed() {
+    if dims[dimension] == ArrayLength::Dynamic {
         // TODO: This is wired up for the support of dynamic multidimensional arrays,
         // like TODO: 'int[3][][4] vec', but it needs testing, as soon as Solang
         // works with them. TODO: A discussion about this is under way here: https://github.com/hyperledger/solang/issues/932
@@ -819,7 +760,7 @@ fn encode_complex_array(
             },
         );
     } else {
-        self.encode_complex_array(
+        encode_complex_array(
             arr,
             arg_no,
             dims,
@@ -834,4 +775,62 @@ fn encode_complex_array(
     }
 
     finish_array_loop(&for_loop, vartab, cfg);
+}
+
+pub fn fixed_array_encode<'a>(
+    array: BasicValueEnum<'a>,
+    buffer: PointerValue<'a>,
+    offset: &mut IntValue<'a>,
+    ty: &Type,
+    elem_ty: &Type,
+    dimensions: &Vec<u32>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> IntValue<'a> {
+    let size = dimensions.iter().product();
+
+    for i in 0..size {
+        let mut ind = vec![bin.context.i64_type().const_zero()];
+
+        let mut e = i;
+
+        // Mapping one-dimensional array indices to multi-dimensional array indices.
+        for d in dimensions {
+            ind.insert(1, bin.context.i64_type().const_int((e % *d).into(), false));
+
+            e /= *d;
+        }
+
+        let elem_ptr = unsafe {
+            bin.builder
+                .build_gep(bin.context.i64_type(), buffer, &ind, &format!("elemptr{i}"))
+        };
+
+        let elem = bin
+            .builder
+            .build_load(bin.llvm_type(elem_ty, ns), elem_ptr, "");
+
+        let elem = if elem_ty.is_fixed_reference_type() {
+            bin.builder.build_load(
+                bin.llvm_type(elem_ty, ns),
+                elem.into_pointer_value(),
+                "elem",
+            )
+        } else {
+            elem
+        };
+
+        encode_uint(elem, buffer, *offset, bin);
+
+        *offset = bin.builder.build_int_add(
+            *offset,
+            bin.context.i64_type().const_int(1, false),
+            "offset",
+        );
+    }
+
+    let size = bin.context.i64_type().const_int(size as u64, false);
+
+    size
 }

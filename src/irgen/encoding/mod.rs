@@ -279,3 +279,28 @@ fn finish_array_loop<'a>(bin: &Binary<'a>, func_value: FunctionValue<'a>, for_lo
 
     bin.builder.position_at_end(for_loop.end_block);
 }
+
+/// Check if we can MemCpy a type to/from a buffer
+pub fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
+    match ty {
+        Type::Struct(no) => {
+            if let Some(no_padded_size) = calculate_struct_non_padded_size(*no, ns) {
+                let padded_size = struct_padded_size(*no, ns);
+                // This remainder tells us if padding is needed between the elements of an array
+                let remainder = padded_size.mod_floor(&ty.struct_elem_alignment(ns));
+                let ty_allowed = ns.structs[*no]
+                    .fields
+                    .iter()
+                    .all(|f| allow_memcpy(&f.ty, ns));
+                return no_padded_size == padded_size && remainder.is_zero() && ty_allowed;
+            }
+
+            false
+        }
+        Type::Array(t, dims) if ty.is_dynamic(ns) => dims.len() == 1 && allow_memcpy(t, ns),
+        // If the array is not dynamic, we mempcy if its elements allow it
+        Type::Array(t, _) => allow_memcpy(t, ns),
+        Type::UserType(t) => allow_memcpy(&ns.user_types[*t].ty, ns),
+        _ => ty.is_primitive(),
+    }
+}
