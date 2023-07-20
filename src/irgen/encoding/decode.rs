@@ -13,7 +13,9 @@ use crate::{
     sema::ast::{ArrayLength, Namespace, Type},
 };
 
-use super::buffer_validator::BufferValidator;
+use super::{
+    buffer_validator::BufferValidator, calculate_struct_non_padded_size, struct_padded_size,
+};
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
 /// expression containing the read value and the number of bytes read.
@@ -67,7 +69,7 @@ pub fn read_from_buffer<'a>(
             let allocated_array =
                 bin.vector_new(func_value, array_length.into_int_value(), None, false);
             let array_data = bin.vector_data(allocated_array.into());
-            set_dynamic_array_loop(
+            decode_dynamic_array_loop(
                 buffer,
                 array_start,
                 array_length.into_int_value(),
@@ -206,7 +208,7 @@ fn decode_array<'a>(
                 bin.vector_new(func_value, array_length.into_int_value(), None, false);
 
             let array_data = bin.vector_data(allocated_array.into());
-            set_dynamic_array_loop(
+            decode_dynamic_array_loop(
                 buffer,
                 array_start,
                 array_length.into_int_value(),
@@ -359,8 +361,6 @@ pub fn fixed_array_copy<'a>(
             elem
         };
 
-        //
-
         bin.builder.build_store(elemptr, elem);
     }
 
@@ -393,7 +393,7 @@ pub fn struct_literal_copy<'a>(
 
 /// Currently, we can only handle one-dimensional arrays.
 /// The situation of multi-dimensional arrays has not been processed yet.
-pub fn set_dynamic_array_loop<'a>(
+pub fn decode_dynamic_array_loop<'a>(
     buffer: PointerValue<'a>,
     offset: IntValue<'a>,
     length: IntValue<'a>,

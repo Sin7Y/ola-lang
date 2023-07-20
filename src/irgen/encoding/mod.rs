@@ -1,18 +1,23 @@
 use std::ops::{AddAssign, Sub};
 
 use inkwell::{
+    basic_block::BasicBlock,
     values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
     IntPredicate,
 };
 use num_bigint::BigInt;
 use num_integer::Integer;
 use num_traits::{ToPrimitive, Zero};
+use ola_parser::program;
 
-use crate::sema::ast::{ArrayLength, Namespace, Type};
+use crate::{
+    codegen::core::ir::function::basic_block::BasicBlock,
+    sema::ast::{ArrayLength, Namespace, Type},
+};
 
 use self::{buffer_validator::BufferValidator, decode::read_from_buffer};
 
-use super::binary::Binary;
+use super::{binary::Binary, expression::array_subscript};
 
 mod buffer_validator;
 
@@ -137,4 +142,140 @@ pub fn struct_padded_size(struct_no: usize, ns: &Namespace) -> BigInt {
         total.add_assign(item.ty.memory_size_of(ns));
     }
     total
+}
+
+fn index_array<'a>(
+    bin: &Binary<'a>,
+    arr: &mut BasicValueEnum<'a>,
+    ty: &mut Type,
+    elem_ty: &Type,
+    dims: &[ArrayLength],
+    indexes: &[IntValue<'a>],
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    let begin = dims.len() - indexes.len();
+
+    for i in (begin..dims.len()).rev() {
+        // If we are indexing the last dimension, the type should be that of the array
+        // element.
+        let local_ty = if i == 0 {
+            elem_ty.clone()
+        } else {
+            Type::Array(Box::new(elem_ty.clone()), dims[0..i].to_vec())
+        };
+
+        let arr = array_subscript(
+            &program::Loc::IRgen,
+            ty,
+            arr.clone(),
+            indexes[dims.len() - i - 1].into(),
+            bin,
+            func_value,
+            ns,
+        );
+
+        // We should only load if the dimension is dynamic.
+        if i > 0 && dims[i - 1] == ArrayLength::Dynamic {
+            bin.builder
+                .build_load(bin.llvm_type(ty, ns), arr.into_pointer_value(), "arr");
+        }
+
+        *ty = local_ty;
+    }
+
+    arr
+}
+
+/// This struct manages for-loops created when iterating over arrays
+struct ForLoop<'a> {
+    pub cond_block: BasicBlock<'a>,
+    pub next_block: BasicBlock<'a>,
+    pub body_block: BasicBlock<'a>,
+    pub end_block: BasicBlock<'a>,
+    pub index: IntValue<'a>,
+}
+
+/// Set up the loop to iterate over an array
+fn set_array_loop<'a>(
+    bin: &Binary<'a>,
+    arr: BasicValueEnum<'a>,
+    ty: &Type,
+    elem_ty: &Type,
+    dims: &[ArrayLength],
+    dimension: usize,
+    indexes: &mut Vec<IntValue<'a>>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> ForLoop<'a> {
+    // Initialize index before the loop
+    let index_ptr = bin
+        .builder
+        .build_alloca(bin.context.i64_type(), "index_ptr");
+    bin.builder
+        .build_store(index_ptr, bin.context.i64_type().const_zero());
+
+    let index_temp = bin
+        .builder
+        .build_load(bin.context.i64_type(), index_ptr, "index")
+        .into_int_value();
+
+    indexes.push(index_temp);
+    let cond_block = bin.context.append_basic_block(func_value, "cond");
+    let next_block = bin.context.append_basic_block(func_value, "next");
+    let body_block = bin.context.append_basic_block(func_value, "body");
+    let end_block = bin.context.append_basic_block(func_value, "end_for");
+
+    bin.builder.build_unconditional_branch(cond_block);
+    bin.builder.position_at_end(cond_block);
+
+    // Get the array length at dimension 'index'
+    let bound = if let ArrayLength::Fixed(dim) = &dims[dimension] {
+        bin.context
+            .i64_type()
+            .const_int(dim.to_u64().unwrap(), false)
+    } else {
+        let sub_array = index_array(
+            bin,
+            &mut arr.clone(),
+            &mut ty.clone(),
+            elem_ty,
+            dims,
+            &indexes[..indexes.len() - 1],
+            func_value,
+            ns,
+        );
+
+        bin.vector_len(sub_array)
+    };
+
+    let cond = bin
+        .builder
+        .build_int_compare(IntPredicate::ULT, index_temp, bound, "");
+
+    bin.builder
+        .build_conditional_branch(cond, body_block, end_block);
+
+    ForLoop {
+        cond_block,
+        next_block,
+        body_block,
+        end_block,
+        index: index_temp,
+    }
+}
+
+/// Closes the for-loop when iterating over an array
+fn finish_array_loop<'a>(bin: &Binary<'a>, func_value: FunctionValue<'a>, for_loop: &ForLoop) {
+    bin.builder.build_unconditional_branch(for_loop.next_block);
+    bin.builder.position_at_end(for_loop.next_block);
+
+    let index_var = bin.builder.build_int_add(
+        for_loop.index,
+        bin.context.i64_type().const_int(1, false),
+        "",
+    );
+    bin.builder.build_unconditional_branch(for_loop.cond_block);
+
+    bin.builder.position_at_end(for_loop.end_block);
 }
