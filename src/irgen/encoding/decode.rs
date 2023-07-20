@@ -14,7 +14,8 @@ use crate::{
 };
 
 use super::{
-    buffer_validator::BufferValidator, calculate_struct_non_padded_size, struct_padded_size,
+    allow_memcpy, buffer_validator::BufferValidator, calculate_struct_non_padded_size,
+    struct_padded_size,
 };
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
@@ -183,7 +184,7 @@ fn decode_array<'a>(
                     _ => unreachable!(),
                 })
                 .collect::<Vec<_>>();
-            fixed_array_copy(
+            fixed_array_decode(
                 buffer,
                 &mut offset.clone(),
                 array_ty,
@@ -287,32 +288,7 @@ fn decode_struct<'a>(
     (struct_var, runtime_size)
 }
 
-/// Check if we can MemCpy a type to/from a buffer
-fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
-    match ty {
-        Type::Struct(no) => {
-            if let Some(no_padded_size) = calculate_struct_non_padded_size(*no, ns) {
-                let padded_size = struct_padded_size(*no, ns);
-                // This remainder tells us if padding is needed between the elements of an array
-                let remainder = padded_size.mod_floor(&ty.struct_elem_alignment(ns));
-                let ty_allowed = ns.structs[*no]
-                    .fields
-                    .iter()
-                    .all(|f| allow_memcpy(&f.ty, ns));
-                return no_padded_size == padded_size && remainder.is_zero() && ty_allowed;
-            }
-
-            false
-        }
-        Type::Array(t, dims) if ty.is_dynamic(ns) => dims.len() == 1 && allow_memcpy(t, ns),
-        // If the array is not dynamic, we mempcy if its elements allow it
-        Type::Array(t, _) => allow_memcpy(t, ns),
-        Type::UserType(t) => allow_memcpy(&ns.user_types[*t].ty, ns),
-        _ => ty.is_primitive(),
-    }
-}
-
-pub fn fixed_array_copy<'a>(
+pub fn fixed_array_decode<'a>(
     buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     ty: &Type,
