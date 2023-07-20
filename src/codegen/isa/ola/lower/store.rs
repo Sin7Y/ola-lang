@@ -315,12 +315,14 @@ fn lower_store_gep(
 
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
+                println!("store gep, slot {:?}", slot);
             } else {
                 base = Some(get_operand_for_val(
                     ctx,
                     gep.operand.types()[1],
                     gep.operand.args()[0],
                 )?);
+                println!("store gep, base {:?}", base);
             }
 
             // let base_ty = gep.operand.types()[0];
@@ -334,7 +336,7 @@ fn lower_store_gep(
                 MOperand::new(OperandData::None),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::VReg(vregs[0])),
-                MOperand::new(OperandData::Int32(0)),
+                MOperand::new(OperandData::None),
             ]
         }
         [Value::Instruction(base_ptr), Const(Int(Int32(idx0))), Const(Int(Int32(idx1)))] => {

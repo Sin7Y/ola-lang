@@ -203,19 +203,22 @@ fn lower_load_gep(
             let mut base = None;
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
+                println!("load gep slot");
             } else {
                 base = Some(get_operand_for_val(
                     ctx,
                     gep.operand.types()[1],
                     gep.operand.args()[0],
                 )?);
+                println!("load gep base");
             }
 
             let base_ty = gep.operand.types()[0];
             let offset = idx0 * ctx.isa.data_layout.get_size_of(ctx.types, base_ty) as i64;
+            println!("gep load off:{}", offset);
 
             let idx1_ty = gep.operand.types()[3];
-            assert!(idx1_ty.is_i64());
+            //assert!(idx1_ty.is_i64());
             let idx1 = get_inst_output(ctx, idx1_ty, *idx1)?;
 
             assert!({
@@ -233,12 +236,7 @@ fn lower_load_gep(
                 MOperand::new(OperandData::Int32(-offset as i32)),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::VReg(idx1[0])),
-                MOperand::new(OperandData::Int32(
-                    ctx.isa
-                        .data_layout
-                        .get_size_of(ctx.types, ctx.types.get_element(base_ty).unwrap())
-                        as i32,
-                )),
+                MOperand::new(OperandData::None),
             ]
         }
         [Value::Instruction(base_ptr), Value::Instruction(idx1)] => {

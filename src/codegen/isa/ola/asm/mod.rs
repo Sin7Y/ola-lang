@@ -559,6 +559,15 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::Reg(reg1),
             OperandData::Reg(reg2),
+            OperandData::None,
+        ) => {
+            format!("[{},{}]", reg_to_str(reg1), reg_to_str(reg2),)
+        }
+        (
+            OperandData::None,
+            OperandData::None,
+            OperandData::Reg(reg1),
+            OperandData::Reg(reg2),
             OperandData::Int64(mul),
         ) => {
             if *mul == 0 {
@@ -581,6 +590,25 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
         ) => {
             format!("[{} + {lbl}]", reg_to_str(reg1))
+        }
+        (
+            OperandData::None,
+            OperandData::Int32(imm),
+            OperandData::Reg(reg1),
+            OperandData::Reg(reg2),
+            OperandData::None,
+        ) => {
+            if *imm == 0 {
+                format!("[{},{}]", reg_to_str(reg1), reg_to_str(reg2))
+            } else {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *imm < 0 { "" } else { "+" },
+                    *imm
+                )
+            }
         }
         e => todo!("{:?}", e),
     }
