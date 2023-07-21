@@ -1,14 +1,17 @@
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicMetadataValueEnum, FunctionValue, IntValue, PointerValue},
+    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue},
     AddressSpace,
 };
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
 
-use crate::sema::ast::Namespace;
+use crate::sema::ast::{Namespace, Type};
 
-use super::{binary::Binary, encoding::abi_decode};
+use super::{
+    binary::Binary,
+    encoding::{abi_decode, abi_encode},
+};
 
 fn public_function_prelude<'a>(
     binary: &Binary<'a>,
@@ -142,15 +145,18 @@ fn dispatch_case<'a>(
         );
     }
 
-    // let mut returns: Vec<usize> = Vec::with_capacity(func.returns.len());
-    // let mut return_tys: Vec<Type> = Vec::with_capacity(func.returns.len());
-    // let mut returns_expr: Vec<Expression> =
-    // Vec::with_capacity(func.returns.len());
+    let mut return_tys: Vec<Type> = Vec::with_capacity(func.returns.len());
+    let mut returns: Vec<BasicValueEnum> = Vec::with_capacity(func.returns.len());
+
+    for item in func.returns.iter() {
+        return_tys.push(item.ty.clone());
+    }
 
     // build call function
     let callee = &ns.functions[func_no];
     let callee_value = bin.module.get_function(&callee.name).unwrap();
-    bin.builder
+    let ret = bin
+        .builder
         .build_call(
             callee_value,
             &args
@@ -161,6 +167,10 @@ fn dispatch_case<'a>(
         )
         .try_as_basic_value()
         .left();
+    if !func.returns.is_empty() {
+        returns.push(ret.unwrap());
+        abi_encode(bin, returns, &return_tys, func_value, ns);
+    }
 
     case_bb
 }

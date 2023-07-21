@@ -87,10 +87,10 @@ impl<'a> BufferValidator<'a> {
         self.verified_until.is_none() || self.current_arg > self.verified_until.unwrap()
     }
 
-    // /// After an array validation, we do not need to re-check its elements.
-    // pub(super) fn validate_array(&mut self) {
-    //     self.verified_until = Some(self.current_arg);
-    // }
+    /// After an array validation, we do not need to re-check its elements.
+    pub(super) fn validate_array(&mut self) {
+        self.verified_until = Some(self.current_arg);
+    }
 
     /// Validate if offset + size is within the buffer's boundaries
     pub(super) fn validate_offset_plus_size(
