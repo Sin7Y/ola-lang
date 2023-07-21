@@ -6,9 +6,7 @@ use crate::irgen::u32_op::{
 };
 use crate::sema::ast::ArrayLength;
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{
-    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
-};
+use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -391,15 +389,14 @@ pub fn expression<'a>(
             }
         }
         Expression::Subscript {
-            loc,
             array_ty,
             array,
             index,
             ..
         } => {
-            let mut array = expression(array, bin, func_context, ns);
+            let array = expression(array, bin, func_context, ns);
             let index = expression(index, bin, func_context, ns);
-            array_subscript(loc, array_ty, array, index, bin, func_context.func_val, ns)
+            array_subscript(array_ty, array, index, bin, func_context.func_val, ns)
         }
 
         Expression::StructMember {
@@ -688,7 +685,6 @@ fn conditional_operator<'a>(
 
 /// Codegen for an array subscript expression
 pub fn array_subscript<'a>(
-    loc: &program::Loc,
     array_ty: &Type,
     array: BasicValueEnum<'a>,
     index: BasicValueEnum<'a>,
