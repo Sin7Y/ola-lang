@@ -2,20 +2,20 @@ use std::ops::{AddAssign, Sub};
 
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
     IntPredicate,
 };
 use num_bigint::BigInt;
 use num_integer::Integer;
 use num_traits::{ToPrimitive, Zero};
-use ola_parser::program;
 
-use crate::{
-    codegen::core::ir::function::basic_block::BasicBlock,
-    sema::ast::{ArrayLength, Namespace, Type},
+use crate::sema::ast::{ArrayLength, Namespace, Type};
+
+use self::{
+    buffer_validator::BufferValidator,
+    decode::read_from_buffer,
+    encode::{calculate_size_args, encode_into_buffer},
 };
-
-use self::{buffer_validator::BufferValidator, decode::read_from_buffer};
 
 use super::{binary::Binary, expression::array_subscript};
 
@@ -33,45 +33,26 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (Expression, Expression) {
-    let size = calculate_size_args(bin, &args, ns, vartab, cfg);
-    let encoded_bytes = vartab.temp_name("abi_encoded", &Type::DynamicBytes);
-    let expr = Expression::AllocDynamicBytes {
-        loc: *loc,
-        ty: Type::DynamicBytes,
-        size: size.clone().into(),
-        initializer: None,
-    };
-    cfg.add(
-        vartab,
-        Instr::Set {
-            loc: *loc,
-            res: encoded_bytes,
-            expr,
-        },
-    );
+) -> (BasicValueEnum<'a>, IntValue<'a>) {
+    let size = calculate_size_args(bin, &args, types, func_value, ns);
+    let encode_bytes = bin.vector_new(func_value, size, None, false);
 
-    let mut offset = Expression::NumberLiteral {
-        loc: *loc,
-        ty: Uint(32),
-        value: BigInt::zero(),
-    };
-    let buffer = Expression::Variable {
-        loc: *loc,
-        ty: Type::DynamicBytes,
-        var_no: encoded_bytes,
-    };
+    let mut offset = bin.context.i64_type().const_zero();
+    let buffer = bin.vector_data(encode_bytes.into());
     for (arg_no, item) in args.iter().enumerate() {
-        let advance = encoder.encode(item, &buffer, &offset, arg_no, ns, vartab, cfg);
-        offset = Expression::Add {
-            loc: *loc,
-            ty: Uint(32),
-            overflowing: false,
-            left: offset.into(),
-            right: advance.into(),
-        };
+        let advance = encode_into_buffer(
+            item.clone(),
+            &types[arg_no],
+            buffer,
+            offset.clone(),
+            arg_no,
+            bin,
+            func_value,
+            ns,
+        );
+        offset = bin.builder.build_int_add(offset, advance, "");
     }
-    (buffer, size)
+    (encode_bytes.into(), size)
 }
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
@@ -144,7 +125,7 @@ pub fn struct_padded_size(struct_no: usize, ns: &Namespace) -> BigInt {
     total
 }
 
-fn index_array<'a>(
+pub(crate) fn index_array<'a>(
     bin: &Binary<'a>,
     arr: &mut BasicValueEnum<'a>,
     ty: &mut Type,
@@ -166,7 +147,6 @@ fn index_array<'a>(
         };
 
         let arr = array_subscript(
-            &program::Loc::IRgen,
             ty,
             arr.clone(),
             indexes[dims.len() - i - 1].into(),
@@ -184,7 +164,7 @@ fn index_array<'a>(
         *ty = local_ty;
     }
 
-    arr
+    *arr
 }
 
 /// This struct manages for-loops created when iterating over arrays
@@ -193,7 +173,7 @@ struct ForLoop<'a> {
     pub next_block: BasicBlock<'a>,
     pub body_block: BasicBlock<'a>,
     pub end_block: BasicBlock<'a>,
-    pub index: IntValue<'a>,
+    pub index: PointerValue<'a>,
 }
 
 /// Set up the loop to iterate over an array
@@ -261,20 +241,23 @@ fn set_array_loop<'a>(
         next_block,
         body_block,
         end_block,
-        index: index_temp,
+        index: index_ptr,
     }
 }
 
 /// Closes the for-loop when iterating over an array
-fn finish_array_loop<'a>(bin: &Binary<'a>, func_value: FunctionValue<'a>, for_loop: &ForLoop) {
+fn finish_array_loop<'a>(bin: &Binary<'a>, for_loop: &ForLoop) {
     bin.builder.build_unconditional_branch(for_loop.next_block);
     bin.builder.position_at_end(for_loop.next_block);
 
     let index_var = bin.builder.build_int_add(
-        for_loop.index,
+        bin.builder
+            .build_load(bin.context.i64_type(), for_loop.index, "index")
+            .into_int_value(),
         bin.context.i64_type().const_int(1, false),
         "",
     );
+    bin.builder.build_store(for_loop.index, index_var);
     bin.builder.build_unconditional_branch(for_loop.cond_block);
 
     bin.builder.position_at_end(for_loop.end_block);

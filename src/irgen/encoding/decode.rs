@@ -1,12 +1,12 @@
-use std::ops::{AddAssign, Sub};
+use std::ops::MulAssign;
 
 use inkwell::{
     values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
-    IntPredicate,
+    AddressSpace, IntPredicate,
 };
+
 use num_bigint::BigInt;
-use num_integer::Integer;
-use num_traits::{ToPrimitive, Zero};
+use num_traits::{One, ToPrimitive, Zero};
 
 use crate::{
     irgen::binary::Binary,
@@ -14,13 +14,12 @@ use crate::{
 };
 
 use super::{
-    allow_memcpy, buffer_validator::BufferValidator, calculate_struct_non_padded_size,
-    struct_padded_size,
+    allow_memcpy, buffer_validator::BufferValidator, finish_array_loop, index_array, set_array_loop,
 };
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
 /// expression containing the read value and the number of bytes read.
-pub fn read_from_buffer<'a>(
+pub(crate) fn read_from_buffer<'a>(
     buffer: PointerValue<'a>,
     offset: IntValue<'a>,
     bin: &Binary<'a>,
@@ -225,7 +224,60 @@ fn decode_array<'a>(
         validator.validate_offset_plus_size(bin, *offset, array_size, func_value);
         (array_pointer, array_size)
     } else {
-        unimplemented!("decode complex array not implemented.")
+        let mut indexes: Vec<IntValue<'a>> = Vec::new();
+        let array_var = bin
+            .context
+            .i64_type()
+            .ptr_type(AddressSpace::default())
+            .const_null();
+        // The function decode_complex_array assumes that, if the dimension is fixed,
+        // there is no need to allocate an array
+        if matches!(dims.last(), Some(ArrayLength::Fixed(_))) {
+            let dims = dims
+                .iter()
+                .map(|d| match d {
+                    ArrayLength::Fixed(d) => d.to_u32().unwrap(),
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>();
+
+            let values = vec![
+                bin.context.i64_type().const_zero();
+                array_ty.array_length().unwrap().to_usize().unwrap()
+            ];
+            let array_literal = alloca_array_literal(bin, array_ty, &dims, values, func_value, ns);
+            bin.builder.build_store(array_var, array_literal);
+        }
+        let offset_var = bin
+            .builder
+            .build_alloca(bin.context.i64_type(), "offset_var");
+        bin.builder.build_store(offset_var, offset.clone());
+        decode_complex_array(
+            bin,
+            array_var,
+            buffer,
+            offset_var,
+            dims.len() - 1,
+            array_ty,
+            elem_ty,
+            dims,
+            validator,
+            func_value,
+            ns,
+            &mut indexes,
+        );
+        let array = bin.builder.build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            array_var,
+            "",
+        );
+        let offset_value = bin
+            .builder
+            .build_load(bin.context.i64_type(), offset_var, "");
+        let size = bin
+            .builder
+            .build_int_sub(offset_value.into_int_value(), *offset, "");
+        (array, size)
     }
 }
 
@@ -442,4 +494,177 @@ pub fn decode_dynamic_array_loop<'a>(
         .build_conditional_branch(cond, loop_body, loop_end);
 
     bin.builder.position_at_end(loop_end);
+}
+
+/// Decodes a complex array from a borsh encoded buffer
+/// Complex arrays are either dynamic arrays or arrays of dynamic types, like
+/// structs. If this is an array of structs, whose representation in memory is
+/// padded, the array is also complex, because it cannot be memcpy'ed
+fn decode_complex_array<'a>(
+    bin: &Binary<'a>,
+    array_var: PointerValue<'a>,
+    buffer: PointerValue<'a>,
+    offset_var: PointerValue<'a>,
+    dimension: usize,
+    array_ty: &Type,
+    elem_ty: &Type,
+    dims: &[ArrayLength],
+    validator: &mut BufferValidator<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+    indexes: &mut Vec<IntValue<'a>>,
+) {
+    let offset = bin
+        .builder
+        .build_load(bin.context.i64_type(), offset_var, "")
+        .into_int_value();
+    // If we have a 'int[3][4][] vec', we can only validate the buffer after we have
+    // allocated the outer dimension, i.e., we are about to read a 'int[3][4]' item.
+    // Arrays whose elements are dynamic cannot be verified.
+    if validator.validation_necessary()
+        && !dims[0..(dimension + 1)]
+            .iter()
+            .any(|d| *d == ArrayLength::Dynamic)
+        && !elem_ty.is_dynamic(ns)
+    {
+        let mut elems = BigInt::one();
+        for item in &dims[0..(dimension + 1)] {
+            elems.mul_assign(item.array_length().unwrap());
+        }
+        elems.mul_assign(elem_ty.memory_size_of(ns));
+        let elems_size = bin
+            .context
+            .i64_type()
+            .const_int(elems.to_u64().unwrap(), false);
+        validator.validate_offset_plus_size(bin, offset, elems_size, func_value);
+        validator.validate_array();
+    }
+
+    // Dynamic dimensions mean that the subarray we are processing must be allocated
+    // in memory.
+    if dims[dimension] == ArrayLength::Dynamic {
+        let length = decode_uint(buffer, offset, bin);
+
+        let array_start =
+            bin.builder
+                .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+        validator.validate_offset(bin, array_start.clone(), func_value);
+
+        bin.builder.build_store(offset_var, array_start);
+
+        let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension + 1)].to_vec());
+        let allocated_array = bin.vector_new(func_value, length.into_int_value(), None, false);
+
+        if indexes.is_empty() {
+            bin.builder.build_store(array_var, allocated_array);
+        } else {
+            let array = bin.builder.build_load(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                array_var,
+                "",
+            );
+            let sub_arr = index_array(
+                bin,
+                &mut array.clone(),
+                &mut array_ty.clone(),
+                elem_ty,
+                dims,
+                indexes,
+                func_value,
+                ns,
+            );
+            bin.builder.build_store(array_var, sub_arr);
+        }
+    }
+
+    let for_loop = set_array_loop(
+        bin,
+        array_var.into(),
+        array_ty,
+        elem_ty,
+        dims,
+        dimension,
+        indexes,
+        func_value,
+        ns,
+    );
+    bin.builder.position_at_end(for_loop.body_block);
+
+    if 0 == dimension {
+        let (read_value, advance) =
+            read_from_buffer(buffer, offset, bin, elem_ty, validator, func_value, ns);
+        let array = bin.builder.build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            array_var,
+            "",
+        );
+        let ptr = index_array(
+            bin,
+            &mut array.clone(),
+            &mut array_ty.clone(),
+            elem_ty,
+            dims,
+            indexes,
+            func_value,
+            ns,
+        );
+
+        bin.builder
+            .build_store(ptr.into_pointer_value(), read_value);
+
+        let offset = bin.builder.build_int_add(offset, advance, "");
+
+        bin.builder.build_store(offset_var, offset);
+    } else {
+        decode_complex_array(
+            bin,
+            array_var,
+            buffer,
+            offset_var,
+            dimension - 1,
+            array_ty,
+            elem_ty,
+            dims,
+            validator,
+            func_value,
+            ns,
+            indexes,
+        );
+    }
+
+    finish_array_loop(bin, &for_loop);
+}
+
+pub fn alloca_array_literal<'a>(
+    bin: &Binary<'a>,
+    array_ty: &Type,
+    dimensions: &Vec<u32>,
+    values: Vec<IntValue<'a>>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> PointerValue<'a> {
+    let array_ty = bin.llvm_type(array_ty, ns);
+    let array_alloca = bin.build_alloca(func_value, array_ty, "array_literal");
+
+    for (i, value) in values.iter().enumerate() {
+        let mut ind = vec![bin.context.i64_type().const_zero()];
+
+        let mut e = i as u32;
+
+        // Mapping one-dimensional array indices to multi-dimensional array indices.
+        for d in dimensions {
+            ind.insert(1, bin.context.i64_type().const_int((e % *d).into(), false));
+
+            e /= *d;
+        }
+
+        let elemptr = unsafe {
+            bin.builder
+                .build_gep(array_ty, array_alloca, &ind, &format!("elemptr{i}"))
+        };
+
+        bin.builder.build_store(elemptr, value.clone());
+    }
+
+    array_alloca.into()
 }
