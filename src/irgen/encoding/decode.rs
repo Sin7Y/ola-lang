@@ -6,7 +6,7 @@ use inkwell::{
 };
 
 use num_bigint::BigInt;
-use num_traits::{One, ToPrimitive, Zero};
+use num_traits::{One, ToPrimitive};
 
 use crate::{
     irgen::binary::Binary,
@@ -552,7 +552,8 @@ fn decode_complex_array<'a>(
 
         bin.builder.build_store(offset_var, array_start);
 
-        let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension + 1)].to_vec());
+        // let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension +
+        // 1)].to_vec());
         let allocated_array = bin.vector_new(func_value, length.into_int_value(), None, false);
 
         if indexes.is_empty() {
