@@ -29,7 +29,7 @@ pub fn calculate_size_args<'a>(
     size
 }
 
-/// Calculate the size of a single codegen::Expression
+/// Calculate the size of a single arg value
 fn get_args_type_size<'a>(
     bin: &Binary<'a>,
     arg_no: usize,
@@ -324,9 +324,7 @@ fn calculate_complex_array_size<'a>(
     finish_array_loop(bin, &for_loop);
 }
 
-/// Provide generic encoding for any given `expr` into `buffer`, depending on
-/// its `Type`. Relies on the methods encoding individual expressions
-/// (`encode_*`) to return the encoded size.
+/// Provide generic encoding for any given `arg` into `buffer`.
 pub(crate) fn encode_into_buffer<'a>(
     arg: BasicValueEnum<'a>,
     arg_ty: &Type,
@@ -568,7 +566,7 @@ pub fn encode_dynamic_array_loop<'a>(
     bin.builder.position_at_end(loop_end);
 }
 
-/// Encode `expr` into `buffer` as a struct type.
+/// Encode `struct` into `buffer` as a struct type.
 fn encode_struct<'a>(
     arg_no: usize,
     struct_value: BasicValueEnum<'a>,
@@ -602,7 +600,7 @@ fn encode_struct<'a>(
     runtime_size
 }
 
-/// Encode `expr` into `buffer` as an array.
+/// Encode `array` into `buffer` as an array.
 fn encode_array<'a>(
     bin: &Binary<'a>,
     array: BasicValueEnum<'a>,
