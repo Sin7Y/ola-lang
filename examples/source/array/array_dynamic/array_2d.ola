@@ -1,0 +1,17 @@
+
+
+contract DynamicArrayInMemory {
+    fn processDynamicArray() {
+        
+
+        u32[][] dynamicArray = new u32[][](3);
+        
+        // 初始化子数组
+        dynamicArray[0] = new u32[](2);
+
+        u32[] subArray = dynamicArray[0];
+        subArray[0] = 1;
+
+
+    }
+}

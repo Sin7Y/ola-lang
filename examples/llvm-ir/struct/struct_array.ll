@@ -17,6 +17,16 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
 
+define ptr @vector_new_init(i64 %0, ptr %1) {
+entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %0, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %1, ptr %vector_data, align 8
+  ret ptr %vector_alloca
+}
+
 declare ptr @contract_input()
 
 declare [4 x i64] @get_storage([4 x i64])
@@ -25,13 +35,17 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
+declare void @tape_store(i64, i64)
+
+declare i64 @tape_load(i64, i64)
+
 define ptr @createStudent() {
 entry:
   %struct_alloca = alloca { i64, ptr }, align 8
-  %vector_alloca = alloca { i64, ptr }, align 8
   %index_alloca = alloca i64, align 8
   %0 = call i64 @vector_new(i64 3)
-  %int_to_ptr = inttoptr i64 %0 to ptr
+  %heap_ptr = sub i64 %0, 3
+  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -48,54 +62,86 @@ body:                                             ; preds = %cond
   br label %cond
 
 done:                                             ; preds = %cond
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 3, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %int_to_ptr, ptr %vector_data, align 8
-  %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  %length = load i64, ptr %vector_len1, align 4
-  %1 = sub i64 %length, 1
-  %2 = sub i64 %1, 0
-  call void @builtin_range_check(i64 %2)
-  %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  %index_access2 = getelementptr i64, ptr %data, i64 0
-  store i64 85, ptr %index_access2, align 4
-  %vector_len3 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  %length4 = load i64, ptr %vector_len3, align 4
-  %3 = sub i64 %length4, 1
-  %4 = sub i64 %3, 1
-  call void @builtin_range_check(i64 %4)
-  %data5 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  %index_access6 = getelementptr i64, ptr %data5, i64 1
-  store i64 90, ptr %index_access6, align 4
-  %vector_len7 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  %length8 = load i64, ptr %vector_len7, align 4
-  %5 = sub i64 %length8, 1
-  %6 = sub i64 %5, 2
-  call void @builtin_range_check(i64 %6)
-  %data9 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  %index_access10 = getelementptr i64, ptr %data9, i64 2
-  store i64 95, ptr %index_access10, align 4
+  %1 = call ptr @vector_new_init(i64 3, ptr %int_to_ptr)
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length = load i64, ptr %vector_len, align 4
+  %2 = sub i64 %length, 1
+  %3 = sub i64 %2, 0
+  call void @builtin_range_check(i64 %3)
+  %data = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access1 = getelementptr i64, ptr %data, i64 0
+  store i64 85, ptr %index_access1, align 4
+  %vector_len2 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length3 = load i64, ptr %vector_len2, align 4
+  %4 = sub i64 %length3, 1
+  %5 = sub i64 %4, 1
+  call void @builtin_range_check(i64 %5)
+  %data4 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access5 = getelementptr i64, ptr %data4, i64 1
+  store i64 90, ptr %index_access5, align 4
+  %vector_len6 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length7 = load i64, ptr %vector_len6, align 4
+  %6 = sub i64 %length7, 1
+  %7 = sub i64 %6, 2
+  call void @builtin_range_check(i64 %7)
+  %data8 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access9 = getelementptr i64, ptr %data8, i64 2
+  store i64 95, ptr %index_access9, align 4
   %"struct member" = getelementptr inbounds { i64, ptr }, ptr %struct_alloca, i32 0, i32 0
   store i64 20, ptr %"struct member", align 4
-  %"struct member11" = getelementptr inbounds { i64, ptr }, ptr %struct_alloca, i32 0, i32 1
-  store ptr %vector_alloca, ptr %"struct member11", align 8
+  %"struct member10" = getelementptr inbounds { i64, ptr }, ptr %struct_alloca, i32 0, i32 1
+  store ptr %1, ptr %"struct member10", align 8
   ret ptr %struct_alloca
 }
 
-define i64 @getFirstGrade(ptr %0) {
+define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
 entry:
-  %_student = alloca ptr, align 8
-  store ptr %0, ptr %_student, align 8
-  %"struct member" = getelementptr inbounds { i64, ptr }, ptr %_student, i32 0, i32 1
-  %"struct member1" = getelementptr inbounds { i64, ptr }, ptr %_student, i32 0, i32 1
+  switch i64 %0, label %missing_function [
+    i64 15777857, label %func_0_dispatch
+  ]
+
+missing_function:                                 ; preds = %entry
+  unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  %3 = call ptr @createStudent()
+  %"struct member" = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %elem = load i64, ptr %"struct member", align 4
+  call void @tape_store(i64 0, i64 %elem)
+  %"struct member1" = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
   %vector_len = getelementptr inbounds { i64, ptr }, ptr %"struct member1", i32 0, i32 0
   %length = load i64, ptr %vector_len, align 4
-  %1 = sub i64 %length, 1
-  %2 = sub i64 %1, 0
-  call void @builtin_range_check(i64 %2)
-  %data = getelementptr inbounds { i64, ptr }, ptr %"struct member", i32 0, i32 1
-  %index_access = getelementptr i64, ptr %data, i64 0
-  %3 = load i64, ptr %index_access, align 4
-  ret i64 %3
+  call void @tape_store(i64 1, i64 %length)
+  %index_ptr = alloca i64, align 8
+  store i64 0, ptr %index_ptr, align 4
+  br label %loop_body
+
+loop_body:                                        ; preds = %loop_body, %func_0_dispatch
+  %index = load i64, ptr %index_ptr, align 4
+  %element = getelementptr { i64, ptr }, ptr %"struct member1", i64 %index
+  %elem2 = load i64, ptr %element, align 4
+  call void @tape_store(i64 2, i64 %elem2)
+  %next_index = add i64 %index, 1
+  store i64 %next_index, ptr %index_ptr, align 4
+  %index_cond = icmp ult i64 %next_index, %length
+  br i1 %index_cond, label %loop_body, label %loop_end
+
+loop_end:                                         ; preds = %loop_body
+  %4 = add i64 %length, 1
+  %5 = add i64 1, %4
+  %6 = add i64 0, %5
+  ret void
+}
+
+define void @call() {
+entry:
+  %0 = call ptr @contract_input()
+  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
+  %selector = load i64, ptr %input_selector, align 4
+  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
+  %len = load i64, ptr %input_len, align 4
+  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
+  %data = load i64, ptr %input_data, align 4
+  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
+  unreachable
 }

@@ -15,17 +15,20 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 9]> = Lazy::new(|| {
+static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
         "vector_new",
+        "vector_new_init",
         "contract_input",
         "get_storage",
         "set_storage",
         "poseidon_hash",
+        "tape_store",
+        "tape_load",
     ]
 });
 
@@ -113,6 +116,38 @@ pub fn declare_prophets(bin: &mut Binary) {
                 .fn_type(&[bin.context.i64_type().into()], false);
             bin.module.add_function("vector_new", ftype, None);
         }
+        "vector_new_init" => {
+            let ftype = bin
+                .struct_vector_type()
+                .ptr_type(AddressSpace::default())
+                .fn_type(
+                    &[
+                        bin.context.i64_type().into(),
+                        bin.context
+                            .i64_type()
+                            .ptr_type(AddressSpace::default())
+                            .into(),
+                    ],
+                    false,
+                );
+            let func = bin.module.add_function("vector_new_init", ftype, None);
+            bin.builder
+                .position_at_end(bin.context.append_basic_block(func, "entry"));
+            let size = func.get_nth_param(0).unwrap();
+            let vector_data = func.get_nth_param(1).unwrap();
+            let vector_alloca = bin.build_alloca(func, bin.struct_vector_type(), "vector_alloca");
+            let size_ptr = bin
+                .builder
+                .build_struct_gep(bin.struct_vector_type(), vector_alloca, 0, "vector_len")
+                .unwrap();
+            bin.builder.build_store(size_ptr, size);
+            let data_ptr = bin
+                .builder
+                .build_struct_gep(bin.struct_vector_type(), vector_alloca, 1, "vector_data")
+                .unwrap();
+            bin.builder.build_store(data_ptr, vector_data);
+            bin.builder.build_return(Some(&vector_alloca));
+        }
 
         "contract_input" => {
             let ret_type = bin.contract_input_type().ptr_type(AddressSpace::default());
@@ -145,6 +180,18 @@ pub fn declare_prophets(bin: &mut Binary) {
             let param_type = bin.context.i64_type().array_type(8);
             let ftype = ret_type.fn_type(&[param_type.into()], false);
             bin.module.add_function("poseidon_hash", ftype, None);
+        }
+        "tape_store" => {
+            let void_type = bin.context.void_type();
+            let param_type = bin.context.i64_type();
+            let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
+            bin.module.add_function("tape_store", ftype, None);
+        }
+        "tape_load" => {
+            let ret_type = bin.context.i64_type();
+            let param_type = bin.context.i64_type();
+            let ftype = ret_type.fn_type(&[param_type.into(), param_type.into()], false);
+            bin.module.add_function("tape_load", ftype, None);
         }
 
         _ => {}

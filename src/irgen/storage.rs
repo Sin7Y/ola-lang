@@ -10,7 +10,7 @@ use inkwell::AddressSpace;
 use num_traits::ToPrimitive;
 
 use super::expression::expression;
-use super::functions::FunctionContext;
+use super::functions::Vartable;
 
 impl Contract {
     /// Get the storage slot for a variable, possibly from base contract
@@ -37,17 +37,18 @@ impl Contract {
 pub(crate) fn storage_array_push<'a>(
     bin: &Binary<'a>,
     args: &[Expression],
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
-    let mut array_slot = expression(&args[0], bin, func_context, ns);
+    let mut array_slot = expression(&args[0], bin, func_value, var_table, ns);
 
     let array_length = storage_load(
         bin,
         &Type::Uint(32),
         &mut array_slot.clone(),
-        func_context.func_val,
+        func_value,
         ns,
     );
 
@@ -56,16 +57,9 @@ pub(crate) fn storage_array_push<'a>(
     let push_pos = array_offset(bin, array_slot, array_length);
 
     if args.len() == 2 {
-        let value = expression(&args[1], bin, func_context, ns);
+        let value = expression(&args[1], bin, func_value, var_table, ns);
 
-        storage_store(
-            bin,
-            &elem_ty,
-            &mut push_pos.clone(),
-            value,
-            func_context.func_val,
-            ns,
-        );
+        storage_store(bin, &elem_ty, &mut push_pos.clone(), value, func_value, ns);
     }
 
     // increase length
@@ -77,7 +71,7 @@ pub(crate) fn storage_array_push<'a>(
         &Type::Uint(32),
         &mut array_slot,
         new_length.into(),
-        func_context.func_val,
+        func_value,
         ns,
     );
 
@@ -89,17 +83,18 @@ pub(crate) fn storage_array_push<'a>(
 pub(crate) fn storage_array_pop<'a>(
     bin: &Binary<'a>,
     args: &[Expression],
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
-    let mut array_slot = expression(&args[0], bin, func_context, ns);
+    let mut array_slot = expression(&args[0], bin, func_value, var_table, ns);
 
     let array_length = storage_load(
         bin,
         &Type::Uint(32),
         &mut array_slot.clone(),
-        func_context.func_val,
+        func_value,
         ns,
     );
 
@@ -107,16 +102,10 @@ pub(crate) fn storage_array_pop<'a>(
 
     let elem_ty = args[0].ty().storage_array_elem().deref_any().clone();
 
-    let ret = storage_load(
-        bin,
-        &elem_ty,
-        &mut pop_pos.clone(),
-        func_context.func_val,
-        ns,
-    );
+    let ret = storage_load(bin, &elem_ty, &mut pop_pos.clone(), func_value, ns);
 
     // clear the slot pop value
-    storage_delete(bin, &elem_ty, &mut pop_pos, func_context.func_val, ns);
+    storage_delete(bin, &elem_ty, &mut pop_pos, func_value, ns);
 
     // set decrease length
     let new_length =
@@ -127,7 +116,7 @@ pub(crate) fn storage_array_pop<'a>(
         &Type::Uint(32),
         &mut array_slot,
         new_length.into(),
-        func_context.func_val,
+        func_value,
         ns,
     );
 
@@ -186,7 +175,7 @@ pub(crate) fn storage_load<'a>(
             } else {
                 let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
-                let dest = bin.vector_new(function, size.into_int_value(), None, false);
+                let dest = bin.vector_new(function, ty, size.into_int_value(), None, false, ns);
 
                 let mut elem_slot = slot_hash(bin, *slot);
 
@@ -254,7 +243,7 @@ pub(crate) fn storage_load<'a>(
             let ret = storage_load_internal(bin, *slot);
             ret
         }
-        Type::Uint(32) => {
+        Type::Uint(32) | Type::Bool | Type::Enum(_) => {
             let ret = storage_load_internal(bin, *slot);
             let value = bin
                 .builder
@@ -403,7 +392,7 @@ pub(crate) fn storage_store<'a>(
         Type::String => {
             set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
-        Type::Address | Type::Contract(_) | Type::Uint(32) | Type::Bool => {
+        Type::Address | Type::Contract(_) | Type::Uint(32) | Type::Bool | Type::Enum(_) => {
             let dest = if dest.is_pointer_value() {
                 let m =
                     bin.builder
@@ -502,7 +491,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
     emit_context!(bin);
     let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
 
-    let dest = bin.vector_new(function, size.into_int_value(), None, false);
+    let dest = bin.vector_new(function, ty, size.into_int_value(), None, false, ns);
     let mut elem_slot = slot_hash(bin, *slot);
 
     bin.emit_loop_cond_first_with_int(

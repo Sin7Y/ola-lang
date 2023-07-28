@@ -10,22 +10,28 @@ contract StructExample {
             book_name: 3,
             book_id: 1
         });
+        
+        myBook = Book({
+            book_name: 4,
+            book_id: 2
+        });
+        
 
         return myBook;
     }
 
-    fn getBookName(Book _book) -> (u32) {
-        return _book.book_name;
-    }
+    // fn getBookName(Book _book) -> (u32) {
+    //     return _book.book_name;
+    // }
 
-    fn getBookId(Book _book) -> (u32) {
-        u32 b = _book.book_id + 1;
-        return b;
-    }
+    // fn getBookId(Book _book) -> (u32) {
+    //     u32 b = _book.book_id + 1;
+    //     return b;
+    // }
 
-    fn main() {
-        Book myBook = createBook();
-        u32 bookTitle = getBookName(myBook);
-        u32 bookId = getBookId(myBook);
-    }
+    // fn main() {
+    //     Book myBook = createBook();
+    //     u32 bookTitle = getBookName(myBook);
+    //     u32 bookId = getBookId(myBook);
+    // }
 }

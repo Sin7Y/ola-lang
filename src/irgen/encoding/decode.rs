@@ -1,7 +1,7 @@
 use std::ops::MulAssign;
 
 use inkwell::{
-    values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
     AddressSpace, IntPredicate,
 };
 
@@ -14,13 +14,14 @@ use crate::{
 };
 
 use super::{
-    allow_memcpy, buffer_validator::BufferValidator, finish_array_loop, index_array, set_array_loop,
+    allow_memcpy, buffer_validator::BufferValidator, calculate_array_size, finish_array_loop,
+    index_array, set_array_loop,
 };
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
 /// expression containing the read value and the number of bytes read.
 pub(crate) fn read_from_buffer<'a>(
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset: IntValue<'a>,
     bin: &Binary<'a>,
     ty: &Type,
@@ -66,16 +67,23 @@ pub(crate) fn read_from_buffer<'a>(
             let total_size_offset = bin.builder.build_int_add(offset, total_size, "");
             validator.validate_offset(bin, total_size_offset, func_value);
 
-            let allocated_array =
-                bin.vector_new(func_value, array_length.into_int_value(), None, false);
+            let allocated_array = bin.vector_new(
+                func_value,
+                ty,
+                array_length.into_int_value(),
+                None,
+                false,
+                ns,
+            );
             let array_data = bin.vector_data(allocated_array.into());
             decode_dynamic_array_loop(
                 buffer,
-                array_start,
+                &mut array_start.clone(),
                 array_length.into_int_value(),
                 &Type::Uint(32),
                 array_data,
                 bin,
+                validator,
                 func_value,
                 ns,
             );
@@ -130,21 +138,23 @@ pub(crate) fn read_from_buffer<'a>(
 }
 
 fn decode_uint<'a>(
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset: IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
-    let start = unsafe {
-        bin.builder
-            .build_gep(bin.context.i64_type(), buffer, &[offset], "start")
-    };
-
     bin.builder
-        .build_load(bin.context.i64_type(), start, "value")
+        .build_call(
+            bin.module.get_function("tape_load").unwrap(),
+            &[buffer.into(), offset.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .unwrap()
 }
 
 fn decode_address<'a>(
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
@@ -161,7 +171,7 @@ fn decode_address<'a>(
 }
 
 fn decode_array<'a>(
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset: &mut IntValue<'a>,
     array_ty: &Type,
     elem_ty: &Type,
@@ -194,10 +204,10 @@ fn decode_array<'a>(
                 ns,
             )
         } else {
-            let array_length = decode_uint(buffer, *offset, bin);
+            let array_length = decode_uint(buffer, *offset, bin).into_int_value();
             let total_size = bin.builder.build_int_add(
                 bin.context.i64_type().const_int(1, false),
-                array_length.into_int_value(),
+                array_length,
                 "",
             );
             let array_start =
@@ -205,19 +215,22 @@ fn decode_array<'a>(
                     .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
             validator.validate_offset(bin, array_start, func_value);
             let allocated_array =
-                bin.vector_new(func_value, array_length.into_int_value(), None, false);
+                bin.vector_new(func_value, array_ty, array_length, None, false, ns);
 
             let array_data = bin.vector_data(allocated_array.into());
+            let array_bytes_size = calculate_array_size(bin, array_length, elem_ty, ns);
             decode_dynamic_array_loop(
                 buffer,
-                array_start,
-                array_length.into_int_value(),
+                &mut array_start.clone(),
+                array_length,
                 elem_ty,
                 array_data,
                 bin,
+                validator,
                 func_value,
                 ns,
             );
+            validator.validate_offset_plus_size(bin, *offset, array_bytes_size, func_value);
             (allocated_array.into(), total_size)
         };
 
@@ -282,7 +295,7 @@ fn decode_array<'a>(
 }
 
 fn decode_struct<'a>(
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset: &mut IntValue<'a>,
     ty: &Type,
     struct_no: usize,
@@ -341,7 +354,7 @@ fn decode_struct<'a>(
 }
 
 pub fn fixed_array_decode<'a>(
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset: &mut IntValue<'a>,
     ty: &Type,
     elem_ty: &Type,
@@ -421,13 +434,14 @@ pub fn struct_literal_copy<'a>(
 
 /// Currently, we can only handle one-dimensional arrays.
 /// The situation of multi-dimensional arrays has not been processed yet.
-pub fn decode_dynamic_array_loop<'a>(
-    buffer: PointerValue<'a>,
-    offset: IntValue<'a>,
+pub(crate) fn decode_dynamic_array_loop<'a>(
+    buffer: IntValue<'a>,
+    offset: &mut IntValue<'a>,
     length: IntValue<'a>,
     elem_ty: &Type,
     dest: PointerValue<'a>,
     bin: &Binary<'a>,
+    validator: &mut BufferValidator<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) {
@@ -438,7 +452,8 @@ pub fn decode_dynamic_array_loop<'a>(
     let index_ptr = bin
         .builder
         .build_alloca(bin.context.i64_type(), "index_ptr");
-    bin.builder.build_store(index_ptr, offset);
+    bin.builder
+        .build_store(index_ptr, bin.context.i64_type().const_zero());
 
     bin.builder.build_unconditional_branch(loop_body);
     bin.builder.position_at_end(loop_body);
@@ -457,7 +472,10 @@ pub fn decode_dynamic_array_loop<'a>(
         )
     };
 
-    let elem = decode_uint(buffer, index.into_int_value(), bin);
+    let (elem, read_size) =
+        read_from_buffer(buffer, *offset, bin, elem_ty, validator, func_value, ns);
+
+    *offset = bin.builder.build_int_add(*offset, read_size, "offset");
 
     let elem = if elem_ty.is_fixed_reference_type() {
         bin.builder.build_load(
@@ -480,15 +498,9 @@ pub fn decode_dynamic_array_loop<'a>(
     // Store the next_index for the next iteration
     bin.builder.build_store(index_ptr, next_index);
 
-    let cond = bin.builder.build_int_compare(
-        IntPredicate::ULT,
-        next_index,
-        bin.builder
-            .build_int_add(offset, length, "array_end")
-            .as_basic_value_enum()
-            .into_int_value(),
-        "index_cond",
-    );
+    let cond = bin
+        .builder
+        .build_int_compare(IntPredicate::ULT, next_index, length, "index_cond");
 
     bin.builder
         .build_conditional_branch(cond, loop_body, loop_end);
@@ -503,7 +515,7 @@ pub fn decode_dynamic_array_loop<'a>(
 fn decode_complex_array<'a>(
     bin: &Binary<'a>,
     array_var: PointerValue<'a>,
-    buffer: PointerValue<'a>,
+    buffer: IntValue<'a>,
     offset_var: PointerValue<'a>,
     dimension: usize,
     array_ty: &Type,
@@ -554,7 +566,14 @@ fn decode_complex_array<'a>(
 
         // let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension +
         // 1)].to_vec());
-        let allocated_array = bin.vector_new(func_value, length.into_int_value(), None, false);
+        let allocated_array = bin.vector_new(
+            func_value,
+            array_ty,
+            length.into_int_value(),
+            None,
+            false,
+            ns,
+        );
 
         if indexes.is_empty() {
             bin.builder.build_store(array_var, allocated_array);
@@ -568,7 +587,6 @@ fn decode_complex_array<'a>(
                 bin,
                 &mut array.clone(),
                 &mut array_ty.clone(),
-                elem_ty,
                 dims,
                 indexes,
                 func_value,
@@ -603,7 +621,6 @@ fn decode_complex_array<'a>(
             bin,
             &mut array.clone(),
             &mut array_ty.clone(),
-            elem_ty,
             dims,
             indexes,
             func_value,

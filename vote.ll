@@ -730,7 +730,7 @@ loop_end:                                         ; preds = %inbounds10
   call void @builtin_range_check(i64 %28)
   %data13 = getelementptr inbounds { i64, ptr }, ptr %26, i32 0, i32 1
   %index_access = getelementptr ptr, ptr %data13, i64 %index
-  store ptr %23, ptr %index_access, align 8
+  store ptr %23, ptr %26, align 8
   %29 = add i64 %3, %12
   store i64 %29, ptr %offset_var, align 4
   br label %next

@@ -285,11 +285,22 @@ impl<'a> Binary<'a> {
     pub(crate) fn vector_new(
         &self,
         function: FunctionValue<'a>,
+        ty: &Type,
         size: IntValue<'a>,
         init: Option<&Vec<u32>>,
         zero_init: bool,
+        ns: &Namespace,
     ) -> PointerValue<'a> {
-        let vector_address = self
+        let elem_ty = ty.array_deref().deref_into();
+        let size = self.builder.build_int_mul(
+            size,
+            self.context
+                .i64_type()
+                .const_int(elem_ty.memory_size_of(ns).to_u64().unwrap(), false),
+            "size",
+        );
+
+        let heap_ptr_after = self
             .builder
             .build_call(
                 self.module.get_function("vector_new").unwrap(),
@@ -299,45 +310,32 @@ impl<'a> Binary<'a> {
             .try_as_basic_value()
             .left()
             .unwrap();
-        // let allocated_size = self.builder.build_int_sub(
-        //     self.builder
-        //         .build_load(
-        //             self.context.i64_type(),
-        //             self.heap_address.as_pointer_value(),
-        //             "",
-        //         )
-        //         .into_int_value(),
-        //     vector_address.into_int_value(),
-        //     "allocated_size",
-        // );
-        // self.builder.build_call(
-        //     self.module
-        //         .get_function("builtin_assert")
-        //         .expect("builtin_assert should have been defined before"),
-        //     &[allocated_size.into(), size.into()],
-        //     "",
-        // );
-        // self.builder
-        //     .build_store(self.heap_address.as_pointer_value(), vector_address);
+
+        let heap_ptr_before =
+            self.builder
+                .build_int_sub(heap_ptr_after.into_int_value(), size, "heap_ptr");
 
         let data = self.builder.build_int_to_ptr(
-            vector_address.into_int_value(),
+            heap_ptr_before,
             self.context.i64_type().ptr_type(AddressSpace::default()),
             "int_to_ptr",
         );
-        let vector_type = self.struct_vector_type();
 
         match init {
             None => {
                 if zero_init {
                     self.vector_zero_init(
                         function,
+                        &elem_ty,
                         self.context.i64_type().const_zero(),
                         size,
                         data,
+                        ns,
                     );
                 }
             }
+            // TODO Is it possible for the initial value to be of type u32? It needs to be
+            // determined based on the type.
             Some(init) => {
                 for (item_no, item) in init.iter().enumerate() {
                     let item = self.context.i64_type().const_int(*item as u64, false);
@@ -354,18 +352,17 @@ impl<'a> Binary<'a> {
                 }
             }
         }
-        let vector_alloca = self.build_alloca(function, self.struct_vector_type(), "vector_alloca");
-        let len = self
-            .builder
-            .build_struct_gep(vector_type, vector_alloca, 0, "vector_len")
-            .unwrap();
-        self.builder.build_store(len, size);
-        let data_ptr = self
-            .builder
-            .build_struct_gep(vector_type, vector_alloca, 1, "vector_data")
-            .unwrap();
-        self.builder.build_store(data_ptr, data);
-        vector_alloca
+
+        self.builder
+            .build_call(
+                self.module.get_function("vector_new_init").unwrap(),
+                &[size.into(), data.into()],
+                "",
+            )
+            .try_as_basic_value()
+            .left()
+            .unwrap()
+            .into_pointer_value()
     }
 
     pub(crate) fn struct_vector_type(&self) -> BasicTypeEnum<'a> {
@@ -381,7 +378,7 @@ impl<'a> Binary<'a> {
     pub(crate) fn contract_input_type(&self) -> BasicTypeEnum<'a> {
         let length_type = self.context.i64_type();
         let func_selector_type = self.context.i64_type();
-        let data_array_type = self.context.i64_type().ptr_type(AddressSpace::default());
+        let data_array_type = self.context.i64_type();
         let struct_type = self.context.struct_type(
             &[
                 func_selector_type.into(),
@@ -397,7 +394,7 @@ impl<'a> Binary<'a> {
     pub(crate) fn contract_input(
         &self,
         input: BasicValueEnum<'a>,
-    ) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
+    ) -> (IntValue<'a>, IntValue<'a>, IntValue<'a>) {
         let input_ty = self.contract_input_type();
         let selector = self
             .builder
@@ -424,13 +421,13 @@ impl<'a> Binary<'a> {
         let data = self
             .builder
             .build_load(
-                self.context.i64_type().ptr_type(AddressSpace::default()),
+                self.context.i64_type(),
                 self.builder
                     .build_struct_gep(input_ty, input.into_pointer_value(), 2, "input_data")
                     .unwrap(),
                 "data",
             )
-            .into_pointer_value();
+            .into_int_value();
 
         (selector, length, data)
     }
@@ -485,9 +482,11 @@ impl<'a> Binary<'a> {
     pub fn vector_zero_init(
         &self,
         function: FunctionValue<'a>,
+        ty: &Type,
         from: IntValue<'a>,
         to: IntValue<'a>,
         data_ref: PointerValue<'a>,
+        ns: &Namespace,
     ) {
         let cond = self.context.append_basic_block(function, "cond");
         let body = self.context.append_basic_block(function, "body");
@@ -518,7 +517,7 @@ impl<'a> Binary<'a> {
 
         let index_access = unsafe {
             self.builder.build_gep(
-                self.context.i64_type(),
+                self.llvm_type(ty, ns),
                 data_ref,
                 &[index_value],
                 "index_access",
@@ -526,7 +525,7 @@ impl<'a> Binary<'a> {
         };
 
         self.builder
-            .build_store(index_access, self.context.i64_type().const_zero());
+            .build_store(index_access, ty.default(&self, function, ns).unwrap());
 
         let next_index =
             self.builder
