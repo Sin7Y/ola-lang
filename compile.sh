@@ -19,7 +19,8 @@ compile_files() {
         fi
 
         mkdir -p "$dst_dir"
-
+        
+        echo "Compiling $src_file..."
         ./target/debug/olac compile "$src_file" --gen "$gen_type" --output "$dst_dir"
     done
 }
