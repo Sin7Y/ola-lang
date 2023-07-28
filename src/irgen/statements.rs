@@ -1,18 +1,18 @@
+use indexmap::IndexMap;
 use inkwell::types::BasicTypeEnum;
-use inkwell::values::{BasicValue, BasicValueEnum};
+use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
+use inkwell::AddressSpace;
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
 
 use super::expression::expression;
+use super::functions::Vartable;
 use super::storage::storage_delete;
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::emit_function_call;
-use crate::irgen::functions::FunctionContext;
-use crate::sema::ast::Type::Uint;
 use crate::sema::ast::{
     self, ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
 };
-use ola_parser::program;
 use ola_parser::program::Loc::IRgen;
 
 /// Resolve a statement, which might be a block of statements or an entire body
@@ -20,23 +20,24 @@ use ola_parser::program::Loc::IRgen;
 pub(crate) fn statement<'a>(
     stmt: &Statement,
     bin: &mut Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
     match stmt {
         Statement::Block { statements, .. } => {
             for stmt in statements {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
             }
         }
         Statement::VariableDecl(_, pos, param, Some(init)) => {
-            let var_value = expression(init, bin, func_context, ns);
+            let var_value = expression(init, bin, func_value, var_table, ns);
 
             let alloca = if param.ty.is_reference_type(ns) && !param.ty.is_contract_storage() {
                 var_value.into_pointer_value()
             } else {
                 let alloca = bin.build_alloca(
-                    func_context.func_val,
+                    func_value,
                     bin.llvm_type(&param.ty, ns),
                     param.name_as_str(),
                 );
@@ -45,33 +46,30 @@ pub(crate) fn statement<'a>(
                 alloca
             };
 
-            func_context
-                .var_table
-                .insert(*pos, alloca.as_basic_value_enum());
+            var_table.insert(*pos, alloca.as_basic_value_enum());
         }
 
         Statement::VariableDecl(_, pos, param, None) => {
-            let default_expr = param.ty.default(ns).unwrap();
-            let default_value = expression(&default_expr, bin, func_context, ns);
-            func_context.var_table.insert(*pos, default_value);
+            let default_value = param.ty.default(bin, func_value, ns).unwrap();
+            var_table.insert(*pos, default_value);
         }
 
         Statement::Return(_, expr) => match expr {
             Some(expr) => {
-                let ret_value = returns(expr, bin, func_context, ns);
+                let ret_value = returns(expr, bin, func_value, var_table, ns);
                 bin.builder.build_return(Some(&ret_value.unwrap()));
             }
             None => {}
         },
         Statement::Expression(_, _, expr) => {
-            expression(expr, bin, func_context, ns);
+            expression(expr, bin, func_value, var_table, ns);
         }
 
         Statement::If(_, _, cond, then_stmt, else_stmt) if else_stmt.is_empty() => {
-            if_then(cond, bin, then_stmt, func_context, ns);
+            if_then(cond, bin, then_stmt, func_value, var_table, ns);
         }
         Statement::If(_, _, cond, then_stmt, else_stmt) => {
-            if_then_else(cond, then_stmt, else_stmt, bin, func_context, ns)
+            if_then_else(cond, then_stmt, else_stmt, bin, func_value, var_table, ns)
         }
 
         Statement::For {
@@ -81,26 +79,18 @@ pub(crate) fn statement<'a>(
             body,
             ..
         } => {
-            let cond_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "cond");
-            let body_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "body");
-            let next_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "next");
-            let end_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "endfor");
+            let cond_block = bin.context.append_basic_block(func_value, "cond");
+            let body_block = bin.context.append_basic_block(func_value, "body");
+            let next_block = bin.context.append_basic_block(func_value, "next");
+            let end_block = bin.context.append_basic_block(func_value, "endfor");
             for stmt in init {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
             }
 
             bin.builder.build_unconditional_branch(cond_block);
             bin.builder.position_at_end(cond_block);
 
-            let cond_expr = expression(cond_expr, bin, func_context, ns);
+            let cond_expr = expression(cond_expr, bin, func_value, var_table, ns);
 
             bin.builder
                 .build_conditional_branch(cond_expr.into_int_value(), body_block, end_block);
@@ -113,7 +103,7 @@ pub(crate) fn statement<'a>(
             let mut body_reachable = true;
 
             for stmt in body {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -130,7 +120,7 @@ pub(crate) fn statement<'a>(
             let mut next_reachable = true;
 
             if let Some(next) = next {
-                expression(next, bin, func_context, ns);
+                expression(next, bin, func_value, var_table, ns);
 
                 next_reachable = next.ty() != Type::Unreachable;
             }
@@ -148,18 +138,12 @@ pub(crate) fn statement<'a>(
             body,
             ..
         } => {
-            let body_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "body");
-            let next_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "next");
-            let end_block = bin
-                .context
-                .append_basic_block(func_context.func_val, "endfor");
+            let body_block = bin.context.append_basic_block(func_value, "body");
+            let next_block = bin.context.append_basic_block(func_value, "next");
+            let end_block = bin.context.append_basic_block(func_value, "endfor");
 
             for stmt in init {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
             }
 
             bin.builder.build_unconditional_branch(body_block);
@@ -175,7 +159,7 @@ pub(crate) fn statement<'a>(
             ));
             let mut body_reachable = true;
             for stmt in body {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -192,7 +176,7 @@ pub(crate) fn statement<'a>(
                 bin.builder.position_at_end(next_block);
 
                 if let Some(next) = next {
-                    expression(next, bin, func_context, ns);
+                    expression(next, bin, func_value, var_table, ns);
 
                     body_reachable = next.ty() != Type::Unreachable;
                 }
@@ -213,22 +197,16 @@ pub(crate) fn statement<'a>(
         }
 
         Statement::While(_, _, cond_expr, body_stmt) => {
-            let body = bin
-                .context
-                .append_basic_block(func_context.func_val, "body");
-            let cond = bin
-                .context
-                .append_basic_block(func_context.func_val, "cond");
+            let body = bin.context.append_basic_block(func_value, "body");
+            let cond = bin.context.append_basic_block(func_value, "cond");
 
-            let end = bin
-                .context
-                .append_basic_block(func_context.func_val, "endwhile");
+            let end = bin.context.append_basic_block(func_value, "endwhile");
 
             bin.builder.build_unconditional_branch(cond);
 
             bin.builder.position_at_end(cond);
 
-            let cond_expr = expression(cond_expr, bin, func_context, ns);
+            let cond_expr = expression(cond_expr, bin, func_value, var_table, ns);
 
             bin.builder
                 .build_conditional_branch(cond_expr.into_int_value(), body, end);
@@ -240,7 +218,7 @@ pub(crate) fn statement<'a>(
             let mut body_reachable = true;
 
             for stmt in body_stmt {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -254,16 +232,10 @@ pub(crate) fn statement<'a>(
             bin.builder.position_at_end(end);
         }
         Statement::DoWhile(_, _, body_stmt, cond_expr) => {
-            let body = bin
-                .context
-                .append_basic_block(func_context.func_val, "body");
-            let cond = bin
-                .context
-                .append_basic_block(func_context.func_val, "cond");
+            let body = bin.context.append_basic_block(func_value, "body");
+            let cond = bin.context.append_basic_block(func_value, "cond");
 
-            let end = bin
-                .context
-                .append_basic_block(func_context.func_val, "enddowhile");
+            let end = bin.context.append_basic_block(func_value, "enddowhile");
 
             bin.builder.build_unconditional_branch(body);
 
@@ -274,7 +246,7 @@ pub(crate) fn statement<'a>(
             let mut body_reachable = true;
 
             for stmt in body_stmt {
-                statement(stmt, bin, func_context, ns);
+                statement(stmt, bin, func_value, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -285,7 +257,7 @@ pub(crate) fn statement<'a>(
 
             bin.builder.position_at_end(cond);
 
-            let cond_expr = expression(cond_expr, bin, func_context, ns);
+            let cond_expr = expression(cond_expr, bin, func_value, var_table, ns);
 
             bin.builder
                 .build_conditional_branch(cond_expr.into_int_value(), body, end);
@@ -293,11 +265,13 @@ pub(crate) fn statement<'a>(
             bin.builder.position_at_end(end);
         }
         Statement::Delete(_, ty, expr) => {
-            let mut slot = expression(expr, bin, func_context, ns);
-            storage_delete(bin, ty, &mut slot, func_context.func_val, ns);
+            let mut slot = expression(expr, bin, func_value, var_table, ns);
+            storage_delete(bin, ty, &mut slot, func_value, ns);
         }
 
-        Statement::Destructure(_, fields, expr) => destructure(bin, fields, expr, func_context, ns),
+        Statement::Destructure(_, fields, expr) => {
+            destructure(bin, fields, expr, func_value, var_table, ns)
+        }
     }
 }
 
@@ -306,18 +280,15 @@ fn if_then<'a>(
     cond: &Expression,
     bin: &mut Binary<'a>,
     then_stmt: &[Statement],
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
     let pos = bin.builder.get_insert_block().unwrap();
-    let cond = expression(cond, bin, func_context, ns);
+    let cond = expression(cond, bin, func_value, var_table, ns);
 
-    let then = bin
-        .context
-        .append_basic_block(func_context.func_val, "then");
-    let endif = bin
-        .context
-        .append_basic_block(func_context.func_val, "enif");
+    let then = bin.context.append_basic_block(func_value, "then");
+    let endif = bin.context.append_basic_block(func_value, "enif");
     bin.builder.position_at_end(pos);
 
     bin.builder
@@ -325,7 +296,7 @@ fn if_then<'a>(
     bin.builder.position_at_end(then);
     let mut reachable = true;
     for stmt in then_stmt {
-        statement(stmt, bin, func_context, ns);
+        statement(stmt, bin, func_value, var_table, ns);
         reachable = stmt.reachable();
     }
 
@@ -341,21 +312,16 @@ fn if_then_else<'a>(
     then_stmt: &[Statement],
     else_stmt: &[Statement],
     bin: &mut Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
     let pos = bin.builder.get_insert_block().unwrap();
-    let cond = expression(cond, bin, func_context, ns);
+    let cond = expression(cond, bin, func_value, var_table, ns);
 
-    let then = bin
-        .context
-        .append_basic_block(func_context.func_val, "then");
-    let else_ = bin
-        .context
-        .append_basic_block(func_context.func_val, "else");
-    let endif = bin
-        .context
-        .append_basic_block(func_context.func_val, "enif");
+    let then = bin.context.append_basic_block(func_value, "then");
+    let else_ = bin.context.append_basic_block(func_value, "else");
+    let endif = bin.context.append_basic_block(func_value, "enif");
     bin.builder.position_at_end(pos);
 
     bin.builder
@@ -363,7 +329,7 @@ fn if_then_else<'a>(
     bin.builder.position_at_end(then);
     let mut reachable = true;
     for stmt in then_stmt {
-        statement(stmt, bin, func_context, ns);
+        statement(stmt, bin, func_value, var_table, ns);
         reachable = stmt.reachable();
     }
 
@@ -375,7 +341,7 @@ fn if_then_else<'a>(
 
     reachable = true;
     for stmt in else_stmt {
-        statement(stmt, bin, func_context, ns);
+        statement(stmt, bin, func_value, var_table, ns);
         reachable = stmt.reachable();
     }
     if reachable {
@@ -388,20 +354,21 @@ fn if_then_else<'a>(
 fn returns<'a>(
     expr: &Expression,
     bin: &Binary<'a>,
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) -> Option<BasicValueEnum<'a>> {
     // Can only be another function call without returns
     let uncast_values = match expr {
         // TODO ADD ConditionalOperator
         ast::Expression::FunctionCall { .. } => {
-            let (ret, _) = emit_function_call(expr, bin, func_context, ns);
+            let (ret, _) = emit_function_call(expr, bin, func_value, var_table, ns);
             ret
         }
         ast::Expression::List { list, .. } => {
             let res = list
                 .iter()
-                .map(|e| expression(e, bin, func_context, ns))
+                .map(|e| expression(e, bin, func_value, var_table, ns))
                 .collect::<Vec<BasicValueEnum>>();
             // Create the struct type based on the list length
             let struct_type = bin.context.struct_type(
@@ -411,7 +378,7 @@ fn returns<'a>(
                 false,
             );
             // Allocate the struct
-            let struct_ptr = bin.build_alloca(func_context.func_val, struct_type, "list_struct");
+            let struct_ptr = bin.build_alloca(func_value, struct_type, "list_struct");
 
             // Store the values in the struct
             for (index, value) in res.into_iter().enumerate() {
@@ -426,41 +393,18 @@ fn returns<'a>(
             Some(struct_ptr.into())
         }
         // Can be any other expression
-        _ => Some(expression(expr, bin, func_context, ns)),
+        _ => Some(expression(expr, bin, func_value, var_table, ns)),
     };
 
     uncast_values
 }
 
-// fn try_load<'a>(
-//     bin: &Binary<'a>,
-//     ret: BasicValueEnum,
-//     func_context: &mut FunctionContext<'a>,
-//     ret_ty: &Type,
-//     ns: &Namespace,
-// ) -> BasicValueEnum<'a> {
-//     match ret_ty {
-//         Type::StorageRef(ty) => ret,
-//         Type::Ref(ty) => ret,
-//         Type::Uint(..) => {
-//             if ret.is_pointer_value() {
-//                 // To access the members of a structure, you need to load the
-// return value.                 let loaded_type = bin.llvm_type(ret_ty, ns);
-//                 bin.builder
-//                     .build_load(loaded_type, ret.into_pointer_value(), "")
-//             } else {
-//                 ret
-//             }
-//         }
-//         _ => ret,
-//     }
-// }
-
 fn destructure<'a>(
     bin: &mut Binary<'a>,
     fields: &[DestructureField],
     expr: &Expression,
-    func_context: &mut FunctionContext<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
     let mut is_single_value = false;
@@ -471,28 +415,24 @@ fn destructure<'a>(
         ..
     } = expr
     {
-        let cond = expression(cond, bin, func_context, ns);
-        let left_block = bin
-            .context
-            .append_basic_block(func_context.func_val, "left_value");
-        let right_block = bin
-            .context
-            .append_basic_block(func_context.func_val, "right_value");
+        let cond = expression(cond, bin, func_value, var_table, ns);
+        let left_block = bin.context.append_basic_block(func_value, "left_value");
+        let right_block = bin.context.append_basic_block(func_value, "right_value");
         let done_block = bin
             .context
-            .append_basic_block(func_context.func_val, "conditional_done");
+            .append_basic_block(func_value, "conditional_done");
 
         bin.builder
             .build_conditional_branch(cond.into_int_value(), left_block, right_block);
 
         bin.builder.position_at_end(left_block);
 
-        destructure(bin, fields, left, func_context, ns);
+        destructure(bin, fields, left, func_value, var_table, ns);
         bin.builder.build_unconditional_branch(done_block);
 
         bin.builder.position_at_end(right_block);
 
-        destructure(bin, fields, right, func_context, ns);
+        destructure(bin, fields, right, func_value, var_table, ns);
         bin.builder.build_unconditional_branch(done_block);
 
         bin.builder.position_at_end(done_block);
@@ -509,7 +449,7 @@ fn destructure<'a>(
         ast::Expression::List { list, .. } => {
             let mut values = Vec::new();
             for expr in list {
-                let elem = expression(expr, bin, func_context, ns);
+                let elem = expression(expr, bin, func_value, var_table, ns);
                 let elem_ty = bin.llvm_type(&expr.ty(), ns);
                 let elem = if expr.ty().is_fixed_reference_type() {
                     bin.builder
@@ -524,8 +464,7 @@ fn destructure<'a>(
                 values.iter().map(|val| val.get_type()).collect();
             let struct_type = bin.context.struct_type(&struct_member_types, false);
             // Create the struct instance and fill the members with the values
-            let struct_alloca =
-                bin.build_alloca(func_context.func_val, struct_type, "struct_alloca");
+            let struct_alloca = bin.build_alloca(func_value, struct_type, "struct_alloca");
             for (i, value) in values.iter().enumerate() {
                 let field_ptr = bin.builder.build_struct_gep(
                     struct_type,
@@ -540,7 +479,7 @@ fn destructure<'a>(
         _ => {
             // must be function call, either internal or external
             // function call may return multiple values, so we need to destructure them
-            let (value, single_flag) = emit_function_call(expr, bin, func_context, ns);
+            let (value, single_flag) = emit_function_call(expr, bin, func_value, var_table, ns);
             is_single_value = single_flag;
             value.unwrap()
         }
@@ -554,13 +493,12 @@ fn destructure<'a>(
             // (u32 a, u32 b) = returnTwoValues();
             DestructureField::VariableDecl(res, param) => {
                 let alloc = bin.build_alloca(
-                    func_context.func_val,
-                    bin.llvm_var_ty(&param.ty, ns),
+                    func_value,
+                    bin.llvm_type(&param.ty, ns),
                     param.name_as_str(),
                 );
-                func_context
-                    .var_table
-                    .insert(*res, alloc.as_basic_value_enum());
+
+                var_table.insert(*res, alloc.as_basic_value_enum());
                 if is_single_value {
                     bin.builder.build_store(alloc, value);
                 } else {
@@ -578,7 +516,7 @@ fn destructure<'a>(
             DestructureField::Expression(left) => {
                 let left = match left {
                     Expression::Variable { var_no, .. } => {
-                        let ret = *func_context.var_table.get(var_no).unwrap();
+                        let ret = *var_table.get(var_no).unwrap();
                         ret
                     }
                     _ => unreachable!(),
@@ -601,39 +539,75 @@ impl Type {
     /// Default value for a type, e.g. an empty string. Some types cannot
     /// have a default value, for example a reference to a variable
     /// in storage.
-    pub fn default(&self, ns: &Namespace) -> Option<Expression> {
+    pub fn default<'a>(
+        &self,
+        bin: &Binary<'a>,
+        func_value: FunctionValue<'a>,
+        ns: &Namespace,
+    ) -> Option<BasicValueEnum<'a>> {
+        let mut var_table: Vartable = IndexMap::new();
         match self {
-            Type::Uint(..) => Some(Expression::NumberLiteral {
-                loc: IRgen,
-                ty: self.clone(),
-                value: BigInt::from(0),
-            }),
-            Type::Address => Some(Expression::AddressLiteral {
-                loc: IRgen,
-                ty: self.clone(),
-                value: vec![BigInt::from(0); 4],
-            }),
-            Type::Bool => Some(Expression::BoolLiteral {
-                loc: IRgen,
-                value: false,
-            }),
-            Type::Enum(e) => ns.enums[*e].ty.default(ns),
+            Type::Uint(..) => {
+                let num_expr = Expression::NumberLiteral {
+                    loc: IRgen,
+                    ty: self.clone(),
+                    value: BigInt::from(0),
+                };
+                Some(expression(&num_expr, bin, func_value, &mut var_table, ns))
+            }
+            Type::Address => {
+                let address_expr = Expression::AddressLiteral {
+                    loc: IRgen,
+                    ty: self.clone(),
+                    value: vec![BigInt::from(0); 4],
+                };
+                Some(expression(
+                    &address_expr,
+                    bin,
+                    func_value,
+                    &mut var_table,
+                    ns,
+                ))
+            }
+            Type::Bool => {
+                let bool_expr = Expression::BoolLiteral {
+                    loc: IRgen,
+                    value: false,
+                };
+                Some(expression(&bool_expr, bin, func_value, &mut var_table, ns))
+            }
+            Type::Enum(e) => {
+                let ty = &ns.enums[*e];
+                let num_expr = Expression::NumberLiteral {
+                    loc: IRgen,
+                    ty: ty.ty.clone(),
+                    value: BigInt::from(0),
+                };
+                Some(expression(&num_expr, bin, func_value, &mut var_table, ns))
+            }
             Type::Struct(n) => {
                 // make sure all our fields have default values
                 for field in &ns.structs[*n].fields {
-                    field.ty.default(ns)?;
+                    field.ty.default(bin, func_value, ns)?;
                 }
 
-                Some(Expression::StructLiteral {
-                    loc: program::Loc::IRgen,
+                let struct_expr = Expression::StructLiteral {
+                    loc: IRgen,
                     ty: self.clone(),
                     values: Vec::new(),
-                })
+                };
+                Some(expression(
+                    &struct_expr,
+                    bin,
+                    func_value,
+                    &mut var_table,
+                    ns,
+                ))
             }
             Type::Ref(ty) => {
                 assert!(matches!(ty.as_ref(), Type::Address));
 
-                Some(Expression::GetRef {
+                let ref_expr = Expression::GetRef {
                     loc: IRgen,
                     ty: Type::Ref(Box::new(ty.as_ref().clone())),
                     expr: Box::new(Expression::NumberLiteral {
@@ -641,23 +615,21 @@ impl Type {
                         ty: ty.as_ref().clone(),
                         value: BigInt::from(0),
                     }),
-                })
+                };
+                Some(expression(&ref_expr, bin, func_value, &mut var_table, ns))
             }
             Type::StorageRef(..) => None,
             Type::Array(ty, dims) => {
-                ty.default(ns)?;
+                ty.default(bin, func_value, ns)?;
 
                 if dims.last() == Some(&ArrayLength::Dynamic) {
-                    Some(Expression::AllocDynamicBytes {
-                        loc: IRgen,
-                        ty: self.clone(),
-                        length: Box::new(Expression::NumberLiteral {
-                            loc: IRgen,
-                            ty: Uint(32),
-                            value: BigInt::zero(),
-                        }),
-                        init: None,
-                    })
+                    Some(
+                        bin.context
+                            .i64_type()
+                            .ptr_type(AddressSpace::default())
+                            .const_null()
+                            .into(),
+                    )
                 } else {
                     let dims = dims
                         .iter()
@@ -675,26 +647,23 @@ impl Type {
                         };
                         self.array_length().unwrap().to_usize().unwrap()
                     ];
-                    Some(Expression::ArrayLiteral {
+                    let array_expr = Expression::ArrayLiteral {
                         loc: IRgen,
                         ty: self.clone(),
                         dimensions: dims,
                         values,
-                    })
+                    };
+                    Some(expression(&array_expr, bin, func_value, &mut var_table, ns))
                 }
             }
             Type::Function { .. } => None,
-            Type::String => Some(Expression::AllocDynamicBytes {
-                loc: IRgen,
-                ty: self.clone(),
-                length: Box::new(Expression::NumberLiteral {
-                    loc: IRgen,
-                    ty: Uint(32),
-                    value: BigInt::zero(),
-                }),
-                init: None,
-            }),
-
+            Type::String => Some(
+                bin.context
+                    .i64_type()
+                    .ptr_type(AddressSpace::default())
+                    .const_null()
+                    .into(),
+            ),
             _ => None,
         }
     }

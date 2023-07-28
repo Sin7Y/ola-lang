@@ -33,26 +33,22 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (BasicValueEnum<'a>, IntValue<'a>) {
-    let size = calculate_size_args(bin, &args, types, func_value, ns);
-    let encode_bytes = bin.vector_new(func_value, size, None, false);
+) {
+    // let size = calculate_size_args(bin, &args, types, func_value, ns);
 
     let mut offset = bin.context.i64_type().const_zero();
-    let buffer = bin.vector_data(encode_bytes.into());
+
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
             item.clone(),
             &types[arg_no],
-            buffer,
             offset.clone(),
-            arg_no,
             bin,
             func_value,
             ns,
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
-    (encode_bytes.into(), size)
 }
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
@@ -60,7 +56,7 @@ pub(super) fn abi_encode<'a>(
 pub(super) fn abi_decode<'a>(
     bin: &Binary<'a>,
     input_length: IntValue<'a>,
-    input: PointerValue<'a>,
+    input: IntValue<'a>,
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -129,12 +125,12 @@ pub(crate) fn index_array<'a>(
     bin: &Binary<'a>,
     arr: &mut BasicValueEnum<'a>,
     ty: &mut Type,
-    elem_ty: &Type,
     dims: &[ArrayLength],
     indexes: &[IntValue<'a>],
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
+    let elem_ty = ty.elem_ty();
     let begin = dims.len() - indexes.len();
 
     for i in (begin..dims.len()).rev() {
@@ -146,7 +142,7 @@ pub(crate) fn index_array<'a>(
             Type::Array(Box::new(elem_ty.clone()), dims[0..i].to_vec())
         };
 
-        let arr = array_subscript(
+        *arr = array_subscript(
             ty,
             arr.clone(),
             indexes[dims.len() - i - 1].into(),
@@ -157,8 +153,11 @@ pub(crate) fn index_array<'a>(
 
         // We should only load if the dimension is dynamic.
         if i > 0 && dims[i - 1] == ArrayLength::Dynamic {
-            bin.builder
-                .build_load(bin.llvm_type(ty, ns), arr.into_pointer_value(), "arr");
+            *arr = bin.builder.build_load(
+                bin.llvm_type(&local_ty.clone(), ns),
+                arr.into_pointer_value(),
+                "arr",
+            );
         }
 
         *ty = local_ty;
@@ -219,7 +218,6 @@ fn set_array_loop<'a>(
             bin,
             &mut arr.clone(),
             &mut ty.clone(),
-            elem_ty,
             dims,
             &indexes[..indexes.len() - 1],
             func_value,
@@ -286,4 +284,21 @@ pub fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
         Type::UserType(t) => allow_memcpy(&ns.user_types[*t].ty, ns),
         _ => ty.is_primitive(),
     }
+}
+
+/// Calculate the num of element a dynamic array, whose dynamic dimension is
+/// the outer. It needs the variable saving the array's length.
+pub fn calculate_array_size<'a>(
+    bin: &Binary<'a>,
+    length_var: IntValue<'a>,
+    elem_ty: &Type,
+    ns: &Namespace,
+) -> IntValue<'a> {
+    let elem_size = elem_ty.memory_size_of(ns);
+    let elem_size = bin
+        .context
+        .i64_type()
+        .const_int(elem_size.to_u64().unwrap(), false);
+    bin.builder
+        .build_int_mul(length_var, elem_size, "array_elem_num")
 }

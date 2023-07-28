@@ -16,7 +16,7 @@ use super::{
 fn public_function_prelude<'a>(
     binary: &Binary<'a>,
     function: FunctionValue,
-) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
+) -> (IntValue<'a>, IntValue<'a>, IntValue<'a>) {
     let entry = binary.context.append_basic_block(function, "entry");
 
     binary.builder.position_at_end(entry);
@@ -49,7 +49,7 @@ pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
     let args = vec![
         BasicMetadataValueEnum::IntValue(selector),
         BasicMetadataValueEnum::IntValue(input_length),
-        BasicMetadataValueEnum::PointerValue(input),
+        BasicMetadataValueEnum::IntValue(input),
     ];
     bin.builder
         .build_call(function_dispatch, &args, "function_dispatch");
@@ -70,10 +70,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         &[
             bin.context.i64_type().into(),
             bin.context.i64_type().into(),
-            bin.context
-                .i64_type()
-                .ptr_type(AddressSpace::default())
-                .into(),
+            bin.context.i64_type().into(),
         ],
         false,
     );
@@ -82,7 +79,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
 
     let selector = func_value.get_nth_param(0).unwrap().into_int_value();
     let input_length = func_value.get_nth_param(1).unwrap().into_int_value();
-    let input = func_value.get_nth_param(2).unwrap().into_pointer_value();
+    let input = func_value.get_nth_param(2).unwrap().into_int_value();
 
     bin.builder.position_at_end(entry);
 
@@ -121,7 +118,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
 /// inserted.
 fn dispatch_case<'a>(
     input_length: IntValue<'a>,
-    input: PointerValue<'a>,
+    input: IntValue<'a>,
     func_no: usize,
     bin: &mut Binary<'a>,
     func_value: FunctionValue<'a>,
@@ -171,6 +168,7 @@ fn dispatch_case<'a>(
         returns.push(ret.unwrap());
         abi_encode(bin, returns, &return_tys, func_value, ns);
     }
+    bin.builder.build_return(None);
 
     case_bb
 }

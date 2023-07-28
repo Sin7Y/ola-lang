@@ -17,6 +17,16 @@ declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
 
+define ptr @vector_new_init(i64 %0, ptr %1) {
+entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %0, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %1, ptr %vector_data, align 8
+  ret ptr %vector_alloca
+}
+
 declare ptr @contract_input()
 
 declare [4 x i64] @get_storage([4 x i64])
@@ -24,6 +34,10 @@ declare [4 x i64] @get_storage([4 x i64])
 declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
+
+declare void @tape_store(i64, i64)
+
+declare i64 @tape_load(i64, i64)
 
 define i64 @var_test(i64 %0) {
 entry:
@@ -54,7 +68,7 @@ entry:
   ret i64 %11
 }
 
-define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
 entry:
   switch i64 %0, label %missing_function [
     i64 3897801033, label %func_0_dispatch
@@ -68,10 +82,9 @@ func_0_dispatch:                                  ; preds = %entry
   br i1 %3, label %inbounds, label %out_of_bounds
 
 inbounds:                                         ; preds = %func_0_dispatch
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %4 = icmp ult i64 1, %1
-  br i1 %4, label %not_all_bytes_read, label %buffer_read
+  %4 = call i64 @tape_load(i64 %2, i64 0)
+  %5 = icmp ult i64 1, %1
+  br i1 %5, label %not_all_bytes_read, label %buffer_read
 
 out_of_bounds:                                    ; preds = %func_0_dispatch
   unreachable
@@ -80,18 +93,20 @@ not_all_bytes_read:                               ; preds = %inbounds
   unreachable
 
 buffer_read:                                      ; preds = %inbounds
-  %5 = call i64 @var_test(i64 %value)
+  %6 = call i64 @var_test(i64 %4)
+  call void @tape_store(i64 0, i64 %6)
+  ret void
 }
 
 define void @call() {
 entry:
   %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, ptr }, ptr %0, i32 0, i32 0
+  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
   %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, ptr }, ptr %0, i32 0, i32 1
+  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
   %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, ptr }, ptr %0, i32 0, i32 2
-  %data = load ptr, ptr %input_data, align 8
-  call void @function_dispatch(i64 %selector, i64 %len, ptr %data)
+  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
+  %data = load i64, ptr %input_data, align 4
+  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
   unreachable
 }
