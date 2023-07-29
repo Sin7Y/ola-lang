@@ -459,8 +459,75 @@ fn lower_store_gep(
                 ctx.block_map[&ctx.cur_block],
             )]);
         }
+        Const(ConstantValue::Null(_)) => {
+            let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+            ctx.inst_seq.push(MachInstruction::new(
+                InstructionData {
+                    opcode: Opcode::MOVri,
+                    operands: vec![
+                        MOperand::output(addr.into()),
+                        MOperand::new(OperandData::Int64(0)),
+                    ],
+                },
+                ctx.block_map[&ctx.cur_block],
+            ));
+            ctx.inst_seq.append(&mut vec![MachInstruction::new(
+                InstructionData {
+                    opcode: Opcode::MSTOREr,
+                    operands: mem
+                        .into_iter()
+                        .chain(vec![MOperand::input(addr.into())].into_iter())
+                        .collect(),
+                },
+                ctx.block_map[&ctx.cur_block],
+            )]);
+        }
+        Value::Argument(a) => {
+            ctx.inst_seq.append(&mut vec![MachInstruction::new(
+                InstructionData {
+                    opcode: Opcode::MSTOREr,
+                    operands: mem
+                        .into_iter()
+                        .chain(
+                            vec![MOperand::input(ctx.arg_idx_to_vreg[&a.nth][0].into())]
+                                .into_iter(),
+                        )
+                        .collect(),
+                },
+                ctx.block_map[&ctx.cur_block],
+            )]);
+        }
         Value::Instruction(id) => {
-            let src = get_inst_output(ctx, src_ty, *id)?;
+            println!("store src ptr aggr type: {:#?}", *id);
+
+            let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+            let mut src = get_inst_output(ctx, src_ty, *id)?;
+            let inst = ctx.ir_data.inst_ref(*id);
+            if inst.opcode == IrOpcode::Alloca {
+                let fp: Reg = GR::R9.into();
+                let mut src_slot = None;
+                if let Some(slot_id) = ctx.inst_id_to_slot_id.get(id) {
+                    src_slot = Some(*slot_id);
+                }
+                println!(
+                    "store aggr pointer opcode {:?},slot {:?}",
+                    inst.opcode, src_slot
+                );
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::ADDri,
+                        operands: vec![
+                            MOperand::output(addr.into()),
+                            MOperand::new(fp.into()),
+                            MOperand::new(OperandData::Slot(src_slot.unwrap())),
+                        ],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+                src = vec![addr.into()];
+            } else {
+                // src = get_inst_output(ctx, src_ty, *id)?;
+            }
             ctx.inst_seq.append(&mut vec![MachInstruction::new(
                 InstructionData {
                     opcode: Opcode::MSTOREr,

@@ -62,6 +62,9 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     if call {
                         size = -size - 2;
                     }
+                    if size > 0 {
+                        size = -size;
+                    }
                     inst.data.operands[len - 1].data = OperandData::Int32(size);
                     function.data.instructions[inst_id] = inst;
                 }

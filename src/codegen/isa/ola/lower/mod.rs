@@ -154,6 +154,7 @@ fn get_inst_output(
 
     if ctx.ir_data.inst_ref(id).parent != ctx.cur_block {
         // The instruction indexed as `id` must be placed in another basic block
+        println!("inst output ref not current block");
         let vreg = new_empty_inst_output(ctx, ty, id);
         return Ok(vreg);
     }

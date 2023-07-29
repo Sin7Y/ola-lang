@@ -608,71 +608,118 @@ array_sort_test:
     fn codegen_vector_gep_var_test() {
         // LLVM Assembly
         let asm = r#"
-        define void @main() {
-            entry:
-              %vector_alloca5 = alloca { i64, ptr }, align 8
-              %i = alloca i64, align 8
-              %vector_alloca = alloca { i64, ptr }, align 8
-              %index_alloca = alloca i64, align 8
-              %0 = call i64 @vector_new(i64 5)
-              %int_to_ptr = inttoptr i64 %0 to ptr
-              store i64 0, ptr %index_alloca, align 4
-              br label %cond
-            
-            cond:                                             ; preds = %body, %entry
-              %index_value = load i64, ptr %index_alloca, align 4
-              %loop_cond = icmp ult i64 %index_value, 5
-              br i1 %loop_cond, label %body, label %done
-            
-            body:                                             ; preds = %cond
-              %index_access = getelementptr i64, ptr %int_to_ptr, i64 %index_value
-              store i64 0, ptr %index_access, align 4
-              %next_index = add i64 %index_value, 1
-              store i64 %next_index, ptr %index_alloca, align 4
-              br label %cond
-            
-            done:                                             ; preds = %cond
-              %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-              store i64 5, ptr %vector_len, align 4
-              %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-              store ptr %int_to_ptr, ptr %vector_data, align 8
-              store i64 0, ptr %i, align 4
-              br label %cond1
-            
-            cond1:                                            ; preds = %next, %done
-              %1 = load i64, ptr %i, align 4
-              %2 = icmp ult i64 %1, 5
-              br i1 %2, label %body2, label %endfor
-            
-            body2:                                            ; preds = %cond1
-              %3 = call i64 @vector_new(i64 1)
-              %int_to_ptr3 = inttoptr i64 %3 to ptr
-              %index_access4 = getelementptr i64, ptr %int_to_ptr3, i64 0
-              store i64 49, ptr %index_access4, align 4
-              %vector_len6 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca5, i32 0, i32 0
-              store i64 1, ptr %vector_len6, align 4
-              %vector_data7 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca5, i32 0, i32 1
-              store ptr %int_to_ptr3, ptr %vector_data7, align 8
-              %4 = load i64, ptr %i, align 4
-              %vector_len8 = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-              %length = load i64, ptr %vector_len8, align 4
-              %5 = sub i64 %length, 1
-              %6 = sub i64 %5, %4
-              call void @builtin_range_check(i64 %6)
-              %data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-              %index_access9 = getelementptr { i64, ptr }, ptr %data, i64 %4
-              store ptr %vector_alloca5, ptr %index_access9, align 8
-              br label %next
-            
-            next:                                             ; preds = %body2
-              %7 = load i64, ptr %i, align 4
-              %8 = add i64 %7, 1
-              store i64 %8, ptr %i, align 4
-              br label %cond1
-            
-            endfor:                                           ; preds = %cond1
-              ret void
-            }               
+; ModuleID = 'Voting'
+source_filename = "examples/source/storage/vote.ola"
+
+@heap_address = internal global i64 -4294967353
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+define ptr @vector_new_init(i64 %0, ptr %1) {
+entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %0, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %1, ptr %vector_data, align 8
+  ret ptr %vector_alloca
+}
+
+declare ptr @contract_input()
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+define void @main() {
+entry:
+  %i = alloca i64, align 8
+  %index_alloca = alloca i64, align 8
+  %0 = call i64 @vector_new(i64 5)
+  %heap_ptr = sub i64 %0, 5
+  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, 5
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %index_access = getelementptr { i64, ptr }, ptr %int_to_ptr, i64 %index_value
+  store ptr null, ptr %index_access, align 8
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  %1 = call ptr @vector_new_init(i64 5, ptr %int_to_ptr)
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length = load i64, ptr %vector_len, align 4
+  %2 = sub i64 %length, 1
+  %3 = sub i64 %2, 0
+  call void @builtin_range_check(i64 %3)
+  %data = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access1 = getelementptr ptr, ptr %data, i64 0
+  %4 = call i64 @vector_new(i64 2)
+  %heap_ptr2 = sub i64 %4, 2
+  %int_to_ptr3 = inttoptr i64 %heap_ptr2 to ptr
+  %index_access4 = getelementptr i64, ptr %int_to_ptr3, i64 0
+  store i64 66, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %int_to_ptr3, i64 1
+  store i64 67, ptr %index_access5, align 4
+  %5 = call ptr @vector_new_init(i64 2, ptr %int_to_ptr3)
+  store ptr %5, ptr %index_access1, align 8
+  store i64 1, ptr %i, align 4
+  br label %cond6
+
+cond6:                                            ; preds = %next, %done
+  %6 = load i64, ptr %i, align 4
+  %7 = icmp ult i64 %6, 5
+  br i1 %7, label %body7, label %endfor
+
+body7:                                            ; preds = %cond6
+  %8 = load i64, ptr %i, align 4
+  %vector_len8 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length9 = load i64, ptr %vector_len8, align 4
+  %9 = sub i64 %length9, 1
+  %10 = sub i64 %9, %8
+  call void @builtin_range_check(i64 %10)
+  %data10 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access11 = getelementptr ptr, ptr %data10, i64 %8
+  %11 = call i64 @vector_new(i64 1)
+  %heap_ptr12 = sub i64 %11, 1
+  %int_to_ptr13 = inttoptr i64 %heap_ptr12 to ptr
+  %index_access14 = getelementptr i64, ptr %int_to_ptr13, i64 0
+  store i64 65, ptr %index_access14, align 4
+  %12 = call ptr @vector_new_init(i64 1, ptr %int_to_ptr13)
+  store ptr %12, ptr %index_access11, align 8
+  br label %next
+
+next:                                             ; preds = %body7
+  %13 = load i64, ptr %i, align 4
+  %14 = add i64 %13, 1
+  store i64 %14, ptr %i, align 4
+  br label %cond6
+
+endfor:                                           ; preds = %cond6
+  ret void
+}             
 "#;
 
         // Parse the assembly and get a module
@@ -689,76 +736,6 @@ array_sort_test:
         assert_eq!(
             format!("{}", code.program),
             "main:
-.LBL0_0:
-  add r9 r9 6
-  mov r1 5
-.PROPHET0_0:
-  mov r0 psp
-  mload r0 [r0]
-  mov r6 r0
-  mov r7 0
-  mstore [r9,-6] r7
-  jmp .LBL0_1
-.LBL0_1:
-  mload r7 [r9,-6]
-  mov r8 5
-  gte r8 r8 r7
-  neq r1 r7 5
-  and r8 r8 r1
-  cjmp r8 .LBL0_2
-  jmp .LBL0_3
-.LBL0_2:
-  mov r1 0
-  mstore [r6,r7] r1
-  add r8 r7 1
-  mstore [r9,-6] r8
-  jmp .LBL0_1
-.LBL0_3:
-  mov r7 5
-  mstore [r9,-5] r7
-  mstore [r9,-4] r6
-  mov r6 0
-  mstore [r9,-3] r6
-  jmp .LBL0_4
-.LBL0_4:
-  mload r6 [r9,-3]
-  mov r7 5
-  gte r7 r7 r6
-  neq r6 r6 5
-  and r7 r7 r6
-  cjmp r7 .LBL0_5
-  jmp .LBL0_7
-.LBL0_5:
-  mov r1 1
-.PROPHET0_1:
-  mov r0 psp
-  mload r0 [r0]
-  mov r7 r0
-  mov r1 49
-  mstore [r7] r1
-  mov r1 1
-  mstore [r9,-2] r1
-  mstore [r9,-1] r7
-  mload r1 [r9,-3]
-  mload r2 [r9,-5]
-  not r7 1
-  add r7 r7 1
-  add r6 r2 r7
-  not r7 r1
-  add r7 r7 1
-  add r8 r6 r7
-  range r8
-  mload r6 [r9,-4]
-  mstore [r6,r1] r5
-  jmp .LBL0_6
-.LBL0_6:
-  mload r7 [r9,-3]
-  add r6 r7 1
-  mstore [r9,-3] r6
-  jmp .LBL0_4
-.LBL0_7:
-  add r9 r9 -6
-  end
 "
         );
     }
