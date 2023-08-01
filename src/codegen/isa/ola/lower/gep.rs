@@ -61,7 +61,7 @@ pub fn lower_gep(
     let mut mem_imm = OperandData::None;
     let mut mem_rbase = OperandData::None;
     let mut mem_ridx = OperandData::None;
-    let mut mem_mul = OperandData::None;
+    let mem_mul = OperandData::None;
 
     if matches!(base, OperandData::Slot(_)) {
         mem_slot = base
@@ -75,7 +75,7 @@ pub fn lower_gep(
         [(1, x)] if x.sext_as_i64().is_some() => {
             // mem_imm = x.to_owned();
             let imm = x.sext_as_i64().unwrap();
-            mem_imm = (imm).into();
+            mem_imm = (imm/4).into();
             println!("gep mem_imm: {:?}", mem_imm);
         }
         [(_, x)] if x.sext_as_i64().is_some() => {
@@ -83,7 +83,7 @@ pub fn lower_gep(
         }
         [(m, x)] if matches!(m, 1 | 2 | 4 | 8) => {
             mem_ridx = x.to_owned();
-            mem_mul = (*m as i64).into();
+            // mem_mul = (*m as i64).into();
             println!("gep size: {:?},idx {:?}", mem_ridx, mem_mul);
         }
         _ => simple_case = false,
@@ -736,6 +736,214 @@ endfor:                                           ; preds = %cond6
         assert_eq!(
             format!("{}", code.program),
             "main:
+"
+        );
+    }
+
+    #[test]
+    fn codegen_string_assert_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'AssertContract'
+source_filename = "examples/source/assert/string_assert.ola"
+
+@heap_address = internal global i64 -4294967353
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+define ptr @vector_new_init(i64 %0, ptr %1) {
+entry:
+  %vector_alloca = alloca { i64, ptr }, align 8
+  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
+  store i64 %0, ptr %vector_len, align 4
+  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
+  store ptr %1, ptr %vector_data, align 8
+  ret ptr %vector_alloca
+}
+
+define void @main() {
+entry:
+  %index = alloca i64, align 8
+  %0 = call i64 @vector_new(i64 5)
+  %heap_ptr = sub i64 %0, 5
+  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
+  %index_access = getelementptr i64, ptr %int_to_ptr, i64 0
+  store i64 104, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %int_to_ptr, i64 1
+  store i64 101, ptr %index_access1, align 4
+  %index_access2 = getelementptr i64, ptr %int_to_ptr, i64 2
+  store i64 108, ptr %index_access2, align 4
+  %index_access3 = getelementptr i64, ptr %int_to_ptr, i64 3
+  store i64 108, ptr %index_access3, align 4
+  %index_access4 = getelementptr i64, ptr %int_to_ptr, i64 4
+  store i64 111, ptr %index_access4, align 4
+  %1 = call ptr @vector_new_init(i64 5, ptr %int_to_ptr)
+  %2 = call i64 @vector_new(i64 5)
+  %heap_ptr5 = sub i64 %2, 5
+  %int_to_ptr6 = inttoptr i64 %heap_ptr5 to ptr
+  %index_access7 = getelementptr i64, ptr %int_to_ptr6, i64 0
+  store i64 104, ptr %index_access7, align 4
+  %index_access8 = getelementptr i64, ptr %int_to_ptr6, i64 1
+  store i64 101, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %int_to_ptr6, i64 2
+  store i64 108, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %int_to_ptr6, i64 3
+  store i64 108, ptr %index_access10, align 4
+  %index_access11 = getelementptr i64, ptr %int_to_ptr6, i64 4
+  store i64 111, ptr %index_access11, align 4
+  %3 = call ptr @vector_new_init(i64 5, ptr %int_to_ptr6)
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
+  %data_ptr12 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %length_ptr13 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length14 = load i64, ptr %length_ptr13, align 4
+  call void @builtin_assert(i64 %length, i64 %length14)
+  ;%index = alloca i64, align 8
+  store i64 0, ptr %index, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %index15 = load i64, ptr %index, align 4
+  %left_char_ptr = getelementptr i64, ptr %data_ptr, i64 %index15
+  %right_char_ptr = getelementptr i64, ptr %data_ptr12, i64 %index15
+  %left_char = load i64, ptr %left_char_ptr, align 4
+  %right_char = load i64, ptr %right_char_ptr, align 4
+  call void @builtin_assert(i64 %left_char, i64 %right_char)
+  %4 = icmp ult i64 %index15, %length
+  %next_index = add i64 %index15, 1
+  store i64 %next_index, ptr %index, align 4
+  br i1 %4, label %loop, label %end
+
+end:                                              ; preds = %loop
+  ret void
+}
+
+declare ptr @contract_input()
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+declare void @tape_store(i64, i64)
+
+declare i64 @tape_load(i64, i64)
+
+
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        println!("{:#?}", code.prophets);
+        assert_eq!(
+            format!("{}", code.program),
+            "vector_new_init:
+.LBL7_0:
+  add r9 r9 2
+  mov r5 r1
+  mov r6 r2
+  mstore [r9,-2] r5
+  mstore [r9,-1] r6
+  add r0 r9 -2
+  add r9 r9 -2
+  ret
+main:
+.LBL8_0:
+  add r9 r9 5
+  mstore [r9,-2] r9
+  mov r1 5
+.PROPHET8_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r5 r0
+  not r7 5
+  add r7 r7 1
+  add r2 r5 r7
+  mov r5 104
+  mstore [r2] r5
+  mov r5 101
+  mstore [r2,+1] r5
+  mov r5 108
+  mstore [r2,+2] r5
+  mov r5 108
+  mstore [r2,+3] r5
+  mov r5 111
+  mstore [r2,+4] r5
+  mov r1 5
+  call vector_new_init
+  mov r5 r0
+  mstore [r9,-5] r5
+  mov r1 5
+.PROPHET8_1:
+  mov r0 psp
+  mload r0 [r0]
+  mov r5 r0
+  not r7 5
+  add r7 r7 1
+  add r5 r5 r7
+  mstore [r9,-4] r5
+  mload r2 [r9,-4]
+  mov r5 104
+  mstore [r2] r5
+  mov r5 101
+  mstore [r2,+1] r5
+  mov r5 108
+  mstore [r2,+2] r5
+  mov r5 108
+  mstore [r2,+3] r5
+  mov r5 111
+  mstore [r2,+4] r5
+  mov r1 5
+  call vector_new_init
+  mov r5 r0
+  mload r6 [r9,-5]
+  mload r6 [r6,+1]
+  mload r7 [r9,-5]
+  mload r7 [r7]
+  mload r8 [r5,+1]
+  mload r5 [r5]
+  assert r7 r5
+  mov r5 0
+  mstore [r9,-3] r5
+  jmp .LBL8_1
+.LBL8_1:
+  mload r1 [r9,-3]
+  mload r2 [r6,r1]
+  mload r3 [r8,r1]
+  assert r2 r3
+  add r5 r1 1
+  mstore [r9,-3] r5
+  gte r5 r7 r1
+  neq r1 r1 r7
+  and r5 r5 r1
+  cjmp r5 .LBL8_1
+  jmp .LBL8_2
+.LBL8_2:
+  add r9 r9 -5
+  end
 "
         );
     }

@@ -8,9 +8,11 @@ use crate::codegen::{
     isa::ola::{
         instruction::{InstructionData, Opcode, Operand as MO, OperandData},
         Ola,
+        register::GR,
     },
     lower::LoweringContext,
 };
+use crate::codegen::register::Reg;
 use anyhow::Result;
 
 pub fn lower_alloca(
@@ -22,7 +24,25 @@ pub fn lower_alloca(
 ) -> Result<()> {
     if let Some(slot_id) = ctx.inst_id_to_slot_id.get(&id) {
         println!("alloca slot id exists");
-        let mem = vec![
+        let ty = ctx.types.base_mut().pointer(tys[0]);
+        //let output = new_empty_inst_output(ctx, ty, id);
+        let addr = ctx.mach_data.vregs.add_vreg_data(ty);
+
+        let fp: Reg = GR::R9.into();
+        let src_slot = Some(*slot_id);
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::ADDri,
+                operands: vec![
+                    MO::output(addr.into()),
+                    MO::new(fp.into()),
+                    MO::new(OperandData::Slot(src_slot.unwrap())),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        ctx.inst_id_to_vreg.insert(id, vec![addr]);
+        /* let mem = vec![
             MO::new(OperandData::MemStart),
             MO::new(OperandData::None),
             MO::new(OperandData::Slot(*slot_id)),
@@ -43,7 +63,7 @@ pub fn lower_alloca(
                     .collect(),
             },
             ctx.block_map[&ctx.cur_block],
-        ));
+        )); */
 
         return Ok(());
     }

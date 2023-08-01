@@ -266,7 +266,7 @@ fn lower_load_gep(
                 MOperand::new(OperandData::Int32(0 as i32)),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::VReg(idx1[0])),
-                MOperand::new(OperandData::Int32(4 as i32)),
+                MOperand::new(OperandData::None),
             ]
         }
         e => todo!("Unsupported GEP pattern for load: {:?}", e),

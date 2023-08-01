@@ -367,6 +367,7 @@ pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>
                 ));
             }
         } else {
+            println!("lower return scalar");
             let vreg = get_vreg_for_val(ctx, ty, value)?;
             let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
             assert!(ty.is_integer() || ty.is_pointer(ctx.types));
@@ -374,6 +375,7 @@ pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>
                 4 | 8 => (GR::R0.into(), Opcode::MOVrr),
                 _ => todo!(),
             };
+            println!("reg {:#?},vreg {:#?}, sz {}",reg,vreg,sz);
             ctx.inst_seq.push(MachInstruction::new(
                 InstructionData {
                     opcode,
