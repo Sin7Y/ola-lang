@@ -1,4 +1,5 @@
 pub mod alloca;
+pub mod phi;
 pub mod bin;
 pub mod br;
 pub mod call;
@@ -13,7 +14,7 @@ use crate::codegen::core::ir::{
         instruction::{
             Alloca, Br, Call, Cast, CondBr, ExtractValue, InsertValue,
             Instruction as IrInstruction, InstructionId, IntBinary, Load, Opcode as IrOpcode,
-            Operand, Ret, Store,
+            Operand, Ret, Store, Phi,
         },
         Parameter,
     },
@@ -34,6 +35,7 @@ use crate::codegen::{
 use anyhow::Result;
 
 use alloca::lower_alloca;
+use phi::lower_phi;
 use bin::{lower_bin, lower_itp};
 use br::{lower_br, lower_condbr};
 use call::{lower_call, lower_return};
@@ -109,6 +111,11 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
             ref num_elements,
             align,
         }) => lower_alloca(ctx, inst.id.unwrap(), tys, num_elements, align),
+        Operand::Phi(Phi {
+            ty,
+            ref args,
+            ref blocks,
+        }) => lower_phi(ctx, inst.id.unwrap(), ty, args, blocks),
         Operand::Load(Load {
             ref tys,
             addr,

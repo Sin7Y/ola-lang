@@ -375,7 +375,7 @@ pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>
                 4 | 8 => (GR::R0.into(), Opcode::MOVrr),
                 _ => todo!(),
             };
-            println!("reg {:#?},vreg {:#?}, sz {}",reg,vreg,sz);
+            println!("reg {:#?},vreg {:#?}, sz {}", reg, vreg, sz);
             ctx.inst_seq.push(MachInstruction::new(
                 InstructionData {
                     opcode,

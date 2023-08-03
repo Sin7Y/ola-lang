@@ -1,18 +1,17 @@
-use super::new_empty_inst_output;
 use crate::codegen::core::ir::{
     function::instruction::InstructionId, types::Type, value::ConstantValue,
 };
 use crate::codegen::isa::TargetIsa;
+use crate::codegen::register::Reg;
 use crate::codegen::{
     function::instruction::Instruction as MachInstruction,
     isa::ola::{
         instruction::{InstructionData, Opcode, Operand as MO, OperandData},
-        Ola,
         register::GR,
+        Ola,
     },
     lower::LoweringContext,
 };
-use crate::codegen::register::Reg;
 use anyhow::Result;
 
 pub fn lower_alloca(

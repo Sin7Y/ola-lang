@@ -75,7 +75,7 @@ pub fn lower_gep(
         [(1, x)] if x.sext_as_i64().is_some() => {
             // mem_imm = x.to_owned();
             let imm = x.sext_as_i64().unwrap();
-            mem_imm = (imm/4).into();
+            mem_imm = (imm / 4).into();
             println!("gep mem_imm: {:?}", mem_imm);
         }
         [(_, x)] if x.sext_as_i64().is_some() => {

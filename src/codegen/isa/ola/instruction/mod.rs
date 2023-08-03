@@ -62,7 +62,6 @@ pub enum Opcode {
 
     PROPHET,
 
-    // TODO
     Phi,
 }
 

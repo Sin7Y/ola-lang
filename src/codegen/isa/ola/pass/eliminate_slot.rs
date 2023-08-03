@@ -148,7 +148,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R9.into());
                 }
-                (OperandData::Slot(slot), OperandData::Reg(reg)) => {
+                (OperandData::Slot(_slot), OperandData::Reg(reg)) => {
                     // let off = function.slots.get(*slot).offset;
                     // let mut size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 +
                     // 1;
