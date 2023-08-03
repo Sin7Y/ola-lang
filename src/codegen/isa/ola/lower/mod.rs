@@ -1,5 +1,4 @@
 pub mod alloca;
-pub mod phi;
 pub mod bin;
 pub mod br;
 pub mod call;
@@ -7,6 +6,7 @@ pub mod extractv;
 pub mod gep;
 pub mod insertv;
 pub mod load;
+pub mod phi;
 pub mod store;
 
 use crate::codegen::core::ir::{
@@ -14,7 +14,7 @@ use crate::codegen::core::ir::{
         instruction::{
             Alloca, Br, Call, Cast, CondBr, ExtractValue, InsertValue,
             Instruction as IrInstruction, InstructionId, IntBinary, Load, Opcode as IrOpcode,
-            Operand, Ret, Store, Phi,
+            Operand, Phi, Ret, Store,
         },
         Parameter,
     },
@@ -35,7 +35,6 @@ use crate::codegen::{
 use anyhow::Result;
 
 use alloca::lower_alloca;
-use phi::lower_phi;
 use bin::{lower_bin, lower_itp};
 use br::{lower_br, lower_condbr};
 use call::{lower_call, lower_return};
@@ -43,6 +42,7 @@ use extractv::lower_extractvalue;
 use gep::lower_gep;
 use insertv::lower_insertvalue;
 use load::lower_load;
+use phi::lower_phi;
 use store::lower_store;
 
 #[derive(Clone, Copy, Default)]
