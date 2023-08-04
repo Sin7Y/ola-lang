@@ -3,7 +3,7 @@ use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
     u32_mod, u32_mul, u32_not, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
-use crate::sema::ast::ArrayLength;
+use crate::sema::ast::{ArrayLength, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
@@ -24,6 +24,7 @@ use super::storage::{
     array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
     storage_store,
 };
+use super::strings::string_location;
 use super::u32_op::u32_compare;
 
 pub fn expression<'a>(
@@ -378,14 +379,27 @@ pub fn expression<'a>(
             args,
             ..
         } => {
-            let cond = expression(&args[0], bin, func_value, var_table, ns).into_int_value();
-            let true_ = bin.context.append_basic_block(func_value, "noassert");
-            let false_ = bin.context.append_basic_block(func_value, "doassert");
-            bin.builder.build_conditional_branch(cond, true_, false_);
-            bin.builder.position_at_end(false_);
-            // TODO add a call to abort
-            bin.builder.build_unreachable();
-            bin.builder.position_at_end(true_);
+            let cond = expression(&args[0], bin, func_value, var_table, ns);
+            bin.builder.build_call(
+                bin.module
+                    .get_function("builtin_assert")
+                    .expect("builtin_assert should have been defined before"),
+                &[
+                    bin.builder
+                        .build_int_z_extend(cond.into_int_value(), bin.context.i64_type(), "")
+                        .into(),
+                    bin.context.i64_type().const_int(1, false).into(),
+                ],
+                "",
+            );
+            bin.context.i64_type().const_zero().into()
+        }
+        Expression::LibFunction {
+            kind: LibFunc::AssertString,
+            args,
+            ..
+        } => {
+            string_equal_assert(&args[0], &args[1], bin, func_value, var_table, ns);
             bin.context.i64_type().const_zero().into()
         }
 
@@ -644,9 +658,10 @@ pub fn expression<'a>(
         {
             array_literal_to_memory_array(expr, to, bin, func_value, var_table, ns)
         }
-        _ => {
-            unimplemented!("{:?}", expr)
+        Expression::StringCompare { left, right, .. } => {
+            string_compare(left, right, bin, func_value, var_table, ns)
         }
+        _ => unimplemented!("{:?}", expr),
     }
 }
 
@@ -935,7 +950,7 @@ pub fn assign_single<'a>(
                         ns,
                     );
                 }
-                Type::Ref(r) => {
+                Type::Ref(..) => {
                     bin.builder
                         .build_store(dest.into_pointer_value(), expr_right);
                 }
@@ -945,4 +960,173 @@ pub fn assign_single<'a>(
             dest
         }
     }
+}
+
+pub fn string_compare<'a>(
+    left: &StringLocation<Expression>,
+    right: &StringLocation<Expression>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    let (left, left_len) = string_location(bin, left, var_table, func_value, ns);
+    let (right, right_len) = string_location(bin, right, var_table, func_value, ns);
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[left_len.into(), right_len.into()],
+        "",
+    );
+
+    // Create a loop for comparing each character in the strings
+    let cond = bin.context.append_basic_block(func_value, "cond");
+    let body = bin.context.append_basic_block(func_value, "body");
+    let done = bin.context.append_basic_block(func_value, "done");
+    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index");
+    bin.builder
+        .build_store(index_ptr, bin.context.i64_type().const_int(0, false));
+
+    bin.builder.build_unconditional_branch(cond);
+    bin.builder.position_at_end(cond);
+
+    let index = bin
+        .builder
+        .build_load(bin.context.i64_type(), index_ptr, "index")
+        .into_int_value();
+
+    let continue_condition = bin
+        .builder
+        .build_int_compare(IntPredicate::ULT, index, left_len, "");
+    bin.builder
+        .build_conditional_branch(continue_condition, body, done);
+
+    // build the loop body
+    bin.builder.position_at_end(body);
+
+    let left_char_ptr = unsafe {
+        bin.builder
+            .build_gep(bin.context.i64_type(), left, &[index], "left_char_ptr")
+    };
+    let right_char_ptr = unsafe {
+        bin.builder
+            .build_gep(bin.context.i64_type(), right, &[index], "right_char_ptr")
+    };
+
+    let left_char = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_char_ptr, "left_char");
+    let right_char = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_char_ptr, "right_char");
+
+    let comparison = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        left_char.into_int_value(),
+        right_char.into_int_value(),
+        "comparison",
+    );
+    let next_index = bin.builder.build_int_add(
+        index,
+        bin.context.i64_type().const_int(1, false),
+        "next_index",
+    );
+    bin.builder.build_store(index_ptr, next_index);
+
+    bin.builder.build_conditional_branch(comparison, cond, done);
+    bin.builder.position_at_end(done);
+
+    bin.builder
+        .build_int_compare(IntPredicate::EQ, index, right_len, "equal")
+        .into()
+}
+
+// Compare two strings for equality  -- just for debugging
+pub fn string_equal_assert<'a>(
+    left: &Expression,
+    right: &Expression,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) {
+    let left = expression(left, bin, func_value, var_table, ns);
+    let right = expression(right, bin, func_value, var_table, ns);
+
+    let left_ptr = bin.vector_data(left);
+    let left_len = bin.vector_len(left);
+    let right_ptr = bin.vector_data(right);
+    let right_len = bin.vector_len(right);
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[left_len.into(), right_len.into()],
+        "",
+    );
+
+    // Create a loop for comparing each character in the strings
+    let cond = bin.context.append_basic_block(func_value, "cond");
+    let body = bin.context.append_basic_block(func_value, "body");
+    let done = bin.context.append_basic_block(func_value, "done");
+    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index");
+    bin.builder
+        .build_store(index_ptr, bin.context.i64_type().const_int(0, false));
+
+    bin.builder.build_unconditional_branch(cond);
+    bin.builder.position_at_end(cond);
+
+    let index = bin
+        .builder
+        .build_load(bin.context.i64_type(), index_ptr, "index")
+        .into_int_value();
+    let continue_condition = bin
+        .builder
+        .build_int_compare(IntPredicate::ULT, index, left_len, "");
+    bin.builder
+        .build_conditional_branch(continue_condition, body, done);
+
+    // build the loop body
+    bin.builder.position_at_end(body);
+
+    let left_char_ptr = unsafe {
+        bin.builder
+            .build_gep(bin.context.i64_type(), left_ptr, &[index], "left_char_ptr")
+    };
+    let right_char_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            right_ptr,
+            &[index],
+            "right_char_ptr",
+        )
+    };
+
+    let left_char = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_char_ptr, "left_char");
+    let right_char = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_char_ptr, "right_char");
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[left_char.into(), right_char.into()],
+        "",
+    );
+
+    let next_index = bin.builder.build_int_add(
+        index,
+        bin.context.i64_type().const_int(1, false),
+        "next_index",
+    );
+    bin.builder.build_store(index_ptr, next_index);
+    bin.builder.build_unconditional_branch(cond);
+
+    bin.builder.position_at_end(done);
 }

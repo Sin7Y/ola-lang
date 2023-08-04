@@ -50,8 +50,8 @@ entry:
 
 cond:                                             ; preds = %next, %entry
   %1 = load i64, ptr %i, align 4
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   %2 = icmp ult i64 %1, %length
   br i1 %2, label %body, label %endfor
 
@@ -64,13 +64,13 @@ body:                                             ; preds = %cond
   %8 = insertvalue [4 x i64] %5, i64 %7, 3
   %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
   %9 = load i64, ptr %i, align 4
-  %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
-  %length2 = load i64, ptr %vector_len1, align 4
+  %length_ptr1 = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
+  %length2 = load i64, ptr %length_ptr1, align 4
   %10 = sub i64 %length2, 1
   %11 = sub i64 %10, %9
   call void @builtin_range_check(i64 %11)
-  %data = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 1
-  %index_access = getelementptr i64, ptr %data, i64 %9
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 1
+  %index_access = getelementptr i64, ptr %data_ptr, i64 %9
   %12 = load i64, ptr %index_access, align 4
   store i64 %12, ptr %"struct member", align 4
   %"struct member3" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
@@ -265,138 +265,4 @@ entry:
 define [4 x i64] @get_caller() {
 entry:
   ret [4 x i64] [i64 402443140940559753, i64 -5438528055523826848, i64 6500940582073311439, i64 -6711892513312253938]
-}
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 2817135588, label %func_0_dispatch
-    i64 2791810083, label %func_1_dispatch
-    i64 3186728800, label %func_2_dispatch
-    i64 363199787, label %func_3_dispatch
-    i64 2868727644, label %func_4_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  %3 = call i64 @tape_load(i64 %2, i64 0)
-  %4 = add i64 1, %3
-  %5 = icmp ule i64 1, %1
-  br i1 %5, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_0_dispatch
-  %size = mul i64 %3, 1
-  %6 = call i64 @vector_new(i64 %size)
-  %heap_ptr = sub i64 %6, %size
-  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
-  %7 = call ptr @vector_new_init(i64 %size, ptr %int_to_ptr)
-  %data = getelementptr inbounds { i64, ptr }, ptr %7, i32 0, i32 1
-  %array_elem_num = mul i64 %3, 1
-  %index_ptr = alloca i64, align 8
-  store i64 0, ptr %index_ptr, align 4
-  br label %loop_body
-
-out_of_bounds:                                    ; preds = %func_0_dispatch
-  unreachable
-
-loop_body:                                        ; preds = %inbounds1, %inbounds
-  %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr i64, ptr %data, i64 %index
-  %8 = icmp ule i64 2, %1
-  br i1 %8, label %inbounds1, label %out_of_bounds2
-
-loop_end:                                         ; preds = %inbounds1
-  %9 = add i64 0, %array_elem_num
-  %10 = icmp ule i64 %9, %1
-  br i1 %10, label %inbounds3, label %out_of_bounds4
-
-inbounds1:                                        ; preds = %loop_body
-  %11 = call i64 @tape_load(i64 %2, i64 1)
-  store i64 %11, ptr %element, align 4
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %3
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-out_of_bounds2:                                   ; preds = %loop_body
-  unreachable
-
-inbounds3:                                        ; preds = %loop_end
-  %12 = add i64 0, %4
-  %13 = icmp ule i64 %12, %1
-  br i1 %13, label %inbounds5, label %out_of_bounds6
-
-out_of_bounds4:                                   ; preds = %loop_end
-  unreachable
-
-inbounds5:                                        ; preds = %inbounds3
-  %14 = add i64 0, %4
-  %15 = icmp ult i64 %14, %1
-  br i1 %15, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds6:                                   ; preds = %inbounds3
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds5
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds5
-  call void @contract_init(ptr %7)
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
-  %16 = icmp ule i64 1, %1
-  br i1 %16, label %inbounds7, label %out_of_bounds8
-
-inbounds7:                                        ; preds = %func_1_dispatch
-  %17 = call i64 @tape_load(i64 %2, i64 0)
-  %18 = icmp ult i64 1, %1
-  br i1 %18, label %not_all_bytes_read9, label %buffer_read10
-
-out_of_bounds8:                                   ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read9:                              ; preds = %inbounds7
-  unreachable
-
-buffer_read10:                                    ; preds = %inbounds7
-  call void @vote_proposal(i64 %17)
-  ret void
-
-func_2_dispatch:                                  ; preds = %entry
-  %19 = call i64 @winningProposal()
-  call void @tape_store(i64 0, i64 %19)
-  ret void
-
-func_3_dispatch:                                  ; preds = %entry
-  %20 = call i64 @getWinnerName()
-  call void @tape_store(i64 0, i64 %20)
-  ret void
-
-func_4_dispatch:                                  ; preds = %entry
-  %21 = call [4 x i64] @get_caller()
-  %22 = extractvalue [4 x i64] %21, 0
-  call void @tape_store(i64 0, i64 %22)
-  %23 = extractvalue [4 x i64] %21, 1
-  call void @tape_store(i64 1, i64 %23)
-  %24 = extractvalue [4 x i64] %21, 2
-  call void @tape_store(i64 2, i64 %24)
-  %25 = extractvalue [4 x i64] %21, 3
-  call void @tape_store(i64 3, i64 %25)
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
 }

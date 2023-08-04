@@ -274,7 +274,7 @@ fn calculate_complex_array_size<'a>(
     }
 
     let for_loop = set_array_loop(
-        bin, array, array_ty, elem_ty, dims, dimension, indexes, func_value, ns,
+        bin, array, array_ty, dims, dimension, indexes, func_value, ns,
     );
     bin.builder.position_at_end(for_loop.body_block);
 
@@ -649,7 +649,6 @@ fn encode_complex_array<'a>(
     indexes: &mut Vec<IntValue<'a>>,
 ) {
     let mut array_ty = array_ty.clone();
-    let elem_ty = array_ty.elem_ty();
     let mut array = array.clone();
     // If this dimension is dynamic, we must save its length before all elements
     if dims[dimension] == ArrayLength::Dynamic {
@@ -679,7 +678,7 @@ fn encode_complex_array<'a>(
         bin.builder.build_store(offset_var, offset_value);
     }
     let for_loop = set_array_loop(
-        bin, array, &array_ty, &elem_ty, dims, dimension, indexes, func_value, ns,
+        bin, array, &array_ty, dims, dimension, indexes, func_value, ns,
     );
     bin.builder.position_at_end(for_loop.body_block);
     if 0 == dimension {

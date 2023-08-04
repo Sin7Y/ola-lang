@@ -180,7 +180,6 @@ fn set_array_loop<'a>(
     bin: &Binary<'a>,
     arr: BasicValueEnum<'a>,
     ty: &Type,
-    elem_ty: &Type,
     dims: &[ArrayLength],
     dimension: usize,
     indexes: &mut Vec<IntValue<'a>>,
