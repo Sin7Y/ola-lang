@@ -1,4 +1,4 @@
-contract SqrtContract {
+contract AssertContract {
 
     fn main() {
        u32 a = 2;

@@ -1,7 +1,6 @@
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue},
-    AddressSpace,
+    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue},
 };
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;

@@ -1,0 +1,9 @@
+contract AssertContract {
+
+    fn main() {
+       string a = "hello";
+       string b = "hello";
+       assert(a == b);
+    }
+
+}

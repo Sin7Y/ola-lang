@@ -63,85 +63,33 @@ body:                                             ; preds = %cond
 
 done:                                             ; preds = %cond
   %1 = call ptr @vector_new_init(i64 3, ptr %int_to_ptr)
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   %2 = sub i64 %length, 1
   %3 = sub i64 %2, 0
   call void @builtin_range_check(i64 %3)
-  %data = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access1 = getelementptr i64, ptr %data, i64 0
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access1 = getelementptr i64, ptr %data_ptr, i64 0
   store i64 85, ptr %index_access1, align 4
-  %vector_len2 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length3 = load i64, ptr %vector_len2, align 4
+  %length_ptr2 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length3 = load i64, ptr %length_ptr2, align 4
   %4 = sub i64 %length3, 1
   %5 = sub i64 %4, 1
   call void @builtin_range_check(i64 %5)
-  %data4 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access5 = getelementptr i64, ptr %data4, i64 1
+  %data_ptr4 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access5 = getelementptr i64, ptr %data_ptr4, i64 1
   store i64 90, ptr %index_access5, align 4
-  %vector_len6 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length7 = load i64, ptr %vector_len6, align 4
+  %length_ptr6 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length7 = load i64, ptr %length_ptr6, align 4
   %6 = sub i64 %length7, 1
   %7 = sub i64 %6, 2
   call void @builtin_range_check(i64 %7)
-  %data8 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access9 = getelementptr i64, ptr %data8, i64 2
+  %data_ptr8 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access9 = getelementptr i64, ptr %data_ptr8, i64 2
   store i64 95, ptr %index_access9, align 4
   %"struct member" = getelementptr inbounds { i64, ptr }, ptr %struct_alloca, i32 0, i32 0
   store i64 20, ptr %"struct member", align 4
   %"struct member10" = getelementptr inbounds { i64, ptr }, ptr %struct_alloca, i32 0, i32 1
   store ptr %1, ptr %"struct member10", align 8
   ret ptr %struct_alloca
-}
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 15777857, label %func_0_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  %3 = call ptr @createStudent()
-  %"struct member" = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %elem = load i64, ptr %"struct member", align 4
-  call void @tape_store(i64 0, i64 %elem)
-  %"struct member1" = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %"struct member1", i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
-  call void @tape_store(i64 1, i64 %length)
-  %index_ptr = alloca i64, align 8
-  store i64 0, ptr %index_ptr, align 4
-  br label %loop_body
-
-loop_body:                                        ; preds = %loop_body, %func_0_dispatch
-  %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr { i64, ptr }, ptr %"struct member1", i64 %index
-  %elem2 = load i64, ptr %element, align 4
-  call void @tape_store(i64 2, i64 %elem2)
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %length
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-loop_end:                                         ; preds = %loop_body
-  %4 = add i64 %length, 1
-  %5 = add i64 1, %4
-  %6 = add i64 0, %5
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
 }

@@ -1,5 +1,5 @@
-; ModuleID = 'AddressExample'
-source_filename = "examples/source/storage/storage_address.ola"
+; ModuleID = 'AssertContract'
+source_filename = "examples/source/assert/u32_assert.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -39,29 +39,21 @@ declare void @tape_store(i64, i64)
 
 declare i64 @tape_load(i64, i64)
 
-define void @addressFunction() {
+define void @main() {
 entry:
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] [i64 402443140940559753, i64 -5438528055523826848, i64 6500940582073311439, i64 -6711892513312253938])
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 2, ptr %a, align 4
+  store i64 2, ptr %b, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = load i64, ptr %b, align 4
+  %2 = icmp eq i64 %0, %1
+  %3 = zext i1 %2 to i64
+  call void @builtin_assert(i64 %3, i64 1)
+  %4 = load i64, ptr %a, align 4
+  %5 = load i64, ptr %b, align 4
+  %6 = icmp ne i64 %4, %5
+  %7 = zext i1 %6 to i64
+  call void @builtin_assert(i64 %7, i64 1)
   ret void
-}
-
-define void @setAddress([4 x i64] %0) {
-entry:
-  %_address = alloca [4 x i64], align 8
-  store [4 x i64] %0, ptr %_address, align 4
-  %1 = load [4 x i64], ptr %_address, align 4
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %1)
-  ret void
-}
-
-define [4 x i64] @getAddress() {
-entry:
-  %0 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  ret [4 x i64] %0
-}
-
-define [4 x i64] @get_caller() {
-entry:
-  %caller_ = alloca [4 x i64], align 8
-  store [4 x i64] zeroinitializer, ptr %caller_, align 4
 }

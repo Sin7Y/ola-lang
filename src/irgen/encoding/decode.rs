@@ -600,7 +600,6 @@ fn decode_complex_array<'a>(
         bin,
         array_var.into(),
         array_ty,
-        elem_ty,
         dims,
         dimension,
         indexes,

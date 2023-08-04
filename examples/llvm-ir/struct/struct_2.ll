@@ -48,36 +48,3 @@ entry:
   store i64 3, ptr %"struct member1", align 4
   ret ptr %struct_alloca
 }
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 973764803, label %func_0_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  %3 = call ptr @myFunction()
-  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
-  %elem = load i64, ptr %"struct member", align 4
-  call void @tape_store(i64 0, i64 %elem)
-  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
-  %elem2 = load i64, ptr %"struct member1", align 4
-  call void @tape_store(i64 1, i64 %elem2)
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
-}

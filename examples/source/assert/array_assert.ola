@@ -1,0 +1,10 @@
+contract DynamicArrayExample {
+    
+    fn main() {
+       u32[] array = new u32[](3);
+       assert(array.length == 3);
+       array[0] = 1;
+       assert(array[0] == 1);
+
+    }
+}
