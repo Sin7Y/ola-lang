@@ -56,8 +56,8 @@ entry:
 
 cond:                                             ; preds = %next, %entry
   %4 = load i64, ptr %i, align 4
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   %5 = icmp ult i64 %4, %length
   br i1 %5, label %body, label %endfor
 
@@ -70,19 +70,19 @@ body:                                             ; preds = %cond
   %11 = insertvalue [4 x i64] %8, i64 %10, 3
   %"struct member" = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 0
   %12 = load i64, ptr %i, align 4
-  %vector_len1 = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
-  %length2 = load i64, ptr %vector_len1, align 4
+  %length_ptr1 = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 0
+  %length2 = load i64, ptr %length_ptr1, align 4
   %13 = sub i64 %length2, 1
   %14 = sub i64 %13, %12
   call void @builtin_range_check(i64 %14)
-  %data = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data, i64 %12
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %proposalNames_, i32 0, i32 1
+  %index_access = getelementptr ptr, ptr %data_ptr, i64 %12
   store ptr %index_access, ptr %"struct member", align 8
   %"struct member3" = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 1
   store i64 0, ptr %"struct member3", align 4
   %name = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 0
-  %vector_len4 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 0
-  %length5 = load i64, ptr %vector_len4, align 4
+  %length_ptr4 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 0
+  %length5 = load i64, ptr %length_ptr4, align 4
   %15 = call [4 x i64] @get_storage([4 x i64] %11)
   %16 = extractvalue [4 x i64] %15, 3
   %17 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length5, 3
@@ -120,8 +120,8 @@ cond6:                                            ; preds = %body7, %body
 
 body7:                                            ; preds = %cond6
   %33 = load [4 x i64], ptr %2, align 4
-  %data8 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 1
-  %index_access9 = getelementptr i64, ptr %data8, i64 %index_value
+  %data_ptr8 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 1
+  %index_access9 = getelementptr i64, ptr %data_ptr8, i64 %index_value
   %34 = load i64, ptr %index_access9, align 4
   %35 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %34, 3
   call void @set_storage([4 x i64] %33, [4 x i64] %35)
@@ -197,55 +197,51 @@ entry:
   %19 = call [4 x i64] @get_storage([4 x i64] %18)
   %20 = extractvalue [4 x i64] %19, 3
   %21 = icmp eq i64 %20, 0
-  br i1 %21, label %noassert, label %doassert
-
-noassert:                                         ; preds = %entry
-  %22 = load i64, ptr %sender, align 4
-  %23 = add i64 %22, 0
-  %24 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %23, 3
-  call void @set_storage([4 x i64] %24, [4 x i64] [i64 0, i64 0, i64 0, i64 1])
-  %25 = load i64, ptr %sender, align 4
-  %26 = add i64 %25, 1
-  %27 = load i64, ptr %proposal_, align 4
-  %28 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %26, 3
+  %22 = zext i1 %21 to i64
+  call void @builtin_assert(i64 %22, i64 1)
+  %23 = load i64, ptr %sender, align 4
+  %24 = add i64 %23, 0
+  %25 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %24, 3
+  call void @set_storage([4 x i64] %25, [4 x i64] [i64 0, i64 0, i64 0, i64 1])
+  %26 = load i64, ptr %sender, align 4
+  %27 = add i64 %26, 1
+  %28 = load i64, ptr %proposal_, align 4
   %29 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %27, 3
-  call void @set_storage([4 x i64] %28, [4 x i64] %29)
-  %30 = load i64, ptr %proposal_, align 4
-  %31 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
-  %32 = extractvalue [4 x i64] %31, 3
-  %33 = sub i64 %32, 1
-  %34 = sub i64 %33, %30
-  call void @builtin_range_check(i64 %34)
-  %35 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
-  %36 = extractvalue [4 x i64] %35, 3
-  %37 = add i64 %36, %30
-  %38 = insertvalue [4 x i64] %35, i64 %37, 3
-  %39 = extractvalue [4 x i64] %38, 3
-  %40 = add i64 %39, 1
-  %41 = insertvalue [4 x i64] %38, i64 %40, 3
-  %42 = load i64, ptr %proposal_, align 4
-  %43 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
-  %44 = extractvalue [4 x i64] %43, 3
-  %45 = sub i64 %44, 1
-  %46 = sub i64 %45, %42
-  call void @builtin_range_check(i64 %46)
-  %47 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
-  %48 = extractvalue [4 x i64] %47, 3
-  %49 = add i64 %48, %42
-  %50 = insertvalue [4 x i64] %47, i64 %49, 3
-  %51 = extractvalue [4 x i64] %50, 3
-  %52 = add i64 %51, 1
-  %53 = insertvalue [4 x i64] %50, i64 %52, 3
-  %54 = call [4 x i64] @get_storage([4 x i64] %53)
-  %55 = extractvalue [4 x i64] %54, 3
-  %56 = add i64 %55, 1
-  call void @builtin_range_check(i64 %56)
-  %57 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %56, 3
-  call void @set_storage([4 x i64] %41, [4 x i64] %57)
+  %30 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %28, 3
+  call void @set_storage([4 x i64] %29, [4 x i64] %30)
+  %31 = load i64, ptr %proposal_, align 4
+  %32 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+  %33 = extractvalue [4 x i64] %32, 3
+  %34 = sub i64 %33, 1
+  %35 = sub i64 %34, %31
+  call void @builtin_range_check(i64 %35)
+  %36 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
+  %37 = extractvalue [4 x i64] %36, 3
+  %38 = add i64 %37, %31
+  %39 = insertvalue [4 x i64] %36, i64 %38, 3
+  %40 = extractvalue [4 x i64] %39, 3
+  %41 = add i64 %40, 1
+  %42 = insertvalue [4 x i64] %39, i64 %41, 3
+  %43 = load i64, ptr %proposal_, align 4
+  %44 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2])
+  %45 = extractvalue [4 x i64] %44, 3
+  %46 = sub i64 %45, 1
+  %47 = sub i64 %46, %43
+  call void @builtin_range_check(i64 %47)
+  %48 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 2])
+  %49 = extractvalue [4 x i64] %48, 3
+  %50 = add i64 %49, %43
+  %51 = insertvalue [4 x i64] %48, i64 %50, 3
+  %52 = extractvalue [4 x i64] %51, 3
+  %53 = add i64 %52, 1
+  %54 = insertvalue [4 x i64] %51, i64 %53, 3
+  %55 = call [4 x i64] @get_storage([4 x i64] %54)
+  %56 = extractvalue [4 x i64] %55, 3
+  %57 = add i64 %56, 1
+  call void @builtin_range_check(i64 %57)
+  %58 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %57, 3
+  call void @set_storage([4 x i64] %42, [4 x i64] %58)
   ret void
-
-doassert:                                         ; preds = %entry
-  unreachable
 }
 
 define i64 @winningProposal() {
@@ -366,8 +362,8 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %30 = load [4 x i64], ptr %0, align 4
-  %data = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 1
-  %index_access = getelementptr i64, ptr %data, i64 %index_value
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 1
+  %index_access = getelementptr i64, ptr %data_ptr, i64 %index_value
   %31 = call [4 x i64] @get_storage([4 x i64] %30)
   %32 = extractvalue [4 x i64] %31, 3
   store i64 %32, ptr %index_access, align 4
@@ -414,13 +410,13 @@ body:                                             ; preds = %cond
 
 done:                                             ; preds = %cond
   %3 = call ptr @vector_new_init(i64 3, ptr %int_to_ptr)
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   %4 = sub i64 %length, 1
   %5 = sub i64 %4, 0
   call void @builtin_range_check(i64 %5)
-  %data = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %index_access1 = getelementptr ptr, ptr %data, i64 0
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %index_access1 = getelementptr ptr, ptr %data_ptr, i64 0
   %6 = call i64 @vector_new(i64 10)
   %heap_ptr2 = sub i64 %6, 10
   %int_to_ptr3 = inttoptr i64 %heap_ptr2 to ptr
@@ -446,13 +442,13 @@ done:                                             ; preds = %cond
   store i64 49, ptr %index_access13, align 4
   %7 = call ptr @vector_new_init(i64 10, ptr %int_to_ptr3)
   store ptr %7, ptr %index_access1, align 8
-  %vector_len14 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %length15 = load i64, ptr %vector_len14, align 4
+  %length_ptr14 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length15 = load i64, ptr %length_ptr14, align 4
   %8 = sub i64 %length15, 1
   %9 = sub i64 %8, 1
   call void @builtin_range_check(i64 %9)
-  %data16 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %index_access17 = getelementptr ptr, ptr %data16, i64 1
+  %data_ptr16 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %index_access17 = getelementptr ptr, ptr %data_ptr16, i64 1
   %10 = call i64 @vector_new(i64 10)
   %heap_ptr18 = sub i64 %10, 10
   %int_to_ptr19 = inttoptr i64 %heap_ptr18 to ptr
@@ -478,13 +474,13 @@ done:                                             ; preds = %cond
   store i64 50, ptr %index_access29, align 4
   %11 = call ptr @vector_new_init(i64 10, ptr %int_to_ptr19)
   store ptr %11, ptr %index_access17, align 8
-  %vector_len30 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %length31 = load i64, ptr %vector_len30, align 4
+  %length_ptr30 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length31 = load i64, ptr %length_ptr30, align 4
   %12 = sub i64 %length31, 1
   %13 = sub i64 %12, 2
   call void @builtin_range_check(i64 %13)
-  %data32 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %index_access33 = getelementptr ptr, ptr %data32, i64 2
+  %data_ptr32 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %index_access33 = getelementptr ptr, ptr %data_ptr32, i64 2
   %14 = call i64 @vector_new(i64 10)
   %heap_ptr34 = sub i64 %14, 10
   %int_to_ptr35 = inttoptr i64 %heap_ptr34 to ptr
@@ -515,8 +511,8 @@ done:                                             ; preds = %cond
 
 cond46:                                           ; preds = %next, %done
   %16 = load i64, ptr %i, align 4
-  %vector_len48 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %length49 = load i64, ptr %vector_len48, align 4
+  %length_ptr48 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length49 = load i64, ptr %length_ptr48, align 4
   %17 = icmp ult i64 %16, %length49
   br i1 %17, label %body47, label %endfor
 
@@ -529,19 +525,19 @@ body47:                                           ; preds = %cond46
   %23 = insertvalue [4 x i64] %20, i64 %22, 3
   %"struct member" = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 0
   %24 = load i64, ptr %i, align 4
-  %vector_len50 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %length51 = load i64, ptr %vector_len50, align 4
+  %length_ptr50 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length51 = load i64, ptr %length_ptr50, align 4
   %25 = sub i64 %length51, 1
   %26 = sub i64 %25, %24
   call void @builtin_range_check(i64 %26)
-  %data52 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %index_access53 = getelementptr ptr, ptr %data52, i64 %24
+  %data_ptr52 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %index_access53 = getelementptr ptr, ptr %data_ptr52, i64 %24
   store ptr %index_access53, ptr %"struct member", align 8
   %"struct member54" = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 1
   store i64 0, ptr %"struct member54", align 4
   %name = getelementptr inbounds { ptr, i64 }, ptr %struct_alloca, i32 0, i32 0
-  %vector_len55 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 0
-  %length56 = load i64, ptr %vector_len55, align 4
+  %length_ptr55 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 0
+  %length56 = load i64, ptr %length_ptr55, align 4
   %27 = call [4 x i64] @get_storage([4 x i64] %23)
   %28 = extractvalue [4 x i64] %27, 3
   %29 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length56, 3
@@ -579,8 +575,8 @@ cond57:                                           ; preds = %body58, %body47
 
 body58:                                           ; preds = %cond57
   %45 = load [4 x i64], ptr %1, align 4
-  %data63 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 1
-  %index_access64 = getelementptr i64, ptr %data63, i64 %index_value61
+  %data_ptr63 = getelementptr inbounds { i64, ptr }, ptr %name, i32 0, i32 1
+  %index_access64 = getelementptr i64, ptr %data_ptr63, i64 %index_value61
   %46 = load i64, ptr %index_access64, align 4
   %47 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %46, 3
   call void @set_storage([4 x i64] %45, [4 x i64] %47)
@@ -625,210 +621,4 @@ done68:                                           ; preds = %cond66
   %60 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
   call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 2], [4 x i64] %60)
   br label %next
-}
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 3920769769, label %func_0_dispatch
-    i64 2791810083, label %func_1_dispatch
-    i64 3186728800, label %func_2_dispatch
-    i64 363199787, label %func_3_dispatch
-    i64 2868727644, label %func_4_dispatch
-    i64 3501063903, label %func_5_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  %offset_var = alloca i64, align 8
-  store i64 0, ptr %offset_var, align 4
-  %3 = load i64, ptr %offset_var, align 4
-  %4 = call i64 @tape_load(i64 %2, i64 %3)
-  %5 = add i64 %3, 1
-  %6 = icmp ule i64 %5, %1
-  br i1 %6, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_0_dispatch
-  store i64 %5, ptr %offset_var, align 4
-  %size = mul i64 %4, 1
-  %7 = call i64 @vector_new(i64 %size)
-  %heap_ptr = sub i64 %7, %size
-  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
-  %8 = call ptr @vector_new_init(i64 %size, ptr %int_to_ptr)
-  store ptr %8, ptr null, align 8
-  %index_ptr = alloca i64, align 8
-  store i64 0, ptr %index_ptr, align 4
-  %index = load i64, ptr %index_ptr, align 4
-  br label %cond
-
-out_of_bounds:                                    ; preds = %func_0_dispatch
-  unreachable
-
-cond:                                             ; preds = %next, %inbounds
-  %length = load i64, ptr null, align 4
-  %9 = icmp ult i64 %index, %length
-  br i1 %9, label %body, label %end_for
-
-next:                                             ; preds = %loop_end
-  %index14 = load i64, ptr %index_ptr, align 4
-  %10 = add i64 %index14, 1
-  store i64 %10, ptr %index_ptr, align 4
-  br label %cond
-
-body:                                             ; preds = %cond
-  %11 = call i64 @tape_load(i64 %2, i64 %3)
-  %12 = add i64 1, %11
-  %13 = add i64 %3, 1
-  %14 = icmp ule i64 %13, %1
-  br i1 %14, label %inbounds1, label %out_of_bounds2
-
-end_for:                                          ; preds = %cond
-  %15 = load ptr, ptr null, align 8
-  %16 = load i64, ptr %offset_var, align 4
-  %17 = sub i64 %16, 0
-  %18 = add i64 0, %17
-  %19 = icmp ult i64 %18, %1
-  br i1 %19, label %not_all_bytes_read, label %buffer_read
-
-inbounds1:                                        ; preds = %body
-  %20 = add i64 %3, %12
-  %21 = icmp ule i64 %20, %1
-  br i1 %21, label %inbounds3, label %out_of_bounds4
-
-out_of_bounds2:                                   ; preds = %body
-  unreachable
-
-inbounds3:                                        ; preds = %inbounds1
-  %size5 = mul i64 %11, 1
-  %22 = call i64 @vector_new(i64 %size5)
-  %heap_ptr6 = sub i64 %22, %size5
-  %int_to_ptr7 = inttoptr i64 %heap_ptr6 to ptr
-  %23 = call ptr @vector_new_init(i64 %size5, ptr %int_to_ptr7)
-  %data = getelementptr inbounds { i64, ptr }, ptr %23, i32 0, i32 1
-  %index_ptr8 = alloca i64, align 8
-  store i64 0, ptr %index_ptr8, align 4
-  br label %loop_body
-
-out_of_bounds4:                                   ; preds = %inbounds1
-  unreachable
-
-loop_body:                                        ; preds = %inbounds10, %inbounds3
-  %index9 = load i64, ptr %index_ptr8, align 4
-  %element = getelementptr i64, ptr %data, i64 %index9
-  %24 = add i64 %13, 1
-  %25 = icmp ule i64 %24, %1
-  br i1 %25, label %inbounds10, label %out_of_bounds11
-
-loop_end:                                         ; preds = %inbounds10
-  %26 = load ptr, ptr null, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %26, i32 0, i32 0
-  %length12 = load i64, ptr %vector_len, align 4
-  %27 = sub i64 %length12, 1
-  %28 = sub i64 %27, %index
-  call void @builtin_range_check(i64 %28)
-  %data13 = getelementptr inbounds { i64, ptr }, ptr %26, i32 0, i32 1
-  %index_access = getelementptr ptr, ptr %data13, i64 %index
-  store ptr %23, ptr %index_access, align 8
-  %29 = add i64 %3, %12
-  store i64 %29, ptr %offset_var, align 4
-  br label %next
-
-inbounds10:                                       ; preds = %loop_body
-  %30 = call i64 @tape_load(i64 %2, i64 %13)
-  %offset = add i64 %13, 1
-  store i64 %30, ptr %element, align 4
-  %next_index = add i64 %index9, 1
-  store i64 %next_index, ptr %index_ptr8, align 4
-  %index_cond = icmp ult i64 %next_index, %11
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-out_of_bounds11:                                  ; preds = %loop_body
-  unreachable
-
-not_all_bytes_read:                               ; preds = %end_for
-  unreachable
-
-buffer_read:                                      ; preds = %end_for
-  call void @contract_init(ptr %15)
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
-  %31 = icmp ule i64 1, %1
-  br i1 %31, label %inbounds15, label %out_of_bounds16
-
-inbounds15:                                       ; preds = %func_1_dispatch
-  %32 = call i64 @tape_load(i64 %2, i64 0)
-  %33 = icmp ult i64 1, %1
-  br i1 %33, label %not_all_bytes_read17, label %buffer_read18
-
-out_of_bounds16:                                  ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read17:                             ; preds = %inbounds15
-  unreachable
-
-buffer_read18:                                    ; preds = %inbounds15
-  call void @vote_proposal(i64 %32)
-  ret void
-
-func_2_dispatch:                                  ; preds = %entry
-  %34 = call i64 @winningProposal()
-  call void @tape_store(i64 0, i64 %34)
-  ret void
-
-func_3_dispatch:                                  ; preds = %entry
-  %35 = call ptr @getWinnerName()
-  %vector_len19 = getelementptr inbounds { i64, ptr }, ptr %35, i32 0, i32 0
-  %length20 = load i64, ptr %vector_len19, align 4
-  call void @tape_store(i64 0, i64 %length20)
-  %data21 = getelementptr inbounds { i64, ptr }, ptr %35, i32 0, i32 1
-  %index_ptr24 = alloca i64, align 8
-  store i64 0, ptr %index_ptr24, align 4
-  br label %loop_body22
-
-loop_body22:                                      ; preds = %loop_body22, %func_3_dispatch
-  %index25 = load i64, ptr %index_ptr24, align 4
-  %element26 = getelementptr { i64, ptr }, ptr %data21, i64 %index25
-  %elem = load i64, ptr %element26, align 4
-  call void @tape_store(i64 1, i64 %elem)
-  %next_index27 = add i64 %index25, 1
-  store i64 %next_index27, ptr %index_ptr24, align 4
-  %index_cond28 = icmp ult i64 %next_index27, %length20
-  br i1 %index_cond28, label %loop_body22, label %loop_end23
-
-loop_end23:                                       ; preds = %loop_body22
-  %36 = add i64 %length20, 1
-  %37 = add i64 0, %36
-  ret void
-
-func_4_dispatch:                                  ; preds = %entry
-  %38 = call [4 x i64] @get_caller()
-  %39 = extractvalue [4 x i64] %38, 0
-  call void @tape_store(i64 0, i64 %39)
-  %40 = extractvalue [4 x i64] %38, 1
-  call void @tape_store(i64 1, i64 %40)
-  %41 = extractvalue [4 x i64] %38, 2
-  call void @tape_store(i64 2, i64 %41)
-  %42 = extractvalue [4 x i64] %38, 3
-  call void @tape_store(i64 3, i64 %42)
-  ret void
-
-func_5_dispatch:                                  ; preds = %entry
-  call void @main()
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
 }

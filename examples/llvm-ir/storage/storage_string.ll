@@ -59,8 +59,8 @@ entry:
   %index_access4 = getelementptr i64, ptr %int_to_ptr, i64 4
   store i64 111, ptr %index_access4, align 4
   %3 = call ptr @vector_new_init(i64 5, ptr %int_to_ptr)
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   %4 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
   %5 = extractvalue [4 x i64] %4, 3
   %6 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length, 3
@@ -77,8 +77,8 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %8 = load [4 x i64], ptr %1, align 4
-  %data = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %index_access5 = getelementptr i64, ptr %data, i64 %index_value
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %index_access5 = getelementptr i64, ptr %data_ptr, i64 %index_value
   %9 = load i64, ptr %index_access5, align 4
   %10 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %9, 3
   call void @set_storage([4 x i64] %8, [4 x i64] %10)
@@ -113,31 +113,4 @@ body7:                                            ; preds = %cond6
 
 done8:                                            ; preds = %cond6
   ret void
-}
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 515430227, label %func_0_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  call void @setStringLiteral()
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
 }

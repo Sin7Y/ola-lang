@@ -8,6 +8,7 @@ mod expression;
 mod functions;
 mod statements;
 pub mod storage;
+mod strings;
 pub mod u32_op;
 mod unused_variable;
 

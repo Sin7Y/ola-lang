@@ -63,35 +63,8 @@ body:                                             ; preds = %cond
 
 done:                                             ; preds = %cond
   %1 = call ptr @vector_new_init(i64 5, ptr %int_to_ptr)
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   store i64 %length, ptr %b, align 4
   ret void
-}
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  call void @main()
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
 }

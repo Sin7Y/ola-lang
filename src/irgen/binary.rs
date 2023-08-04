@@ -44,8 +44,8 @@ impl<'a> Binary<'a> {
         let mut binary = Binary::new(context, &contract.name, filename);
         gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
-        gen_func_dispatch(&mut binary, ns);
-        gen_contract_entrance(None, &mut binary);
+        // gen_func_dispatch(&mut binary, ns);
+        // gen_contract_entrance(None, &mut binary);
         binary
     }
 
@@ -453,7 +453,7 @@ impl<'a> Binary<'a> {
 
             let len = self
                 .builder
-                .build_struct_gep(vector_type, vector, 0, "vector_len")
+                .build_struct_gep(vector_type, vector, 0, "length_ptr")
                 .unwrap();
 
             self.builder
@@ -474,7 +474,7 @@ impl<'a> Binary<'a> {
         } else {
             let vector_type = self.struct_vector_type();
             self.builder
-                .build_struct_gep(vector_type, vector.into_pointer_value(), 1, "data")
+                .build_struct_gep(vector_type, vector.into_pointer_value(), 1, "data_ptr")
                 .unwrap()
         }
     }

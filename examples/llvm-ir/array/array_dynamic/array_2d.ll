@@ -63,13 +63,13 @@ body:                                             ; preds = %cond
 
 done:                                             ; preds = %cond
   %1 = call ptr @vector_new_init(i64 3, ptr %int_to_ptr)
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length = load i64, ptr %vector_len, align 4
+  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length = load i64, ptr %length_ptr, align 4
   %2 = sub i64 %length, 1
   %3 = sub i64 %2, 0
   call void @builtin_range_check(i64 %3)
-  %data = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access1 = getelementptr ptr, ptr %data, i64 0
+  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access1 = getelementptr ptr, ptr %data_ptr, i64 0
   %4 = call i64 @vector_new(i64 2)
   %heap_ptr2 = sub i64 %4, 2
   %int_to_ptr3 = inttoptr i64 %heap_ptr2 to ptr
@@ -91,47 +91,20 @@ body5:                                            ; preds = %cond4
 done6:                                            ; preds = %cond4
   %5 = call ptr @vector_new_init(i64 2, ptr %int_to_ptr3)
   store ptr %5, ptr %index_access1, align 8
-  %vector_len12 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length13 = load i64, ptr %vector_len12, align 4
+  %length_ptr12 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %length13 = load i64, ptr %length_ptr12, align 4
   %6 = sub i64 %length13, 1
   %7 = sub i64 %6, 0
   call void @builtin_range_check(i64 %7)
-  %data14 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access15 = getelementptr ptr, ptr %data14, i64 0
-  %vector_len16 = getelementptr inbounds { i64, ptr }, ptr %index_access15, i32 0, i32 0
-  %length17 = load i64, ptr %vector_len16, align 4
+  %data_ptr14 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %index_access15 = getelementptr ptr, ptr %data_ptr14, i64 0
+  %length_ptr16 = getelementptr inbounds { i64, ptr }, ptr %index_access15, i32 0, i32 0
+  %length17 = load i64, ptr %length_ptr16, align 4
   %8 = sub i64 %length17, 1
   %9 = sub i64 %8, 0
   call void @builtin_range_check(i64 %9)
-  %data18 = getelementptr inbounds { i64, ptr }, ptr %index_access15, i32 0, i32 1
-  %index_access19 = getelementptr i64, ptr %data18, i64 0
+  %data_ptr18 = getelementptr inbounds { i64, ptr }, ptr %index_access15, i32 0, i32 1
+  %index_access19 = getelementptr i64, ptr %data_ptr18, i64 0
   store i64 1, ptr %index_access19, align 4
   ret void
-}
-
-define void @function_dispatch(i64 %0, i64 %1, i64 %2) {
-entry:
-  switch i64 %0, label %missing_function [
-    i64 1008636309, label %func_0_dispatch
-  ]
-
-missing_function:                                 ; preds = %entry
-  unreachable
-
-func_0_dispatch:                                  ; preds = %entry
-  call void @processDynamicArray()
-  ret void
-}
-
-define void @call() {
-entry:
-  %0 = call ptr @contract_input()
-  %input_selector = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 0
-  %selector = load i64, ptr %input_selector, align 4
-  %input_len = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 1
-  %len = load i64, ptr %input_len, align 4
-  %input_data = getelementptr inbounds { i64, i64, i64 }, ptr %0, i32 0, i32 2
-  %data = load i64, ptr %input_data, align 4
-  call void @function_dispatch(i64 %selector, i64 %len, i64 %data)
-  unreachable
 }

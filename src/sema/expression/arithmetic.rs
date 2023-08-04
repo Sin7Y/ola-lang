@@ -355,6 +355,15 @@ pub(super) fn not_equal(
     let left_type = left.ty();
     let right_type = right.ty();
 
+    if let Some(expr) =
+        is_string_equal(loc, &left, &left_type, &right, &right_type, ns, diagnostics)?
+    {
+        return Ok(Expression::Not {
+            loc: *loc,
+            expr: expr.into(),
+        });
+    }
+
     let ty = coerce(&left_type, &l.loc(), &right_type, &r.loc(), ns, diagnostics)?;
     Ok(Expression::NotEqual {
         loc: *loc,
