@@ -136,7 +136,9 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
         Operand::IntBinary(IntBinary { ty, ref args, .. }) => {
             lower_bin(ctx, inst.id.unwrap(), inst.opcode, ty, args)
         }
-        Operand::Cast(Cast { ref tys, arg }) if inst.opcode == IrOpcode::IntToPtr => {
+        Operand::Cast(Cast { ref tys, arg })
+            if inst.opcode == IrOpcode::IntToPtr || inst.opcode == IrOpcode::PtrToInt =>
+        {
             lower_itp(ctx, inst.id.unwrap(), tys, arg)
         }
         Operand::Br(Br { block }) => lower_br(ctx, block),
