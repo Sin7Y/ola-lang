@@ -102,7 +102,7 @@ impl RegisterClass for RegClass {
 
     fn gpr_list(&self) -> Vec<Reg> {
         match self {
-            RegClass::GR => vec![GR::R5, GR::R6, GR::R7, GR::R8]
+            RegClass::GR => vec![GR::R8, GR::R7, GR::R6, GR::R5]
                 .into_iter()
                 .map(|r| r.into())
                 .collect(),

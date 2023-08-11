@@ -2549,60 +2549,59 @@ body10:                                           ; preds = %cond9
   %18 = extractvalue [4 x i64] %17, 3
   %19 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
   %20 = extractvalue [4 x i64] %19, 3
-  %21 = add i64 %20, %18
-  %22 = insertvalue [4 x i64] %19, i64 %21, 3
+  %21 = mul i64 %18, 2
+  %22 = add i64 %20, %21
+  %23 = insertvalue [4 x i64] %19, i64 %22, 3
   %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  %23 = load i64, ptr %i, align 4
+  %24 = load i64, ptr %i, align 4
   %length12 = load i64, ptr %heap_start_ptr, align 4
-  %24 = sub i64 %length12, 1
-  %25 = sub i64 %24, %23
-  call void @builtin_range_check(i64 %25)
-  %26 = ptrtoint ptr %heap_start_ptr to i64
-  %27 = add i64 %26, 1
-  %vector_data13 = inttoptr i64 %27 to ptr
-  %index_access14 = getelementptr i64, ptr %vector_data13, i64 %23
-  %28 = load i64, ptr %index_access14, align 4
-  store i64 %28, ptr %"struct member", align 4
+  %25 = sub i64 %length12, 1
+  %26 = sub i64 %25, %24
+  call void @builtin_range_check(i64 %26)
+  %27 = ptrtoint ptr %heap_start_ptr to i64
+  %28 = add i64 %27, 1
+  %vector_data13 = inttoptr i64 %28 to ptr
+  %index_access14 = getelementptr i64, ptr %vector_data13, i64 %24
+  %29 = load i64, ptr %index_access14, align 4
+  store i64 %29, ptr %"struct member", align 4
   %"struct member15" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  %29 = load i64, ptr %i, align 4
-  store i64 %29, ptr %"struct member15", align 4
+  %30 = load i64, ptr %i, align 4
+  store i64 %30, ptr %"struct member15", align 4
   %name = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  %30 = load i64, ptr %name, align 4
-  %31 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %30, 3
-  call void @set_storage([4 x i64] %22, [4 x i64] %31)
-  %32 = extractvalue [4 x i64] %22, 3
-  %33 = add i64 %32, 1
-  %34 = insertvalue [4 x i64] %22, i64 %33, 3
+  %31 = load i64, ptr %name, align 4
+  %32 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %31, 3
+  call void @set_storage([4 x i64] %23, [4 x i64] %32)
+  %33 = extractvalue [4 x i64] %23, 3
+  %34 = add i64 %33, 1
+  %35 = insertvalue [4 x i64] %23, i64 %34, 3
   %voteCount = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  %35 = load i64, ptr %voteCount, align 4
-  %36 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %35, 3
-  call void @set_storage([4 x i64] %34, [4 x i64] %36)
+  %36 = load i64, ptr %voteCount, align 4
+  %37 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %36, 3
+  call void @set_storage([4 x i64] %35, [4 x i64] %37)
   %new_length = add i64 %18, 1
-  %37 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %37)
+  %38 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %38)
   br label %next
 
 next:                                             ; preds = %body10
-  %38 = load i64, ptr %i, align 4
-  %39 = add i64 %38, 1
-  store i64 %39, ptr %i, align 4
+  %39 = load i64, ptr %i, align 4
+  %40 = add i64 %39, 1
+  store i64 %40, ptr %i, align 4
   br label %cond9
 
 endfor:                                           ; preds = %cond9
   %length16 = load i64, ptr %heap_start_ptr, align 4
-  %40 = sub i64 %length16, 1
-  %41 = sub i64 %40, 1
-  call void @builtin_range_check(i64 %41)
-  %42 = ptrtoint ptr %heap_start_ptr to i64
-  %43 = add i64 %42, 1
-  %vector_data17 = inttoptr i64 %43 to ptr
+  %41 = sub i64 %length16, 1
+  %42 = sub i64 %41, 1
+  call void @builtin_range_check(i64 %42)
+  %43 = ptrtoint ptr %heap_start_ptr to i64
+  %44 = add i64 %43, 1
+  %vector_data17 = inttoptr i64 %44 to ptr
   %index_access18 = getelementptr i64, ptr %vector_data17, i64 1
-  %44 = load i64, ptr %index_access18, align 4
-  %45 = icmp eq i64 %44, 66
-  %46 = zext i1 %45 to i64
-  call void @builtin_assert(i64 %46, i64 1)
+  %45 = load i64, ptr %index_access18, align 4
+  call void @builtin_assert(i64 %45, i64 66)
   ret void
-}
+}        
 "#;
 
         // Parse the assembly and get a module
@@ -2619,8 +2618,682 @@ endfor:                                           ; preds = %cond9
         println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
-            "test_array:
+            "main:
+.LBL13_0:
+  add r9 r9 23
+  mov r1 4
+.PROPHET13_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r5 r0
+  not r7 4
+  add r7 r7 1
+  add r8 r5 r7
+  mstore [r9,-5] r8
+  mov r8 3
+  mload r7 [r9,-5]
+  mstore [r7] r8
+  mload r8 [r9,-5]
+  add r6 r8 1
+  mov r8 r6
+  mov r7 0
+  mstore [r9,-4] r7
+  jmp .LBL13_1
+.LBL13_1:
+  mload r7 [r9,-4]
+  mov r6 3
+  gte r6 r6 r7
+  neq r5 r7 3
+  and r6 r6 r5
+  cjmp r6 .LBL13_2
+  jmp .LBL13_3
+.LBL13_2:
+  mov r5 0
+  mstore [r8,r7] r5
+  add r6 r7 1
+  mstore [r9,-4] r6
+  jmp .LBL13_1
+.LBL13_3:
+  mload r7 [r9,-5]
+  mload r7 [r7]
+  mstore [r9,-9] r7
+  not r7 1
+  add r7 r7 1
+  mload r7 [r9,-9]
+  add r8 r7 r7
+  not r7 0
+  add r7 r7 1
+  add r6 r8 r7
+  range r6
+  mload r8 [r9,-5]
+  add r5 r8 1
+  mov r8 r5
+  mov r7 65
+  mstore [r8] r7
+  mload r8 [r9,-5]
+  mload r8 [r8]
+  not r7 1
+  add r7 r7 1
+  add r1 r8 r7
+  not r7 1
+  add r7 r7 1
+  add r2 r1 r7
+  range r2
+  mload r8 [r9,-5]
+  add r3 r8 1
+  mov r8 r3
+  mov r7 66
+  mstore [r8,+1] r7
+  mload r8 [r9,-5]
+  mload r8 [r8]
+  not r7 1
+  add r7 r7 1
+  add r8 r8 r7
+  mstore [r9,-6] r8
+  not r7 2
+  add r7 r7 1
+  mload r8 [r9,-6]
+  add r8 r8 r7
+  mstore [r9,-7] r8
+  mload r8 [r9,-7]
+  range r8
+  mload r8 [r9,-5]
+  add r8 r8 1
+  mstore [r9,-8] r8
+  mload r8 [r9,-8]
+  mov r7 67
+  mstore [r8,+2] r7
+  mov r8 0
+  mstore [r9,-3] r8
+  jmp .LBL13_4
+.LBL13_4:
+  mload r8 [r9,-3]
+  mload r7 [r9,-5]
+  mload r7 [r7]
+  gte r6 r7 r8
+  neq r8 r8 r7
+  and r6 r6 r8
+  cjmp r6 .LBL13_5
+  jmp .LBL13_7
+.LBL13_5:
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sload 
+  mov r8 r1
+  mov r8 r2
+  mov r8 r3
+  mov r8 r4
+  mstore [r9,-17] r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 0
+  poseidon 
+  mov r8 r4
+  mload r6 [r9,-3]
+  mload r7 [r9,-5]
+  mload r5 [r7]
+  not r7 1
+  add r7 r7 1
+  add r7 r5 r7
+  mstore [r9,-10] r7
+  not r7 r6
+  add r7 r7 1
+  mload r7 [r9,-10]
+  add r7 r7 r7
+  mstore [r9,-11] r7
+  mload r7 [r9,-11]
+  range r7
+  mload r7 [r9,-5]
+  add r7 r7 1
+  mstore [r9,-12] r7
+  mload r7 [r9,-12]
+  mload r7 [r7,r6]
+  mstore [r9,-2] r7
+  mload r7 [r9,-3]
+  mstore [r9,-1] r7
+  mload r7 [r9,-2]
+  mload r6 [r9,-17]
+  mstore [r9,-18] r6
+  mload r6 [r9,-18]
+  mul r6 r6 2
+  mstore [r9,-13] r6
+  mload r6 [r9,-13]
+  add r8 r8 r6
+  mstore [r9,-14] r8
+  mov r8 r1
+  mstore [r9,-19] r8
+  mov r8 r2
+  mstore [r9,-20] r8
+  mov r8 r3
+  mstore [r9,-21] r8
+  mload r8 [r9,-14]
+  mov r8 r8
+  mstore [r9,-22] r8
+  mov r5 0
+  mov r6 0
+  mov r8 0
+  mov r7 r7
+  mstore [r9,-23] r7
+  mload r7 [r9,-19]
+  mov r1 r7
+  mload r7 [r9,-20]
+  mov r2 r7
+  mload r7 [r9,-21]
+  mov r3 r7
+  mload r7 [r9,-22]
+  mov r4 r7
+  mov r7 r8
+  mload r8 [r9,-23]
+  sstore 
+  mload r8 [r9,-1]
+  mload r7 [r9,-22]
+  add r7 r7 1
+  mstore [r9,-15] r7
+  mload r7 [r9,-19]
+  mov r1 r7
+  mload r7 [r9,-20]
+  mov r2 r7
+  mload r7 [r9,-21]
+  mov r3 r7
+  mload r7 [r9,-15]
+  mov r4 r7
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 r8
+  sstore 
+  mload r8 [r9,-18]
+  add r8 r8 1
+  mstore [r9,-16] r8
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mload r8 [r9,-16]
+  mov r8 r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sstore 
+  jmp .LBL13_6
+.LBL13_6:
+  mload r7 [r9,-3]
+  add r8 r7 1
+  mstore [r9,-3] r8
+  jmp .LBL13_4
+.LBL13_7:
+  mload r7 [r9,-5]
+  mload r1 [r7]
+  not r7 1
+  add r7 r7 1
+  add r8 r1 r7
+  not r7 1
+  add r7 r7 1
+  add r6 r8 r7
+  range r6
+  mload r8 [r9,-5]
+  add r5 r8 1
+  mov r8 r5
+  mload r8 [r8,+1]
+  assert r8 66
+  add r9 r9 -23
+  end
+"
+        );
+    }
 
+    #[test]
+    fn codegen_vote_v3_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'Voting'
+source_filename = "examples/source/storage/vote.ola"
+
+@heap_address = internal global i64 -4294967353
+
+declare void @builtin_assert(i64, i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+declare ptr @contract_input()
+
+declare [4 x i64] @get_storage([4 x i64])
+
+declare void @set_storage([4 x i64], [4 x i64])
+
+declare [4 x i64] @poseidon_hash([8 x i64])
+
+declare void @tape_store(i64, i64)
+
+declare i64 @tape_load(i64, i64)
+
+define void @contract_init(ptr %0) {
+entry:
+  %struct_alloca = alloca { i64, i64 }, align 8
+  %i = alloca i64, align 8
+  store i64 0, ptr %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %next, %entry
+  %1 = load i64, ptr %i, align 4
+  %length = load i64, ptr %0, align 4
+  %2 = icmp ult i64 %1, %length
+  br i1 %2, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %3 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1])
+  %4 = extractvalue [4 x i64] %3, 3
+  %5 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 1])
+  %6 = extractvalue [4 x i64] %5, 3
+  %7 = mul i64 %4, 2
+  %8 = add i64 %6, %7
+  %9 = insertvalue [4 x i64] %5, i64 %8, 3
+  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
+  %10 = load i64, ptr %i, align 4
+  %length1 = load i64, ptr %0, align 4
+  %11 = sub i64 %length1, 1
+  %12 = sub i64 %11, %10
+  call void @builtin_range_check(i64 %12)
+  %13 = ptrtoint ptr %0 to i64
+  %14 = add i64 %13, 1
+  %vector_data = inttoptr i64 %14 to ptr
+  %index_access = getelementptr i64, ptr %vector_data, i64 %10
+  %15 = load i64, ptr %index_access, align 4
+  store i64 %15, ptr %"struct member", align 4
+  %"struct member2" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
+  store i64 0, ptr %"struct member2", align 4
+  %name = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
+  %16 = load i64, ptr %name, align 4
+  %17 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %16, 3
+  call void @set_storage([4 x i64] %9, [4 x i64] %17)
+  %18 = extractvalue [4 x i64] %9, 3
+  %19 = add i64 %18, 1
+  %20 = insertvalue [4 x i64] %9, i64 %19, 3
+  %voteCount = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
+  %21 = load i64, ptr %voteCount, align 4
+  %22 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %21, 3
+  call void @set_storage([4 x i64] %20, [4 x i64] %22)
+  %new_length = add i64 %4, 1
+  %23 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
+  call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1], [4 x i64] %23)
+  br label %next
+
+next:                                             ; preds = %body
+  %24 = load i64, ptr %i, align 4
+  %25 = add i64 %24, 1
+  store i64 %25, ptr %i, align 4
+  br label %cond
+
+endfor:                                           ; preds = %cond
+  ret void
+}
+
+define void @main() {
+entry:
+  %index_alloca = alloca i64, align 8
+  %0 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %0, 4
+  %heap_start_ptr = inttoptr i64 %heap_start to ptr
+  store i64 3, ptr %heap_start_ptr, align 4
+  %1 = ptrtoint ptr %heap_start_ptr to i64
+  %2 = add i64 %1, 1
+  %vector_data = inttoptr i64 %2 to ptr
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, 3
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+  store i64 0, ptr %index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  %length = load i64, ptr %heap_start_ptr, align 4
+  %3 = sub i64 %length, 1
+  %4 = sub i64 %3, 0
+  call void @builtin_range_check(i64 %4)
+  %5 = ptrtoint ptr %heap_start_ptr to i64
+  %6 = add i64 %5, 1
+  %vector_data1 = inttoptr i64 %6 to ptr
+  %index_access2 = getelementptr i64, ptr %vector_data1, i64 0
+  store i64 65, ptr %index_access2, align 4
+  %length3 = load i64, ptr %heap_start_ptr, align 4
+  %7 = sub i64 %length3, 1
+  %8 = sub i64 %7, 1
+  call void @builtin_range_check(i64 %8)
+  %9 = ptrtoint ptr %heap_start_ptr to i64
+  %10 = add i64 %9, 1
+  %vector_data4 = inttoptr i64 %10 to ptr
+  %index_access5 = getelementptr i64, ptr %vector_data4, i64 1
+  store i64 66, ptr %index_access5, align 4
+  %length6 = load i64, ptr %heap_start_ptr, align 4
+  %11 = sub i64 %length6, 1
+  %12 = sub i64 %11, 2
+  call void @builtin_range_check(i64 %12)
+  %13 = ptrtoint ptr %heap_start_ptr to i64
+  %14 = add i64 %13, 1
+  %vector_data7 = inttoptr i64 %14 to ptr
+  %index_access8 = getelementptr i64, ptr %vector_data7, i64 2
+  store i64 67, ptr %index_access8, align 4
+  call void @contract_init(ptr %heap_start_ptr)
+  %15 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1])
+  %16 = extractvalue [4 x i64] %15, 3
+  %17 = sub i64 %16, 1
+  %18 = sub i64 %17, 1
+  call void @builtin_range_check(i64 %18)
+  %19 = call [4 x i64] @poseidon_hash([8 x i64] [i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 1])
+  %20 = extractvalue [4 x i64] %19, 3
+  %21 = add i64 %20, 2
+  %22 = insertvalue [4 x i64] %19, i64 %21, 3
+  %23 = extractvalue [4 x i64] %22, 3
+  %24 = add i64 %23, 0
+  %25 = insertvalue [4 x i64] %22, i64 %24, 3
+  %26 = call [4 x i64] @get_storage([4 x i64] %25)
+  %27 = extractvalue [4 x i64] %26, 3
+  call void @builtin_assert(i64 %27, i64 66)
+  ret void
+}     
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        println!("{:#?}", code.prophets);
+        assert_eq!(
+            format!("{}", code.program),
+            "contract_init:
+.LBL13_0:
+  add r9 r9 18
+  mov r8 r1
+  mstore [r9,-4] r8
+  mov r8 0
+  mstore [r9,-3] r8
+  jmp .LBL13_1
+.LBL13_1:
+  mload r8 [r9,-3]
+  mload r7 [r9,-4]
+  mload r7 [r7]
+  gte r6 r7 r8
+  neq r8 r8 r7
+  and r6 r6 r8
+  cjmp r6 .LBL13_2
+  jmp .LBL13_4
+.LBL13_2:
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 1
+  sload 
+  mov r8 r1
+  mov r8 r2
+  mov r8 r3
+  mov r8 r4
+  mstore [r9,-12] r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 1
+  poseidon 
+  mov r8 r4
+  mload r6 [r9,-3]
+  mload r7 [r9,-4]
+  mload r5 [r7]
+  not r7 1
+  add r7 r7 1
+  add r7 r5 r7
+  mstore [r9,-5] r7
+  not r7 r6
+  add r7 r7 1
+  mload r7 [r9,-5]
+  add r7 r7 r7
+  mstore [r9,-6] r7
+  mload r7 [r9,-6]
+  range r7
+  mload r7 [r9,-4]
+  add r7 r7 1
+  mstore [r9,-7] r7
+  mload r7 [r9,-7]
+  mload r7 [r7,r6]
+  mstore [r9,-2] r7
+  mov r7 0
+  mstore [r9,-1] r7
+  mload r7 [r9,-2]
+  mload r6 [r9,-12]
+  mstore [r9,-13] r6
+  mload r6 [r9,-13]
+  mul r6 r6 2
+  mstore [r9,-8] r6
+  mload r6 [r9,-8]
+  add r8 r8 r6
+  mstore [r9,-9] r8
+  mov r8 r1
+  mstore [r9,-14] r8
+  mov r8 r2
+  mstore [r9,-15] r8
+  mov r8 r3
+  mstore [r9,-16] r8
+  mload r8 [r9,-9]
+  mov r8 r8
+  mstore [r9,-17] r8
+  mov r5 0
+  mov r6 0
+  mov r8 0
+  mov r7 r7
+  mstore [r9,-18] r7
+  mload r7 [r9,-14]
+  mov r1 r7
+  mload r7 [r9,-15]
+  mov r2 r7
+  mload r7 [r9,-16]
+  mov r3 r7
+  mload r7 [r9,-17]
+  mov r4 r7
+  mov r7 r8
+  mload r8 [r9,-18]
+  sstore 
+  mload r8 [r9,-1]
+  mload r7 [r9,-17]
+  add r7 r7 1
+  mstore [r9,-10] r7
+  mload r7 [r9,-14]
+  mov r1 r7
+  mload r7 [r9,-15]
+  mov r2 r7
+  mload r7 [r9,-16]
+  mov r3 r7
+  mload r7 [r9,-10]
+  mov r4 r7
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 r8
+  sstore 
+  mload r8 [r9,-13]
+  add r8 r8 1
+  mstore [r9,-11] r8
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mload r8 [r9,-11]
+  mov r8 r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 1
+  sstore 
+  jmp .LBL13_3
+.LBL13_3:
+  mload r7 [r9,-3]
+  add r8 r7 1
+  mstore [r9,-3] r8
+  jmp .LBL13_1
+.LBL13_4:
+  add r9 r9 -18
+  ret
+main:
+.LBL14_0:
+  add r9 r9 12
+  mstore [r9,-2] r9
+  mov r1 4
+.PROPHET14_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r5 r0
+  not r7 4
+  add r7 r7 1
+  add r8 r5 r7
+  mov r1 r8
+  mov r8 3
+  mstore [r1] r8
+  mov r8 r1
+  add r6 r8 1
+  mov r8 r6
+  mov r7 0
+  mstore [r9,-3] r7
+  jmp .LBL14_1
+.LBL14_1:
+  mload r7 [r9,-3]
+  mov r6 3
+  gte r6 r6 r7
+  neq r5 r7 3
+  and r6 r6 r5
+  cjmp r6 .LBL14_2
+  jmp .LBL14_3
+.LBL14_2:
+  mov r5 0
+  mstore [r8,r7] r5
+  add r6 r7 1
+  mstore [r9,-3] r6
+  jmp .LBL14_1
+.LBL14_3:
+  mload r7 [r1]
+  mstore [r9,-12] r7
+  not r7 1
+  add r7 r7 1
+  mload r7 [r9,-12]
+  add r8 r7 r7
+  not r7 0
+  add r7 r7 1
+  add r6 r8 r7
+  range r6
+  mov r8 r1
+  add r5 r8 1
+  mov r8 r5
+  mov r7 65
+  mstore [r8] r7
+  mload r8 [r1]
+  not r7 1
+  add r7 r7 1
+  add r2 r8 r7
+  not r7 1
+  add r7 r7 1
+  add r3 r2 r7
+  range r3
+  mov r8 r1
+  add r8 r8 1
+  mstore [r9,-8] r8
+  mload r8 [r9,-8]
+  mov r7 66
+  mstore [r8,+1] r7
+  mload r8 [r1]
+  not r7 1
+  add r7 r7 1
+  add r8 r8 r7
+  mstore [r9,-9] r8
+  not r7 2
+  add r7 r7 1
+  mload r8 [r9,-9]
+  add r8 r8 r7
+  mstore [r9,-10] r8
+  mload r8 [r9,-10]
+  range r8
+  mov r8 r1
+  add r8 r8 1
+  mstore [r9,-11] r8
+  mload r8 [r9,-11]
+  mov r7 67
+  mstore [r8,+2] r7
+  call contract_init
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 1
+  sload 
+  mov r8 r1
+  mov r8 r2
+  mov r8 r3
+  mov r8 r4
+  not r7 1
+  add r7 r7 1
+  add r8 r8 r7
+  mstore [r9,-4] r8
+  not r7 1
+  add r7 r7 1
+  mload r8 [r9,-4]
+  add r8 r8 r7
+  mstore [r9,-7] r8
+  mload r8 [r9,-7]
+  range r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  mov r5 0
+  mov r6 0
+  mov r7 0
+  mov r8 1
+  poseidon 
+  mov r8 r4
+  add r8 r8 2
+  mstore [r9,-6] r8
+  mload r8 [r9,-6]
+  mov r8 r8
+  mstore [r9,-5] r8
+  mload r8 [r9,-5]
+  mov r4 r8
+  sload 
+  mov r8 r1
+  mov r8 r2
+  mov r8 r3
+  mov r8 r4
+  assert r8 66
+  add r9 r9 -12
+  end
 "
         );
     }
