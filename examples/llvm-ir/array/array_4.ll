@@ -3,7 +3,7 @@ source_filename = "examples/source/array/array_4.ola"
 
 @heap_address = internal global i64 -4294967353
 
-declare void @builtin_assert(i64, i64)
+declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
@@ -16,16 +16,6 @@ declare i64 @prophet_u32_mod(i64, i64)
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
-
-define ptr @vector_new_init(i64 %0, ptr %1) {
-entry:
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %0, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %1, ptr %vector_data, align 8
-  ret ptr %vector_alloca
-}
 
 declare ptr @contract_input()
 
@@ -43,8 +33,6 @@ define i64 @array_sort_test(ptr %0) {
 entry:
   %array_literal1 = alloca [10 x i64], align 8
   %array_literal = alloca [10 x i64], align 8
-  %source = alloca ptr, align 8
-  store ptr %0, ptr %source, align 8
   %elemptr0 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 0
   store i64 0, ptr %elemptr0, align 4
   %elemptr1 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 1

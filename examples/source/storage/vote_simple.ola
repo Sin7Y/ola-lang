@@ -15,19 +15,19 @@ contract Voting {
 
     Proposal[] proposals;
 
-    fn contract_init(u32[] proposalNames_) {
-        for (u32 i = 0; i < proposalNames_.length; i++) {
-            proposals.push(Proposal({
-                name: proposalNames_[i],
-                voteCount: 0
-            }));
-        }
-    }
+    // fn contract_init(u32[] proposalNames_) {
+    //     for (u32 i = 0; i < proposalNames_.length; i++) {
+    //         proposals.push(Proposal({
+    //             name: proposalNames_[i],
+    //             voteCount: 0
+    //         }));
+    //     }
+    // }
 
     fn vote_proposal(u32 proposal_)  {
         address msgSender = get_caller();
         Voter storage sender = voters[msgSender];
-        //require(!sender.voted, "Already voted.");
+        assert(!sender.voted, "Already voted.");
         sender.voted = true;
         sender.vote = proposal_;
 
@@ -35,21 +35,21 @@ contract Voting {
     }
 
 
-    fn winningProposal() -> (u32 winningProposal_) {
-        u32 winningVoteCount = 0;
-        for (u32 p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[p].voteCount;
-                winningProposal_ = p;
-            }
-        }
-        return winningProposal_;
-    }
+    // fn winningProposal() -> (u32 winningProposal_) {
+    //     u32 winningVoteCount = 0;
+    //     for (u32 p = 0; p < proposals.length; p++) {
+    //         if (proposals[p].voteCount > winningVoteCount) {
+    //             winningVoteCount = proposals[p].voteCount;
+    //             winningProposal_ = p;
+    //         }
+    //     }
+    //     return winningProposal_;
+    // }
 
-     fn getWinnerName() -> (u32) {
-         u32 winnerName = proposals[winningProposal()].name;
-         return winnerName;
-     }
+    //  fn getWinnerName() -> (u32) {
+    //      u32 winnerName = proposals[winningProposal()].name;
+    //      return winnerName;
+    //  }
 
     fn get_caller() -> (address) {
         return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;

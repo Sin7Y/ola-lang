@@ -160,11 +160,21 @@ pub fn u32_div<'a>(
         "",
     );
 
+    let equal = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        quotient_mul_right_plus_remainder,
+        left.into_int_value(),
+        "",
+    );
+
     bin.builder.build_call(
         bin.module
             .get_function("builtin_assert")
             .expect("builtin_assert should have been defined before"),
-        &[quotient_mul_right_plus_remainder.into(), left.into()],
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
         "",
     );
     quotient
@@ -249,11 +259,21 @@ pub fn u32_mod<'a>(
         "",
     );
 
+    let equal = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        quotient_mul_right_plus_remainder,
+        left.into_int_value(),
+        "",
+    );
+
     bin.builder.build_call(
         bin.module
             .get_function("builtin_assert")
             .expect("builtin_assert should have been defined before"),
-        &[quotient_mul_right_plus_remainder.into(), left.into()],
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
         "",
     );
     remainder
@@ -410,11 +430,21 @@ pub fn u32_shift_right<'a>(
         "",
     );
 
+    let equal = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        quotient_mul_right_plus_remainder,
+        left,
+        "",
+    );
+
     bin.builder.build_call(
         bin.module
             .get_function("builtin_assert")
             .expect("builtin_assert should have been defined before"),
-        &[quotient_mul_right_plus_remainder.into(), left.into()],
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
         "",
     );
     quotient

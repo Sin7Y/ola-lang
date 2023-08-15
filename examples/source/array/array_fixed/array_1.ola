@@ -2,6 +2,9 @@
 contract FixedArrayExample {
     
     fn main() {
-       u32[3] array = [1, 2, 3]; 
+        for (u32 i = 0; i < 3; i++) {
+            u32[3] array = [1, 2, 3]; 
+            array[i] = 0;
+        }
     }
 }
