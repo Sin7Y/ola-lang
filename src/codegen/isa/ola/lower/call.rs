@@ -42,12 +42,11 @@ pub fn lower_call(
     if name.starts_with("builtin") {
         match name.as_str() {
             "builtin_assert" => {
-                let lhs = get_operand_for_val(ctx, tys[1], args[1])?;
-                let rhs = get_operand_for_val(ctx, tys[2], args[2])?;
+                let arg = get_operand_for_val(ctx, tys[1], args[1])?;
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {
                         opcode: Opcode::ASSERTri,
-                        operands: vec![MO::input(lhs), MO::input(rhs)],
+                        operands: vec![MO::input(arg)],
                     },
                     ctx.block_map[&ctx.cur_block],
                 ));

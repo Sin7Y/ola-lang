@@ -8,6 +8,7 @@ pub mod insertv;
 pub mod load;
 pub mod phi;
 pub mod store;
+pub mod zext;
 
 use crate::codegen::core::ir::{
     function::{
@@ -44,6 +45,7 @@ use insertv::lower_insertvalue;
 use load::lower_load;
 use phi::lower_phi;
 use store::lower_store;
+use zext::lower_zext;
 
 #[derive(Clone, Copy, Default)]
 pub struct Lower {}
@@ -140,6 +142,9 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
             if inst.opcode == IrOpcode::IntToPtr || inst.opcode == IrOpcode::PtrToInt =>
         {
             lower_itp(ctx, inst.id.unwrap(), tys, arg)
+        }
+        Operand::Cast(Cast { ref tys, arg }) if inst.opcode == IrOpcode::Zext => {
+            lower_zext(ctx, inst.id.unwrap(), tys, arg)
         }
         Operand::Br(Br { block }) => lower_br(ctx, block),
         Operand::CondBr(CondBr { arg, blocks }) => lower_condbr(ctx, arg, blocks),
