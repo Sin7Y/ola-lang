@@ -3,7 +3,7 @@ source_filename = "examples/source/array/array_2d.ola"
 
 @heap_address = internal global i64 -4294967353
 
-declare void @builtin_assert(i64, i64)
+declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
@@ -16,16 +16,6 @@ declare i64 @prophet_u32_mod(i64, i64)
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
-
-define ptr @vector_new_init(i64 %0, ptr %1) {
-entry:
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %0, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %1, ptr %vector_data, align 8
-  ret ptr %vector_alloca
-}
 
 declare ptr @contract_input()
 
@@ -61,14 +51,12 @@ define i64 @getElement(ptr %0, i64 %1, i64 %2) {
 entry:
   %_j = alloca i64, align 8
   %_i = alloca i64, align 8
-  %_array2D = alloca ptr, align 8
-  store ptr %0, ptr %_array2D, align 8
   store i64 %1, ptr %_i, align 4
   store i64 %2, ptr %_j, align 4
   %3 = load i64, ptr %_i, align 4
   %4 = sub i64 2, %3
   call void @builtin_range_check(i64 %4)
-  %index_access = getelementptr [3 x [2 x i64]], ptr %_array2D, i64 0, i64 %3
+  %index_access = getelementptr [3 x [2 x i64]], ptr %0, i64 0, i64 %3
   %5 = load i64, ptr %_j, align 4
   %6 = sub i64 1, %5
   call void @builtin_range_check(i64 %6)

@@ -3,7 +3,7 @@ source_filename = "examples/source/array/array_dynamic/array_2.ola"
 
 @heap_address = internal global i64 -4294967353
 
-declare void @builtin_assert(i64, i64)
+declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
@@ -16,16 +16,6 @@ declare i64 @prophet_u32_mod(i64, i64)
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
-
-define ptr @vector_new_init(i64 %0, ptr %1) {
-entry:
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %0, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %1, ptr %vector_data, align 8
-  ret ptr %vector_alloca
-}
 
 declare ptr @contract_input()
 
@@ -43,9 +33,13 @@ define void @main() {
 entry:
   %b = alloca i64, align 8
   %index_alloca = alloca i64, align 8
-  %0 = call i64 @vector_new(i64 5)
-  %heap_ptr = sub i64 %0, 5
-  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
+  %0 = call i64 @vector_new(i64 6)
+  %heap_start = sub i64 %0, 6
+  %heap_start_ptr = inttoptr i64 %heap_start to ptr
+  store i64 5, ptr %heap_start_ptr, align 4
+  %1 = ptrtoint ptr %heap_start_ptr to i64
+  %2 = add i64 %1, 1
+  %vector_data = inttoptr i64 %2 to ptr
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -55,16 +49,14 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr i64, ptr %int_to_ptr, i64 %index_value
+  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %1 = call ptr @vector_new_init(i64 5, ptr %int_to_ptr)
-  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length = load i64, ptr %length_ptr, align 4
+  %length = load i64, ptr %heap_start_ptr, align 4
   store i64 %length, ptr %b, align 4
   ret void
 }

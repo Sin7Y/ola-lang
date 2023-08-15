@@ -3,7 +3,7 @@ source_filename = "examples/source/array/array_dynamic/array_2d.ola"
 
 @heap_address = internal global i64 -4294967353
 
-declare void @builtin_assert(i64, i64)
+declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
@@ -16,16 +16,6 @@ declare i64 @prophet_u32_mod(i64, i64)
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
-
-define ptr @vector_new_init(i64 %0, ptr %1) {
-entry:
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %0, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %1, ptr %vector_data, align 8
-  ret ptr %vector_alloca
-}
 
 declare ptr @contract_input()
 
@@ -41,11 +31,15 @@ declare i64 @tape_load(i64, i64)
 
 define void @processDynamicArray() {
 entry:
-  %index_alloca7 = alloca i64, align 8
+  %index_alloca9 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
-  %0 = call i64 @vector_new(i64 3)
-  %heap_ptr = sub i64 %0, 3
-  %int_to_ptr = inttoptr i64 %heap_ptr to ptr
+  %0 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %0, 4
+  %heap_start_ptr = inttoptr i64 %heap_start to ptr
+  store i64 3, ptr %heap_start_ptr, align 4
+  %1 = ptrtoint ptr %heap_start_ptr to i64
+  %2 = add i64 %1, 1
+  %vector_data = inttoptr i64 %2 to ptr
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -55,56 +49,62 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr { i64, ptr }, ptr %int_to_ptr, i64 %index_value
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
   store ptr null, ptr %index_access, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  %1 = call ptr @vector_new_init(i64 3, ptr %int_to_ptr)
-  %length_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length = load i64, ptr %length_ptr, align 4
-  %2 = sub i64 %length, 1
-  %3 = sub i64 %2, 0
-  call void @builtin_range_check(i64 %3)
-  %data_ptr = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access1 = getelementptr ptr, ptr %data_ptr, i64 0
-  %4 = call i64 @vector_new(i64 2)
-  %heap_ptr2 = sub i64 %4, 2
-  %int_to_ptr3 = inttoptr i64 %heap_ptr2 to ptr
-  store i64 0, ptr %index_alloca7, align 4
-  br label %cond4
+  %length = load i64, ptr %heap_start_ptr, align 4
+  %3 = sub i64 %length, 1
+  %4 = sub i64 %3, 0
+  call void @builtin_range_check(i64 %4)
+  %5 = ptrtoint ptr %heap_start_ptr to i64
+  %6 = add i64 %5, 1
+  %vector_data1 = inttoptr i64 %6 to ptr
+  %index_access2 = getelementptr ptr, ptr %vector_data1, i64 0
+  %7 = call i64 @vector_new(i64 3)
+  %heap_start3 = sub i64 %7, 3
+  %heap_start_ptr4 = inttoptr i64 %heap_start3 to ptr
+  store i64 2, ptr %heap_start_ptr4, align 4
+  %8 = ptrtoint ptr %heap_start_ptr4 to i64
+  %9 = add i64 %8, 1
+  %vector_data5 = inttoptr i64 %9 to ptr
+  store i64 0, ptr %index_alloca9, align 4
+  br label %cond6
 
-cond4:                                            ; preds = %body5, %done
-  %index_value8 = load i64, ptr %index_alloca7, align 4
-  %loop_cond9 = icmp ult i64 %index_value8, 2
-  br i1 %loop_cond9, label %body5, label %done6
+cond6:                                            ; preds = %body7, %done
+  %index_value10 = load i64, ptr %index_alloca9, align 4
+  %loop_cond11 = icmp ult i64 %index_value10, 2
+  br i1 %loop_cond11, label %body7, label %done8
 
-body5:                                            ; preds = %cond4
-  %index_access10 = getelementptr i64, ptr %int_to_ptr3, i64 %index_value8
-  store i64 0, ptr %index_access10, align 4
-  %next_index11 = add i64 %index_value8, 1
-  store i64 %next_index11, ptr %index_alloca7, align 4
-  br label %cond4
+body7:                                            ; preds = %cond6
+  %index_access12 = getelementptr i64, ptr %vector_data5, i64 %index_value10
+  store i64 0, ptr %index_access12, align 4
+  %next_index13 = add i64 %index_value10, 1
+  store i64 %next_index13, ptr %index_alloca9, align 4
+  br label %cond6
 
-done6:                                            ; preds = %cond4
-  %5 = call ptr @vector_new_init(i64 2, ptr %int_to_ptr3)
-  store ptr %5, ptr %index_access1, align 8
-  %length_ptr12 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
-  %length13 = load i64, ptr %length_ptr12, align 4
-  %6 = sub i64 %length13, 1
-  %7 = sub i64 %6, 0
-  call void @builtin_range_check(i64 %7)
-  %data_ptr14 = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
-  %index_access15 = getelementptr ptr, ptr %data_ptr14, i64 0
-  %length_ptr16 = getelementptr inbounds { i64, ptr }, ptr %index_access15, i32 0, i32 0
-  %length17 = load i64, ptr %length_ptr16, align 4
-  %8 = sub i64 %length17, 1
-  %9 = sub i64 %8, 0
-  call void @builtin_range_check(i64 %9)
-  %data_ptr18 = getelementptr inbounds { i64, ptr }, ptr %index_access15, i32 0, i32 1
-  %index_access19 = getelementptr i64, ptr %data_ptr18, i64 0
+done8:                                            ; preds = %cond6
+  store ptr %heap_start_ptr4, ptr %index_access2, align 8
+  %length14 = load i64, ptr %heap_start_ptr, align 4
+  %10 = sub i64 %length14, 1
+  %11 = sub i64 %10, 0
+  call void @builtin_range_check(i64 %11)
+  %12 = ptrtoint ptr %heap_start_ptr to i64
+  %13 = add i64 %12, 1
+  %vector_data15 = inttoptr i64 %13 to ptr
+  %index_access16 = getelementptr ptr, ptr %vector_data15, i64 0
+  %14 = load ptr, ptr %index_access16, align 8
+  %length17 = load i64, ptr %14, align 4
+  %15 = sub i64 %length17, 1
+  %16 = sub i64 %15, 0
+  call void @builtin_range_check(i64 %16)
+  %17 = ptrtoint ptr %14 to i64
+  %18 = add i64 %17, 1
+  %vector_data18 = inttoptr i64 %18 to ptr
+  %index_access19 = getelementptr i64, ptr %vector_data18, i64 0
   store i64 1, ptr %index_access19, align 4
   ret void
 }

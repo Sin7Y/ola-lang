@@ -3,7 +3,7 @@ source_filename = "examples/source/storage/storage_array.ola"
 
 @heap_address = internal global i64 -4294967353
 
-declare void @builtin_assert(i64, i64)
+declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
@@ -16,16 +16,6 @@ declare i64 @prophet_u32_mod(i64, i64)
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
-
-define ptr @vector_new_init(i64 %0, ptr %1) {
-entry:
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %0, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %1, ptr %vector_data, align 8
-  ret ptr %vector_alloca
-}
 
 declare ptr @contract_input()
 
@@ -86,12 +76,11 @@ entry:
   %2 = load i64, ptr %index, align 4
   %3 = sub i64 4, %2
   call void @builtin_range_check(i64 %3)
-  %4 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
-  %5 = extractvalue [4 x i64] %4, 3
-  %6 = add i64 %5, %2
-  %7 = insertvalue [4 x i64] %4, i64 %6, 3
-  %8 = load i64, ptr %value, align 4
-  %9 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %8, 3
-  call void @set_storage([4 x i64] %7, [4 x i64] %9)
+  %index_offset = mul i64 %2, 1
+  %index_slot = add i64 0, %index_offset
+  %4 = load i64, ptr %value, align 4
+  %5 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %index_slot, 3
+  %6 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %4, 3
+  call void @set_storage([4 x i64] %5, [4 x i64] %6)
   ret void
 }
