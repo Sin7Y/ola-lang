@@ -3,7 +3,7 @@ source_filename = "examples/source/storage/storage_array_dyn.ola"
 
 @heap_address = internal global i64 -4294967353
 
-declare void @builtin_assert(i64, i64)
+declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
@@ -16,16 +16,6 @@ declare i64 @prophet_u32_mod(i64, i64)
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
 declare i64 @vector_new(i64)
-
-define ptr @vector_new_init(i64 %0, ptr %1) {
-entry:
-  %vector_alloca = alloca { i64, ptr }, align 8
-  %vector_len = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 0
-  store i64 %0, ptr %vector_len, align 4
-  %vector_data = getelementptr inbounds { i64, ptr }, ptr %vector_alloca, i32 0, i32 1
-  store ptr %1, ptr %vector_data, align 8
-  ret ptr %vector_alloca
-}
 
 declare ptr @contract_input()
 
@@ -47,14 +37,15 @@ entry:
   %2 = extractvalue [4 x i64] %1, 3
   %3 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
   %4 = extractvalue [4 x i64] %3, 3
-  %5 = add i64 %4, %2
-  %6 = insertvalue [4 x i64] %3, i64 %5, 3
-  %7 = load i64, ptr %element, align 4
-  %8 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %7, 3
-  call void @set_storage([4 x i64] %6, [4 x i64] %8)
+  %5 = mul i64 %2, 1
+  %6 = add i64 %4, %5
+  %7 = insertvalue [4 x i64] %3, i64 %6, 3
+  %8 = load i64, ptr %element, align 4
+  %9 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %8, 3
+  call void @set_storage([4 x i64] %7, [4 x i64] %9)
   %new_length = add i64 %2, 1
-  %9 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %9)
+  %10 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %10)
   ret void
 }
 
@@ -64,14 +55,15 @@ entry:
   %1 = extractvalue [4 x i64] %0, 3
   %2 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
   %3 = extractvalue [4 x i64] %2, 3
-  %4 = add i64 %3, %1
-  %5 = insertvalue [4 x i64] %2, i64 %4, 3
-  %6 = call [4 x i64] @get_storage([4 x i64] %5)
-  %7 = extractvalue [4 x i64] %6, 3
-  call void @set_storage([4 x i64] %5, [4 x i64] zeroinitializer)
+  %4 = mul i64 %1, 1
+  %5 = add i64 %3, %4
+  %6 = insertvalue [4 x i64] %2, i64 %5, 3
+  %7 = call [4 x i64] @get_storage([4 x i64] %6)
+  %8 = extractvalue [4 x i64] %7, 3
+  call void @set_storage([4 x i64] %6, [4 x i64] zeroinitializer)
   %new_length = sub i64 %1, 1
-  %8 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %8)
+  %9 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %new_length, 3
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %9)
   ret void
 }
 

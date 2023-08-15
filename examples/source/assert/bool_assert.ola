@@ -1,0 +1,18 @@
+contract AssertContract {
+
+    fn main() {
+
+       u32 a = 1;
+       u32 b = 2;
+       u32 c = 1;
+       bool d = true;
+       bool e = false;
+       assert(a == c);
+       assert(a <= c);
+       assert (a != b);
+       assert( b >= a);
+       assert(d);
+       assert(!e);
+    }
+
+}

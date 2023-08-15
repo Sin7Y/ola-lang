@@ -6,7 +6,7 @@ use crate::irgen::u32_op::{
 use crate::sema::ast::{ArrayLength, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
-use inkwell::IntPredicate;
+use inkwell::{AddressSpace, IntPredicate};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use ola_parser::program;
@@ -384,22 +384,12 @@ pub fn expression<'a>(
                 bin.module
                     .get_function("builtin_assert")
                     .expect("builtin_assert should have been defined before"),
-                &[
-                    bin.builder
-                        .build_int_z_extend(cond.into_int_value(), bin.context.i64_type(), "")
-                        .into(),
-                    bin.context.i64_type().const_int(1, false).into(),
-                ],
+                &[bin
+                    .builder
+                    .build_int_z_extend(cond.into_int_value(), bin.context.i64_type(), "")
+                    .into()],
                 "",
             );
-            bin.context.i64_type().const_zero().into()
-        }
-        Expression::LibFunction {
-            kind: LibFunc::AssertString,
-            args,
-            ..
-        } => {
-            string_equal_assert(&args[0], &args[1], bin, func_value, var_table, ns);
             bin.context.i64_type().const_zero().into()
         }
 
@@ -550,7 +540,8 @@ pub fn expression<'a>(
         Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_value, var_table, ns).into_pointer_value();
             if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
-                ptr.into()
+                let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
+                bin.builder.build_load(loaded_type, ptr, "")
             } else {
                 let loaded_type = bin.llvm_type(ty, ns);
                 bin.builder.build_load(loaded_type, ptr, "")
@@ -812,23 +803,25 @@ pub fn array_subscript<'a>(
         return poseidon_hash(bin, inputs);
     }
 
-    let array_length = match array_ty.deref_any() {
+    let (array_length, fixed) = match array_ty.deref_any() {
         Type::Array(..) => match array_ty.array_length() {
             None => {
                 if let Type::StorageRef(..) = array_ty {
                     let array_length =
                         storage_load(bin, &Type::Uint(32), &mut array.clone(), func_value, ns);
-                    array_length
+                    (array_length, false)
                 } else {
-                    bin.vector_len(array).into()
+                    (bin.vector_len(array).into(), false)
                 }
             }
 
-            Some(l) => bin
-                .context
-                .i64_type()
-                .const_int(l.to_u64().unwrap(), false)
-                .into(),
+            Some(l) => (
+                bin.context
+                    .i64_type()
+                    .const_int(l.to_u64().unwrap(), false)
+                    .into(),
+                true,
+            ),
         },
         _ => {
             unreachable!()
@@ -860,8 +853,23 @@ pub fn array_subscript<'a>(
         "",
     );
 
-    if let Type::StorageRef(..) = &array_ty {
-        array_offset(bin, array, index)
+    if let Type::StorageRef(ty) = &array_ty {
+        let elem_ty = ty.storage_array_elem();
+        if fixed {
+            let elem_size = elem_ty.storage_slots(ns);
+            let offset = bin.builder.build_int_mul(
+                index.into_int_value(),
+                bin.context
+                    .i64_type()
+                    .const_int(elem_size.to_u64().unwrap(), false),
+                "index_offset",
+            );
+            bin.builder
+                .build_int_add(array.into_int_value(), offset, "index_slot")
+                .into()
+        } else {
+            array_offset(bin, array, index, elem_ty, ns)
+        }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
         let llvm_elem_ty = bin.llvm_var_ty(elem_ty.deref_memory(), ns);
@@ -973,11 +981,18 @@ pub fn string_compare<'a>(
     let (left, left_len) = string_location(bin, left, var_table, func_value, ns);
     let (right, right_len) = string_location(bin, right, var_table, func_value, ns);
 
+    // Check if the strings are equal length
+    let equal = bin
+        .builder
+        .build_int_compare(IntPredicate::EQ, left_len, right_len, "");
     bin.builder.build_call(
         bin.module
             .get_function("builtin_assert")
             .expect("builtin_assert should have been defined before"),
-        &[left_len.into(), right_len.into()],
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
         "",
     );
 
@@ -1041,92 +1056,4 @@ pub fn string_compare<'a>(
     bin.builder
         .build_int_compare(IntPredicate::EQ, index, right_len, "equal")
         .into()
-}
-
-// Compare two strings for equality  -- just for debugging
-pub fn string_equal_assert<'a>(
-    left: &Expression,
-    right: &Expression,
-    bin: &Binary<'a>,
-    func_value: FunctionValue<'a>,
-    var_table: &mut Vartable<'a>,
-    ns: &Namespace,
-) {
-    let left = expression(left, bin, func_value, var_table, ns);
-    let right = expression(right, bin, func_value, var_table, ns);
-
-    let left_ptr = bin.vector_data(left);
-    let left_len = bin.vector_len(left);
-    let right_ptr = bin.vector_data(right);
-    let right_len = bin.vector_len(right);
-
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_assert")
-            .expect("builtin_assert should have been defined before"),
-        &[left_len.into(), right_len.into()],
-        "",
-    );
-
-    // Create a loop for comparing each character in the strings
-    let cond = bin.context.append_basic_block(func_value, "cond");
-    let body = bin.context.append_basic_block(func_value, "body");
-    let done = bin.context.append_basic_block(func_value, "done");
-    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index");
-    bin.builder
-        .build_store(index_ptr, bin.context.i64_type().const_int(0, false));
-
-    bin.builder.build_unconditional_branch(cond);
-    bin.builder.position_at_end(cond);
-
-    let index = bin
-        .builder
-        .build_load(bin.context.i64_type(), index_ptr, "index")
-        .into_int_value();
-    let continue_condition = bin
-        .builder
-        .build_int_compare(IntPredicate::ULT, index, left_len, "");
-    bin.builder
-        .build_conditional_branch(continue_condition, body, done);
-
-    // build the loop body
-    bin.builder.position_at_end(body);
-
-    let left_char_ptr = unsafe {
-        bin.builder
-            .build_gep(bin.context.i64_type(), left_ptr, &[index], "left_char_ptr")
-    };
-    let right_char_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            right_ptr,
-            &[index],
-            "right_char_ptr",
-        )
-    };
-
-    let left_char = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_char_ptr, "left_char");
-    let right_char = bin
-        .builder
-        .build_load(bin.context.i64_type(), right_char_ptr, "right_char");
-
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_assert")
-            .expect("builtin_assert should have been defined before"),
-        &[left_char.into(), right_char.into()],
-        "",
-    );
-
-    let next_index = bin.builder.build_int_add(
-        index,
-        bin.context.i64_type().const_int(1, false),
-        "next_index",
-    );
-    bin.builder.build_store(index_ptr, next_index);
-    bin.builder.build_unconditional_branch(cond);
-
-    bin.builder.position_at_end(done);
 }

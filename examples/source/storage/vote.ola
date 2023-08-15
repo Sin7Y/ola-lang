@@ -1,11 +1,9 @@
 contract Voting {
  
     struct Proposal {
-        string name;  
+        u32 name;  
         u32 voteCount;
     }
-
-    address chairperson;
 
     struct Voter {
         bool voted;  
@@ -16,8 +14,7 @@ contract Voting {
 
     Proposal[] proposals;
 
-    fn contract_init(string[] proposalNames_) {
-        chairperson = get_caller();
+    fn contract_init(u32[] proposalNames_) {
         for (u32 i = 0; i < proposalNames_.length; i++) {
             proposals.push(Proposal({
                 name: proposalNames_[i],
@@ -25,33 +22,34 @@ contract Voting {
             }));
         }
     }
+    
+    // fn winningProposal() -> (u32 winningProposal_) {
+    //     u32 winningVoteCount = 0;
+    //     for (u32 p = 0; p < proposals.length; p++) {
+    //         if (proposals[p].voteCount > winningVoteCount) {
+    //             winningVoteCount = proposals[p].voteCount;
+    //             winningProposal_ = p;
+    //         }
+    //     }
+    //     return winningProposal_;
+    // }
+
+    // fn getWinnerName() -> (u32) {
+    //      u32 winningProposal = winningProposal();
+    //      u32 winnerName = proposals[winningProposal].name;
+    //      return winnerName;
+    // }
+
 
     fn vote_proposal(u32 proposal_)  {
         address msgSender = get_caller();
+        assert(!voters[msgSender].voted);
         Voter storage sender = voters[msgSender];
-        assert(!sender.voted, "Already voted.");
         sender.voted = true;
         sender.vote = proposal_;
-
         proposals[proposal_].voteCount += 1;
     }
 
-
-    fn winningProposal() -> (u32 winningProposal_) {
-        u32 winningVoteCount = 0;
-        for (u32 p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[p].voteCount;
-                winningProposal_ = p;
-            }
-        }
-        return winningProposal_;
-    }
-
-     fn getWinnerName() -> (string) {
-         string winnerName = proposals[winningProposal()].name;
-         return winnerName;
-     }
 
     fn get_caller() -> (address) {
         return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;
@@ -59,16 +57,16 @@ contract Voting {
 
     fn main() {
 
-        string[] proposalNames = new string[](3);
-        proposalNames[0] = "Proposal 1";
-        proposalNames[1] = "Proposal 2";
-        proposalNames[2] = "Proposal 3";
+        u32[] proposalNames = new u32[](3);
+        proposalNames[0] = 65;
+        proposalNames[1] = 66;
+        proposalNames[2] = 67;
 
-        for (u32 i = 0; i < proposalNames.length; i++) {
-            proposals.push(Proposal({
-                name: proposalNames[i],
-                voteCount: 0
-            }));
-        }
+        contract_init(proposalNames);
+        vote_proposal(1);
+
+        assert(proposals[1].voteCount == 1);
     }
 }
+
+

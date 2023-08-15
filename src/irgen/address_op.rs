@@ -18,7 +18,7 @@ pub fn address_compare<'a>(
     let left = expression(l, bin, func_value, var_table, ns).into_array_value();
     let right = expression(r, bin, func_value, var_table, ns).into_array_value();
 
-    let mut result = bin.context.bool_type().const_all_ones();
+    let mut result = bin.context.bool_type().const_int(1, false);
 
     // Compare each pair of elements
     for i in 0..4 {

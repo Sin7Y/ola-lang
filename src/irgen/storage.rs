@@ -54,7 +54,7 @@ pub(crate) fn storage_array_push<'a>(
 
     let elem_ty = args[0].ty().storage_array_elem();
 
-    let push_pos = array_offset(bin, array_slot, array_length);
+    let push_pos = array_offset(bin, array_slot, array_length, elem_ty.clone(), ns);
 
     if args.len() == 2 {
         let value = expression(&args[1], bin, func_value, var_table, ns);
@@ -97,8 +97,9 @@ pub(crate) fn storage_array_pop<'a>(
         func_value,
         ns,
     );
+    let elem_ty = args[0].ty().storage_array_elem();
 
-    let mut pop_pos = array_offset(bin, array_slot, array_length);
+    let mut pop_pos = array_offset(bin, array_slot, array_length, elem_ty, ns);
 
     let elem_ty = args[0].ty().storage_array_elem().deref_any().clone();
 
@@ -185,7 +186,7 @@ pub(crate) fn storage_load<'a>(
                     size.into_int_value(),
                     &mut elem_slot,
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        let elem = bin.array_subscript(ty, dest, elem_no, ns);
+                        let elem = bin.array_subscript(ty, dest.into(), elem_no, ns);
 
                         let entry = storage_load(bin, elem_ty, slot, function, ns);
 
@@ -323,8 +324,7 @@ pub(crate) fn storage_store<'a>(
                     len,
                     &mut elem_slot,
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-                        let mut elem =
-                            bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
+                        let mut elem = bin.array_subscript(ty, dest, elem_no, ns);
 
                         if elem_ty.is_reference_type(ns)
                             && !elem_ty.deref_memory().is_fixed_reference_type()
@@ -500,7 +500,7 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
         size.into_int_value(),
         &mut elem_slot,
         |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-            let elem = bin.array_subscript(ty, dest, elem_no, ns);
+            let elem = bin.array_subscript(ty, dest.into(), elem_no, ns);
 
             let entry = storage_load(bin, &Type::Uint(32), slot, function, ns);
 
@@ -538,7 +538,7 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
         len,
         &mut elem_slot,
         |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
-            let elem = bin.array_subscript(ty, dest.into_pointer_value(), elem_no, ns);
+            let elem = bin.array_subscript(ty, dest, elem_no, ns);
             storage_store(bin, &Type::Uint(32), slot, elem.into(), function, ns);
 
             *slot = slot_next(bin, *slot);
@@ -725,18 +725,26 @@ pub(crate) fn array_offset<'a>(
     bin: &Binary<'a>,
     start: BasicValueEnum<'a>,
     index: BasicValueEnum<'a>,
+    elem_ty: Type,
+    ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
+    let elem_size = elem_ty.storage_slots(ns);
     let hash_ret = slot_hash(bin, start);
     let hash_value_0 = bin
         .builder
         .build_extract_value(hash_ret.into_array_value(), 3, "");
-
-    let res = bin.builder.build_int_add(
-        hash_value_0.unwrap().into_int_value(),
+    let index_with_size = bin.builder.build_int_mul(
         index.into_int_value(),
+        bin.context
+            .i64_type()
+            .const_int(elem_size.to_u64().unwrap(), false),
         "",
     );
+
+    let res =
+        bin.builder
+            .build_int_add(hash_value_0.unwrap().into_int_value(), index_with_size, "");
 
     bin.builder
         .build_insert_value(hash_ret.into_array_value(), res, 3, "")
