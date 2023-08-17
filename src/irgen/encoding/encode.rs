@@ -1,3 +1,4 @@
+
 use inkwell::{
     values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
     IntPredicate,
@@ -317,6 +318,7 @@ fn calculate_complex_array_size<'a>(
 
 /// Provide generic encoding for any given `arg` into `buffer`.
 pub(crate) fn encode_into_buffer<'a>(
+    buffer: PointerValue<'a>,
     arg: BasicValueEnum<'a>,
     arg_ty: &Type,
     offset: IntValue<'a>,
@@ -326,19 +328,20 @@ pub(crate) fn encode_into_buffer<'a>(
 ) -> IntValue<'a> {
     match arg_ty {
         Type::Contract(_) | Type::Address => {
-            encode_address(arg, &mut offset.clone(), bin);
+            encode_address(buffer, arg,  &mut offset.clone(), bin);
             bin.context.i64_type().const_int(4, false)
         }
         Type::Bool | Type::Uint(32) | Type::Enum(_) => {
-            encode_uint(arg, offset, bin);
+            encode_uint(buffer, arg, offset, bin);
             bin.context.i64_type().const_int(1, false)
         }
 
-        Type::String => encode_bytes(arg, &mut offset.clone(), bin, func_value, ns),
+        Type::String => encode_bytes(buffer, arg, &mut offset.clone(), bin, func_value, ns),
 
         Type::Struct(struct_no) => encode_struct(
             arg,
             arg_ty,
+            buffer,
             &mut offset.clone(),
             *struct_no,
             bin,
@@ -353,6 +356,7 @@ pub(crate) fn encode_into_buffer<'a>(
                 arg_ty,
                 ty,
                 dims,
+                buffer,
                 &mut offset.clone(),
                 func_value,
                 ns,
@@ -364,6 +368,7 @@ pub(crate) fn encode_into_buffer<'a>(
             arg_ty,
             ty,
             dims,
+            buffer,
             &mut offset.clone(),
             func_value,
             ns,
@@ -375,6 +380,7 @@ pub(crate) fn encode_into_buffer<'a>(
                 return encode_struct(
                     arg,
                     arg_ty,
+                    buffer,
                     &mut offset.clone(),
                     *struct_no,
                     bin,
@@ -385,11 +391,11 @@ pub(crate) fn encode_into_buffer<'a>(
             let loaded = bin
                 .builder
                 .build_load(bin.llvm_type(r, ns), arg.into_pointer_value(), "");
-            encode_into_buffer(loaded, r, offset, bin, func_value, ns)
+            encode_into_buffer(buffer, loaded, r,  offset, bin, func_value, ns)
         }
         Type::StorageRef(r) => {
             let loaded = storage_load(bin, r, &mut arg.clone(), func_value, ns);
-            encode_into_buffer(loaded, r, offset, bin, func_value, ns)
+            encode_into_buffer(buffer, loaded, r, offset, bin, func_value, ns)
         }
         Type::UserType(_) | Type::Unresolved | Type::Unreachable => {
             unreachable!("Type should not exist in irgen")
@@ -403,21 +409,31 @@ pub(crate) fn encode_into_buffer<'a>(
 
 /// Write whatever is inside the given `arg` into `buffer` without any
 /// modification.
-fn encode_uint<'a>(arg: BasicValueEnum<'a>, offset: IntValue<'a>, bin: &Binary<'a>) {
-    bin.builder.build_call(
-        bin.module.get_function("tape_store").unwrap(),
-        &[offset.into(), arg.into()],
-        "",
-    );
+fn encode_uint<'a>(
+    buffer: PointerValue<'a>,
+    arg: BasicValueEnum<'a>,
+    offset: IntValue<'a>,
+    bin: &Binary<'a>,
+) {
+    let start = unsafe {
+        bin.builder
+            .build_gep(bin.context.i64_type(), buffer, &[offset], "start")
+    };
+    bin.builder.build_store(start, arg);
 }
 
 /// Encode `address` into `buffer` as an [4 * i64] array.
-fn encode_address<'a>(address: BasicValueEnum<'a>, offset: &mut IntValue<'a>, bin: &Binary<'a>) {
+fn encode_address<'a>(
+    buffer: PointerValue<'a>,
+    address: BasicValueEnum<'a>,
+    offset: &mut IntValue<'a>,
+    bin: &Binary<'a>,
+) {
     for i in 0..4 {
         let value = bin
             .builder
             .build_extract_value(address.into_array_value(), i, "");
-        encode_uint(value.unwrap(), *offset, bin);
+        encode_uint(buffer, value.unwrap(),  *offset, bin);
         *offset =
             bin.builder
                 .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
@@ -426,6 +442,7 @@ fn encode_address<'a>(address: BasicValueEnum<'a>, offset: &mut IntValue<'a>, bi
 
 /// Encode `string` into `buffer` as bytes.
 fn encode_bytes<'a>(
+    buffer: PointerValue<'a>,
     string_value: BasicValueEnum<'a>,
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
@@ -434,7 +451,7 @@ fn encode_bytes<'a>(
 ) -> IntValue<'a> {
     let len = bin.vector_len(string_value);
     // First, we must save the length of the string
-    encode_uint(len.into(), *offset, bin);
+    encode_uint(buffer, len.into(),  *offset, bin);
     *offset = bin.builder.build_int_add(
         *offset,
         bin.context.i64_type().const_int(1, false),
@@ -448,6 +465,7 @@ fn encode_bytes<'a>(
         len,
         &Type::String,
         &Type::Uint(32),
+        buffer,
         bin,
         func_value,
         ns,
@@ -464,6 +482,7 @@ pub fn encode_dynamic_array_loop<'a>(
     length: IntValue<'a>,
     array_ty: &Type,
     elem_ty: &Type,
+    buffer: PointerValue<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -502,7 +521,7 @@ pub fn encode_dynamic_array_loop<'a>(
         elem_ptr.into()
     };
 
-    encode_into_buffer(elem, elem_ty, *offset, bin, func_value, ns);
+    encode_into_buffer(buffer, elem, elem_ty,  *offset, bin, func_value, ns);
 
     *offset = bin.builder.build_int_add(
         *offset,
@@ -533,6 +552,7 @@ pub fn encode_dynamic_array_loop<'a>(
 fn encode_struct<'a>(
     struct_value: BasicValueEnum<'a>,
     struct_ty: &Type,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     struct_no: usize,
     bin: &Binary<'a>,
@@ -543,14 +563,14 @@ fn encode_struct<'a>(
     let first_ty = ns.structs[struct_no].fields[0].ty.clone();
     let loaded = load_struct_member(bin, struct_ty, &first_ty, struct_value, 0, ns);
 
-    let mut advance = encode_into_buffer(loaded, &first_ty, *offset, bin, func_value, ns);
+    let mut advance = encode_into_buffer(buffer, loaded, &first_ty,  *offset, bin, func_value, ns);
     let mut runtime_size = advance.clone();
     for i in 1..qty {
         let ith_type = ns.structs[struct_no].fields[i].ty.clone();
         *offset = bin.builder.build_int_add(*offset, advance, "");
         let loaded = load_struct_member(bin, struct_ty, &ith_type, struct_value, i, ns);
         // After fetching the struct member, we can encode it
-        advance = encode_into_buffer(loaded, &ith_type, *offset, bin, func_value, ns);
+        advance = encode_into_buffer(buffer, loaded, &ith_type, *offset, bin, func_value, ns);
         runtime_size = bin.builder.build_int_add(runtime_size, advance, "");
     }
 
@@ -564,6 +584,7 @@ fn encode_array<'a>(
     array_ty: &Type,
     elem_ty: &Type,
     dims: &[ArrayLength],
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -580,11 +601,11 @@ fn encode_array<'a>(
                     _ => unreachable!(),
                 })
                 .collect::<Vec<_>>();
-            fixed_array_encode(array, array_ty, offset, elem_ty, &dims, bin, ns)
+            fixed_array_encode(array, buffer, array_ty, offset, elem_ty, &dims, bin, ns)
         } else {
             // If the array is dynamic, we must save its size before all elements
             let length = bin.vector_len(array);
-            encode_uint(length.into(), *offset, bin);
+            encode_uint(buffer, length.into(),  *offset, bin);
             *offset =
                 bin.builder
                     .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
@@ -594,6 +615,7 @@ fn encode_array<'a>(
                 length,
                 array_ty,
                 elem_ty,
+                buffer,
                 bin,
                 func_value,
                 ns,
@@ -611,6 +633,7 @@ fn encode_array<'a>(
         .build_alloca(bin.context.i64_type(), "offset_var_no");
     bin.builder.build_store(offset_var_no, offset.clone());
     encode_complex_array(
+        buffer,
         bin,
         array,
         array_ty,
@@ -638,6 +661,7 @@ fn encode_array<'a>(
 /// Note: In the default implementation, `encode_array` decides when to use this
 /// method for you.
 fn encode_complex_array<'a>(
+    buffer: PointerValue<'a>,
     bin: &Binary<'a>,
     array: BasicValueEnum<'a>,
     array_ty: &Type,
@@ -668,7 +692,7 @@ fn encode_complex_array<'a>(
             .builder
             .build_load(bin.context.i64_type(), offset_var, "");
 
-        encode_uint(size.into(), offset_value.into_int_value(), bin);
+        encode_uint(buffer, size.into(),  offset_value.into_int_value(), bin);
 
         let offset_value = bin.builder.build_int_add(
             offset_value.into_int_value(),
@@ -697,6 +721,7 @@ fn encode_complex_array<'a>(
             .builder
             .build_load(bin.context.i64_type(), offset_var, "");
         let elem_size = encode_into_buffer(
+            buffer,
             deref,
             &array_ty,
             offset_value.into_int_value(),
@@ -710,6 +735,7 @@ fn encode_complex_array<'a>(
         bin.builder.build_store(offset_var, offset_value);
     } else {
         encode_complex_array(
+            buffer,
             bin,
             array,
             &array_ty,
@@ -727,6 +753,7 @@ fn encode_complex_array<'a>(
 
 pub fn fixed_array_encode<'a>(
     array: BasicValueEnum<'a>,
+    buffer: PointerValue<'a>,
     array_ty: &Type,
     offset: &mut IntValue<'a>,
     elem_ty: &Type,
@@ -771,7 +798,7 @@ pub fn fixed_array_encode<'a>(
             elem
         };
 
-        encode_uint(elem, *offset, bin);
+        encode_uint(buffer, elem,  *offset, bin);
 
         *offset = bin.builder.build_int_add(
             *offset,

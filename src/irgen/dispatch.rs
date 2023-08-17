@@ -1,6 +1,6 @@
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue},
+    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue}, AddressSpace,
 };
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
@@ -14,24 +14,13 @@ use super::{
 
 fn public_function_prelude<'a>(
     binary: &Binary<'a>,
-    function: FunctionValue,
-) -> (IntValue<'a>, IntValue<'a>, IntValue<'a>) {
+    function: FunctionValue<'a>,
+) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
     let entry = binary.context.append_basic_block(function, "entry");
 
     binary.builder.position_at_end(entry);
 
-    let input = binary
-        .builder
-        .build_call(
-            binary.module.get_function("contract_input").unwrap(),
-            &[],
-            "",
-        )
-        .try_as_basic_value()
-        .left()
-        .unwrap();
-
-    binary.contract_input(input)
+    binary.contract_input()
 }
 
 /// Emits the "deploy" function if `init` is `Some`, otherwise emits the "call"
@@ -48,7 +37,7 @@ pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
     let args = vec![
         BasicMetadataValueEnum::IntValue(selector),
         BasicMetadataValueEnum::IntValue(input_length),
-        BasicMetadataValueEnum::IntValue(input),
+        BasicMetadataValueEnum::PointerValue(input),
     ];
     bin.builder
         .build_call(function_dispatch, &args, "function_dispatch");
@@ -69,7 +58,10 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         &[
             bin.context.i64_type().into(),
             bin.context.i64_type().into(),
-            bin.context.i64_type().into(),
+            bin.context
+                .i64_type()
+                .ptr_type(AddressSpace::default())
+                .into(),
         ],
         false,
     );
@@ -78,7 +70,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
 
     let selector = func_value.get_nth_param(0).unwrap().into_int_value();
     let input_length = func_value.get_nth_param(1).unwrap().into_int_value();
-    let input = func_value.get_nth_param(2).unwrap().into_int_value();
+    let input = func_value.get_nth_param(2).unwrap().into_pointer_value();
 
     bin.builder.position_at_end(entry);
 
@@ -117,7 +109,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
 /// inserted.
 fn dispatch_case<'a>(
     input_length: IntValue<'a>,
-    input: IntValue<'a>,
+    input: PointerValue<'a>,
     func_no: usize,
     bin: &mut Binary<'a>,
     func_value: FunctionValue<'a>,
@@ -165,7 +157,8 @@ fn dispatch_case<'a>(
         .left();
     if !func.returns.is_empty() {
         returns.push(ret.unwrap());
-        abi_encode(bin, returns, &return_tys, func_value, ns);
+        let (reutrn_data, size) = abi_encode(bin, returns, &return_tys, func_value, ns);
+        bin.tape_data_store(reutrn_data, size);
     }
     bin.builder.build_return(None);
 

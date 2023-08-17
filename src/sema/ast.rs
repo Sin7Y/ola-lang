@@ -894,6 +894,8 @@ pub enum LibFunc {
     ArrayLength,
     ArraySort,
     Assert,
+    CallerAddress,
+
 }
 
 #[derive(Clone, Debug)]

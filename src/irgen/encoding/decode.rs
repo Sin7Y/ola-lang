@@ -21,7 +21,7 @@ use super::{
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
 /// expression containing the read value and the number of bytes read.
 pub(crate) fn read_from_buffer<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: IntValue<'a>,
     bin: &Binary<'a>,
     ty: &Type,
@@ -138,23 +138,21 @@ pub(crate) fn read_from_buffer<'a>(
 }
 
 fn decode_uint<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
+    let start = unsafe {
+        bin.builder
+            .build_gep(bin.context.i64_type(), buffer, &[offset], "start")
+    };
+
     bin.builder
-        .build_call(
-            bin.module.get_function("tape_load").unwrap(),
-            &[buffer.into(), offset.into()],
-            "",
-        )
-        .try_as_basic_value()
-        .left()
-        .unwrap()
+        .build_load(bin.context.i64_type(), start, "value")
 }
 
 fn decode_address<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
@@ -171,7 +169,7 @@ fn decode_address<'a>(
 }
 
 fn decode_array<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     array_ty: &Type,
     elem_ty: &Type,
@@ -295,7 +293,7 @@ fn decode_array<'a>(
 }
 
 fn decode_struct<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     ty: &Type,
     struct_no: usize,
@@ -354,7 +352,7 @@ fn decode_struct<'a>(
 }
 
 pub fn fixed_array_decode<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     ty: &Type,
     elem_ty: &Type,
@@ -435,7 +433,7 @@ pub fn struct_literal_copy<'a>(
 /// Currently, we can only handle one-dimensional arrays.
 /// The situation of multi-dimensional arrays has not been processed yet.
 pub(crate) fn decode_dynamic_array_loop<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     length: IntValue<'a>,
     elem_ty: &Type,
@@ -515,7 +513,7 @@ pub(crate) fn decode_dynamic_array_loop<'a>(
 fn decode_complex_array<'a>(
     bin: &Binary<'a>,
     array_var: PointerValue<'a>,
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     offset_var: PointerValue<'a>,
     dimension: usize,
     array_ty: &Type,
