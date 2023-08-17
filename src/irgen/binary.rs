@@ -46,8 +46,8 @@ impl<'a> Binary<'a> {
         let mut binary = Binary::new(context, &contract.name, filename);
         gen_lib_functions(&mut binary, ns);
         gen_functions(&mut binary, ns);
-        // gen_func_dispatch(&mut binary, ns);
-        // gen_contract_entrance(None, &mut binary);
+        gen_func_dispatch(&mut binary, ns);
+        gen_contract_entrance(None, &mut binary);
         binary
     }
 
@@ -324,31 +324,13 @@ impl<'a> Binary<'a> {
             "size_add_one",
         );
 
-        let heap_ptr_after = self
-            .builder
-            .build_call(
-                self.module.get_function("vector_new").unwrap(),
-                &[size_add_one.into()],
-                "",
-            )
-            .try_as_basic_value()
-            .left()
-            .unwrap();
-
-        let heap_ptr_before =
-            self.builder
-                .build_int_sub(heap_ptr_after.into_int_value(), size_add_one, "heap_start");
-
-        let vector = self.builder.build_int_to_ptr(
-            heap_ptr_before,
-            self.context.i64_type().ptr_type(AddressSpace::default()),
-            "heap_start_ptr",
-        );
-        self.builder.build_store(vector, size);
+        let (_, heap_start_ptr) = self.heap_malloc(size_add_one);
+      
+        self.builder.build_store(heap_start_ptr, size);
         match init {
             None => {
                 if zero_init {
-                    let data = self.vector_data(vector.as_basic_value_enum());
+                    let data = self.vector_data(heap_start_ptr.as_basic_value_enum());
                     self.vector_zero_init(
                         function,
                         &elem_ty,
@@ -365,7 +347,7 @@ impl<'a> Binary<'a> {
                 for (item_no, item) in init.iter().enumerate() {
                     let item = self.context.i64_type().const_int(*item as u64, false);
                     let index = self.context.i64_type().const_int(item_no as u64, false);
-                    let data = self.vector_data(vector.as_basic_value_enum());
+                    let data = self.vector_data(heap_start_ptr.as_basic_value_enum());
                     let index_access = unsafe {
                         self.builder.build_gep(
                             self.context.i64_type(),
@@ -379,60 +361,92 @@ impl<'a> Binary<'a> {
             }
         }
 
-        vector
+        heap_start_ptr
     }
 
-    pub(crate) fn contract_input_type(&self) -> BasicTypeEnum<'a> {
-        let struct_type = self.context.struct_type(
-            &[
-                self.context.i64_type().into(),
-                self.context.i64_type().into(),
-            ],
-            false,
+
+    pub(crate) fn heap_malloc(&self, size: IntValue<'a>) -> (IntValue<'a>, PointerValue<'a>) {
+
+        let heap_ptr_after = self
+            .builder
+            .build_call(
+                self.module.get_function("vector_new").unwrap(),
+                &[size.into()],
+                "",
+            )
+            .try_as_basic_value()
+            .left()
+            .unwrap();
+
+        let heap_start_int =
+            self.builder
+                .build_int_sub(heap_ptr_after.into_int_value(), size, "heap_start");
+
+        let heap_start_ptr = self.builder.build_int_to_ptr(
+            heap_start_int,
+            self.context.i64_type().ptr_type(AddressSpace::default()),
+            "heap_to_ptr",
+        );    
+
+        (heap_start_int, heap_start_ptr)
+    }
+
+
+    pub(crate) fn context_data_load(&self, heap_address: IntValue<'a>, tape_index: IntValue<'a>) {
+        let context_data_function = self.module.get_function("get_context_data").unwrap();
+        self.builder.build_call(context_data_function,
+            &[heap_address.into(), tape_index.into()],
+            "",
         );
 
-        struct_type.as_basic_type_enum()
+    }
+    pub(crate) fn call_data_load(
+        &self,
+        heap_address: IntValue<'a>, 
+        tape_index: IntValue<'a>
+    )  {
+       let call_data_function = self.module.get_function("get_call_data").unwrap();
+        self.builder.build_call(call_data_function,
+            &[heap_address.into(), tape_index.into()],
+            "",
+        );
     }
 
-    pub(crate) fn contract_input(
+    pub(crate) fn tape_data_store(
         &self,
-        input: BasicValueEnum<'a>,
-    ) -> (IntValue<'a>, IntValue<'a>, IntValue<'a>) {
-        let input_ty = self.contract_input_type();
-        let selector = self
-            .builder
-            .build_load(
-                self.context.i64_type(),
-                self.builder
-                    .build_struct_gep(input_ty, input.into_pointer_value(), 0, "input_selector")
-                    .unwrap(),
-                "selector",
-            )
-            .into_int_value();
+        heap_address: IntValue<'a>, 
+        length: IntValue<'a>
+    )  {
+         let tape_data_function = self.module.get_function("set_tape_data").unwrap();
+          self.builder.build_call(tape_data_function,
+                &[heap_address.into(), length.into()],
+                "",
+          );
+    }
 
-        let length = self
-            .builder
-            .build_load(
-                self.context.i64_type(),
-                self.builder
-                    .build_struct_gep(input_ty, input.into_pointer_value(), 1, "input_len")
-                    .unwrap(),
-                "len",
-            )
-            .into_int_value();
 
-        let data = self
-            .builder
-            .build_load(
-                self.context.i64_type(),
-                self.builder
-                    .build_struct_gep(input_ty, input.into_pointer_value(), 2, "input_data")
-                    .unwrap(),
-                "data",
-            )
-            .into_int_value();
-
-        (selector, length, data)
+    pub(crate) fn contract_input(&self) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
+        let (selector_start_int, selector_start_ptr) =
+        self.heap_malloc(self.context.i64_type().const_int(1, false));
+        self.call_data_load(selector_start_int, self.context.i64_type().const_int(0, false));
+        let function_selector = self.builder.build_load(
+            self.context.i64_type(),
+            selector_start_ptr,
+            "function_selector",
+        );
+        let (length_start_int, length_start_ptr) =
+        self.heap_malloc(self.context.i64_type().const_int(1, false));
+        self.call_data_load(length_start_int, self.context.i64_type().const_int(1, false));
+        let input_length = self.builder.build_load(
+            self.context.i64_type(),
+            length_start_ptr,
+            "input_length",
+        );
+        let (data_start_int, data_start_ptr) =
+        self.heap_malloc(input_length.into_int_value());
+        self.call_data_load(data_start_int, self.context.i64_type().const_int(2, false));
+        (function_selector.into_int_value(), input_length.into_int_value(), data_start_ptr)
+    
     }
 
     /// Number of element in a vector

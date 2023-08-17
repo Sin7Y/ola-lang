@@ -393,6 +393,37 @@ pub fn expression<'a>(
             bin.context.i64_type().const_zero().into()
         }
 
+        Expression::LibFunction {
+            kind: LibFunc::CallerAddress,
+            ..
+        } => {
+            let mut caller_address = bin.context.i64_type().array_type(4).get_undef();
+            let (heap_start_int, heap_start_ptr) =
+                bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+            bin.context_data_load(heap_start_int, bin.context.i64_type().const_int(2, false));
+            // caller address is start from index = 2 in tape data
+            for i in 0..4 {
+                let index_access = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        heap_start_ptr,
+                        &[bin.context.i64_type().const_int(i, false)],
+                        "",
+                    )
+                };
+                let caller_address_value = bin
+                    .builder
+                    .build_load(bin.context.i64_type(), index_access, "")
+                    .into_int_value();
+                caller_address = bin
+                    .builder
+                    .build_insert_value(caller_address, caller_address_value, i as u32, "")
+                    .unwrap()
+                    .into_array_value()
+            }
+            caller_address.into()
+        }
+
         Expression::StructLiteral { ty, values, .. } => {
             let struct_ty = bin.llvm_type(ty, ns);
 

@@ -33,13 +33,15 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) {
-    // let size = calculate_size_args(bin, &args, types, func_value, ns);
+) -> (IntValue<'a>, IntValue<'a>){
+    let size = calculate_size_args(bin, &args, types, func_value, ns);
+    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(size); 
 
     let mut offset = bin.context.i64_type().const_zero();
-
+    
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
+            heap_start_ptr,
             item.clone(),
             &types[arg_no],
             offset.clone(),
@@ -49,6 +51,7 @@ pub(super) fn abi_encode<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
+    (heap_start_int, size)
 }
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
@@ -56,7 +59,7 @@ pub(super) fn abi_encode<'a>(
 pub(super) fn abi_decode<'a>(
     bin: &Binary<'a>,
     input_length: IntValue<'a>,
-    input: IntValue<'a>,
+    input: PointerValue<'a>,
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
