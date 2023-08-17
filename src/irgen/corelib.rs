@@ -1,6 +1,5 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
-use inkwell::types::BasicType;
 use inkwell::AddressSpace;
 use once_cell::sync::Lazy;
 
@@ -22,12 +21,12 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 11]> = Lazy::new(|| {
         "prophet_u32_mod",
         "prophet_u32_array_sort",
         "vector_new",
-        "contract_input",
+        "get_context_data",
+        "get_call_data",
+        "set_tape_data",
         "get_storage",
         "set_storage",
         "poseidon_hash",
-        "tape_store",
-        "tape_load",
     ]
 });
 
@@ -125,10 +124,27 @@ pub fn declare_prophets(bin: &mut Binary) {
             bin.module.add_function("vector_new", ftype, None);
         }
 
-        "contract_input" => {
-            let ret_type = bin.contract_input_type().ptr_type(AddressSpace::default());
-            let ftype = ret_type.fn_type(&[], false);
-            bin.module.add_function("contract_input", ftype, None);
+        "get_context_data" => {
+            // first param is heap address.
+            // sencond param is tape index.
+            let void_type = bin.context.void_type();
+            let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
+            bin.module.add_function("get_context_data", ftype, None);
+        }
+
+        "get_call_data" => {
+            // first param is heap address.
+            // sencond param is tape index.
+            let void_type = bin.context.void_type();
+            let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
+            bin.module.add_function("get_call_data", ftype, None);
+        }
+        "set_tape_data" => {
+            // first param is heap address.
+            // sencond param is data len.
+            let void_type = bin.context.void_type();
+            let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
+            bin.module.add_function("set_tape_data", ftype, None);
         }
 
         "prophet_u32_array_sort" => {
@@ -156,18 +172,6 @@ pub fn declare_prophets(bin: &mut Binary) {
             let param_type = bin.context.i64_type().array_type(8);
             let ftype = ret_type.fn_type(&[param_type.into()], false);
             bin.module.add_function("poseidon_hash", ftype, None);
-        }
-        "tape_store" => {
-            let void_type = bin.context.void_type();
-            let param_type = bin.context.i64_type();
-            let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
-            bin.module.add_function("tape_store", ftype, None);
-        }
-        "tape_load" => {
-            let ret_type = bin.context.i64_type();
-            let param_type = bin.context.i64_type();
-            let ftype = ret_type.fn_type(&[param_type.into(), param_type.into()], false);
-            bin.module.add_function("tape_load", ftype, None);
         }
 
         _ => {}
