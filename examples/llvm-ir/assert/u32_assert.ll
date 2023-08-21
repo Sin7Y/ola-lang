@@ -79,5 +79,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }

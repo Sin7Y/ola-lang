@@ -108,8 +108,9 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = mul i64 %length, 1
   %5 = add i64 %4, 1
   %6 = add i64 1, %5
-  %7 = call i64 @vector_new(i64 %6)
-  %heap_start = sub i64 %7, %6
+  %size_add_one = add i64 %6, 1
+  %7 = call i64 @vector_new(i64 %size_add_one)
+  %heap_start = sub i64 %7, %size_add_one
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %"struct member2" = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
   %elem3 = load i64, ptr %"struct member2", align 4
@@ -138,6 +139,8 @@ loop_end:                                         ; preds = %loop_body
   %8 = add i64 %length5, 1
   %9 = add i64 1, %8
   %10 = add i64 0, %9
+  %start9 = getelementptr i64, ptr %heap_to_ptr, i64 %10
+  store i64 %6, ptr %start9, align 4
   call void @set_tape_data(i64 %heap_start, i64 %6)
   ret void
 }
@@ -159,5 +162,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }

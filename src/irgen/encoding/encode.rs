@@ -409,7 +409,7 @@ pub(crate) fn encode_into_buffer<'a>(
 
 /// Write whatever is inside the given `arg` into `buffer` without any
 /// modification.
-fn encode_uint<'a>(
+pub(crate) fn encode_uint<'a>(
     buffer: PointerValue<'a>,
     arg: BasicValueEnum<'a>,
     offset: IntValue<'a>,

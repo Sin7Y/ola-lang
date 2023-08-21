@@ -367,8 +367,8 @@ buffer_read14:                                    ; preds = %inbounds9
 
 func_2_dispatch:                                  ; preds = %entry
   %17 = call [4 x i64] @get_caller()
-  %18 = call i64 @vector_new(i64 4)
-  %heap_start15 = sub i64 %18, 4
+  %18 = call i64 @vector_new(i64 5)
+  %heap_start15 = sub i64 %18, 5
   %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
   %19 = extractvalue [4 x i64] %17, 0
   %start17 = getelementptr i64, ptr %heap_to_ptr16, i64 0
@@ -382,6 +382,8 @@ func_2_dispatch:                                  ; preds = %entry
   %22 = extractvalue [4 x i64] %17, 3
   %start20 = getelementptr i64, ptr %heap_to_ptr16, i64 3
   store i64 %22, ptr %start20, align 4
+  %start21 = getelementptr i64, ptr %heap_to_ptr16, i64 4
+  store i64 4, ptr %start21, align 4
   call void @set_tape_data(i64 %heap_start15, i64 4)
   ret void
 
@@ -407,5 +409,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }

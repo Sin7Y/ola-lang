@@ -55,8 +55,8 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   %3 = call ptr @createBook()
-  %4 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %4, 2
+  %4 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %4, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %"struct member" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
   %elem = load i64, ptr %"struct member", align 4
@@ -66,6 +66,8 @@ func_0_dispatch:                                  ; preds = %entry
   %elem2 = load i64, ptr %"struct member1", align 4
   %start3 = getelementptr i64, ptr %heap_to_ptr, i64 1
   store i64 %elem2, ptr %start3, align 4
+  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 2, ptr %start4, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }
@@ -87,5 +89,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }
