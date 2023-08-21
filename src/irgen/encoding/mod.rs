@@ -2,7 +2,7 @@ use std::ops::{AddAssign, Sub};
 
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    values::{BasicValueEnum, FunctionValue, IntValue, PointerValue, BasicValue},
     IntPredicate,
 };
 use num_bigint::BigInt;
@@ -14,7 +14,7 @@ use crate::sema::ast::{ArrayLength, Namespace, Type};
 use self::{
     buffer_validator::BufferValidator,
     decode::read_from_buffer,
-    encode::{calculate_size_args, encode_into_buffer},
+    encode::{calculate_size_args, encode_into_buffer, encode_uint},
 };
 
 use super::{binary::Binary, expression::array_subscript};
@@ -33,9 +33,16 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (IntValue<'a>, IntValue<'a>){
+) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
-    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(size); 
+
+    let size_add_one = bin.builder.build_int_add(
+        size,
+    bin.context.i64_type().const_int(1, false),
+        "size_add_one",
+    );
+  
+    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(size_add_one); 
 
     let mut offset = bin.context.i64_type().const_zero();
     
@@ -51,7 +58,14 @@ pub(super) fn abi_encode<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
-    (heap_start_int, size)
+    // encode size to heap 
+    encode_uint(
+        heap_start_ptr,
+        size.as_basic_value_enum(),
+        offset,
+        bin,
+    );
+    bin.tape_data_store(heap_start_int, size)
 }
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.

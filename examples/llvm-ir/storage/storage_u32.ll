@@ -68,11 +68,13 @@ func_0_dispatch:                                  ; preds = %entry
 
 func_1_dispatch:                                  ; preds = %entry
   %3 = call i64 @get()
-  %4 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %4, 1
+  %4 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %4, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %start = getelementptr i64, ptr %heap_to_ptr, i64 0
   store i64 %3, ptr %start, align 4
+  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %start1, align 4
   call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
@@ -98,5 +100,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }

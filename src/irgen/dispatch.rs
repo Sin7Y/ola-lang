@@ -41,7 +41,7 @@ pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
     ];
     bin.builder
         .build_call(function_dispatch, &args, "function_dispatch");
-    bin.builder.build_unreachable();
+    bin.builder.build_return(None);
 }
 
 /// Emits the "function_dispatch" function.
@@ -157,8 +157,8 @@ fn dispatch_case<'a>(
         .left();
     if !func.returns.is_empty() {
         returns.push(ret.unwrap());
-        let (reutrn_data, size) = abi_encode(bin, returns, &return_tys, func_value, ns);
-        bin.tape_data_store(reutrn_data, size);
+        abi_encode(bin, returns, &return_tys, func_value, ns);
+        
     }
     bin.builder.build_return(None);
 

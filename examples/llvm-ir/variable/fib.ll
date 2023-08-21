@@ -29,12 +29,6 @@ declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
 
-define void @main() {
-entry:
-  %0 = call i64 @fib_non_recursive(i64 10)
-  ret void
-}
-
 define i64 @fib_recursive(i64 %0) {
 entry:
   %n = alloca i64, align 8
@@ -119,29 +113,24 @@ endfor:                                           ; preds = %cond
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
-    i64 229678162, label %func_1_dispatch
-    i64 2146118040, label %func_2_dispatch
+    i64 229678162, label %func_0_dispatch
+    i64 2146118040, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @main()
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
   %3 = icmp ule i64 1, %1
   br i1 %3, label %inbounds, label %out_of_bounds
 
-inbounds:                                         ; preds = %func_1_dispatch
+inbounds:                                         ; preds = %func_0_dispatch
   %start = getelementptr i64, ptr %2, i64 0
   %value = load i64, ptr %start, align 4
   %4 = icmp ult i64 1, %1
   br i1 %4, label %not_all_bytes_read, label %buffer_read
 
-out_of_bounds:                                    ; preds = %func_1_dispatch
+out_of_bounds:                                    ; preds = %func_0_dispatch
   unreachable
 
 not_all_bytes_read:                               ; preds = %inbounds
@@ -149,38 +138,42 @@ not_all_bytes_read:                               ; preds = %inbounds
 
 buffer_read:                                      ; preds = %inbounds
   %5 = call i64 @fib_recursive(i64 %value)
-  %6 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %6, 1
+  %6 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %6, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %start1 = getelementptr i64, ptr %heap_to_ptr, i64 0
   store i64 %5, ptr %start1, align 4
+  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %start2, align 4
   call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
-func_2_dispatch:                                  ; preds = %entry
+func_1_dispatch:                                  ; preds = %entry
   %7 = icmp ule i64 1, %1
-  br i1 %7, label %inbounds2, label %out_of_bounds3
+  br i1 %7, label %inbounds3, label %out_of_bounds4
 
-inbounds2:                                        ; preds = %func_2_dispatch
-  %start4 = getelementptr i64, ptr %2, i64 0
-  %value5 = load i64, ptr %start4, align 4
+inbounds3:                                        ; preds = %func_1_dispatch
+  %start5 = getelementptr i64, ptr %2, i64 0
+  %value6 = load i64, ptr %start5, align 4
   %8 = icmp ult i64 1, %1
-  br i1 %8, label %not_all_bytes_read6, label %buffer_read7
+  br i1 %8, label %not_all_bytes_read7, label %buffer_read8
 
-out_of_bounds3:                                   ; preds = %func_2_dispatch
+out_of_bounds4:                                   ; preds = %func_1_dispatch
   unreachable
 
-not_all_bytes_read6:                              ; preds = %inbounds2
+not_all_bytes_read7:                              ; preds = %inbounds3
   unreachable
 
-buffer_read7:                                     ; preds = %inbounds2
-  %9 = call i64 @fib_non_recursive(i64 %value5)
-  %10 = call i64 @vector_new(i64 1)
-  %heap_start8 = sub i64 %10, 1
-  %heap_to_ptr9 = inttoptr i64 %heap_start8 to ptr
-  %start10 = getelementptr i64, ptr %heap_to_ptr9, i64 0
-  store i64 %9, ptr %start10, align 4
-  call void @set_tape_data(i64 %heap_start8, i64 1)
+buffer_read8:                                     ; preds = %inbounds3
+  %9 = call i64 @fib_non_recursive(i64 %value6)
+  %10 = call i64 @vector_new(i64 2)
+  %heap_start9 = sub i64 %10, 2
+  %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
+  %start11 = getelementptr i64, ptr %heap_to_ptr10, i64 0
+  store i64 %9, ptr %start11, align 4
+  %start12 = getelementptr i64, ptr %heap_to_ptr10, i64 1
+  store i64 1, ptr %start12, align 4
+  call void @set_tape_data(i64 %heap_start9, i64 1)
   ret void
 }
 
@@ -201,5 +194,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }
