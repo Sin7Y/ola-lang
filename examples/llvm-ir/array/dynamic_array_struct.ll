@@ -93,7 +93,7 @@ entry:
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %struct_alloca = alloca { i64, i64, [5 x i64] }, align 8
-  %array_literal39 = alloca [5 x i64], align 8
+  %array_literal40 = alloca [5 x i64], align 8
   %array_literal = alloca [2 x { i64, i64, [5 x i64] }], align 8
   switch i64 %0, label %missing_function [
     i64 2736305406, label %func_0_dispatch
@@ -138,8 +138,9 @@ body:                                             ; preds = %cond
 
 end_for:                                          ; preds = %cond
   %9 = load i64, ptr %size_var, align 4
-  %10 = call i64 @vector_new(i64 %9)
-  %heap_start = sub i64 %10, %9
+  %size_add_one = add i64 %9, 1
+  %10 = call i64 @vector_new(i64 %size_add_one)
+  %heap_start = sub i64 %10, %size_add_one
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %offset_var_no = alloca i64, align 8
   store i64 0, ptr %offset_var_no, align 4
@@ -207,14 +208,16 @@ end_for10:                                        ; preds = %cond7
   %23 = load i64, ptr %offset_var_no, align 4
   %24 = sub i64 %23, 0
   %25 = add i64 0, %24
+  %start28 = getelementptr i64, ptr %heap_to_ptr, i64 %25
+  store i64 %9, ptr %start28, align 4
   call void @set_tape_data(i64 %heap_start, i64 %9)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %elemptr028 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %array_literal, i64 0, i64 0
-  store i64 0, ptr %elemptr028, align 4
-  %elemptr129 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %array_literal, i64 0, i64 1
-  store i64 0, ptr %elemptr129, align 4
+  %elemptr029 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %array_literal, i64 0, i64 0
+  store i64 0, ptr %elemptr029, align 4
+  %elemptr130 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %array_literal, i64 0, i64 1
+  store i64 0, ptr %elemptr130, align 4
   store ptr %array_literal, ptr null, align 8
   %offset_var = alloca i64, align 8
   store i64 0, ptr %offset_var, align 4
@@ -224,72 +227,72 @@ func_1_dispatch:                                  ; preds = %entry
   br i1 %28, label %inbounds, label %out_of_bounds
 
 inbounds:                                         ; preds = %func_1_dispatch
-  %index_ptr30 = alloca i64, align 8
-  store i64 0, ptr %index_ptr30, align 4
-  %index31 = load i64, ptr %index_ptr30, align 4
-  br label %cond32
+  %index_ptr31 = alloca i64, align 8
+  store i64 0, ptr %index_ptr31, align 4
+  %index32 = load i64, ptr %index_ptr31, align 4
+  br label %cond33
 
 out_of_bounds:                                    ; preds = %func_1_dispatch
   unreachable
 
-cond32:                                           ; preds = %next33, %inbounds
-  %29 = icmp ult i64 %index31, 2
-  br i1 %29, label %body34, label %end_for35
+cond33:                                           ; preds = %next34, %inbounds
+  %29 = icmp ult i64 %index32, 2
+  br i1 %29, label %body35, label %end_for36
 
-next33:                                           ; preds = %body34
-  %index64 = load i64, ptr %index_ptr30, align 4
-  %30 = add i64 %index64, 1
-  store i64 %30, ptr %index_ptr30, align 4
-  br label %cond32
+next34:                                           ; preds = %body35
+  %index65 = load i64, ptr %index_ptr31, align 4
+  %30 = add i64 %index65, 1
+  store i64 %30, ptr %index_ptr31, align 4
+  br label %cond33
 
-body34:                                           ; preds = %cond32
-  %start36 = getelementptr i64, ptr %2, i64 %26
-  %value = load i64, ptr %start36, align 4
+body35:                                           ; preds = %cond33
+  %start37 = getelementptr i64, ptr %2, i64 %26
+  %value = load i64, ptr %start37, align 4
   %31 = add i64 %26, 1
-  %start37 = getelementptr i64, ptr %2, i64 %31
-  %value38 = load i64, ptr %start37, align 4
+  %start38 = getelementptr i64, ptr %2, i64 %31
+  %value39 = load i64, ptr %start38, align 4
   %32 = add i64 %31, 1
-  %elemptr040 = getelementptr [5 x i64], ptr %array_literal39, i64 0, i64 0
-  %start41 = getelementptr i64, ptr %2, i64 %32
-  %value42 = load i64, ptr %start41, align 4
-  %offset43 = add i64 %32, 1
-  store i64 %value42, ptr %elemptr040, align 4
-  %elemptr144 = getelementptr [5 x i64], ptr %array_literal39, i64 0, i64 1
-  %start45 = getelementptr i64, ptr %2, i64 %offset43
-  %value46 = load i64, ptr %start45, align 4
-  %offset47 = add i64 %offset43, 1
-  store i64 %value46, ptr %elemptr144, align 4
-  %elemptr248 = getelementptr [5 x i64], ptr %array_literal39, i64 0, i64 2
-  %start49 = getelementptr i64, ptr %2, i64 %offset47
-  %value50 = load i64, ptr %start49, align 4
-  %offset51 = add i64 %offset47, 1
-  store i64 %value50, ptr %elemptr248, align 4
-  %elemptr352 = getelementptr [5 x i64], ptr %array_literal39, i64 0, i64 3
-  %start53 = getelementptr i64, ptr %2, i64 %offset51
-  %value54 = load i64, ptr %start53, align 4
-  %offset55 = add i64 %offset51, 1
-  store i64 %value54, ptr %elemptr352, align 4
-  %elemptr456 = getelementptr [5 x i64], ptr %array_literal39, i64 0, i64 4
-  %start57 = getelementptr i64, ptr %2, i64 %offset55
-  %value58 = load i64, ptr %start57, align 4
-  %offset59 = add i64 %offset55, 1
-  store i64 %value58, ptr %elemptr456, align 4
-  %"struct member60" = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %struct_alloca, i32 0, i32 0
-  store i64 %value, ptr %"struct member60", align 4
-  %"struct member61" = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %struct_alloca, i32 0, i32 1
-  store i64 %value38, ptr %"struct member61", align 4
-  %"struct member62" = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %struct_alloca, i32 0, i32 2
-  store ptr %array_literal39, ptr %"struct member62", align 8
+  %elemptr041 = getelementptr [5 x i64], ptr %array_literal40, i64 0, i64 0
+  %start42 = getelementptr i64, ptr %2, i64 %32
+  %value43 = load i64, ptr %start42, align 4
+  %offset44 = add i64 %32, 1
+  store i64 %value43, ptr %elemptr041, align 4
+  %elemptr145 = getelementptr [5 x i64], ptr %array_literal40, i64 0, i64 1
+  %start46 = getelementptr i64, ptr %2, i64 %offset44
+  %value47 = load i64, ptr %start46, align 4
+  %offset48 = add i64 %offset44, 1
+  store i64 %value47, ptr %elemptr145, align 4
+  %elemptr249 = getelementptr [5 x i64], ptr %array_literal40, i64 0, i64 2
+  %start50 = getelementptr i64, ptr %2, i64 %offset48
+  %value51 = load i64, ptr %start50, align 4
+  %offset52 = add i64 %offset48, 1
+  store i64 %value51, ptr %elemptr249, align 4
+  %elemptr353 = getelementptr [5 x i64], ptr %array_literal40, i64 0, i64 3
+  %start54 = getelementptr i64, ptr %2, i64 %offset52
+  %value55 = load i64, ptr %start54, align 4
+  %offset56 = add i64 %offset52, 1
+  store i64 %value55, ptr %elemptr353, align 4
+  %elemptr457 = getelementptr [5 x i64], ptr %array_literal40, i64 0, i64 4
+  %start58 = getelementptr i64, ptr %2, i64 %offset56
+  %value59 = load i64, ptr %start58, align 4
+  %offset60 = add i64 %offset56, 1
+  store i64 %value59, ptr %elemptr457, align 4
+  %"struct member61" = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %struct_alloca, i32 0, i32 0
+  store i64 %value, ptr %"struct member61", align 4
+  %"struct member62" = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %struct_alloca, i32 0, i32 1
+  store i64 %value39, ptr %"struct member62", align 4
+  %"struct member63" = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %struct_alloca, i32 0, i32 2
+  store ptr %array_literal40, ptr %"struct member63", align 8
   %33 = load ptr, ptr null, align 8
-  %34 = sub i64 1, %index31
+  %34 = sub i64 1, %index32
   call void @builtin_range_check(i64 %34)
-  %index_access63 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %33, i64 0, i64 %index31
-  store ptr %struct_alloca, ptr %index_access63, align 8
+  %index_access64 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %33, i64 0, i64 %index32
+  store ptr %struct_alloca, ptr %index_access64, align 8
   %35 = add i64 %26, 7
   store i64 %35, ptr %offset_var, align 4
-  br label %next33
+  br label %next34
 
-end_for35:                                        ; preds = %cond32
+end_for36:                                        ; preds = %cond33
   %36 = load ptr, ptr null, align 8
   %37 = load i64, ptr %offset_var, align 4
   %38 = sub i64 %37, 0
@@ -297,17 +300,19 @@ end_for35:                                        ; preds = %cond32
   %40 = icmp ult i64 %39, %1
   br i1 %40, label %not_all_bytes_read, label %buffer_read
 
-not_all_bytes_read:                               ; preds = %end_for35
+not_all_bytes_read:                               ; preds = %end_for36
   unreachable
 
-buffer_read:                                      ; preds = %end_for35
+buffer_read:                                      ; preds = %end_for36
   %41 = call i64 @getFirstBookID(ptr %36)
-  %42 = call i64 @vector_new(i64 1)
-  %heap_start65 = sub i64 %42, 1
-  %heap_to_ptr66 = inttoptr i64 %heap_start65 to ptr
-  %start67 = getelementptr i64, ptr %heap_to_ptr66, i64 0
-  store i64 %41, ptr %start67, align 4
-  call void @set_tape_data(i64 %heap_start65, i64 1)
+  %42 = call i64 @vector_new(i64 2)
+  %heap_start66 = sub i64 %42, 2
+  %heap_to_ptr67 = inttoptr i64 %heap_start66 to ptr
+  %start68 = getelementptr i64, ptr %heap_to_ptr67, i64 0
+  store i64 %41, ptr %start68, align 4
+  %start69 = getelementptr i64, ptr %heap_to_ptr67, i64 1
+  store i64 1, ptr %start69, align 4
+  call void @set_tape_data(i64 %heap_start66, i64 1)
   ret void
 }
 
@@ -328,5 +333,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }

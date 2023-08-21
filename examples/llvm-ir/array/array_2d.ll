@@ -78,8 +78,8 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   %3 = call ptr @create2DArray()
-  %4 = call i64 @vector_new(i64 6)
-  %heap_start = sub i64 %4, 6
+  %4 = call i64 @vector_new(i64 7)
+  %heap_start = sub i64 %4, 7
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %elemptr0 = getelementptr [3 x [2 x i64]], ptr %3, i64 0, i64 0, i64 0
   %5 = load i64, ptr %elemptr0, align 4
@@ -105,6 +105,8 @@ func_0_dispatch:                                  ; preds = %entry
   %10 = load i64, ptr %elemptr5, align 4
   %start5 = getelementptr i64, ptr %heap_to_ptr, i64 5
   store i64 %10, ptr %start5, align 4
+  %start6 = getelementptr i64, ptr %heap_to_ptr, i64 6
+  store i64 6, ptr %start6, align 4
   call void @set_tape_data(i64 %heap_start, i64 6)
   ret void
 
@@ -113,34 +115,34 @@ func_1_dispatch:                                  ; preds = %entry
   br i1 %11, label %inbounds, label %out_of_bounds
 
 inbounds:                                         ; preds = %func_1_dispatch
-  %elemptr06 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 0, i64 0
-  %start7 = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start7, align 4
-  store i64 %value, ptr %elemptr06, align 4
-  %elemptr18 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 0, i64 1
-  %start9 = getelementptr i64, ptr %2, i64 1
-  %value10 = load i64, ptr %start9, align 4
-  store i64 %value10, ptr %elemptr18, align 4
-  %elemptr211 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 1, i64 0
-  %start12 = getelementptr i64, ptr %2, i64 2
-  %value13 = load i64, ptr %start12, align 4
-  store i64 %value13, ptr %elemptr211, align 4
-  %elemptr314 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 1, i64 1
-  %start15 = getelementptr i64, ptr %2, i64 3
-  %value16 = load i64, ptr %start15, align 4
-  store i64 %value16, ptr %elemptr314, align 4
-  %elemptr417 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 2, i64 0
-  %start18 = getelementptr i64, ptr %2, i64 4
-  %value19 = load i64, ptr %start18, align 4
-  store i64 %value19, ptr %elemptr417, align 4
-  %elemptr520 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 2, i64 1
-  %start21 = getelementptr i64, ptr %2, i64 5
-  %value22 = load i64, ptr %start21, align 4
-  store i64 %value22, ptr %elemptr520, align 4
-  %start23 = getelementptr i64, ptr %2, i64 6
-  %value24 = load i64, ptr %start23, align 4
-  %start25 = getelementptr i64, ptr %2, i64 7
-  %value26 = load i64, ptr %start25, align 4
+  %elemptr07 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 0, i64 0
+  %start8 = getelementptr i64, ptr %2, i64 0
+  %value = load i64, ptr %start8, align 4
+  store i64 %value, ptr %elemptr07, align 4
+  %elemptr19 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 0, i64 1
+  %start10 = getelementptr i64, ptr %2, i64 1
+  %value11 = load i64, ptr %start10, align 4
+  store i64 %value11, ptr %elemptr19, align 4
+  %elemptr212 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 1, i64 0
+  %start13 = getelementptr i64, ptr %2, i64 2
+  %value14 = load i64, ptr %start13, align 4
+  store i64 %value14, ptr %elemptr212, align 4
+  %elemptr315 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 1, i64 1
+  %start16 = getelementptr i64, ptr %2, i64 3
+  %value17 = load i64, ptr %start16, align 4
+  store i64 %value17, ptr %elemptr315, align 4
+  %elemptr418 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 2, i64 0
+  %start19 = getelementptr i64, ptr %2, i64 4
+  %value20 = load i64, ptr %start19, align 4
+  store i64 %value20, ptr %elemptr418, align 4
+  %elemptr521 = getelementptr [3 x [2 x i64]], ptr %array_literal, i64 0, i64 2, i64 1
+  %start22 = getelementptr i64, ptr %2, i64 5
+  %value23 = load i64, ptr %start22, align 4
+  store i64 %value23, ptr %elemptr521, align 4
+  %start24 = getelementptr i64, ptr %2, i64 6
+  %value25 = load i64, ptr %start24, align 4
+  %start26 = getelementptr i64, ptr %2, i64 7
+  %value27 = load i64, ptr %start26, align 4
   %12 = icmp ult i64 8, %1
   br i1 %12, label %not_all_bytes_read, label %buffer_read
 
@@ -151,13 +153,15 @@ not_all_bytes_read:                               ; preds = %inbounds
   unreachable
 
 buffer_read:                                      ; preds = %inbounds
-  %13 = call i64 @getElement(ptr %array_literal, i64 %value24, i64 %value26)
-  %14 = call i64 @vector_new(i64 1)
-  %heap_start27 = sub i64 %14, 1
-  %heap_to_ptr28 = inttoptr i64 %heap_start27 to ptr
-  %start29 = getelementptr i64, ptr %heap_to_ptr28, i64 0
-  store i64 %13, ptr %start29, align 4
-  call void @set_tape_data(i64 %heap_start27, i64 1)
+  %13 = call i64 @getElement(ptr %array_literal, i64 %value25, i64 %value27)
+  %14 = call i64 @vector_new(i64 2)
+  %heap_start28 = sub i64 %14, 2
+  %heap_to_ptr29 = inttoptr i64 %heap_start28 to ptr
+  %start30 = getelementptr i64, ptr %heap_to_ptr29, i64 0
+  store i64 %13, ptr %start30, align 4
+  %start31 = getelementptr i64, ptr %heap_to_ptr29, i64 1
+  store i64 1, ptr %start31, align 4
+  call void @set_tape_data(i64 %heap_start28, i64 1)
   ret void
 }
 
@@ -178,5 +182,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }

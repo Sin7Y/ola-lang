@@ -1,9 +1,5 @@
 contract Fibonacci {
 
-    fn main() {
-       fib_non_recursive(10);
-    }
-
     fn fib_recursive(u32 n) -> (u32) {
         if (n == 0) {
             return 0;

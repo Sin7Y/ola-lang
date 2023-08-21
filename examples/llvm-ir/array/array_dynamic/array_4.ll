@@ -137,8 +137,9 @@ buffer_read:                                      ; preds = %inbounds
   %length = load i64, ptr %5, align 4
   %6 = mul i64 %length, 1
   %7 = add i64 %6, 1
-  %8 = call i64 @vector_new(i64 %7)
-  %heap_start = sub i64 %8, %7
+  %size_add_one = add i64 %7, 1
+  %8 = call i64 @vector_new(i64 %size_add_one)
+  %heap_start = sub i64 %8, %size_add_one
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %length1 = load i64, ptr %5, align 4
   %start2 = getelementptr i64, ptr %heap_to_ptr, i64 0
@@ -161,6 +162,8 @@ loop_body:                                        ; preds = %loop_body, %buffer_
 loop_end:                                         ; preds = %loop_body
   %9 = add i64 %length1, 1
   %10 = add i64 0, %9
+  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 %10
+  store i64 %7, ptr %start4, align 4
   call void @set_tape_data(i64 %heap_start, i64 %7)
   ret void
 }
@@ -182,5 +185,5 @@ entry:
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
   call void @get_call_data(i64 %heap_start3, i64 2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
-  unreachable
+  ret void
 }
