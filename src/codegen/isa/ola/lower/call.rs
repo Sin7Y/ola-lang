@@ -66,6 +66,52 @@ pub fn lower_call(
         return Ok(());
     }
 
+    if name.as_str() == "get_ctx_data" || name.as_str() == "get_call_data" {
+        let flag_imm = if name.as_str() == "get_call_data" {
+            1
+        } else {
+            0
+        };
+        let dest = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let idx = get_operand_for_val(ctx, tys[2], args[2])?;
+
+        let addr = ctx.mach_data.vregs.add_vreg_data(tys[1]);
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MOVri,
+                operands: vec![MO::output(addr.into()), MO::new(flag_imm.into())],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::TLOADri,
+                operands: vec![
+                    MO::output(dest.into()),
+                    MO::input(addr.into()),
+                    MO::input(idx),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
+    if name.as_str() == "set_tape_data" {
+        let src = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let len = get_operand_for_val(ctx, tys[2], args[2])?;
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::TSTOREr,
+                operands: vec![MO::input(src.into()), MO::input(len)],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
     if name.as_str() == "set_storage" {
         pass_str_args_to_regs(ctx, &tys[1..], &args[1..])?;
         ctx.inst_seq.push(MachInstruction::new(

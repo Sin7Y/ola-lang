@@ -63,6 +63,11 @@ pub enum Opcode {
     PROPHET,
 
     Phi,
+
+    TLOADri,
+    TLOADrr,
+    TSTOREi,
+    TSTOREr,
 }
 
 #[derive(Clone)]

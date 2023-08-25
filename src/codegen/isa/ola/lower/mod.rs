@@ -15,7 +15,7 @@ use crate::codegen::core::ir::{
         instruction::{
             Alloca, Br, Call, Cast, CondBr, ExtractValue, InsertValue,
             Instruction as IrInstruction, InstructionId, IntBinary, Load, Opcode as IrOpcode,
-            Operand, Phi, Ret, Store,
+            Operand, Phi, Ret, Store, Switch,
         },
         Parameter,
     },
@@ -37,7 +37,7 @@ use anyhow::Result;
 
 use alloca::lower_alloca;
 use bin::{lower_bin, lower_itp};
-use br::{lower_br, lower_condbr};
+use br::{lower_br, lower_condbr, lower_switch};
 use call::{lower_call, lower_return};
 use extractv::lower_extractvalue;
 use gep::lower_gep;
@@ -148,6 +148,11 @@ fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
         }
         Operand::Br(Br { block }) => lower_br(ctx, block),
         Operand::CondBr(CondBr { arg, blocks }) => lower_condbr(ctx, arg, blocks),
+        Operand::Switch(Switch {
+            ref tys,
+            ref args,
+            ref blocks,
+        }) => lower_switch(ctx, inst.id.unwrap(), tys, args, blocks),
         Operand::Call(Call {
             ref args, ref tys, ..
         }) => lower_call(ctx, inst.id.unwrap(), tys, args),

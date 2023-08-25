@@ -385,6 +385,8 @@ impl fmt::Display for Opcode {
                 Self::XOR => "xor",
                 Self::RANGECHECK => "range",
                 Self::ASSERTri | Self::ASSERTrr => "assert",
+                Self::TLOADri | Self::TLOADrr => "tload",
+                Self::TSTOREi | Self::TSTOREr => "tstore",
                 e => todo!("{:?}", e),
             }
         )

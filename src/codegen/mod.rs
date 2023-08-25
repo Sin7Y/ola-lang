@@ -4277,4 +4277,142 @@ done75:                                           ; preds = %cond73
 "
         );
     }
+
+    #[test]
+    fn codegen_tape_test() {
+        // LLVM Assembly
+        let asm = r#"
+  define dso_local void @foo(i64 %len1) #0 {
+    %a = alloca i64, align 8
+    store i32 10, i64* %a
+    %b = alloca i64, align 8
+    store i32 20, i64* %b
+    %len = alloca i64, align 8
+    store i32 30, i32* %len
+    call void @get_call_data(i64 %a, i64 2)
+    call void @get_call_data(i64 %a, i64 %len1)
+
+    call void @get_ctx_data(i64 %a, i64 3)
+    call void @get_ctx_data(i64 %a, i64 %len1)
+    call void @set_tape_data(i64 %a, i64 4)
+    call void @set_tape_data(i64 %a, i64 %len1)
+    ret void
+  }
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "foo:
+.LBL0_0:
+  add r9 r9 3
+  mov r6 r1
+  mov r5 10
+  mstore [r9,-1] r5
+  mov r5 20
+  mstore [r8] r5
+  mov r8 30
+  mstore [r7] r8
+  add r8 r9 -1
+  mov r7 1
+  tload r8 r7 2
+  mov r7 1
+  tload r8 r7 r6
+  mov r7 0
+  tload r8 r7 3
+  mov r7 0
+  tload r8 r7 r6
+  tstore r8 4
+  tstore r8 r6
+  add r9 r9 -3
+  ret
+"
+        );
+    }
+
+    #[test]
+    fn codegen_switch_test() {
+        // LLVM Assembly
+        let asm = r#"
+define i64 @main() {
+entry:
+  %x = alloca i64, align 4
+  store i64 2, i64* %x, align 4
+  %0 = load i64, i64* %x, align 4
+  switch i64 %0, label %default [
+    i64 1, label %case1
+    i64 2, label %case2
+    i64 3, label %case3
+  ]
+
+case1:
+  br label %end
+
+case2:
+  br label %end
+
+case3:
+  br label %end
+
+default:
+  unreachable
+  br label %end
+
+end:
+  ret i64 100
+}
+
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r9 r9 1
+  mov r8 2
+  mstore [r9,-1] r8
+  mload r8 [r9,-1]
+  eq r7 r8 1
+  cjmp r7 .LBL0_1
+  eq r7 r8 2
+  cjmp r7 .LBL0_2
+  eq r7 r8 3
+  cjmp r7 .LBL0_3
+  jmp .LBL0_4
+.LBL0_1:
+  jmp .LBL0_5
+.LBL0_2:
+  jmp .LBL0_5
+.LBL0_3:
+  jmp .LBL0_5
+.LBL0_4:
+  jmp .LBL0_5
+.LBL0_5:
+  mov r0 100
+  add r9 r9 -1
+  end
+"
+        );
+    }
 }

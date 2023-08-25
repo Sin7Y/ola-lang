@@ -375,6 +375,50 @@ pub fn lower_condbr(
     Err(LoweringError::Todo("Unsupported conditional br pattern".into()).into())
 }
 
+pub fn lower_switch(
+    ctx: &mut LoweringContext<Ola>,
+    id: InstructionId,
+    tys: &[Type],
+    args: &[ValueId],
+    blocks: &[BasicBlockId],
+) -> Result<()> {
+    let src = get_operand_for_val(ctx, tys[0], args[0])?;
+    let output = new_empty_inst_output(ctx, tys[0], id);
+    for (idx, dst) in args[1..].iter().enumerate() {
+        let dest = get_operand_for_val(ctx, tys[idx], *dst)?;
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::EQri,
+                operands: vec![
+                    MO::output(OperandData::VReg(output[0])),
+                    MO::input(src.clone()),
+                    MO::input(dest),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::CJMPr,
+                operands: vec![
+                    MO::input(output[0].into()),
+                    MO::new(OperandData::Block(ctx.block_map[&blocks[idx + 1]])),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+    }
+    ctx.inst_seq.push(MachInstruction::new(
+        InstructionData {
+            opcode: Opcode::JMPr,
+            operands: vec![MO::new(OperandData::Block(ctx.block_map[&blocks[0]]))],
+        },
+        ctx.block_map[&ctx.cur_block],
+    ));
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use crate::codegen::{
