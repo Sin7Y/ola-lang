@@ -65,7 +65,7 @@ pub(super) fn abi_encode<'a>(
         offset,
         bin,
     );
-    bin.tape_data_store(heap_start_int, size)
+    bin.tape_data_store(heap_start_int, size_add_one)
 }
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
