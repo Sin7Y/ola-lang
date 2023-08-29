@@ -1,14 +1,9 @@
 contract InputExample {
-    fn foo() -> (u32) {
-        return 5;
+    fn foo(u32 a, u32 b) -> (u32) {
+        return a + b;
     }
 
-    fn main() {
-        u32 x = 5;
-        u32 y = foo();
-    }
-
-    fn bar() -> (u32) {
-        return 5 + 4;
+    fn bar(u32 a, u32 b) -> (u32) {
+        return a * b;
     }
 }
