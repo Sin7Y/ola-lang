@@ -426,25 +426,28 @@ impl<'a> Binary<'a> {
 
 
     pub(crate) fn contract_input(&self) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
+        let selector_size = self.context.i64_type().const_int(1, false);
         let (selector_start_int, selector_start_ptr) =
-        self.heap_malloc(self.context.i64_type().const_int(1, false));
-        self.call_data_load(selector_start_int, self.context.i64_type().const_int(0, false));
+        self.heap_malloc(selector_size);
+        self.call_data_load(selector_start_int, selector_size);
         let function_selector = self.builder.build_load(
             self.context.i64_type(),
             selector_start_ptr,
             "function_selector",
         );
+        let length_size = self.context.i64_type().const_int(2, false);
         let (length_start_int, length_start_ptr) =
-        self.heap_malloc(self.context.i64_type().const_int(1, false));
-        self.call_data_load(length_start_int, self.context.i64_type().const_int(1, false));
+        self.heap_malloc(length_size);
+        self.call_data_load(length_start_int, length_size);
         let input_length = self.builder.build_load(
             self.context.i64_type(),
             length_start_ptr,
             "input_length",
         );
+        let calldata_size = self.builder.build_int_add(input_length.into_int_value(), self.context.i64_type().const_int(2, false), "");
         let (data_start_int, data_start_ptr) =
-        self.heap_malloc(input_length.into_int_value());
-        self.call_data_load(data_start_int, self.context.i64_type().const_int(2, false));
+        self.heap_malloc(calldata_size);
+        self.call_data_load(data_start_int, calldata_size);
         (function_selector.into_int_value(), input_length.into_int_value(), data_start_ptr)
     
     }
