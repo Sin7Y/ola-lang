@@ -118,6 +118,7 @@ pub fn compile_function<'a, T: TargetIsa>(
 
         // entry block
         if i == 0 {
+            // if "function_dispatch" != function.name.as_str() {
             T::Lower::copy_args_to_vregs(
                 &mut LoweringContext {
                     ir_data: &function.data,
@@ -136,6 +137,7 @@ pub fn compile_function<'a, T: TargetIsa>(
                 },
                 function.params(),
             )?;
+            // }
         }
 
         // Only handle Alloca and Phi insts
@@ -167,7 +169,6 @@ pub fn compile_function<'a, T: TargetIsa>(
 
         for inst_id in function.layout.inst_iter(block_id) {
             let inst = function.data.inst_ref(inst_id);
-
             if inst.opcode == Opcode::Alloca || inst.opcode == Opcode::Phi {
                 continue;
             }

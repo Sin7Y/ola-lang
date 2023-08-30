@@ -383,14 +383,17 @@ pub fn lower_switch(
     blocks: &[BasicBlockId],
 ) -> Result<()> {
     let src = get_operand_for_val(ctx, tys[0], args[0])?;
-    let output = new_empty_inst_output(ctx, tys[0], id);
+    //let output = new_empty_inst_output(ctx, tys[0], id);
+    // let mut vreg = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+    // ctx.inst_id_to_vreg.insert(id, vec![vreg]);
+    let switch_reg: Reg = GR::R1.into();
     for (idx, dst) in args[1..].iter().enumerate() {
         let dest = get_operand_for_val(ctx, tys[idx], *dst)?;
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::EQri,
                 operands: vec![
-                    MO::output(OperandData::VReg(output[0])),
+                    MO::output(switch_reg.into()),
                     MO::input(src.clone()),
                     MO::input(dest),
                 ],
@@ -401,7 +404,7 @@ pub fn lower_switch(
             InstructionData {
                 opcode: Opcode::CJMPr,
                 operands: vec![
-                    MO::input(output[0].into()),
+                    MO::input(switch_reg.into()),
                     MO::new(OperandData::Block(ctx.block_map[&blocks[idx + 1]])),
                 ],
             },

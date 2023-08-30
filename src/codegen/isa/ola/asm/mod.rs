@@ -288,6 +288,10 @@ pub fn print_function(
 
     for block in function.layout.block_iter() {
         code.push_str(&format!(".LBL{}_{}:\n", fn_idx, block.index()));
+        match function.layout.last_inst_of(block) {
+            Some(_) => (),
+            None => code.push_str(&format!("  ret\n")),
+        }
         for inst in function.layout.inst_iter(block) {
             let inst = function.data.inst_ref(inst);
             if Opcode::MSTOREr == inst.data.opcode {
@@ -301,7 +305,7 @@ pub fn print_function(
 
             if Opcode::RET == inst.data.opcode {
                 let mut term = "  ret";
-                if function.ir.name() == "main" {
+                if function.ir.name() == "main" || function.ir.name() == "call" {
                     term = "  end";
                 }
                 code.push_str(&format!("{}", term));

@@ -168,6 +168,22 @@ fn lower_load_gep(
                 MOperand::new(OperandData::None),
             ]
         }
+        [Value::Argument(a), Const(Int(Int64(idx0)))] => {
+            let mut vregs = vec![];
+            let ops = ctx.arg_idx_to_vreg.get(&a.nth).unwrap();
+            for idx in 0..ops.len() {
+                vregs.push(ops[idx]);
+            }
+            vec![
+                MOperand::new(OperandData::MemStart),
+                MOperand::new(OperandData::None),
+                MOperand::new(OperandData::None),
+                MOperand::new(OperandData::Int32(*idx0 as i32)),
+                MOperand::input(OperandData::VReg(vregs[0])),
+                MOperand::input(OperandData::None),
+                MOperand::new(OperandData::None),
+            ]
+        }
         [Value::Instruction(base_ptr), Const(Int(Int64(idx0))), Const(Int(Int64(idx1)))] => {
             let mut slot = None;
             let mut base = None;
