@@ -130,7 +130,7 @@ pub(super) fn member_access(
                 };
             }
         }
-        Type::String | Type::Slice(_) => {
+        Type::String | Type::DynamicBytes | Type::Slice(_) => {
             if id.name == "length" {
                 return Ok(Expression::LibFunction {
                     loc: *loc,
@@ -166,6 +166,18 @@ pub(super) fn member_access(
                 }
             }
             Type::Array(_, _) => {
+                if id.name == "length" {
+                    let elem_ty = expr.ty().storage_array_elem().deref_into();
+
+                    return Ok(Expression::StorageArrayLength {
+                        loc: id.loc,
+                        ty: Type::Uint(32),
+                        array: Box::new(expr),
+                        elem_ty,
+                    });
+                }
+            }
+            Type::DynamicBytes | Type::String => {
                 if id.name == "length" {
                     let elem_ty = expr.ty().storage_array_elem().deref_into();
 

@@ -15,6 +15,7 @@ impl RetrieveType for Expression {
             | Expression::Not { .. }
             | Expression::StringCompare { .. } => Type::Bool,
             Expression::StringConcat { ty, .. }
+            | Expression::BytesLiteral { ty, .. }
             | Expression::NumberLiteral { ty, .. }
             | Expression::AddressLiteral { ty, .. }
             | Expression::StructLiteral { ty, .. }
@@ -49,6 +50,9 @@ impl RetrieveType for Expression {
             | Expression::Trunc { to, .. }
             | Expression::Cast { to, .. } => to.clone(),
             Expression::StorageArrayLength { ty, .. } => ty.clone(),
+            Expression::ExternalFunctionCallRaw { .. } => {
+                panic!("two return values");
+            }
             Expression::LibFunction { tys: returns, .. }
             | Expression::FunctionCall { returns, .. } => {
                 assert_eq!(returns.len(), 1);

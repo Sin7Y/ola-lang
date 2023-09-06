@@ -383,6 +383,40 @@ pub(super) fn is_string_equal(
     ns: &Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<Option<Expression>, ()> {
+    // compare string against literal
+    match (&left, &right_type.deref_any()) {
+        (Expression::BytesLiteral { value: l, .. }, Type::String)
+        | (Expression::BytesLiteral { value: l, .. }, Type::DynamicBytes) => {
+            return Ok(Some(Expression::StringCompare {
+                loc: *loc,
+                left: StringLocation::RunTime(Box::new(right.cast(
+                    &right.loc(),
+                    right_type.deref_any(),
+                    ns,
+                    diagnostics,
+                )?)),
+                right: StringLocation::CompileTime(l.clone()),
+            }));
+        }
+        _ => {}
+    }
+
+    match (&right, &left_type.deref_any()) {
+        (Expression::BytesLiteral { value, .. }, Type::String)
+        | (Expression::BytesLiteral { value, .. }, Type::DynamicBytes) => {
+            return Ok(Some(Expression::StringCompare {
+                loc: *loc,
+                left: StringLocation::RunTime(Box::new(left.cast(
+                    &left.loc(),
+                    left_type.deref_any(),
+                    ns,
+                    diagnostics,
+                )?)),
+                right: StringLocation::CompileTime(value.clone()),
+            }));
+        }
+        _ => {}
+    }
     // compare string
     match (&left_type.deref_any(), &right_type.deref_any()) {
         (Type::String, Type::String) => {

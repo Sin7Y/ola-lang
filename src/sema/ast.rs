@@ -22,6 +22,7 @@ pub enum Type {
     Bool,
     Uint(u16),
     Address,
+    DynamicBytes,
     String,
     Array(Box<Type>, Vec<ArrayLength>),
     /// The usize is an index into enums in the namespace
@@ -300,6 +301,7 @@ impl From<&program::Type> for Type {
             program::Type::Uint(n) => Type::Uint(*n),
             program::Type::String => Type::String,
             program::Type::Mapping { .. } => unimplemented!(),
+            program::Type::DynamicBytes => Type::DynamicBytes,
         }
     }
 }
@@ -421,6 +423,11 @@ pub enum Expression {
     BoolLiteral {
         loc: program::Loc,
         value: bool,
+    },
+    BytesLiteral {
+        loc: program::Loc,
+        ty: Type,
+        value: Vec<u8>,
     },
     NumberLiteral {
         loc: program::Loc,
@@ -693,6 +700,14 @@ pub enum Expression {
         args: Vec<Expression>,
     },
 
+    ExternalFunctionCallRaw {
+        loc: program::Loc,
+        ty: CallTy,
+        address: Box<Expression>,
+        args: Box<Expression>,
+        call_args: CallArgs,
+    },
+
     LibFunction {
         loc: program::Loc,
         tys: Vec<Type>,
@@ -703,6 +718,27 @@ pub enum Expression {
         loc: program::Loc,
         list: Vec<Expression>,
     },
+}
+
+
+#[derive(PartialEq, Eq, Clone, Default, Debug)]
+pub struct CallArgs {
+    pub gas: Option<Box<Expression>>,
+    pub value: Option<Box<Expression>>,
+    pub address: Option<Box<Expression>>,
+}
+
+impl Recurse for CallArgs {
+    type ArgType = Expression;
+    fn recurse<T>(&self, cx: &mut T, f: fn(expr: &Expression, ctx: &mut T) -> bool) {
+        if let Some(gas) = &self.gas {
+            gas.recurse(cx, f);
+        }
+        if let Some(value) = &self.value {
+            value.recurse(cx, f);
+        }
+
+    }
 }
 
 impl Recurse for Expression {
@@ -792,6 +828,16 @@ impl Recurse for Expression {
                         e.recurse(cx, f);
                     }
                 }
+                Expression::ExternalFunctionCallRaw {
+                    address,
+                    args,
+                    call_args,
+                    ..
+                } => {
+                    args.recurse(cx, f);
+                    address.recurse(cx, f);
+                    call_args.recurse(cx, f);
+                }
                 Expression::LibFunction { args: exprs, .. }
                 | Expression::List { list: exprs, .. } => {
                     for e in exprs {
@@ -808,6 +854,7 @@ impl CodeLocation for Expression {
     fn loc(&self) -> program::Loc {
         match self {
             Expression::BoolLiteral { loc, .. }
+            | Expression::BytesLiteral { loc, .. }
             | Expression::NumberLiteral { loc, .. }
             | Expression::AddressLiteral { loc, .. }
             | Expression::StructLiteral { loc, .. }
@@ -851,6 +898,7 @@ impl CodeLocation for Expression {
             | Expression::StringConcat { loc, .. }
             | Expression::Function { loc, .. }
             | Expression::FunctionCall { loc, .. }
+            | Expression::ExternalFunctionCallRaw { loc, .. }
             | Expression::Increment { loc, .. }
             | Expression::Decrement { loc, .. }
             | Expression::LibFunction { loc, .. }
@@ -895,7 +943,27 @@ pub enum LibFunc {
     ArraySort,
     Assert,
     CallerAddress,
+    AbiDecode,
+    AbiEncode,
+    AbiEncodeWithSignature
 
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub enum CallTy {
+    Regular,
+    Delegate,
+    Static,
+}
+
+impl fmt::Display for CallTy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CallTy::Regular => write!(f, "regular"),
+            CallTy::Static => write!(f, "static"),
+            CallTy::Delegate => write!(f, "delegate"),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

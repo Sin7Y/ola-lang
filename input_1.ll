@@ -58,8 +58,8 @@ entry:
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 253268590, label %func_0_dispatch
-    i64 1503968193, label %func_1_dispatch
+    i64 1855068175, label %func_0_dispatch
+    i64 3250299993, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

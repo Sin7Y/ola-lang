@@ -431,7 +431,6 @@ fn enum_decl(
             Some(c) => Some(ns.contracts[c].name.to_owned()),
             None => None,
         },
-        // TODO change type to field ?
         ty: Type::Uint(32),
         values: entries,
     };
@@ -564,6 +563,7 @@ impl Type {
             Type::Address => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
             Type::String => "string".to_string(),
+            Type::DynamicBytes => "bytes".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
             Type::Array(ty, len) => format!(
@@ -648,6 +648,7 @@ impl Type {
             Type::Contract(_) | Type::Address => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
             Type::String => "string".to_string(),
+            Type::DynamicBytes => "bytes".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(
                 "{}{}",
@@ -700,6 +701,7 @@ impl Type {
             Type::Struct(_) => true,
             Type::Array(_, dims) => !dims.iter().any(|d| *d == ArrayLength::Dynamic),
             Type::Contract(_) => false,
+            Type::DynamicBytes => false,
             Type::String => false,
             Type::Mapping(..) => false,
             Type::Slice(_) => false,
@@ -719,6 +721,7 @@ impl Type {
                 Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())
             }
             Type::Array(ty, dim) if dim.len() == 1 => *ty.clone(),
+            Type::DynamicBytes => Type::Uint(32),
             _ => panic!("not an array"),
         }
     }
@@ -729,6 +732,7 @@ impl Type {
     pub fn storage_array_elem(&self) -> Self {
         match self {
             Type::Mapping(Mapping { value, .. }) => Type::StorageRef(value.clone()),
+            Type::DynamicBytes | Type::String => Type::Uint(32),
             Type::Array(ty, dim) if dim.len() > 1 => Type::StorageRef(Box::new(Type::Array(
                 ty.clone(),
                 dim[..dim.len() - 1].to_vec(),
@@ -783,7 +787,7 @@ impl Type {
                 .iter()
                 .map(|d| d.ty.memory_size_of_internal(ns, structs_visited))
                 .sum::<BigInt>(),
-            Type::String | Type::Ref(_) | Type::Slice(_) | Type::StorageRef(..) => BigInt::one(),
+            Type::String | Type::DynamicBytes | Type::Ref(_) | Type::Slice(_) | Type::StorageRef(..) => BigInt::one(),
             Type::Unresolved => BigInt::zero(),
             Type::UserType(no) => ns.user_types[*no]
                 .ty
@@ -817,6 +821,7 @@ impl Type {
                 ns.structs[*n].fields.iter().map(|d| d.ty.struct_elem_alignment(ns)).max().unwrap()
             }
             Type::String
+            | Type::DynamicBytes
             | Type::Ref(_)
             | Type::StorageRef(..) => BigInt::one(),
             Type::UserType(no) => ns.user_types[*no].ty.struct_elem_alignment(ns),
@@ -848,7 +853,7 @@ impl Type {
                 .last()
                 .cloned()
                 .unwrap_or_else(BigInt::zero),
-            Type::String => BigInt::one(),
+            Type::String | Type::DynamicBytes => BigInt::one(),
             Type::Ref(ty) | Type::StorageRef(ty) => ty.storage_size(ns),
             Type::UserType(no) => ns.user_types[*no].ty.storage_size(ns),
             // Other types have the same size both in storage and in memory
@@ -930,7 +935,7 @@ impl Type {
     #[must_use]
     pub fn array_deref(&self) -> Self {
         match self {
-            Type::String => Type::Ref(Box::new(Type::Uint(32))),
+            Type::String | Type::DynamicBytes => Type::Ref(Box::new(Type::Uint(32))),
             Type::Ref(t) => t.array_deref(),
             Type::Array(ty, dim) if dim.len() > 1 => Type::Ref(Box::new(Type::Array(
                 ty.clone(),
@@ -950,6 +955,7 @@ impl Type {
             Type::Enum(_) => false,
             Type::Struct(_) => true,
             Type::Array(..) => true,
+            Type::DynamicBytes => true,
             Type::String => true,
             Type::Mapping(..) => true,
             Type::Contract(_) => false,
@@ -968,7 +974,7 @@ impl Type {
 
     fn is_dynamic_internal(&self, ns: &Namespace, structs_visited: &mut HashSet<usize>) -> bool {
         self.guarded_recursion(structs_visited, false, |structs_visited| match self {
-            Type::String => true,
+            Type::String | Type::DynamicBytes => true,
             Type::Ref(r) => r.is_dynamic_internal(ns, structs_visited),
             Type::Array(ty, dim) => {
                 if dim.iter().any(|d| d == &ArrayLength::Dynamic) {
@@ -992,7 +998,7 @@ impl Type {
     pub fn can_have_data_location(&self) -> bool {
         matches!(
             self,
-            Type::Array(..) | Type::Struct(_) | Type::Mapping(..) | Type::String
+            Type::Array(..) | Type::Struct(_) | Type::Mapping(..) | Type::String | Type::DynamicBytes
         )
     }
 
@@ -1004,11 +1010,22 @@ impl Type {
     /// Is this a reference to dynamic memory (arrays, strings)
     pub fn is_dynamic_memory(&self) -> bool {
         match self {
-            Type::String | Type::Slice(_) => true,
+            Type::String | Type::DynamicBytes | Type::Slice(_) => true,
             Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => true,
             Type::Ref(ty) => ty.is_dynamic_memory(),
             _ => false,
         }
+    }
+
+    /// Is this a storage bytes string
+    pub fn is_storage_bytes(&self) -> bool {
+        if let Type::StorageRef(ty) = self {
+            if let Type::DynamicBytes = ty.as_ref() {
+                return true;
+            }
+        }
+
+        false
     }
 
     /// Is this a mapping
