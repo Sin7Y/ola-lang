@@ -3,6 +3,8 @@ use crate::sema::ast::{Diagnostic, Expression, LibFunc, Namespace, RetrieveType}
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
 
+use super::ast::CallArgs;
+
 /// Mark variables as assigned, either in the symbol table (for local variables)
 /// or in the Namespace (for storage variables)
 pub fn assigned_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtable) {
@@ -140,6 +142,15 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             assigned_variable(ns, &args[0], symtable);
             used_variable(ns, &args[0], symtable);
         }
+        Expression::LibFunction {
+            kind: LibFunc::ArrayPush | LibFunc::ArrayPop,
+            args,
+            ..
+        } => {
+            // Array push and pop return values, so they are both read and assigned.
+            used_variable(ns, &args[0], symtable);
+            assigned_variable(ns, &args[0], symtable);
+        }
 
         Expression::StorageArrayLength { array, .. } => {
             // We should not eliminate an array from the code when 'length' is called
@@ -181,6 +192,16 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
             }
             check_function_call(ns, function, symtable);
         }
+        Expression::ExternalFunctionCallRaw {
+            address,
+            args,
+            call_args,
+            ..
+        } => {
+            used_variable(ns, args, symtable);
+            used_variable(ns, address, symtable);
+            check_call_args(ns, call_args, symtable);
+        }
         Expression::LibFunction {
             kind: expr_type,
             args,
@@ -204,6 +225,17 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
     }
 }
 
+
+/// Mark function call arguments as used
+fn check_call_args(ns: &mut Namespace, call_args: &CallArgs, symtable: &mut Symtable) {
+    if let Some(gas) = &call_args.gas {
+        used_variable(ns, gas.as_ref(), symtable);
+    }
+    if let Some(value) = &call_args.value {
+        used_variable(ns, value.as_ref(), symtable);
+    }
+}
+
 /// Marks as used variables that appear in an expression with right and left
 /// hand side.
 pub fn check_var_usage_expression(
@@ -217,16 +249,15 @@ pub fn check_var_usage_expression(
 }
 
 /// Emit different warning types according to the function variable usage
-pub fn emit_warning_local_variable(variable: &symtable::Variable) -> Option<Diagnostic> {
+pub fn emit_warning_local_variable(variable: &symtable::Variable, ns: &Namespace) -> Option<Diagnostic> {
     match &variable.usage_type {
         VariableUsage::Parameter => {
-            if !variable.read {
+            if (!variable.read && !variable.ty.is_reference_type(ns))
+                || (!variable.read && !variable.assigned && variable.ty.is_reference_type(ns))
+            {
                 return Some(Diagnostic::warning(
                     variable.id.loc,
-                    format!(
-                        "function parameter '{}' has never been read",
-                        variable.id.name
-                    ),
+                    format!("function parameter '{}' is unused", variable.id.name),
                 ));
             }
             None
@@ -234,30 +265,37 @@ pub fn emit_warning_local_variable(variable: &symtable::Variable) -> Option<Diag
 
         VariableUsage::ReturnVariable => {
             if !variable.assigned {
-                return Some(Diagnostic::warning(
-                    variable.id.loc,
-                    format!(
-                        "return variable '{}' has never been assigned",
-                        variable.id.name
-                    ),
-                ));
+                if variable.ty.is_contract_storage() {
+                    return Some(Diagnostic::error(
+                        variable.id.loc,
+                        format!(
+                            "storage reference '{}' must be assigned a value",
+                            variable.id.name
+                        ),
+                    ));
+                } else {
+                    return Some(Diagnostic::warning(
+                        variable.id.loc,
+                        format!(
+                            "return variable '{}' has never been assigned",
+                            variable.id.name
+                        ),
+                    ));
+                }
             }
             None
         }
 
         VariableUsage::LocalVariable => {
             let assigned = variable.initializer.has_initializer() || variable.assigned;
-            if !assigned && !variable.read {
+            if !variable.assigned && !variable.read {
                 return Some(Diagnostic::warning(
                     variable.id.loc,
-                    format!(
-                        "local variable '{}' has never been read nor assigned",
-                        variable.id.name
-                    ),
+                    format!("local variable '{}' is unused", variable.id.name),
                 ));
-            } else if assigned && !variable.read {
-                // Values assigned to variables that reference others change the value of its
-                // reference No warning needed in this case
+            } else if assigned && !variable.read && !variable.is_reference() {
+                // Values assigned to variables that reference others change the value of its reference
+                // No warning needed in this case
                 return Some(Diagnostic::warning(
                     variable.id.loc,
                     format!(

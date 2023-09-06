@@ -112,7 +112,6 @@ fn resolve_import(
         .iter()
         .position(|file| file.cache_no.is_none() && file.path == os_filename)
     {
-        // import "solana"
         builtin_file_no
     } else {
         match resolver.resolve_file(parent, os_filename) {
