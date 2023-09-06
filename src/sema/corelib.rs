@@ -5,8 +5,11 @@ use super::diagnostics::Diagnostics;
 use super::expression::{ExprContext, ResolveTo};
 use super::symtable::Symtable;
 use crate::sema::expression::resolve_expression::expression;
+use crate::sema::ast::{RetrieveType};
+use num_bigint::BigInt;
 use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
+use tiny_keccak::{Keccak, Hasher};
 
 pub struct Prototype {
     pub libfunc: LibFunc,
@@ -17,7 +20,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 5]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 8]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -59,6 +62,27 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 5]> = Lazy::new(|| {
             name: "caller_address",
             params: vec![],
             ret: vec![Type::Address],
+        },
+        Prototype {
+            libfunc: LibFunc::AbiDecode,
+            namespace: Some("abi"),
+            name: "decode",
+            params: vec![Type::DynamicBytes],
+            ret: vec![],
+        },
+        Prototype {
+            libfunc: LibFunc::AbiEncode,
+            namespace: Some("abi"),
+            name: "encode",
+            params: vec![],
+            ret: vec![],
+        },
+        Prototype {
+            libfunc: LibFunc::AbiEncodeWithSignature,
+            namespace: Some("abi"),
+            name: "encodeWithSignature",
+            params: vec![Type::String],
+            ret: vec![],
         },
     ]
 });
@@ -201,6 +225,225 @@ pub fn resolve_call(
 
     Err(())
 }
+
+/// Resolve a builtin namespace call. The takes the unresolved arguments, since it has
+/// to handle the special case "abi.decode(foo, (int32, bool, address))" where the
+/// second argument is a type list. The generic expression resolver cannot deal with
+/// this. It is only used in for this specific call.
+pub(super) fn resolve_namespace_call(
+    loc: &program::Loc,
+    namespace: &str,
+    name: &str,
+    args: &[program::Expression],
+    context: &ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    // The abi.* functions need special handling, others do not
+    if namespace != "abi" {
+
+        return resolve_call(
+            loc,
+            Some(namespace),
+            name,
+            args,
+            context,
+            ns,
+            symtable,
+            diagnostics,
+        );
+    }
+
+    let builtin = match name {
+        "decode" => LibFunc::AbiDecode,
+        "encode" => LibFunc::AbiEncode,
+        "encodeWithSignature" => LibFunc::AbiEncodeWithSignature,
+    
+        _ => unreachable!(),
+    };
+
+    if builtin == LibFunc::AbiDecode {
+        if args.len() != 2 {
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                format!("function expects {} arguments, {} provided", 2, args.len()),
+            ));
+
+            return Err(());
+        }
+
+        // first args
+        let data = expression(
+            &args[0],
+            context,
+            ns,
+            symtable,
+            diagnostics,
+            ResolveTo::Type(&Type::DynamicBytes),
+        )?
+        .cast(&args[0].loc(), &Type::DynamicBytes,  ns, diagnostics)?;
+
+        let mut tys = Vec::new();
+        let mut broken = false;
+
+        match &args[1] {
+            program::Expression::List(_, list) => {
+                for (loc, param) in list {
+                    if let Some(param) = param {
+                        let ty = ns.resolve_type(
+                            context.file_no,
+                            context.contract_no,
+                            &param.ty,
+                            diagnostics,
+                        )?;
+
+                        if let Some(name) = &param.name {
+                            diagnostics.push(Diagnostic::error(
+                                name.loc,
+                                format!("unexpected identifier '{}' in type", name.name),
+                            ));
+                            broken = true;
+                        }
+
+                        if ty.is_mapping() || ty.is_recursive(ns) {
+                            diagnostics.push(Diagnostic::error(
+                                *loc,
+                        format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns)))
+                            );
+                            broken = true;
+                        }
+
+                        tys.push(ty);
+                    } else {
+                        diagnostics.push(Diagnostic::error(*loc, "missing type".to_string()));
+
+                        broken = true;
+                    }
+                }
+            }
+            _ => {
+                let ty = ns.resolve_type(
+                    context.file_no,
+                    context.contract_no,
+                    args[1].remove_parenthesis(),
+                    diagnostics,
+                )?;
+
+                if ty.is_mapping() || ty.is_recursive(ns) {
+                    diagnostics.push(Diagnostic::error(
+                        *loc,
+                        format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns))
+                    ));
+                    broken = true;
+                }
+
+                tys.push(ty);
+            }
+        }
+
+        return if broken {
+            Err(())
+        } else {
+            Ok(Expression::LibFunction {
+                loc: *loc,
+                tys,
+                kind: builtin,
+                args: vec![data],
+            })
+        };
+    }
+
+    let mut resolved_args = Vec::new();
+    let mut args_iter = args.iter();
+
+    match builtin {
+
+        LibFunc::AbiEncodeWithSignature => {
+            // first argument is signature
+            if let Some(signature) = args_iter.next() {
+                let function_selector;
+                match signature {
+                    program::Expression::StringLiteral(s) => {
+                        let function_name = &s[0].string;
+                        if !function_name.starts_with("fn") {
+                            diagnostics.push(Diagnostic::error(
+                                *loc,
+                                "function signature must start with 'fn'".to_string(),
+                            ));
+
+                            return Err(());
+                        } else {
+                            // keccak hash the signature
+                            let mut hasher = Keccak::v256();
+                            let mut hash = [0u8; 32];
+                            hasher.update(function_name.as_bytes());
+                            hasher.finalize(&mut hash);
+                    
+                            function_selector = u32::from_le_bytes(hash[0..4].try_into().unwrap())
+                        }
+                    }
+                    _ => {
+                        diagnostics.push(Diagnostic::error(
+                            *loc,
+                            "function signature must be a string literal".to_string(),
+                        ));
+                        return Err(());
+                    }
+                    
+                }
+                resolved_args.insert(
+                    0,
+                    Expression::NumberLiteral {
+                        loc: *loc,
+                        ty: Type::Uint(32),
+                        value: BigInt::from(function_selector),
+                    }
+                );
+            } else {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    "function requires one 'string' signature argument".to_string(),
+                ));
+
+                return Err(());
+            }
+        }
+        _ => (),
+    }
+
+    for arg in args_iter {
+        let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+        let ty = expr.ty();
+
+        if ty.is_mapping() || ty.is_recursive(ns) {
+            diagnostics.push(Diagnostic::error(
+                arg.loc(),
+                format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns)),
+            ));
+
+            return Err(());
+        }
+
+        expr = expr.cast(&arg.loc(), ty.deref_any(),  ns, diagnostics)?;
+
+        // A string or hex literal should be encoded as a string
+        if let Expression::BytesLiteral { .. } = &expr {
+            expr = expr.cast(&arg.loc(), &Type::String,  ns, diagnostics)?;
+        }
+
+        resolved_args.push(expr);
+    }
+
+    Ok(Expression::LibFunction {
+        loc: *loc,
+        tys: vec![Type::DynamicBytes],
+        kind: builtin,
+        args: resolved_args,
+    })
+}
+
+
 
 /// Resolve a builtin call
 pub fn resolve_method_call(

@@ -153,6 +153,8 @@ pub enum Type {
     Uint(u16),
     Address,
     String,
+    /// `bytes`
+    DynamicBytes,
     /// `mapping(<key> [key_name] => <value> [value_name])`
     Mapping {
         /// The code location.
@@ -311,6 +313,7 @@ pub enum Expression {
     Parenthesis(Loc, Box<Expression>),
     MemberAccess(Loc, Box<Expression>, Identifier),
     FunctionCall(Loc, Box<Expression>, Vec<Expression>),
+    FunctionCallBlock(Loc, Box<Expression>, Box<Statement>),
     NamedFunctionCall(Loc, Box<Expression>, Vec<NamedArgument>),
     Not(Loc, Box<Expression>),
     BitwiseNot(Loc, Box<Expression>),
@@ -369,6 +372,7 @@ impl CodeLocation for Expression {
             | Expression::ArraySlice(loc, ..)
             | Expression::MemberAccess(loc, ..)
             | Expression::FunctionCall(loc, ..)
+            | Expression::FunctionCallBlock(loc, ..)
             | Expression::NamedFunctionCall(loc, ..)
             | Expression::Not(loc, _)
             | Expression::BitwiseNot(loc, _)

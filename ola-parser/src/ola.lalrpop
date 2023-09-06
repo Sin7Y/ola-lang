@@ -23,6 +23,7 @@ Type: Type = {
     "u64" => Type::Uint(64),
     "u256" => Type::Uint(256),
     "address" => Type::Address,
+    "bytes" => Type::DynamicBytes,
     "string" => Type::String,
         <l:@L> "mapping" "(" <k:Precedence0> <key_name:Identifier?> "=>" <v:Precedence0> <value_name:Identifier?> ")" <r:@R> => {
         Type::Mapping {
@@ -218,6 +219,9 @@ NamedArgument: NamedArgument = {
 FunctionCall: Expression = {
     <a:@L> <i:Precedence0> "(" <v:Comma<Expression>> ")" <b:@R> => {
         Expression::FunctionCall(Loc::File(file_no, a, b), Box::new(i), v)
+    },
+    <l:@L> <i:Precedence0> <block:BlockStatement> <r:@R> => {
+        Expression::FunctionCallBlock(Loc::File(file_no, l, r), Box::new(i), Box::new(block))
     },
     <a:@L> <i:Precedence0> "(" "{" <v:Comma<NamedArgument>> "}" ")" <b:@R> => {
         Expression::NamedFunctionCall(Loc::File(file_no, a, b), Box::new(i), v)

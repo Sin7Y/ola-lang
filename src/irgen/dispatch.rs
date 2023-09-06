@@ -83,7 +83,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         .iter()
         .enumerate()
         .filter_map(|(func_no, func)| {
-            let selector = BigInt::from_bytes_le(Sign::Plus, &func.selector());
+            let selector = BigInt::from_bytes_be(Sign::Plus, &func.selector());
             let case = bin
                 .context
                 .i64_type()

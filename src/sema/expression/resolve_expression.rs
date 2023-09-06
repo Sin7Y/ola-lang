@@ -429,5 +429,12 @@ pub fn expression(
             ));
             Err(())
         }
+        program::Expression::FunctionCallBlock(loc, ..) => {
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                "unexpect block encountered".to_owned(),
+            ));
+            Err(())
+        }
     }
 }

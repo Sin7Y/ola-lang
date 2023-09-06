@@ -187,6 +187,19 @@ impl Dot {
                 );
             }
 
+            Expression::BytesLiteral { loc, ty, value } => {
+                let labels = vec![
+                    format!("{} literal: {}", ty.to_string(ns), hex::encode(value)),
+                    ns.loc_to_string(loc),
+                ];
+
+                self.add_node(
+                    Node::new("bytes_literal", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+            }
+
             Expression::NumberLiteral { loc, ty, value } => {
                 let labels = vec![
                     format!("{} literal: {}", ty.to_string(ns), value),
@@ -938,6 +951,29 @@ impl Dot {
                 }
             }
 
+            Expression::ExternalFunctionCallRaw {
+                loc,
+                address,
+                args,
+                call_args,
+                ..
+            } => {
+                let labels = vec![
+                    String::from("call external function"),
+                    ns.loc_to_string(loc),
+                ];
+
+                let node = self.add_node(
+                    Node::new("call_external_function", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(address, func, ns, node, String::from("address"));
+                self.add_expression(args, func, ns, node, String::from("args"));
+                self.add_call_args(call_args, func, ns, node);
+            }
+
             Expression::LibFunction {
                 loc, kind, args, ..
             } => {
@@ -960,6 +996,21 @@ impl Dot {
                     self.add_expression(expr, func, ns, node, format!("entry #{}", no));
                 }
             }
+        }
+    }
+
+    fn add_call_args(
+        &mut self,
+        call_args: &CallArgs,
+        func: Option<&Function>,
+        ns: &Namespace,
+        node: usize,
+    ) {
+        if let Some(gas) = &call_args.gas {
+            self.add_expression(gas, func, ns, node, String::from("gas"));
+        }
+        if let Some(value) = &call_args.value {
+            self.add_expression(value, func, ns, node, String::from("value"));
         }
     }
 

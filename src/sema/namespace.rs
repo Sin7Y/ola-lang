@@ -487,8 +487,6 @@ impl Namespace {
         if let program::Expression::Type(_, ty) = &id {
             assert!(namespace.is_empty());
 
-            // TODO Add Mapping type
-
             let ty = match ty {
                 program::Type::Mapping {
                     key,

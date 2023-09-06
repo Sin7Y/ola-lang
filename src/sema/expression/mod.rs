@@ -51,6 +51,7 @@ impl Expression {
             Expression::LibFunction { tys: returns, .. }
             | Expression::FunctionCall { returns, .. } => returns.to_vec(),
             Expression::List { list, .. } => list.iter().map(|e| e.ty()).collect(),
+            Expression::ExternalFunctionCallRaw { .. } => vec![Type::DynamicBytes],
             _ => vec![self.ty()],
         }
     }
@@ -109,6 +110,11 @@ impl Expression {
         }
         // If it's a storage reference then load the value. The expr is the storage slot
         if let Type::StorageRef(r) = from {
+            if let Expression::Subscript { array_ty: ty, .. } = self {
+                if ty.is_storage_bytes() {
+                    return Ok(self.clone());
+                }
+            }
             return Expression::StorageLoad {
                 loc: *loc,
                 ty: *r,
@@ -239,6 +245,14 @@ impl Expression {
             {
                 Ok(self.clone())
             }
+
+            (Type::String, Type::DynamicBytes) | (Type::DynamicBytes, Type::String) =>{
+                Ok(Expression::Cast {
+                    loc: *loc,
+                    to: to.clone(),
+                    expr: Box::new(self.clone()),
+                })
+        }
 
             _ => {
                 diagnostics.push(Diagnostic::cast_error(

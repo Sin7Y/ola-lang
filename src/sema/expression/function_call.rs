@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, RetrieveType, Type};
+use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, RetrieveType, Type, CallTy, CallArgs};
 use crate::sema::diagnostics::Diagnostics;
 
 use crate::sema::corelib;
@@ -282,6 +282,7 @@ fn try_namespace(
     var: &program::Expression,
     func: &program::Identifier,
     args: &[program::Expression],
+    call_args_loc: Option<program::Loc>,
     context: &ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
@@ -289,9 +290,17 @@ fn try_namespace(
 ) -> Result<Option<Expression>, ()> {
     if let program::Expression::Variable(namespace) = var {
         if corelib::is_lib_func_call(Some(&namespace.name), &func.name) {
-            return Ok(Some(corelib::resolve_call(
+            if let Some(loc) = call_args_loc {
+                diagnostics.push(Diagnostic::error(
+                    loc,
+                    "call arguments not allowed on builtins".to_string(),
+                ));
+                return Err(());
+            }
+
+            return Ok(Some(corelib::resolve_namespace_call(
                 loc,
-                Some(namespace.name.as_str()),
+                &namespace.name,
                 &func.name,
                 args,
                 context,
@@ -413,6 +422,70 @@ fn try_storage_reference(
                         args: vec![var_expr.clone()],
                     }));
                 }
+
+            }
+
+            Type::DynamicBytes => {
+
+
+                if func.name == "push" {
+                    let mut builtin_args = vec![var_expr.clone()];
+
+                    let elem_ty = Type::Uint(32);
+
+                    let ret_ty = match args.len() {
+                        1 => {
+                            let expr = expression(
+                                &args[0],
+                                context,
+                                ns,
+                                symtable,
+                                diagnostics,
+                                ResolveTo::Type(&elem_ty),
+                            )?;
+
+                            builtin_args.push(expr.cast(
+                                &args[0].loc(),
+                                &elem_ty,
+                                ns,
+                                diagnostics,
+                            )?);
+
+                            Type::Void
+                        }
+                        0 => elem_ty,
+                        _ => {
+                            diagnostics.push(Diagnostic::error(
+                                func.loc,
+                                "method 'push()' takes at most 1 argument".to_string(),
+                            ));
+                            return Err(());
+                        }
+                    };
+                    return Ok(Some(Expression::LibFunction {
+                        loc: func.loc,
+                        tys: vec![ret_ty],
+                        kind: LibFunc::ArrayPush,
+                        args: builtin_args,
+                    }));
+                }
+
+                if func.name == "pop" {
+                    if !args.is_empty() {
+                        diagnostics.push(Diagnostic::error(
+                            func.loc,
+                            "method 'pop()' does not take any arguments".to_string(),
+                        ));
+                        return Err(());
+                    }
+
+                    return Ok(Some(Expression::LibFunction  {
+                        loc: func.loc,
+                        tys: vec![Type::Uint(32)],
+                        kind: LibFunc::ArrayPop,
+                        args: vec![var_expr.clone()],
+                    }));
+                }
             }
             _ => {}
         }
@@ -430,6 +503,7 @@ fn try_type_method(
     loc: &program::Loc,
     func: &program::Identifier,
     args: &[program::Expression],
+    call_args: &[&program::NamedArgument],
     context: &ExprContext,
     var_expr: &Expression,
     ns: &mut Namespace,
@@ -439,7 +513,7 @@ fn try_type_method(
     let var_ty = var_expr.ty();
 
     match var_ty.deref_any() {
-        Type::Array(..) => {
+        Type::Array(..) | Type::DynamicBytes if var_ty.is_dynamic(ns) => {
             if func.name == "push" {
                 let elem_ty = var_ty.array_elem();
 
@@ -502,6 +576,98 @@ fn try_type_method(
                 }));
             }
         }
+        Type::Array(..) if func.name == "push" || func.name == "pop" => {
+            diagnostics.push(Diagnostic::error(
+                func.loc,
+                format!(
+                    "method {}() is not available for fixed length arrays",
+                    func.name
+                ),
+            ));
+            return Err(());
+        }
+        Type::Address => {
+
+            let ty = match func.name.as_str() {
+                "call" => Some(CallTy::Regular),
+                "delegatecall" => Some(CallTy::Delegate),
+                "staticcall" => Some(CallTy::Static),
+                _ => None,
+            };
+
+            if let Some(ty) = ty {
+                let call_args =
+                    parse_call_args(call_args,  context, ns, symtable, diagnostics)?;
+
+                if ty != CallTy::Regular && call_args.value.is_some() {
+                    diagnostics.push(Diagnostic::error(
+                        *loc,
+                        format!("'{}' cannot have value specified", func.name,),
+                    ));
+
+                    return Err(());
+                }
+
+                if ty == CallTy::Delegate && call_args.gas.is_some() {
+                    diagnostics.push(Diagnostic::warning(
+                        *loc,
+                        "'gas' specified on 'delegatecall' will be ignored".into(),
+                    ));
+                }
+
+                if args.len() != 1 {
+                    diagnostics.push(Diagnostic::error(
+                        *loc,
+                        format!(
+                            "'{}' expects 1 argument, {} provided",
+                            func.name,
+                            args.len()
+                        ),
+                    ));
+
+                    return Err(());
+                }
+
+                let args = expression(
+                    &args[0],
+                    context,
+                    ns,
+                    symtable,
+                    diagnostics,
+                    ResolveTo::Type(&Type::DynamicBytes),
+                )?;
+
+                let args_ty = args.ty();
+
+                match args_ty.deref_any() {
+                    Type::DynamicBytes => (),
+                    Type::Array(..) | Type::Struct(..) if !args_ty.is_dynamic(ns) => {}
+                    _ => {
+                        diagnostics.push(Diagnostic::error(
+                            args.loc(),
+                            format!("'{}' is not fixed length type", args_ty.to_string(ns),),
+                        ));
+
+                        return Err(());
+                    }
+                }
+
+                let args = args.cast(&args.loc(), args_ty.deref_any(),  ns, diagnostics)?;
+
+                return Ok(Some(Expression::ExternalFunctionCallRaw {
+                    loc: *loc,
+                    ty,
+                    args: Box::new(args),
+                    address: Box::new(var_expr.cast(
+                        &var_expr.loc(),
+                        &Type::Address,
+                        ns,
+                        diagnostics,
+                    )?),
+                    call_args,
+                }));
+            }
+        }
 
         _ => (),
     }
@@ -509,12 +675,96 @@ fn try_type_method(
     Ok(None)
 }
 
+
+/// Parse call arguments for external calls
+pub(super) fn parse_call_args(
+    call_args: &[&program::NamedArgument],
+    context: &ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> Result<CallArgs, ()> {
+    let mut args: HashMap<&String, &program::NamedArgument> = HashMap::new();
+
+    for arg in call_args {
+        if let Some(prev) = args.get(&arg.name.name) {
+            diagnostics.push(Diagnostic::error_with_note(
+                arg.loc,
+                format!("'{}' specified multiple times", arg.name.name),
+                prev.loc,
+                format!("location of previous declaration of '{}'", arg.name.name),
+            ));
+            return Err(());
+        }
+
+        args.insert(&arg.name.name, arg);
+    }
+
+    let mut res = CallArgs::default();
+
+    for arg in args.values() {
+        match arg.name.name.as_str() {
+            "value" => {
+
+                let ty = Type::Uint(32);
+                let expr = expression(
+                    &arg.expr,
+                    context,
+                    ns,
+                    symtable,
+                    diagnostics,
+                    ResolveTo::Type(&ty),
+                )?;
+
+                res.value = Some(Box::new(expr.cast(
+                    &arg.expr.loc(),
+                    &ty,
+                    ns,
+                    diagnostics,
+                )?));
+                
+            }
+            "gas" => {
+                let ty = Type::Uint(32);
+
+                let expr = expression(
+                    &arg.expr,
+                    context,
+                    ns,
+                    symtable,
+                    diagnostics,
+                    ResolveTo::Type(&ty),
+                )?;
+
+                res.gas = Some(Box::new(expr.cast(
+                    &arg.expr.loc(),
+                    &ty,
+                    ns,
+                    diagnostics,
+                )?));
+            }
+            _ => {
+                diagnostics.push(Diagnostic::error(
+                    arg.loc,
+                    format!("'{}' not a valid call parameter", arg.name.name),
+                ));
+                return Err(());
+            }
+        }
+    }
+
+    Ok(res)
+}
+
+
 /// Resolve a method call with positional arguments
 pub(super) fn method_call_pos_args(
     loc: &program::Loc,
     var: &program::Expression,
     func: &program::Identifier,
     args: &[program::Expression],
+    call_args: &[&program::NamedArgument],
+    call_args_loc: Option<program::Loc>,
     context: &ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
@@ -522,7 +772,7 @@ pub(super) fn method_call_pos_args(
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     if let Some(resolved_call) =
-        try_namespace(loc, var, func, args, context, ns, symtable, diagnostics)?
+        try_namespace(loc, var, func, args, call_args_loc, context, ns, symtable, diagnostics)?
     {
         return Ok(resolved_call);
     }
@@ -548,26 +798,95 @@ pub(super) fn method_call_pos_args(
         return Ok(resolved_call);
     }
 
-    if let Some(resolved_call) = try_type_method(
+    let mut diagnostics_type: u8 = 0;
+    let type_method_diagnostics = Diagnostics::default();
+
+    match  try_type_method(
         loc,
         func,
         args,
+        call_args,
         context,
         &var_expr,
         ns,
         symtable,
         diagnostics,
-    )? {
-        return Ok(resolved_call);
+    ) {
+        Ok(Some(resolved_call)) => {
+            diagnostics.extend(type_method_diagnostics);
+            return Ok(resolved_call);
+        }
+        Ok(None) => (),
+        Err(()) => {
+            // Adding one means diagnostics from type method
+            diagnostics_type += 1;
+        }
     }
 
-    diagnostics.push(Diagnostic::error(
-        func.loc,
-        format!("method '{}' does not exist", func.name),
-    ));
+    match diagnostics_type {
+        1 => diagnostics.extend(type_method_diagnostics),
+        // If 'diagnostics_type' is 2, we have errors from both type_method and resolve_using.
+        _ => diagnostics.push(Diagnostic::error(
+            func.loc,
+            format!("method '{}' does not exist", func.name),
+        )),
+    }
 
     Err(())
 }
+
+/// Function call arguments
+pub fn collect_call_args<'a>(
+    expr: &'a program::Expression,
+    diagnostics: &mut Diagnostics,
+) -> Result<
+    (
+        &'a program::Expression,
+        Vec<&'a program::NamedArgument>,
+        Option<program::Loc>,
+    ),
+    (),
+> {
+    let mut named_arguments = Vec::new();
+    let mut expr = expr;
+    let mut loc: Option<program::Loc> = None;
+
+    while let program::Expression::FunctionCallBlock(_, e, block) = expr {
+        match block.as_ref() {
+            program::Statement::Args(_, args) => {
+                if let Some(program::Loc::File(file_no, start, _)) = loc {
+                    loc = Some(program::Loc::File(file_no, start, block.loc().end()));
+                } else {
+                    loc = Some(block.loc());
+                }
+
+                named_arguments.extend(args);
+            }
+            program::Statement::Block { statements, .. } if statements.is_empty() => {
+                // {}
+                diagnostics.push(Diagnostic::error(
+                    block.loc(),
+                    "missing call arguments".to_string(),
+                ));
+                return Err(());
+            }
+            _ => {
+                diagnostics.push(Diagnostic::error(
+                    block.loc(),
+                    "code block found where list of call arguments expected, like '{gas: 5000}'"
+                        .to_string(),
+                ));
+                return Err(());
+            }
+        }
+
+        expr = e;
+    }
+
+    Ok((expr, named_arguments, loc))
+}
+
+
 
 pub fn named_call_expr(
     loc: &program::Loc,
@@ -679,6 +998,11 @@ pub fn call_expr(
 
     let expr = match ty.remove_parenthesis() {
         program::Expression::New(_, ty) => new(loc, ty, args, context, ns, symtable, diagnostics)?,
+        program::Expression::FunctionCallBlock(loc, expr, _)
+        if matches!(expr.remove_parenthesis(), program::Expression::New(..)) =>
+        {
+            new(loc, ty, args, context, ns, symtable, diagnostics)?
+        }
         _ => function_call_expr(
             loc,
             ty,
@@ -706,6 +1030,8 @@ pub fn function_call_expr(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
+
+    let (ty, call_args, call_args_loc) = collect_call_args(ty, diagnostics)?;
     match ty.remove_parenthesis() {
         program::Expression::MemberAccess(_, member, func) => {
             if context.constant {
@@ -721,6 +1047,8 @@ pub fn function_call_expr(
                 member,
                 func,
                 args,
+                &call_args,
+                call_args_loc,
                 context,
                 ns,
                 symtable,
@@ -798,18 +1126,28 @@ pub fn named_function_call_expr(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
+    let (ty, _, call_args_loc) = collect_call_args(ty, diagnostics)?;
     match ty {
-        program::Expression::Variable(id) => function_call_named_args(
-            loc,
-            id,
-            args,
-            available_functions(&id.name, context.contract_no, ns),
-            context,
-            resolve_to,
-            ns,
-            symtable,
-            diagnostics,
-        ),
+        program::Expression::Variable(id) => {
+            if let Some(loc) = call_args_loc {
+                diagnostics.push(Diagnostic::error(
+                    loc,
+                    "call arguments not permitted for internal calls".to_string(),
+                ));
+                return Err(());
+            }
+            function_call_named_args(
+                loc,
+                id,
+                args,
+                available_functions(&id.name, context.contract_no, ns),
+                context,
+                resolve_to,
+                ns,
+                symtable,
+                diagnostics,
+            )
+        }
         program::Expression::ArraySubscript(..) => {
             diagnostics.push(Diagnostic::error(
                 ty.loc(),

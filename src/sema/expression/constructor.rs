@@ -41,7 +41,7 @@ pub fn new(
                 return Err(());
             }
         }
-        Type::String => {}
+        Type::String | Type::DynamicBytes => {}
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
