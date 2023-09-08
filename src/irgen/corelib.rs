@@ -14,7 +14,7 @@ use once_cell::sync::Lazy;
 // ///
 // pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 11]> = Lazy::new(|| {
+static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
@@ -22,11 +22,12 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 11]> = Lazy::new(|| {
         "prophet_u32_array_sort",
         "vector_new",
         "get_context_data",
-        "get_call_data",
+        "get_tape_data",
         "set_tape_data",
         "get_storage",
         "set_storage",
         "poseidon_hash",
+        "contract_call"
     ]
 });
 
@@ -132,12 +133,12 @@ pub fn declare_prophets(bin: &mut Binary) {
             bin.module.add_function("get_context_data", ftype, None);
         }
 
-        "get_call_data" => {
+        "get_tape_data" => {
             // first param is heap address.
             // sencond param is tape index.
             let void_type = bin.context.void_type();
             let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
-            bin.module.add_function("get_call_data", ftype, None);
+            bin.module.add_function("get_tape_data", ftype, None);
         }
         "set_tape_data" => {
             // first param is heap address.
@@ -172,6 +173,12 @@ pub fn declare_prophets(bin: &mut Binary) {
             let param_type = bin.context.i64_type().array_type(8);
             let ftype = ret_type.fn_type(&[param_type.into()], false);
             bin.module.add_function("poseidon_hash", ftype, None);
+        }
+        "contract_call" => {
+            let void_type = bin.context.void_type();
+            let param_type = bin.context.i64_type();
+            let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
+            bin.module.add_function("contract_call", ftype, None);
         }
 
         _ => {}
