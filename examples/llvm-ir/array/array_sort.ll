@@ -19,7 +19,7 @@ declare i64 @vector_new(i64)
 
 declare void @get_context_data(i64, i64)
 
-declare void @get_call_data(i64, i64)
+declare void @get_tape_data(i64, i64)
 
 declare void @set_tape_data(i64, i64)
 
@@ -28,6 +28,8 @@ declare [4 x i64] @get_storage([4 x i64])
 declare void @set_storage([4 x i64], [4 x i64])
 
 declare [4 x i64] @poseidon_hash([8 x i64])
+
+declare void @contract_call(i64, i64)
 
 define void @main() {
 entry:
@@ -93,7 +95,6 @@ entry:
   %20 = sub i64 %19, 1
   call void @builtin_range_check(i64 %20)
   store i64 %20, ptr %index_access6, align 4
-  ret void
 }
 
 define ptr @array_sort_test(ptr %0) {
@@ -165,8 +166,8 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %array_literal = alloca [10 x i64], align 8
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
-    i64 1940129018, label %func_1_dispatch
+    i64 3758009808, label %func_0_dispatch
+    i64 4194608243, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -262,7 +263,7 @@ loop_end:                                         ; preds = %loop_body
   %10 = add i64 0, %9
   %start22 = getelementptr i64, ptr %heap_to_ptr, i64 %10
   store i64 %7, ptr %start22, align 4
-  call void @set_tape_data(i64 %heap_start, i64 %7)
+  call void @set_tape_data(i64 %heap_start, i64 %size_add_one)
   ret void
 }
 
@@ -271,17 +272,18 @@ entry:
   %0 = call i64 @vector_new(i64 1)
   %heap_start = sub i64 %0, 1
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_call_data(i64 %heap_start, i64 0)
+  call void @get_tape_data(i64 %heap_start, i64 1)
   %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 1)
-  %heap_start1 = sub i64 %1, 1
+  %1 = call i64 @vector_new(i64 2)
+  %heap_start1 = sub i64 %1, 2
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_call_data(i64 %heap_start1, i64 1)
+  call void @get_tape_data(i64 %heap_start1, i64 2)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = call i64 @vector_new(i64 %input_length)
-  %heap_start3 = sub i64 %2, %input_length
+  %2 = add i64 %input_length, 2
+  %3 = call i64 @vector_new(i64 %2)
+  %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
-  call void @get_call_data(i64 %heap_start3, i64 2)
+  call void @get_tape_data(i64 %heap_start3, i64 %2)
   call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
   ret void
 }

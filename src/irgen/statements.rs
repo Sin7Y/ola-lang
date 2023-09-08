@@ -1,5 +1,4 @@
 use indexmap::IndexMap;
-use inkwell::types::BasicTypeEnum;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::AddressSpace;
 use num_bigint::BigInt;
@@ -7,11 +6,12 @@ use num_traits::{ToPrimitive, Zero};
 
 use super::expression::expression;
 use super::functions::Vartable;
-use super::storage::storage_delete;
+use super::storage::{storage_delete, storage_store};
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::emit_function_call;
 use crate::sema::ast::{
-    self, ArrayLength, DestructureField, Expression, Namespace, RetrieveType, Statement, Type,
+    self, ArrayLength, DestructureField, Expression, Function, Namespace, RetrieveType, Statement,
+    Type,
 };
 use ola_parser::program::Loc::IRgen;
 
@@ -21,13 +21,14 @@ pub(crate) fn statement<'a>(
     stmt: &Statement,
     bin: &mut Binary<'a>,
     func_value: FunctionValue<'a>,
+    func: &Function,
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
     match stmt {
         Statement::Block { statements, .. } => {
             for stmt in statements {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
             }
         }
         Statement::VariableDecl(_, pos, param, Some(init)) => {
@@ -56,21 +57,22 @@ pub(crate) fn statement<'a>(
 
         Statement::Return(_, expr) => match expr {
             Some(expr) => {
-                let ret_value = returns(expr, bin, func_value, var_table, ns);
-                bin.builder.build_return(Some(&ret_value.unwrap()));
+                returns(expr, bin, func_value, func, var_table, ns);
             }
-            None => {}
+            None => {
+                bin.builder.build_return(None);
+            }
         },
         Statement::Expression(_, _, expr) => {
             expression(expr, bin, func_value, var_table, ns);
         }
 
         Statement::If(_, _, cond, then_stmt, else_stmt) if else_stmt.is_empty() => {
-            if_then(cond, bin, then_stmt, func_value, var_table, ns);
+            if_then(cond, bin, then_stmt, func_value, func, var_table, ns);
         }
-        Statement::If(_, _, cond, then_stmt, else_stmt) => {
-            if_then_else(cond, then_stmt, else_stmt, bin, func_value, var_table, ns)
-        }
+        Statement::If(_, _, cond, then_stmt, else_stmt) => if_then_else(
+            cond, then_stmt, else_stmt, bin, func_value, func, var_table, ns,
+        ),
 
         Statement::For {
             init,
@@ -84,7 +86,7 @@ pub(crate) fn statement<'a>(
             let next_block = bin.context.append_basic_block(func_value, "next");
             let end_block = bin.context.append_basic_block(func_value, "endfor");
             for stmt in init {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
             }
 
             bin.builder.build_unconditional_branch(cond_block);
@@ -103,7 +105,7 @@ pub(crate) fn statement<'a>(
             let mut body_reachable = true;
 
             for stmt in body {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -143,7 +145,7 @@ pub(crate) fn statement<'a>(
             let end_block = bin.context.append_basic_block(func_value, "endfor");
 
             for stmt in init {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
             }
 
             bin.builder.build_unconditional_branch(body_block);
@@ -159,7 +161,7 @@ pub(crate) fn statement<'a>(
             ));
             let mut body_reachable = true;
             for stmt in body {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -218,7 +220,7 @@ pub(crate) fn statement<'a>(
             let mut body_reachable = true;
 
             for stmt in body_stmt {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -246,7 +248,7 @@ pub(crate) fn statement<'a>(
             let mut body_reachable = true;
 
             for stmt in body_stmt {
-                statement(stmt, bin, func_value, var_table, ns);
+                statement(stmt, bin, func_value, func, var_table, ns);
 
                 body_reachable = stmt.reachable();
             }
@@ -281,6 +283,7 @@ fn if_then<'a>(
     bin: &mut Binary<'a>,
     then_stmt: &[Statement],
     func_value: FunctionValue<'a>,
+    func: &Function,
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
@@ -296,7 +299,7 @@ fn if_then<'a>(
     bin.builder.position_at_end(then);
     let mut reachable = true;
     for stmt in then_stmt {
-        statement(stmt, bin, func_value, var_table, ns);
+        statement(stmt, bin, func_value, func, var_table, ns);
         reachable = stmt.reachable();
     }
 
@@ -313,6 +316,7 @@ fn if_then_else<'a>(
     else_stmt: &[Statement],
     bin: &mut Binary<'a>,
     func_value: FunctionValue<'a>,
+    func: &Function,
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
@@ -329,7 +333,7 @@ fn if_then_else<'a>(
     bin.builder.position_at_end(then);
     let mut reachable = true;
     for stmt in then_stmt {
-        statement(stmt, bin, func_value, var_table, ns);
+        statement(stmt, bin, func_value, func, var_table, ns);
         reachable = stmt.reachable();
     }
 
@@ -341,7 +345,7 @@ fn if_then_else<'a>(
 
     reachable = true;
     for stmt in else_stmt {
-        statement(stmt, bin, func_value, var_table, ns);
+        statement(stmt, bin, func_value, func, var_table, ns);
         reachable = stmt.reachable();
     }
     if reachable {
@@ -355,48 +359,46 @@ fn returns<'a>(
     expr: &Expression,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
+    func: &Function,
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
-) -> Option<BasicValueEnum<'a>> {
+) {
     // Can only be another function call without returns
     let uncast_values = match expr {
         // TODO ADD ConditionalOperator
-        ast::Expression::FunctionCall { .. } => {
-            let (ret, _) = emit_function_call(expr, bin, func_value, var_table, ns);
-            ret
+        ast::Expression::LibFunction {
+            kind: ast::LibFunc::AbiDecode,
+            ..
         }
-        ast::Expression::List { list, .. } => {
-            let res = list
-                .iter()
-                .map(|e| expression(e, bin, func_value, var_table, ns))
-                .collect::<Vec<BasicValueEnum>>();
-            // Create the struct type based on the list length
-            let struct_type = bin.context.struct_type(
-                &res.iter()
-                    .map(|value| value.get_type())
-                    .collect::<Vec<BasicTypeEnum>>(),
-                false,
-            );
-            // Allocate the struct
-            let struct_ptr = bin.build_alloca(func_value, struct_type, "list_struct");
+        | ast::Expression::FunctionCall { .. }
+        | ast::Expression::ExternalFunctionCallRaw { .. } => {
+            emit_function_call(expr, bin, func_value, var_table, ns)
+        }
+        ast::Expression::List { list, .. } => list
+            .iter()
+            .map(|e| expression(e, bin, func_value, var_table, ns))
+            .collect::<Vec<BasicValueEnum>>(),
 
-            // Store the values in the struct
-            for (index, value) in res.into_iter().enumerate() {
-                let field_ptr = bin.builder.build_struct_gep(
-                    struct_type,
-                    struct_ptr,
-                    index as u32,
-                    &format!("field_{}", index),
-                );
-                bin.builder.build_store(field_ptr.unwrap(), value);
-            }
-            Some(struct_ptr.into())
-        }
         // Can be any other expression
-        _ => Some(expression(expr, bin, func_value, var_table, ns)),
+        _ => vec![expression(expr, bin, func_value, var_table, ns)],
     };
 
-    uncast_values
+    // TODO Should we do type conversion here?
+
+    if !uncast_values.is_empty() {
+        if uncast_values.len() == 1 {
+            bin.builder.build_return(Some(&uncast_values[0]));
+        } else {
+            let returns_offset = func.params.len();
+            for (i, val) in uncast_values.iter().enumerate() {
+                let arg = func_value
+                    .get_nth_param((returns_offset + i) as u32)
+                    .unwrap();
+                bin.builder.build_store(arg.into_pointer_value(), *val);
+            }
+            bin.builder.build_return(None);
+        }
+    }
 }
 
 fn destructure<'a>(
@@ -407,7 +409,6 @@ fn destructure<'a>(
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
-    let mut is_single_value = false;
     if let ast::Expression::ConditionalOperator {
         cond,
         true_option: left,
@@ -442,7 +443,7 @@ fn destructure<'a>(
         return;
     }
 
-    let value = match expr {
+    let mut values = match expr {
         // When the value of the expression on the right side is a List
         // We need to return a struct, which corresponds to handling multiple return values in
         // functions.
@@ -459,33 +460,17 @@ fn destructure<'a>(
                 };
                 values.push(elem);
             }
-            // Create the struct type based on the types of the values
-            let struct_member_types: Vec<BasicTypeEnum> =
-                values.iter().map(|val| val.get_type()).collect();
-            let struct_type = bin.context.struct_type(&struct_member_types, false);
-            // Create the struct instance and fill the members with the values
-            let struct_alloca = bin.build_alloca(func_value, struct_type, "struct_alloca");
-            for (i, value) in values.iter().enumerate() {
-                let field_ptr = bin.builder.build_struct_gep(
-                    struct_type,
-                    struct_alloca,
-                    i as u32,
-                    &format!("field_ptr{}", i),
-                );
-                bin.builder.build_store(field_ptr.unwrap(), *value);
-            }
-            struct_alloca.into()
+            values
         }
         _ => {
             // must be function call, either internal or external
             // function call may return multiple values, so we need to destructure them
-            let (value, single_flag) = emit_function_call(expr, bin, func_value, var_table, ns);
-            is_single_value = single_flag;
-            value.unwrap()
+            emit_function_call(expr, bin, func_value, var_table, ns)
         }
     };
 
-    for (i, field) in fields.iter().enumerate() {
+    for (_, field) in fields.iter().enumerate() {
+        let right_value = values.remove(0);
         match field {
             DestructureField::None => {
                 // nothing to do
@@ -499,38 +484,37 @@ fn destructure<'a>(
                 );
 
                 var_table.insert(*res, alloc.as_basic_value_enum());
-                if is_single_value {
-                    bin.builder.build_store(alloc, value);
-                } else {
-                    let field = bin
-                        .builder
-                        .build_extract_value(
-                            value.into_struct_value(),
-                            i as u32,
-                            param.name_as_str(),
-                        )
-                        .unwrap();
-                    bin.builder.build_store(alloc, field);
-                }
+                bin.builder.build_store(alloc, right_value);
             }
-            DestructureField::Expression(left) => {
-                let left = match left {
-                    Expression::Variable { var_no, .. } => {
-                        let ret = *var_table.get(var_no).unwrap();
-                        ret
+            DestructureField::Expression(left) => match left {
+                Expression::Variable { var_no, .. } => {
+                    var_table.insert(*var_no, right_value);
+                }
+                _ => {
+                    let left_ty = left.ty();
+                    let ty = left_ty.deref_memory();
+
+                    let mut dest = expression(left, bin, func_value, var_table, ns);
+
+                    match left_ty {
+                        Type::StorageRef(..) => {
+                            storage_store(
+                                bin,
+                                &ty.deref_any().clone(),
+                                &mut dest,
+                                right_value,
+                                func_value,
+                                ns,
+                            );
+                        }
+                        Type::Ref(..) => {
+                            bin.builder
+                                .build_store(dest.into_pointer_value(), right_value);
+                        }
+                        _ => unreachable!(),
                     }
-                    _ => unreachable!(),
-                };
-                if is_single_value {
-                    bin.builder.build_store(left.into_pointer_value(), value);
-                } else {
-                    let field = bin
-                        .builder
-                        .build_extract_value(value.into_struct_value(), i as u32, "")
-                        .unwrap();
-                    bin.builder.build_store(left.into_pointer_value(), field);
                 }
-            }
+            },
         }
     }
 }

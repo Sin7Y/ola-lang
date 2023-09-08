@@ -130,25 +130,30 @@ impl<'a> Binary<'a> {
         ns: &Namespace,
     ) -> FunctionType<'a> {
         // function parameters
-        let args = params
+        let mut args = params
             .iter()
             .map(|ty| self.llvm_var_ty(ty, ns).into())
             .collect::<Vec<BasicMetadataTypeEnum>>();
 
-        return if returns.is_empty() {
-            let void_type = self.context.void_type();
-            void_type.fn_type(&args, false)
-        } else if returns.len() == 1 {
+        return if returns.len() == 1 {
             let return_type = self.llvm_var_ty(&returns[0], ns);
             return_type.fn_type(&args, false)
         } else {
-            // when function return multiple values, we need to return a struct
-            let struct_returns = returns
-                .iter()
-                .map(|ty| self.llvm_var_ty(ty, ns))
-                .collect::<Vec<BasicTypeEnum>>();
-            let struct_type = self.context.struct_type(&struct_returns, false);
-            struct_type.fn_type(&args, false)
+            // add return values
+            for ty in returns {
+                args.push(if ty.is_reference_type(ns) && !ty.is_contract_storage() {
+                    self.llvm_type(ty, ns)
+                        .ptr_type(AddressSpace::default())
+                        .ptr_type(AddressSpace::default())
+                        .into()
+                } else {
+                    self.llvm_type(ty, ns)
+                        .ptr_type(AddressSpace::default())
+                        .into()
+                });
+            }
+            let void_type = self.context.void_type();
+            void_type.fn_type(&args, false)
         };
     }
 
@@ -157,7 +162,7 @@ impl<'a> Binary<'a> {
     pub(crate) fn llvm_var_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {
-            Type::Struct(_) | Type::Array(..) | Type::String => llvm_ty
+            Type::Struct(_) | Type::Array(..) | Type::String |  Type::DynamicBytes => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => llvm_ty,
@@ -171,7 +176,7 @@ impl<'a> Binary<'a> {
             Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
-            Type::String => llvm_ty
+            Type::DynamicBytes | Type::String => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => llvm_ty,
@@ -224,7 +229,7 @@ impl<'a> Binary<'a> {
 
                 BasicTypeEnum::ArrayType(aty)
             }
-            Type::String => self
+            Type::String | Type::DynamicBytes => self
                 .context
                 .i64_type()
                 .ptr_type(AddressSpace::default())
@@ -400,13 +405,13 @@ impl<'a> Binary<'a> {
         );
 
     }
-    pub(crate) fn call_data_load(
+    pub(crate) fn tape_data_load(
         &self,
         heap_address: IntValue<'a>, 
         tape_index: IntValue<'a>
     )  {
-       let call_data_function = self.module.get_function("get_call_data").unwrap();
-        self.builder.build_call(call_data_function,
+       let tape_data_function = self.module.get_function("get_tape_data").unwrap();
+        self.builder.build_call(tape_data_function,
             &[heap_address.into(), tape_index.into()],
             "",
         );
@@ -429,7 +434,7 @@ impl<'a> Binary<'a> {
         let selector_size = self.context.i64_type().const_int(1, false);
         let (selector_start_int, selector_start_ptr) =
         self.heap_malloc(selector_size);
-        self.call_data_load(selector_start_int, selector_size);
+        self.tape_data_load(selector_start_int, selector_size);
         let function_selector = self.builder.build_load(
             self.context.i64_type(),
             selector_start_ptr,
@@ -438,7 +443,7 @@ impl<'a> Binary<'a> {
         let length_size = self.context.i64_type().const_int(2, false);
         let (length_start_int, length_start_ptr) =
         self.heap_malloc(length_size);
-        self.call_data_load(length_start_int, length_size);
+        self.tape_data_load(length_start_int, length_size);
         let input_length = self.builder.build_load(
             self.context.i64_type(),
             length_start_ptr,
@@ -447,7 +452,7 @@ impl<'a> Binary<'a> {
         let calldata_size = self.builder.build_int_add(input_length.into_int_value(), self.context.i64_type().const_int(2, false), "");
         let (data_start_int, data_start_ptr) =
         self.heap_malloc(calldata_size);
-        self.call_data_load(data_start_int, calldata_size);
+        self.tape_data_load(data_start_int, calldata_size);
         (function_selector.into_int_value(), input_length.into_int_value(), data_start_ptr)
     
     }
