@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    allow_memcpy, buffer_validator::BufferValidator, calculate_array_size, finish_array_loop,
-    index_array, set_array_loop,
+    allow_memcpy, buffer_validator::BufferValidator, finish_array_loop,
+    index_array, set_array_loop, calculate_memory_size,
 };
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
@@ -216,7 +216,7 @@ fn decode_array<'a>(
                 bin.vector_new(func_value, array_ty, array_length, None, false, ns);
 
             let array_data = bin.vector_data(allocated_array.into());
-            let array_bytes_size = calculate_array_size(bin, array_length, elem_ty, ns);
+            let array_bytes_size = calculate_memory_size(bin, array_length, elem_ty, ns);
             decode_dynamic_array_loop(
                 buffer,
                 &mut array_start.clone(),

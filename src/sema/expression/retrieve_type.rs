@@ -51,7 +51,7 @@ impl RetrieveType for Expression {
             | Expression::Cast { to, .. } => to.clone(),
             Expression::StorageArrayLength { ty, .. } => ty.clone(),
             Expression::ExternalFunctionCallRaw { .. } => {
-                panic!("two return values");
+                Type::DynamicBytes
             }
             Expression::LibFunction { tys: returns, .. }
             | Expression::FunctionCall { returns, .. } => {

@@ -41,9 +41,6 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &'a sema::ast::Namespa
             let mut var_table: Vartable = IndexMap::new();
             gen_function(bin, func_value, func, &mut var_table, ns);
         }
-        if func.returns.is_empty() {
-            bin.builder.build_return(None);
-        }
     }
 }
 
@@ -65,29 +62,11 @@ pub(super) fn gen_function<'a>(
     populate_named_returns(bin, func_value, func, var_table, ns);
 
     for stmt in &func.body {
-        statement(stmt, bin, func_value, var_table, ns);
+        statement(stmt, bin, func_value, func, var_table, ns);
     }
 
-    // if func_context
-    //     .func
-    //     .body
-    //     .last()
-    //     .map(|stmt| stmt.reachable())
-    //     .unwrap_or(true)
-    // {
-    //     // TODO When multiple values are returned, they need to be converted
-    // into struct     // for processing.
-    //     if func_context.func.returns.len() != 0 {
-    //         let pos = func_context.func.symtable.returns[0];
-    //         let ret_expr = Expression::Variable {
-    //             loc: program::Loc::IRgen,
-    //             ty: func_context.func.symtable.vars[pos].ty.clone(),
-    //             var_no: pos,
-    //         };
-    //         let ret_value = expression(&ret_expr, bin, func_context, ns);
-    //         bin.builder.build_return(Some(&ret_value));
-    //     }
-    // }
+    // TODO add implicit return
+
 }
 
 /// Populate the arguments of a function

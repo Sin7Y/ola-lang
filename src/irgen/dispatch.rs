@@ -157,7 +157,8 @@ fn dispatch_case<'a>(
         .left();
     if !func.returns.is_empty() {
         returns.push(ret.unwrap());
-        abi_encode(bin, returns, &return_tys, func_value, ns);
+        let (heap_start_int, _, size_add_one) = abi_encode(bin, returns, &return_tys, func_value, ns);
+        bin.tape_data_store(heap_start_int, size_add_one);
         
     }
     bin.builder.build_return(None);

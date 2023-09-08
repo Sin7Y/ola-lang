@@ -3,9 +3,11 @@ use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
     u32_mod, u32_mul, u32_not, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
-use crate::sema::ast::{ArrayLength, StringLocation};
+use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
+use inkwell::values::{
+    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
+};
 use inkwell::{AddressSpace, IntPredicate};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -19,6 +21,7 @@ use crate::sema::{
 };
 
 use super::address_op::address_compare;
+use super::encoding::{abi_decode, abi_encode};
 use super::functions::Vartable;
 use super::storage::{
     array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
@@ -335,9 +338,14 @@ pub fn expression<'a>(
             // }
             assign_single(left, right, bin, func_value, var_table, ns)
         }
-        Expression::FunctionCall { .. } => {
-            let (ret, _) = emit_function_call(expr, bin, func_value, var_table, ns);
-            ret.unwrap_or(bin.context.i64_type().const_zero().into())
+        Expression::FunctionCall { .. }
+        | Expression::ExternalFunctionCallRaw { .. }
+        | Expression::LibFunction {
+            kind: LibFunc::AbiDecode,
+            ..
+        } => {
+            let mut returns = emit_function_call(expr, bin, func_value, var_table, ns);
+            returns.remove(0)
         }
         Expression::NumberLiteral { ty, value, .. } => bin.number_literal(ty, value, ns),
 
@@ -641,6 +649,30 @@ pub fn expression<'a>(
                 .expect("Should have a left return value");
             array_sorted
         }
+
+        Expression::LibFunction {
+            kind: LibFunc::AbiEncode,
+            args,
+            ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::AbiEncodeWithSignature,
+            args,
+            ..
+        } => {
+            let (types, encoder_args): (Vec<_>, Vec<_>) = args
+                .iter()
+                .map(|expr| {
+                    let ty = expr.ty().unwrap_user_type(ns).clone();
+                    let arg = expression(expr, bin, func_value, var_table, ns);
+                    (ty, arg)
+                })
+                .unzip();
+
+            abi_encode(bin, encoder_args, &types, func_value, ns)
+                .1
+                .as_basic_value_enum()
+        }
         Expression::AllocDynamicBytes {
             ty,
             length: size,
@@ -733,49 +765,96 @@ pub fn emit_function_call<'a>(
     func_value: FunctionValue<'a>,
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
-) -> (Option<BasicValueEnum<'a>>, bool) {
-    if let Expression::FunctionCall { function, args, .. } = expr {
-        if let Expression::Function { function_no, .. } = function.as_ref() {
-            let callee = &ns.functions[*function_no];
-            let callee_value = bin.module.get_function(&callee.name).unwrap();
-            let params = args
-                .iter()
-                .map(|a| expression(a, bin, func_value, var_table, ns).into())
-                .collect::<Vec<BasicMetadataValueEnum>>();
+) -> Vec<BasicValueEnum<'a>> {
+    match expr {
+        Expression::FunctionCall { function, args, .. } => {
+            if let Expression::Function { function_no, .. } = function.as_ref() {
+                let callee = &ns.functions[*function_no];
+                let callee_value = bin.module.get_function(&callee.name).unwrap();
+                let mut params = args
+                    .iter()
+                    .map(|a| expression(a, bin, func_value, var_table, ns).into())
+                    .collect::<Vec<BasicMetadataValueEnum>>();
 
-            let ret_value = bin
-                .builder
-                .build_call(callee_value, &params, "")
-                .try_as_basic_value()
-                .left();
-            match ret_value {
-                Some(ret_value) => {
-                    if callee.returns.len() == 1 {
-                        (Some(ret_value), true)
-                    } else {
-                        let struct_ty = bin
-                            .context
-                            .struct_type(
-                                &callee
-                                    .returns
-                                    .iter()
-                                    .map(|f| bin.llvm_field_ty(&f.ty, ns))
-                                    .collect::<Vec<BasicTypeEnum>>(),
-                                false,
+                if callee.returns.len() > 1 {
+                    for v in callee.returns.iter() {
+                        params.push(
+                            bin.build_alloca(
+                                func_value,
+                                bin.llvm_var_ty(&v.ty, ns),
+                                v.name_as_str(),
                             )
-                            .as_basic_type_enum();
-                        let ret_ptr = bin.build_alloca(func_value, struct_ty, "struct_alloca");
-                        bin.builder.build_store(ret_ptr, ret_value);
-                        (Some(ret_value), false)
+                            .into(),
+                        );
                     }
                 }
-                None => (None, false),
+
+                let ret_value = bin
+                    .builder
+                    .build_call(callee_value, &params, "")
+                    .try_as_basic_value()
+                    .left();
+                if callee.returns.len() <= 1 {
+                    vec![ret_value.unwrap_or(bin.context.i64_type().const_zero().into())]
+                } else {
+                    let mut returns = Vec::new();
+                    for (i, v) in callee.returns.iter().enumerate() {
+                        let load_ty = bin.llvm_var_ty(&v.ty, ns);
+                        let val = bin.builder.build_load(
+                            load_ty,
+                            params[args.len() + i].into_pointer_value(),
+                            v.name_as_str(),
+                        );
+                        returns.push(val.into());
+                    }
+                    returns
+                }
+            } else {
+                unimplemented!()
             }
-        } else {
-            unimplemented!()
         }
-    } else {
-        unimplemented!()
+        Expression::ExternalFunctionCallRaw {
+            address, args, ty, ..
+        } => {
+            let args = expression(args, bin, func_value, var_table, ns);
+            let address = expression(address, bin, func_value, var_table, ns);
+
+            let (address_heap_int, address_heap_ptr) =
+                bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+
+            // extract address value and store to heap
+            for i in 0..4 {
+                let index_access = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        address_heap_ptr,
+                        &[bin.context.i64_type().const_int(i, false)],
+                        "",
+                    )
+                };
+                let address_value = bin
+                    .builder
+                    .build_extract_value(address.into_array_value(), i as u32, "")
+                    .unwrap();
+                bin.builder.build_store(index_access, address_value);
+            }
+
+            let return_data =
+                external_call(bin, args, address_heap_int, ty.clone());
+            vec![return_data]
+        }
+        Expression::LibFunction {
+            tys,
+            kind: LibFunc::AbiDecode,
+            args,
+            ..
+        } => {
+            let data = expression(&args[0], bin, func_value, var_table, ns);
+            let input_length = bin.vector_len(data);
+            let input = bin.vector_data(data);
+            abi_decode(bin, input_length, input, tys, func_value, ns)
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -1087,4 +1166,61 @@ pub fn string_compare<'a>(
     bin.builder
         .build_int_compare(IntPredicate::EQ, index, right_len, "equal")
         .into()
+}
+
+/// Call external binary
+fn external_call<'a>(
+    bin: &Binary<'a>,
+    args: BasicValueEnum<'a>,
+    address: IntValue<'a>,
+    call_type: CallTy,
+) -> BasicValueEnum<'a> {
+    let payload_len = bin.builder.build_load(
+        bin.context.i64_type(),
+        args.into_pointer_value(),
+        "payload_len",
+    );
+
+    let len_add_one = bin.builder.build_int_add(
+        payload_len.into_int_value(),
+        bin.context.i64_type().const_int(1, false),
+        "",
+    );
+
+    let payload_heap_addr =
+        bin.builder
+            .build_ptr_to_int(args.into_pointer_value(), bin.context.i64_type(), "");
+
+    // store payload and payload len to tape
+    bin.tape_data_store(payload_heap_addr, len_add_one);
+
+    let call_type = match call_type {
+        CallTy::Regular => bin.context.i64_type().const_zero(),
+        CallTy::Delegate => bin.context.i64_type().const_int(1, false),
+        CallTy::Static => bin.context.i64_type().const_int(2, false),
+    };
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("contract_call")
+            .expect("contract_call should have been defined before"),
+        &[address.into(), call_type.into()],
+        "",
+    );
+
+    // length start from index 2
+    let length_size = bin.context.i64_type().const_int(2, false);
+    let (length_start_int, length_start_ptr) = bin.heap_malloc(length_size);
+    bin.tape_data_load(length_start_int, length_size);
+    let return_length =
+        bin.builder
+            .build_load(bin.context.i64_type(), length_start_ptr, "return_length");
+    let calldata_size = bin.builder.build_int_add(
+        return_length.into_int_value(),
+        bin.context.i64_type().const_int(2, false),
+        "",
+    );
+    let (data_start_int, data_start_ptr) = bin.heap_malloc(calldata_size);
+    bin.tape_data_load(data_start_int, calldata_size);
+    data_start_ptr.as_basic_value_enum()
 }

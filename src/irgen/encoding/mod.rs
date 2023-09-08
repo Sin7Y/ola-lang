@@ -13,11 +13,10 @@ use crate::sema::ast::{ArrayLength, Namespace, Type};
 
 use self::{
     buffer_validator::BufferValidator,
-    decode::read_from_buffer,
-    encode::{calculate_size_args, encode_into_buffer, encode_uint},
+    decode::read_from_buffer, encode::{encode_into_buffer, encode_uint},
 };
 
-use super::{binary::Binary, expression::array_subscript};
+use super::{binary::Binary, expression::array_subscript, storage::storage_load};
 
 mod buffer_validator;
 
@@ -33,7 +32,7 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) {
+) -> (IntValue<'a>, PointerValue<'a>,  IntValue<'a>) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
     let size_add_one = bin.builder.build_int_add(
@@ -65,7 +64,8 @@ pub(super) fn abi_encode<'a>(
         offset,
         bin,
     );
-    bin.tape_data_store(heap_start_int, size_add_one)
+    (heap_start_int, heap_start_ptr, size_add_one) 
+
 }
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
@@ -98,6 +98,314 @@ pub(super) fn abi_decode<'a>(
 
     read_items
 }
+
+/// Calculate the size of a set of arguments to encoding functions
+pub(super) fn calculate_size_args<'a>(
+    bin: &Binary<'a>,
+    args: &[BasicValueEnum<'a>],
+    types: &Vec<Type>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> IntValue<'a> {
+    let mut size = get_args_type_size(bin, args[0], &types[0], func_value, ns);
+    for (i, item) in types.iter().enumerate().skip(1) {
+        let additional = get_args_type_size(bin, args[i], item, func_value, ns);
+        size = bin.builder.build_int_add(size, additional, "");
+    }
+    size
+}
+
+/// Calculate the size of a single arg value
+fn get_args_type_size<'a>(
+    bin: &Binary<'a>,
+    arg_value: BasicValueEnum<'a>,
+    ty: &Type,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> IntValue<'a> {
+    match &ty {
+        Type::Uint(32) | Type::Bool | Type::Enum(_) => bin.context.i64_type().const_int(1, false),
+        Type::Contract(_) | Type::Address => bin.context.i64_type().const_int(4, false),
+
+        Type::Struct(struct_no) => {
+            calculate_struct_size(bin, arg_value, *struct_no, ty, func_value, ns)
+        }
+        Type::Slice(elem_ty) => {
+            let dims = vec![ArrayLength::Dynamic];
+            calculate_array_size(bin, arg_value, ty, &elem_ty, &dims, func_value, ns)
+        }
+        Type::Array(elem_ty, dims) => {
+            calculate_array_size(bin, arg_value, ty, &elem_ty, dims, func_value, ns)
+        }
+
+        Type::Ref(r) => {
+            if let Type::Struct(struct_no) = &**r {
+                return calculate_struct_size(bin, arg_value, *struct_no, ty, func_value, ns);
+            }
+
+            let loaded = bin.builder.build_load(
+                bin.llvm_type(ty.deref_memory(), ns),
+                arg_value.into_pointer_value(),
+                "",
+            );
+
+            get_args_type_size(bin, loaded, r, func_value, ns)
+        }
+        Type::StorageRef(r) => {
+            let storage_var = storage_load(bin, r, &mut arg_value.clone(), func_value, ns);
+            let size = get_args_type_size(bin, storage_var, r, func_value, ns);
+            size
+        }
+        Type::String => calculate_string_size(bin, arg_value),
+        Type::Void
+        | Type::Unreachable
+        | Type::BufferPointer
+        | Type::Mapping(..)
+        | Type::Function { .. } => {
+            unreachable!("This type cannot be encoded")
+        }
+        Type::UserType(_) | Type::Unresolved => {
+            unreachable!("Type should not exist in irgen")
+        }
+        _ => unreachable!("Type should not exist in irgen"),
+    }
+}
+
+
+
+fn calculate_string_size<'a>(bin: &Binary<'a>, string_value: BasicValueEnum<'a>) -> IntValue<'a> {
+    // When encoding a variable length array, the total size is "compact encoded
+    // array length + N elements"
+    let length = bin.vector_len(string_value);
+    bin.builder
+        .build_int_add(length, bin.context.i64_type().const_int(1, false), "")
+}
+
+/// Calculate the size of an array
+fn calculate_array_size<'a>(
+    bin: &Binary<'a>,
+    array: BasicValueEnum<'a>,
+    array_ty: &Type,
+    elem_ty: &Type,
+    dims: &Vec<ArrayLength>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> IntValue<'a> {
+    let dyn_dims = dims.iter().filter(|d| **d == ArrayLength::Dynamic).count();
+
+    // If the array does not have variable length elements,
+    // we can calculate its size using a simple multiplication (direct_assessment)
+    // i.e. 'uint8[3][] vec' has size vec.length*2*size_of(uint8)
+    // In cases like 'uint [3][][2] v' this is not possible, as v[0] and v[1] have
+    // different sizes
+    let direct_assessment =
+        dyn_dims == 0 || (dyn_dims == 1 && dims.last() == Some(&ArrayLength::Dynamic));
+
+    // Check if the array contains only fixed sized elements
+    let primitive_size = if elem_ty.is_primitive() && direct_assessment {
+        Some(elem_ty.memory_size_of(ns))
+    } else if let Type::Struct(struct_no) = elem_ty {
+        if direct_assessment {
+            calculate_struct_non_padded_size(*struct_no, ns)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    if let Some(compile_type_size) = primitive_size {
+        // If the array saves primitive-type elements, its size is
+        // sizeof(type)*vec.length
+        let mut size = if let ArrayLength::Fixed(dim) = &dims.last().unwrap() {
+            bin.context
+                .i64_type()
+                .const_int(dim.to_u64().unwrap(), false)
+        } else {
+            bin.vector_len(array)
+        };
+
+        for item in dims.iter().take(dims.len() - 1) {
+            let local_size = bin
+                .context
+                .i64_type()
+                .const_int(item.array_length().unwrap().to_u64().unwrap(), false);
+            size = bin.builder.build_int_mul(size, local_size, "");
+        }
+
+        let type_size = bin
+            .context
+            .i64_type()
+            .const_int(compile_type_size.to_u64().unwrap(), false);
+        let size = bin.builder.build_int_mul(size, type_size, "");
+
+        if !matches!(&dims.last().unwrap(), ArrayLength::Dynamic) {
+            return size;
+        }
+
+        // If the array is dynamic, we must save its size before all elements
+        bin.builder
+            .build_int_add(size, bin.context.i64_type().const_int(1, false), "")
+    } else {
+        let mut index_vec: Vec<IntValue<'a>> = Vec::new();
+        let size_var = bin.build_alloca(func_value, bin.context.i64_type(), "size_var");
+        bin.builder
+            .build_store(size_var, bin.context.i64_type().const_zero());
+        calculate_complex_array_size(
+            bin,
+            array,
+            array_ty,
+            elem_ty,
+            dims,
+            dims.len() - 1,
+            size_var,
+            func_value,
+            ns,
+            &mut index_vec,
+        );
+        bin.builder
+            .build_load(bin.context.i64_type(), size_var, "")
+            .into_int_value()
+    }
+}
+
+/// Calculate the size of a complex array.
+/// This function indexes an array from its outer dimension to its inner one and
+/// accounts for the encoded length size for dynamic dimensions.
+fn calculate_complex_array_size<'a>(
+    bin: &Binary<'a>,
+    array: BasicValueEnum<'a>,
+    array_ty: &Type,
+    elem_ty: &Type,
+    dims: &Vec<ArrayLength>,
+    dimension: usize,
+    size_var: PointerValue<'a>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+    indexes: &mut Vec<IntValue<'a>>,
+) {
+    // If this dimension is dynamic, account for the encoded vector length variable.
+    if dims[dimension] == ArrayLength::Dynamic {
+        let arr = index_array(
+            bin,
+            &mut array.clone(),
+            &mut array_ty.clone(),
+            dims,
+            indexes,
+            func_value,
+            ns,
+        );
+        let size = bin.vector_len(arr);
+        let size = bin.builder.build_int_add(
+            size,
+            bin.builder
+                .build_load(bin.context.i64_type(), size_var, "")
+                .into_int_value(),
+            "",
+        );
+        bin.builder.build_store(size_var, size);
+    }
+
+    let for_loop = set_array_loop(
+        bin, array, array_ty, dims, dimension, indexes, func_value, ns,
+    );
+    bin.builder.position_at_end(for_loop.body_block);
+
+    if 0 == dimension {
+        let deref = index_array(
+            bin,
+            &mut array.clone(),
+            &mut array_ty.clone(),
+            dims,
+            indexes,
+            func_value,
+            ns,
+        );
+        let elem_size = get_args_type_size(bin, deref, elem_ty, func_value, ns);
+
+        let size = bin.builder.build_int_add(
+            bin.builder
+                .build_load(bin.context.i64_type(), size_var, "")
+                .into_int_value(),
+            elem_size,
+            "",
+        );
+        bin.builder.build_store(size_var, size);
+    } else {
+        calculate_complex_array_size(
+            bin,
+            array,
+            array_ty,
+            elem_ty,
+            dims,
+            dimension - 1,
+            size_var,
+            func_value,
+            ns,
+            indexes,
+        );
+    }
+    finish_array_loop(bin, &for_loop);
+}
+
+
+/// Retrieves the size of a struct
+fn calculate_struct_size<'a>(
+    bin: &Binary<'a>,
+    struct_ptr: BasicValueEnum<'a>,
+    struct_no: usize,
+    ty: &Type,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> IntValue<'a> {
+    if let Some(struct_size) = calculate_struct_non_padded_size(struct_no, ns) {
+        return bin
+            .context
+            .i64_type()
+            .const_int(struct_size.to_u64().unwrap(), false);
+    }
+    let first_type = ns.structs[struct_no].fields[0].ty.clone();
+    let first_field = load_struct_member(bin, ty, &first_type, struct_ptr, 0, ns);
+    let mut size = get_args_type_size(bin, first_field, &first_type, func_value, ns);
+    for i in 1..ns.structs[struct_no].fields.len() {
+        let field_ty = ns.structs[struct_no].fields[i].ty.clone();
+        let field = load_struct_member(bin, ty, &field_ty, struct_ptr, i, ns);
+        let expr_size = get_args_type_size(bin, field, &field_ty, func_value, ns).into();
+        size = bin.builder.build_int_add(size, expr_size, "");
+    }
+    size
+}
+
+
+
+/// Loads a struct member
+fn load_struct_member<'a>(
+    bin: &Binary<'a>,
+    struct_ty: &Type,
+    field_ty: &Type,
+    struct_ptr: BasicValueEnum<'a>,
+    member: usize,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    let struct_ty = bin.llvm_type(struct_ty.deref_memory(), ns);
+
+    let struct_member = bin
+        .builder
+        .build_struct_gep(
+            struct_ty,
+            struct_ptr.into_pointer_value(),
+            member as u32,
+            "struct member",
+        )
+        .unwrap();
+    if field_ty.is_primitive() {
+        bin.builder
+            .build_load(bin.llvm_type(field_ty, ns), struct_member, "elem")
+    } else {
+        struct_member.into()
+    }
+}
+
 
 /// Checks if struct contains only primitive types and returns its memory
 /// non-padded size
@@ -304,7 +612,7 @@ pub fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
 
 /// Calculate the num of element a dynamic array, whose dynamic dimension is
 /// the outer. It needs the variable saving the array's length.
-pub fn calculate_array_size<'a>(
+pub fn calculate_memory_size<'a>(
     bin: &Binary<'a>,
     length_var: IntValue<'a>,
     elem_ty: &Type,

@@ -366,14 +366,6 @@ pub(super) fn resolve_namespace_call(
                 match signature {
                     program::Expression::StringLiteral(s) => {
                         let function_name = &s[0].string;
-                        if !function_name.starts_with("fn") {
-                            diagnostics.push(Diagnostic::error(
-                                *loc,
-                                "function signature must start with 'fn'".to_string(),
-                            ));
-
-                            return Err(());
-                        } else {
                             // keccak hash the signature
                             let mut hasher = Keccak::v256();
                             let mut hash = [0u8; 32];
@@ -382,7 +374,7 @@ pub(super) fn resolve_namespace_call(
                     
                             function_selector = u32::from_le_bytes(hash[0..4].try_into().unwrap())
                         }
-                    }
+                    
                     _ => {
                         diagnostics.push(Diagnostic::error(
                             *loc,
