@@ -21,7 +21,7 @@ use crate::sema::{
 };
 
 use super::address_op::address_compare;
-use super::encoding::{abi_decode, abi_encode};
+use super::encoding::{abi_decode, abi_encode_with_selector, abi_encode};
 use super::functions::Vartable;
 use super::storage::{
     array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
@@ -654,11 +654,6 @@ pub fn expression<'a>(
             kind: LibFunc::AbiEncode,
             args,
             ..
-        }
-        | Expression::LibFunction {
-            kind: LibFunc::AbiEncodeWithSignature,
-            args,
-            ..
         } => {
             let (types, encoder_args): (Vec<_>, Vec<_>) = args
                 .iter()
@@ -669,10 +664,26 @@ pub fn expression<'a>(
                 })
                 .unzip();
 
-            abi_encode(bin, encoder_args, &types, func_value, ns)
-                .1
-                .as_basic_value_enum()
+            abi_encode(bin, encoder_args, &types, func_value, ns).as_basic_value_enum()
+
         }
+        Expression::LibFunction {
+            kind: LibFunc::AbiEncodeWithSignature,
+            args,
+            ..
+        } => {
+            let selector = expression(&args[0], bin, func_value, var_table, ns);
+            let (types, encoder_args): (Vec<_>, Vec<_>) = args[1..]
+                .iter()
+                .map(|a| {
+                    let ty = a.ty();
+                    let expr = expression(a, bin, func_value, var_table, ns);
+                    (ty, expr)
+                })
+                .unzip();
+            
+             abi_encode_with_selector(bin, selector,encoder_args, &types, func_value, ns).as_basic_value_enum()
+            }
         Expression::AllocDynamicBytes {
             ty,
             length: size,
@@ -839,8 +850,7 @@ pub fn emit_function_call<'a>(
                 bin.builder.build_store(index_access, address_value);
             }
 
-            let return_data =
-                external_call(bin, args, address_heap_int, ty.clone());
+            let return_data = external_call(bin, args, address_heap_int, ty.clone());
             vec![return_data]
         }
         Expression::LibFunction {
@@ -1181,18 +1191,25 @@ fn external_call<'a>(
         "payload_len",
     );
 
-    let len_add_one = bin.builder.build_int_add(
+    let tape_size = bin.builder.build_int_add(
         payload_len.into_int_value(),
-        bin.context.i64_type().const_int(1, false),
-        "",
+        bin.context.i64_type().const_int(2, false),
+        "tape_size",
     );
 
-    let payload_heap_addr =
+    let payload_ptr =
         bin.builder
             .build_ptr_to_int(args.into_pointer_value(), bin.context.i64_type(), "");
 
+    let payload_start = bin.builder.build_int_add(
+        payload_ptr,
+        bin.context.i64_type().const_int(1, false),
+        "payload_start",
+    );
+
+
     // store payload and payload len to tape
-    bin.tape_data_store(payload_heap_addr, len_add_one);
+    bin.tape_data_store(payload_start, tape_size);
 
     let call_type = match call_type {
         CallTy::Regular => bin.context.i64_type().const_zero(),
@@ -1208,19 +1225,35 @@ fn external_call<'a>(
         "",
     );
 
-    // length start from index 2
-    let length_size = bin.context.i64_type().const_int(2, false);
+    // length start from index = 0 in tape data
+    let length_size = bin.context.i64_type().const_int(1, false);
     let (length_start_int, length_start_ptr) = bin.heap_malloc(length_size);
     bin.tape_data_load(length_start_int, length_size);
     let return_length =
         bin.builder
             .build_load(bin.context.i64_type(), length_start_ptr, "return_length");
-    let calldata_size = bin.builder.build_int_add(
+
+    let heap_size = bin.builder.build_int_add(
         return_length.into_int_value(),
         bin.context.i64_type().const_int(2, false),
+        "heap_size",
+    );
+
+    let tape_size = bin.builder.build_int_add(
+        return_length.into_int_value(),
+        bin.context.i64_type().const_int(1, false),
+        "tape_size",
+    );
+    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size);
+
+    bin.builder.build_store(heap_start_ptr, return_length);
+
+    let tape_start_int = bin.builder.build_int_add(
+        heap_start_int,
+        bin.context.i64_type().const_int(1, false),
         "",
     );
-    let (data_start_int, data_start_ptr) = bin.heap_malloc(calldata_size);
-    bin.tape_data_load(data_start_int, calldata_size);
-    data_start_ptr.as_basic_value_enum()
+
+    bin.tape_data_load(tape_start_int, tape_size);
+    heap_start_ptr.as_basic_value_enum()
 }

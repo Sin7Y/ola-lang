@@ -32,19 +32,24 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> (IntValue<'a>, PointerValue<'a>,  IntValue<'a>) {
+) -> PointerValue<'a>{
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let size_add_one = bin.builder.build_int_add(
-        size,
-    bin.context.i64_type().const_int(1, false),
-        "size_add_one",
-    );
-  
-    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(size_add_one); 
+    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(1, false), "heap_size");
+    
+    let (_, heap_start_ptr) = bin.heap_malloc(heap_size); 
 
     let mut offset = bin.context.i64_type().const_zero();
-    
+    // encode size to heap start
+    encode_uint(
+        heap_start_ptr,
+        size.as_basic_value_enum(),
+        offset,
+        bin,
+    );
+
+    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
             heap_start_ptr,
@@ -57,16 +62,121 @@ pub(super) fn abi_encode<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
-    // encode size to heap 
+     heap_start_ptr
+
+}
+
+
+
+/// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
+/// Returns a pointer to the encoded data and the size as a 32bit integer.
+pub(super) fn abi_encode_store_tape<'a>(
+    bin: &Binary<'a>,
+    args: Vec<BasicValueEnum<'a>>,
+    types: &Vec<Type>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) {
+    let size = calculate_size_args(bin, &args, types, func_value, ns);
+
+    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(2, false), "heap_size");
+
+    let tape_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(1, false), "tape_size");
+    
+    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size); 
+
+    let mut offset = bin.context.i64_type().const_zero();
+    // encode size to heap start
     encode_uint(
         heap_start_ptr,
         size.as_basic_value_enum(),
         offset,
         bin,
     );
-    (heap_start_int, heap_start_ptr, size_add_one) 
+
+    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+
+    for (arg_no, item) in args.iter().enumerate() {
+        let advance = encode_into_buffer(
+            heap_start_ptr,
+            item.clone(),
+            &types[arg_no],
+            offset.clone(),
+            bin,
+            func_value,
+            ns,
+        );
+        offset = bin.builder.build_int_add(offset, advance, "");
+    }
+
+    bin.tape_data_store(heap_start_int, tape_size);
 
 }
+
+
+/// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
+/// Returns a pointer to the encoded data and the size as a 32bit integer.
+pub(super) fn abi_encode_with_selector<'a>(
+    bin: &Binary<'a>,
+    selector: BasicValueEnum<'a>,
+    args: Vec<BasicValueEnum<'a>>,
+    types: &Vec<Type>,
+    func_value: FunctionValue<'a>,
+    ns: &Namespace,
+) -> PointerValue<'a> {
+    let size = calculate_size_args(bin, &args, types, func_value, ns);
+    
+    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(3, false), "heap_size");
+  
+    let (_, heap_start_ptr) = bin.heap_malloc(heap_size); 
+
+    let mut offset = bin.context.i64_type().const_zero();
+
+    // encode size to heap
+    encode_uint(
+        heap_start_ptr,
+        size.as_basic_value_enum(),
+        offset,
+        bin,
+    );
+
+    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+
+
+    for (arg_no, item) in args.iter().enumerate() {
+        let advance = encode_into_buffer(
+            heap_start_ptr,
+            item.clone(),
+            &types[arg_no],
+            offset.clone(),
+            bin,
+            func_value,
+            ns,
+        );
+        offset = bin.builder.build_int_add(offset, advance, "");
+    }
+    // encode size to heap, the "size" here is only used for tape area identification.
+    encode_uint(
+        heap_start_ptr,
+        size.as_basic_value_enum(),
+        offset,
+        bin,
+    );
+
+    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+
+    // encode selector to heap
+    encode_uint(
+        heap_start_ptr,
+        selector,
+        offset,
+        bin,
+    );
+    
+    heap_start_ptr 
+
+}
+
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
 /// Returns a vector containing the encoded data.

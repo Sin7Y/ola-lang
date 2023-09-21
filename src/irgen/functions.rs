@@ -41,6 +41,9 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &'a sema::ast::Namespa
             let mut var_table: Vartable = IndexMap::new();
             gen_function(bin, func_value, func, &mut var_table, ns);
         }
+        if func.returns.is_empty() {
+            bin.builder.build_return(None);
+        }
     }
 }
 

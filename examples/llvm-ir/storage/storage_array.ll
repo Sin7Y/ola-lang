@@ -66,6 +66,7 @@ body:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 done:                                             ; preds = %body
+  ret void
 }
 
 define void @setElement(i64 %0, i64 %1) {
@@ -83,13 +84,14 @@ entry:
   %5 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %index_slot, 3
   %6 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %4, 3
   call void @set_storage([4 x i64] %5, [4 x i64] %6)
+  ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3787929898, label %func_0_dispatch
-    i64 996780931, label %func_1_dispatch
+    i64 708429793, label %func_0_dispatch
+    i64 2209048891, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -124,17 +126,17 @@ buffer_read:                                      ; preds = %inbounds
 
 define void @call() {
 entry:
-  %0 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %0, 1
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 1)
+  call void @get_tape_data(i64 %heap_start, i64 13)
   %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 2)
-  %heap_start1 = sub i64 %1, 2
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_tape_data(i64 %heap_start1, i64 2)
+  call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 %input_length, 2
+  %2 = add i64 14, %input_length
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr

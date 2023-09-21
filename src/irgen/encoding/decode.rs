@@ -156,11 +156,11 @@ fn decode_address<'a>(
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
-    let address = bin.context.i64_type().array_type(4).get_undef();
+    let mut address = bin.context.i64_type().array_type(4).get_undef();
 
     for i in 0..4 {
         let value = decode_uint(buffer, *offset, bin);
-        bin.builder.build_insert_value(address, value, i, "");
+        address = bin.builder.build_insert_value(address, value, i, "").unwrap().into_array_value();
         *offset =
             bin.builder
                 .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
