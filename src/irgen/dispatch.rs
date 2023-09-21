@@ -9,7 +9,7 @@ use crate::sema::ast::{Namespace, Type};
 
 use super::{
     binary::Binary,
-    encoding::{abi_decode, abi_encode},
+    encoding::{abi_decode, abi_encode_store_tape},
 };
 
 fn public_function_prelude<'a>(
@@ -83,7 +83,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         .iter()
         .enumerate()
         .filter_map(|(func_no, func)| {
-            let selector = BigInt::from_bytes_be(Sign::Plus, &func.selector());
+            let selector = BigInt::from_bytes_le(Sign::Plus, &func.selector());
             let case = bin
                 .context
                 .i64_type()
@@ -157,9 +157,7 @@ fn dispatch_case<'a>(
         .left();
     if !func.returns.is_empty() {
         returns.push(ret.unwrap());
-        let (heap_start_int, _, size_add_one) = abi_encode(bin, returns, &return_tys, func_value, ns);
-        bin.tape_data_store(heap_start_int, size_add_one);
-        
+        abi_encode_store_tape(bin, returns, &return_tys, func_value, ns);
     }
     bin.builder.build_return(None);
 

@@ -3,6 +3,7 @@ use crate::sema::expression::FIELD_ORDER;
 use std::path::Path;
 use std::str;
 
+use nom::InputLength;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
@@ -431,28 +432,34 @@ impl<'a> Binary<'a> {
 
 
     pub(crate) fn contract_input(&self) -> (IntValue<'a>, IntValue<'a>, PointerValue<'a>) {
-        let selector_size = self.context.i64_type().const_int(1, false);
+
+        // contract input in tape
+        // ｜ calldata ｜ calldata len(1 field) ｜ selector(1 field) ｜ caller_address(4 field) ｜ callee_address(4 field) | code_address(4 field)| 
+        
+        let selector_index = self.context.i64_type().const_int(13, false);
         let (selector_start_int, selector_start_ptr) =
-        self.heap_malloc(selector_size);
-        self.tape_data_load(selector_start_int, selector_size);
+        self.heap_malloc(selector_index);
+        self.tape_data_load(selector_start_int, selector_index);
         let function_selector = self.builder.build_load(
             self.context.i64_type(),
             selector_start_ptr,
             "function_selector",
         );
-        let length_size = self.context.i64_type().const_int(2, false);
+        let length_size = self.context.i64_type().const_int(1, false);
+        let length_index = self.builder.build_int_add(selector_index, length_size, "");
+
         let (length_start_int, length_start_ptr) =
-        self.heap_malloc(length_size);
-        self.tape_data_load(length_start_int, length_size);
+        self.heap_malloc(length_index);
+        self.tape_data_load(length_start_int, length_index);
         let input_length = self.builder.build_load(
             self.context.i64_type(),
             length_start_ptr,
             "input_length",
         );
-        let calldata_size = self.builder.build_int_add(input_length.into_int_value(), self.context.i64_type().const_int(2, false), "");
+        let calldata_index = self.builder.build_int_add(length_index, input_length.into_int_value(), "");
         let (data_start_int, data_start_ptr) =
-        self.heap_malloc(calldata_size);
-        self.tape_data_load(data_start_int, calldata_size);
+        self.heap_malloc(calldata_index);
+        self.tape_data_load(data_start_int, calldata_index);
         (function_selector.into_int_value(), input_length.into_int_value(), data_start_ptr)
     
     }

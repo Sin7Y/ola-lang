@@ -79,7 +79,7 @@ done:                                             ; preds = %cond
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 4273215651, label %func_0_dispatch
+    i64 2736305406, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -90,13 +90,16 @@ func_0_dispatch:                                  ; preds = %entry
   %length = load i64, ptr %3, align 4
   %4 = mul i64 %length, 2
   %5 = add i64 %4, 1
-  %size_add_one = add i64 %5, 1
-  %6 = call i64 @vector_new(i64 %size_add_one)
-  %heap_start = sub i64 %6, %size_add_one
+  %heap_size = add i64 %5, 2
+  %tape_size = add i64 %5, 1
+  %6 = call i64 @vector_new(i64 %heap_size)
+  %heap_start = sub i64 %6, %heap_size
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %length1 = load i64, ptr %3, align 4
   %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %length1, ptr %start, align 4
+  store i64 %5, ptr %start, align 4
+  %length1 = load i64, ptr %3, align 4
+  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %length1, ptr %start2, align 4
   %index_ptr = alloca i64, align 8
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
@@ -106,12 +109,12 @@ loop_body:                                        ; preds = %loop_body, %func_0_
   %element = getelementptr ptr, ptr %3, i64 %index
   %"struct member" = getelementptr inbounds { i64, i64 }, ptr %element, i32 0, i32 0
   %elem = load i64, ptr %"struct member", align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %elem, ptr %start2, align 4
-  %"struct member3" = getelementptr inbounds { i64, i64 }, ptr %element, i32 0, i32 1
-  %elem4 = load i64, ptr %"struct member3", align 4
-  %start5 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %elem4, ptr %start5, align 4
+  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 %elem, ptr %start3, align 4
+  %"struct member4" = getelementptr inbounds { i64, i64 }, ptr %element, i32 0, i32 1
+  %elem5 = load i64, ptr %"struct member4", align 4
+  %start6 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 %elem5, ptr %start6, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
   %index_cond = icmp ult i64 %next_index, %length1
@@ -119,26 +122,24 @@ loop_body:                                        ; preds = %loop_body, %func_0_
 
 loop_end:                                         ; preds = %loop_body
   %7 = add i64 %length1, 1
-  %8 = add i64 0, %7
-  %start6 = getelementptr i64, ptr %heap_to_ptr, i64 %8
-  store i64 %5, ptr %start6, align 4
-  call void @set_tape_data(i64 %heap_start, i64 %size_add_one)
+  %8 = add i64 1, %7
+  call void @set_tape_data(i64 %heap_start, i64 %tape_size)
   ret void
 }
 
 define void @call() {
 entry:
-  %0 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %0, 1
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 1)
+  call void @get_tape_data(i64 %heap_start, i64 13)
   %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 2)
-  %heap_start1 = sub i64 %1, 2
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_tape_data(i64 %heap_start1, i64 2)
+  call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 %input_length, 2
+  %2 = add i64 14, %input_length
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
