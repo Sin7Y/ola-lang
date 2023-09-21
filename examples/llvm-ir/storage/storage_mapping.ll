@@ -54,6 +54,7 @@ entry:
   %16 = load i64, ptr %number, align 4
   %17 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %16, 3
   call void @set_storage([4 x i64] %15, [4 x i64] %17)
+  ret void
 }
 
 define i64 @get_mapping([4 x i64] %0) {
@@ -87,14 +88,15 @@ entry:
   call void @add_mapping([4 x i64] %0, i64 1)
   %1 = load [4 x i64], ptr %myaddress, align 4
   %2 = call i64 @get_mapping([4 x i64] %1)
+  ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3323288006, label %func_0_dispatch
-    i64 3883133653, label %func_1_dispatch
-    i64 3758009808, label %func_2_dispatch
+    i64 3327727046, label %func_0_dispatch
+    i64 3588912103, label %func_1_dispatch
+    i64 3501063903, label %func_2_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -110,13 +112,13 @@ inbounds:                                         ; preds = %func_0_dispatch
   %4 = insertvalue [4 x i64] undef, i64 %value, 0
   %start1 = getelementptr i64, ptr %2, i64 1
   %value2 = load i64, ptr %start1, align 4
-  %5 = insertvalue [4 x i64] undef, i64 %value2, 1
+  %5 = insertvalue [4 x i64] %4, i64 %value2, 1
   %start3 = getelementptr i64, ptr %2, i64 2
   %value4 = load i64, ptr %start3, align 4
-  %6 = insertvalue [4 x i64] undef, i64 %value4, 2
+  %6 = insertvalue [4 x i64] %5, i64 %value4, 2
   %start5 = getelementptr i64, ptr %2, i64 3
   %value6 = load i64, ptr %start5, align 4
-  %7 = insertvalue [4 x i64] undef, i64 %value6, 3
+  %7 = insertvalue [4 x i64] %6, i64 %value6, 3
   %start7 = getelementptr i64, ptr %2, i64 4
   %value8 = load i64, ptr %start7, align 4
   %8 = icmp ult i64 5, %1
@@ -129,7 +131,7 @@ not_all_bytes_read:                               ; preds = %inbounds
   unreachable
 
 buffer_read:                                      ; preds = %inbounds
-  call void @add_mapping([4 x i64] undef, i64 %value8)
+  call void @add_mapping([4 x i64] %7, i64 %value8)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -142,13 +144,13 @@ inbounds9:                                        ; preds = %func_1_dispatch
   %10 = insertvalue [4 x i64] undef, i64 %value12, 0
   %start13 = getelementptr i64, ptr %2, i64 1
   %value14 = load i64, ptr %start13, align 4
-  %11 = insertvalue [4 x i64] undef, i64 %value14, 1
+  %11 = insertvalue [4 x i64] %10, i64 %value14, 1
   %start15 = getelementptr i64, ptr %2, i64 2
   %value16 = load i64, ptr %start15, align 4
-  %12 = insertvalue [4 x i64] undef, i64 %value16, 2
+  %12 = insertvalue [4 x i64] %11, i64 %value16, 2
   %start17 = getelementptr i64, ptr %2, i64 3
   %value18 = load i64, ptr %start17, align 4
-  %13 = insertvalue [4 x i64] undef, i64 %value18, 3
+  %13 = insertvalue [4 x i64] %12, i64 %value18, 3
   %14 = icmp ult i64 4, %1
   br i1 %14, label %not_all_bytes_read19, label %buffer_read20
 
@@ -159,14 +161,14 @@ not_all_bytes_read19:                             ; preds = %inbounds9
   unreachable
 
 buffer_read20:                                    ; preds = %inbounds9
-  %15 = call i64 @get_mapping([4 x i64] undef)
-  %16 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %16, 2
+  %15 = call i64 @get_mapping([4 x i64] %13)
+  %16 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %16, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %start21 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %15, ptr %start21, align 4
+  store i64 1, ptr %start21, align 4
   %start22 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start22, align 4
+  store i64 %15, ptr %start22, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 
@@ -177,17 +179,17 @@ func_2_dispatch:                                  ; preds = %entry
 
 define void @call() {
 entry:
-  %0 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %0, 1
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 1)
+  call void @get_tape_data(i64 %heap_start, i64 13)
   %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 2)
-  %heap_start1 = sub i64 %1, 2
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_tape_data(i64 %heap_start1, i64 2)
+  call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 %input_length, 2
+  %2 = add i64 14, %input_length
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr

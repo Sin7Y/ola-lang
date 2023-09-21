@@ -2,10 +2,11 @@
 contract Caller {
     u32 num;
 
+
     fn delegatecall_test(address _contract) {
         u32 set_data = 66;
         bytes call_data = abi.encodeWithSignature("setVars(u32)", set_data);
-        bytes memory data = _contract.delegatecall(call_data);
+        _contract.delegatecall(call_data);
         assert(num == 66);
     }
 

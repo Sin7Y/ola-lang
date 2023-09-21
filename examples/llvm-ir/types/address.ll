@@ -59,7 +59,7 @@ entry:
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 2654497108, label %func_0_dispatch
+    i64 1416181918, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -75,13 +75,13 @@ inbounds:                                         ; preds = %func_0_dispatch
   %4 = insertvalue [4 x i64] undef, i64 %value, 0
   %start1 = getelementptr i64, ptr %2, i64 1
   %value2 = load i64, ptr %start1, align 4
-  %5 = insertvalue [4 x i64] undef, i64 %value2, 1
+  %5 = insertvalue [4 x i64] %4, i64 %value2, 1
   %start3 = getelementptr i64, ptr %2, i64 2
   %value4 = load i64, ptr %start3, align 4
-  %6 = insertvalue [4 x i64] undef, i64 %value4, 2
+  %6 = insertvalue [4 x i64] %5, i64 %value4, 2
   %start5 = getelementptr i64, ptr %2, i64 3
   %value6 = load i64, ptr %start5, align 4
-  %7 = insertvalue [4 x i64] undef, i64 %value6, 3
+  %7 = insertvalue [4 x i64] %6, i64 %value6, 3
   %8 = icmp ult i64 4, %1
   br i1 %8, label %not_all_bytes_read, label %buffer_read
 
@@ -92,31 +92,31 @@ not_all_bytes_read:                               ; preds = %inbounds
   unreachable
 
 buffer_read:                                      ; preds = %inbounds
-  %9 = call i64 @compare_address([4 x i64] undef)
-  %10 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %10, 2
+  %9 = call i64 @compare_address([4 x i64] %7)
+  %10 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %10, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %start7 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %9, ptr %start7, align 4
+  store i64 1, ptr %start7, align 4
   %start8 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start8, align 4
+  store i64 %9, ptr %start8, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }
 
 define void @call() {
 entry:
-  %0 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %0, 1
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 1)
+  call void @get_tape_data(i64 %heap_start, i64 13)
   %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 2)
-  %heap_start1 = sub i64 %1, 2
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_tape_data(i64 %heap_start1, i64 2)
+  call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 %input_length, 2
+  %2 = add i64 14, %input_length
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
