@@ -52,19 +52,19 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   %3 = call ptr @myFunction()
-  %4 = call i64 @vector_new(i64 4)
-  %heap_start = sub i64 %4, 4
+  %4 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %4, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 2, ptr %start, align 4
   %"struct member" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
   %elem = load i64, ptr %"struct member", align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %elem, ptr %start1, align 4
-  %"struct member2" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
-  %elem3 = load i64, ptr %"struct member2", align 4
+  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %elem, ptr %start, align 4
+  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
+  %elem2 = load i64, ptr %"struct member1", align 4
+  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %elem2, ptr %start3, align 4
   %start4 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %elem3, ptr %start4, align 4
+  store i64 2, ptr %start4, align 4
   call void @set_tape_data(i64 %heap_start, i64 3)
   ret void
 }
@@ -81,7 +81,7 @@ entry:
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
   call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 14, %input_length
+  %2 = add i64 %input_length, 14
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
