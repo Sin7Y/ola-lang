@@ -575,6 +575,21 @@ fn try_type_method(
                     args: vec![var_expr.clone()],
                 }));
             }
+            
+            if func.name == "concat" {
+                if args.len() != 2 {
+                    diagnostics.push(Diagnostic::error(
+                        func.loc,
+                        "method 'concat()' takes exactly 1 argument".to_string(),
+                    ));
+                    return Err(());
+                }
+
+                
+
+               
+
+            }
         }
         Type::Array(..) if func.name == "push" || func.name == "pop" => {
             diagnostics.push(Diagnostic::error(

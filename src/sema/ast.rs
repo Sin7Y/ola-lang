@@ -22,6 +22,8 @@ pub enum Type {
     Bool,
     Uint(u16),
     Address,
+    Hash,
+    Field,
     DynamicBytes,
     String,
     Array(Box<Type>, Vec<ArrayLength>),
@@ -302,6 +304,8 @@ impl From<&program::Type> for Type {
             program::Type::String => Type::String,
             program::Type::Mapping { .. } => unimplemented!(),
             program::Type::DynamicBytes => Type::DynamicBytes,
+            program::Type::Field => Type::Field,
+            program::Type::Hash => Type::Hash,
         }
     }
 }
@@ -943,9 +947,15 @@ pub enum LibFunc {
     ArraySort,
     Assert,
     CallerAddress,
+    OriginAddress,
+    CodeAddress,
     AbiDecode,
     AbiEncode,
-    AbiEncodeWithSignature
+    AbiEncodeWithSignature,
+    PoseidonHash,
+    ChainId,
+    FieldsConcat,
+
 
 }
 
