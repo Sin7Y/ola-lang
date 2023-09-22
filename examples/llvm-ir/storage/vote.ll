@@ -369,23 +369,23 @@ buffer_read14:                                    ; preds = %inbounds9
 
 func_2_dispatch:                                  ; preds = %entry
   %17 = call [4 x i64] @get_caller()
-  %18 = call i64 @vector_new(i64 6)
-  %heap_start15 = sub i64 %18, 6
+  %18 = call i64 @vector_new(i64 5)
+  %heap_start15 = sub i64 %18, 5
   %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
-  %start17 = getelementptr i64, ptr %heap_to_ptr16, i64 0
-  store i64 4, ptr %start17, align 4
   %19 = extractvalue [4 x i64] %17, 0
-  %start18 = getelementptr i64, ptr %heap_to_ptr16, i64 1
-  store i64 %19, ptr %start18, align 4
+  %start17 = getelementptr i64, ptr %heap_to_ptr16, i64 0
+  store i64 %19, ptr %start17, align 4
   %20 = extractvalue [4 x i64] %17, 1
-  %start19 = getelementptr i64, ptr %heap_to_ptr16, i64 2
-  store i64 %20, ptr %start19, align 4
+  %start18 = getelementptr i64, ptr %heap_to_ptr16, i64 1
+  store i64 %20, ptr %start18, align 4
   %21 = extractvalue [4 x i64] %17, 2
-  %start20 = getelementptr i64, ptr %heap_to_ptr16, i64 3
-  store i64 %21, ptr %start20, align 4
+  %start19 = getelementptr i64, ptr %heap_to_ptr16, i64 2
+  store i64 %21, ptr %start19, align 4
   %22 = extractvalue [4 x i64] %17, 3
+  %start20 = getelementptr i64, ptr %heap_to_ptr16, i64 3
+  store i64 %22, ptr %start20, align 4
   %start21 = getelementptr i64, ptr %heap_to_ptr16, i64 4
-  store i64 %22, ptr %start21, align 4
+  store i64 4, ptr %start21, align 4
   call void @set_tape_data(i64 %heap_start15, i64 5)
   ret void
 
@@ -406,7 +406,7 @@ entry:
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
   call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 14, %input_length
+  %2 = add i64 %input_length, 14
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr

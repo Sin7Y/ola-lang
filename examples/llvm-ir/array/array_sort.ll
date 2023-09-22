@@ -237,16 +237,13 @@ buffer_read:                                      ; preds = %inbounds
   %length = load i64, ptr %5, align 4
   %6 = mul i64 %length, 1
   %7 = add i64 %6, 1
-  %heap_size = add i64 %7, 2
-  %tape_size = add i64 %7, 1
+  %heap_size = add i64 %7, 1
   %8 = call i64 @vector_new(i64 %heap_size)
   %heap_start = sub i64 %8, %heap_size
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start19 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %7, ptr %start19, align 4
-  %length20 = load i64, ptr %5, align 4
-  %start21 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %length20, ptr %start21, align 4
+  %length19 = load i64, ptr %5, align 4
+  %start20 = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %length19, ptr %start20, align 4
   %index_ptr = alloca i64, align 8
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
@@ -255,17 +252,19 @@ loop_body:                                        ; preds = %loop_body, %buffer_
   %index = load i64, ptr %index_ptr, align 4
   %element = getelementptr ptr, ptr %5, i64 %index
   %elem = load i64, ptr %element, align 4
-  %start22 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %elem, ptr %start22, align 4
+  %start21 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %elem, ptr %start21, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %length20
+  %index_cond = icmp ult i64 %next_index, %length19
   br i1 %index_cond, label %loop_body, label %loop_end
 
 loop_end:                                         ; preds = %loop_body
-  %9 = add i64 %length20, 1
-  %10 = add i64 1, %9
-  call void @set_tape_data(i64 %heap_start, i64 %tape_size)
+  %9 = add i64 %length19, 1
+  %10 = add i64 0, %9
+  %start22 = getelementptr i64, ptr %heap_to_ptr, i64 %10
+  store i64 %7, ptr %start22, align 4
+  call void @set_tape_data(i64 %heap_start, i64 %heap_size)
   ret void
 }
 
@@ -281,7 +280,7 @@ entry:
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
   call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 14, %input_length
+  %2 = add i64 %input_length, 14
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr

@@ -79,22 +79,11 @@ pub(super) fn abi_encode_store_tape<'a>(
 ) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(2, false), "heap_size");
-
-    let tape_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(1, false), "tape_size");
+    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(1, false), "heap_size");
     
     let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size); 
 
     let mut offset = bin.context.i64_type().const_zero();
-    // encode size to heap start
-    encode_uint(
-        heap_start_ptr,
-        size.as_basic_value_enum(),
-        offset,
-        bin,
-    );
-
-    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
 
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
@@ -108,8 +97,15 @@ pub(super) fn abi_encode_store_tape<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
+    // encode size to heap, the "size" here is only used for tape area identification.
+    encode_uint(
+        heap_start_ptr,
+        size.as_basic_value_enum(),
+        offset,
+        bin,
+    );
 
-    bin.tape_data_store(heap_start_int, tape_size);
+    bin.tape_data_store(heap_start_int, heap_size);
 
 }
 
