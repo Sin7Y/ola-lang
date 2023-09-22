@@ -73,7 +73,7 @@ fn type_decl(
     // - This would require resolving the types definition after all other types are
     //   resolved
     // - Need for circular checks (type a is b; type b is a;)
-    if !matches!(ty, Type::Address | Type::Uint(_) | Type::Bool) {
+    if !matches!(ty, Type::Address | Type::Uint(_) | Type::Bool | Type::Hash | Type::Field ) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
             format!("'{}' is not an elementary value type", ty.to_string(ns)),
@@ -560,10 +560,12 @@ impl Type {
     pub fn to_string(&self, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
+            Type::Hash => "hash".to_string(),
+            Type::Field => "field".to_string(),
             Type::Address => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
             Type::String => "string".to_string(),
-            Type::DynamicBytes => "bytes".to_string(),
+            Type::DynamicBytes => "fields".to_string(),
             Type::Enum(n) => format!("enum {}", ns.enums[*n]),
             Type::Struct(n) => format!("struct {}", ns.structs[*n]),
             Type::Array(ty, len) => format!(
@@ -635,6 +637,8 @@ impl Type {
             Type::Bool => true,
             Type::Address => true,
             Type::Uint(_) => true,
+            Type::Hash => true,
+            Type::Field => true,
             Type::Ref(r) => r.is_primitive(),
             Type::StorageRef(r) => r.is_primitive(),
             _ => false,
@@ -645,10 +649,12 @@ impl Type {
     pub fn to_signature_string(&self, say_tuple: bool, ns: &Namespace) -> String {
         match self {
             Type::Bool => "bool".to_string(),
+            Type::Hash => "hash".to_string(),
+            Type::Field => "field".to_string(),
             Type::Contract(_) | Type::Address => "address".to_string(),
             Type::Uint(n) => format!("u{}", n),
             Type::String => "string".to_string(),
-            Type::DynamicBytes => "bytes".to_string(),
+            Type::DynamicBytes => "fields".to_string(),
             Type::Enum(n) => ns.enums[*n].ty.to_signature_string(say_tuple, ns),
             Type::Array(ty, len) => format!(
                 "{}{}",
@@ -696,6 +702,8 @@ impl Type {
         match self {
             Type::Bool => false,
             Type::Address => false,
+            Type::Hash => false,
+            Type::Field => false,
             Type::Uint(_) => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,
@@ -722,6 +730,7 @@ impl Type {
             }
             Type::Array(ty, dim) if dim.len() == 1 => *ty.clone(),
             Type::DynamicBytes => Type::Uint(32),
+            Type::String => Type::Uint(32),
             _ => panic!("not an array"),
         }
     }
@@ -767,7 +776,8 @@ impl Type {
         self.guarded_recursion(structs_visited, 0.into(), |structs_visited| match self {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
-            Type::Contract(_) | Type::Address => BigInt::from(4),
+            Type::Field => BigInt::one(),
+            Type::Contract(_) | Type::Address | Type::Hash => BigInt::from(4),
             Type::Uint(32) => BigInt::one(),
             Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::one(),
             Type::Array(ty, dims) => {
@@ -806,7 +816,7 @@ impl Type {
             // Contract and address are arrays of u8, so they align with one.
             | Type::Contract(_)
             | Type::Address
-            | Type::Enum(_) => BigInt::from(4),
+            | Type::Enum(_) | Type::Field => BigInt::one(),
 
             Type::Uint(32) => BigInt::one(),
             Type::Array(ty, dims) => {
@@ -881,8 +891,9 @@ impl Type {
 
     pub fn bits(&self, ns: &Namespace) -> u16 {
         match self {
-            Type::Address | Type::Contract(_) => 256_u16,
+            Type::Address | Type::Contract(_) | Type::Hash => 256_u16,
             Type::Bool => 1,
+            Type::Field => Type::Uint(32).bits(ns),
             Type::Uint(n) => *n,
             Type::Ref(ty) => ty.bits(ns),
             Type::StorageRef(..) => Type::Uint(32).bits(ns),
@@ -894,6 +905,7 @@ impl Type {
     pub fn is_integer(&self, ns: &Namespace) -> bool {
         match self {
             Type::Uint(_) => true,
+            Type::Field => true,
             Type::Ref(r) => r.is_integer(ns),
             Type::StorageRef(r) => r.is_integer(ns),
             Type::UserType(user) => ns.user_types[*user].ty.is_integer(ns),
@@ -951,6 +963,8 @@ impl Type {
         match self {
             Type::Bool => false,
             Type::Address => false,
+            Type::Hash => false,
+            Type::Field => false,
             Type::Uint(_) => false,
             Type::Enum(_) => false,
             Type::Struct(_) => true,

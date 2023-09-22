@@ -153,7 +153,9 @@ pub enum Type {
     Uint(u16),
     Address,
     String,
-    /// `bytes`
+    Field,
+    Hash,
+    /// `Fields`
     DynamicBytes,
     /// `mapping(<key> [key_name] => <value> [value_name])`
     Mapping {
