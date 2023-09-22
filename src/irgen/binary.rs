@@ -3,7 +3,6 @@ use crate::sema::expression::FIELD_ORDER;
 use std::path::Path;
 use std::str;
 
-use nom::InputLength;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 
@@ -456,7 +455,7 @@ impl<'a> Binary<'a> {
             length_start_ptr,
             "input_length",
         );
-        let calldata_index = self.builder.build_int_add(length_index, input_length.into_int_value(), "");
+        let calldata_index = self.builder.build_int_add(input_length.into_int_value(), length_index, "");
         let (data_start_int, data_start_ptr) =
         self.heap_malloc(calldata_index);
         self.tape_data_load(data_start_int, calldata_index);

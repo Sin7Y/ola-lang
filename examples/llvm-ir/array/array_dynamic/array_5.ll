@@ -191,13 +191,13 @@ not_all_bytes_read:                               ; preds = %inbounds7
 
 buffer_read:                                      ; preds = %inbounds7
   %15 = call i64 @array_call(ptr %heap_to_ptr)
-  %16 = call i64 @vector_new(i64 3)
-  %heap_start9 = sub i64 %16, 3
+  %16 = call i64 @vector_new(i64 2)
+  %heap_start9 = sub i64 %16, 2
   %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
   %start11 = getelementptr i64, ptr %heap_to_ptr10, i64 0
-  store i64 1, ptr %start11, align 4
+  store i64 %15, ptr %start11, align 4
   %start12 = getelementptr i64, ptr %heap_to_ptr10, i64 1
-  store i64 %15, ptr %start12, align 4
+  store i64 1, ptr %start12, align 4
   call void @set_tape_data(i64 %heap_start9, i64 2)
   ret void
 }
@@ -214,7 +214,7 @@ entry:
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
   call void @get_tape_data(i64 %heap_start1, i64 14)
   %input_length = load i64, ptr %heap_to_ptr2, align 4
-  %2 = add i64 14, %input_length
+  %2 = add i64 %input_length, 14
   %3 = call i64 @vector_new(i64 %2)
   %heap_start3 = sub i64 %3, %2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
