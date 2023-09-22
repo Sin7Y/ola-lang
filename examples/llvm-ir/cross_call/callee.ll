@@ -83,36 +83,6 @@ not_all_bytes_read:                               ; preds = %inbounds
 buffer_read:                                      ; preds = %inbounds
   call void @setVars(i64 %value)
   ret void
-
-func_1_dispatch:                                  ; preds = %entry
-  %5 = icmp ule i64 2, %1
-  br i1 %5, label %inbounds1, label %out_of_bounds2
-
-inbounds1:                                        ; preds = %func_1_dispatch
-  %start3 = getelementptr i64, ptr %2, i64 0
-  %value4 = load i64, ptr %start3, align 4
-  %start5 = getelementptr i64, ptr %2, i64 1
-  %value6 = load i64, ptr %start5, align 4
-  %6 = icmp ult i64 2, %1
-  br i1 %6, label %not_all_bytes_read7, label %buffer_read8
-
-out_of_bounds2:                                   ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read7:                              ; preds = %inbounds1
-  unreachable
-
-buffer_read8:                                     ; preds = %inbounds1
-  %7 = call i64 @add(i64 %value4, i64 %value6)
-  %8 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %8, 2
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start9 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %7, ptr %start9, align 4
-  %start10 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start10, align 4
-  call void @set_tape_data(i64 %heap_start, i64 2)
-  ret void
 }
 
 define void @call() {

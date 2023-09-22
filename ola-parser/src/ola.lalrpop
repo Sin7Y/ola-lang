@@ -23,7 +23,9 @@ Type: Type = {
     "u64" => Type::Uint(64),
     "u256" => Type::Uint(256),
     "address" => Type::Address,
-    "bytes" => Type::DynamicBytes,
+    "field" => Type::Field,
+    "hash" => Type::Hash,
+    "fields" => Type::DynamicBytes,
     "string" => Type::String,
         <l:@L> "mapping" "(" <k:Precedence0> <key_name:Identifier?> "=>" <v:Precedence0> <value_name:Identifier?> ")" <r:@R> => {
         Type::Mapping {

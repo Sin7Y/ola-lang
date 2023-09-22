@@ -122,6 +122,12 @@ impl<'a> Binary<'a> {
         self.context.i64_type().array_type(4_u32)
     }
 
+    /// llvm hash type
+    pub(crate) fn hash_type(&self) -> ArrayType<'a> {
+        self.context.i64_type().array_type(4_u32)
+    }
+    
+
     /// Emit function prototype
     pub(crate) fn function_type(
         &self,
@@ -190,6 +196,8 @@ impl<'a> Binary<'a> {
             // Map all i32 data to a field-based data type, with the maximum value of field between
             // u63 and u64
             Type::Uint(32) => self.context.i64_type().into(),
+            Type::Field => self.context.i64_type().into(),
+            Type::Hash => BasicTypeEnum::ArrayType(self.hash_type().into()),
             Type::Contract(_) | Type::Address => BasicTypeEnum::ArrayType(self.address_type()),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
             Type::Array(base_ty, dims) => {
