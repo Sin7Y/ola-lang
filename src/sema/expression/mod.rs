@@ -147,6 +147,28 @@ impl Expression {
                 };
             }
 
+            (Expression::NumberLiteral { value, .. }, p, &Type::Field)
+            if p.is_primitive() =>
+        {
+            return if from != Type::Uint(32) {
+                diagnostics.push(Diagnostic::cast_error(
+                    *loc,
+                    format!(
+                        "type {} cannot be converted to type '{}'",
+                        from.to_string(ns),
+                        to.to_string(ns)
+                    ),
+                ));
+                Err(())
+            } else {
+                Ok(Expression::NumberLiteral {
+                    loc: *loc,
+                    ty: Type::Field,
+                    value: value.clone(),
+                })
+            };
+        }
+
             (
                 &Expression::ArrayLiteral { .. },
                 Type::Array(from_ty, from_dims),
@@ -234,6 +256,21 @@ impl Expression {
                     expr: Box::new(self.clone()),
                 }),
             },
+            (Type::Field, Type::Uint(32)) | (Type::Uint(32), Type::Field) => Ok(self.clone()),
+            (Type::Field, Type::DynamicBytes) | (Type::DynamicBytes, Type::Field) => {
+                Ok(Expression::BytesCast {
+                    loc: *loc,
+                    to: to.clone(),
+                    from: from.clone(),
+                    expr: Box::new(self.clone()),
+                })
+            }
+            (Type::Hash, Type::Address)  | (Type::Address, Type::Hash)=> Ok(Expression::Cast {
+                loc: *loc,
+                to: to.clone(),
+                expr: Box::new(self.clone()),
+            }),
+
             // Match any array with ArrayLength::AnyFixed if is it fixed for that dimension, and the
             // element type and other dimensions also match
             (Type::Array(from_elem, from_dim), Type::Array(to_elem, to_dim))
@@ -245,6 +282,16 @@ impl Expression {
             {
                 Ok(self.clone())
             }
+
+            (Type::DynamicBytes | Type::Field, Type::Slice(ty))
+            if ty.as_ref() == &Type::Field =>
+        {
+            Ok(Expression::Cast {
+                loc: *loc,
+                to: to.clone(),
+                expr: Box::new(self.clone()),
+            })
+        }
 
             (Type::String, Type::DynamicBytes) | (Type::DynamicBytes, Type::String) =>{
                 Ok(Expression::Cast {

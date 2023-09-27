@@ -67,7 +67,7 @@ pub(crate) fn read_from_buffer<'a>(
             let total_size_offset = bin.builder.build_int_add(offset, total_size, "");
             validator.validate_offset(bin, total_size_offset, func_value);
 
-            let allocated_array = bin.vector_new(
+            let allocated_array = bin.alloca_dynamic_array(
                 func_value,
                 ty,
                 array_length.into_int_value(),
@@ -156,16 +156,22 @@ fn decode_address<'a>(
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
-    let mut address = bin.context.i64_type().array_type(4).get_undef();
+    let (_, address_ptr) = bin.heap_malloc(
+        bin.context.i64_type().const_int(4, false)
+    );
 
     for i in 0..4 {
-        let value = decode_uint(buffer, *offset, bin);
-        address = bin.builder.build_insert_value(address, value, i, "").unwrap().into_array_value();
+        let value: BasicValueEnum<'_> = decode_uint(buffer, *offset, bin);
+        let elem_ptr = unsafe {
+            bin.builder
+                .build_gep(bin.context.i64_type(), address_ptr, &[bin.context.i64_type().const_int(i, false)], "element")
+        };
+        bin.builder.build_store(elem_ptr, value);
         *offset =
             bin.builder
                 .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
     }
-    address.into()
+    address_ptr.into()
 }
 
 fn decode_array<'a>(
@@ -213,7 +219,7 @@ fn decode_array<'a>(
                     .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");
             validator.validate_offset(bin, array_start, func_value);
             let allocated_array =
-                bin.vector_new(func_value, array_ty, array_length, None, false, ns);
+                bin.alloca_dynamic_array(func_value, array_ty, array_length, None, false, ns);
 
             let array_data = bin.vector_data(allocated_array.into());
             let array_bytes_size = calculate_memory_size(bin, array_length, elem_ty, ns);
@@ -564,7 +570,7 @@ fn decode_complex_array<'a>(
 
         // let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension +
         // 1)].to_vec());
-        let allocated_array = bin.vector_new(
+        let allocated_array = bin.alloca_dynamic_array(
             func_value,
             array_ty,
             length.into_int_value(),

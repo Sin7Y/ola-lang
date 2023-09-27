@@ -157,27 +157,32 @@ pub fn declare_prophets(bin: &mut Binary) {
                 .add_function("prophet_u32_array_sort", ftype, None);
         }
         "get_storage" => {
-            let ret_type = bin.context.i64_type().array_type(4);
-            let param_type = bin.context.i64_type().array_type(4);
-            let ftype = ret_type.fn_type(&[param_type.into()], false);
+            let void_type = bin.context.void_type();
+            let param_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
             bin.module.add_function("get_storage", ftype, None);
         }
         "set_storage" => {
             let void_type = bin.context.void_type();
-            let param_type = bin.context.i64_type().array_type(4);
+            let param_type = bin.context.i64_type().ptr_type(AddressSpace::default());
             let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
             bin.module.add_function("set_storage", ftype, None);
         }
+        // @param input heap address
+        // @param output heap address
+        // @param input length
         "poseidon_hash" => {
-            let ret_type = bin.context.i64_type().array_type(4);
-            let param_type = bin.context.i64_type().array_type(8);
-            let ftype = ret_type.fn_type(&[param_type.into()], false);
+            let void_type = bin.context.void_type();
+            let i64_type = bin.context.i64_type();
+            let ptr_type = i64_type.ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
             bin.module.add_function("poseidon_hash", ftype, None);
         }
         "contract_call" => {
             let void_type = bin.context.void_type();
-            let param_type = bin.context.i64_type();
-            let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
+            let call_type = bin.context.i64_type();
+            let address_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(&[address_type.into(), call_type.into()], false);
             bin.module.add_function("contract_call", ftype, None);
         }
 

@@ -10,6 +10,7 @@ mod statements;
 pub mod storage;
 mod strings;
 pub mod u32_op;
+pub mod hash_op;
 mod unused_variable;
 
 use crate::sema::ast;
@@ -30,12 +31,6 @@ macro_rules! emit_context {
                 $binary.context.i64_type().const_zero()
             };
         }
-        #[allow(unused_macros)]
-        macro_rules! array_type {
-            ($val:expr) => {
-                $binary.context.i64_type().array_type($val)
-            };
-        }
 
         #[allow(unused_macros)]
         macro_rules! call {
@@ -43,30 +38,9 @@ macro_rules! emit_context {
                 $binary
                     .builder
                     .build_call($binary.module.get_function($name).unwrap(), $args, "")
-                    .try_as_basic_value()
-                    .left()
-                    .unwrap()
             };
+
             ($name:expr, $args:expr, $call_name:literal) => {
-                $binary
-                    .builder
-                    .build_call(
-                        $binary.module.get_function($name).unwrap(),
-                        $args,
-                        $call_name,
-                    )
-                    .try_as_basic_value()
-                    .left()
-                    .unwrap()
-            };
-
-            ($void:expr, $name:expr, $args:expr) => {
-                $binary
-                    .builder
-                    .build_call($binary.module.get_function($name).unwrap(), $args, "")
-            };
-
-            ($void:expr, $name:expr, $args:expr, $call_name:literal) => {
                 $binary.builder.build_call(
                     $binary.module.get_function($name).unwrap(),
                     $args,

@@ -23,28 +23,73 @@ declare void @get_tape_data(i64, i64)
 
 declare void @set_tape_data(i64, i64)
 
-declare [4 x i64] @get_storage([4 x i64])
+declare void @get_storage(ptr, ptr)
 
-declare void @set_storage([4 x i64], [4 x i64])
+declare void @set_storage(ptr, ptr)
 
-declare [4 x i64] @poseidon_hash([8 x i64])
+declare void @poseidon_hash(ptr, ptr, i64)
 
-declare void @contract_call(i64, i64)
+declare void @contract_call(ptr, i64)
 
 define void @setArray1(ptr %0) {
 entry:
-  %1 = alloca [4 x i64], align 8
-  %index_alloca4 = alloca i64, align 8
-  %2 = alloca [4 x i64], align 8
+  %1 = alloca ptr, align 8
+  %index_alloca14 = alloca i64, align 8
+  %2 = alloca ptr, align 8
   %index_alloca = alloca i64, align 8
   %length = load i64, ptr %0, align 4
-  %3 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
-  %4 = extractvalue [4 x i64] %3, 3
-  %5 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %length, 3
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %5)
-  %6 = call [4 x i64] @poseidon_hash([8 x i64] zeroinitializer)
+  %3 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %3, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %4 = call i64 @vector_new(i64 4)
+  %heap_start1 = sub i64 %4, 4
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  store i64 0, ptr %heap_to_ptr2, align 4
+  %5 = getelementptr i64, ptr %heap_to_ptr2, i64 1
+  store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %heap_to_ptr2, i64 2
+  store i64 0, ptr %6, align 4
+  %7 = getelementptr i64, ptr %heap_to_ptr2, i64 3
+  store i64 0, ptr %7, align 4
+  call void @get_storage(ptr %heap_to_ptr2, ptr %heap_to_ptr)
+  %storage_value = load i64, ptr %heap_to_ptr, align 4
+  %8 = call i64 @vector_new(i64 4)
+  %heap_start3 = sub i64 %8, 4
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  store i64 0, ptr %heap_to_ptr4, align 4
+  %9 = getelementptr i64, ptr %heap_to_ptr4, i64 1
+  store i64 0, ptr %9, align 4
+  %10 = getelementptr i64, ptr %heap_to_ptr4, i64 2
+  store i64 0, ptr %10, align 4
+  %11 = getelementptr i64, ptr %heap_to_ptr4, i64 3
+  store i64 0, ptr %11, align 4
+  %12 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %12, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  store i64 %length, ptr %heap_to_ptr6, align 4
+  %13 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  store i64 0, ptr %13, align 4
+  %14 = getelementptr i64, ptr %heap_to_ptr6, i64 2
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %heap_to_ptr6, i64 3
+  store i64 0, ptr %15, align 4
+  call void @set_storage(ptr %heap_to_ptr4, ptr %heap_to_ptr6)
+  %16 = call i64 @vector_new(i64 4)
+  %heap_start7 = sub i64 %16, 4
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  store i64 0, ptr %heap_to_ptr8, align 4
+  %17 = getelementptr i64, ptr %heap_to_ptr8, i64 1
+  store i64 0, ptr %17, align 4
+  %18 = getelementptr i64, ptr %heap_to_ptr8, i64 2
+  store i64 0, ptr %18, align 4
+  %19 = getelementptr i64, ptr %heap_to_ptr8, i64 3
+  store i64 0, ptr %19, align 4
+  %20 = call i64 @vector_new(i64 4)
+  %heap_start9 = sub i64 %20, 4
+  %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr8, ptr %heap_to_ptr10, i64 4)
   store i64 0, ptr %index_alloca, align 4
-  store [4 x i64] %6, ptr %2, align 4
+  store ptr %heap_to_ptr10, ptr %2, align 8
   br label %cond
 
 cond:                                             ; preds = %body, %entry
@@ -53,44 +98,53 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %7 = load [4 x i64], ptr %2, align 4
-  %8 = ptrtoint ptr %0 to i64
-  %9 = add i64 %8, 1
-  %vector_data = inttoptr i64 %9 to ptr
+  %21 = load ptr, ptr %2, align 8
+  %22 = ptrtoint ptr %0 to i64
+  %23 = add i64 %22, 1
+  %vector_data = inttoptr i64 %23 to ptr
   %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
-  %10 = load i64, ptr %index_access, align 4
-  %11 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %10, 3
-  call void @set_storage([4 x i64] %7, [4 x i64] %11)
-  %12 = extractvalue [4 x i64] %7, 3
-  %13 = add i64 %12, 1
-  %14 = insertvalue [4 x i64] %7, i64 %13, 3
-  store [4 x i64] %14, ptr %2, align 4
+  call void @set_storage(ptr %21, ptr %index_access)
+  %24 = getelementptr i64, ptr %21, i64 3
+  %slot_value = load i64, ptr %24, align 4
+  %25 = add i64 %slot_value, 1
+  store i64 %25, ptr %2, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  store i64 %length, ptr %index_alloca4, align 4
-  store [4 x i64] %6, ptr %1, align 4
-  br label %cond1
+  store i64 %length, ptr %index_alloca14, align 4
+  store ptr %heap_to_ptr10, ptr %1, align 8
+  br label %cond11
 
-cond1:                                            ; preds = %body2, %done
-  %index_value5 = load i64, ptr %index_alloca4, align 4
-  %loop_cond6 = icmp ult i64 %index_value5, %4
-  br i1 %loop_cond6, label %body2, label %done3
+cond11:                                           ; preds = %body12, %done
+  %index_value15 = load i64, ptr %index_alloca14, align 4
+  %loop_cond16 = icmp ult i64 %index_value15, %storage_value
+  br i1 %loop_cond16, label %body12, label %done13
 
-body2:                                            ; preds = %cond1
-  %15 = load [4 x i64], ptr %1, align 4
-  call void @set_storage([4 x i64] %15, [4 x i64] zeroinitializer)
-  %16 = extractvalue [4 x i64] %15, 3
-  %17 = add i64 %16, 1
-  %18 = insertvalue [4 x i64] %15, i64 %17, 3
-  store [4 x i64] %18, ptr %1, align 4
-  %next_index7 = add i64 %index_value5, 1
-  store i64 %next_index7, ptr %index_alloca4, align 4
-  br label %cond1
+body12:                                           ; preds = %cond11
+  %26 = load ptr, ptr %1, align 8
+  %27 = call i64 @vector_new(i64 4)
+  %heap_start17 = sub i64 %27, 4
+  %heap_to_ptr18 = inttoptr i64 %heap_start17 to ptr
+  %storage_key_ptr = getelementptr i64, ptr %heap_to_ptr18, i64 0
+  store i64 0, ptr %storage_key_ptr, align 4
+  %storage_key_ptr19 = getelementptr i64, ptr %heap_to_ptr18, i64 1
+  store i64 0, ptr %storage_key_ptr19, align 4
+  %storage_key_ptr20 = getelementptr i64, ptr %heap_to_ptr18, i64 2
+  store i64 0, ptr %storage_key_ptr20, align 4
+  %storage_key_ptr21 = getelementptr i64, ptr %heap_to_ptr18, i64 3
+  store i64 0, ptr %storage_key_ptr21, align 4
+  call void @set_storage(ptr %26, ptr %heap_to_ptr18)
+  %28 = getelementptr i64, ptr %26, i64 3
+  %slot_value22 = load i64, ptr %28, align 4
+  %29 = add i64 %slot_value22, 1
+  store i64 %29, ptr %1, align 4
+  %next_index23 = add i64 %index_value15, 1
+  store i64 %next_index23, ptr %index_alloca14, align 4
+  br label %cond11
 
-done3:                                            ; preds = %cond1
+done13:                                           ; preds = %cond11
   ret void
 }
 
@@ -116,7 +170,7 @@ inbounds:                                         ; preds = %func_0_dispatch
   %5 = call i64 @vector_new(i64 %size_add_one)
   %heap_start = sub i64 %5, %size_add_one
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 %value, ptr %heap_to_ptr, align 4
+  store i64 %size, ptr %heap_to_ptr, align 4
   %6 = ptrtoint ptr %heap_to_ptr to i64
   %7 = add i64 %6, 1
   %vector_data = inttoptr i64 %7 to ptr
