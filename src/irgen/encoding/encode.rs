@@ -128,10 +128,16 @@ fn encode_address<'a>(
     bin: &Binary<'a>,
 ) {
     for i in 0..4 {
-        let value = bin
-            .builder
-            .build_extract_value(address.into_array_value(), i, "");
-        encode_uint(buffer, value.unwrap(),  *offset, bin);
+        let value_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                address.into_pointer_value(),
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        let value = bin.builder.build_load(bin.context.i64_type(), value_ptr, "");
+        encode_uint(buffer, value,  *offset, bin);
         *offset =
             bin.builder
                 .build_int_add(*offset, bin.context.i64_type().const_int(1, false), "");

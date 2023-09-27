@@ -599,6 +599,31 @@ impl Dot {
                 self.add_expression(expr, func, ns, node, String::from("expr"));
             }
 
+            Expression::BytesCast {
+                loc,
+                to,
+                from,
+                expr,
+            } => {
+                let node = self.add_node(
+                    Node::new(
+                        "bytes_cast",
+                        vec![
+                            format!(
+                                "bytes cast from {} to {}",
+                                from.to_string(ns),
+                                to.to_string(ns)
+                            ),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(expr, func, ns, node, String::from("expr"));
+            }
+
             Expression::Increment { loc, ty, expr } => {
                 let labels = vec![
                     String::from("pre increment"),

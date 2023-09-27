@@ -20,7 +20,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 13]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 14]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -78,6 +78,13 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 13]> = Lazy::new(|| {
             ret: vec![Type::Address],
         },
         Prototype {
+            libfunc: LibFunc::CodeAddress,
+            namespace: None,
+            name: "current_address",
+            params: vec![],
+            ret: vec![Type::Address],
+        },
+        Prototype {
             libfunc: LibFunc::PoseidonHash,
             namespace: None,
             name: "poseidon_hash",
@@ -102,8 +109,8 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 13]> = Lazy::new(|| {
             libfunc: LibFunc::FieldsConcat,
             namespace: None,
             name: "fields_concat",
-            params: vec![],
-            ret: vec![],
+            params: vec![Type::DynamicBytes, Type::DynamicBytes],
+            ret: vec![Type::DynamicBytes],
         },
         Prototype {
             libfunc: LibFunc::AbiDecode,

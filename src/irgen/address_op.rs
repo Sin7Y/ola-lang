@@ -15,23 +15,23 @@ pub fn address_compare<'a>(
     ns: &Namespace,
     op: IntPredicate,
 ) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_value, var_table, ns).into_array_value();
-    let right = expression(r, bin, func_value, var_table, ns).into_array_value();
+    let left = expression(l, bin, func_value, var_table, ns);
+    let right = expression(r, bin, func_value, var_table, ns);
 
     let mut result = bin.context.bool_type().const_int(1, false);
 
     // Compare each pair of elements
     for i in 0..4 {
-        let left_elem = bin
-            .builder
-            .build_extract_value(left, i, &format!("left_elem_{}", i))
-            .unwrap()
-            .into_int_value();
-        let right_elem = bin
-            .builder
-            .build_extract_value(right, i, &format!("right_elem_{}", i))
-            .unwrap()
-            .into_int_value();
+
+        let left_elem_ptr = unsafe {
+            bin.builder.build_gep(bin.context.i64_type(), left.into_pointer_value(), &[bin.context.i64_type().const_int(i, false)], &format!("left_elem_{}", i))
+        };
+        let left_elem = bin.builder.build_load(bin.context.i64_type(), left_elem_ptr, "").into_int_value();
+
+        let right_elem_ptr = unsafe {
+            bin.builder.build_gep(bin.context.i64_type(), right.into_pointer_value(), &[bin.context.i64_type().const_int(i, false)], &format!("right_elem_{}", i))
+        };
+        let right_elem = bin.builder.build_load(bin.context.i64_type(), right_elem_ptr, "").into_int_value();
 
         let compare =
             bin.builder

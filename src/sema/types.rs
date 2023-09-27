@@ -631,7 +631,7 @@ impl Type {
         }
     }
 
-    /// Is this a primitive, i.e. bool, address, int, uint, bytes
+    /// Is this a primitive, i.e. bool, uint, field
     pub fn is_primitive(&self) -> bool {
         match self {
             Type::Bool => true,
