@@ -23,13 +23,13 @@ declare void @get_tape_data(i64, i64)
 
 declare void @set_tape_data(i64, i64)
 
-declare [4 x i64] @get_storage([4 x i64])
+declare void @get_storage(ptr, ptr)
 
-declare void @set_storage([4 x i64], [4 x i64])
+declare void @set_storage(ptr, ptr)
 
-declare [4 x i64] @poseidon_hash([8 x i64])
+declare void @poseidon_hash(ptr, ptr, i64)
 
-declare void @contract_call(i64, i64)
+declare void @contract_call(ptr, i64)
 
 define ptr @createBooks() {
 entry:
@@ -39,7 +39,7 @@ entry:
   %0 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %0, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 1, ptr %heap_to_ptr, align 4
+  store i64 2, ptr %heap_to_ptr, align 4
   %1 = ptrtoint ptr %heap_to_ptr to i64
   %2 = add i64 %1, 1
   %vector_data = inttoptr i64 %2 to ptr

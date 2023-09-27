@@ -23,13 +23,13 @@ declare void @get_tape_data(i64, i64)
 
 declare void @set_tape_data(i64, i64)
 
-declare [4 x i64] @get_storage([4 x i64])
+declare void @get_storage(ptr, ptr)
 
-declare void @set_storage([4 x i64], [4 x i64])
+declare void @set_storage(ptr, ptr)
 
-declare [4 x i64] @poseidon_hash([8 x i64])
+declare void @poseidon_hash(ptr, ptr, i64)
 
-declare void @contract_call(i64, i64)
+declare void @contract_call(ptr, i64)
 
 define void @setData(i64 %0, i64 %1) {
 entry:
@@ -45,21 +45,50 @@ entry:
   %3 = load i64, ptr %_value, align 4
   store i64 %3, ptr %"struct member1", align 4
   %id = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  %4 = load i64, ptr %id, align 4
-  %5 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %4, 3
-  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %5)
+  %4 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %4, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  %5 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 0, ptr %6, align 4
+  %7 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 0, ptr %7, align 4
+  call void @set_storage(ptr %heap_to_ptr, ptr %id)
   %value = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  %6 = load i64, ptr %value, align 4
-  %7 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %6, 3
-  call void @set_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1], [4 x i64] %7)
+  %8 = call i64 @vector_new(i64 4)
+  %heap_start2 = sub i64 %8, 4
+  %heap_to_ptr3 = inttoptr i64 %heap_start2 to ptr
+  store i64 1, ptr %heap_to_ptr3, align 4
+  %9 = getelementptr i64, ptr %heap_to_ptr3, i64 1
+  store i64 0, ptr %9, align 4
+  %10 = getelementptr i64, ptr %heap_to_ptr3, i64 2
+  store i64 0, ptr %10, align 4
+  %11 = getelementptr i64, ptr %heap_to_ptr3, i64 3
+  store i64 0, ptr %11, align 4
+  call void @set_storage(ptr %heap_to_ptr3, ptr %value)
   ret void
 }
 
 define i64 @getData() {
 entry:
-  %0 = call [4 x i64] @get_storage([4 x i64] [i64 0, i64 0, i64 0, i64 1])
-  %1 = extractvalue [4 x i64] %0, 3
-  ret i64 %1
+  %0 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %0, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %1 = call i64 @vector_new(i64 4)
+  %heap_start1 = sub i64 %1, 4
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  store i64 1, ptr %heap_to_ptr2, align 4
+  %2 = getelementptr i64, ptr %heap_to_ptr2, i64 1
+  store i64 0, ptr %2, align 4
+  %3 = getelementptr i64, ptr %heap_to_ptr2, i64 2
+  store i64 0, ptr %3, align 4
+  %4 = getelementptr i64, ptr %heap_to_ptr2, i64 3
+  store i64 0, ptr %4, align 4
+  call void @get_storage(ptr %heap_to_ptr2, ptr %heap_to_ptr)
+  %storage_value = load i64, ptr %heap_to_ptr, align 4
+  ret i64 %storage_value
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {

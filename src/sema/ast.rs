@@ -577,6 +577,12 @@ pub enum Expression {
         to: Type,
         expr: Box<Expression>,
     },
+    BytesCast {
+        loc: program::Loc,
+        from: Type,
+        to: Type,
+        expr: Box<Expression>,
+    },
     Increment {
         loc: program::Loc,
         ty: Type,
@@ -762,6 +768,7 @@ impl Recurse for Expression {
                 | Expression::ZeroExt { expr, .. }
                 | Expression::Trunc { expr, .. }
                 | Expression::Cast { expr, .. }
+                | Expression::BytesCast { expr, .. }
                 | Expression::Increment { expr, .. }
                 | Expression::Decrement { expr, .. }
                 | Expression::StructMember { expr, .. }
@@ -884,6 +891,7 @@ impl CodeLocation for Expression {
             | Expression::ZeroExt { loc, .. }
             | Expression::Trunc { loc, .. }
             | Expression::Cast { loc, .. }
+            | Expression::BytesCast { loc, .. }
             | Expression::More { loc, .. }
             | Expression::Less { loc, .. }
             | Expression::MoreEqual { loc, .. }
@@ -949,6 +957,7 @@ pub enum LibFunc {
     CallerAddress,
     OriginAddress,
     CodeAddress,
+    CurrentAddress,
     AbiDecode,
     AbiEncode,
     AbiEncodeWithSignature,

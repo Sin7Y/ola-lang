@@ -1,3 +1,4 @@
+
 use crate::irgen::binary::Binary;
 use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
@@ -6,7 +7,7 @@ use crate::irgen::u32_op::{
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{
-    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
+    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue,
 };
 use inkwell::{AddressSpace, IntPredicate};
 use num_bigint::BigInt;
@@ -21,11 +22,11 @@ use crate::sema::{
 };
 
 use super::address_op::address_compare;
-use super::encoding::{abi_decode, abi_encode_with_selector, abi_encode};
+use super::encoding::{abi_decode, abi_encode, abi_encode_with_selector};
 use super::functions::Vartable;
+use super::hash_op::hash_compare;
 use super::storage::{
-    array_offset, poseidon_hash, slot_offest, storage_array_pop, storage_array_push, storage_load,
-    storage_store,
+    array_offset, slot_offest, storage_array_pop, storage_array_push, storage_load, storage_store,
 };
 use super::strings::string_location;
 use super::u32_op::u32_compare;
@@ -79,144 +80,187 @@ pub fn expression<'a>(
         Expression::ShiftRight { left, right, .. } => {
             u32_shift_right(left, right, bin, func_value, var_table, ns)
         }
-        Expression::Equal { left, right, .. } => {
-            if left.ty().is_address() {
-                address_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::EQ,
-                )
-            } else {
-                u32_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::EQ,
-                )
-            }
-        }
-        Expression::NotEqual { left, right, .. } => {
-            if left.ty().is_address() {
-                address_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::NE,
-                )
-            } else {
-                u32_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::NE,
-                )
-            }
-        }
-        Expression::More { left, right, .. } => {
-            if left.ty().is_address() {
-                address_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::UGT,
-                )
-            } else {
-                u32_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::UGT,
-                )
-            }
-        }
-        Expression::MoreEqual { left, right, .. } => {
-            if left.ty().is_address() {
-                address_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::UGE,
-                )
-            } else {
-                u32_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::UGE,
-                )
-            }
-        }
-        Expression::Less { left, right, .. } => {
-            if left.ty().is_address() {
-                address_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::ULT,
-                )
-            } else {
-                u32_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::ULT,
-                )
-            }
-        }
-        Expression::LessEqual { left, right, .. } => {
-            if left.ty().is_address() {
-                address_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::ULE,
-                )
-            } else {
-                u32_compare(
-                    left,
-                    right,
-                    bin,
-                    func_value,
-                    var_table,
-                    ns,
-                    IntPredicate::ULE,
-                )
-            }
-        }
+        Expression::Equal { left, right, .. } => match left.ty() {
+            Type::Address | Type::Contract(_) => address_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::EQ,
+            ),
+            Type::Uint(32) => u32_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::EQ,
+            ),
+            Type::Hash => hash_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::EQ,
+            ),
+            _ => unimplemented!("equal for type {:?}", left.ty()),
+        },
+        Expression::NotEqual { left, right, .. } => match left.ty() {
+            Type::Address | Type::Contract(_) => address_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::NE,
+            ),
+            Type::Uint(32) => u32_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::NE,
+            ),
+            Type::Hash => hash_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::NE,
+            ),
+            _ => unimplemented!("not equal for type {:?}", left.ty()),
+        },
+        Expression::More { left, right, .. } => match left.ty() {
+            Type::Address | Type::Contract(_) => address_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::UGT,
+            ),
+            Type::Uint(32) => u32_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::UGT,
+            ),
+            Type::Hash => hash_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::UGT,
+            ),
+
+            _ => unimplemented!("more for type {:?}", left.ty()),
+        },
+        Expression::MoreEqual { left, right, .. } => match left.ty() {
+            Type::Address | Type::Contract(_) => address_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::UGE,
+            ),
+            Type::Uint(32) => u32_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::UGE,
+            ),
+            Type::Hash => hash_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::UGE,
+            ),
+            _ => unimplemented!("more equal for type {:?}", left.ty()),
+        },
+        Expression::Less { left, right, .. } => match left.ty() {
+            Type::Address | Type::Contract(_) => address_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::ULT,
+            ),
+            Type::Uint(32) => u32_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::ULT,
+            ),
+            Type::Hash => hash_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::ULT,
+            ),
+            _ => unimplemented!("less for type {:?}", left.ty()),
+        },
+        Expression::LessEqual { left, right, .. } => match left.ty() {
+            Type::Address | Type::Contract(_) => address_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::ULE,
+            ),
+            Type::Uint(32) => u32_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::ULE,
+            ),
+            Type::Hash => hash_compare(
+                left,
+                right,
+                bin,
+                func_value,
+                var_table,
+                ns,
+                IntPredicate::ULE,
+            ),
+            _ => unimplemented!("less equal for type {:?}", left.ty()),
+        },
 
         Expression::Not { expr, .. } => u32_not(expr, bin, func_value, var_table, ns),
         Expression::BitwiseNot { expr, .. } => {
@@ -402,36 +446,60 @@ pub fn expression<'a>(
         }
 
         Expression::LibFunction {
-            kind: LibFunc::CallerAddress,
+            kind: LibFunc::OriginAddress,
             ..
         } => {
-            let mut caller_address = bin.context.i64_type().array_type(4).get_undef();
+            let origin_address_index = bin.context.i64_type().const_int(11, false);
             let (heap_start_int, heap_start_ptr) =
                 bin.heap_malloc(bin.context.i64_type().const_int(4, false));
-            bin.context_data_load(heap_start_int, bin.context.i64_type().const_int(2, false));
-            // caller address is start from index = 2 in tape data
-            for i in 0..4 {
-                let index_access = unsafe {
-                    bin.builder.build_gep(
-                        bin.context.i64_type(),
-                        heap_start_ptr,
-                        &[bin.context.i64_type().const_int(i, false)],
-                        "",
-                    )
-                };
-                let caller_address_value = bin
-                    .builder
-                    .build_load(bin.context.i64_type(), index_access, "")
-                    .into_int_value();
-                caller_address = bin
-                    .builder
-                    .build_insert_value(caller_address, caller_address_value, i as u32, "")
-                    .unwrap()
-                    .into_array_value()
-            }
-            caller_address.into()
+            bin.context_data_load(heap_start_int, origin_address_index);
+            heap_start_ptr.into()
         }
 
+        Expression::LibFunction {
+            kind: LibFunc::ChainId,
+            ..
+        } => {
+            let chain_id_index = bin.context.i64_type().const_int(7, false);
+            let (heap_start_int, heap_start_ptr) =
+                bin.heap_malloc(bin.context.i64_type().const_int(1, false));
+            bin.context_data_load(heap_start_int, chain_id_index);
+            bin.builder
+                .build_load(bin.context.i64_type(), heap_start_ptr, "")
+        }
+
+        Expression::LibFunction {
+            kind: LibFunc::CallerAddress,
+            ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::CodeAddress,
+            ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::CurrentAddress,
+            ..
+        } => {
+            let address_index = match expr {
+                Expression::LibFunction {
+                    kind: LibFunc::CallerAddress,
+                    ..
+                } => bin.context.i64_type().const_int(12, false),
+                Expression::LibFunction {
+                    kind: LibFunc::CodeAddress,
+                    ..
+                } => bin.context.i64_type().const_int(8, false),
+                Expression::LibFunction {
+                    kind: LibFunc::CurrentAddress,
+                    ..
+                } => bin.context.i64_type().const_int(4, false),
+                _ => unreachable!(),
+            };
+
+            let (heap_start_int, heap_start_ptr) = bin.heap_malloc(address_index);
+            bin.tape_data_load(heap_start_int, address_index);
+            heap_start_ptr.into()
+        }
         Expression::StructLiteral { ty, values, .. } => {
             let struct_ty = bin.llvm_type(ty, ns);
 
@@ -535,8 +603,16 @@ pub fn expression<'a>(
             ..
         } => {
             let array = expression(array, bin, func_value, var_table, ns);
-            let index = expression(index, bin, func_value, var_table, ns);
-            array_subscript(array_ty, array, index, bin, func_value, ns)
+            let index_value = expression(index, bin, func_value, var_table, ns);
+            array_subscript(
+                array_ty,
+                array,
+                index_value,
+                &index.ty(),
+                bin,
+                func_value,
+                ns,
+            )
         }
 
         Expression::StructMember {
@@ -585,6 +661,67 @@ pub fn expression<'a>(
                 let loaded_type = bin.llvm_type(ty, ns);
                 bin.builder.build_load(loaded_type, ptr, "")
             }
+        }
+
+        Expression::AllocDynamicBytes {
+            ty,
+            length: size,
+            init,
+            ..
+        } => {
+            let size = expression(size, bin, func_value, var_table, ns).into_int_value();
+            bin.alloca_dynamic_array(func_value, ty, size, init.as_ref(), true, ns)
+                .into()
+        }
+        Expression::ConditionalOperator {
+            ty,
+            cond,
+            true_option: left,
+            false_option: right,
+            ..
+        } => conditional_operator(bin, ty, cond, func_value, var_table, ns, left, right),
+        Expression::BoolLiteral { value, .. } => bin
+            .context
+            .i64_type()
+            .const_int(*value as u64, false)
+            .into(),
+
+        Expression::GetRef { expr, .. } => {
+            let address = expression(expr, bin, func_value, var_table, ns).into_array_value();
+
+            let stack = bin.build_alloca(func_value, address.get_type(), "address");
+
+            bin.builder.build_store(stack, address);
+
+            stack.into()
+        }
+
+        Expression::Cast { to, expr, .. }
+            if matches!(to, Type::Array(..))
+                && matches!(**expr, Expression::ArrayLiteral { .. }) =>
+        {
+            array_literal_to_memory_array(expr, to, bin, func_value, var_table, ns)
+        }
+
+        Expression::BytesCast {
+            from: Type::Field,
+            to: Type::DynamicBytes,
+            expr,
+            ..
+        } => {
+            unimplemented!("bytes cast from field")
+        }
+        Expression::BytesCast {
+            from: Type::DynamicBytes,
+            to: Type::Field,
+            expr,
+            ..
+        } => {
+            unimplemented!("bytes cast from field")
+        }
+
+        Expression::StringCompare { left, right, .. } => {
+            string_compare(left, right, bin, func_value, var_table, ns)
         }
 
         Expression::LibFunction {
@@ -665,7 +802,6 @@ pub fn expression<'a>(
                 .unzip();
 
             abi_encode(bin, encoder_args, &types, func_value, ns).as_basic_value_enum()
-
         }
         Expression::LibFunction {
             kind: LibFunc::AbiEncodeWithSignature,
@@ -681,51 +817,20 @@ pub fn expression<'a>(
                     (ty, expr)
                 })
                 .unzip();
-            
-             abi_encode_with_selector(bin, selector,encoder_args, &types, func_value, ns).as_basic_value_enum()
-            }
-        Expression::AllocDynamicBytes {
-            ty,
-            length: size,
-            init,
+
+            abi_encode_with_selector(bin, selector, encoder_args, &types, func_value, ns)
+                .as_basic_value_enum()
+        }
+        Expression::LibFunction {
+            kind: LibFunc::FieldsConcat,
+            args,
             ..
         } => {
-            let size = expression(size, bin, func_value, var_table, ns).into_int_value();
-            bin.vector_new(func_value, ty, size, init.as_ref(), true, ns)
-                .into()
-        }
-        Expression::ConditionalOperator {
-            ty,
-            cond,
-            true_option: left,
-            false_option: right,
-            ..
-        } => conditional_operator(bin, ty, cond, func_value, var_table, ns, left, right),
-        Expression::BoolLiteral { value, .. } => bin
-            .context
-            .i64_type()
-            .const_int(*value as u64, false)
-            .into(),
-
-        Expression::GetRef { expr, .. } => {
-            let address = expression(expr, bin, func_value, var_table, ns).into_array_value();
-
-            let stack = bin.build_alloca(func_value, address.get_type(), "address");
-
-            bin.builder.build_store(stack, address);
-
-            stack.into()
+            let left = expression(&args[0], bin, func_value, var_table, ns);
+            let right = expression(&args[1], bin, func_value, var_table, ns);
+            fields_concat(left, right, bin, func_value, var_table, ns)
         }
 
-        Expression::Cast { to, expr, .. }
-            if matches!(to, Type::Array(..))
-                && matches!(**expr, Expression::ArrayLiteral { .. }) =>
-        {
-            array_literal_to_memory_array(expr, to, bin, func_value, var_table, ns)
-        }
-        Expression::StringCompare { left, right, .. } => {
-            string_compare(left, right, bin, func_value, var_table, ns)
-        }
         _ => unimplemented!("{:?}", expr),
     }
 }
@@ -739,7 +844,7 @@ pub fn array_literal_to_memory_array<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     let dims = expr.ty().array_length().unwrap().clone();
-    let array_vector = bin.vector_new(
+    let array_vector = bin.alloca_dynamic_array(
         func_value,
         ty,
         bin.context
@@ -830,27 +935,7 @@ pub fn emit_function_call<'a>(
             let args = expression(args, bin, func_value, var_table, ns);
             let address = expression(address, bin, func_value, var_table, ns);
 
-            let (address_heap_int, address_heap_ptr) =
-                bin.heap_malloc(bin.context.i64_type().const_int(4, false));
-
-            // extract address value and store to heap
-            for i in 0..4 {
-                let index_access = unsafe {
-                    bin.builder.build_gep(
-                        bin.context.i64_type(),
-                        address_heap_ptr,
-                        &[bin.context.i64_type().const_int(i, false)],
-                        "",
-                    )
-                };
-                let address_value = bin
-                    .builder
-                    .build_extract_value(address.into_array_value(), i as u32, "")
-                    .unwrap();
-                bin.builder.build_store(index_access, address_value);
-            }
-
-            let return_data = external_call(bin, args, address_heap_int, ty.clone());
+            let return_data = external_call(bin, args, address, ty.clone());
             vec![return_data]
         }
         Expression::LibFunction {
@@ -914,15 +999,14 @@ pub fn array_subscript<'a>(
     array_ty: &Type,
     array: BasicValueEnum<'a>,
     index: BasicValueEnum<'a>,
+    index_ty: &Type,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     if array_ty.is_mapping() {
-        let inputs = vec![array, index];
-        return poseidon_hash(bin, inputs);
+        return mapping_subscript(array, index, index_ty, bin, func_value);
     }
-
     let (array_length, fixed) = match array_ty.deref_any() {
         Type::Array(..) => match array_ty.array_length() {
             None => {
@@ -988,7 +1072,7 @@ pub fn array_subscript<'a>(
                 .build_int_add(array.into_int_value(), offset, "index_slot")
                 .into()
         } else {
-            array_offset(bin, array, index, elem_ty, ns)
+            array_offset(bin, array, index, elem_ty, func_value, ns)
         }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
@@ -1018,6 +1102,37 @@ pub fn array_subscript<'a>(
 
         return element_ptr.as_basic_value_enum();
     }
+}
+
+pub fn mapping_subscript<'a>(
+    array: BasicValueEnum<'a>,
+    index: BasicValueEnum<'a>,
+    index_ty: &Type,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+) -> BasicValueEnum<'a> {
+    let mut inputs = Vec::with_capacity(2);
+    let slot_value = match array.get_type() {
+        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(array),
+        _ => array,
+    };
+    inputs.push((slot_value, bin.context.i64_type().const_int(4, false)));
+
+    match index_ty {
+        Type::Uint(32) | Type::Field | Type::Bool | Type::Hash  | Type::Address => {
+            let index_value = match index.get_type() {
+                BasicTypeEnum::IntType(..) => bin.convert_uint_storage(index),
+                _ => index,
+            };
+            inputs.push((index_value, bin.context.i64_type().const_int(4, false)));
+        }
+        Type::DynamicBytes | Type::String => {
+            inputs.push((bin.vector_data(index).into(), bin.vector_len(index)));
+        }
+        _ => unreachable!(),
+    }
+
+    bin.poseidon_hash(func_value, inputs)
 }
 
 pub fn assign_single<'a>(
@@ -1178,11 +1293,22 @@ pub fn string_compare<'a>(
         .into()
 }
 
+fn fields_concat<'a>(
+    left: BasicValueEnum<'a>,
+    right: BasicValueEnum<'a>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    bin.context.i64_type().const_zero().as_basic_value_enum()
+}
+
 /// Call external binary
 fn external_call<'a>(
     bin: &Binary<'a>,
     args: BasicValueEnum<'a>,
-    address: IntValue<'a>,
+    address: BasicValueEnum<'a>,
     call_type: CallTy,
 ) -> BasicValueEnum<'a> {
     let payload_len = bin.builder.build_load(
@@ -1206,7 +1332,6 @@ fn external_call<'a>(
         bin.context.i64_type().const_int(1, false),
         "payload_start",
     );
-
 
     // store payload and payload len to tape
     bin.tape_data_store(payload_start, tape_size);

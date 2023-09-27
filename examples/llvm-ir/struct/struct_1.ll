@@ -23,13 +23,13 @@ declare void @get_tape_data(i64, i64)
 
 declare void @set_tape_data(i64, i64)
 
-declare [4 x i64] @get_storage([4 x i64])
+declare void @get_storage(ptr, ptr)
 
-declare void @set_storage([4 x i64], [4 x i64])
+declare void @set_storage(ptr, ptr)
 
-declare [4 x i64] @poseidon_hash([8 x i64])
+declare void @poseidon_hash(ptr, ptr, i64)
 
-declare void @contract_call(i64, i64)
+declare void @contract_call(ptr, i64)
 
 define ptr @createBook() {
 entry:

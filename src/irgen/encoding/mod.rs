@@ -35,20 +35,9 @@ pub(super) fn abi_encode<'a>(
 ) -> PointerValue<'a>{
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(1, false), "heap_size");
-    
-    let (_, heap_start_ptr) = bin.heap_malloc(heap_size); 
+    let heap_start_ptr= bin.vector_new(size); 
 
-    let mut offset = bin.context.i64_type().const_zero();
-    // encode size to heap start
-    encode_uint(
-        heap_start_ptr,
-        size.as_basic_value_enum(),
-        offset,
-        bin,
-    );
-
-    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+    let mut offset = bin.context.i64_type().const_int(1, false);
 
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
@@ -122,22 +111,11 @@ pub(super) fn abi_encode_with_selector<'a>(
 ) -> PointerValue<'a> {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
     
-    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(3, false), "heap_size");
+    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(2, false), "heap_size");
   
-    let (_, heap_start_ptr) = bin.heap_malloc(heap_size); 
+    let heap_start_ptr = bin.vector_new(heap_size); 
 
-    let mut offset = bin.context.i64_type().const_zero();
-
-    // encode size to heap
-    encode_uint(
-        heap_start_ptr,
-        size.as_basic_value_enum(),
-        offset,
-        bin,
-    );
-
-    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
-
+    let mut offset = bin.context.i64_type().const_int(1, false);
 
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
@@ -151,7 +129,7 @@ pub(super) fn abi_encode_with_selector<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
-    // encode size to heap, the "size" here is only used for tape area identification.
+    // encode size to heap, the "size" here is used for tape area identification.
     encode_uint(
         heap_start_ptr,
         size.as_basic_value_enum(),
@@ -577,6 +555,7 @@ pub(crate) fn index_array<'a>(
             ty,
             arr.clone(),
             indexes[dims.len() - i - 1].into(),
+            &Type::Uint(32),
             bin,
             func_value,
             ns,
