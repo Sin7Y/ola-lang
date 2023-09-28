@@ -372,6 +372,7 @@ impl fmt::Display for Opcode {
                 Self::JMPi | Self::JMPr => "jmp",
                 Self::CJMPi | Self::CJMPr => "cjmp",
                 Self::CALL => "call",
+                Self::SCCALL => "sccall",
                 Self::RET => "ret",
                 Self::Phi => "PHI",
                 Self::SSTORE => "sstore",

@@ -4726,4 +4726,773 @@ main:
 "
         );
     }
+
+    #[test]
+    fn codegen_callee_test() {
+        // LLVM Assembly
+        let asm = r#"
+define void @setVars(i64 %0) {
+entry:
+  %data = alloca i64, align 8
+  store i64 %0, ptr %data, align 4
+  %1 = load i64, ptr %data, align 4
+  %2 = insertvalue [4 x i64] [i64 0, i64 0, i64 0, i64 undef], i64 %1, 3
+  call void @set_storage([4 x i64] zeroinitializer, [4 x i64] %2)
+  ret void
+}
+
+define i64 @add(i64 %0, i64 %1) {
+entry:
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 %0, ptr %a, align 4
+  store i64 %1, ptr %b, align 4
+  %2 = load i64, ptr %a, align 4
+  %3 = load i64, ptr %b, align 4
+  %4 = add i64 %2, %3
+  call void @builtin_range_check(i64 %4)
+  ret i64 %4
+}
+
+define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+entry:
+  switch i64 %0, label %missing_function [
+    i64 2371037854, label %func_0_dispatch
+    i64 2062500454, label %func_1_dispatch
+  ]
+
+missing_function:                                 ; preds = %entry
+  unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  %3 = icmp ule i64 1, %1
+  br i1 %3, label %inbounds, label %out_of_bounds
+
+inbounds:                                         ; preds = %func_0_dispatch
+  %start = getelementptr i64, ptr %2, i64 0
+  %value = load i64, ptr %start, align 4
+  %4 = icmp ult i64 1, %1
+  br i1 %4, label %not_all_bytes_read, label %buffer_read
+
+out_of_bounds:                                    ; preds = %func_0_dispatch
+  unreachable
+
+not_all_bytes_read:                               ; preds = %inbounds
+  unreachable
+
+buffer_read:                                      ; preds = %inbounds
+  call void @setVars(i64 %value)
+  ret void
+
+func_1_dispatch:                                  ; preds = %entry
+  %5 = icmp ule i64 2, %1
+  br i1 %5, label %inbounds1, label %out_of_bounds2
+
+inbounds1:                                        ; preds = %func_1_dispatch
+  %start3 = getelementptr i64, ptr %2, i64 0
+  %value4 = load i64, ptr %start3, align 4
+  %start5 = getelementptr i64, ptr %2, i64 1
+  %value6 = load i64, ptr %start5, align 4
+  %6 = icmp ult i64 2, %1
+  br i1 %6, label %not_all_bytes_read7, label %buffer_read8
+
+out_of_bounds2:                                   ; preds = %func_1_dispatch
+  unreachable
+
+not_all_bytes_read7:                              ; preds = %inbounds1
+  unreachable
+
+buffer_read8:                                     ; preds = %inbounds1
+  %7 = call i64 @add(i64 %value4, i64 %value6)
+  %8 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %8, 2
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %start9 = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %7, ptr %start9, align 4
+  %start10 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %start10, align 4
+  call void @set_tape_data(i64 %heap_start, i64 2)
+  ret void
+}
+
+define void @main() {
+entry:
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  call void @get_tape_data(i64 %heap_start, i64 13)
+  %function_selector = load i64, ptr %heap_to_ptr, align 4
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  call void @get_tape_data(i64 %heap_start1, i64 14)
+  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %2 = add i64 %input_length, 14
+  %3 = call i64 @vector_new(i64 %2)
+  %heap_start3 = sub i64 %3, %2
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @get_tape_data(i64 %heap_start3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        println!("{:#?}", code.prophets);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r9 r9 1
+  mov r7 10
+  mstore [r9,-1] r7
+  mload r7 [r9,-1]
+  add r5 r7 20
+  add r6 r7 30
+  mul r8 r5 r6
+  not r7 r6
+  add r7 r7 1
+  add r0 r8 r7
+  add r9 r9 -1
+  end
+"
+        );
+    }
+
+    #[test]
+    fn codegen_caller_test() {
+        // LLVM Assembly
+        let asm = r#"
+define void @delegatecall_test([4 x i64] %0) {
+entry:
+  %set_data = alloca i64, align 8
+  %_contract = alloca [4 x i64], align 8
+  store [4 x i64] %0, ptr %_contract, align 4
+  store i64 66, ptr %set_data, align 4
+  %1 = load i64, ptr %set_data, align 4
+  %2 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %2, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 1, ptr %start, align 4
+  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %1, ptr %start1, align 4
+  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 1, ptr %start2, align 4
+  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 2371037854, ptr %start3, align 4
+  %3 = load [4 x i64], ptr %_contract, align 4
+  %4 = call i64 @vector_new(i64 4)
+  %heap_start4 = sub i64 %4, 4
+  %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
+  %5 = getelementptr i64, ptr %heap_to_ptr5, i64 0
+  %6 = extractvalue [4 x i64] %3, 0
+  store i64 %6, ptr %5, align 4
+  %7 = getelementptr i64, ptr %heap_to_ptr5, i64 1
+  %8 = extractvalue [4 x i64] %3, 1
+  store i64 %8, ptr %7, align 4
+  %9 = getelementptr i64, ptr %heap_to_ptr5, i64 2
+  %10 = extractvalue [4 x i64] %3, 2
+  store i64 %10, ptr %9, align 4
+  %11 = getelementptr i64, ptr %heap_to_ptr5, i64 3
+  %12 = extractvalue [4 x i64] %3, 3
+  store i64 %12, ptr %11, align 4
+  %payload_len = load i64, ptr %heap_to_ptr, align 4
+  %tape_size = add i64 %payload_len, 2
+  %13 = ptrtoint ptr %heap_to_ptr to i64
+  %payload_start = add i64 %13, 1
+  call void @set_tape_data(i64 %payload_start, i64 %tape_size)
+  call void @contract_call(i64 %heap_start4, i64 1)
+  %14 = call i64 @vector_new(i64 1)
+  %heap_start6 = sub i64 %14, 1
+  %heap_to_ptr7 = inttoptr i64 %heap_start6 to ptr
+  call void @get_tape_data(i64 %heap_start6, i64 1)
+  %return_length = load i64, ptr %heap_to_ptr7, align 4
+  %heap_size = add i64 %return_length, 2
+  %tape_size8 = add i64 %return_length, 1
+  %15 = call i64 @vector_new(i64 %heap_size)
+  %heap_start9 = sub i64 %15, %heap_size
+  %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
+  store i64 %return_length, ptr %heap_to_ptr10, align 4
+  %16 = add i64 %heap_start9, 1
+  call void @get_tape_data(i64 %16, i64 %tape_size8)
+  %17 = call [4 x i64] @get_storage([4 x i64] zeroinitializer)
+  %18 = extractvalue [4 x i64] %17, 3
+  %19 = icmp eq i64 %18, 66
+  %20 = zext i1 %19 to i64
+  call void @builtin_assert(i64 %20)
+  ret void
+}
+
+define void @call_test([4 x i64] %0) {
+entry:
+  %result = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  %_contract = alloca [4 x i64], align 8
+  store [4 x i64] %0, ptr %_contract, align 4
+  store i64 100, ptr %a, align 4
+  store i64 200, ptr %b, align 4
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = call i64 @vector_new(i64 5)
+  %heap_start = sub i64 %3, 5
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 2, ptr %start, align 4
+  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %1, ptr %start1, align 4
+  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 %2, ptr %start2, align 4
+  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 2, ptr %start3, align 4
+  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 4
+  store i64 2062500454, ptr %start4, align 4
+  %4 = load [4 x i64], ptr %_contract, align 4
+  %5 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %5, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  %6 = getelementptr i64, ptr %heap_to_ptr6, i64 0
+  %7 = extractvalue [4 x i64] %4, 0
+  store i64 %7, ptr %6, align 4
+  %8 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  %9 = extractvalue [4 x i64] %4, 1
+  store i64 %9, ptr %8, align 4
+  %10 = getelementptr i64, ptr %heap_to_ptr6, i64 2
+  %11 = extractvalue [4 x i64] %4, 2
+  store i64 %11, ptr %10, align 4
+  %12 = getelementptr i64, ptr %heap_to_ptr6, i64 3
+  %13 = extractvalue [4 x i64] %4, 3
+  store i64 %13, ptr %12, align 4
+  %payload_len = load i64, ptr %heap_to_ptr, align 4
+  %tape_size = add i64 %payload_len, 2
+  %14 = ptrtoint ptr %heap_to_ptr to i64
+  %payload_start = add i64 %14, 1
+  call void @set_tape_data(i64 %payload_start, i64 %tape_size)
+  call void @contract_call(i64 %heap_start5, i64 0)
+  %15 = call i64 @vector_new(i64 1)
+  %heap_start7 = sub i64 %15, 1
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  call void @get_tape_data(i64 %heap_start7, i64 1)
+  %return_length = load i64, ptr %heap_to_ptr8, align 4
+  %heap_size = add i64 %return_length, 2
+  %tape_size9 = add i64 %return_length, 1
+  %16 = call i64 @vector_new(i64 %heap_size)
+  %heap_start10 = sub i64 %16, %heap_size
+  %heap_to_ptr11 = inttoptr i64 %heap_start10 to ptr
+  store i64 %return_length, ptr %heap_to_ptr11, align 4
+  %17 = add i64 %heap_start10, 1
+  call void @get_tape_data(i64 %17, i64 %tape_size9)
+  %length = load i64, ptr %heap_to_ptr11, align 4
+  %18 = ptrtoint ptr %heap_to_ptr11 to i64
+  %19 = add i64 %18, 1
+  %vector_data = inttoptr i64 %19 to ptr
+  %20 = icmp ule i64 1, %length
+  br i1 %20, label %inbounds, label %out_of_bounds
+
+inbounds:                                         ; preds = %entry
+  %start12 = getelementptr i64, ptr %vector_data, i64 0
+  %value = load i64, ptr %start12, align 4
+  %21 = icmp ult i64 1, %length
+  br i1 %21, label %not_all_bytes_read, label %buffer_read
+
+out_of_bounds:                                    ; preds = %entry
+  unreachable
+
+not_all_bytes_read:                               ; preds = %inbounds
+  unreachable
+
+buffer_read:                                      ; preds = %inbounds
+  store i64 %value, ptr %result, align 4
+  %22 = load i64, ptr %result, align 4
+  %23 = icmp eq i64 %22, 300
+  %24 = zext i1 %23 to i64
+  call void @builtin_assert(i64 %24)
+  ret void
+}
+
+define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+entry:
+  switch i64 %0, label %missing_function [
+    i64 3965482278, label %func_0_dispatch
+    i64 1607480800, label %func_1_dispatch
+  ]
+
+missing_function:                                 ; preds = %entry
+  unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  %3 = icmp ule i64 4, %1
+  br i1 %3, label %inbounds, label %out_of_bounds
+
+inbounds:                                         ; preds = %func_0_dispatch
+  %start = getelementptr i64, ptr %2, i64 0
+  %value = load i64, ptr %start, align 4
+  %4 = insertvalue [4 x i64] undef, i64 %value, 0
+  %start1 = getelementptr i64, ptr %2, i64 1
+  %value2 = load i64, ptr %start1, align 4
+  %5 = insertvalue [4 x i64] %4, i64 %value2, 1
+  %start3 = getelementptr i64, ptr %2, i64 2
+  %value4 = load i64, ptr %start3, align 4
+  %6 = insertvalue [4 x i64] %5, i64 %value4, 2
+  %start5 = getelementptr i64, ptr %2, i64 3
+  %value6 = load i64, ptr %start5, align 4
+  %7 = insertvalue [4 x i64] %6, i64 %value6, 3
+  %8 = icmp ult i64 4, %1
+  br i1 %8, label %not_all_bytes_read, label %buffer_read
+
+out_of_bounds:                                    ; preds = %func_0_dispatch
+  unreachable
+
+not_all_bytes_read:                               ; preds = %inbounds
+  unreachable
+
+buffer_read:                                      ; preds = %inbounds
+  call void @delegatecall_test([4 x i64] %7)
+  ret void
+
+func_1_dispatch:                                  ; preds = %entry
+  %9 = icmp ule i64 4, %1
+  br i1 %9, label %inbounds7, label %out_of_bounds8
+
+inbounds7:                                        ; preds = %func_1_dispatch
+  %start9 = getelementptr i64, ptr %2, i64 0
+  %value10 = load i64, ptr %start9, align 4
+  %10 = insertvalue [4 x i64] undef, i64 %value10, 0
+  %start11 = getelementptr i64, ptr %2, i64 1
+  %value12 = load i64, ptr %start11, align 4
+  %11 = insertvalue [4 x i64] %10, i64 %value12, 1
+  %start13 = getelementptr i64, ptr %2, i64 2
+  %value14 = load i64, ptr %start13, align 4
+  %12 = insertvalue [4 x i64] %11, i64 %value14, 2
+  %start15 = getelementptr i64, ptr %2, i64 3
+  %value16 = load i64, ptr %start15, align 4
+  %13 = insertvalue [4 x i64] %12, i64 %value16, 3
+  %14 = icmp ult i64 4, %1
+  br i1 %14, label %not_all_bytes_read17, label %buffer_read18
+
+out_of_bounds8:                                   ; preds = %func_1_dispatch
+  unreachable
+
+not_all_bytes_read17:                             ; preds = %inbounds7
+  unreachable
+
+buffer_read18:                                    ; preds = %inbounds7
+  call void @call_test([4 x i64] %13)
+  ret void
+}
+
+define void @main() {
+entry:
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  call void @get_tape_data(i64 %heap_start, i64 13)
+  %function_selector = load i64, ptr %heap_to_ptr, align 4
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  call void @get_tape_data(i64 %heap_start1, i64 14)
+  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %2 = add i64 %input_length, 14
+  %3 = call i64 @vector_new(i64 %2)
+  %heap_start3 = sub i64 %3, %2
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @get_tape_data(i64 %heap_start3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{}", code.program);
+        println!("{:#?}", code.prophets);
+        assert_eq!(
+            format!("{}", code.program),
+            "delegatecall_test:
+.LBL0_0:
+  add r9 r9 13
+  mov r7 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 r4
+  mstore [r9,-5] r3
+  mstore [r9,-4] r2
+  mstore [r9,-3] r1
+  mstore [r9,-2] r7
+  mov r7 66
+  mstore [r9,-1] r7
+  mload r2 [r9,-1]
+  mov r1 4
+.PROPHET0_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  not r7 4
+  add r7 r7 1
+  add r8 r1 r7
+  mov r7 1
+  mstore [r8] r7
+  mstore [r8,+1] r2
+  mov r7 1
+  mstore [r8,+2] r7
+  mov r7 2371037854
+  mstore [r8,+3] r7
+  mload r2 [r9,-2]
+  mload r3 [r9,-3]
+  mload r7 [r9,-4]
+  mstore [r9,-12] r7
+  mload r7 [r9,-5]
+  mstore [r9,-13] r7
+  mov r1 4
+.PROPHET0_1:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  not r7 4
+  add r7 r7 1
+  add r7 r1 r7
+  mstore [r9,-6] r7
+  mload r7 [r9,-6]
+  mov r1 r2
+  mstore [r7] r1
+  mov r1 r3
+  mstore [r7,+1] r1
+  mload r1 [r9,-12]
+  mstore [r7,+2] r1
+  mload r1 [r9,-13]
+  mstore [r7,+3] r1
+  mload r7 [r8]
+  add r5 r8 1
+  add r6 r7 2
+  tstore r5 r6
+  mload r8 [r9,-6]
+  sccall r8 1
+  mov r1 1
+.PROPHET0_2:
+  mov r0 psp
+  mload r0 [r0]
+  mov r8 r0
+  mov r6 1
+  not r7 1
+  add r7 r7 1
+  add r8 r8 r7
+  mstore [r9,-7] r8
+  tload r8 r6 1
+  mstore [r9,-7] r8
+  mload r8 [r9,-7]
+  mload r8 [r8]
+  add r7 r8 2
+  mstore [r9,-8] r7
+  mload r7 [r9,-8]
+  mov r1 r7
+.PROPHET0_3:
+  mov r0 psp
+  mload r0 [r0]
+  mov r6 r0
+  mload r7 [r9,-8]
+  not r7 r7
+  add r7 r7 1
+  add r7 r6 r7
+  mstore [r9,-9] r7
+  mload r7 [r9,-9]
+  mstore [r7] r8
+  mov r7 1
+  mload r6 [r9,-9]
+  add r6 r6 1
+  mstore [r9,-11] r6
+  add r8 r8 1
+  mstore [r9,-10] r8
+  mload r8 [r9,-10]
+  tload r8 r7 r8
+  mstore [r9,-11] r8
+  mov r1 0
+  mov r2 0
+  mov r3 0
+  mov r4 0
+  sload 
+  mov r8 r1
+  mov r8 r2
+  mov r8 r3
+  mov r8 r4
+  eq r8 r8 66
+  assert r8
+  add r9 r9 -13
+  ret
+call_test:
+.LBL1_0:
+  add r9 r9 16
+  mov r7 r1
+  mov r1 r2
+  mov r2 r3
+  mov r3 r4
+  mstore [r9,-7] r3
+  mstore [r9,-6] r2
+  mstore [r9,-5] r1
+  mstore [r9,-4] r7
+  mov r7 100
+  mstore [r9,-3] r7
+  mov r7 200
+  mstore [r9,-2] r7
+  mload r2 [r9,-3]
+  mload r3 [r9,-2]
+  mov r1 5
+.PROPHET1_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  not r7 5
+  add r7 r7 1
+  add r8 r1 r7
+  mov r7 2
+  mstore [r8] r7
+  mstore [r8,+1] r2
+  mstore [r8,+2] r3
+  mov r7 2
+  mstore [r8,+3] r7
+  mov r7 2062500454
+  mstore [r8,+4] r7
+  mload r2 [r9,-4]
+  mload r3 [r9,-5]
+  mload r7 [r9,-6]
+  mstore [r9,-15] r7
+  mload r7 [r9,-7]
+  mstore [r9,-16] r7
+  mov r1 4
+.PROPHET1_1:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  not r7 4
+  add r7 r7 1
+  add r7 r1 r7
+  mstore [r9,-8] r7
+  mload r7 [r9,-8]
+  mov r1 r2
+  mstore [r7] r1
+  mov r1 r3
+  mstore [r7,+1] r1
+  mload r1 [r9,-15]
+  mstore [r7,+2] r1
+  mload r1 [r9,-16]
+  mstore [r7,+3] r1
+  mload r7 [r8]
+  add r5 r8 1
+  add r6 r7 2
+  tstore r5 r6
+  mload r8 [r9,-8]
+  sccall r8 0
+  mov r1 1
+.PROPHET1_2:
+  mov r0 psp
+  mload r0 [r0]
+  mov r8 r0
+  mov r6 1
+  not r7 1
+  add r7 r7 1
+  add r8 r8 r7
+  mstore [r9,-9] r8
+  tload r8 r6 1
+  mstore [r9,-9] r8
+  mload r8 [r9,-9]
+  mload r8 [r8]
+  add r7 r8 2
+  mstore [r9,-10] r7
+  mload r7 [r9,-10]
+  mov r1 r7
+.PROPHET1_3:
+  mov r0 psp
+  mload r0 [r0]
+  mov r6 r0
+  mload r7 [r9,-10]
+  not r7 r7
+  add r7 r7 1
+  add r7 r6 r7
+  mstore [r9,-11] r7
+  mload r7 [r9,-11]
+  mstore [r7] r8
+  mov r6 1
+  mload r5 [r9,-11]
+  add r5 r5 1
+  mstore [r9,-13] r5
+  add r8 r8 1
+  mstore [r9,-12] r8
+  mload r8 [r9,-12]
+  tload r8 r6 r8
+  mstore [r9,-13] r8
+  mload r8 [r7]
+  add r7 r7 1
+  mstore [r9,-14] r7
+  mload r7 [r9,-14]
+  mov r6 1
+  gte r6 r8 r6
+  cjmp r6 .LBL1_1
+  jmp .LBL1_2
+.LBL1_1:
+  mload r7 [r7]
+  mov r6 1
+  gte r5 r8 r6
+  neq r8 r6 r8
+  and r5 r5 r8
+  cjmp r5 .LBL1_3
+  jmp .LBL1_4
+.LBL1_2:
+  ret
+.LBL1_3:
+  ret
+.LBL1_4:
+  mstore [r9,-1] r7
+  mload r8 [r9,-1]
+  eq r8 r8 300
+  assert r8
+  add r9 r9 -16
+  ret
+function_dispatch:
+.LBL2_0:
+  add r9 r9 2
+  mstore [r9,-2] r9
+  mov r8 r1
+  mov r7 r2
+  mov r6 r3
+  eq r1 r8 3965482278
+  cjmp r1 .LBL2_2
+  eq r1 r8 1607480800
+  cjmp r1 .LBL2_7
+  jmp .LBL2_1
+.LBL2_1:
+  ret
+.LBL2_2:
+  mov r8 4
+  gte r8 r7 r8
+  cjmp r8 .LBL2_3
+  jmp .LBL2_4
+.LBL2_3:
+  mload r8 [r6]
+  mload r5 [r6,+1]
+  mload r1 [r6,+2]
+  mload r6 [r6,+3]
+  mov r8 r8
+  mov r2 0
+  mov r2 0
+  mov r3 0
+  mov r5 r5
+  mov r2 r3
+  mov r3 r1
+  mov r1 r2
+  mov r1 r8
+  mov r2 r5
+  mov r4 r6
+  mov r8 4
+  gte r6 r7 r8
+  neq r8 r8 r7
+  and r6 r6 r8
+  cjmp r6 .LBL2_5
+  jmp .LBL2_6
+.LBL2_4:
+  ret
+.LBL2_5:
+  ret
+.LBL2_6:
+  call delegatecall_test
+  add r9 r9 -2
+  ret
+.LBL2_7:
+  mov r8 4
+  gte r8 r7 r8
+  cjmp r8 .LBL2_8
+  jmp .LBL2_9
+.LBL2_8:
+  mload r8 [r6]
+  mload r5 [r6,+1]
+  mload r1 [r6,+2]
+  mload r6 [r6,+3]
+  mov r8 r8
+  mov r2 0
+  mov r2 0
+  mov r3 0
+  mov r5 r5
+  mov r2 r3
+  mov r3 r1
+  mov r1 r2
+  mov r1 r8
+  mov r2 r5
+  mov r4 r6
+  mov r8 4
+  gte r6 r7 r8
+  neq r8 r8 r7
+  and r6 r6 r8
+  cjmp r6 .LBL2_10
+  jmp .LBL2_11
+.LBL2_9:
+  ret
+.LBL2_10:
+  ret
+.LBL2_11:
+  call call_test
+  add r9 r9 -2
+  ret
+main:
+.LBL3_0:
+  add r9 r9 2
+  mstore [r9,-2] r9
+  mov r1 13
+.PROPHET3_0:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  mov r2 1
+  not r7 13
+  add r7 r7 1
+  add r8 r1 r7
+  tload r8 r2 13
+  mload r8 [r8]
+  mov r1 14
+.PROPHET3_1:
+  mov r0 psp
+  mload r0 [r0]
+  mov r1 r0
+  mov r2 1
+  not r7 14
+  add r7 r7 1
+  add r6 r1 r7
+  tload r6 r2 14
+  mov r7 r6
+  mload r2 [r7]
+  add r5 r2 14
+  mov r1 r5
+.PROPHET3_2:
+  mov r0 psp
+  mload r0 [r0]
+  mov r6 r0
+  mov r1 1
+  not r7 r5
+  add r7 r7 1
+  add r3 r6 r7
+  tload r3 r1 r5
+  mov r1 r8
+  call function_dispatch
+  add r9 r9 -2
+  end
+"
+        );
+    }
 }

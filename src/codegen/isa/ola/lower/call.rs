@@ -66,15 +66,25 @@ pub fn lower_call(
         return Ok(());
     }
 
-    if name.as_str() == "get_ctx_data" || name.as_str() == "get_call_data" {
-        let flag_imm = if name.as_str() == "get_call_data" {
+    if name.as_str() == "contract_call" {
+        let addr = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let flag = get_operand_for_val(ctx, tys[2], args[2])?;
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::SCCALL,
+                operands: vec![MO::input(addr.into()), MO::input(flag)],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
+    if name.as_str() == "get_ctx_data" || name.as_str() == "get_tape_data" {
+        let flag_imm = if name.as_str() == "get_tape_data" {
             1
         } else {
             0
         };
-        let dest = get_vreg_for_val(ctx, tys[1], args[1])?;
-        let idx = get_operand_for_val(ctx, tys[2], args[2])?;
-
         let addr = ctx.mach_data.vregs.add_vreg_data(tys[1]);
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
@@ -83,6 +93,9 @@ pub fn lower_call(
             },
             ctx.block_map[&ctx.cur_block],
         ));
+
+        let dest = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let idx = get_operand_for_val(ctx, tys[2], args[2])?;
 
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {

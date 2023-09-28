@@ -40,6 +40,7 @@ pub enum Opcode {
     CJMPi,
     CJMPr,
     CALL,
+    SCCALL,
     RET,
     END,
 
