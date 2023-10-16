@@ -4,12 +4,12 @@ use super::ast::{ArrayLength, Diagnostic, Expression, LibFunc, Namespace, Type};
 use super::diagnostics::Diagnostics;
 use super::expression::{ExprContext, ResolveTo};
 use super::symtable::Symtable;
+use crate::sema::ast::RetrieveType;
 use crate::sema::expression::resolve_expression::expression;
-use crate::sema::ast::{RetrieveType};
 use num_bigint::BigInt;
 use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
-use tiny_keccak::{Keccak, Hasher};
+use tiny_keccak::{Hasher, Keccak};
 
 pub struct Prototype {
     pub libfunc: LibFunc,
@@ -126,7 +126,6 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 14]> = Lazy::new(|| {
             params: vec![Type::String],
             ret: vec![],
         },
-
     ]
 });
 
@@ -269,10 +268,10 @@ pub fn resolve_call(
     Err(())
 }
 
-/// Resolve a builtin namespace call. The takes the unresolved arguments, since it has
-/// to handle the special case "abi.decode(foo, (int32, bool, address))" where the
-/// second argument is a type list. The generic expression resolver cannot deal with
-/// this. It is only used in for this specific call.
+/// Resolve a builtin namespace call. The takes the unresolved arguments, since
+/// it has to handle the special case "abi.decode(foo, (int32, bool, address))"
+/// where the second argument is a type list. The generic expression resolver
+/// cannot deal with this. It is only used in for this specific call.
 pub(super) fn resolve_namespace_call(
     loc: &program::Loc,
     namespace: &str,
@@ -285,7 +284,6 @@ pub(super) fn resolve_namespace_call(
 ) -> Result<Expression, ()> {
     // The abi.* functions need special handling, others do not
     if namespace != "abi" {
-
         return resolve_call(
             loc,
             Some(namespace),
@@ -302,7 +300,7 @@ pub(super) fn resolve_namespace_call(
         "decode" => LibFunc::AbiDecode,
         "encode" => LibFunc::AbiEncode,
         "encodeWithSignature" => LibFunc::AbiEncodeWithSignature,
-    
+
         _ => unreachable!(),
     };
 
@@ -325,7 +323,7 @@ pub(super) fn resolve_namespace_call(
             diagnostics,
             ResolveTo::Type(&Type::DynamicBytes),
         )?
-        .cast(&args[0].loc(), &Type::DynamicBytes,  ns, diagnostics)?;
+        .cast(&args[0].loc(), &Type::DynamicBytes, ns, diagnostics)?;
 
         let mut tys = Vec::new();
         let mut broken = false;
@@ -401,7 +399,6 @@ pub(super) fn resolve_namespace_call(
     let mut args_iter = args.iter();
 
     match builtin {
-
         LibFunc::AbiEncodeWithSignature => {
             // first argument is signature
             if let Some(signature) = args_iter.next() {
@@ -409,15 +406,15 @@ pub(super) fn resolve_namespace_call(
                 match signature {
                     program::Expression::StringLiteral(s) => {
                         let function_name = &s[0].string;
-                            // keccak hash the signature
-                            let mut hasher = Keccak::v256();
-                            let mut hash = [0u8; 32];
-                            hasher.update(function_name.as_bytes());
-                            hasher.finalize(&mut hash);
-                    
-                            function_selector = u32::from_le_bytes(hash[0..4].try_into().unwrap())
-                        }
-                    
+                        // keccak hash the signature
+                        let mut hasher = Keccak::v256();
+                        let mut hash = [0u8; 32];
+                        hasher.update(function_name.as_bytes());
+                        hasher.finalize(&mut hash);
+
+                        function_selector = u32::from_le_bytes(hash[0..4].try_into().unwrap())
+                    }
+
                     _ => {
                         diagnostics.push(Diagnostic::error(
                             *loc,
@@ -425,7 +422,6 @@ pub(super) fn resolve_namespace_call(
                         ));
                         return Err(());
                     }
-                    
                 }
                 resolved_args.insert(
                     0,
@@ -433,7 +429,7 @@ pub(super) fn resolve_namespace_call(
                         loc: *loc,
                         ty: Type::Uint(32),
                         value: BigInt::from(function_selector),
-                    }
+                    },
                 );
             } else {
                 diagnostics.push(Diagnostic::error(
@@ -460,11 +456,11 @@ pub(super) fn resolve_namespace_call(
             return Err(());
         }
 
-        expr = expr.cast(&arg.loc(), ty.deref_any(),  ns, diagnostics)?;
+        expr = expr.cast(&arg.loc(), ty.deref_any(), ns, diagnostics)?;
 
         // A string or hex literal should be encoded as a string
         if let Expression::BytesLiteral { .. } = &expr {
-            expr = expr.cast(&arg.loc(), &Type::String,  ns, diagnostics)?;
+            expr = expr.cast(&arg.loc(), &Type::String, ns, diagnostics)?;
         }
 
         resolved_args.push(expr);
@@ -477,8 +473,6 @@ pub(super) fn resolve_namespace_call(
         args: resolved_args,
     })
 }
-
-
 
 /// Resolve a builtin call
 pub fn resolve_method_call(

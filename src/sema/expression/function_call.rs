@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::sema::ast::{ArrayLength, Expression, Function, LibFunc, Namespace, RetrieveType, Type, CallTy, CallArgs};
+use crate::sema::ast::{
+    ArrayLength, CallArgs, CallTy, Expression, Function, LibFunc, Namespace, RetrieveType, Type,
+};
 use crate::sema::diagnostics::Diagnostics;
 
 use crate::sema::corelib;
@@ -422,12 +424,9 @@ fn try_storage_reference(
                         args: vec![var_expr.clone()],
                     }));
                 }
-
             }
 
             Type::DynamicBytes => {
-
-
                 if func.name == "push" {
                     let mut builtin_args = vec![var_expr.clone()];
 
@@ -479,7 +478,7 @@ fn try_storage_reference(
                         return Err(());
                     }
 
-                    return Ok(Some(Expression::LibFunction  {
+                    return Ok(Some(Expression::LibFunction {
                         loc: func.loc,
                         tys: vec![Type::Uint(32)],
                         kind: LibFunc::ArrayPop,
@@ -575,7 +574,7 @@ fn try_type_method(
                     args: vec![var_expr.clone()],
                 }));
             }
-            
+
             if func.name == "concat" {
                 if args.len() != 2 {
                     diagnostics.push(Diagnostic::error(
@@ -584,11 +583,6 @@ fn try_type_method(
                     ));
                     return Err(());
                 }
-
-                
-
-               
-
             }
         }
         Type::Array(..) if func.name == "push" || func.name == "pop" => {
@@ -602,7 +596,6 @@ fn try_type_method(
             return Err(());
         }
         Type::Address => {
-
             let ty = match func.name.as_str() {
                 "call" => Some(CallTy::Regular),
                 "delegatecall" => Some(CallTy::Delegate),
@@ -611,8 +604,7 @@ fn try_type_method(
             };
 
             if let Some(ty) = ty {
-                let call_args =
-                    parse_call_args(call_args,  context, ns, symtable, diagnostics)?;
+                let call_args = parse_call_args(call_args, context, ns, symtable, diagnostics)?;
 
                 if ty != CallTy::Regular && call_args.value.is_some() {
                     diagnostics.push(Diagnostic::error(
@@ -667,7 +659,7 @@ fn try_type_method(
                     }
                 }
 
-                let args = args.cast(&args.loc(), args_ty.deref_any(),  ns, diagnostics)?;
+                let args = args.cast(&args.loc(), args_ty.deref_any(), ns, diagnostics)?;
 
                 return Ok(Some(Expression::ExternalFunctionCallRaw {
                     loc: *loc,
@@ -689,7 +681,6 @@ fn try_type_method(
 
     Ok(None)
 }
-
 
 /// Parse call arguments for external calls
 pub(super) fn parse_call_args(
@@ -720,7 +711,6 @@ pub(super) fn parse_call_args(
     for arg in args.values() {
         match arg.name.name.as_str() {
             "value" => {
-
                 let ty = Type::Uint(32);
                 let expr = expression(
                     &arg.expr,
@@ -737,7 +727,6 @@ pub(super) fn parse_call_args(
                     ns,
                     diagnostics,
                 )?));
-                
             }
             "gas" => {
                 let ty = Type::Uint(32);
@@ -771,7 +760,6 @@ pub(super) fn parse_call_args(
     Ok(res)
 }
 
-
 /// Resolve a method call with positional arguments
 pub(super) fn method_call_pos_args(
     loc: &program::Loc,
@@ -786,9 +774,17 @@ pub(super) fn method_call_pos_args(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-    if let Some(resolved_call) =
-        try_namespace(loc, var, func, args, call_args_loc, context, ns, symtable, diagnostics)?
-    {
+    if let Some(resolved_call) = try_namespace(
+        loc,
+        var,
+        func,
+        args,
+        call_args_loc,
+        context,
+        ns,
+        symtable,
+        diagnostics,
+    )? {
         return Ok(resolved_call);
     }
 
@@ -816,7 +812,7 @@ pub(super) fn method_call_pos_args(
     let mut diagnostics_type: u8 = 0;
     let type_method_diagnostics = Diagnostics::default();
 
-    match  try_type_method(
+    match try_type_method(
         loc,
         func,
         args,
@@ -900,8 +896,6 @@ pub fn collect_call_args<'a>(
 
     Ok((expr, named_arguments, loc))
 }
-
-
 
 pub fn named_call_expr(
     loc: &program::Loc,
@@ -1014,7 +1008,7 @@ pub fn call_expr(
     let expr = match ty.remove_parenthesis() {
         program::Expression::New(_, ty) => new(loc, ty, args, context, ns, symtable, diagnostics)?,
         program::Expression::FunctionCallBlock(loc, expr, _)
-        if matches!(expr.remove_parenthesis(), program::Expression::New(..)) =>
+            if matches!(expr.remove_parenthesis(), program::Expression::New(..)) =>
         {
             new(loc, ty, args, context, ns, symtable, diagnostics)?
         }
@@ -1045,7 +1039,6 @@ pub fn function_call_expr(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
     let (ty, call_args, call_args_loc) = collect_call_args(ty, diagnostics)?;
     match ty.remove_parenthesis() {
         program::Expression::MemberAccess(_, member, func) => {

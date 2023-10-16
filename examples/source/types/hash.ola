@@ -1,0 +1,11 @@
+contract HashContract {
+
+    fn hash_test() {
+       string a = "helloworld";
+       hash h = poseidon_hash(a);
+       assert(h == 0x411de5c874de5593bd5102ec5e2763262162a786259e21467c238b0cff76cde2hash);
+    }
+
+}
+
+

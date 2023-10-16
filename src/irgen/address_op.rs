@@ -18,28 +18,48 @@ pub fn address_compare<'a>(
     let left = expression(l, bin, func_value, var_table, ns);
     let right = expression(r, bin, func_value, var_table, ns);
 
-    let mut result = bin.context.bool_type().const_int(1, false);
+    let mut result = bin.context.i64_type().const_int(1, false);
 
     // Compare each pair of elements
     for i in 0..4 {
-
         let left_elem_ptr = unsafe {
-            bin.builder.build_gep(bin.context.i64_type(), left.into_pointer_value(), &[bin.context.i64_type().const_int(i, false)], &format!("left_elem_{}", i))
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                left.into_pointer_value(),
+                &[bin.context.i64_type().const_int(i, false)],
+                &format!("left_elem_{}", i),
+            )
         };
-        let left_elem = bin.builder.build_load(bin.context.i64_type(), left_elem_ptr, "").into_int_value();
+        let left_elem = bin
+            .builder
+            .build_load(bin.context.i64_type(), left_elem_ptr, "")
+            .into_int_value();
 
         let right_elem_ptr = unsafe {
-            bin.builder.build_gep(bin.context.i64_type(), right.into_pointer_value(), &[bin.context.i64_type().const_int(i, false)], &format!("right_elem_{}", i))
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                right.into_pointer_value(),
+                &[bin.context.i64_type().const_int(i, false)],
+                &format!("right_elem_{}", i),
+            )
         };
-        let right_elem = bin.builder.build_load(bin.context.i64_type(), right_elem_ptr, "").into_int_value();
+        let right_elem = bin
+            .builder
+            .build_load(bin.context.i64_type(), right_elem_ptr, "")
+            .into_int_value();
 
         let compare =
             bin.builder
                 .build_int_compare(op, left_elem, right_elem, &format!("compare_{}", i));
 
+        let compare = bin
+            .builder
+            .build_int_z_extend(compare, bin.context.i64_type(), "")
+            .into();
+
         result = bin
             .builder
-            .build_and(result, compare, &format!("result_{}", i));
+            .build_and(compare,result , &format!("result_{}", i));
     }
     result.into()
 }

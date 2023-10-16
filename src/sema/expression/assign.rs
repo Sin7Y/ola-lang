@@ -317,22 +317,18 @@ pub(super) fn assign_expr(
                         diagnostics,
                     )?),
                 }),
-                    // If the variable is a Type::Ref(Type::Ref(..)), we must load it first.
-                Type::Ref(inner)
-                    if matches!(**inner, Type::Uint(_)) =>
-                {
-                    Ok(Expression::Assign {
-                        loc: *loc,
-                        ty: *inner.clone(),
-                        left: Box::new(var.cast(loc, r_ty,  ns, diagnostics)?),
-                        right: Box::new(op(
-                            var.cast(loc, inner, ns, diagnostics)?,
-                            inner,
-                            ns,
-                            diagnostics,
-                        )?),
-                    })
-                }
+                // If the variable is a Type::Ref(Type::Ref(..)), we must load it first.
+                Type::Ref(inner) if matches!(**inner, Type::Uint(_)) => Ok(Expression::Assign {
+                    loc: *loc,
+                    ty: *inner.clone(),
+                    left: Box::new(var.cast(loc, r_ty, ns, diagnostics)?),
+                    right: Box::new(op(
+                        var.cast(loc, inner, ns, diagnostics)?,
+                        inner,
+                        ns,
+                        diagnostics,
+                    )?),
+                }),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),

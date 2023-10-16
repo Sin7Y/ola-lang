@@ -1,0 +1,22 @@
+contract BoolContract {
+    fn cond_bool(bool a) -> (u32 ret){
+       if (a) {
+           return 1;
+       } else {
+           return 2;
+       }
+    }
+
+    fn return_bool(bool a) -> (bool) {
+        return a;
+    }
+
+    fn bool_compare() {
+        bool a = true;
+        bool b = false;
+        bool c = true;
+        assert(a != b);
+        assert(a == c);
+    }
+
+}

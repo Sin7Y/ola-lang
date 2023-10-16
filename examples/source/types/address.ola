@@ -5,5 +5,9 @@ contract AddressExample {
         return myaddress == _address;
     }
 
+    fn u32_to_address(u32 a) -> (address) {
+        u32 b = 0x0000000001;
+        return address(0x1234);
+    }
 
 }

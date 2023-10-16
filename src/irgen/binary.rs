@@ -12,9 +12,7 @@ use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::{Linkage, Module};
-use inkwell::types::{
-     BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix,
-};
+use inkwell::types::{BasicMetadataTypeEnum, BasicType, BasicTypeEnum, FunctionType, StringRadix};
 use inkwell::values::{
     BasicValue, BasicValueEnum, FunctionValue, GlobalValue, IntValue, PointerValue,
 };
@@ -124,15 +122,25 @@ impl<'a> Binary<'a> {
         address_heap_ptr.into()
     }
 
-    // /// llvm address type
-    // pub(crate) fn address_type(&self) -> ArrayType<'a> {
-    //     self.context.i64_type().array_type(4_u32)
-    // }
-
-    // /// llvm hash type
-    // pub(crate) fn hash_type(&self) -> ArrayType<'a> {
-    //     self.context.i64_type().array_type(4_u32)
-    // }
+    pub(crate) fn hash_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
+        let (_, hash_heap_ptr) =
+            self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
+        let ty = self.context.i64_type();
+        for (i, v) in value.iter().enumerate() {
+            let index = self.context.i64_type().const_int(i as u64, false);
+            let index_access = unsafe {
+                self.builder.build_gep(
+                    self.context.i64_type(),
+                    hash_heap_ptr,
+                    &[index],
+                    "index_access",
+                )
+            };
+            self.builder
+                .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
+        }
+        hash_heap_ptr.into()
+    }
 
     /// Emit function prototype
     pub(crate) fn function_type(
@@ -364,10 +372,10 @@ impl<'a> Binary<'a> {
             // TODO Is it possible for the initial value to be of type u32? It needs to be
             // determined based on the type.
             Some(init) => {
+                let data = self.vector_data(heap_start_ptr.as_basic_value_enum());
                 for (item_no, item) in init.iter().enumerate() {
                     let item = self.context.i64_type().const_int(*item as u64, false);
                     let index = self.context.i64_type().const_int(item_no as u64, false);
-                    let data = self.vector_data(heap_start_ptr.as_basic_value_enum());
                     let index_access = unsafe {
                         self.builder.build_gep(
                             self.context.i64_type(),
@@ -484,9 +492,8 @@ impl<'a> Binary<'a> {
     pub(crate) fn poseidon_hash(
         &self,
         function: FunctionValue<'a>,
-        hash_src: Vec<(BasicValueEnum<'a>, IntValue<'a>)>
+        hash_src: Vec<(BasicValueEnum<'a>, IntValue<'a>)>,
     ) -> BasicValueEnum<'a> {
-        
         let (heap_src_ptr, src_len) = if hash_src.len() > 1 {
             let mut src_len = self.context.i64_type().const_zero();
 
@@ -494,14 +501,12 @@ impl<'a> Binary<'a> {
                 src_len = self.builder.build_int_add(src_len, *len, "");
             }
             let (_, heap_src_ptr) = self.heap_malloc(src_len);
-    
+
             let mut offset = self.context.i64_type().const_zero();
             for (v, len) in hash_src.iter() {
-    
                 self.mempcy(function, v.into_pointer_value(), heap_src_ptr, offset, *len);
-    
+
                 offset = self.builder.build_int_add(offset, *len, "");
-    
             }
             (heap_src_ptr, src_len)
         } else {
@@ -521,37 +526,31 @@ impl<'a> Binary<'a> {
 
     /// Number of element in a vector
     pub(crate) fn vector_len(&self, vector: BasicValueEnum<'a>) -> IntValue<'a> {
-
-            self.builder
-                .build_load(
-                    self.context.i64_type(),
-                    vector.into_pointer_value(),
-                    "length",
-                )
-                .into_int_value()
-        
+        self.builder
+            .build_load(
+                self.context.i64_type(),
+                vector.into_pointer_value(),
+                "length",
+            )
+            .into_int_value()
     }
 
     /// Return the pointer to the actual bytes in the vector
     pub(crate) fn vector_data(&self, vector: BasicValueEnum<'a>) -> PointerValue<'a> {
-
-            let vector_int_value = self.builder.build_ptr_to_int(
-                vector.into_pointer_value(),
-                self.context.i64_type(),
-                "",
-            );
-            // field 1 is the data
-            let vector_data = self.builder.build_int_add(
-                vector_int_value,
-                self.context.i64_type().const_int(1, false),
-                "",
-            );
-            self.builder.build_int_to_ptr(
-                vector_data,
-                self.context.i64_type().ptr_type(AddressSpace::default()),
-                "vector_data",
-            )
-        
+        let vector_int_value =
+            self.builder
+                .build_ptr_to_int(vector.into_pointer_value(), self.context.i64_type(), "");
+        // field 1 is the data
+        let vector_data = self.builder.build_int_add(
+            vector_int_value,
+            self.context.i64_type().const_int(1, false),
+            "",
+        );
+        self.builder.build_int_to_ptr(
+            vector_data,
+            self.context.i64_type().ptr_type(AddressSpace::default()),
+            "vector_data",
+        )
     }
 
     pub fn vector_zero_init(
@@ -784,7 +783,6 @@ impl<'a> Binary<'a> {
         dest: PointerValue<'a>,
         dest_index: IntValue<'a>,
         len: IntValue<'a>,
-
     ) {
         let cond = self.context.append_basic_block(function, "cond");
         let body = self.context.append_basic_block(function, "body");
@@ -814,19 +812,13 @@ impl<'a> Binary<'a> {
         self.builder.position_at_end(body);
 
         let src_access = unsafe {
-            self.builder.build_gep(
-                self.context.i64_type(),
-                src,
-                &[index_value],
-                "index_access",
-            )
+            self.builder
+                .build_gep(self.context.i64_type(), src, &[index_value], "index_access")
         };
 
-        let src_value = self.builder.build_load(
-            self.context.i64_type(),
-            src_access,
-            "",
-        );
+        let src_value = self
+            .builder
+            .build_load(self.context.i64_type(), src_access, "");
 
         let dest_access = unsafe {
             self.builder.build_gep(
@@ -837,8 +829,7 @@ impl<'a> Binary<'a> {
             )
         };
 
-        self.builder
-            .build_store(dest_access, src_value);
+        self.builder.build_store(dest_access, src_value);
 
         // memory copy end
         let next_index =
@@ -853,16 +844,9 @@ impl<'a> Binary<'a> {
         self.builder.position_at_end(done);
     }
 
-
-    pub fn convert_uint_storage(
-        &self,
-        value: BasicValueEnum<'a>,
-    ) -> BasicValueEnum<'a> {
+    pub fn convert_uint_storage(&self, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
         let (_, heap_ptr) = self.heap_malloc(self.context.i64_type().const_int(4, false));
-        self.builder.build_store(
-            heap_ptr,
-            value,
-        );
+        self.builder.build_store(heap_ptr, value);
         for i in 1..4 {
             let elem_ptr = unsafe {
                 self.builder.build_gep(
@@ -872,12 +856,9 @@ impl<'a> Binary<'a> {
                     "",
                 )
             };
-            self.builder.build_store(
-                elem_ptr,
-                self.context.i64_type().const_zero(),
-            );
+            self.builder
+                .build_store(elem_ptr, self.context.i64_type().const_zero());
         }
         heap_ptr.into()
     }
-
 }

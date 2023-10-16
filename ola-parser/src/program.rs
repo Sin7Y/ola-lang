@@ -356,6 +356,7 @@ pub enum Expression {
     HexNumberLiteral(Loc, String),
     StringLiteral(Vec<StringLiteral>),
     AddressLiteral(Loc, String),
+    HashLiteral(Loc, String),
     Type(Loc, Type),
     Variable(Identifier),
     List(Loc, ParameterList),
@@ -418,6 +419,7 @@ impl CodeLocation for Expression {
             | Expression::Variable(Identifier { loc, .. }) => *loc,
             Expression::StringLiteral(v) => v[0].loc,
             Expression::AddressLiteral(loc, _) => *loc,
+            Expression::HashLiteral(loc, _) => *loc,
         }
     }
 }

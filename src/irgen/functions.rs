@@ -69,7 +69,6 @@ pub(super) fn gen_function<'a>(
     }
 
     // TODO add implicit return
-
 }
 
 /// Populate the arguments of a function
