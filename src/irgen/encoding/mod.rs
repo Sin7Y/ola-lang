@@ -2,7 +2,7 @@ use std::ops::{AddAssign, Sub};
 
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicValueEnum, FunctionValue, IntValue, PointerValue, BasicValue},
+    values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
     IntPredicate,
 };
 use num_bigint::BigInt;
@@ -13,7 +13,8 @@ use crate::sema::ast::{ArrayLength, Namespace, Type};
 
 use self::{
     buffer_validator::BufferValidator,
-    decode::read_from_buffer, encode::{encode_into_buffer, encode_uint},
+    decode::read_from_buffer,
+    encode::{encode_into_buffer, encode_uint},
 };
 
 use super::{binary::Binary, expression::array_subscript, storage::storage_load};
@@ -32,10 +33,10 @@ pub(super) fn abi_encode<'a>(
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-) -> PointerValue<'a>{
+) -> PointerValue<'a> {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_start_ptr= bin.vector_new(size); 
+    let heap_start_ptr = bin.vector_new(size);
 
     let mut offset = bin.context.i64_type().const_int(1, false);
 
@@ -51,11 +52,8 @@ pub(super) fn abi_encode<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
-     heap_start_ptr
-
+    heap_start_ptr
 }
-
-
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
 /// Returns a pointer to the encoded data and the size as a 32bit integer.
@@ -68,9 +66,13 @@ pub(super) fn abi_encode_store_tape<'a>(
 ) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(1, false), "heap_size");
-    
-    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size); 
+    let heap_size = bin.builder.build_int_add(
+        size,
+        bin.context.i64_type().const_int(1, false),
+        "heap_size",
+    );
+
+    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size);
 
     let mut offset = bin.context.i64_type().const_zero();
 
@@ -86,18 +88,12 @@ pub(super) fn abi_encode_store_tape<'a>(
         );
         offset = bin.builder.build_int_add(offset, advance, "");
     }
-    // encode size to heap, the "size" here is only used for tape area identification.
-    encode_uint(
-        heap_start_ptr,
-        size.as_basic_value_enum(),
-        offset,
-        bin,
-    );
+    // encode size to heap, the "size" here is only used for tape area
+    // identification.
+    encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
     bin.tape_data_store(heap_start_int, heap_size);
-
 }
-
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
 /// Returns a pointer to the encoded data and the size as a 32bit integer.
@@ -110,10 +106,14 @@ pub(super) fn abi_encode_with_selector<'a>(
     ns: &Namespace,
 ) -> PointerValue<'a> {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
-    
-    let heap_size = bin.builder.build_int_add(size, bin.context.i64_type().const_int(2, false), "heap_size");
-  
-    let heap_start_ptr = bin.vector_new(heap_size); 
+
+    let heap_size = bin.builder.build_int_add(
+        size,
+        bin.context.i64_type().const_int(2, false),
+        "heap_size",
+    );
+
+    let heap_start_ptr = bin.vector_new(heap_size);
 
     let mut offset = bin.context.i64_type().const_int(1, false);
 
@@ -130,27 +130,17 @@ pub(super) fn abi_encode_with_selector<'a>(
         offset = bin.builder.build_int_add(offset, advance, "");
     }
     // encode size to heap, the "size" here is used for tape area identification.
-    encode_uint(
-        heap_start_ptr,
-        size.as_basic_value_enum(),
-        offset,
-        bin,
-    );
+    encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
-    offset = bin.builder.build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+    offset = bin
+        .builder
+        .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
 
     // encode selector to heap
-    encode_uint(
-        heap_start_ptr,
-        selector,
-        offset,
-        bin,
-    );
-    
-    heap_start_ptr 
+    encode_uint(heap_start_ptr, selector, offset, bin);
 
+    heap_start_ptr
 }
-
 
 /// Insert decoding routines into the `cfg` for the `Expression`s in `args`.
 /// Returns a vector containing the encoded data.
@@ -208,8 +198,12 @@ fn get_args_type_size<'a>(
     ns: &Namespace,
 ) -> IntValue<'a> {
     match &ty {
-        Type::Uint(32) | Type::Bool | Type::Enum(_) => bin.context.i64_type().const_int(1, false),
-        Type::Contract(_) | Type::Address => bin.context.i64_type().const_int(4, false),
+        Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
+            bin.context.i64_type().const_int(1, false)
+        }
+        Type::Contract(_) | Type::Address | Type::Hash => {
+            bin.context.i64_type().const_int(4, false)
+        }
 
         Type::Struct(struct_no) => {
             calculate_struct_size(bin, arg_value, *struct_no, ty, func_value, ns)
@@ -240,7 +234,7 @@ fn get_args_type_size<'a>(
             let size = get_args_type_size(bin, storage_var, r, func_value, ns);
             size
         }
-        Type::String => calculate_string_size(bin, arg_value),
+        Type::String | Type::DynamicBytes => calculate_string_size(bin, arg_value),
         Type::Void
         | Type::Unreachable
         | Type::BufferPointer
@@ -254,8 +248,6 @@ fn get_args_type_size<'a>(
         _ => unreachable!("Type should not exist in irgen"),
     }
 }
-
-
 
 fn calculate_string_size<'a>(bin: &Binary<'a>, string_value: BasicValueEnum<'a>) -> IntValue<'a> {
     // When encoding a variable length array, the total size is "compact encoded
@@ -432,7 +424,6 @@ fn calculate_complex_array_size<'a>(
     finish_array_loop(bin, &for_loop);
 }
 
-
 /// Retrieves the size of a struct
 fn calculate_struct_size<'a>(
     bin: &Binary<'a>,
@@ -459,8 +450,6 @@ fn calculate_struct_size<'a>(
     }
     size
 }
-
-
 
 /// Loads a struct member
 fn load_struct_member<'a>(
@@ -489,7 +478,6 @@ fn load_struct_member<'a>(
         struct_member.into()
     }
 }
-
 
 /// Checks if struct contains only primitive types and returns its memory
 /// non-padded size

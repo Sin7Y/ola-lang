@@ -1,0 +1,24 @@
+contract SystemContextExample {
+
+
+    fn caller_address_test() -> (address) {
+        return caller_address() ;
+    }
+
+    fn origin_address_test() -> (address) {
+       return origin_address();
+    }
+
+    fn code_address_test() -> (address) {
+        return code_address();
+    }
+
+    fn current_address_test() -> (address) {
+        return current_address();
+    }
+
+    fn chain_id_test() -> (u32) {
+        return chain_id();
+    }
+
+}

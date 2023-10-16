@@ -23,22 +23,22 @@ contract Voting {
         }
     }
     
-    // fn winningProposal() -> (u32 winningProposal_) {
-    //     u32 winningVoteCount = 0;
-    //     for (u32 p = 0; p < proposals.length; p++) {
-    //         if (proposals[p].voteCount > winningVoteCount) {
-    //             winningVoteCount = proposals[p].voteCount;
-    //             winningProposal_ = p;
-    //         }
-    //     }
-    //     return winningProposal_;
-    // }
+    fn winningProposal() -> (u32 winningProposal_) {
+        u32 winningVoteCount = 0;
+        for (u32 p = 0; p < proposals.length; p++) {
+            if (proposals[p].voteCount > winningVoteCount) {
+                winningVoteCount = proposals[p].voteCount;
+                winningProposal_ = p;
+            }
+        }
+        return winningProposal_;
+    }
 
-    // fn getWinnerName() -> (u32) {
-    //      u32 winningProposal = winningProposal();
-    //      u32 winnerName = proposals[winningProposal].name;
-    //      return winnerName;
-    // }
+    fn getWinnerName() -> (u32) {
+         u32 winningProposal = winningProposal();
+         u32 winnerName = proposals[winningProposal].name;
+         return winnerName;
+    }
 
 
     fn vote_proposal(u32 proposal_)  {
@@ -52,7 +52,7 @@ contract Voting {
 
 
     fn get_caller() -> (address) {
-        return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580E;
+        return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580Eaddress;
     }
 
     fn main() {

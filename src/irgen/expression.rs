@@ -1,4 +1,3 @@
-
 use crate::irgen::binary::Binary;
 use crate::irgen::u32_op::{
     u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
@@ -6,9 +5,7 @@ use crate::irgen::u32_op::{
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{
-    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue,
-};
+use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::{AddressSpace, IntPredicate};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -90,7 +87,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::EQ,
             ),
-            Type::Uint(32) => u32_compare(
+            Type::Uint(32) | Type::Bool => u32_compare(
                 left,
                 right,
                 bin,
@@ -120,7 +117,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::NE,
             ),
-            Type::Uint(32) => u32_compare(
+            Type::Uint(32) | Type::Bool => u32_compare(
                 left,
                 right,
                 bin,
@@ -395,6 +392,8 @@ pub fn expression<'a>(
 
         Expression::AddressLiteral { value, .. } => bin.address_literal(value),
 
+        Expression::HashLiteral { value, .. } => bin.hash_literal(value),
+
         Expression::Variable { ty, var_no, .. } => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
             if ty.is_reference_type(ns) && !ty.is_contract_storage() {
@@ -449,10 +448,23 @@ pub fn expression<'a>(
             kind: LibFunc::OriginAddress,
             ..
         } => {
-            let origin_address_index = bin.context.i64_type().const_int(11, false);
-            let (heap_start_int, heap_start_ptr) =
-                bin.heap_malloc(bin.context.i64_type().const_int(4, false));
-            bin.context_data_load(heap_start_int, origin_address_index);
+            let (_, heap_start_ptr) = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+            for i in 0..4 {
+                let address_elem = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        heap_start_ptr,
+                        &[bin.context.i64_type().const_int(i, false)],
+                        "",
+                    )
+                };
+                let origin_address_index = bin.context.i64_type().const_int(8 + i, false);
+                let address_elem_int =
+                    bin.builder
+                        .build_ptr_to_int(address_elem, bin.context.i64_type(), "");
+                bin.context_data_load(address_elem_int, origin_address_index);
+            }
+
             heap_start_ptr.into()
         }
 
@@ -703,21 +715,36 @@ pub fn expression<'a>(
             array_literal_to_memory_array(expr, to, bin, func_value, var_table, ns)
         }
 
+        Expression::Cast { to, expr, .. }
+            if matches!(to, Type::String | Type::DynamicBytes)
+                && matches!(expr.ty(), Type::String | Type::DynamicBytes) =>
+        {
+            expression(expr, bin, func_value, var_table, ns)
+        }
+
+        Expression::Cast { to, expr, .. }
+            if matches!(to, Type::Hash | Type::Address)
+                && matches!(expr.ty(), Type::Hash | Type::Address) =>
+        {
+            expression(expr, bin, func_value, var_table, ns)
+        }
+
+        Expression::Cast { to, expr, .. }
+            if matches!(to, Type::DynamicBytes)
+                && matches!(expr.ty(), Type::Hash | Type::Address) =>
+        {
+            let source = expression(expr, bin, func_value, var_table, ns);
+            hash_or_address_to_fields(source, bin)
+        }
+
         Expression::BytesCast {
             from: Type::Field,
             to: Type::DynamicBytes,
             expr,
             ..
         } => {
-            unimplemented!("bytes cast from field")
-        }
-        Expression::BytesCast {
-            from: Type::DynamicBytes,
-            to: Type::Field,
-            expr,
-            ..
-        } => {
-            unimplemented!("bytes cast from field")
+            let source = expression(expr, bin, func_value, var_table, ns);
+            field_to_fields(source, bin)
         }
 
         Expression::StringCompare { left, right, .. } => {
@@ -828,7 +855,21 @@ pub fn expression<'a>(
         } => {
             let left = expression(&args[0], bin, func_value, var_table, ns);
             let right = expression(&args[1], bin, func_value, var_table, ns);
-            fields_concat(left, right, bin, func_value, var_table, ns)
+            fields_concat(left, right, bin, func_value)
+        }
+
+        Expression::LibFunction {
+            kind: LibFunc::PoseidonHash,
+            args,
+            ..
+        } => {
+            let hash_input = expression(&args[0], bin, func_value, var_table, ns);
+            let hash_input_length = bin.vector_len(hash_input);
+            let hash_input_data = bin.vector_data(hash_input);
+            bin.poseidon_hash(
+                func_value,
+                vec![(hash_input_data.into(), hash_input_length)],
+            )
         }
 
         _ => unimplemented!("{:?}", expr),
@@ -1119,7 +1160,7 @@ pub fn mapping_subscript<'a>(
     inputs.push((slot_value, bin.context.i64_type().const_int(4, false)));
 
     match index_ty {
-        Type::Uint(32) | Type::Field | Type::Bool | Type::Hash  | Type::Address => {
+        Type::Uint(32) | Type::Field | Type::Bool | Type::Hash | Type::Address => {
             let index_value = match index.get_type() {
                 BasicTypeEnum::IntType(..) => bin.convert_uint_storage(index),
                 _ => index,
@@ -1298,10 +1339,70 @@ fn fields_concat<'a>(
     right: BasicValueEnum<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
-    var_table: &mut Vartable<'a>,
-    ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    bin.context.i64_type().const_zero().as_basic_value_enum()
+    let left_len = bin.vector_len(left);
+    let left_data = bin.vector_data(left);
+    let right_len = bin.vector_len(right);
+    let right_data = bin.vector_data(right);
+    let new_len = bin.builder.build_int_add(left_len, right_len, "new_len");
+    let new_fields = bin.vector_new(new_len);
+
+    bin.mempcy(
+        func_value,
+        left_data,
+        new_fields,
+        bin.context.i64_type().const_zero(),
+        left_len,
+    );
+    bin.mempcy(func_value, right_data, new_fields, left_len, right_len);
+    new_fields.as_basic_value_enum()
+}
+
+fn field_to_fields<'a>(source: BasicValueEnum<'a>, bin: &Binary<'a>) -> BasicValueEnum<'a> {
+    let left_len = bin.context.i64_type().const_int(1, false);
+    let new_fields = bin.vector_new(left_len);
+    let dest_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            new_fields,
+            &[bin.context.i64_type().const_zero()],
+            "",
+        )
+    };
+    bin.builder.build_store(dest_elem_ptr, source);
+    new_fields.as_basic_value_enum()
+}
+
+fn hash_or_address_to_fields<'a>(
+    source: BasicValueEnum<'a>,
+    bin: &Binary<'a>,
+) -> BasicValueEnum<'a> {
+    let left_len = bin.context.i64_type().const_int(4, false);
+    let new_fields = bin.vector_new(left_len);
+    for i in 0..4 {
+        let source_elem_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                source.into_pointer_value(),
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        let source_value = bin
+            .builder
+            .build_load(bin.context.i64_type(), source_elem_ptr, "");
+
+        let dest_elem_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                new_fields,
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        bin.builder.build_store(dest_elem_ptr, source_value);
+    }
+    new_fields.as_basic_value_enum()
 }
 
 /// Call external binary

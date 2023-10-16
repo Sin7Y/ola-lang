@@ -452,6 +452,14 @@ pub enum Expression {
         value: Vec<BigInt>,
     },
 
+    // The hash type is composed of 4 Filed elements in the underlying storage,
+    // totaling 256 bits.
+    HashLiteral {
+        loc: program::Loc,
+        ty: Type,
+        value: Vec<BigInt>,
+    },
+
     ArrayLiteral {
         loc: program::Loc,
         ty: Type,
@@ -730,7 +738,6 @@ pub enum Expression {
     },
 }
 
-
 #[derive(PartialEq, Eq, Clone, Default, Debug)]
 pub struct CallArgs {
     pub gas: Option<Box<Expression>>,
@@ -747,7 +754,6 @@ impl Recurse for CallArgs {
         if let Some(value) = &self.value {
             value.recurse(cx, f);
         }
-
     }
 }
 
@@ -868,6 +874,7 @@ impl CodeLocation for Expression {
             | Expression::BytesLiteral { loc, .. }
             | Expression::NumberLiteral { loc, .. }
             | Expression::AddressLiteral { loc, .. }
+            | Expression::HashLiteral { loc, .. }
             | Expression::StructLiteral { loc, .. }
             | Expression::ArrayLiteral { loc, .. }
             | Expression::ConstArrayLiteral { loc, .. }
@@ -964,8 +971,6 @@ pub enum LibFunc {
     PoseidonHash,
     ChainId,
     FieldsConcat,
-
-
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

@@ -1,6 +1,7 @@
 use inkwell::{
     basic_block::BasicBlock,
-    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue}, AddressSpace,
+    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue},
+    AddressSpace,
 };
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
@@ -27,7 +28,7 @@ fn public_function_prelude<'a>(
 /// function.
 pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
     let ty = bin.context.void_type().fn_type(&[], false);
-    let name = if init.is_some() { "deploy" } else { "call" };
+    let name = if init.is_some() { "deploy" } else { "main" };
     let func = bin.module.add_function(name, ty, None);
     let (selector, input_length, input) = public_function_prelude(bin, func);
     if let Some(initializer) = init {

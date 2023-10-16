@@ -147,7 +147,7 @@ loop_end:                                         ; preds = %loop_body
   ret void
 }
 
-define void @call() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

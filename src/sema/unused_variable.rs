@@ -225,7 +225,6 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
     }
 }
 
-
 /// Mark function call arguments as used
 fn check_call_args(ns: &mut Namespace, call_args: &CallArgs, symtable: &mut Symtable) {
     if let Some(gas) = &call_args.gas {
@@ -249,7 +248,10 @@ pub fn check_var_usage_expression(
 }
 
 /// Emit different warning types according to the function variable usage
-pub fn emit_warning_local_variable(variable: &symtable::Variable, ns: &Namespace) -> Option<Diagnostic> {
+pub fn emit_warning_local_variable(
+    variable: &symtable::Variable,
+    ns: &Namespace,
+) -> Option<Diagnostic> {
     match &variable.usage_type {
         VariableUsage::Parameter => {
             if (!variable.read && !variable.ty.is_reference_type(ns))
@@ -294,8 +296,8 @@ pub fn emit_warning_local_variable(variable: &symtable::Variable, ns: &Namespace
                     format!("local variable '{}' is unused", variable.id.name),
                 ));
             } else if assigned && !variable.read && !variable.is_reference() {
-                // Values assigned to variables that reference others change the value of its reference
-                // No warning needed in this case
+                // Values assigned to variables that reference others change the value of its
+                // reference No warning needed in this case
                 return Some(Diagnostic::warning(
                     variable.id.loc,
                     format!(

@@ -10,7 +10,8 @@ use crate::sema::expression::{
     function_call::{call_expr, named_call_expr},
     integers::{coerce, coerce_number, type_bits},
     literals::{
-        address_literal, array_literal, hex_number_literal, number_literal, string_literal,
+        address_literal, array_literal, hash_literal, hex_number_literal, number_literal,
+        string_literal,
     },
     member_access::member_access,
     subscript::array_subscript,
@@ -69,6 +70,8 @@ pub fn expression(
         program::Expression::AddressLiteral(loc, address) => {
             address_literal(loc, address, diagnostics)
         }
+
+        program::Expression::HashLiteral(loc, hash) => hash_literal(loc, hash, diagnostics),
 
         program::Expression::Variable(id) => {
             variable(id, context, ns, symtable, diagnostics, resolve_to)

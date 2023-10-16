@@ -18,6 +18,7 @@ impl RetrieveType for Expression {
             | Expression::BytesLiteral { ty, .. }
             | Expression::NumberLiteral { ty, .. }
             | Expression::AddressLiteral { ty, .. }
+            | Expression::HashLiteral { ty, .. }
             | Expression::StructLiteral { ty, .. }
             | Expression::ArrayLiteral { ty, .. }
             | Expression::ConstArrayLiteral { ty, .. }
@@ -48,11 +49,10 @@ impl RetrieveType for Expression {
             Expression::Subscript { ty, .. } => ty.clone(),
             Expression::ZeroExt { to, .. }
             | Expression::Trunc { to, .. }
-            | Expression::Cast { to, .. }  | Expression::BytesCast { to, .. }  => to.clone(),
+            | Expression::Cast { to, .. }
+            | Expression::BytesCast { to, .. } => to.clone(),
             Expression::StorageArrayLength { ty, .. } => ty.clone(),
-            Expression::ExternalFunctionCallRaw { .. } => {
-                Type::DynamicBytes
-            }
+            Expression::ExternalFunctionCallRaw { .. } => Type::DynamicBytes,
             Expression::LibFunction { tys: returns, .. }
             | Expression::FunctionCall { returns, .. } => {
                 assert_eq!(returns.len(), 1);
