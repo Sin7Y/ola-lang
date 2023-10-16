@@ -201,7 +201,6 @@ pub(crate) fn statement<'a>(
         Statement::While(_, _, cond_expr, body_stmt) => {
             let body = bin.context.append_basic_block(func_value, "body");
             let cond = bin.context.append_basic_block(func_value, "cond");
-
             let end = bin.context.append_basic_block(func_value, "endwhile");
 
             bin.builder.build_unconditional_branch(cond);
@@ -209,9 +208,13 @@ pub(crate) fn statement<'a>(
             bin.builder.position_at_end(cond);
 
             let cond_expr = expression(cond_expr, bin, func_value, var_table, ns);
+            let cond_expr = bin.builder.build_int_truncate(
+                cond_expr.into_int_value(),
+                bin.context.bool_type(),
+                "",
+            );
 
-            bin.builder
-                .build_conditional_branch(cond_expr.into_int_value(), body, end);
+            bin.builder.build_conditional_branch(cond_expr, body, end);
 
             bin.builder.position_at_end(body);
 
@@ -260,9 +263,13 @@ pub(crate) fn statement<'a>(
             bin.builder.position_at_end(cond);
 
             let cond_expr = expression(cond_expr, bin, func_value, var_table, ns);
+            let cond_expr = bin.builder.build_int_truncate(
+                cond_expr.into_int_value(),
+                bin.context.bool_type(),
+                "",
+            );
 
-            bin.builder
-                .build_conditional_branch(cond_expr.into_int_value(), body, end);
+            bin.builder.build_conditional_branch(cond_expr, body, end);
 
             bin.builder.position_at_end(end);
         }
@@ -290,12 +297,15 @@ fn if_then<'a>(
     let pos = bin.builder.get_insert_block().unwrap();
     let cond = expression(cond, bin, func_value, var_table, ns);
 
+    let cond = bin
+        .builder
+        .build_int_truncate(cond.into_int_value(), bin.context.bool_type(), "");
+
     let then = bin.context.append_basic_block(func_value, "then");
     let endif = bin.context.append_basic_block(func_value, "enif");
     bin.builder.position_at_end(pos);
 
-    bin.builder
-        .build_conditional_branch(cond.into_int_value(), then, endif);
+    bin.builder.build_conditional_branch(cond, then, endif);
     bin.builder.position_at_end(then);
     let mut reachable = true;
     for stmt in then_stmt {
@@ -322,14 +332,16 @@ fn if_then_else<'a>(
 ) {
     let pos = bin.builder.get_insert_block().unwrap();
     let cond = expression(cond, bin, func_value, var_table, ns);
+    let cond = bin
+        .builder
+        .build_int_truncate(cond.into_int_value(), bin.context.bool_type(), "");
 
     let then = bin.context.append_basic_block(func_value, "then");
     let else_ = bin.context.append_basic_block(func_value, "else");
     let endif = bin.context.append_basic_block(func_value, "enif");
     bin.builder.position_at_end(pos);
 
-    bin.builder
-        .build_conditional_branch(cond.into_int_value(), then, else_);
+    bin.builder.build_conditional_branch(cond, then, else_);
     bin.builder.position_at_end(then);
     let mut reachable = true;
     for stmt in then_stmt {
@@ -417,6 +429,9 @@ fn destructure<'a>(
     } = expr
     {
         let cond = expression(cond, bin, func_value, var_table, ns);
+        let cond =
+            bin.builder
+                .build_int_truncate(cond.into_int_value(), bin.context.bool_type(), "");
         let left_block = bin.context.append_basic_block(func_value, "left_value");
         let right_block = bin.context.append_basic_block(func_value, "right_value");
         let done_block = bin
@@ -424,7 +439,7 @@ fn destructure<'a>(
             .append_basic_block(func_value, "conditional_done");
 
         bin.builder
-            .build_conditional_branch(cond.into_int_value(), left_block, right_block);
+            .build_conditional_branch(cond, left_block, right_block);
 
         bin.builder.position_at_end(left_block);
 
@@ -552,6 +567,14 @@ impl Type {
                     &mut var_table,
                     ns,
                 ))
+            }
+            Type::Hash => {
+                let hash_expr = Expression::HashLiteral {
+                    loc: IRgen,
+                    ty: self.clone(),
+                    value: vec![BigInt::from(0); 4],
+                };
+                Some(expression(&hash_expr, bin, func_value, &mut var_table, ns))
             }
             Type::Bool => {
                 let bool_expr = Expression::BoolLiteral {

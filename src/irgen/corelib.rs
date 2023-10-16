@@ -27,7 +27,7 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
         "get_storage",
         "set_storage",
         "poseidon_hash",
-        "contract_call"
+        "contract_call",
     ]
 });
 
@@ -129,7 +129,10 @@ pub fn declare_prophets(bin: &mut Binary) {
             // first param is heap address.
             // sencond param is tape index.
             let void_type = bin.context.void_type();
-            let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
+            let ftype = void_type.fn_type(
+                &[bin.context.i64_type().into(), bin.context.i64_type().into()],
+                false,
+            );
             bin.module.add_function("get_context_data", ftype, None);
         }
 
@@ -137,14 +140,20 @@ pub fn declare_prophets(bin: &mut Binary) {
             // first param is heap address.
             // sencond param is tape index.
             let void_type = bin.context.void_type();
-            let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
+            let ftype = void_type.fn_type(
+                &[bin.context.i64_type().into(), bin.context.i64_type().into()],
+                false,
+            );
             bin.module.add_function("get_tape_data", ftype, None);
         }
         "set_tape_data" => {
             // first param is heap address.
             // sencond param is data len.
             let void_type = bin.context.void_type();
-            let ftype = void_type.fn_type(&[bin.context.i64_type().into(), bin.context.i64_type().into()], false);
+            let ftype = void_type.fn_type(
+                &[bin.context.i64_type().into(), bin.context.i64_type().into()],
+                false,
+            );
             bin.module.add_function("set_tape_data", ftype, None);
         }
 
@@ -175,7 +184,8 @@ pub fn declare_prophets(bin: &mut Binary) {
             let void_type = bin.context.void_type();
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
-            let ftype = void_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
+            let ftype =
+                void_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
             bin.module.add_function("poseidon_hash", ftype, None);
         }
         "contract_call" => {

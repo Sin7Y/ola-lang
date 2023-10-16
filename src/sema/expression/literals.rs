@@ -65,6 +65,7 @@ pub(super) fn address_literal(
     address: &str,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
+    let address = address.trim_end_matches("address");
     if !address.chars().any(|c| c == '_') && address.len() == 64 {
         let mut address_vec = Vec::new();
         for (_, chunk) in address.as_bytes().chunks(16).enumerate() {
@@ -99,6 +100,41 @@ pub(super) fn address_literal(
     }
 }
 
+pub(super) fn hash_literal(
+    loc: &program::Loc,
+    hash: &str,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    let hash = hash.trim_end_matches("hash");
+    if !hash.chars().any(|c| c == '_') && hash.len() == 64 {
+        let mut hash_vec = Vec::new();
+        for (_, chunk) in hash.as_bytes().chunks(16).enumerate() {
+            let hash_chunk = u64::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
+            // We need to check if each chunk exceeds the FIELD_ORDER.
+            if hash_chunk > FIELD_ORDER {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!("hash literal {} out of range", hash),
+                ));
+                return Err(());
+            } else {
+                hash_vec.push(BigInt::from_u64(hash_chunk).unwrap());
+            }
+        }
+        Ok(Expression::HashLiteral {
+            loc: *loc,
+            ty: Type::Hash,
+            value: hash_vec,
+        })
+    } else {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!("hash literal {} incorrect length of {}", hash, hash.len()),
+        ));
+        Err(())
+    }
+}
+
 /// Resolve the given number literal, multiplied by value of unit
 pub(super) fn number_literal(
     loc: &Loc,
@@ -119,11 +155,10 @@ pub(super) fn hex_number_literal(
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
     // from_str_radix does not like the 0x prefix
-    let s: String = n.chars().skip(2).filter(|v| *v != '_').collect();
 
     bigint_to_expression(
         loc,
-        &BigInt::from_str_radix(s.as_str(), 16).unwrap(),
+        &BigInt::from_str_radix(n, 16).unwrap(),
         ns,
         diagnostics,
         resolve_to,

@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    allow_memcpy, buffer_validator::BufferValidator, finish_array_loop,
-    index_array, set_array_loop, calculate_memory_size,
+    allow_memcpy, buffer_validator::BufferValidator, calculate_memory_size, finish_array_loop,
+    index_array, set_array_loop,
 };
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
@@ -37,7 +37,7 @@ pub(crate) fn read_from_buffer<'a>(
             (read_value, size)
         }
 
-        Type::Address | Type::Contract(_) => {
+        Type::Address | Type::Contract(_) | Type::Hash => {
             let read_bytes = ty.memory_size_of(ns);
 
             let size = bin
@@ -46,11 +46,11 @@ pub(crate) fn read_from_buffer<'a>(
                 .const_int(read_bytes.to_u64().unwrap(), false);
             validator.validate_offset_plus_size(bin, offset, size, func_value);
 
-            let read_value = decode_address(buffer, &mut offset.clone(), bin);
+            let read_value = decode_address_or_hash(buffer, &mut offset.clone(), bin);
             (read_value, size)
         }
 
-        Type::String => {
+        Type::String | Type::DynamicBytes => {
             // String and Dynamic bytes are encoded as size + elements
             let array_length = decode_uint(buffer, offset, bin);
             let total_size = bin.builder.build_int_add(
@@ -133,7 +133,7 @@ pub(crate) fn read_from_buffer<'a>(
             ns,
         ),
 
-        _ => unreachable!("Type should not appear on an encoded buffer"),
+        _ => unreachable!("read_from_buffer: {:?}", ty),
     }
 }
 
@@ -151,20 +151,36 @@ fn decode_uint<'a>(
         .build_load(bin.context.i64_type(), start, "value")
 }
 
-fn decode_address<'a>(
+// fn decode_bool<'a>(
+//     buffer: PointerValue<'a>,
+//     offset: IntValue<'a>,
+//     bin: &Binary<'a>,
+// ) -> BasicValueEnum<'a> {
+//     let start = unsafe {
+//         bin.builder
+//             .build_gep(bin.context.bool_type(), buffer, &[offset], "start")
+//     };
+
+//     bin.builder
+//         .build_load(bin.context.bool_type(), start, "value")
+// }
+
+fn decode_address_or_hash<'a>(
     buffer: PointerValue<'a>,
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
-    let (_, address_ptr) = bin.heap_malloc(
-        bin.context.i64_type().const_int(4, false)
-    );
+    let (_, address_ptr) = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
 
     for i in 0..4 {
         let value: BasicValueEnum<'_> = decode_uint(buffer, *offset, bin);
         let elem_ptr = unsafe {
-            bin.builder
-                .build_gep(bin.context.i64_type(), address_ptr, &[bin.context.i64_type().const_int(i, false)], "element")
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                address_ptr,
+                &[bin.context.i64_type().const_int(i, false)],
+                "element",
+            )
         };
         bin.builder.build_store(elem_ptr, value);
         *offset =

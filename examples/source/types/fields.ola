@@ -1,0 +1,11 @@
+contract FieldsContract {
+
+    fn fields_test() -> (fields){
+       string a = "hello";
+       string b = "world";
+       fields a_b = fields_concat(a, b);
+       return a_b;
+
+    }
+
+}

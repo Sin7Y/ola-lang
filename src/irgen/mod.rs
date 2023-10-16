@@ -6,11 +6,11 @@ mod dispatch;
 mod encoding;
 mod expression;
 mod functions;
+pub mod hash_op;
 mod statements;
 pub mod storage;
 mod strings;
 pub mod u32_op;
-pub mod hash_op;
 mod unused_variable;
 
 use crate::sema::ast;

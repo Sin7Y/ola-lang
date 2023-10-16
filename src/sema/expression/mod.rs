@@ -14,6 +14,8 @@ mod subscript;
 mod variable;
 use std::cmp::Ordering;
 
+use num_bigint::BigInt;
+use num_traits::Zero;
 use ola_parser::program;
 
 use super::ast::{ArrayLength, Diagnostic, Expression, Namespace, RetrieveType, Type};
@@ -147,27 +149,54 @@ impl Expression {
                 };
             }
 
-            (Expression::NumberLiteral { value, .. }, p, &Type::Field)
-            if p.is_primitive() =>
-        {
-            return if from != Type::Uint(32) {
-                diagnostics.push(Diagnostic::cast_error(
-                    *loc,
-                    format!(
-                        "type {} cannot be converted to type '{}'",
-                        from.to_string(ns),
-                        to.to_string(ns)
-                    ),
-                ));
-                Err(())
-            } else {
-                Ok(Expression::NumberLiteral {
+            (Expression::NumberLiteral { value, .. }, p, &Type::Field) if p.is_primitive() => {
+                return if from != Type::Uint(32) {
+                    diagnostics.push(Diagnostic::cast_error(
+                        *loc,
+                        format!(
+                            "type {} cannot be converted to type '{}'",
+                            from.to_string(ns),
+                            to.to_string(ns)
+                        ),
+                    ));
+                    Err(())
+                } else {
+                    Ok(Expression::NumberLiteral {
+                        loc: *loc,
+                        ty: Type::Field,
+                        value: value.clone(),
+                    })
+                };
+            }
+
+            (Expression::NumberLiteral { value, .. }, p, &Type::Address)
+                if *p == Type::Uint(32) =>
+            {
+                let address = vec![
+                    BigInt::zero(),
+                    BigInt::zero(),
+                    BigInt::zero(),
+                    value.clone(),
+                ];
+                return Ok(Expression::AddressLiteral {
                     loc: *loc,
-                    ty: Type::Field,
-                    value: value.clone(),
-                })
-            };
-        }
+                    ty: Type::Address,
+                    value: address,
+                });
+            }
+            (Expression::NumberLiteral { value, .. }, p, &Type::Hash) if *p == Type::Uint(32) => {
+                let hash = vec![
+                    BigInt::zero(),
+                    BigInt::zero(),
+                    BigInt::zero(),
+                    value.clone(),
+                ];
+                return Ok(Expression::HashLiteral {
+                    loc: *loc,
+                    ty: Type::Hash,
+                    value: hash,
+                });
+            }
 
             (
                 &Expression::ArrayLiteral { .. },
@@ -265,11 +294,18 @@ impl Expression {
                     expr: Box::new(self.clone()),
                 })
             }
-            (Type::Hash, Type::Address)  | (Type::Address, Type::Hash)=> Ok(Expression::Cast {
+            (Type::Hash, Type::Address) | (Type::Address, Type::Hash) => Ok(Expression::Cast {
                 loc: *loc,
                 to: to.clone(),
                 expr: Box::new(self.clone()),
             }),
+            (Type::Hash, Type::DynamicBytes) | (Type::Address, Type::DynamicBytes) => {
+                Ok(Expression::Cast {
+                    loc: *loc,
+                    to: to.clone(),
+                    expr: Box::new(self.clone()),
+                })
+            }
 
             // Match any array with ArrayLength::AnyFixed if is it fixed for that dimension, and the
             // element type and other dimensions also match
@@ -283,23 +319,21 @@ impl Expression {
                 Ok(self.clone())
             }
 
-            (Type::DynamicBytes | Type::Field, Type::Slice(ty))
-            if ty.as_ref() == &Type::Field =>
-        {
-            Ok(Expression::Cast {
-                loc: *loc,
-                to: to.clone(),
-                expr: Box::new(self.clone()),
-            })
-        }
-
-            (Type::String, Type::DynamicBytes) | (Type::DynamicBytes, Type::String) =>{
+            (Type::DynamicBytes | Type::Field, Type::Slice(ty)) if ty.as_ref() == &Type::Field => {
                 Ok(Expression::Cast {
                     loc: *loc,
                     to: to.clone(),
                     expr: Box::new(self.clone()),
                 })
-        }
+            }
+
+            (Type::String, Type::DynamicBytes) | (Type::DynamicBytes, Type::String) => {
+                Ok(Expression::Cast {
+                    loc: *loc,
+                    to: to.clone(),
+                    expr: Box::new(self.clone()),
+                })
+            }
 
             _ => {
                 diagnostics.push(Diagnostic::cast_error(

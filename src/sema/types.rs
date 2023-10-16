@@ -73,7 +73,10 @@ fn type_decl(
     // - This would require resolving the types definition after all other types are
     //   resolved
     // - Need for circular checks (type a is b; type b is a;)
-    if !matches!(ty, Type::Address | Type::Uint(_) | Type::Bool | Type::Hash | Type::Field ) {
+    if !matches!(
+        ty,
+        Type::Address | Type::Uint(_) | Type::Bool | Type::Hash | Type::Field
+    ) {
         ns.diagnostics.push(Diagnostic::error(
             def.ty.loc(),
             format!("'{}' is not an elementary value type", ty.to_string(ns)),
@@ -797,7 +800,11 @@ impl Type {
                 .iter()
                 .map(|d| d.ty.memory_size_of_internal(ns, structs_visited))
                 .sum::<BigInt>(),
-            Type::String | Type::DynamicBytes | Type::Ref(_) | Type::Slice(_) | Type::StorageRef(..) => BigInt::one(),
+            Type::String
+            | Type::DynamicBytes
+            | Type::Ref(_)
+            | Type::Slice(_)
+            | Type::StorageRef(..) => BigInt::one(),
             Type::Unresolved => BigInt::zero(),
             Type::UserType(no) => ns.user_types[*no]
                 .ty
@@ -1012,7 +1019,11 @@ impl Type {
     pub fn can_have_data_location(&self) -> bool {
         matches!(
             self,
-            Type::Array(..) | Type::Struct(_) | Type::Mapping(..) | Type::String | Type::DynamicBytes
+            Type::Array(..)
+                | Type::Struct(_)
+                | Type::Mapping(..)
+                | Type::String
+                | Type::DynamicBytes
         )
     }
 

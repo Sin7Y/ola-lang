@@ -262,11 +262,14 @@ LiteralExpression: Expression = {
         Expression::NumberLiteral(Loc::File(file_no, l, r), n)
       },
     <l:@L> <n: HexNumber> <r:@R> =>  {
-        Expression::HexNumberLiteral(Loc::File(file_no, l, r), n)
+        Expression::HexNumberLiteral(Loc::File(file_no, l, r), n.chars().skip(2).filter(|c|  *c != '"' && *c != '\'').collect())
     },
     <StringLiteral+> => Expression::StringLiteral(<>),
     <l:@L> <a: AddressLiteral> <r:@R> => {
         Expression::AddressLiteral(Loc::File(file_no, l, r), a.chars().skip(2).filter(|c|  *c != '"' && *c != '\'').collect())
+    },
+    <l:@L> <a: HashLiteral> <r:@R> => {
+        Expression::HashLiteral(Loc::File(file_no, l, r), a.chars().skip(2).filter(|c|  *c != '"' && *c != '\'').collect())
     },
 }
 
@@ -421,11 +424,15 @@ Number: String = {
 }
 
 HexNumber: String = {
-    r#"0x[0-9A-Fa-f]{1,63}"# => <>.to_string()
+    r#"0x[0-9A-Fa-f]+"# => <>.to_string()
 }
 
 AddressLiteral: String = {
-    r#"0x[0-9A-Fa-f]{64}"# => <>.to_string(),
+    r#"0x([0-9A-Fa-f]{64})address"# => <>.to_string(),
+}
+
+HashLiteral: String = {
+    r#"0x[0-9A-Fa-f]{64}hash"# => <>.to_string(),
 }
 
 

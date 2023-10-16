@@ -1,15 +1,15 @@
-contract AddressExample {
+contract StringExample {
     string str;
 
-    // fn set(string s) {
-    //     str = s;
-    // }
+    fn set(string s) {
+        str = s;
+    }
 
     fn setStringLiteral() {
         str = "hello";
     }
 
-    // fn get() -> (string) {
-    //     return str;
-    // }
+    fn get() -> (string) {
+        return str;
+    }
 }

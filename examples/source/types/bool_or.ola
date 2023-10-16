@@ -1,0 +1,10 @@
+contract BoolContract {
+
+    fn bool_bitwise() -> (bool) {
+        bool a = true;
+        bool b = false;
+        bool c = a == b;
+        return c;
+    }
+
+}

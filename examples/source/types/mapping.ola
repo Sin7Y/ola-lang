@@ -1,0 +1,11 @@
+contract NonceHolder {
+
+    mapping(address => mapping(u32 => bool)) nonces;
+
+
+    fn setNonce(address _address, u32 _nonce) {
+        assert(!nonces[_address][_nonce], "Nonce already used");
+        nonces[_address][_nonce] = true;
+        assert(nonces[_address][_nonce]);
+    }
+}

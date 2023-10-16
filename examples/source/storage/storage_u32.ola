@@ -4,14 +4,7 @@ contract SimpleVar {
     /// This increments the value by `by`.
     fn inc_simple() {
         value = 100;
-    }
-
-    fn get() -> (u32) {
-        return value;
-    }
-
-    fn main() {
-        inc_simple();
-        u32 x = get();
+        assert(value == 100);
     }
 }
+
