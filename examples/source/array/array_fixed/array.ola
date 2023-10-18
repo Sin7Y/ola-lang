@@ -1,13 +1,11 @@
 
 contract FixedArrayExample {
     
-    fn main() {
-       u32[3] array = [1, 2, 3]; 
-       array[1] += 1;
-       u32[3] array1 = [1, 2, 3];
+    fn fixed_array_test() {
        u32[3] array2;
        array2[2] = 99;  
        u32[3] array_return = array_call(array2);
+       assert(array_return[2] == 100);
     }
 
     fn array_call(u32[3] source) -> (u32[3]) {

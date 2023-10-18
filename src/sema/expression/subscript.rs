@@ -65,7 +65,7 @@ pub(super) fn array_subscript(
     index = index.cast(&index.loc(), index_ty.deref_any(), ns, diagnostics)?;
     let deref_ty = array_ty.deref_any();
     match deref_ty {
-        Type::Array(..) | Type::Slice(_) => {
+        Type::Array(..) | Type::Slice(_) | Type::String | Type::DynamicBytes => {
             if array_ty.is_contract_storage() {
                 let elem_ty = array_ty.storage_array_elem();
 
@@ -98,13 +98,6 @@ pub(super) fn array_subscript(
                     index: Box::new(index),
                 })
             }
-        }
-        Type::String => {
-            diagnostics.push(Diagnostic::error(
-                array.loc(),
-                "array subscript is not permitted on string".to_string(),
-            ));
-            Err(())
         }
         _ => {
             diagnostics.push(Diagnostic::error(

@@ -1,6 +1,6 @@
 contract SqrtContract {
 
-    fn main() {
+    fn test() {
        sqrt_test(4);
     }
 

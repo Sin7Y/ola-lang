@@ -762,6 +762,7 @@ impl Type {
             Type::StorageRef(ty) => ty.array_length(),
             Type::Ref(ty) => ty.array_length(),
             Type::Array(_, dim) => dim.last().unwrap().array_length(),
+            Type::String | Type::DynamicBytes => None,
             _ => panic!("array_length on non-array"),
         }
     }

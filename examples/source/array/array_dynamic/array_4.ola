@@ -1,9 +1,11 @@
 contract DynamicArrayExample {
     
-    fn main() {
+    fn test() {
        u32[] array = new u32[](5);
         array[0] = 1;
+        assert(array[0] == 1);
         u32[] array1 = array_call(5);
+        assert(array1[0] == 0);
     }
 
      fn array_call(u32 length) -> (u32[]) {

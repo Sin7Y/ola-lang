@@ -31,7 +31,7 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @main() {
+define void @test() {
 entry:
   %0 = call i64 @vector_new(i64 4)
   %heap_start = sub i64 %0, 4
@@ -46,24 +46,28 @@ entry:
   store i64 2, ptr %index_access1, align 4
   %index_access2 = getelementptr ptr, ptr %vector_data, i64 2
   store i64 3, ptr %index_access2, align 4
+  %length = load i64, ptr %heap_to_ptr, align 4
+  %3 = icmp eq i64 %length, 3
+  %4 = zext i1 %3 to i64
+  call void @builtin_assert(i64 %4)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
+    i64 1845340408, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @main()
+  call void @test()
   ret void
 }
 
-define void @main.1() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

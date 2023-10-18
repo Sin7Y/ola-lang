@@ -1,6 +1,6 @@
 contract Fibonacci {
 
-    fn main() {
+     {
        fib_non_recursive(10);
     }
 

@@ -75,13 +75,13 @@ entry:
   %heap_start13 = sub i64 %7, 4
   %heap_to_ptr14 = inttoptr i64 %heap_start13 to ptr
   %index_access15 = getelementptr i64, ptr %heap_to_ptr14, i64 0
-  store i64 4692159035906872723, ptr %index_access15, align 4
+  store i64 129094667183523914, ptr %index_access15, align 4
   %index_access16 = getelementptr i64, ptr %heap_to_ptr14, i64 1
-  store i64 -4805056113212431578, ptr %index_access16, align 4
+  store i64 107395124437206779, ptr %index_access16, align 4
   %index_access17 = getelementptr i64, ptr %heap_to_ptr14, i64 2
-  store i64 2405669345567842630, ptr %index_access17, align 4
+  store i64 -7568657024057810014, ptr %index_access17, align 4
   %index_access18 = getelementptr i64, ptr %heap_to_ptr14, i64 3
-  store i64 8945146172829781474, ptr %index_access18, align 4
+  store i64 1885151562297713155, ptr %index_access18, align 4
   %left_elem_0 = getelementptr i64, ptr %6, i64 0
   %8 = load i64, ptr %left_elem_0, align 4
   %right_elem_0 = getelementptr i64, ptr %heap_to_ptr14, i64 0
