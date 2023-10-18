@@ -33,10 +33,81 @@ declare void @contract_call(ptr, i64)
 
 define i64 @sum(ptr %0) {
 entry:
+  %i = alloca i64, align 8
   %totalSum = alloca i64, align 8
+  %index_alloca = alloca i64, align 8
+  %1 = call i64 @vector_new(i64 11)
+  %heap_start = sub i64 %1, 11
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 10, ptr %heap_to_ptr, align 4
+  %2 = ptrtoint ptr %heap_to_ptr to i64
+  %3 = add i64 %2, 1
+  %vector_data = inttoptr i64 %3 to ptr
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, 10
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+  store i64 0, ptr %index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
   store i64 0, ptr %totalSum, align 4
-  %1 = load i64, ptr %totalSum, align 4
-  ret i64 %1
+  store i64 0, ptr %i, align 4
+  br label %cond1
+
+cond1:                                            ; preds = %next, %done
+  %4 = load i64, ptr %i, align 4
+  %5 = icmp ult i64 %4, 10
+  br i1 %5, label %body2, label %endfor
+
+body2:                                            ; preds = %cond1
+  %6 = load i64, ptr %i, align 4
+  %length = load i64, ptr %heap_to_ptr, align 4
+  %7 = sub i64 %length, 1
+  %8 = sub i64 %7, %6
+  call void @builtin_range_check(i64 %8)
+  %9 = ptrtoint ptr %heap_to_ptr to i64
+  %10 = add i64 %9, 1
+  %vector_data3 = inttoptr i64 %10 to ptr
+  %index_access4 = getelementptr i64, ptr %vector_data3, i64 %6
+  %11 = load i64, ptr %i, align 4
+  %12 = sub i64 9, %11
+  call void @builtin_range_check(i64 %12)
+  %index_access5 = getelementptr [10 x i64], ptr %0, i64 0, i64 %11
+  %13 = load i64, ptr %index_access5, align 4
+  store i64 %13, ptr %index_access4, align 4
+  %14 = load i64, ptr %totalSum, align 4
+  %15 = load i64, ptr %i, align 4
+  %length6 = load i64, ptr %heap_to_ptr, align 4
+  %16 = sub i64 %length6, 1
+  %17 = sub i64 %16, %15
+  call void @builtin_range_check(i64 %17)
+  %18 = ptrtoint ptr %heap_to_ptr to i64
+  %19 = add i64 %18, 1
+  %vector_data7 = inttoptr i64 %19 to ptr
+  %index_access8 = getelementptr i64, ptr %vector_data7, i64 %15
+  %20 = load i64, ptr %index_access8, align 4
+  %21 = add i64 %14, %20
+  call void @builtin_range_check(i64 %21)
+  br label %next
+
+next:                                             ; preds = %body2
+  %22 = load i64, ptr %i, align 4
+  %23 = add i64 %22, 1
+  store i64 %23, ptr %i, align 4
+  br label %cond1
+
+endfor:                                           ; preds = %cond1
+  %24 = load i64, ptr %totalSum, align 4
+  ret i64 %24
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {

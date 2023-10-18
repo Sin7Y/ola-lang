@@ -31,7 +31,7 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @main() {
+define void @test() {
 entry:
   %index_alloca = alloca i64, align 8
   %0 = call i64 @vector_new(i64 6)
@@ -66,7 +66,31 @@ done:                                             ; preds = %cond
   %vector_data1 = inttoptr i64 %6 to ptr
   %index_access2 = getelementptr i64, ptr %vector_data1, i64 0
   store i64 1, ptr %index_access2, align 4
-  %7 = call ptr @array_call(i64 5)
+  %length3 = load i64, ptr %heap_to_ptr, align 4
+  %7 = sub i64 %length3, 1
+  %8 = sub i64 %7, 0
+  call void @builtin_range_check(i64 %8)
+  %9 = ptrtoint ptr %heap_to_ptr to i64
+  %10 = add i64 %9, 1
+  %vector_data4 = inttoptr i64 %10 to ptr
+  %index_access5 = getelementptr i64, ptr %vector_data4, i64 0
+  %11 = load i64, ptr %index_access5, align 4
+  %12 = icmp eq i64 %11, 1
+  %13 = zext i1 %12 to i64
+  call void @builtin_assert(i64 %13)
+  %14 = call ptr @array_call(i64 5)
+  %length6 = load i64, ptr %14, align 4
+  %15 = sub i64 %length6, 1
+  %16 = sub i64 %15, 0
+  call void @builtin_range_check(i64 %16)
+  %17 = ptrtoint ptr %14 to i64
+  %18 = add i64 %17, 1
+  %vector_data7 = inttoptr i64 %18 to ptr
+  %index_access8 = getelementptr i64, ptr %vector_data7, i64 0
+  %19 = load i64, ptr %index_access8, align 4
+  %20 = icmp eq i64 %19, 0
+  %21 = zext i1 %20 to i64
+  call void @builtin_assert(i64 %21)
   ret void
 }
 
@@ -107,7 +131,7 @@ done:                                             ; preds = %cond
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
+    i64 1845340408, label %func_0_dispatch
     i64 991959678, label %func_1_dispatch
   ]
 
@@ -115,7 +139,7 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @main()
+  call void @test()
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -170,7 +194,7 @@ loop_end:                                         ; preds = %loop_body
   ret void
 }
 
-define void @main.1() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

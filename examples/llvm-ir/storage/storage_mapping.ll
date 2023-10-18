@@ -33,7 +33,7 @@ declare void @contract_call(ptr, i64)
 
 define void @add_mapping(ptr %0, i64 %1) {
 entry:
-  %index_alloca7 = alloca i64, align 8
+  %index_alloca6 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
   %number = alloca i64, align 8
   %name = alloca ptr, align 8
@@ -62,57 +62,59 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr i64, ptr %heap_to_ptr, i64 %index_value
-  %8 = load i64, ptr %index_access, align 4
-  %9 = add i64 0, %index_value
-  %index_access3 = getelementptr i64, ptr %heap_to_ptr2, i64 %9
-  store i64 %8, ptr %index_access3, align 4
+  %8 = add i64 0, %index_value
+  %src_index_access = getelementptr i64, ptr %heap_to_ptr, i64 %8
+  %9 = load i64, ptr %src_index_access, align 4
+  %10 = add i64 0, %index_value
+  %dest_index_access = getelementptr i64, ptr %heap_to_ptr2, i64 %10
+  store i64 %9, ptr %dest_index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  store i64 0, ptr %index_alloca7, align 4
-  br label %cond4
+  store i64 0, ptr %index_alloca6, align 4
+  br label %cond3
 
-cond4:                                            ; preds = %body5, %done
-  %index_value8 = load i64, ptr %index_alloca7, align 4
-  %loop_cond9 = icmp ult i64 %index_value8, 4
-  br i1 %loop_cond9, label %body5, label %done6
+cond3:                                            ; preds = %body4, %done
+  %index_value7 = load i64, ptr %index_alloca6, align 4
+  %loop_cond8 = icmp ult i64 %index_value7, 4
+  br i1 %loop_cond8, label %body4, label %done5
 
-body5:                                            ; preds = %cond4
-  %index_access10 = getelementptr i64, ptr %2, i64 %index_value8
-  %10 = load i64, ptr %index_access10, align 4
-  %11 = add i64 4, %index_value8
-  %index_access11 = getelementptr i64, ptr %heap_to_ptr2, i64 %11
-  store i64 %10, ptr %index_access11, align 4
-  %next_index12 = add i64 %index_value8, 1
-  store i64 %next_index12, ptr %index_alloca7, align 4
-  br label %cond4
+body4:                                            ; preds = %cond3
+  %11 = add i64 0, %index_value7
+  %src_index_access9 = getelementptr i64, ptr %2, i64 %11
+  %12 = load i64, ptr %src_index_access9, align 4
+  %13 = add i64 4, %index_value7
+  %dest_index_access10 = getelementptr i64, ptr %heap_to_ptr2, i64 %13
+  store i64 %12, ptr %dest_index_access10, align 4
+  %next_index11 = add i64 %index_value7, 1
+  store i64 %next_index11, ptr %index_alloca6, align 4
+  br label %cond3
 
-done6:                                            ; preds = %cond4
-  %12 = call i64 @vector_new(i64 4)
-  %heap_start13 = sub i64 %12, 4
-  %heap_to_ptr14 = inttoptr i64 %heap_start13 to ptr
-  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr14, i64 8)
-  %13 = load i64, ptr %number, align 4
+done5:                                            ; preds = %cond3
   %14 = call i64 @vector_new(i64 4)
-  %heap_start15 = sub i64 %14, 4
-  %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
-  store i64 %13, ptr %heap_to_ptr16, align 4
-  %15 = getelementptr i64, ptr %heap_to_ptr16, i64 1
-  store i64 0, ptr %15, align 4
-  %16 = getelementptr i64, ptr %heap_to_ptr16, i64 2
-  store i64 0, ptr %16, align 4
-  %17 = getelementptr i64, ptr %heap_to_ptr16, i64 3
+  %heap_start12 = sub i64 %14, 4
+  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr13, i64 8)
+  %15 = load i64, ptr %number, align 4
+  %16 = call i64 @vector_new(i64 4)
+  %heap_start14 = sub i64 %16, 4
+  %heap_to_ptr15 = inttoptr i64 %heap_start14 to ptr
+  store i64 %15, ptr %heap_to_ptr15, align 4
+  %17 = getelementptr i64, ptr %heap_to_ptr15, i64 1
   store i64 0, ptr %17, align 4
-  call void @set_storage(ptr %heap_to_ptr14, ptr %heap_to_ptr16)
+  %18 = getelementptr i64, ptr %heap_to_ptr15, i64 2
+  store i64 0, ptr %18, align 4
+  %19 = getelementptr i64, ptr %heap_to_ptr15, i64 3
+  store i64 0, ptr %19, align 4
+  call void @set_storage(ptr %heap_to_ptr13, ptr %heap_to_ptr15)
   ret void
 }
 
 define i64 @get_mapping(ptr %0) {
 entry:
-  %index_alloca7 = alloca i64, align 8
+  %index_alloca6 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
   %name = alloca ptr, align 8
   store ptr %0, ptr %name, align 8
@@ -139,48 +141,50 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr i64, ptr %heap_to_ptr, i64 %index_value
-  %7 = load i64, ptr %index_access, align 4
-  %8 = add i64 0, %index_value
-  %index_access3 = getelementptr i64, ptr %heap_to_ptr2, i64 %8
-  store i64 %7, ptr %index_access3, align 4
+  %7 = add i64 0, %index_value
+  %src_index_access = getelementptr i64, ptr %heap_to_ptr, i64 %7
+  %8 = load i64, ptr %src_index_access, align 4
+  %9 = add i64 0, %index_value
+  %dest_index_access = getelementptr i64, ptr %heap_to_ptr2, i64 %9
+  store i64 %8, ptr %dest_index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  store i64 0, ptr %index_alloca7, align 4
-  br label %cond4
+  store i64 0, ptr %index_alloca6, align 4
+  br label %cond3
 
-cond4:                                            ; preds = %body5, %done
-  %index_value8 = load i64, ptr %index_alloca7, align 4
-  %loop_cond9 = icmp ult i64 %index_value8, 4
-  br i1 %loop_cond9, label %body5, label %done6
+cond3:                                            ; preds = %body4, %done
+  %index_value7 = load i64, ptr %index_alloca6, align 4
+  %loop_cond8 = icmp ult i64 %index_value7, 4
+  br i1 %loop_cond8, label %body4, label %done5
 
-body5:                                            ; preds = %cond4
-  %index_access10 = getelementptr i64, ptr %1, i64 %index_value8
-  %9 = load i64, ptr %index_access10, align 4
-  %10 = add i64 4, %index_value8
-  %index_access11 = getelementptr i64, ptr %heap_to_ptr2, i64 %10
-  store i64 %9, ptr %index_access11, align 4
-  %next_index12 = add i64 %index_value8, 1
-  store i64 %next_index12, ptr %index_alloca7, align 4
-  br label %cond4
+body4:                                            ; preds = %cond3
+  %10 = add i64 0, %index_value7
+  %src_index_access9 = getelementptr i64, ptr %1, i64 %10
+  %11 = load i64, ptr %src_index_access9, align 4
+  %12 = add i64 4, %index_value7
+  %dest_index_access10 = getelementptr i64, ptr %heap_to_ptr2, i64 %12
+  store i64 %11, ptr %dest_index_access10, align 4
+  %next_index11 = add i64 %index_value7, 1
+  store i64 %next_index11, ptr %index_alloca6, align 4
+  br label %cond3
 
-done6:                                            ; preds = %cond4
-  %11 = call i64 @vector_new(i64 4)
-  %heap_start13 = sub i64 %11, 4
-  %heap_to_ptr14 = inttoptr i64 %heap_start13 to ptr
-  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr14, i64 8)
-  %12 = call i64 @vector_new(i64 4)
-  %heap_start15 = sub i64 %12, 4
-  %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
-  call void @get_storage(ptr %heap_to_ptr14, ptr %heap_to_ptr16)
-  %storage_value = load i64, ptr %heap_to_ptr16, align 4
+done5:                                            ; preds = %cond3
+  %13 = call i64 @vector_new(i64 4)
+  %heap_start12 = sub i64 %13, 4
+  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr13, i64 8)
+  %14 = call i64 @vector_new(i64 4)
+  %heap_start14 = sub i64 %14, 4
+  %heap_to_ptr15 = inttoptr i64 %heap_start14 to ptr
+  call void @get_storage(ptr %heap_to_ptr13, ptr %heap_to_ptr15)
+  %storage_value = load i64, ptr %heap_to_ptr15, align 4
   ret i64 %storage_value
 }
 
-define void @main() {
+define void @mapping_test() {
 entry:
   %myaddress = alloca ptr, align 8
   %0 = call i64 @vector_new(i64 4)
@@ -207,7 +211,7 @@ entry:
   switch i64 %0, label %missing_function [
     i64 3327727046, label %func_0_dispatch
     i64 3588912103, label %func_1_dispatch
-    i64 3501063903, label %func_2_dispatch
+    i64 1683873080, label %func_2_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -298,11 +302,11 @@ buffer_read29:                                    ; preds = %inbounds12
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  call void @main()
+  call void @mapping_test()
   ret void
 }
 
-define void @main.1() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

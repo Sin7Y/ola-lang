@@ -504,7 +504,7 @@ impl<'a> Binary<'a> {
 
             let mut offset = self.context.i64_type().const_zero();
             for (v, len) in hash_src.iter() {
-                self.mempcy(function, v.into_pointer_value(), heap_src_ptr, offset, *len);
+                self.mempcy(function, v.into_pointer_value(), self.context.i64_type().const_zero(), heap_src_ptr, offset, *len);
 
                 offset = self.builder.build_int_add(offset, *len, "");
             }
@@ -780,15 +780,16 @@ impl<'a> Binary<'a> {
         &self,
         function: FunctionValue<'a>,
         src: PointerValue<'a>,
+        src_start_index: IntValue<'a>,
         dest: PointerValue<'a>,
-        dest_index: IntValue<'a>,
+        dest_start_index: IntValue<'a>,
         len: IntValue<'a>,
     ) {
         let cond = self.context.append_basic_block(function, "cond");
         let body = self.context.append_basic_block(function, "body");
         let done = self.context.append_basic_block(function, "done");
 
-        let loop_ty = dest_index.get_type();
+        let loop_ty = self.context.i64_type();
         // create an alloca for the loop variable
         let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
         // initialize the loop variable with the starting value
@@ -813,7 +814,7 @@ impl<'a> Binary<'a> {
 
         let src_access = unsafe {
             self.builder
-                .build_gep(self.context.i64_type(), src, &[index_value], "index_access")
+                .build_gep(self.context.i64_type(), src, &[self.builder.build_int_add(src_start_index, index_value, "")], "src_index_access")
         };
 
         let src_value = self
@@ -824,8 +825,8 @@ impl<'a> Binary<'a> {
             self.builder.build_gep(
                 self.context.i64_type(),
                 dest,
-                &[self.builder.build_int_add(dest_index, index_value, "")],
-                "index_access",
+                &[self.builder.build_int_add(dest_start_index, index_value, "")],
+                "dest_index_access",
             )
         };
 

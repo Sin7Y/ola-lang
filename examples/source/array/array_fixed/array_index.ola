@@ -1,9 +1,10 @@
 
 contract ArrayIndexExample {
     
-    fn main() {
+    fn test() {
        u32 index = 2;
        u32 value = array_index(index);
+       assert(value == 3);
     }
 
     fn array_index(u32 index) -> (u32) {

@@ -47,6 +47,7 @@ impl RetrieveType for Expression {
             | Expression::Decrement { ty, .. }
             | Expression::Assign { ty, .. } => ty.clone(),
             Expression::Subscript { ty, .. } => ty.clone(),
+            Expression::ArraySlice { .. } => Type::DynamicBytes,
             Expression::ZeroExt { to, .. }
             | Expression::Trunc { to, .. }
             | Expression::Cast { to, .. }

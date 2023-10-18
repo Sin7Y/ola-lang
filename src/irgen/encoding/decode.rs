@@ -30,7 +30,7 @@ pub(crate) fn read_from_buffer<'a>(
     ns: &Namespace,
 ) -> (BasicValueEnum<'a>, IntValue<'a>) {
     match ty {
-        Type::Uint(32) | Type::Bool | Type::Enum(_) => {
+        Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let size = bin.context.i64_type().const_int(1, false);
             validator.validate_offset_plus_size(bin, offset, size, func_value);
             let read_value = decode_uint(buffer, offset, bin);

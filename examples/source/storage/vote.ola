@@ -35,8 +35,8 @@ contract Voting {
     }
 
     fn getWinnerName() -> (u32) {
-         u32 winningProposal = winningProposal();
-         u32 winnerName = proposals[winningProposal].name;
+         u32 _winningProposal = winningProposal();
+         u32 winnerName = proposals[_winningProposal].name;
          return winnerName;
     }
 
@@ -55,7 +55,7 @@ contract Voting {
         return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580Eaddress;
     }
 
-    fn main() {
+    fn vote_test(){
 
         u32[] proposalNames = new u32[](3);
         proposalNames[0] = 65;

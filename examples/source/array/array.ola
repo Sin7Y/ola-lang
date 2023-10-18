@@ -1,23 +1,19 @@
 
 contract Array {
 
-    // fn array_literal() -> (u32) {
-    //     u32[3] a = [1, 2, 3];
-    //     return a[1];
-    // }
+    fn array_literal() -> (u32) {
+        u32[3] a = [1, 2, 3];
+        return a[1];
+    }
 
-    // fn array_dynamic_1() -> (u32) {
-    //     u32[] a = [1, 2, 3];
-    //     return a.length;
-    // }
+    fn array_dynamic_1() -> (u32) {
+        u32[] a = [1, 2, 3];
+        return a.length;
+    }
     fn array_dynamic_2() -> (u32) {
         u32[] a = new u32[](5);
         return a[1];
     }
-
-    // fn main() {
-    //    array_literal();
-    // }
 
 
 }

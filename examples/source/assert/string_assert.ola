@@ -1,6 +1,6 @@
 contract AssertContract {
 
-    fn main() {
+    fn test() {
        string a = "hello";
        string b = "hello";
        assert(a == b);

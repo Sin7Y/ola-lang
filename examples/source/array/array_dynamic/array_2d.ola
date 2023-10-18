@@ -6,11 +6,12 @@ contract DynamicArrayInMemory {
 
         u32[][] dynamicArray = new u32[][](3);
         
-        // 初始化子数组
         dynamicArray[0] = new u32[](2);
 
         u32[] subArray = dynamicArray[0];
         subArray[0] = 1;
+        assert(subArray[0] == 1);
+        assert(dynamicArray[0][0] == 1);
 
 
     }

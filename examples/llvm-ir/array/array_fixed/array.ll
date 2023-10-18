@@ -31,41 +31,25 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @main() {
+define void @fixed_array_test() {
 entry:
-  %array_literal6 = alloca [3 x i64], align 8
-  %array_literal2 = alloca [3 x i64], align 8
   %array_literal = alloca [3 x i64], align 8
   %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
-  store i64 1, ptr %elemptr0, align 4
+  store i64 0, ptr %elemptr0, align 4
   %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  store i64 2, ptr %elemptr1, align 4
+  store i64 0, ptr %elemptr1, align 4
   %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
-  store i64 3, ptr %elemptr2, align 4
-  call void @builtin_range_check(i64 1)
-  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  call void @builtin_range_check(i64 1)
-  %index_access1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  %0 = load i64, ptr %index_access1, align 4
-  %1 = add i64 %0, 1
-  call void @builtin_range_check(i64 %1)
-  store i64 %1, ptr %index_access, align 4
-  %elemptr03 = getelementptr [3 x i64], ptr %array_literal2, i64 0, i64 0
-  store i64 1, ptr %elemptr03, align 4
-  %elemptr14 = getelementptr [3 x i64], ptr %array_literal2, i64 0, i64 1
-  store i64 2, ptr %elemptr14, align 4
-  %elemptr25 = getelementptr [3 x i64], ptr %array_literal2, i64 0, i64 2
-  store i64 3, ptr %elemptr25, align 4
-  %elemptr07 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 0
-  store i64 0, ptr %elemptr07, align 4
-  %elemptr18 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 1
-  store i64 0, ptr %elemptr18, align 4
-  %elemptr29 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 2
-  store i64 0, ptr %elemptr29, align 4
+  store i64 0, ptr %elemptr2, align 4
   call void @builtin_range_check(i64 0)
-  %index_access10 = getelementptr [3 x i64], ptr %array_literal6, i64 0, i64 2
-  store i64 99, ptr %index_access10, align 4
-  %2 = call ptr @array_call(ptr %array_literal6)
+  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  store i64 99, ptr %index_access, align 4
+  %0 = call ptr @array_call(ptr %array_literal)
+  call void @builtin_range_check(i64 0)
+  %index_access1 = getelementptr [3 x i64], ptr %0, i64 0, i64 2
+  %1 = load i64, ptr %index_access1, align 4
+  %2 = icmp eq i64 %1, 100
+  %3 = zext i1 %2 to i64
+  call void @builtin_assert(i64 %3)
   ret void
 }
 
@@ -81,7 +65,7 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %array_literal = alloca [3 x i64], align 8
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
+    i64 359223084, label %func_0_dispatch
     i64 984717406, label %func_1_dispatch
   ]
 
@@ -89,7 +73,7 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @main()
+  call void @fixed_array_test()
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -141,7 +125,7 @@ buffer_read:                                      ; preds = %inbounds
   ret void
 }
 
-define void @main.1() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

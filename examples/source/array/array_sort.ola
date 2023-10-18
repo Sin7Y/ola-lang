@@ -1,11 +1,13 @@
 
 contract ArraySortExample {
     
-    fn main() {
+    fn test() {
        u32[10] source = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
        u32[] returned = array_sort_test(source);
        returned[0] += 1;
        returned[1] -= 1;
+       assert(returned[0] == 1);
+       assert(returned[1] == 1);
 
     }
 

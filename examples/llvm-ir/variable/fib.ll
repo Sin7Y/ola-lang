@@ -64,10 +64,59 @@ enif2:                                            ; preds = %enif
   ret i64 %11
 }
 
+define i64 @fib_non_recursive(i64 %0) {
+entry:
+  %i = alloca i64, align 8
+  %third = alloca i64, align 8
+  %second = alloca i64, align 8
+  %first = alloca i64, align 8
+  %n = alloca i64, align 8
+  store i64 %0, ptr %n, align 4
+  %1 = load i64, ptr %n, align 4
+  %2 = icmp eq i64 %1, 0
+  br i1 %2, label %then, label %enif
+
+then:                                             ; preds = %entry
+  ret i64 0
+
+enif:                                             ; preds = %entry
+  store i64 0, ptr %first, align 4
+  store i64 1, ptr %second, align 4
+  store i64 1, ptr %third, align 4
+  store i64 2, ptr %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %next, %enif
+  %3 = load i64, ptr %i, align 4
+  %4 = load i64, ptr %n, align 4
+  %5 = icmp ule i64 %3, %4
+  br i1 %5, label %body, label %endfor
+
+body:                                             ; preds = %cond
+  %6 = load i64, ptr %first, align 4
+  %7 = load i64, ptr %second, align 4
+  %8 = add i64 %6, %7
+  call void @builtin_range_check(i64 %8)
+  %9 = load i64, ptr %second, align 4
+  %10 = load i64, ptr %third, align 4
+  br label %next
+
+next:                                             ; preds = %body
+  %11 = load i64, ptr %i, align 4
+  %12 = add i64 %11, 1
+  store i64 %12, ptr %i, align 4
+  br label %cond
+
+endfor:                                           ; preds = %cond
+  %13 = load i64, ptr %third, align 4
+  ret i64 %13
+}
+
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
     i64 229678162, label %func_0_dispatch
+    i64 2146118040, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -99,6 +148,34 @@ buffer_read:                                      ; preds = %inbounds
   %start2 = getelementptr i64, ptr %heap_to_ptr, i64 1
   store i64 1, ptr %start2, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
+  ret void
+
+func_1_dispatch:                                  ; preds = %entry
+  %7 = icmp ule i64 1, %1
+  br i1 %7, label %inbounds3, label %out_of_bounds4
+
+inbounds3:                                        ; preds = %func_1_dispatch
+  %start5 = getelementptr i64, ptr %2, i64 0
+  %value6 = load i64, ptr %start5, align 4
+  %8 = icmp ult i64 1, %1
+  br i1 %8, label %not_all_bytes_read7, label %buffer_read8
+
+out_of_bounds4:                                   ; preds = %func_1_dispatch
+  unreachable
+
+not_all_bytes_read7:                              ; preds = %inbounds3
+  unreachable
+
+buffer_read8:                                     ; preds = %inbounds3
+  %9 = call i64 @fib_non_recursive(i64 %value6)
+  %10 = call i64 @vector_new(i64 2)
+  %heap_start9 = sub i64 %10, 2
+  %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
+  %start11 = getelementptr i64, ptr %heap_to_ptr10, i64 0
+  store i64 %9, ptr %start11, align 4
+  %start12 = getelementptr i64, ptr %heap_to_ptr10, i64 1
+  store i64 1, ptr %start12, align 4
+  call void @set_tape_data(i64 %heap_start9, i64 2)
   ret void
 }
 

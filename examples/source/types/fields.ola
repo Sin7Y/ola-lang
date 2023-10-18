@@ -1,11 +1,11 @@
 contract FieldsContract {
 
     fn fields_test() -> (fields){
-       string a = "hello";
-       string b = "world";
+       string a = "ola";
+       string b = "vm";
        fields a_b = fields_concat(a, b);
+       assert(string(a_b) == "olavm");
        return a_b;
-
     }
 
 }

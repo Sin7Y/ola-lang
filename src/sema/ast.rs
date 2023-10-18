@@ -661,6 +661,15 @@ pub enum Expression {
         index: Box<Expression>,
     },
 
+    ArraySlice {
+        loc: program::Loc,
+        ty: Type,
+        array_ty: Type,
+        array: Box<Expression>,
+        start: Option<Box<Expression>>,
+        end: Option<Box<Expression>>,
+    },
+
     StructMember {
         loc: program::Loc,
         ty: Type,
@@ -909,6 +918,7 @@ impl CodeLocation for Expression {
             | Expression::BitwiseNot { loc, .. }
             | Expression::ConditionalOperator { loc, .. }
             | Expression::Subscript { loc, .. }
+            | Expression::ArraySlice { loc, .. }
             | Expression::StructMember { loc, .. }
             | Expression::Or { loc, .. }
             | Expression::AllocDynamicBytes { loc, .. }
