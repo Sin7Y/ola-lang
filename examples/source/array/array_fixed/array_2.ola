@@ -1,7 +1,8 @@
 contract FixedArrayExample {
     
-    fn main() {
+    fn test() {
        u32[3] array = [1, 2, 3];
        u32[3] array1 = array;    
+       assert(array1[0] == 1);
     }
 }

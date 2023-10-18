@@ -31,7 +31,7 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @main() {
+define void @test() {
 entry:
   %array_literal = alloca [10 x i64], align 8
   %elemptr0 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 0
@@ -95,6 +95,30 @@ entry:
   %20 = sub i64 %19, 1
   call void @builtin_range_check(i64 %20)
   store i64 %20, ptr %index_access6, align 4
+  %length10 = load i64, ptr %0, align 4
+  %21 = sub i64 %length10, 1
+  %22 = sub i64 %21, 0
+  call void @builtin_range_check(i64 %22)
+  %23 = ptrtoint ptr %0 to i64
+  %24 = add i64 %23, 1
+  %vector_data11 = inttoptr i64 %24 to ptr
+  %index_access12 = getelementptr i64, ptr %vector_data11, i64 0
+  %25 = load i64, ptr %index_access12, align 4
+  %26 = icmp eq i64 %25, 1
+  %27 = zext i1 %26 to i64
+  call void @builtin_assert(i64 %27)
+  %length13 = load i64, ptr %0, align 4
+  %28 = sub i64 %length13, 1
+  %29 = sub i64 %28, 1
+  call void @builtin_range_check(i64 %29)
+  %30 = ptrtoint ptr %0 to i64
+  %31 = add i64 %30, 1
+  %vector_data14 = inttoptr i64 %31 to ptr
+  %index_access15 = getelementptr i64, ptr %vector_data14, i64 1
+  %32 = load i64, ptr %index_access15, align 4
+  %33 = icmp eq i64 %32, 1
+  %34 = zext i1 %33 to i64
+  call void @builtin_assert(i64 %34)
   ret void
 }
 
@@ -167,7 +191,7 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %array_literal = alloca [10 x i64], align 8
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
+    i64 1845340408, label %func_0_dispatch
     i64 1940129018, label %func_1_dispatch
   ]
 
@@ -175,7 +199,7 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @main()
+  call void @test()
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -268,7 +292,7 @@ loop_end:                                         ; preds = %loop_body
   ret void
 }
 
-define void @main.1() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

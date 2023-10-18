@@ -27,7 +27,7 @@ pub struct Opt {
     pub pass: Option<String>,
 }
 
-fn main() {
+ {
     env_logger::init();
     color_backtrace::install();
 

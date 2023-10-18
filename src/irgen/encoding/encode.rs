@@ -26,7 +26,7 @@ pub(crate) fn encode_into_buffer<'a>(
             encode_address_or_hash(buffer, arg, &mut offset.clone(), bin);
             bin.context.i64_type().const_int(4, false)
         }
-        Type::Bool | Type::Uint(32) | Type::Enum(_) => {
+        Type::Bool | Type::Uint(32) | Type::Enum(_) | Type::Field => {
             encode_uint(buffer, arg, offset, bin);
             bin.context.i64_type().const_int(1, false)
         }
@@ -100,7 +100,7 @@ pub(crate) fn encode_into_buffer<'a>(
         Type::Void | Type::BufferPointer | Type::Mapping(..) | Type::Function { .. } => {
             unreachable!("This type cannot be encoded")
         }
-        _ => unreachable!("Type should not exist in irgen"),
+        _ => unreachable!("Type {:?} should not exist in irgen", arg_ty),
     }
 }
 

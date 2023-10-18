@@ -1,7 +1,7 @@
 use vicis_codegen::{self, isa::x86_64::X86_64, lower::compile_module};
 use vicis_core::ir::module::Module;
 
-fn main() {
+ {
     // LLVM Assembly
     let asm = r#"
   source_filename = "asm"

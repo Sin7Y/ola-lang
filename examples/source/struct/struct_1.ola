@@ -29,7 +29,7 @@ contract StructExample {
     //     return b;
     // }
 
-    // fn main() {
+    //  {
     //     Book myBook = createBook();
     //     u32 bookTitle = getBookName(myBook);
     //     u32 bookId = getBookId(myBook);

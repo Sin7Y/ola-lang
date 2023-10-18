@@ -31,7 +31,7 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @main() {
+define void @test() {
 entry:
   %length3 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
@@ -69,6 +69,10 @@ done:                                             ; preds = %cond
   store i64 1, ptr %index_access2, align 4
   %7 = call i64 @array_call(ptr %heap_to_ptr)
   store i64 %7, ptr %length3, align 4
+  %8 = load i64, ptr %length3, align 4
+  %9 = icmp eq i64 %8, 5
+  %10 = zext i1 %9 to i64
+  call void @builtin_assert(i64 %10)
   ret void
 }
 
@@ -111,7 +115,7 @@ endfor:                                           ; preds = %cond
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3501063903, label %func_0_dispatch
+    i64 1845340408, label %func_0_dispatch
     i64 2934118673, label %func_1_dispatch
   ]
 
@@ -119,7 +123,7 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @main()
+  call void @test()
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -202,7 +206,7 @@ buffer_read:                                      ; preds = %inbounds7
   ret void
 }
 
-define void @main.1() {
+define void @main() {
 entry:
   %0 = call i64 @vector_new(i64 13)
   %heap_start = sub i64 %0, 13

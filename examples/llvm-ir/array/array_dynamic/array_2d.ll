@@ -108,6 +108,39 @@ done8:                                            ; preds = %cond6
   %vector_data18 = inttoptr i64 %18 to ptr
   %index_access19 = getelementptr i64, ptr %vector_data18, i64 0
   store i64 1, ptr %index_access19, align 4
+  %length20 = load i64, ptr %14, align 4
+  %19 = sub i64 %length20, 1
+  %20 = sub i64 %19, 0
+  call void @builtin_range_check(i64 %20)
+  %21 = ptrtoint ptr %14 to i64
+  %22 = add i64 %21, 1
+  %vector_data21 = inttoptr i64 %22 to ptr
+  %index_access22 = getelementptr i64, ptr %vector_data21, i64 0
+  %23 = load i64, ptr %index_access22, align 4
+  %24 = icmp eq i64 %23, 1
+  %25 = zext i1 %24 to i64
+  call void @builtin_assert(i64 %25)
+  %length23 = load i64, ptr %heap_to_ptr, align 4
+  %26 = sub i64 %length23, 1
+  %27 = sub i64 %26, 0
+  call void @builtin_range_check(i64 %27)
+  %28 = ptrtoint ptr %heap_to_ptr to i64
+  %29 = add i64 %28, 1
+  %vector_data24 = inttoptr i64 %29 to ptr
+  %index_access25 = getelementptr ptr, ptr %vector_data24, i64 0
+  %30 = load ptr, ptr %index_access25, align 8
+  %length26 = load i64, ptr %30, align 4
+  %31 = sub i64 %length26, 1
+  %32 = sub i64 %31, 0
+  call void @builtin_range_check(i64 %32)
+  %33 = ptrtoint ptr %30 to i64
+  %34 = add i64 %33, 1
+  %vector_data27 = inttoptr i64 %34 to ptr
+  %index_access28 = getelementptr i64, ptr %vector_data27, i64 0
+  %35 = load i64, ptr %index_access28, align 4
+  %36 = icmp eq i64 %35, 1
+  %37 = zext i1 %36 to i64
+  call void @builtin_assert(i64 %37)
   ret void
 }
 

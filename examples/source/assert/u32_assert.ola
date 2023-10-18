@@ -1,6 +1,6 @@
 contract AssertContract {
 
-    fn main() {
+    fn test() {
        u32 a = 2;
        u32 b = 2;
        assert(a == b, "a should be equal to b");

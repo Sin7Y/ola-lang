@@ -1,0 +1,9 @@
+
+contract ArraySlice {
+    
+    fn array_slice_test() {
+        string a = "hello";
+        fields b = a[0:2];
+        assert(string(b) == "he");
+    }
+}

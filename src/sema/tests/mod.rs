@@ -394,7 +394,7 @@ fn test_array_contract() {
     let file = r#"
     contract ArraySortExample {
     
-        // fn main() {
+        //  {
         //    u32[10] source = [3, 4, 5, 1, 7, 9, 0, 2, 8, 6];
         //    array_sort_test(source);
         // }

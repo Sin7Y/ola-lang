@@ -9,7 +9,7 @@ contract SimpleMappingExample {
         return users[name];
     }
 
-    fn main() {
+    fn mapping_test() {
         address myaddress = 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580Eaddress;
         add_mapping(myaddress, 1);
         get_mapping(myaddress);

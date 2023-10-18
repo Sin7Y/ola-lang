@@ -87,7 +87,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::EQ,
             ),
-            Type::Uint(32) | Type::Bool => u32_compare(
+            Type::Uint(32) | Type::Bool | Type::Field => u32_compare(
                 left,
                 right,
                 bin,
@@ -117,7 +117,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::NE,
             ),
-            Type::Uint(32) | Type::Bool => u32_compare(
+            Type::Uint(32) | Type::Bool  | Type::Field => u32_compare(
                 left,
                 right,
                 bin,
@@ -627,6 +627,17 @@ pub fn expression<'a>(
             )
         }
 
+        Expression::ArraySlice {
+            array_ty,
+            array,
+            start,
+            end,
+            ..
+        } => {
+            let array = expression(array, bin, func_value, var_table, ns);
+            array_slice(array_ty, array, start, end, bin, func_value, var_table, ns)
+        }
+
         Expression::StructMember {
             ty,
             expr: var,
@@ -728,6 +739,31 @@ pub fn expression<'a>(
         {
             expression(expr, bin, func_value, var_table, ns)
         }
+
+        Expression::Cast { to, expr, .. }
+        if matches!(to, Type::Hash | Type::Address)
+            && matches!(expr.ty(), Type::Uint(32)) =>
+    {
+        let expr = expression(expr, bin, func_value, var_table, ns);
+        let zero = bin.context.i64_type().const_zero();
+        let value = [zero, zero, zero, expr.into_int_value()];
+            let (_, heap_ptr) =
+            bin.heap_malloc(bin.context.i64_type().const_int(value.len() as u64, false));
+        for (i, v) in value.iter().enumerate() {
+            let index = bin.context.i64_type().const_int(i as u64, false);
+            let index_access = unsafe {
+                bin.builder.build_gep(
+                bin.context.i64_type(),
+                    heap_ptr,
+                    &[index],
+                    "index_access",
+                )
+            };
+            bin.builder
+                .build_store(index_access, v.clone().as_basic_value_enum());
+        }
+        heap_ptr.into()
+    }
 
         Expression::Cast { to, expr, .. }
             if matches!(to, Type::DynamicBytes)
@@ -1049,7 +1085,7 @@ pub fn array_subscript<'a>(
         return mapping_subscript(array, index, index_ty, bin, func_value);
     }
     let (array_length, fixed) = match array_ty.deref_any() {
-        Type::Array(..) => match array_ty.array_length() {
+        Type::Array(..) | Type::String | Type::DynamicBytes => match array_ty.array_length() {
             None => {
                 if let Type::StorageRef(..) = array_ty {
                     let array_length =
@@ -1143,6 +1179,104 @@ pub fn array_subscript<'a>(
 
         return element_ptr.as_basic_value_enum();
     }
+}
+
+/// Codegen for an array subscript expression
+pub fn array_slice<'a>(
+    array_ty: &Type,
+    array: BasicValueEnum<'a>,
+    start: &Option<Box<Expression>>,
+    end: &Option<Box<Expression>>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    let array_length = match array_ty.deref_any() {
+        Type::Array(..) | Type::DynamicBytes | Type::String => match array_ty.array_length() {
+            None => bin.vector_len(array),
+
+            Some(l) => bin
+                .context
+                .i64_type()
+                .const_int(l.to_u64().unwrap(), false)
+                .into(),
+        },
+        _ => {
+            unreachable!("array_slice should only be called on arrays or fields")
+        }
+    };
+    let start = match start {
+        Some(start) => expression(start, bin, func_value, var_table, ns).into_int_value(),
+        None => bin.context.i64_type().const_zero(),
+    };
+
+    let end = match end {
+        Some(end) => expression(end, bin, func_value, var_table, ns).into_int_value(),
+        None => array_length,
+    };
+
+    // check start index is out of bounds
+    let array_length_sub_one: BasicValueEnum = bin
+        .builder
+        .build_int_sub(array_length, bin.context.i64_type().const_int(1, false), "")
+        .into();
+    let array_length_sub_one_sub_start: BasicValueEnum = bin
+        .builder
+        .build_int_sub(array_length_sub_one.into_int_value(), start, "")
+        .into();
+    // check if index is out of bounds
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[array_length_sub_one_sub_start.into()],
+        "start_check",
+    );
+
+    let array_length_sub_end: BasicValueEnum =
+        bin.builder.build_int_sub(array_length, end, "").into();
+    // check if index is out of bounds
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[array_length_sub_end.into()],
+        "end_check",
+    );
+
+    // slice length = end - start
+
+    let len = bin.builder.build_int_sub(end, start, "slice_len");
+
+    // alloc slice
+    let new_array = bin.vector_new(len);
+
+    let dest_array = bin.vector_data(new_array.into());
+
+    // check start < end
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[len.into()],
+        "start_end_check",
+    );
+
+    let src_data = if array_ty.is_dynamic_memory() {
+        bin.vector_data(array)
+    } else {
+        array.into_pointer_value()
+    };
+    bin.mempcy(
+        func_value,
+        src_data,
+        start,
+        dest_array,
+        bin.context.i64_type().const_zero(),
+        len,
+    );
+    new_array.as_basic_value_enum()
 }
 
 pub fn mapping_subscript<'a>(
@@ -1350,11 +1484,19 @@ fn fields_concat<'a>(
     bin.mempcy(
         func_value,
         left_data,
+        bin.context.i64_type().const_zero(),
         new_fields,
         bin.context.i64_type().const_zero(),
         left_len,
     );
-    bin.mempcy(func_value, right_data, new_fields, left_len, right_len);
+    bin.mempcy(
+        func_value,
+        right_data,
+        bin.context.i64_type().const_zero(),
+        new_fields,
+        left_len,
+        right_len,
+    );
     new_fields.as_basic_value_enum()
 }
 

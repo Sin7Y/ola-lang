@@ -43,9 +43,12 @@ entry:
   store i64 1000, ptr %elemptr02, align 4
   %elemptr13 = getelementptr [2 x i64], ptr %array_literal1, i64 0, i64 1
   store i64 1001, ptr %elemptr13, align 4
-  call void @builtin_range_check(i64 0)
-  %index_access = getelementptr [2 x i64], ptr %array_literal1, i64 0, i64 1
-  store i64 7, ptr %index_access, align 4
+  call void @builtin_range_check(i64 1)
+  %index_access = getelementptr [2 x i64], ptr %array_literal1, i64 0, i64 0
+  %0 = load i64, ptr %index_access, align 4
+  %1 = icmp eq i64 %0, 1000
+  %2 = zext i1 %1 to i64
+  call void @builtin_assert(i64 %2)
   ret void
 }
 

@@ -11,6 +11,7 @@ pub mod resolve_expression;
 pub mod retrieve_type;
 pub(crate) mod strings;
 mod subscript;
+mod slice;
 mod variable;
 use std::cmp::Ordering;
 
@@ -295,6 +296,11 @@ impl Expression {
                 })
             }
             (Type::Hash, Type::Address) | (Type::Address, Type::Hash) => Ok(Expression::Cast {
+                loc: *loc,
+                to: to.clone(),
+                expr: Box::new(self.clone()),
+            }),
+            (Type::Uint(32), Type::Address) => Ok(Expression::Cast {
                 loc: *loc,
                 to: to.clone(),
                 expr: Box::new(self.clone()),

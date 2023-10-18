@@ -1,6 +1,6 @@
 contract DynamicArrayExample {
     
-    fn main() {
+    fn test() {
        u32[] array = new u32[](3);
        assert(array.length == 3);
        array[0] = 1;

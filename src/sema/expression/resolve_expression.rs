@@ -29,6 +29,8 @@ use crate::sema::{
     },
 };
 use ola_parser::{diagnostics::Diagnostic, program, program::CodeLocation};
+
+use super::slice::array_slice;
 /// Resolve a parsed expression into an AST expression. The resolve_to argument
 /// is a hint to what type the result should be.
 pub fn expression(
@@ -343,13 +345,8 @@ pub fn expression(
 
             Err(())
         }
-        program::Expression::ArraySlice(loc, ..) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "slice not supported yet".to_string(),
-            ));
-
-            Err(())
+        program::Expression::ArraySlice(loc, array, from, to) => {
+            array_slice(loc, array, from, to, context, ns, symtable, diagnostics)
         }
         program::Expression::ArraySubscript(loc, array, Some(index)) => {
             array_subscript(loc, array, index, context, ns, symtable, diagnostics)

@@ -814,6 +814,34 @@ impl Dot {
                 self.add_expression(array, func, ns, node, String::from("array"));
                 self.add_expression(index, func, ns, node, String::from("index"));
             }
+            Expression::ArraySlice {
+                loc,
+                array_ty,
+                array,
+                start,
+                end,
+                ..
+            } => {
+                let node = self.add_node(
+                    Node::new(
+                        "array_slice",
+                        vec![
+                            format!("array_slice {}", array_ty.to_string(ns)),
+                            ns.loc_to_string(loc),
+                        ],
+                    ),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(array, func, ns, node, String::from("array"));
+                if let Some(start) = &start {
+                    self.add_expression(start, func, ns, node, String::from("start"));
+                }
+                if let Some(end) = &end {
+                    self.add_expression(end, func, ns, node, String::from("start"));
+                }
+            }
 
             Expression::StructMember {
                 loc,

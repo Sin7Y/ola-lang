@@ -1,7 +1,7 @@
 use vicis_codegen::{self, isa::ola::Ola, lower::compile_module};
 use vicis_core::ir::module::Module;
 
-fn main() {
+ {
     // LLVM Assembly
     let asm = r#"
     ; ModuleID = 'Fibonacci'
