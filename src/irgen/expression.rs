@@ -448,21 +448,12 @@ pub fn expression<'a>(
             kind: LibFunc::OriginAddress,
             ..
         } => {
-            let (_, heap_start_ptr) = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+            let (heap_start_int, heap_start_ptr) = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
             for i in 0..4 {
-                let address_elem = unsafe {
-                    bin.builder.build_gep(
-                        bin.context.i64_type(),
-                        heap_start_ptr,
-                        &[bin.context.i64_type().const_int(i, false)],
-                        "",
-                    )
-                };
+                let address_elem = 
+                    bin.builder.build_int_add(heap_start_int, bin.context.i64_type().const_int(i, false), "");
                 let origin_address_index = bin.context.i64_type().const_int(8 + i, false);
-                let address_elem_int =
-                    bin.builder
-                        .build_ptr_to_int(address_elem, bin.context.i64_type(), "");
-                bin.context_data_load(address_elem_int, origin_address_index);
+                bin.context_data_load(address_elem, origin_address_index);
             }
 
             heap_start_ptr.into()

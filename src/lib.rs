@@ -11,6 +11,8 @@ pub mod file_resolver;
 
 pub mod standard_json;
 
+pub mod abi;
+
 pub mod sema;
 
 use file_resolver::FileResolver;

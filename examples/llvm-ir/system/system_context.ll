@@ -45,18 +45,14 @@ entry:
   %0 = call i64 @vector_new(i64 4)
   %heap_start = sub i64 %0, 4
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %1 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  %2 = ptrtoint ptr %1 to i64
-  call void @get_context_data(i64 %2, i64 8)
-  %3 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  %4 = ptrtoint ptr %3 to i64
-  call void @get_context_data(i64 %4, i64 9)
-  %5 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  %6 = ptrtoint ptr %5 to i64
-  call void @get_context_data(i64 %6, i64 10)
-  %7 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  %8 = ptrtoint ptr %7 to i64
-  call void @get_context_data(i64 %8, i64 11)
+  %1 = add i64 %heap_start, 0
+  call void @get_context_data(i64 %1, i64 8)
+  %2 = add i64 %heap_start, 1
+  call void @get_context_data(i64 %2, i64 9)
+  %3 = add i64 %heap_start, 2
+  call void @get_context_data(i64 %3, i64 10)
+  %4 = add i64 %heap_start, 3
+  call void @get_context_data(i64 %4, i64 11)
   ret ptr %heap_to_ptr
 }
 

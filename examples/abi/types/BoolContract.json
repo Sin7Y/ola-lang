@@ -1,0 +1,14 @@
+[
+  {
+    "name": "bool_bitwise",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ]
+  }
+]

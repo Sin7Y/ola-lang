@@ -1,0 +1,48 @@
+[
+  {
+    "name": "foo",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "b",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  },
+  {
+    "name": "bar",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "b",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

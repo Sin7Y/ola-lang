@@ -1,0 +1,44 @@
+[
+  {
+    "name": "addressFunction",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "setAddress",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "getAddress",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "name": "get_caller",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "caller_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  }
+]

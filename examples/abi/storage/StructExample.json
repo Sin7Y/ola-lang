@@ -1,0 +1,31 @@
+[
+  {
+    "name": "setData",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_id",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "_value",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "getData",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

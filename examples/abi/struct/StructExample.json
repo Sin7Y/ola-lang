@@ -1,0 +1,26 @@
+[
+  {
+    "name": "createBook",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct StructExample.Book",
+        "components": [
+          {
+            "name": "book_id",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_name",
+            "type": "u32",
+            "internalType": "u32"
+          }
+        ]
+      }
+    ]
+  }
+]

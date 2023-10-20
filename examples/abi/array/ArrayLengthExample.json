@@ -1,0 +1,14 @@
+[
+  {
+    "name": "array_length_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

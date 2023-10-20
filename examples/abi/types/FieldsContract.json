@@ -1,0 +1,14 @@
+[
+  {
+    "name": "fields_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "fields",
+        "internalType": "fields"
+      }
+    ]
+  }
+]

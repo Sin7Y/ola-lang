@@ -1,0 +1,42 @@
+[
+  {
+    "name": "create2DArray",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[2][3]",
+        "internalType": "u32[2][3]"
+      }
+    ]
+  },
+  {
+    "name": "getElement",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_array2D",
+        "type": "u32[2][3]",
+        "internalType": "u32[2][3]"
+      },
+      {
+        "name": "_i",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "_j",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]
