@@ -1,0 +1,26 @@
+[
+  {
+    "name": "test",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "sqrt_test",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "n",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

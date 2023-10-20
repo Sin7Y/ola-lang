@@ -1,0 +1,43 @@
+[
+  {
+    "name": "add_mapping",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "number",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "get_mapping",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  },
+  {
+    "name": "mapping_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  }
+]
