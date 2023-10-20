@@ -1,0 +1,38 @@
+[
+  {
+    "name": "fib_recursive",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "n",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  },
+  {
+    "name": "fib_non_recursive",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "n",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "sum",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "inputArray",
+        "type": "u32[10]",
+        "internalType": "u32[10]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

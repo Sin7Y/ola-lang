@@ -1,0 +1,26 @@
+[
+  {
+    "name": "test",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "array_index",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

@@ -1,0 +1,25 @@
+[
+  {
+    "name": "init",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "setElement",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "value",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": []
+  }
+]

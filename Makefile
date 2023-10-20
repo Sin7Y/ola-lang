@@ -5,6 +5,9 @@ compile-llvm-ir:
 compile-asm: 
 	./compile.sh asm
 
+compile-abi: 
+	./compile.sh abi	
+
 compile-ast:
 	./compile.sh ast
 
@@ -27,4 +30,4 @@ clippy: ## Run clippy checks over all workspace members
 	@cargo check --all-features
 	@cargo clippy --all-features --all-targets
 
-.PHONY: compile-llvm-ir compile-asm compile-ast clean fmt clippy doc help
+.PHONY: compile-llvm-ir compile-asm compile-abi compile-ast clean fmt clippy doc help

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "fixed_array_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "array_call",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "source",
+        "type": "u32[3]",
+        "internalType": "u32[3]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[3]",
+        "internalType": "u32[3]"
+      }
+    ]
+  }
+]

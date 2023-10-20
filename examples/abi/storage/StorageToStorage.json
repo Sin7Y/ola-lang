@@ -1,0 +1,14 @@
+[
+  {
+    "name": "setArray1",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "u32[]",
+        "internalType": "u32[]"
+      }
+    ],
+    "outputs": []
+  }
+]

@@ -4,6 +4,7 @@ use clap::{builder::ValueParser, Arg, ArgMatches, Command};
 
 use num_bigint::BigInt;
 use num_traits::Zero;
+use ola_lang::abi;
 use ola_lang::codegen::isa::ola::Ola;
 use ola_lang::codegen::lower::compile_module;
 use ola_lang::file_resolver::FileResolver;
@@ -39,7 +40,7 @@ fn main() {
                             .help("Show compile intermediate status results")
                             .long("gen")
                             .num_args(1)
-                            .value_parser(["ast", "llvm-ir", "asm"]),
+                            .value_parser(["ast", "llvm-ir", "abi", "asm"]),
                     )
                     .arg(
                         Arg::new("OUTPUT")
@@ -128,6 +129,14 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
                 let llvm_filename = output_file(matches, filename_stem.to_str().unwrap(), "ll");
 
                 binary.dump_llvm(&llvm_filename).unwrap();
+            }
+
+            Some("abi") => {
+                let (metadata, meta_ext) =
+                abi::generate_abi(contract_no, &ns);
+                let meta_filename = output_file(matches, &binary.name, meta_ext);
+                let mut file = create_file(&meta_filename);
+                file.write_all(metadata.as_bytes()).unwrap();
             }
 
             Some("asm") => {

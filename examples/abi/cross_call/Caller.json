@@ -1,0 +1,26 @@
+[
+  {
+    "name": "delegatecall_test",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_contract",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "call_test",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_contract",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": []
+  }
+]
