@@ -9,9 +9,9 @@ pub(crate) mod constructor;
 mod member_access;
 pub mod resolve_expression;
 pub mod retrieve_type;
+mod slice;
 pub(crate) mod strings;
 mod subscript;
-mod slice;
 mod variable;
 use std::cmp::Ordering;
 

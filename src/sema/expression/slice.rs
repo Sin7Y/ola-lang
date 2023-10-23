@@ -34,21 +34,21 @@ pub(super) fn array_slice(
     if array.ty().is_mapping() {
         diagnostics.push(Diagnostic::error(
             *loc,
-                "The slice operation cannot be applied to mapping types.".to_string(),
+            "The slice operation cannot be applied to mapping types.".to_string(),
         ));
         return Err(());
     }
 
     let from = match from {
         Some(from) => {
-           let mut from_expr =  expression(
+            let mut from_expr = expression(
                 from,
                 context,
                 ns,
                 symtable,
                 diagnostics,
                 ResolveTo::Type(&Type::Uint(32)),
-           )?;
+            )?;
             let from_ty = from_expr.ty();
 
             match from_ty.deref_any() {
@@ -65,10 +65,10 @@ pub(super) fn array_slice(
                 }
             };
             from_expr.recurse(ns, check_term_for_constant_overflow);
-            
+
             // make sure we load the from index value if needed
             from_expr = from_expr.cast(&from_expr.loc(), from_ty.deref_any(), ns, diagnostics)?;
-            
+
             Some(Box::new(from_expr))
         }
         None => None,
@@ -76,7 +76,7 @@ pub(super) fn array_slice(
 
     let to = match to {
         Some(to) => {
-           let mut to_expr =  expression(
+            let mut to_expr = expression(
                 to,
                 context,
                 ns,
@@ -100,14 +100,13 @@ pub(super) fn array_slice(
                 }
             };
             to_expr.recurse(ns, check_term_for_constant_overflow);
-            
+
             // make sure we load the from index value if needed
             to_expr = to_expr.cast(&to_expr.loc(), to_ty.deref_any(), ns, diagnostics)?;
-            
+
             Some(Box::new(to_expr))
         }
-        None => None
-        
+        None => None,
     };
 
     let deref_ty = array_ty.deref_any();
@@ -116,7 +115,7 @@ pub(super) fn array_slice(
             if array_ty.is_contract_storage() {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                        "The slice operation cannot be applied to storage var.".to_string(),
+                    "The slice operation cannot be applied to storage var.".to_string(),
                 ));
                 return Err(());
             } else {
@@ -133,7 +132,14 @@ pub(super) fn array_slice(
                     diagnostics,
                 )?;
 
-                Ok(Expression::ArraySlice { loc: *loc, ty: elem_ty, array_ty, array: Box::new(array), start: from, end: to })
+                Ok(Expression::ArraySlice {
+                    loc: *loc,
+                    ty: elem_ty,
+                    array_ty,
+                    array: Box::new(array),
+                    start: from,
+                    end: to,
+                })
             }
         }
         _ => {
@@ -145,4 +151,3 @@ pub(super) fn array_slice(
         }
     }
 }
-

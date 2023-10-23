@@ -211,8 +211,10 @@ pub fn encode_dynamic_array_loop<'a>(
     let loop_end = bin.context.append_basic_block(func_value, "loop_end");
 
     // Initialize index before the loop
-    let index_ptr = bin
-        .build_alloca(func_value, bin.context.i64_type(), "index_ptr");
+    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index_ptr");
+
+    let offset_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "offset_ptr");
+    bin.builder.build_store(offset_ptr, *offset);
     bin.builder
         .build_store(index_ptr, bin.context.i64_type().const_zero());
 
@@ -240,12 +242,15 @@ pub fn encode_dynamic_array_loop<'a>(
         elem_ptr.into()
     };
 
-    encode_into_buffer(buffer, elem, elem_ty, *offset, bin, func_value, ns);
+    let offset = bin
+        .builder
+        .build_load(bin.context.i64_type(), offset_ptr, "offset")
+        .into_int_value();
+    let encode_len = encode_into_buffer(buffer, elem, elem_ty, offset, bin, func_value, ns);
 
-    *offset = bin.builder.build_int_add(
-        *offset,
-        bin.context.i64_type().const_int(1, false),
-        "offset",
+    bin.builder.build_store(
+        offset_ptr,
+        bin.builder.build_int_add(offset, encode_len, "next_offset"),
     );
 
     let next_index = bin.builder.build_int_add(

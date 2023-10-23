@@ -774,6 +774,7 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 2817135588, label %func_0_dispatch
@@ -806,6 +807,7 @@ inbounds:                                         ; preds = %func_0_dispatch
   %vector_data = inttoptr i64 %7 to ptr
   %array_elem_num = mul i64 %value, 1
   store i64 0, ptr %index_ptr, align 4
+  store i64 1, ptr %offset_ptr, align 4
   br label %loop_body
 
 out_of_bounds:                                    ; preds = %func_0_dispatch
@@ -814,17 +816,21 @@ out_of_bounds:                                    ; preds = %func_0_dispatch
 loop_body:                                        ; preds = %inbounds1, %inbounds
   %index = load i64, ptr %index_ptr, align 4
   %element = getelementptr i64, ptr %vector_data, i64 %index
-  %8 = icmp ule i64 2, %1
-  br i1 %8, label %inbounds1, label %out_of_bounds2
+  %offset = load i64, ptr %offset_ptr, align 4
+  %8 = add i64 %offset, 1
+  %9 = icmp ule i64 %8, %1
+  br i1 %9, label %inbounds1, label %out_of_bounds2
 
 loop_end:                                         ; preds = %inbounds1
-  %9 = add i64 0, %array_elem_num
-  %10 = icmp ule i64 %9, %1
-  br i1 %10, label %inbounds5, label %out_of_bounds6
+  %10 = add i64 0, %array_elem_num
+  %11 = icmp ule i64 %10, %1
+  br i1 %11, label %inbounds5, label %out_of_bounds6
 
 inbounds1:                                        ; preds = %loop_body
-  %start3 = getelementptr i64, ptr %2, i64 1
+  %start3 = getelementptr i64, ptr %2, i64 %offset
   %value4 = load i64, ptr %start3, align 4
+  %next_offset = add i64 %offset, 1
+  store i64 %next_offset, ptr %offset_ptr, align 4
   store i64 %value4, ptr %element, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
@@ -835,17 +841,17 @@ out_of_bounds2:                                   ; preds = %loop_body
   unreachable
 
 inbounds5:                                        ; preds = %loop_end
-  %11 = add i64 0, %3
-  %12 = icmp ule i64 %11, %1
-  br i1 %12, label %inbounds7, label %out_of_bounds8
+  %12 = add i64 0, %3
+  %13 = icmp ule i64 %12, %1
+  br i1 %13, label %inbounds7, label %out_of_bounds8
 
 out_of_bounds6:                                   ; preds = %loop_end
   unreachable
 
 inbounds7:                                        ; preds = %inbounds5
-  %13 = add i64 0, %3
-  %14 = icmp ult i64 %13, %1
-  br i1 %14, label %not_all_bytes_read, label %buffer_read
+  %14 = add i64 0, %3
+  %15 = icmp ult i64 %14, %1
+  br i1 %15, label %not_all_bytes_read, label %buffer_read
 
 out_of_bounds8:                                   ; preds = %inbounds5
   unreachable
@@ -858,38 +864,38 @@ buffer_read:                                      ; preds = %inbounds7
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %15 = call i64 @winningProposal()
-  %16 = call i64 @vector_new(i64 2)
-  %heap_start9 = sub i64 %16, 2
+  %16 = call i64 @winningProposal()
+  %17 = call i64 @vector_new(i64 2)
+  %heap_start9 = sub i64 %17, 2
   %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
   %start11 = getelementptr i64, ptr %heap_to_ptr10, i64 0
-  store i64 %15, ptr %start11, align 4
+  store i64 %16, ptr %start11, align 4
   %start12 = getelementptr i64, ptr %heap_to_ptr10, i64 1
   store i64 1, ptr %start12, align 4
   call void @set_tape_data(i64 %heap_start9, i64 2)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %17 = call i64 @getWinnerName()
-  %18 = call i64 @vector_new(i64 2)
-  %heap_start13 = sub i64 %18, 2
+  %18 = call i64 @getWinnerName()
+  %19 = call i64 @vector_new(i64 2)
+  %heap_start13 = sub i64 %19, 2
   %heap_to_ptr14 = inttoptr i64 %heap_start13 to ptr
   %start15 = getelementptr i64, ptr %heap_to_ptr14, i64 0
-  store i64 %17, ptr %start15, align 4
+  store i64 %18, ptr %start15, align 4
   %start16 = getelementptr i64, ptr %heap_to_ptr14, i64 1
   store i64 1, ptr %start16, align 4
   call void @set_tape_data(i64 %heap_start13, i64 2)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %19 = icmp ule i64 1, %1
-  br i1 %19, label %inbounds17, label %out_of_bounds18
+  %20 = icmp ule i64 1, %1
+  br i1 %20, label %inbounds17, label %out_of_bounds18
 
 inbounds17:                                       ; preds = %func_3_dispatch
   %start19 = getelementptr i64, ptr %2, i64 0
   %value20 = load i64, ptr %start19, align 4
-  %20 = icmp ult i64 1, %1
-  br i1 %20, label %not_all_bytes_read21, label %buffer_read22
+  %21 = icmp ult i64 1, %1
+  br i1 %21, label %not_all_bytes_read21, label %buffer_read22
 
 out_of_bounds18:                                  ; preds = %func_3_dispatch
   unreachable
@@ -902,26 +908,26 @@ buffer_read22:                                    ; preds = %inbounds17
   ret void
 
 func_4_dispatch:                                  ; preds = %entry
-  %21 = call ptr @get_caller()
-  %22 = call i64 @vector_new(i64 5)
-  %heap_start23 = sub i64 %22, 5
+  %22 = call ptr @get_caller()
+  %23 = call i64 @vector_new(i64 5)
+  %heap_start23 = sub i64 %23, 5
   %heap_to_ptr24 = inttoptr i64 %heap_start23 to ptr
-  %23 = getelementptr i64, ptr %21, i64 0
-  %24 = load i64, ptr %23, align 4
+  %24 = getelementptr i64, ptr %22, i64 0
+  %25 = load i64, ptr %24, align 4
   %start25 = getelementptr i64, ptr %heap_to_ptr24, i64 0
-  store i64 %24, ptr %start25, align 4
-  %25 = getelementptr i64, ptr %21, i64 1
-  %26 = load i64, ptr %25, align 4
+  store i64 %25, ptr %start25, align 4
+  %26 = getelementptr i64, ptr %22, i64 1
+  %27 = load i64, ptr %26, align 4
   %start26 = getelementptr i64, ptr %heap_to_ptr24, i64 1
-  store i64 %26, ptr %start26, align 4
-  %27 = getelementptr i64, ptr %21, i64 2
-  %28 = load i64, ptr %27, align 4
+  store i64 %27, ptr %start26, align 4
+  %28 = getelementptr i64, ptr %22, i64 2
+  %29 = load i64, ptr %28, align 4
   %start27 = getelementptr i64, ptr %heap_to_ptr24, i64 2
-  store i64 %28, ptr %start27, align 4
-  %29 = getelementptr i64, ptr %21, i64 3
-  %30 = load i64, ptr %29, align 4
+  store i64 %29, ptr %start27, align 4
+  %30 = getelementptr i64, ptr %22, i64 3
+  %31 = load i64, ptr %30, align 4
   %start28 = getelementptr i64, ptr %heap_to_ptr24, i64 3
-  store i64 %30, ptr %start28, align 4
+  store i64 %31, ptr %start28, align 4
   %start29 = getelementptr i64, ptr %heap_to_ptr24, i64 4
   store i64 4, ptr %start29, align 4
   call void @set_tape_data(i64 %heap_start23, i64 5)

@@ -1,9 +1,8 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
+use inkwell::values::{BasicValue, BasicValueEnum};
 use inkwell::AddressSpace;
-use inkwell::values::{BasicValueEnum, BasicValue};
 use once_cell::sync::Lazy;
-
 
 static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
     [
@@ -97,7 +96,6 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                 let right_value = func.get_nth_param(1).unwrap().into();
                 let new_fields = fields_concat(left_value, right_value, bin);
                 bin.builder.build_return(Some(&new_fields));
-
             }
             _ => {}
         }
@@ -223,7 +221,6 @@ pub fn declare_builtins(bin: &mut Binary) {
         _ => {}
     });
 }
-
 
 fn fields_concat<'a>(
     left: BasicValueEnum<'a>,
