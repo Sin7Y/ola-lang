@@ -31,6 +31,31 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %4
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %5 = add i64 %1, %index_value
+  %src_index_access = getelementptr i64, ptr %0, i64 %5
+  %6 = load i64, ptr %src_index_access, align 4
+  %7 = add i64 %3, %index_value
+  %dest_index_access = getelementptr i64, ptr %2, i64 %7
+  store i64 %6, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+}
+
 define void @foo(ptr %0) {
 entry:
   %index51 = alloca i64, align 8
@@ -279,6 +304,9 @@ done50:                                           ; preds = %body49, %cond48
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %struct_alloca = alloca { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, align 8
+  %index_ptr64 = alloca i64, align 8
+  %index_ptr42 = alloca i64, align 8
+  %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 3469705383, label %func_0_dispatch
   ]
@@ -343,7 +371,6 @@ inbounds20:                                       ; preds = %inbounds18
   %10 = ptrtoint ptr %heap_to_ptr23 to i64
   %11 = add i64 %10, 1
   %vector_data = inttoptr i64 %11 to ptr
-  %index_ptr = alloca i64, align 8
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
@@ -396,7 +423,6 @@ inbounds33:                                       ; preds = %inbounds31
   %21 = ptrtoint ptr %heap_to_ptr38 to i64
   %22 = add i64 %21, 1
   %vector_data39 = inttoptr i64 %22 to ptr
-  %index_ptr42 = alloca i64, align 8
   store i64 0, ptr %index_ptr42, align 4
   br label %loop_body40
 
@@ -451,7 +477,6 @@ inbounds55:                                       ; preds = %inbounds53
   %33 = ptrtoint ptr %heap_to_ptr60 to i64
   %34 = add i64 %33, 1
   %vector_data61 = inttoptr i64 %34 to ptr
-  %index_ptr64 = alloca i64, align 8
   store i64 0, ptr %index_ptr64, align 4
   br label %loop_body62
 

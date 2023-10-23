@@ -31,6 +31,31 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %4
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %5 = add i64 %1, %index_value
+  %src_index_access = getelementptr i64, ptr %0, i64 %5
+  %6 = load i64, ptr %src_index_access, align 4
+  %7 = add i64 %3, %index_value
+  %dest_index_access = getelementptr i64, ptr %2, i64 %7
+  store i64 %6, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+}
+
 define ptr @createStudent() {
 entry:
   %struct_alloca = alloca { i64, ptr }, align 8
@@ -94,6 +119,7 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 15777857, label %func_0_dispatch
   ]
@@ -122,7 +148,6 @@ func_0_dispatch:                                  ; preds = %entry
   %length5 = load i64, ptr %"struct member4", align 4
   %start6 = getelementptr i64, ptr %heap_to_ptr, i64 1
   store i64 %length5, ptr %start6, align 4
-  %index_ptr = alloca i64, align 8
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 

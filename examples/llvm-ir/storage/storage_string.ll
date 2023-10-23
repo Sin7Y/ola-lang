@@ -31,6 +31,31 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %4
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %5 = add i64 %1, %index_value
+  %src_index_access = getelementptr i64, ptr %0, i64 %5
+  %6 = load i64, ptr %src_index_access, align 4
+  %7 = add i64 %3, %index_value
+  %dest_index_access = getelementptr i64, ptr %2, i64 %7
+  store i64 %6, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+}
+
 define void @set(ptr %0) {
 entry:
   %1 = alloca ptr, align 8
@@ -353,6 +378,8 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %index_ptr14 = alloca i64, align 8
+  %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 1586025294, label %func_0_dispatch
     i64 515430227, label %func_1_dispatch
@@ -387,7 +414,6 @@ inbounds1:                                        ; preds = %inbounds
   %8 = ptrtoint ptr %heap_to_ptr to i64
   %9 = add i64 %8, 1
   %vector_data = inttoptr i64 %9 to ptr
-  %index_ptr = alloca i64, align 8
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
@@ -442,7 +468,6 @@ func_2_dispatch:                                  ; preds = %entry
   %16 = ptrtoint ptr %13 to i64
   %17 = add i64 %16, 1
   %vector_data11 = inttoptr i64 %17 to ptr
-  %index_ptr14 = alloca i64, align 8
   store i64 0, ptr %index_ptr14, align 4
   br label %loop_body12
 
