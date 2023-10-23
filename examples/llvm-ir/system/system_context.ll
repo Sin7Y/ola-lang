@@ -31,6 +31,31 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %4
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %5 = add i64 %1, %index_value
+  %src_index_access = getelementptr i64, ptr %0, i64 %5
+  %6 = load i64, ptr %src_index_access, align 4
+  %7 = add i64 %3, %index_value
+  %dest_index_access = getelementptr i64, ptr %2, i64 %7
+  store i64 %6, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+}
+
 define ptr @caller_address_test() {
 entry:
   %0 = call i64 @vector_new(i64 12)
@@ -67,10 +92,10 @@ entry:
 
 define ptr @current_address_test() {
 entry:
-  %0 = call i64 @vector_new(i64 8)
-  %heap_start = sub i64 %0, 8
+  %0 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %0, 4
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 8)
+  call void @get_tape_data(i64 %heap_start, i64 4)
   ret ptr %heap_to_ptr
 }
 
@@ -93,17 +118,9 @@ entry:
   %caller = alloca ptr, align 8
   %0 = call ptr @caller_address_test()
   store ptr %0, ptr %caller, align 8
-  %1 = call ptr @origin_address_test()
-  store ptr %1, ptr %origin, align 8
-  %2 = call ptr @code_address_test()
-  store ptr %2, ptr %code, align 8
-  %3 = call ptr @current_address_test()
-  store ptr %3, ptr %current, align 8
-  %4 = call i64 @chain_id_test()
-  store i64 %4, ptr %chain, align 4
-  %5 = load ptr, ptr %caller, align 8
-  %6 = call i64 @vector_new(i64 4)
-  %heap_start = sub i64 %6, 4
+  %1 = load ptr, ptr %caller, align 8
+  %2 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %2, 4
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %index_access = getelementptr i64, ptr %heap_to_ptr, i64 0
   store i64 17, ptr %index_access, align 4
@@ -113,38 +130,40 @@ entry:
   store i64 19, ptr %index_access2, align 4
   %index_access3 = getelementptr i64, ptr %heap_to_ptr, i64 3
   store i64 20, ptr %index_access3, align 4
-  %left_elem_0 = getelementptr i64, ptr %5, i64 0
-  %7 = load i64, ptr %left_elem_0, align 4
+  %left_elem_0 = getelementptr i64, ptr %1, i64 0
+  %3 = load i64, ptr %left_elem_0, align 4
   %right_elem_0 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  %8 = load i64, ptr %right_elem_0, align 4
-  %compare_0 = icmp eq i64 %7, %8
-  %9 = zext i1 %compare_0 to i64
-  %result_0 = and i64 %9, 1
-  %left_elem_1 = getelementptr i64, ptr %5, i64 1
-  %10 = load i64, ptr %left_elem_1, align 4
+  %4 = load i64, ptr %right_elem_0, align 4
+  %compare_0 = icmp eq i64 %3, %4
+  %5 = zext i1 %compare_0 to i64
+  %result_0 = and i64 %5, 1
+  %left_elem_1 = getelementptr i64, ptr %1, i64 1
+  %6 = load i64, ptr %left_elem_1, align 4
   %right_elem_1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  %11 = load i64, ptr %right_elem_1, align 4
-  %compare_1 = icmp eq i64 %10, %11
-  %12 = zext i1 %compare_1 to i64
-  %result_1 = and i64 %12, %result_0
-  %left_elem_2 = getelementptr i64, ptr %5, i64 2
-  %13 = load i64, ptr %left_elem_2, align 4
+  %7 = load i64, ptr %right_elem_1, align 4
+  %compare_1 = icmp eq i64 %6, %7
+  %8 = zext i1 %compare_1 to i64
+  %result_1 = and i64 %8, %result_0
+  %left_elem_2 = getelementptr i64, ptr %1, i64 2
+  %9 = load i64, ptr %left_elem_2, align 4
   %right_elem_2 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  %14 = load i64, ptr %right_elem_2, align 4
-  %compare_2 = icmp eq i64 %13, %14
-  %15 = zext i1 %compare_2 to i64
-  %result_2 = and i64 %15, %result_1
-  %left_elem_3 = getelementptr i64, ptr %5, i64 3
-  %16 = load i64, ptr %left_elem_3, align 4
+  %10 = load i64, ptr %right_elem_2, align 4
+  %compare_2 = icmp eq i64 %9, %10
+  %11 = zext i1 %compare_2 to i64
+  %result_2 = and i64 %11, %result_1
+  %left_elem_3 = getelementptr i64, ptr %1, i64 3
+  %12 = load i64, ptr %left_elem_3, align 4
   %right_elem_3 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  %17 = load i64, ptr %right_elem_3, align 4
-  %compare_3 = icmp eq i64 %16, %17
-  %18 = zext i1 %compare_3 to i64
-  %result_3 = and i64 %18, %result_2
+  %13 = load i64, ptr %right_elem_3, align 4
+  %compare_3 = icmp eq i64 %12, %13
+  %14 = zext i1 %compare_3 to i64
+  %result_3 = and i64 %14, %result_2
   call void @builtin_assert(i64 %result_3)
-  %19 = load ptr, ptr %origin, align 8
-  %20 = call i64 @vector_new(i64 4)
-  %heap_start4 = sub i64 %20, 4
+  %15 = call ptr @origin_address_test()
+  store ptr %15, ptr %origin, align 8
+  %16 = load ptr, ptr %origin, align 8
+  %17 = call i64 @vector_new(i64 4)
+  %heap_start4 = sub i64 %17, 4
   %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
   %index_access6 = getelementptr i64, ptr %heap_to_ptr5, i64 0
   store i64 5, ptr %index_access6, align 4
@@ -154,38 +173,40 @@ entry:
   store i64 7, ptr %index_access8, align 4
   %index_access9 = getelementptr i64, ptr %heap_to_ptr5, i64 3
   store i64 8, ptr %index_access9, align 4
-  %left_elem_010 = getelementptr i64, ptr %19, i64 0
-  %21 = load i64, ptr %left_elem_010, align 4
+  %left_elem_010 = getelementptr i64, ptr %16, i64 0
+  %18 = load i64, ptr %left_elem_010, align 4
   %right_elem_011 = getelementptr i64, ptr %heap_to_ptr5, i64 0
-  %22 = load i64, ptr %right_elem_011, align 4
-  %compare_012 = icmp eq i64 %21, %22
-  %23 = zext i1 %compare_012 to i64
-  %result_013 = and i64 %23, 1
-  %left_elem_114 = getelementptr i64, ptr %19, i64 1
-  %24 = load i64, ptr %left_elem_114, align 4
+  %19 = load i64, ptr %right_elem_011, align 4
+  %compare_012 = icmp eq i64 %18, %19
+  %20 = zext i1 %compare_012 to i64
+  %result_013 = and i64 %20, 1
+  %left_elem_114 = getelementptr i64, ptr %16, i64 1
+  %21 = load i64, ptr %left_elem_114, align 4
   %right_elem_115 = getelementptr i64, ptr %heap_to_ptr5, i64 1
-  %25 = load i64, ptr %right_elem_115, align 4
-  %compare_116 = icmp eq i64 %24, %25
-  %26 = zext i1 %compare_116 to i64
-  %result_117 = and i64 %26, %result_013
-  %left_elem_218 = getelementptr i64, ptr %19, i64 2
-  %27 = load i64, ptr %left_elem_218, align 4
+  %22 = load i64, ptr %right_elem_115, align 4
+  %compare_116 = icmp eq i64 %21, %22
+  %23 = zext i1 %compare_116 to i64
+  %result_117 = and i64 %23, %result_013
+  %left_elem_218 = getelementptr i64, ptr %16, i64 2
+  %24 = load i64, ptr %left_elem_218, align 4
   %right_elem_219 = getelementptr i64, ptr %heap_to_ptr5, i64 2
-  %28 = load i64, ptr %right_elem_219, align 4
-  %compare_220 = icmp eq i64 %27, %28
-  %29 = zext i1 %compare_220 to i64
-  %result_221 = and i64 %29, %result_117
-  %left_elem_322 = getelementptr i64, ptr %19, i64 3
-  %30 = load i64, ptr %left_elem_322, align 4
+  %25 = load i64, ptr %right_elem_219, align 4
+  %compare_220 = icmp eq i64 %24, %25
+  %26 = zext i1 %compare_220 to i64
+  %result_221 = and i64 %26, %result_117
+  %left_elem_322 = getelementptr i64, ptr %16, i64 3
+  %27 = load i64, ptr %left_elem_322, align 4
   %right_elem_323 = getelementptr i64, ptr %heap_to_ptr5, i64 3
-  %31 = load i64, ptr %right_elem_323, align 4
-  %compare_324 = icmp eq i64 %30, %31
-  %32 = zext i1 %compare_324 to i64
-  %result_325 = and i64 %32, %result_221
+  %28 = load i64, ptr %right_elem_323, align 4
+  %compare_324 = icmp eq i64 %27, %28
+  %29 = zext i1 %compare_324 to i64
+  %result_325 = and i64 %29, %result_221
   call void @builtin_assert(i64 %result_325)
-  %33 = load ptr, ptr %code, align 8
-  %34 = call i64 @vector_new(i64 4)
-  %heap_start26 = sub i64 %34, 4
+  %30 = call ptr @code_address_test()
+  store ptr %30, ptr %code, align 8
+  %31 = load ptr, ptr %code, align 8
+  %32 = call i64 @vector_new(i64 4)
+  %heap_start26 = sub i64 %32, 4
   %heap_to_ptr27 = inttoptr i64 %heap_start26 to ptr
   %index_access28 = getelementptr i64, ptr %heap_to_ptr27, i64 0
   store i64 9, ptr %index_access28, align 4
@@ -195,38 +216,40 @@ entry:
   store i64 11, ptr %index_access30, align 4
   %index_access31 = getelementptr i64, ptr %heap_to_ptr27, i64 3
   store i64 12, ptr %index_access31, align 4
-  %left_elem_032 = getelementptr i64, ptr %33, i64 0
-  %35 = load i64, ptr %left_elem_032, align 4
+  %left_elem_032 = getelementptr i64, ptr %31, i64 0
+  %33 = load i64, ptr %left_elem_032, align 4
   %right_elem_033 = getelementptr i64, ptr %heap_to_ptr27, i64 0
-  %36 = load i64, ptr %right_elem_033, align 4
-  %compare_034 = icmp eq i64 %35, %36
-  %37 = zext i1 %compare_034 to i64
-  %result_035 = and i64 %37, 1
-  %left_elem_136 = getelementptr i64, ptr %33, i64 1
-  %38 = load i64, ptr %left_elem_136, align 4
+  %34 = load i64, ptr %right_elem_033, align 4
+  %compare_034 = icmp eq i64 %33, %34
+  %35 = zext i1 %compare_034 to i64
+  %result_035 = and i64 %35, 1
+  %left_elem_136 = getelementptr i64, ptr %31, i64 1
+  %36 = load i64, ptr %left_elem_136, align 4
   %right_elem_137 = getelementptr i64, ptr %heap_to_ptr27, i64 1
-  %39 = load i64, ptr %right_elem_137, align 4
-  %compare_138 = icmp eq i64 %38, %39
-  %40 = zext i1 %compare_138 to i64
-  %result_139 = and i64 %40, %result_035
-  %left_elem_240 = getelementptr i64, ptr %33, i64 2
-  %41 = load i64, ptr %left_elem_240, align 4
+  %37 = load i64, ptr %right_elem_137, align 4
+  %compare_138 = icmp eq i64 %36, %37
+  %38 = zext i1 %compare_138 to i64
+  %result_139 = and i64 %38, %result_035
+  %left_elem_240 = getelementptr i64, ptr %31, i64 2
+  %39 = load i64, ptr %left_elem_240, align 4
   %right_elem_241 = getelementptr i64, ptr %heap_to_ptr27, i64 2
-  %42 = load i64, ptr %right_elem_241, align 4
-  %compare_242 = icmp eq i64 %41, %42
-  %43 = zext i1 %compare_242 to i64
-  %result_243 = and i64 %43, %result_139
-  %left_elem_344 = getelementptr i64, ptr %33, i64 3
-  %44 = load i64, ptr %left_elem_344, align 4
+  %40 = load i64, ptr %right_elem_241, align 4
+  %compare_242 = icmp eq i64 %39, %40
+  %41 = zext i1 %compare_242 to i64
+  %result_243 = and i64 %41, %result_139
+  %left_elem_344 = getelementptr i64, ptr %31, i64 3
+  %42 = load i64, ptr %left_elem_344, align 4
   %right_elem_345 = getelementptr i64, ptr %heap_to_ptr27, i64 3
-  %45 = load i64, ptr %right_elem_345, align 4
-  %compare_346 = icmp eq i64 %44, %45
-  %46 = zext i1 %compare_346 to i64
-  %result_347 = and i64 %46, %result_243
+  %43 = load i64, ptr %right_elem_345, align 4
+  %compare_346 = icmp eq i64 %42, %43
+  %44 = zext i1 %compare_346 to i64
+  %result_347 = and i64 %44, %result_243
   call void @builtin_assert(i64 %result_347)
-  %47 = load ptr, ptr %current, align 8
-  %48 = call i64 @vector_new(i64 4)
-  %heap_start48 = sub i64 %48, 4
+  %45 = call ptr @current_address_test()
+  store ptr %45, ptr %current, align 8
+  %46 = load ptr, ptr %current, align 8
+  %47 = call i64 @vector_new(i64 4)
+  %heap_start48 = sub i64 %47, 4
   %heap_to_ptr49 = inttoptr i64 %heap_start48 to ptr
   %index_access50 = getelementptr i64, ptr %heap_to_ptr49, i64 0
   store i64 13, ptr %index_access50, align 4
@@ -236,35 +259,37 @@ entry:
   store i64 15, ptr %index_access52, align 4
   %index_access53 = getelementptr i64, ptr %heap_to_ptr49, i64 3
   store i64 16, ptr %index_access53, align 4
-  %left_elem_054 = getelementptr i64, ptr %47, i64 0
-  %49 = load i64, ptr %left_elem_054, align 4
+  %left_elem_054 = getelementptr i64, ptr %46, i64 0
+  %48 = load i64, ptr %left_elem_054, align 4
   %right_elem_055 = getelementptr i64, ptr %heap_to_ptr49, i64 0
-  %50 = load i64, ptr %right_elem_055, align 4
-  %compare_056 = icmp eq i64 %49, %50
-  %51 = zext i1 %compare_056 to i64
-  %result_057 = and i64 %51, 1
-  %left_elem_158 = getelementptr i64, ptr %47, i64 1
-  %52 = load i64, ptr %left_elem_158, align 4
+  %49 = load i64, ptr %right_elem_055, align 4
+  %compare_056 = icmp eq i64 %48, %49
+  %50 = zext i1 %compare_056 to i64
+  %result_057 = and i64 %50, 1
+  %left_elem_158 = getelementptr i64, ptr %46, i64 1
+  %51 = load i64, ptr %left_elem_158, align 4
   %right_elem_159 = getelementptr i64, ptr %heap_to_ptr49, i64 1
-  %53 = load i64, ptr %right_elem_159, align 4
-  %compare_160 = icmp eq i64 %52, %53
-  %54 = zext i1 %compare_160 to i64
-  %result_161 = and i64 %54, %result_057
-  %left_elem_262 = getelementptr i64, ptr %47, i64 2
-  %55 = load i64, ptr %left_elem_262, align 4
+  %52 = load i64, ptr %right_elem_159, align 4
+  %compare_160 = icmp eq i64 %51, %52
+  %53 = zext i1 %compare_160 to i64
+  %result_161 = and i64 %53, %result_057
+  %left_elem_262 = getelementptr i64, ptr %46, i64 2
+  %54 = load i64, ptr %left_elem_262, align 4
   %right_elem_263 = getelementptr i64, ptr %heap_to_ptr49, i64 2
-  %56 = load i64, ptr %right_elem_263, align 4
-  %compare_264 = icmp eq i64 %55, %56
-  %57 = zext i1 %compare_264 to i64
-  %result_265 = and i64 %57, %result_161
-  %left_elem_366 = getelementptr i64, ptr %47, i64 3
-  %58 = load i64, ptr %left_elem_366, align 4
+  %55 = load i64, ptr %right_elem_263, align 4
+  %compare_264 = icmp eq i64 %54, %55
+  %56 = zext i1 %compare_264 to i64
+  %result_265 = and i64 %56, %result_161
+  %left_elem_366 = getelementptr i64, ptr %46, i64 3
+  %57 = load i64, ptr %left_elem_366, align 4
   %right_elem_367 = getelementptr i64, ptr %heap_to_ptr49, i64 3
-  %59 = load i64, ptr %right_elem_367, align 4
-  %compare_368 = icmp eq i64 %58, %59
-  %60 = zext i1 %compare_368 to i64
-  %result_369 = and i64 %60, %result_265
+  %58 = load i64, ptr %right_elem_367, align 4
+  %compare_368 = icmp eq i64 %57, %58
+  %59 = zext i1 %compare_368 to i64
+  %result_369 = and i64 %59, %result_265
   call void @builtin_assert(i64 %result_369)
+  %60 = call i64 @chain_id_test()
+  store i64 %60, ptr %chain, align 4
   %61 = load i64, ptr %chain, align 4
   %62 = icmp eq i64 %61, 1
   %63 = zext i1 %62 to i64

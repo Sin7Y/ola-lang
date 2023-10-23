@@ -78,7 +78,7 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 14]> = Lazy::new(|| {
             ret: vec![Type::Address],
         },
         Prototype {
-            libfunc: LibFunc::CodeAddress,
+            libfunc: LibFunc::CurrentAddress,
             namespace: None,
             name: "current_address",
             params: vec![],

@@ -212,8 +212,7 @@ pub fn encode_dynamic_array_loop<'a>(
 
     // Initialize index before the loop
     let index_ptr = bin
-        .builder
-        .build_alloca(bin.context.i64_type(), "index_ptr");
+        .build_alloca(func_value, bin.context.i64_type(), "index_ptr");
     bin.builder
         .build_store(index_ptr, bin.context.i64_type().const_zero());
 
