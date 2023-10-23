@@ -469,10 +469,12 @@ pub(crate) fn decode_dynamic_array_loop<'a>(
     let loop_end = bin.context.append_basic_block(func_value, "loop_end");
 
     // Initialize index before the loop
-    let index_ptr = bin
-        .build_alloca(func_value, bin.context.i64_type(), "index_ptr");
+    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index_ptr");
     bin.builder
         .build_store(index_ptr, bin.context.i64_type().const_zero());
+
+    let offset_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "offset_ptr");
+    bin.builder.build_store(offset_ptr, *offset);
 
     bin.builder.build_unconditional_branch(loop_body);
     bin.builder.position_at_end(loop_body);
@@ -491,10 +493,18 @@ pub(crate) fn decode_dynamic_array_loop<'a>(
         )
     };
 
-    let (elem, read_size) =
-        read_from_buffer(buffer, *offset, bin, elem_ty, validator, func_value, ns);
+    let offset = bin
+        .builder
+        .build_load(bin.context.i64_type(), offset_ptr, "offset")
+        .into_int_value();
 
-    *offset = bin.builder.build_int_add(*offset, read_size, "offset");
+    let (elem, read_size) =
+        read_from_buffer(buffer, offset, bin, elem_ty, validator, func_value, ns);
+
+    bin.builder.build_store(
+        offset_ptr,
+        bin.builder.build_int_add(offset, read_size, "next_offset"),
+    );
 
     let elem = if elem_ty.is_fixed_reference_type() {
         bin.builder.build_load(

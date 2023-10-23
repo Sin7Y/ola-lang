@@ -59,7 +59,7 @@ pub fn address_compare<'a>(
 
         result = bin
             .builder
-            .build_and(compare,result , &format!("result_{}", i));
+            .build_and(compare, result, &format!("result_{}", i));
     }
     result.into()
 }

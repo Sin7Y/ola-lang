@@ -175,6 +175,7 @@ done13:                                           ; preds = %cond11
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 2477870332, label %func_0_dispatch
@@ -202,6 +203,7 @@ inbounds:                                         ; preds = %func_0_dispatch
   %vector_data = inttoptr i64 %7 to ptr
   %array_elem_num = mul i64 %value, 1
   store i64 0, ptr %index_ptr, align 4
+  store i64 1, ptr %offset_ptr, align 4
   br label %loop_body
 
 out_of_bounds:                                    ; preds = %func_0_dispatch
@@ -210,17 +212,21 @@ out_of_bounds:                                    ; preds = %func_0_dispatch
 loop_body:                                        ; preds = %inbounds1, %inbounds
   %index = load i64, ptr %index_ptr, align 4
   %element = getelementptr i64, ptr %vector_data, i64 %index
-  %8 = icmp ule i64 2, %1
-  br i1 %8, label %inbounds1, label %out_of_bounds2
+  %offset = load i64, ptr %offset_ptr, align 4
+  %8 = add i64 %offset, 1
+  %9 = icmp ule i64 %8, %1
+  br i1 %9, label %inbounds1, label %out_of_bounds2
 
 loop_end:                                         ; preds = %inbounds1
-  %9 = add i64 0, %array_elem_num
-  %10 = icmp ule i64 %9, %1
-  br i1 %10, label %inbounds5, label %out_of_bounds6
+  %10 = add i64 0, %array_elem_num
+  %11 = icmp ule i64 %10, %1
+  br i1 %11, label %inbounds5, label %out_of_bounds6
 
 inbounds1:                                        ; preds = %loop_body
-  %start3 = getelementptr i64, ptr %2, i64 1
+  %start3 = getelementptr i64, ptr %2, i64 %offset
   %value4 = load i64, ptr %start3, align 4
+  %next_offset = add i64 %offset, 1
+  store i64 %next_offset, ptr %offset_ptr, align 4
   store i64 %value4, ptr %element, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
@@ -231,17 +237,17 @@ out_of_bounds2:                                   ; preds = %loop_body
   unreachable
 
 inbounds5:                                        ; preds = %loop_end
-  %11 = add i64 0, %3
-  %12 = icmp ule i64 %11, %1
-  br i1 %12, label %inbounds7, label %out_of_bounds8
+  %12 = add i64 0, %3
+  %13 = icmp ule i64 %12, %1
+  br i1 %13, label %inbounds7, label %out_of_bounds8
 
 out_of_bounds6:                                   ; preds = %loop_end
   unreachable
 
 inbounds7:                                        ; preds = %inbounds5
-  %13 = add i64 0, %3
-  %14 = icmp ult i64 %13, %1
-  br i1 %14, label %not_all_bytes_read, label %buffer_read
+  %14 = add i64 0, %3
+  %15 = icmp ult i64 %14, %1
+  br i1 %15, label %not_all_bytes_read, label %buffer_read
 
 out_of_bounds8:                                   ; preds = %inbounds5
   unreachable

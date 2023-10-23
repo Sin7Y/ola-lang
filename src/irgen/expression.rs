@@ -117,7 +117,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::NE,
             ),
-            Type::Uint(32) | Type::Bool  | Type::Field => u32_compare(
+            Type::Uint(32) | Type::Bool | Type::Field => u32_compare(
                 left,
                 right,
                 bin,
@@ -448,10 +448,14 @@ pub fn expression<'a>(
             kind: LibFunc::OriginAddress,
             ..
         } => {
-            let (heap_start_int, heap_start_ptr) = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+            let (heap_start_int, heap_start_ptr) =
+                bin.heap_malloc(bin.context.i64_type().const_int(4, false));
             for i in 0..4 {
-                let address_elem = 
-                    bin.builder.build_int_add(heap_start_int, bin.context.i64_type().const_int(i, false), "");
+                let address_elem = bin.builder.build_int_add(
+                    heap_start_int,
+                    bin.context.i64_type().const_int(i, false),
+                    "",
+                );
                 let origin_address_index = bin.context.i64_type().const_int(8 + i, false);
                 bin.context_data_load(address_elem, origin_address_index);
             }
@@ -732,29 +736,28 @@ pub fn expression<'a>(
         }
 
         Expression::Cast { to, expr, .. }
-        if matches!(to, Type::Hash | Type::Address)
-            && matches!(expr.ty(), Type::Uint(32)) =>
-    {
-        let expr = expression(expr, bin, func_value, var_table, ns);
-        let zero = bin.context.i64_type().const_zero();
-        let value = [zero, zero, zero, expr.into_int_value()];
+            if matches!(to, Type::Hash | Type::Address) && matches!(expr.ty(), Type::Uint(32)) =>
+        {
+            let expr = expression(expr, bin, func_value, var_table, ns);
+            let zero = bin.context.i64_type().const_zero();
+            let value = [zero, zero, zero, expr.into_int_value()];
             let (_, heap_ptr) =
-            bin.heap_malloc(bin.context.i64_type().const_int(value.len() as u64, false));
-        for (i, v) in value.iter().enumerate() {
-            let index = bin.context.i64_type().const_int(i as u64, false);
-            let index_access = unsafe {
-                bin.builder.build_gep(
-                bin.context.i64_type(),
-                    heap_ptr,
-                    &[index],
-                    "index_access",
-                )
-            };
-            bin.builder
-                .build_store(index_access, v.clone().as_basic_value_enum());
+                bin.heap_malloc(bin.context.i64_type().const_int(value.len() as u64, false));
+            for (i, v) in value.iter().enumerate() {
+                let index = bin.context.i64_type().const_int(i as u64, false);
+                let index_access = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        heap_ptr,
+                        &[index],
+                        "index_access",
+                    )
+                };
+                bin.builder
+                    .build_store(index_access, v.clone().as_basic_value_enum());
+            }
+            heap_ptr.into()
         }
-        heap_ptr.into()
-    }
 
         Expression::Cast { to, expr, .. }
             if matches!(to, Type::DynamicBytes)
@@ -906,9 +909,7 @@ pub fn expression<'a>(
             let hash_input = expression(&args[0], bin, func_value, var_table, ns);
             let hash_input_length = bin.vector_len(hash_input);
             let hash_input_data = bin.vector_data(hash_input);
-            bin.poseidon_hash(
-                vec![(hash_input_data.into(), hash_input_length)],
-            )
+            bin.poseidon_hash(vec![(hash_input_data.into(), hash_input_length)])
         }
 
         _ => unimplemented!("{:?}", expr),
@@ -1152,7 +1153,7 @@ pub fn array_subscript<'a>(
                 .build_int_add(array.into_int_value(), offset, "index_slot")
                 .into()
         } else {
-            array_offset(bin, array, index, elem_ty,  ns)
+            array_offset(bin, array, index, elem_ty, ns)
         }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();

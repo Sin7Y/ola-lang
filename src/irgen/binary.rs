@@ -503,7 +503,13 @@ impl<'a> Binary<'a> {
 
             let mut offset = self.context.i64_type().const_zero();
             for (v, len) in hash_src.iter() {
-                self.mempcy( v.into_pointer_value(), self.context.i64_type().const_zero(), heap_src_ptr, offset, *len);
+                self.mempcy(
+                    v.into_pointer_value(),
+                    self.context.i64_type().const_zero(),
+                    heap_src_ptr,
+                    offset,
+                    *len,
+                );
 
                 offset = self.builder.build_int_add(offset, *len, "");
             }
@@ -801,7 +807,16 @@ impl<'a> Binary<'a> {
         let ptr_type = self.context.i64_type().ptr_type(AddressSpace::default());
         let i64_type = self.context.i64_type();
         let void_type = self.context.void_type();
-        let ftype = void_type.fn_type(&[ptr_type.into(), i64_type.into(),  ptr_type.into(), i64_type.into(), i64_type.into()], false);
+        let ftype = void_type.fn_type(
+            &[
+                ptr_type.into(),
+                i64_type.into(),
+                ptr_type.into(),
+                i64_type.into(),
+                i64_type.into(),
+            ],
+            false,
+        );
         let func = self.module.add_function("memory_copy", ftype, None);
         self.builder
             .position_at_end(self.context.append_basic_block(func, "entry"));
@@ -839,8 +854,12 @@ impl<'a> Binary<'a> {
         self.builder.position_at_end(body);
 
         let src_access = unsafe {
-            self.builder
-                .build_gep(self.context.i64_type(), src, &[self.builder.build_int_add(src_start_index, index_value, "")], "src_index_access")
+            self.builder.build_gep(
+                self.context.i64_type(),
+                src,
+                &[self.builder.build_int_add(src_start_index, index_value, "")],
+                "src_index_access",
+            )
         };
 
         let src_value = self
@@ -851,7 +870,9 @@ impl<'a> Binary<'a> {
             self.builder.build_gep(
                 self.context.i64_type(),
                 dest,
-                &[self.builder.build_int_add(dest_start_index, index_value, "")],
+                &[self
+                    .builder
+                    .build_int_add(dest_start_index, index_value, "")],
                 "dest_index_access",
             )
         };

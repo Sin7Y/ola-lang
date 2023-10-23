@@ -155,6 +155,7 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 1845340408, label %func_0_dispatch
@@ -196,6 +197,7 @@ buffer_read:                                      ; preds = %inbounds
   %length1 = load i64, ptr %5, align 4
   %start2 = getelementptr i64, ptr %heap_to_ptr, i64 0
   store i64 %length1, ptr %start2, align 4
+  store i64 1, ptr %offset_ptr, align 4
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
@@ -203,8 +205,11 @@ loop_body:                                        ; preds = %loop_body, %buffer_
   %index = load i64, ptr %index_ptr, align 4
   %element = getelementptr ptr, ptr %5, i64 %index
   %elem = load i64, ptr %element, align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  %offset = load i64, ptr %offset_ptr, align 4
+  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
   store i64 %elem, ptr %start3, align 4
+  %next_offset = add i64 %offset, 1
+  store i64 %next_offset, ptr %offset_ptr, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
   %index_cond = icmp ult i64 %next_index, %length1
