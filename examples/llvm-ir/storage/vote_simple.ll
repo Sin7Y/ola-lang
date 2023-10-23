@@ -31,11 +31,34 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %4
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %5 = add i64 %1, %index_value
+  %src_index_access = getelementptr i64, ptr %0, i64 %5
+  %6 = load i64, ptr %src_index_access, align 4
+  %7 = add i64 %3, %index_value
+  %dest_index_access = getelementptr i64, ptr %2, i64 %7
+  store i64 %6, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+}
+
 define void @vote_proposal(i64 %0) {
 entry:
   %sender = alloca i64, align 8
-  %index_alloca6 = alloca i64, align 8
-  %index_alloca = alloca i64, align 8
   %msgSender = alloca ptr, align 8
   %proposal_ = alloca i64, align 8
   store i64 %0, ptr %proposal_, align 4
@@ -55,238 +78,200 @@ entry:
   %7 = call i64 @vector_new(i64 8)
   %heap_start1 = sub i64 %7, 8
   %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  store i64 0, ptr %index_alloca, align 4
-  br label %cond
-
-cond:                                             ; preds = %body, %entry
-  %index_value = load i64, ptr %index_alloca, align 4
-  %loop_cond = icmp ult i64 %index_value, 4
-  br i1 %loop_cond, label %body, label %done
-
-body:                                             ; preds = %cond
-  %8 = add i64 0, %index_value
-  %src_index_access = getelementptr i64, ptr %heap_to_ptr, i64 %8
-  %9 = load i64, ptr %src_index_access, align 4
-  %10 = add i64 0, %index_value
-  %dest_index_access = getelementptr i64, ptr %heap_to_ptr2, i64 %10
-  store i64 %9, ptr %dest_index_access, align 4
-  %next_index = add i64 %index_value, 1
-  store i64 %next_index, ptr %index_alloca, align 4
-  br label %cond
-
-done:                                             ; preds = %cond
-  store i64 0, ptr %index_alloca6, align 4
-  br label %cond3
-
-cond3:                                            ; preds = %body4, %done
-  %index_value7 = load i64, ptr %index_alloca6, align 4
-  %loop_cond8 = icmp ult i64 %index_value7, 4
-  br i1 %loop_cond8, label %body4, label %done5
-
-body4:                                            ; preds = %cond3
-  %11 = add i64 0, %index_value7
-  %src_index_access9 = getelementptr i64, ptr %2, i64 %11
-  %12 = load i64, ptr %src_index_access9, align 4
-  %13 = add i64 4, %index_value7
-  %dest_index_access10 = getelementptr i64, ptr %heap_to_ptr2, i64 %13
-  store i64 %12, ptr %dest_index_access10, align 4
-  %next_index11 = add i64 %index_value7, 1
-  store i64 %next_index11, ptr %index_alloca6, align 4
-  br label %cond3
-
-done5:                                            ; preds = %cond3
-  %14 = call i64 @vector_new(i64 4)
-  %heap_start12 = sub i64 %14, 4
-  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
-  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr13, i64 8)
-  store ptr %heap_to_ptr13, ptr %sender, align 8
-  %15 = load i64, ptr %sender, align 4
-  %16 = add i64 %15, 0
-  %17 = call i64 @vector_new(i64 4)
-  %heap_start14 = sub i64 %17, 4
-  %heap_to_ptr15 = inttoptr i64 %heap_start14 to ptr
-  %18 = call i64 @vector_new(i64 4)
-  %heap_start16 = sub i64 %18, 4
-  %heap_to_ptr17 = inttoptr i64 %heap_start16 to ptr
-  store i64 %16, ptr %heap_to_ptr17, align 4
-  %19 = getelementptr i64, ptr %heap_to_ptr17, i64 1
-  store i64 0, ptr %19, align 4
-  %20 = getelementptr i64, ptr %heap_to_ptr17, i64 2
-  store i64 0, ptr %20, align 4
-  %21 = getelementptr i64, ptr %heap_to_ptr17, i64 3
+  call void @memory_copy(ptr %heap_to_ptr, i64 0, ptr %heap_to_ptr2, i64 0, i64 4)
+  call void @memory_copy(ptr %2, i64 0, ptr %heap_to_ptr2, i64 4, i64 4)
+  %8 = call i64 @vector_new(i64 4)
+  %heap_start3 = sub i64 %8, 4
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr4, i64 8)
+  store ptr %heap_to_ptr4, ptr %sender, align 8
+  %9 = load i64, ptr %sender, align 4
+  %10 = add i64 %9, 0
+  %11 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %11, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  %12 = call i64 @vector_new(i64 4)
+  %heap_start7 = sub i64 %12, 4
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  store i64 %10, ptr %heap_to_ptr8, align 4
+  %13 = getelementptr i64, ptr %heap_to_ptr8, i64 1
+  store i64 0, ptr %13, align 4
+  %14 = getelementptr i64, ptr %heap_to_ptr8, i64 2
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %heap_to_ptr8, i64 3
+  store i64 0, ptr %15, align 4
+  call void @get_storage(ptr %heap_to_ptr8, ptr %heap_to_ptr6)
+  %storage_value = load i64, ptr %heap_to_ptr6, align 4
+  %16 = icmp eq i64 %storage_value, 0
+  %17 = zext i1 %16 to i64
+  call void @builtin_assert(i64 %17)
+  %18 = load i64, ptr %sender, align 4
+  %19 = add i64 %18, 0
+  %20 = call i64 @vector_new(i64 4)
+  %heap_start9 = sub i64 %20, 4
+  %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
+  store i64 %19, ptr %heap_to_ptr10, align 4
+  %21 = getelementptr i64, ptr %heap_to_ptr10, i64 1
   store i64 0, ptr %21, align 4
-  call void @get_storage(ptr %heap_to_ptr17, ptr %heap_to_ptr15)
-  %storage_value = load i64, ptr %heap_to_ptr15, align 4
-  %22 = icmp eq i64 %storage_value, 0
-  %23 = zext i1 %22 to i64
-  call void @builtin_assert(i64 %23)
-  %24 = load i64, ptr %sender, align 4
-  %25 = add i64 %24, 0
-  %26 = call i64 @vector_new(i64 4)
-  %heap_start18 = sub i64 %26, 4
-  %heap_to_ptr19 = inttoptr i64 %heap_start18 to ptr
-  store i64 %25, ptr %heap_to_ptr19, align 4
-  %27 = getelementptr i64, ptr %heap_to_ptr19, i64 1
+  %22 = getelementptr i64, ptr %heap_to_ptr10, i64 2
+  store i64 0, ptr %22, align 4
+  %23 = getelementptr i64, ptr %heap_to_ptr10, i64 3
+  store i64 0, ptr %23, align 4
+  %24 = call i64 @vector_new(i64 4)
+  %heap_start11 = sub i64 %24, 4
+  %heap_to_ptr12 = inttoptr i64 %heap_start11 to ptr
+  store i64 1, ptr %heap_to_ptr12, align 4
+  %25 = getelementptr i64, ptr %heap_to_ptr12, i64 1
+  store i64 0, ptr %25, align 4
+  %26 = getelementptr i64, ptr %heap_to_ptr12, i64 2
+  store i64 0, ptr %26, align 4
+  %27 = getelementptr i64, ptr %heap_to_ptr12, i64 3
   store i64 0, ptr %27, align 4
-  %28 = getelementptr i64, ptr %heap_to_ptr19, i64 2
-  store i64 0, ptr %28, align 4
-  %29 = getelementptr i64, ptr %heap_to_ptr19, i64 3
-  store i64 0, ptr %29, align 4
-  %30 = call i64 @vector_new(i64 4)
-  %heap_start20 = sub i64 %30, 4
-  %heap_to_ptr21 = inttoptr i64 %heap_start20 to ptr
-  store i64 1, ptr %heap_to_ptr21, align 4
-  %31 = getelementptr i64, ptr %heap_to_ptr21, i64 1
-  store i64 0, ptr %31, align 4
-  %32 = getelementptr i64, ptr %heap_to_ptr21, i64 2
+  call void @set_storage(ptr %heap_to_ptr10, ptr %heap_to_ptr12)
+  %28 = load i64, ptr %sender, align 4
+  %29 = add i64 %28, 1
+  %30 = load i64, ptr %proposal_, align 4
+  %31 = call i64 @vector_new(i64 4)
+  %heap_start13 = sub i64 %31, 4
+  %heap_to_ptr14 = inttoptr i64 %heap_start13 to ptr
+  store i64 %29, ptr %heap_to_ptr14, align 4
+  %32 = getelementptr i64, ptr %heap_to_ptr14, i64 1
   store i64 0, ptr %32, align 4
-  %33 = getelementptr i64, ptr %heap_to_ptr21, i64 3
+  %33 = getelementptr i64, ptr %heap_to_ptr14, i64 2
   store i64 0, ptr %33, align 4
-  call void @set_storage(ptr %heap_to_ptr19, ptr %heap_to_ptr21)
-  %34 = load i64, ptr %sender, align 4
-  %35 = add i64 %34, 1
-  %36 = load i64, ptr %proposal_, align 4
-  %37 = call i64 @vector_new(i64 4)
-  %heap_start22 = sub i64 %37, 4
-  %heap_to_ptr23 = inttoptr i64 %heap_start22 to ptr
-  store i64 %35, ptr %heap_to_ptr23, align 4
-  %38 = getelementptr i64, ptr %heap_to_ptr23, i64 1
+  %34 = getelementptr i64, ptr %heap_to_ptr14, i64 3
+  store i64 0, ptr %34, align 4
+  %35 = call i64 @vector_new(i64 4)
+  %heap_start15 = sub i64 %35, 4
+  %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
+  store i64 %30, ptr %heap_to_ptr16, align 4
+  %36 = getelementptr i64, ptr %heap_to_ptr16, i64 1
+  store i64 0, ptr %36, align 4
+  %37 = getelementptr i64, ptr %heap_to_ptr16, i64 2
+  store i64 0, ptr %37, align 4
+  %38 = getelementptr i64, ptr %heap_to_ptr16, i64 3
   store i64 0, ptr %38, align 4
-  %39 = getelementptr i64, ptr %heap_to_ptr23, i64 2
-  store i64 0, ptr %39, align 4
-  %40 = getelementptr i64, ptr %heap_to_ptr23, i64 3
-  store i64 0, ptr %40, align 4
+  call void @set_storage(ptr %heap_to_ptr14, ptr %heap_to_ptr16)
+  %39 = load i64, ptr %proposal_, align 4
+  %40 = call i64 @vector_new(i64 4)
+  %heap_start17 = sub i64 %40, 4
+  %heap_to_ptr18 = inttoptr i64 %heap_start17 to ptr
   %41 = call i64 @vector_new(i64 4)
-  %heap_start24 = sub i64 %41, 4
-  %heap_to_ptr25 = inttoptr i64 %heap_start24 to ptr
-  store i64 %36, ptr %heap_to_ptr25, align 4
-  %42 = getelementptr i64, ptr %heap_to_ptr25, i64 1
+  %heap_start19 = sub i64 %41, 4
+  %heap_to_ptr20 = inttoptr i64 %heap_start19 to ptr
+  store i64 1, ptr %heap_to_ptr20, align 4
+  %42 = getelementptr i64, ptr %heap_to_ptr20, i64 1
   store i64 0, ptr %42, align 4
-  %43 = getelementptr i64, ptr %heap_to_ptr25, i64 2
+  %43 = getelementptr i64, ptr %heap_to_ptr20, i64 2
   store i64 0, ptr %43, align 4
-  %44 = getelementptr i64, ptr %heap_to_ptr25, i64 3
+  %44 = getelementptr i64, ptr %heap_to_ptr20, i64 3
   store i64 0, ptr %44, align 4
-  call void @set_storage(ptr %heap_to_ptr23, ptr %heap_to_ptr25)
-  %45 = load i64, ptr %proposal_, align 4
-  %46 = call i64 @vector_new(i64 4)
-  %heap_start26 = sub i64 %46, 4
-  %heap_to_ptr27 = inttoptr i64 %heap_start26 to ptr
+  call void @get_storage(ptr %heap_to_ptr20, ptr %heap_to_ptr18)
+  %storage_value21 = load i64, ptr %heap_to_ptr18, align 4
+  %45 = sub i64 %storage_value21, 1
+  %46 = sub i64 %45, %39
+  call void @builtin_range_check(i64 %46)
   %47 = call i64 @vector_new(i64 4)
-  %heap_start28 = sub i64 %47, 4
+  %heap_start22 = sub i64 %47, 4
+  %heap_to_ptr23 = inttoptr i64 %heap_start22 to ptr
+  store i64 1, ptr %heap_to_ptr23, align 4
+  %48 = getelementptr i64, ptr %heap_to_ptr23, i64 1
+  store i64 0, ptr %48, align 4
+  %49 = getelementptr i64, ptr %heap_to_ptr23, i64 2
+  store i64 0, ptr %49, align 4
+  %50 = getelementptr i64, ptr %heap_to_ptr23, i64 3
+  store i64 0, ptr %50, align 4
+  %51 = call i64 @vector_new(i64 4)
+  %heap_start24 = sub i64 %51, 4
+  %heap_to_ptr25 = inttoptr i64 %heap_start24 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr23, ptr %heap_to_ptr25, i64 4)
+  %52 = getelementptr i64, ptr %heap_to_ptr25, i64 3
+  %53 = load i64, ptr %52, align 4
+  %54 = mul i64 %39, 2
+  %55 = add i64 %53, %54
+  store i64 %55, ptr %52, align 4
+  %56 = getelementptr i64, ptr %heap_to_ptr25, i64 3
+  %slot_value = load i64, ptr %56, align 4
+  %57 = add i64 %slot_value, 1
+  %58 = load i64, ptr %proposal_, align 4
+  %59 = call i64 @vector_new(i64 4)
+  %heap_start26 = sub i64 %59, 4
+  %heap_to_ptr27 = inttoptr i64 %heap_start26 to ptr
+  %60 = call i64 @vector_new(i64 4)
+  %heap_start28 = sub i64 %60, 4
   %heap_to_ptr29 = inttoptr i64 %heap_start28 to ptr
   store i64 1, ptr %heap_to_ptr29, align 4
-  %48 = getelementptr i64, ptr %heap_to_ptr29, i64 1
-  store i64 0, ptr %48, align 4
-  %49 = getelementptr i64, ptr %heap_to_ptr29, i64 2
-  store i64 0, ptr %49, align 4
-  %50 = getelementptr i64, ptr %heap_to_ptr29, i64 3
-  store i64 0, ptr %50, align 4
+  %61 = getelementptr i64, ptr %heap_to_ptr29, i64 1
+  store i64 0, ptr %61, align 4
+  %62 = getelementptr i64, ptr %heap_to_ptr29, i64 2
+  store i64 0, ptr %62, align 4
+  %63 = getelementptr i64, ptr %heap_to_ptr29, i64 3
+  store i64 0, ptr %63, align 4
   call void @get_storage(ptr %heap_to_ptr29, ptr %heap_to_ptr27)
   %storage_value30 = load i64, ptr %heap_to_ptr27, align 4
-  %51 = sub i64 %storage_value30, 1
-  %52 = sub i64 %51, %45
-  call void @builtin_range_check(i64 %52)
-  %53 = call i64 @vector_new(i64 4)
-  %heap_start31 = sub i64 %53, 4
+  %64 = sub i64 %storage_value30, 1
+  %65 = sub i64 %64, %58
+  call void @builtin_range_check(i64 %65)
+  %66 = call i64 @vector_new(i64 4)
+  %heap_start31 = sub i64 %66, 4
   %heap_to_ptr32 = inttoptr i64 %heap_start31 to ptr
   store i64 1, ptr %heap_to_ptr32, align 4
-  %54 = getelementptr i64, ptr %heap_to_ptr32, i64 1
-  store i64 0, ptr %54, align 4
-  %55 = getelementptr i64, ptr %heap_to_ptr32, i64 2
-  store i64 0, ptr %55, align 4
-  %56 = getelementptr i64, ptr %heap_to_ptr32, i64 3
-  store i64 0, ptr %56, align 4
-  %57 = call i64 @vector_new(i64 4)
-  %heap_start33 = sub i64 %57, 4
+  %67 = getelementptr i64, ptr %heap_to_ptr32, i64 1
+  store i64 0, ptr %67, align 4
+  %68 = getelementptr i64, ptr %heap_to_ptr32, i64 2
+  store i64 0, ptr %68, align 4
+  %69 = getelementptr i64, ptr %heap_to_ptr32, i64 3
+  store i64 0, ptr %69, align 4
+  %70 = call i64 @vector_new(i64 4)
+  %heap_start33 = sub i64 %70, 4
   %heap_to_ptr34 = inttoptr i64 %heap_start33 to ptr
   call void @poseidon_hash(ptr %heap_to_ptr32, ptr %heap_to_ptr34, i64 4)
-  %58 = getelementptr i64, ptr %heap_to_ptr34, i64 3
-  %59 = load i64, ptr %58, align 4
-  %60 = mul i64 %45, 2
-  %61 = add i64 %59, %60
-  store i64 %61, ptr %58, align 4
-  %62 = getelementptr i64, ptr %heap_to_ptr34, i64 3
-  %slot_value = load i64, ptr %62, align 4
-  %63 = add i64 %slot_value, 1
-  %64 = load i64, ptr %proposal_, align 4
-  %65 = call i64 @vector_new(i64 4)
-  %heap_start35 = sub i64 %65, 4
-  %heap_to_ptr36 = inttoptr i64 %heap_start35 to ptr
-  %66 = call i64 @vector_new(i64 4)
-  %heap_start37 = sub i64 %66, 4
-  %heap_to_ptr38 = inttoptr i64 %heap_start37 to ptr
-  store i64 1, ptr %heap_to_ptr38, align 4
-  %67 = getelementptr i64, ptr %heap_to_ptr38, i64 1
-  store i64 0, ptr %67, align 4
-  %68 = getelementptr i64, ptr %heap_to_ptr38, i64 2
-  store i64 0, ptr %68, align 4
-  %69 = getelementptr i64, ptr %heap_to_ptr38, i64 3
-  store i64 0, ptr %69, align 4
-  call void @get_storage(ptr %heap_to_ptr38, ptr %heap_to_ptr36)
-  %storage_value39 = load i64, ptr %heap_to_ptr36, align 4
-  %70 = sub i64 %storage_value39, 1
-  %71 = sub i64 %70, %64
-  call void @builtin_range_check(i64 %71)
-  %72 = call i64 @vector_new(i64 4)
-  %heap_start40 = sub i64 %72, 4
-  %heap_to_ptr41 = inttoptr i64 %heap_start40 to ptr
-  store i64 1, ptr %heap_to_ptr41, align 4
-  %73 = getelementptr i64, ptr %heap_to_ptr41, i64 1
-  store i64 0, ptr %73, align 4
-  %74 = getelementptr i64, ptr %heap_to_ptr41, i64 2
-  store i64 0, ptr %74, align 4
-  %75 = getelementptr i64, ptr %heap_to_ptr41, i64 3
-  store i64 0, ptr %75, align 4
-  %76 = call i64 @vector_new(i64 4)
-  %heap_start42 = sub i64 %76, 4
-  %heap_to_ptr43 = inttoptr i64 %heap_start42 to ptr
-  call void @poseidon_hash(ptr %heap_to_ptr41, ptr %heap_to_ptr43, i64 4)
-  %77 = getelementptr i64, ptr %heap_to_ptr43, i64 3
-  %78 = load i64, ptr %77, align 4
-  %79 = mul i64 %64, 2
-  %80 = add i64 %78, %79
-  store i64 %80, ptr %77, align 4
-  %81 = getelementptr i64, ptr %heap_to_ptr43, i64 3
-  %slot_value44 = load i64, ptr %81, align 4
-  %82 = add i64 %slot_value44, 1
+  %71 = getelementptr i64, ptr %heap_to_ptr34, i64 3
+  %72 = load i64, ptr %71, align 4
+  %73 = mul i64 %58, 2
+  %74 = add i64 %72, %73
+  store i64 %74, ptr %71, align 4
+  %75 = getelementptr i64, ptr %heap_to_ptr34, i64 3
+  %slot_value35 = load i64, ptr %75, align 4
+  %76 = add i64 %slot_value35, 1
+  %77 = call i64 @vector_new(i64 4)
+  %heap_start36 = sub i64 %77, 4
+  %heap_to_ptr37 = inttoptr i64 %heap_start36 to ptr
+  %78 = call i64 @vector_new(i64 4)
+  %heap_start38 = sub i64 %78, 4
+  %heap_to_ptr39 = inttoptr i64 %heap_start38 to ptr
+  store i64 %76, ptr %heap_to_ptr39, align 4
+  %79 = getelementptr i64, ptr %heap_to_ptr39, i64 1
+  store i64 0, ptr %79, align 4
+  %80 = getelementptr i64, ptr %heap_to_ptr39, i64 2
+  store i64 0, ptr %80, align 4
+  %81 = getelementptr i64, ptr %heap_to_ptr39, i64 3
+  store i64 0, ptr %81, align 4
+  call void @get_storage(ptr %heap_to_ptr39, ptr %heap_to_ptr37)
+  %storage_value40 = load i64, ptr %heap_to_ptr37, align 4
+  %82 = add i64 %storage_value40, 1
+  call void @builtin_range_check(i64 %82)
   %83 = call i64 @vector_new(i64 4)
-  %heap_start45 = sub i64 %83, 4
-  %heap_to_ptr46 = inttoptr i64 %heap_start45 to ptr
-  %84 = call i64 @vector_new(i64 4)
-  %heap_start47 = sub i64 %84, 4
-  %heap_to_ptr48 = inttoptr i64 %heap_start47 to ptr
-  store i64 %82, ptr %heap_to_ptr48, align 4
-  %85 = getelementptr i64, ptr %heap_to_ptr48, i64 1
+  %heap_start41 = sub i64 %83, 4
+  %heap_to_ptr42 = inttoptr i64 %heap_start41 to ptr
+  store i64 %57, ptr %heap_to_ptr42, align 4
+  %84 = getelementptr i64, ptr %heap_to_ptr42, i64 1
+  store i64 0, ptr %84, align 4
+  %85 = getelementptr i64, ptr %heap_to_ptr42, i64 2
   store i64 0, ptr %85, align 4
-  %86 = getelementptr i64, ptr %heap_to_ptr48, i64 2
+  %86 = getelementptr i64, ptr %heap_to_ptr42, i64 3
   store i64 0, ptr %86, align 4
-  %87 = getelementptr i64, ptr %heap_to_ptr48, i64 3
-  store i64 0, ptr %87, align 4
-  call void @get_storage(ptr %heap_to_ptr48, ptr %heap_to_ptr46)
-  %storage_value49 = load i64, ptr %heap_to_ptr46, align 4
-  %88 = add i64 %storage_value49, 1
-  call void @builtin_range_check(i64 %88)
-  %89 = call i64 @vector_new(i64 4)
-  %heap_start50 = sub i64 %89, 4
-  %heap_to_ptr51 = inttoptr i64 %heap_start50 to ptr
-  store i64 %63, ptr %heap_to_ptr51, align 4
-  %90 = getelementptr i64, ptr %heap_to_ptr51, i64 1
+  %87 = call i64 @vector_new(i64 4)
+  %heap_start43 = sub i64 %87, 4
+  %heap_to_ptr44 = inttoptr i64 %heap_start43 to ptr
+  store i64 %82, ptr %heap_to_ptr44, align 4
+  %88 = getelementptr i64, ptr %heap_to_ptr44, i64 1
+  store i64 0, ptr %88, align 4
+  %89 = getelementptr i64, ptr %heap_to_ptr44, i64 2
+  store i64 0, ptr %89, align 4
+  %90 = getelementptr i64, ptr %heap_to_ptr44, i64 3
   store i64 0, ptr %90, align 4
-  %91 = getelementptr i64, ptr %heap_to_ptr51, i64 2
-  store i64 0, ptr %91, align 4
-  %92 = getelementptr i64, ptr %heap_to_ptr51, i64 3
-  store i64 0, ptr %92, align 4
-  %93 = call i64 @vector_new(i64 4)
-  %heap_start52 = sub i64 %93, 4
-  %heap_to_ptr53 = inttoptr i64 %heap_start52 to ptr
-  store i64 %88, ptr %heap_to_ptr53, align 4
-  %94 = getelementptr i64, ptr %heap_to_ptr53, i64 1
-  store i64 0, ptr %94, align 4
-  %95 = getelementptr i64, ptr %heap_to_ptr53, i64 2
-  store i64 0, ptr %95, align 4
-  %96 = getelementptr i64, ptr %heap_to_ptr53, i64 3
-  store i64 0, ptr %96, align 4
-  call void @set_storage(ptr %heap_to_ptr51, ptr %heap_to_ptr53)
+  call void @set_storage(ptr %heap_to_ptr42, ptr %heap_to_ptr44)
   ret void
 }
 

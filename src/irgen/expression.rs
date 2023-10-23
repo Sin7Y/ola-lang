@@ -882,7 +882,20 @@ pub fn expression<'a>(
         } => {
             let left = expression(&args[0], bin, func_value, var_table, ns);
             let right = expression(&args[1], bin, func_value, var_table, ns);
-            fields_concat(left, right, bin, func_value)
+
+            let result = bin
+                .builder
+                .build_call(
+                    bin.module
+                        .get_function("fields_concat")
+                        .expect("fields_concat should have been defined before"),
+                    &[left.into(), right.into()],
+                    "",
+                )
+                .try_as_basic_value()
+                .left()
+                .expect("Should have a left return value");
+            result
         }
 
         Expression::LibFunction {
@@ -894,7 +907,6 @@ pub fn expression<'a>(
             let hash_input_length = bin.vector_len(hash_input);
             let hash_input_data = bin.vector_data(hash_input);
             bin.poseidon_hash(
-                func_value,
                 vec![(hash_input_data.into(), hash_input_length)],
             )
         }
@@ -1073,7 +1085,7 @@ pub fn array_subscript<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     if array_ty.is_mapping() {
-        return mapping_subscript(array, index, index_ty, bin, func_value);
+        return mapping_subscript(array, index, index_ty, bin);
     }
     let (array_length, fixed) = match array_ty.deref_any() {
         Type::Array(..) | Type::String | Type::DynamicBytes => match array_ty.array_length() {
@@ -1140,7 +1152,7 @@ pub fn array_subscript<'a>(
                 .build_int_add(array.into_int_value(), offset, "index_slot")
                 .into()
         } else {
-            array_offset(bin, array, index, elem_ty, func_value, ns)
+            array_offset(bin, array, index, elem_ty,  ns)
         }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
@@ -1260,7 +1272,6 @@ pub fn array_slice<'a>(
         array.into_pointer_value()
     };
     bin.mempcy(
-        func_value,
         src_data,
         start,
         dest_array,
@@ -1275,7 +1286,6 @@ pub fn mapping_subscript<'a>(
     index: BasicValueEnum<'a>,
     index_ty: &Type,
     bin: &Binary<'a>,
-    func_value: FunctionValue<'a>,
 ) -> BasicValueEnum<'a> {
     let mut inputs = Vec::with_capacity(2);
     let slot_value = match array.get_type() {
@@ -1298,7 +1308,7 @@ pub fn mapping_subscript<'a>(
         _ => unreachable!(),
     }
 
-    bin.poseidon_hash(func_value, inputs)
+    bin.poseidon_hash(inputs)
 }
 
 pub fn assign_single<'a>(
@@ -1457,38 +1467,6 @@ pub fn string_compare<'a>(
     bin.builder
         .build_int_compare(IntPredicate::EQ, index, right_len, "equal")
         .into()
-}
-
-fn fields_concat<'a>(
-    left: BasicValueEnum<'a>,
-    right: BasicValueEnum<'a>,
-    bin: &Binary<'a>,
-    func_value: FunctionValue<'a>,
-) -> BasicValueEnum<'a> {
-    let left_len = bin.vector_len(left);
-    let left_data = bin.vector_data(left);
-    let right_len = bin.vector_len(right);
-    let right_data = bin.vector_data(right);
-    let new_len = bin.builder.build_int_add(left_len, right_len, "new_len");
-    let new_fields = bin.vector_new(new_len);
-
-    bin.mempcy(
-        func_value,
-        left_data,
-        bin.context.i64_type().const_zero(),
-        new_fields,
-        bin.context.i64_type().const_zero(),
-        left_len,
-    );
-    bin.mempcy(
-        func_value,
-        right_data,
-        bin.context.i64_type().const_zero(),
-        new_fields,
-        left_len,
-        right_len,
-    );
-    new_fields.as_basic_value_enum()
 }
 
 fn field_to_fields<'a>(source: BasicValueEnum<'a>, bin: &Binary<'a>) -> BasicValueEnum<'a> {

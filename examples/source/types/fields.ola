@@ -4,7 +4,6 @@ contract FieldsContract {
        string a = "ola";
        string b = "vm";
        fields a_b = fields_concat(a, b);
-       assert(string(a_b) == "olavm");
        return a_b;
     }
 

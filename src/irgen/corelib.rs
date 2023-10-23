@@ -1,18 +1,9 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
 use inkwell::AddressSpace;
+use inkwell::values::{BasicValueEnum, BasicValue};
 use once_cell::sync::Lazy;
 
-// const EPSILON: u64 = (1 << 32) - 1;
-//
-// /// A field selected to have fast reduction.
-// ///
-// /// Its order is 2^64 - 2^32 + 1.
-// /// P = 2**64 - EPSILON
-// ///   = 2**64 - 2**32 + 1
-// ///   = 2**32 * (2**32 - 1) + 1
-// ///
-// pub const ORDER: u64 = 0xFFFFFFFF00000001;
 
 static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
     [
@@ -42,6 +33,8 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
     declare_builtins(bin);
 
     declare_prophets(bin);
+
+    bin.mempcy_internal();
 
     // Generate core lib functions
     ns.called_lib_functions.iter().for_each(|p| {
@@ -93,6 +86,18 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                     "",
                 );
                 bin.builder.build_return(Some(&root));
+            }
+            "fields_concat" => {
+                let ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+                let ftype = ptr_type.fn_type(&[ptr_type.into(), ptr_type.into()], false);
+                let func = bin.module.add_function("fields_concat", ftype, None);
+                bin.builder
+                    .position_at_end(bin.context.append_basic_block(func, "entry"));
+                let left_value = func.get_nth_param(0).unwrap().into();
+                let right_value = func.get_nth_param(1).unwrap().into();
+                let new_fields = fields_concat(left_value, right_value, bin);
+                bin.builder.build_return(Some(&new_fields));
+
             }
             _ => {}
         }
@@ -217,4 +222,36 @@ pub fn declare_builtins(bin: &mut Binary) {
         }
         _ => {}
     });
+}
+
+
+fn fields_concat<'a>(
+    left: BasicValueEnum<'a>,
+    right: BasicValueEnum<'a>,
+    bin: &Binary<'a>,
+) -> BasicValueEnum<'a> {
+    let left_len = bin.vector_len(left);
+    let left_data = bin.vector_data(left);
+    let right_len = bin.vector_len(right);
+    let right_data = bin.vector_data(right);
+    let new_len = bin.builder.build_int_add(left_len, right_len, "new_len");
+    let new_fields = bin.vector_new(new_len);
+
+    let new_fields_data = bin.vector_data(new_fields.as_basic_value_enum());
+
+    bin.mempcy(
+        left_data,
+        bin.context.i64_type().const_zero(),
+        new_fields_data,
+        bin.context.i64_type().const_zero(),
+        left_len,
+    );
+    bin.mempcy(
+        right_data,
+        bin.context.i64_type().const_zero(),
+        new_fields_data,
+        left_len,
+        right_len,
+    );
+    new_fields.as_basic_value_enum()
 }

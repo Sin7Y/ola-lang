@@ -23,14 +23,14 @@ contract SystemContextExample {
 
     fn all_test() {
         address caller = caller_address_test();
-        address origin = origin_address_test();
-        address code = code_address_test();
-        address current = current_address_test();
-        u32 chain = chain_id_test();
         assert(caller == 0x0000000000000011000000000000001200000000000000130000000000000014address);
+        address origin = origin_address_test();
         assert(origin == 0x0000000000000005000000000000000600000000000000070000000000000008address);
-        assert(code == 0x0000000000000009000000000000000a000000000000000b000000000000000caddress);
-        assert(current == 0x000000000000000d000000000000000e000000000000000f0000000000000010address);
+        address code = code_address_test();
+         assert(code == 0x0000000000000009000000000000000a000000000000000b000000000000000caddress);
+        address current = current_address_test();
+         assert(current == 0x000000000000000d000000000000000e000000000000000f0000000000000010address);
+        u32 chain = chain_id_test();   
         assert(chain == 1);
     }
 
