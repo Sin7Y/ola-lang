@@ -29,8 +29,6 @@ pub struct ABI {
     pub outputs: Option<Vec<ABIParam>>,
 }
 
-
-
 impl Type {
     /// Is this type a struct, or an array of structs?
     fn is_struct_or_array_of_struct(&self) -> Option<usize> {

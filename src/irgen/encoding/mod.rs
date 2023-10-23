@@ -122,7 +122,7 @@ pub(super) fn abi_encode_with_selector<'a>(
             heap_start_ptr,
             item.clone(),
             &types[arg_no],
-            offset.clone(),
+            offset,
             bin,
             func_value,
             ns,

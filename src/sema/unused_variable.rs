@@ -132,7 +132,9 @@ pub fn used_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symtab
             used_variable(ns, array, symtable);
             used_variable(ns, index, symtable);
         }
-        Expression::ArraySlice { array, start, end, .. } => {
+        Expression::ArraySlice {
+            array, start, end, ..
+        } => {
             used_variable(ns, array, symtable);
             if let Some(start) = start {
                 used_variable(ns, start, symtable);

@@ -132,8 +132,7 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
             }
 
             Some("abi") => {
-                let (metadata, meta_ext) =
-                abi::generate_abi(contract_no, &ns);
+                let (metadata, meta_ext) = abi::generate_abi(contract_no, &ns);
                 let meta_filename = output_file(matches, &binary.name, meta_ext);
                 let mut file = create_file(&meta_filename);
                 file.write_all(metadata.as_bytes()).unwrap();

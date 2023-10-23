@@ -378,7 +378,9 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %offset_ptr15 = alloca i64, align 8
   %index_ptr14 = alloca i64, align 8
+  %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
   switch i64 %0, label %missing_function [
     i64 1586025294, label %func_0_dispatch
@@ -415,6 +417,7 @@ inbounds1:                                        ; preds = %inbounds
   %9 = add i64 %8, 1
   %vector_data = inttoptr i64 %9 to ptr
   store i64 0, ptr %index_ptr, align 4
+  store i64 1, ptr %offset_ptr, align 4
   br label %loop_body
 
 out_of_bounds2:                                   ; preds = %inbounds
@@ -423,17 +426,21 @@ out_of_bounds2:                                   ; preds = %inbounds
 loop_body:                                        ; preds = %inbounds3, %inbounds1
   %index = load i64, ptr %index_ptr, align 4
   %element = getelementptr i64, ptr %vector_data, i64 %index
-  %10 = icmp ule i64 2, %1
-  br i1 %10, label %inbounds3, label %out_of_bounds4
+  %offset = load i64, ptr %offset_ptr, align 4
+  %10 = add i64 %offset, 1
+  %11 = icmp ule i64 %10, %1
+  br i1 %11, label %inbounds3, label %out_of_bounds4
 
 loop_end:                                         ; preds = %inbounds3
-  %11 = add i64 0, %3
-  %12 = icmp ult i64 %11, %1
-  br i1 %12, label %not_all_bytes_read, label %buffer_read
+  %12 = add i64 0, %3
+  %13 = icmp ult i64 %12, %1
+  br i1 %13, label %not_all_bytes_read, label %buffer_read
 
 inbounds3:                                        ; preds = %loop_body
-  %start5 = getelementptr i64, ptr %2, i64 1
+  %start5 = getelementptr i64, ptr %2, i64 %offset
   %value6 = load i64, ptr %start5, align 4
+  %next_offset = add i64 %offset, 1
+  store i64 %next_offset, ptr %offset_ptr, align 4
   store i64 %value6, ptr %element, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
@@ -455,38 +462,42 @@ func_1_dispatch:                                  ; preds = %entry
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %13 = call ptr @get()
-  %length = load i64, ptr %13, align 4
-  %14 = add i64 %length, 1
-  %heap_size = add i64 %14, 1
-  %15 = call i64 @vector_new(i64 %heap_size)
-  %heap_start7 = sub i64 %15, %heap_size
+  %14 = call ptr @get()
+  %length = load i64, ptr %14, align 4
+  %15 = add i64 %length, 1
+  %heap_size = add i64 %15, 1
+  %16 = call i64 @vector_new(i64 %heap_size)
+  %heap_start7 = sub i64 %16, %heap_size
   %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
-  %length9 = load i64, ptr %13, align 4
+  %length9 = load i64, ptr %14, align 4
   %start10 = getelementptr i64, ptr %heap_to_ptr8, i64 0
   store i64 %length9, ptr %start10, align 4
-  %16 = ptrtoint ptr %13 to i64
-  %17 = add i64 %16, 1
-  %vector_data11 = inttoptr i64 %17 to ptr
+  %17 = ptrtoint ptr %14 to i64
+  %18 = add i64 %17, 1
+  %vector_data11 = inttoptr i64 %18 to ptr
+  store i64 1, ptr %offset_ptr15, align 4
   store i64 0, ptr %index_ptr14, align 4
   br label %loop_body12
 
 loop_body12:                                      ; preds = %loop_body12, %func_2_dispatch
-  %index15 = load i64, ptr %index_ptr14, align 4
-  %element16 = getelementptr ptr, ptr %vector_data11, i64 %index15
-  %elem = load i64, ptr %element16, align 4
-  %start17 = getelementptr i64, ptr %heap_to_ptr8, i64 1
-  store i64 %elem, ptr %start17, align 4
-  %next_index18 = add i64 %index15, 1
-  store i64 %next_index18, ptr %index_ptr14, align 4
-  %index_cond19 = icmp ult i64 %next_index18, %length9
-  br i1 %index_cond19, label %loop_body12, label %loop_end13
+  %index16 = load i64, ptr %index_ptr14, align 4
+  %element17 = getelementptr ptr, ptr %vector_data11, i64 %index16
+  %elem = load i64, ptr %element17, align 4
+  %offset18 = load i64, ptr %offset_ptr15, align 4
+  %start19 = getelementptr i64, ptr %heap_to_ptr8, i64 %offset18
+  store i64 %elem, ptr %start19, align 4
+  %next_offset20 = add i64 %offset18, 1
+  store i64 %next_offset20, ptr %offset_ptr15, align 4
+  %next_index21 = add i64 %index16, 1
+  store i64 %next_index21, ptr %index_ptr14, align 4
+  %index_cond22 = icmp ult i64 %next_index21, %length9
+  br i1 %index_cond22, label %loop_body12, label %loop_end13
 
 loop_end13:                                       ; preds = %loop_body12
-  %18 = add i64 %length9, 1
-  %19 = add i64 0, %18
-  %start20 = getelementptr i64, ptr %heap_to_ptr8, i64 %19
-  store i64 %14, ptr %start20, align 4
+  %19 = add i64 %length9, 1
+  %20 = add i64 0, %19
+  %start23 = getelementptr i64, ptr %heap_to_ptr8, i64 %20
+  store i64 %15, ptr %start23, align 4
   call void @set_tape_data(i64 %heap_start7, i64 %heap_size)
   ret void
 }
