@@ -31,31 +31,6 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
-entry:
-  %index_alloca = alloca i64, align 8
-  store i64 0, ptr %index_alloca, align 4
-  br label %cond
-
-cond:                                             ; preds = %body, %entry
-  %index_value = load i64, ptr %index_alloca, align 4
-  %loop_cond = icmp ult i64 %index_value, %4
-  br i1 %loop_cond, label %body, label %done
-
-body:                                             ; preds = %cond
-  %5 = add i64 %1, %index_value
-  %src_index_access = getelementptr i64, ptr %0, i64 %5
-  %6 = load i64, ptr %src_index_access, align 4
-  %7 = add i64 %3, %index_value
-  %dest_index_access = getelementptr i64, ptr %2, i64 %7
-  store i64 %6, ptr %dest_index_access, align 4
-  %next_index = add i64 %index_value, 1
-  store i64 %next_index, ptr %index_alloca, align 4
-  br label %cond
-
-done:                                             ; preds = %cond
-}
-
 define i64 @array_sort_test() {
 entry:
   %array_literal = alloca [10 x i64], align 8
@@ -79,24 +54,19 @@ entry:
   store i64 8, ptr %elemptr8, align 4
   %elemptr9 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 9
   store i64 9, ptr %elemptr9, align 4
-  call void @builtin_range_check(i64 6)
   %index_access = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
   %0 = load i64, ptr %index_access, align 4
   %1 = sub i64 %0, 1
-  call void @builtin_range_check(i64 6)
   %index_access1 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
   %2 = sub i64 %0, 1
   store i64 %2, ptr %index_access1, align 4
-  call void @builtin_range_check(i64 6)
   %index_access2 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
   %3 = load i64, ptr %index_access2, align 4
   %4 = add i64 %3, 1
-  call void @builtin_range_check(i64 6)
   %index_access3 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
   %5 = add i64 %3, 1
   %6 = add i64 %3, 1
   store i64 %6, ptr %index_access3, align 4
-  call void @builtin_range_check(i64 6)
   %index_access4 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
   %7 = load i64, ptr %index_access4, align 4
   ret i64 %7

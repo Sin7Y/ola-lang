@@ -909,7 +909,10 @@ pub fn expression<'a>(
             let hash_input = expression(&args[0], bin, func_value, var_table, ns);
             let hash_input_length = bin.vector_len(hash_input);
             let hash_input_data = bin.vector_data(hash_input);
-            bin.poseidon_hash(vec![(hash_input_data.into(), hash_input_length)])
+            bin.poseidon_hash(
+                func_value,
+                vec![(hash_input_data.into(), hash_input_length)],
+            )
         }
 
         _ => unimplemented!("{:?}", expr),
@@ -1086,7 +1089,7 @@ pub fn array_subscript<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     if array_ty.is_mapping() {
-        return mapping_subscript(array, index, index_ty, bin);
+        return mapping_subscript(array, index, index_ty, bin, func_value);
     }
     let (array_length, fixed) = match array_ty.deref_any() {
         Type::Array(..) | Type::String | Type::DynamicBytes => match array_ty.array_length() {
@@ -1112,32 +1115,24 @@ pub fn array_subscript<'a>(
             unreachable!()
         }
     };
+        let array_length_sub_one: BasicValueEnum = bin
+            .builder
+            .build_int_sub(
+                array_length.into_int_value(),
+                bin.context.i64_type().const_int(1, false),
+                "",
+            )
+            .into();
+        let array_length_sub_one_sub_index = bin
+            .builder
+            .build_int_sub(
+                array_length_sub_one.into_int_value(),
+                index.into_int_value(),
+                "",
+            );
+        bin.range_check(array_length_sub_one_sub_index);
 
-    let array_length_sub_one: BasicValueEnum = bin
-        .builder
-        .build_int_sub(
-            array_length.into_int_value(),
-            bin.context.i64_type().const_int(1, false),
-            "",
-        )
-        .into();
-    let array_length_sub_one_sub_index: BasicValueEnum = bin
-        .builder
-        .build_int_sub(
-            array_length_sub_one.into_int_value(),
-            index.into_int_value(),
-            "",
-        )
-        .into();
-    // check if index is out of bounds
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
-        &[array_length_sub_one_sub_index.into()],
-        "",
-    );
-
+    
     if let Type::StorageRef(ty) = &array_ty {
         let elem_ty = ty.storage_array_elem();
         if fixed {
@@ -1153,7 +1148,7 @@ pub fn array_subscript<'a>(
                 .build_int_add(array.into_int_value(), offset, "index_slot")
                 .into()
         } else {
-            array_offset(bin, array, index, elem_ty, ns)
+            array_offset(bin, array, index, elem_ty, func_value, ns)
         }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
@@ -1221,51 +1216,29 @@ pub fn array_slice<'a>(
     };
 
     // check start index is out of bounds
-    let array_length_sub_one: BasicValueEnum = bin
-        .builder
-        .build_int_sub(array_length, bin.context.i64_type().const_int(1, false), "")
-        .into();
-    let array_length_sub_one_sub_start: BasicValueEnum = bin
-        .builder
-        .build_int_sub(array_length_sub_one.into_int_value(), start, "")
-        .into();
-    // check if index is out of bounds
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
-        &[array_length_sub_one_sub_start.into()],
-        "start_check",
+    let array_length_sub_one = bin.builder.build_int_sub(
+        array_length,
+        bin.context.i64_type().const_int(1, false),
+        "array_len_sub_one",
     );
+    let array_length_sub_one_sub_start =
+        bin.builder
+            .build_int_sub(array_length_sub_one, start, "");
+    bin.range_check(array_length_sub_one_sub_start);
+    
 
-    let array_length_sub_end: BasicValueEnum =
-        bin.builder.build_int_sub(array_length, end, "").into();
-    // check if index is out of bounds
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
-        &[array_length_sub_end.into()],
-        "end_check",
-    );
+    let array_length_sub_end = bin.builder.build_int_sub(array_length, end, "");
+    bin.range_check(array_length_sub_end);
 
     // slice length = end - start
-
-    let len = bin.builder.build_int_sub(end, start, "slice_len");
+    let end_sub_start: inkwell::values::IntValue<'_> =
+        bin.builder.build_int_sub(end, start, "slice_len");
+    bin.range_check(end_sub_start); 
 
     // alloc slice
-    let new_array = bin.vector_new(len);
+    let new_array = bin.vector_new(end_sub_start);
 
     let dest_array = bin.vector_data(new_array.into());
-
-    // check start < end
-    bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
-        &[len.into()],
-        "start_end_check",
-    );
 
     let src_data = if array_ty.is_dynamic_memory() {
         bin.vector_data(array)
@@ -1273,11 +1246,12 @@ pub fn array_slice<'a>(
         array.into_pointer_value()
     };
     bin.mempcy(
+        func_value,
         src_data,
         start,
         dest_array,
         bin.context.i64_type().const_zero(),
-        len,
+        end_sub_start,
     );
     new_array.as_basic_value_enum()
 }
@@ -1287,6 +1261,7 @@ pub fn mapping_subscript<'a>(
     index: BasicValueEnum<'a>,
     index_ty: &Type,
     bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
 ) -> BasicValueEnum<'a> {
     let mut inputs = Vec::with_capacity(2);
     let slot_value = match array.get_type() {
@@ -1309,7 +1284,7 @@ pub fn mapping_subscript<'a>(
         _ => unreachable!(),
     }
 
-    bin.poseidon_hash(inputs)
+    bin.poseidon_hash(func_value, inputs)
 }
 
 pub fn assign_single<'a>(
