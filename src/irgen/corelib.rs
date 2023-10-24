@@ -1,6 +1,6 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
-use inkwell::values::{BasicValue, BasicValueEnum};
+use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::AddressSpace;
 use once_cell::sync::Lazy;
 
@@ -33,8 +33,6 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
 
     declare_prophets(bin);
 
-    bin.mempcy_internal();
-
     // Generate core lib functions
     ns.called_lib_functions.iter().for_each(|p| {
         match p.as_str() {
@@ -58,13 +56,7 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                     .try_as_basic_value()
                     .left()
                     .expect("Should have a left return value");
-                bin.builder.build_call(
-                    bin.module
-                        .get_function("builtin_range_check")
-                        .expect("builtin_range_check should have been defined before"),
-                    &[root.into()],
-                    "",
-                );
+                bin.range_check(root.into_int_value());
                 let root_squared =
                     bin.builder
                         .build_int_mul(root.into_int_value(), root.into_int_value(), "");
@@ -94,7 +86,7 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                     .position_at_end(bin.context.append_basic_block(func, "entry"));
                 let left_value = func.get_nth_param(0).unwrap().into();
                 let right_value = func.get_nth_param(1).unwrap().into();
-                let new_fields = fields_concat(left_value, right_value, bin);
+                let new_fields = fields_concat(left_value, right_value, func, bin);
                 bin.builder.build_return(Some(&new_fields));
             }
             _ => {}
@@ -225,6 +217,7 @@ pub fn declare_builtins(bin: &mut Binary) {
 fn fields_concat<'a>(
     left: BasicValueEnum<'a>,
     right: BasicValueEnum<'a>,
+    function: FunctionValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
     let left_len = bin.vector_len(left);
@@ -237,6 +230,7 @@ fn fields_concat<'a>(
     let new_fields_data = bin.vector_data(new_fields.as_basic_value_enum());
 
     bin.mempcy(
+        function,
         left_data,
         bin.context.i64_type().const_zero(),
         new_fields_data,
@@ -244,6 +238,7 @@ fn fields_concat<'a>(
         left_len,
     );
     bin.mempcy(
+        function,
         right_data,
         bin.context.i64_type().const_zero(),
         new_fields_data,

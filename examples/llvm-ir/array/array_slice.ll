@@ -31,34 +31,10 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
-define void @memory_copy(ptr %0, i64 %1, ptr %2, i64 %3, i64 %4) {
-entry:
-  %index_alloca = alloca i64, align 8
-  store i64 0, ptr %index_alloca, align 4
-  br label %cond
-
-cond:                                             ; preds = %body, %entry
-  %index_value = load i64, ptr %index_alloca, align 4
-  %loop_cond = icmp ult i64 %index_value, %4
-  br i1 %loop_cond, label %body, label %done
-
-body:                                             ; preds = %cond
-  %5 = add i64 %1, %index_value
-  %src_index_access = getelementptr i64, ptr %0, i64 %5
-  %6 = load i64, ptr %src_index_access, align 4
-  %7 = add i64 %3, %index_value
-  %dest_index_access = getelementptr i64, ptr %2, i64 %7
-  store i64 %6, ptr %dest_index_access, align 4
-  %next_index = add i64 %index_value, 1
-  store i64 %next_index, ptr %index_alloca, align 4
-  br label %cond
-
-done:                                             ; preds = %cond
-}
-
 define void @array_slice_test() {
 entry:
   %index = alloca i64, align 8
+  %index_alloca = alloca i64, align 8
   %0 = call i64 @vector_new(i64 6)
   %heap_start = sub i64 %0, 6
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
@@ -77,67 +53,85 @@ entry:
   %index_access4 = getelementptr i64, ptr %vector_data, i64 4
   store i64 111, ptr %index_access4, align 4
   %length = load i64, ptr %heap_to_ptr, align 4
-  %3 = sub i64 %length, 1
-  %4 = sub i64 %3, 0
+  %array_len_sub_one = sub i64 %length, 1
+  %3 = sub i64 %array_len_sub_one, 0
+  call void @builtin_range_check(i64 %3)
+  %4 = sub i64 %length, 2
   call void @builtin_range_check(i64 %4)
-  %5 = sub i64 %length, 2
-  call void @builtin_range_check(i64 %5)
-  %6 = call i64 @vector_new(i64 3)
-  %heap_start5 = sub i64 %6, 3
+  %5 = call i64 @vector_new(i64 3)
+  %heap_start5 = sub i64 %5, 3
   %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
   store i64 2, ptr %heap_to_ptr6, align 4
-  %7 = ptrtoint ptr %heap_to_ptr6 to i64
-  %8 = add i64 %7, 1
-  %vector_data7 = inttoptr i64 %8 to ptr
-  call void @builtin_range_check(i64 2)
-  %9 = ptrtoint ptr %heap_to_ptr to i64
-  %10 = add i64 %9, 1
-  %vector_data8 = inttoptr i64 %10 to ptr
-  call void @memory_copy(ptr %vector_data8, i64 0, ptr %vector_data7, i64 0, i64 2)
-  %11 = ptrtoint ptr %heap_to_ptr6 to i64
-  %12 = add i64 %11, 1
-  %vector_data9 = inttoptr i64 %12 to ptr
+  %6 = ptrtoint ptr %heap_to_ptr6 to i64
+  %7 = add i64 %6, 1
+  %vector_data7 = inttoptr i64 %7 to ptr
+  %8 = ptrtoint ptr %heap_to_ptr to i64
+  %9 = add i64 %8, 1
+  %vector_data8 = inttoptr i64 %9 to ptr
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, 2
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %10 = add i64 0, %index_value
+  %src_index_access = getelementptr i64, ptr %vector_data8, i64 %10
+  %11 = load i64, ptr %src_index_access, align 4
+  %12 = add i64 0, %index_value
+  %dest_index_access = getelementptr i64, ptr %vector_data7, i64 %12
+  store i64 %11, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  %13 = ptrtoint ptr %heap_to_ptr6 to i64
+  %14 = add i64 %13, 1
+  %vector_data9 = inttoptr i64 %14 to ptr
   %length10 = load i64, ptr %heap_to_ptr6, align 4
-  %13 = call i64 @vector_new(i64 3)
-  %heap_start11 = sub i64 %13, 3
+  %15 = call i64 @vector_new(i64 3)
+  %heap_start11 = sub i64 %15, 3
   %heap_to_ptr12 = inttoptr i64 %heap_start11 to ptr
   store i64 2, ptr %heap_to_ptr12, align 4
-  %14 = ptrtoint ptr %heap_to_ptr12 to i64
-  %15 = add i64 %14, 1
-  %vector_data13 = inttoptr i64 %15 to ptr
+  %16 = ptrtoint ptr %heap_to_ptr12 to i64
+  %17 = add i64 %16, 1
+  %vector_data13 = inttoptr i64 %17 to ptr
   %index_access14 = getelementptr i64, ptr %vector_data13, i64 0
   store i64 104, ptr %index_access14, align 4
   %index_access15 = getelementptr i64, ptr %vector_data13, i64 1
   store i64 101, ptr %index_access15, align 4
-  %16 = ptrtoint ptr %heap_to_ptr12 to i64
-  %17 = add i64 %16, 1
-  %vector_data16 = inttoptr i64 %17 to ptr
+  %18 = ptrtoint ptr %heap_to_ptr12 to i64
+  %19 = add i64 %18, 1
+  %vector_data16 = inttoptr i64 %19 to ptr
   %length17 = load i64, ptr %heap_to_ptr12, align 4
-  %18 = icmp eq i64 %length10, %length17
-  %19 = zext i1 %18 to i64
-  call void @builtin_assert(i64 %19)
+  %20 = icmp eq i64 %length10, %length17
+  %21 = zext i1 %20 to i64
+  call void @builtin_assert(i64 %21)
   store i64 0, ptr %index, align 4
-  br label %cond
+  br label %cond18
 
-cond:                                             ; preds = %body, %entry
-  %index18 = load i64, ptr %index, align 4
-  %20 = icmp ult i64 %index18, %length10
-  br i1 %20, label %body, label %done
+cond18:                                           ; preds = %body19, %done
+  %index21 = load i64, ptr %index, align 4
+  %22 = icmp ult i64 %index21, %length10
+  br i1 %22, label %body19, label %done20
 
-body:                                             ; preds = %cond
-  %left_char_ptr = getelementptr i64, ptr %vector_data9, i64 %index18
-  %right_char_ptr = getelementptr i64, ptr %vector_data16, i64 %index18
+body19:                                           ; preds = %cond18
+  %left_char_ptr = getelementptr i64, ptr %vector_data9, i64 %index21
+  %right_char_ptr = getelementptr i64, ptr %vector_data16, i64 %index21
   %left_char = load i64, ptr %left_char_ptr, align 4
   %right_char = load i64, ptr %right_char_ptr, align 4
   %comparison = icmp eq i64 %left_char, %right_char
-  %next_index = add i64 %index18, 1
-  store i64 %next_index, ptr %index, align 4
-  br i1 %comparison, label %cond, label %done
+  %next_index22 = add i64 %index21, 1
+  store i64 %next_index22, ptr %index, align 4
+  br i1 %comparison, label %cond18, label %done20
 
-done:                                             ; preds = %body, %cond
-  %equal = icmp eq i64 %index18, %length17
-  %21 = zext i1 %equal to i64
-  call void @builtin_assert(i64 %21)
+done20:                                           ; preds = %body19, %cond18
+  %equal = icmp eq i64 %index21, %length17
+  %23 = zext i1 %equal to i64
+  call void @builtin_assert(i64 %23)
   ret void
 }
 

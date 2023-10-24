@@ -491,6 +491,7 @@ impl<'a> Binary<'a> {
 
     pub(crate) fn poseidon_hash(
         &self,
+        function: FunctionValue<'a>,
         hash_src: Vec<(BasicValueEnum<'a>, IntValue<'a>)>,
     ) -> BasicValueEnum<'a> {
         let (heap_src_ptr, src_len) = if hash_src.len() > 1 {
@@ -504,6 +505,7 @@ impl<'a> Binary<'a> {
             let mut offset = self.context.i64_type().const_zero();
             for (v, len) in hash_src.iter() {
                 self.mempcy(
+                    function,
                     v.into_pointer_value(),
                     self.context.i64_type().const_zero(),
                     heap_src_ptr,
@@ -783,56 +785,20 @@ impl<'a> Binary<'a> {
 
     pub fn mempcy(
         &self,
+        function: FunctionValue<'a>,
         src: PointerValue<'a>,
         src_start_index: IntValue<'a>,
         dest: PointerValue<'a>,
         dest_start_index: IntValue<'a>,
         len: IntValue<'a>,
     ) {
-        let mempcy_function = self.module.get_function("memory_copy").unwrap();
-        self.builder.build_call(
-            mempcy_function,
-            &[
-                src.into(),
-                src_start_index.into(),
-                dest.into(),
-                dest_start_index.into(),
-                len.into(),
-            ],
-            "",
-        );
-    }
-
-    pub fn mempcy_internal(&self) {
-        let ptr_type = self.context.i64_type().ptr_type(AddressSpace::default());
-        let i64_type = self.context.i64_type();
-        let void_type = self.context.void_type();
-        let ftype = void_type.fn_type(
-            &[
-                ptr_type.into(),
-                i64_type.into(),
-                ptr_type.into(),
-                i64_type.into(),
-                i64_type.into(),
-            ],
-            false,
-        );
-        let func = self.module.add_function("memory_copy", ftype, None);
-        self.builder
-            .position_at_end(self.context.append_basic_block(func, "entry"));
-        let src = func.get_nth_param(0).unwrap().into_pointer_value();
-        let src_start_index = func.get_nth_param(1).unwrap().into_int_value();
-        let dest = func.get_nth_param(2).unwrap().into_pointer_value();
-        let dest_start_index = func.get_nth_param(3).unwrap().into_int_value();
-        let len = func.get_nth_param(4).unwrap().into_int_value();
-
-        let cond = self.context.append_basic_block(func, "cond");
-        let body = self.context.append_basic_block(func, "body");
-        let done = self.context.append_basic_block(func, "done");
+        let cond = self.context.append_basic_block(function, "cond");
+        let body = self.context.append_basic_block(function, "body");
+        let done = self.context.append_basic_block(function, "done");
 
         let loop_ty = self.context.i64_type();
         // create an alloca for the loop variable
-        let index_alloca = self.build_alloca(func, loop_ty, "index_alloca");
+        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
         // initialize the loop variable with the starting value
         self.builder.build_store(index_alloca, loop_ty.const_zero());
 
@@ -908,5 +874,20 @@ impl<'a> Binary<'a> {
                 .build_store(elem_ptr, self.context.i64_type().const_zero());
         }
         heap_ptr.into()
+    }
+
+    pub fn range_check(&self, value: IntValue<'a>) {
+        if !value.is_const() {
+        // check if value is out of bounds
+            self.builder.build_call(
+                self.module
+                    .get_function("builtin_range_check")
+                    .expect("builtin_range_check should have been defined before"),
+                &[value.into()],
+                "range_check",
+            );
+    }
+    
+
     }
 }
