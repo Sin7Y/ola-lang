@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define void @setVars(i64 %0) {
 entry:
   %data = alloca i64, align 8

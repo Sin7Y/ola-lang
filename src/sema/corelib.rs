@@ -20,7 +20,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 14]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 15]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -55,6 +55,13 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 14]> = Lazy::new(|| {
             name: "assert",
             params: vec![Type::Bool, Type::String],
             ret: vec![Type::Void],
+        },
+        Prototype {
+            libfunc: LibFunc::Print,
+            namespace: None,
+            name: "print",
+            params: vec![Type::Unresolved],
+            ret: vec![],
         },
         Prototype {
             libfunc: LibFunc::CallerAddress,
@@ -412,7 +419,7 @@ pub(super) fn resolve_namespace_call(
                         hasher.update(function_name.as_bytes());
                         hasher.finalize(&mut hash);
 
-                        function_selector = u32::from_le_bytes(hash[0..4].try_into().unwrap())
+                        function_selector = u32::from_be_bytes(hash[0..4].try_into().unwrap())
                     }
 
                     _ => {

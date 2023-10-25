@@ -981,6 +981,7 @@ pub enum LibFunc {
     PoseidonHash,
     ChainId,
     FieldsConcat,
+    Print,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

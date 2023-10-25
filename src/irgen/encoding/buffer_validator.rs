@@ -182,7 +182,7 @@ impl<'a> BufferValidator<'a> {
     ) {
         let cond = bin
             .builder
-            .build_int_compare(IntPredicate::ULE, offset, self.buffer_length, "");
+            .build_int_compare(IntPredicate::ULE, offset, self.buffer_length, "offset_inbounds");
 
         let inbounds_block = bin.context.append_basic_block(func_value, "inbounds");
         let out_of_bounds_block = bin.context.append_basic_block(func_value, "out_of_bounds");

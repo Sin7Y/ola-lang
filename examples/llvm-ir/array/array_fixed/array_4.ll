@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define i64 @array_call(ptr %0) {
 entry:
   %index_access = getelementptr [3 x i64], ptr %0, i64 0, i64 2

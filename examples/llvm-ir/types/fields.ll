@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define ptr @fields_concat(ptr %0, ptr %1) {
 entry:
   %index_alloca7 = alloca i64, align 8

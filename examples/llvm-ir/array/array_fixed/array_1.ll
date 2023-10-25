@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define void @fiex_array_test() {
 entry:
   %i = alloca i64, align 8
