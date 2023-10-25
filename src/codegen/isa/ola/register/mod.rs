@@ -42,15 +42,13 @@ const ARG_REGS: [RegUnit; 3] = [
     RegUnit(RegClass::GR as u16, GR::R3 as u16),
 ];
 
-const STR_ARG_REGS: [RegUnit; 8] = [
+const STR_ARG_REGS: [RegUnit; 6] = [
     RegUnit(RegClass::GR as u16, GR::R1 as u16),
     RegUnit(RegClass::GR as u16, GR::R2 as u16),
     RegUnit(RegClass::GR as u16, GR::R3 as u16),
     RegUnit(RegClass::GR as u16, GR::R4 as u16),
     RegUnit(RegClass::GR as u16, GR::R5 as u16),
     RegUnit(RegClass::GR as u16, GR::R6 as u16),
-    RegUnit(RegClass::GR as u16, GR::R7 as u16),
-    RegUnit(RegClass::GR as u16, GR::R8 as u16),
 ];
 
 const CSR: [RegUnit; 5] = [
@@ -102,7 +100,7 @@ impl RegisterClass for RegClass {
 
     fn gpr_list(&self) -> Vec<Reg> {
         match self {
-            RegClass::GR => vec![GR::R8, GR::R7, GR::R6, GR::R5]
+            RegClass::GR => vec![GR::R1, GR::R2, GR::R3, GR::R4]
                 .into_iter()
                 .map(|r| r.into())
                 .collect(),
@@ -111,7 +109,7 @@ impl RegisterClass for RegClass {
 
     fn csr_list(&self) -> Vec<Reg> {
         match self {
-            RegClass::GR => vec![GR::R1, GR::R2, GR::R3, GR::R4, GR::R0]
+            RegClass::GR => vec![GR::R5, GR::R6, GR::R7, GR::R8]
                 .into_iter()
                 .map(|r| r.into())
                 .collect(),

@@ -368,6 +368,7 @@ impl fmt::Display for Opcode {
             match self {
                 Self::ADDri | Self::ADDrr => "add",
                 Self::MULri | Self::MULrr => "mul",
+                Self::ANDri | Self::ANDrr => "and",
                 Self::MOVri | Self::MOVrr | Self::MOV => "mov",
                 Self::JMPi | Self::JMPr => "jmp",
                 Self::CJMPi | Self::CJMPr => "cjmp",
