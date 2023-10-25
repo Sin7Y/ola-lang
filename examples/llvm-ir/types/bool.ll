@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define i64 @cond_bool(i64 %0) {
 entry:
   %ret = alloca i64, align 8

@@ -56,16 +56,13 @@ pub(crate) fn read_from_buffer<'a>(
             let total_size = bin.builder.build_int_add(
                 bin.context.i64_type().const_int(1, false),
                 array_length.into_int_value(),
-                "",
+                "decode_total_size",
             );
-            let array_start =
-                bin.builder
-                    .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
-
-            validator.validate_offset(bin, array_start, func_value);
-
             let total_size_offset = bin.builder.build_int_add(offset, total_size, "");
             validator.validate_offset(bin, total_size_offset, func_value);
+            let array_start =
+                bin.builder
+                    .build_int_add(offset, bin.context.i64_type().const_int(1, false), "decode_array_start");
 
             let allocated_array = bin.alloca_dynamic_array(
                 func_value,
@@ -144,11 +141,11 @@ fn decode_uint<'a>(
 ) -> BasicValueEnum<'a> {
     let start = unsafe {
         bin.builder
-            .build_gep(bin.context.i64_type(), buffer, &[offset], "start")
+            .build_gep(bin.context.i64_type(), buffer, &[offset], "decode_value_ptr")
     };
 
     bin.builder
-        .build_load(bin.context.i64_type(), start, "value")
+        .build_load(bin.context.i64_type(), start, "decode_value")
 }
 
 // fn decode_bool<'a>(

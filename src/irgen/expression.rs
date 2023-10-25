@@ -915,6 +915,17 @@ pub fn expression<'a>(
             )
         }
 
+        Expression::LibFunction {
+            kind: LibFunc::Print,
+            args,
+            ..
+        } => {
+            let ty = args[0].ty();
+            let arg = expression(&args[0], bin, func_value, var_table, ns);
+            debug_print(bin, arg, &ty, func_value, ns);
+            bin.context.i64_type().const_zero().into()
+        }
+
         _ => unimplemented!("{:?}", expr),
     }
 }
@@ -1115,24 +1126,21 @@ pub fn array_subscript<'a>(
             unreachable!()
         }
     };
-        let array_length_sub_one: BasicValueEnum = bin
-            .builder
-            .build_int_sub(
-                array_length.into_int_value(),
-                bin.context.i64_type().const_int(1, false),
-                "",
-            )
-            .into();
-        let array_length_sub_one_sub_index = bin
-            .builder
-            .build_int_sub(
-                array_length_sub_one.into_int_value(),
-                index.into_int_value(),
-                "",
-            );
-        bin.range_check(array_length_sub_one_sub_index);
+    let array_length_sub_one: BasicValueEnum = bin
+        .builder
+        .build_int_sub(
+            array_length.into_int_value(),
+            bin.context.i64_type().const_int(1, false),
+            "",
+        )
+        .into();
+    let array_length_sub_one_sub_index = bin.builder.build_int_sub(
+        array_length_sub_one.into_int_value(),
+        index.into_int_value(),
+        "",
+    );
+    bin.range_check(array_length_sub_one_sub_index);
 
-    
     if let Type::StorageRef(ty) = &array_ty {
         let elem_ty = ty.storage_array_elem();
         if fixed {
@@ -1221,11 +1229,8 @@ pub fn array_slice<'a>(
         bin.context.i64_type().const_int(1, false),
         "array_len_sub_one",
     );
-    let array_length_sub_one_sub_start =
-        bin.builder
-            .build_int_sub(array_length_sub_one, start, "");
+    let array_length_sub_one_sub_start = bin.builder.build_int_sub(array_length_sub_one, start, "");
     bin.range_check(array_length_sub_one_sub_start);
-    
 
     let array_length_sub_end = bin.builder.build_int_sub(array_length, end, "");
     bin.range_check(array_length_sub_end);
@@ -1233,7 +1238,7 @@ pub fn array_slice<'a>(
     // slice length = end - start
     let end_sub_start: inkwell::values::IntValue<'_> =
         bin.builder.build_int_sub(end, start, "slice_len");
-    bin.range_check(end_sub_start); 
+    bin.range_check(end_sub_start);
 
     // alloc slice
     let new_array = bin.vector_new(end_sub_start);
@@ -1569,4 +1574,113 @@ fn external_call<'a>(
 
     bin.tape_data_load(tape_start_int, tape_size);
     heap_start_ptr.as_basic_value_enum()
+}
+
+
+fn debug_print<'a>(bin: &Binary<'a>, arg: BasicValueEnum<'a>, ty: &Type, func_value: FunctionValue<'a>, ns: &Namespace) {
+    // print the value
+    let print_func = bin.module.get_function("prophet_printf").unwrap();
+    match ty {
+        Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
+            bin.builder
+                .build_call(print_func, &[arg.into(), bin.context.i64_type().const_int(3, false).into()], "");
+        }
+        Type::Address => {
+            let address_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "address_start",
+            );
+            bin.builder.build_call(
+                print_func,
+                &[address_start.into(), bin.context.i64_type().const_int(2, false).into()],
+                "",
+            );
+        }
+        Type::Hash => {
+            let hash_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "hash_start",
+            );
+            bin.builder.build_call(
+                print_func,
+                &[hash_start.into(),  bin.context.i64_type().const_int(2, false).into()],
+                "",
+            );
+        }
+
+        Type::DynamicBytes => {
+            let fields_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "fields_start",
+            );
+
+            bin.builder.build_call(
+                print_func,
+                &[fields_start.into(),  bin.context.i64_type().const_zero().into()],
+                "",
+            );
+        }
+        Type::String => {
+            let string_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "string_start",
+            );
+            bin.builder.build_call(
+                print_func,
+                &[string_start.into(), bin.context.i64_type().const_int(1, false).into()],
+                "",
+            );
+        }
+        Type::Array(_, dims) => {
+            let array_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "array_start",
+            );
+            let array_len = if let Some(ArrayLength::Fixed(d)) = dims.last() {
+                bin.context.i64_type().const_int(d.to_u64().unwrap(), false)
+            } else {
+               bin.vector_len(arg)
+            };
+            bin.builder.build_call(
+                print_func,
+                &[array_start.into(), array_len.into(), bin.context.i64_type().const_zero().into()],
+                "",
+            );
+        }
+        Type::Struct(_) => {
+            let struct_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "struct_start",
+            );
+            let struct_size = bin
+                .context
+                .i64_type()
+                .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
+            bin.builder.build_call(
+                print_func,
+                &[struct_start.into(), struct_size.into(), bin.context.i64_type().const_zero().into()],
+                "",
+            );
+        }
+        Type::Mapping(_) => todo!(),
+        Type::Contract(_) => todo!(),
+        Type::Ref(_) => todo!(),
+        Type::StorageRef(ty) => {
+            let value = storage_load(bin, ty, &mut arg.into(), func_value, ns);
+            debug_print(bin, value, ty, func_value, ns);
+        }
+        Type::Function { .. } => todo!(),
+        Type::UserType(_) => todo!(),
+        Type::Void => todo!(),
+        Type::Unreachable => todo!(),
+        Type::Slice(_) => todo!(),
+        Type::Unresolved => todo!(),
+        Type::BufferPointer => todo!(),
+    }
 }

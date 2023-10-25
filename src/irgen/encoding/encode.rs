@@ -114,7 +114,7 @@ pub(crate) fn encode_uint<'a>(
 ) {
     let start = unsafe {
         bin.builder
-            .build_gep(bin.context.i64_type(), buffer, &[offset], "start")
+            .build_gep(bin.context.i64_type(), buffer, &[offset], "encode_value_ptr")
     };
     bin.builder.build_store(start, arg);
 }

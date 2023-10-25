@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define i64 @compare_address(ptr %0) {
 entry:
   %_address = alloca ptr, align 8

@@ -46,7 +46,7 @@ impl ast::Contract {
         hasher.update(self.name.as_bytes());
         hasher.finalize(&mut hash);
 
-        u32::from_le_bytes(hash[0..4].try_into().unwrap())
+        u32::from_be_bytes(hash[0..4].try_into().unwrap())
     }
 }
 
