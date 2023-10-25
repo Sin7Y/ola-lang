@@ -396,7 +396,7 @@ impl<'a> Binary<'a> {
         let size_add_one = self.builder.build_int_add(
             size,
             self.context.i64_type().const_int(1, false),
-            "size_add_one",
+            "length_and_data",
         );
 
         let (_, heap_start_ptr) = self.heap_malloc(size_add_one);
@@ -878,7 +878,7 @@ impl<'a> Binary<'a> {
 
     pub fn range_check(&self, value: IntValue<'a>) {
         if !value.is_const() {
-        // check if value is out of bounds
+            // check if value is out of bounds
             self.builder.build_call(
                 self.module
                     .get_function("builtin_range_check")
@@ -886,8 +886,6 @@ impl<'a> Binary<'a> {
                 &[value.into()],
                 "range_check",
             );
-    }
-    
-
+        }
     }
 }

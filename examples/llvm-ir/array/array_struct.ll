@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define ptr @createBooks() {
 entry:
   %struct_alloca3 = alloca { i64, i64 }, align 8

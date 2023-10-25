@@ -4,7 +4,7 @@ use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::AddressSpace;
 use once_cell::sync::Lazy;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
+static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
@@ -18,6 +18,7 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
         "set_storage",
         "poseidon_hash",
         "contract_call",
+        "prophet_printf",
     ]
 });
 
@@ -112,6 +113,7 @@ pub fn declare_prophets(bin: &mut Binary) {
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             bin.module.add_function("prophet_u32_mod", ftype, None);
         }
+
         "vector_new" => {
             let ftype = bin
                 .context
@@ -190,6 +192,14 @@ pub fn declare_prophets(bin: &mut Binary) {
             let ftype = void_type.fn_type(&[address_type.into(), call_type.into()], false);
             bin.module.add_function("contract_call", ftype, None);
         }
+
+        "prophet_printf" => {
+            let void_type = bin.context.void_type();
+            let i64_type = bin.context.i64_type();
+            let ftype = void_type.fn_type(&[i64_type.into(), i64_type.into()], false);
+            bin.module.add_function("prophet_printf", ftype, None);
+        }
+
 
         _ => {}
     });

@@ -31,6 +31,8 @@ declare void @poseidon_hash(ptr, ptr, i64)
 
 declare void @contract_call(ptr, i64)
 
+declare void @prophet_printf(i64, i64)
+
 define void @delegatecall_test(ptr %0) {
 entry:
   %set_data = alloca i64, align 8
@@ -47,7 +49,7 @@ entry:
   %start1 = getelementptr i64, ptr %heap_to_ptr, i64 2
   store i64 1, ptr %start1, align 4
   %start2 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 2371037854, ptr %start2, align 4
+  store i64 2653574029, ptr %start2, align 4
   %3 = load ptr, ptr %_contract, align 8
   %payload_len = load i64, ptr %heap_to_ptr, align 4
   %tape_size = add i64 %payload_len, 2
@@ -111,7 +113,7 @@ entry:
   %start2 = getelementptr i64, ptr %heap_to_ptr, i64 3
   store i64 2, ptr %start2, align 4
   %start3 = getelementptr i64, ptr %heap_to_ptr, i64 4
-  store i64 2062500454, ptr %start3, align 4
+  store i64 1715662714, ptr %start3, align 4
   %4 = load ptr, ptr %_contract, align 8
   %payload_len = load i64, ptr %heap_to_ptr, align 4
   %tape_size = add i64 %payload_len, 2
