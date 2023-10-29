@@ -37,10 +37,10 @@ define void @test() {
 entry:
   %b = alloca i64, align 8
   %index_alloca = alloca i64, align 8
-  %0 = call i64 @vector_new(i64 6)
-  %heap_start = sub i64 %0, 6
+  %0 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %0, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 5, ptr %heap_to_ptr, align 4
+  store i64 1, ptr %heap_to_ptr, align 4
   %1 = ptrtoint ptr %heap_to_ptr to i64
   %2 = add i64 %1, 1
   %vector_data = inttoptr i64 %2 to ptr
@@ -71,6 +71,9 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1845340408, label %func_0_dispatch
   ]

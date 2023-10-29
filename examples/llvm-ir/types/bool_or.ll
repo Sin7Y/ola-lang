@@ -50,6 +50,9 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1236768756, label %func_0_dispatch
   ]
@@ -62,10 +65,10 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %4, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %3, ptr %start, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start1, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %3, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr1, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }

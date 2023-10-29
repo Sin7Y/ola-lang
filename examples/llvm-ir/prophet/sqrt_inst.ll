@@ -146,6 +146,9 @@ enif4:                                            ; preds = %then3, %else
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1845340408, label %func_0_dispatch
     i64 2314906946, label %func_1_dispatch
@@ -159,30 +162,17 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %3 = icmp ule i64 1, %1
-  br i1 %3, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_1_dispatch
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %4 = icmp ult i64 1, %1
-  br i1 %4, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  %5 = call i64 @sqrt_test(i64 %value)
-  %6 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %6, 2
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %3, align 4
+  %4 = call i64 @sqrt_test(i64 %decode_value)
+  %5 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %5, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %5, ptr %start1, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start2, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %4, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr1, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }

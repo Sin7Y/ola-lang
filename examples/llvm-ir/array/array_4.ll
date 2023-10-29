@@ -35,55 +35,62 @@ declare void @prophet_printf(i64, i64)
 
 define i64 @array_sort_test() {
 entry:
-  %array_literal1 = alloca [10 x i64], align 8
-  %array_literal = alloca [10 x i64], align 8
-  %elemptr0 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 0
+  %0 = call i64 @vector_new(i64 10)
+  %heap_start = sub i64 %0, 10
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %elemptr0 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 0
   store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 1
+  %elemptr1 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 1
   store i64 1, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 2
+  %elemptr2 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 2
   store i64 2, ptr %elemptr2, align 4
-  %elemptr3 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 3
+  %elemptr3 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 3
   store i64 3, ptr %elemptr3, align 4
-  %elemptr4 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 4
+  %elemptr4 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 4
   store i64 4, ptr %elemptr4, align 4
-  %elemptr5 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 5
+  %elemptr5 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 5
   store i64 5, ptr %elemptr5, align 4
-  %elemptr6 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 6
+  %elemptr6 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 6
   store i64 6, ptr %elemptr6, align 4
-  %elemptr7 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 7
+  %elemptr7 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 7
   store i64 7, ptr %elemptr7, align 4
-  %elemptr8 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 8
+  %elemptr8 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 8
   store i64 8, ptr %elemptr8, align 4
-  %elemptr9 = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 9
+  %elemptr9 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 9
   store i64 9, ptr %elemptr9, align 4
-  %elemptr02 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 0
-  store i64 0, ptr %elemptr02, align 4
-  %elemptr13 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 1
-  store i64 0, ptr %elemptr13, align 4
-  %elemptr24 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 2
-  store i64 0, ptr %elemptr24, align 4
-  %elemptr35 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 3
-  store i64 0, ptr %elemptr35, align 4
-  %elemptr46 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 4
-  store i64 0, ptr %elemptr46, align 4
-  %elemptr57 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 5
-  store i64 0, ptr %elemptr57, align 4
-  %elemptr68 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 6
-  store i64 0, ptr %elemptr68, align 4
-  %elemptr79 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 7
-  store i64 0, ptr %elemptr79, align 4
-  %elemptr810 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 8
-  store i64 0, ptr %elemptr810, align 4
-  %elemptr911 = getelementptr [10 x i64], ptr %array_literal1, i64 0, i64 9
-  store i64 0, ptr %elemptr911, align 4
-  %index_access = getelementptr [10 x i64], ptr %array_literal, i64 0, i64 2
-  %0 = load i64, ptr %index_access, align 4
-  ret i64 %0
+  %1 = call i64 @vector_new(i64 10)
+  %heap_start1 = sub i64 %1, 10
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %elemptr03 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 0
+  store i64 0, ptr %elemptr03, align 4
+  %elemptr14 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 1
+  store i64 0, ptr %elemptr14, align 4
+  %elemptr25 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 2
+  store i64 0, ptr %elemptr25, align 4
+  %elemptr36 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 3
+  store i64 0, ptr %elemptr36, align 4
+  %elemptr47 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 4
+  store i64 0, ptr %elemptr47, align 4
+  %elemptr58 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 5
+  store i64 0, ptr %elemptr58, align 4
+  %elemptr69 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 6
+  store i64 0, ptr %elemptr69, align 4
+  %elemptr710 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 7
+  store i64 0, ptr %elemptr710, align 4
+  %elemptr811 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 8
+  store i64 0, ptr %elemptr811, align 4
+  %elemptr912 = getelementptr [10 x i64], ptr %heap_to_ptr2, i64 0, i64 9
+  store i64 0, ptr %elemptr912, align 4
+  %index_access = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %2 = load i64, ptr %index_access, align 4
+  ret i64 %2
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1065523696, label %func_0_dispatch
   ]
@@ -96,10 +103,10 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %4, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %3, ptr %start, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start1, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %3, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr1, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }

@@ -334,6 +334,34 @@ impl<'a> Binary<'a> {
         res
     }
 
+    // Creates a new stack allocation instruction in the entry block of the function
+    pub(crate) fn build_int_add(
+        &self,
+        left: IntValue<'a>,
+        right: IntValue<'a>,
+        name: &str,
+    ) -> IntValue<'a> {
+        if right == self.context.i64_type().const_zero() {
+            return left;
+        } else {
+            return self.builder.build_int_add(left, right, name);
+        }
+    }
+
+    // Creates a new stack allocation instruction in the entry block of the function
+    pub(crate) fn build_int_sub(
+        &self,
+        left: IntValue<'a>,
+        right: IntValue<'a>,
+        name: &str,
+    ) -> IntValue<'a> {
+        if right == self.context.i64_type().const_zero() {
+            return left;
+        } else {
+            return self.builder.build_int_sub(left, right, name);
+        }
+    }
+
     /// Allocate vector on the heap and return heap address
     pub(crate) fn alloca_dynamic_array(
         &self,
@@ -344,14 +372,14 @@ impl<'a> Binary<'a> {
         zero_init: bool,
         ns: &Namespace,
     ) -> PointerValue<'a> {
-        let elem_ty = ty.array_deref().deref_into();
-        let memory_size: IntValue<'_> = self.builder.build_int_mul(
-            size,
-            self.context
+        let elem_ty = ty.array_elem();
+        let memory_size = match ty {
+            Type::Slice(_) | Type::String | Type::DynamicBytes => size,
+            _ => self
+                .context
                 .i64_type()
-                .const_int(elem_ty.memory_size_of(ns).to_u64().unwrap(), false),
-            "size",
-        );
+                .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false),
+        };
 
         let heap_start_ptr = self.vector_new(memory_size);
 
@@ -418,8 +446,7 @@ impl<'a> Binary<'a> {
             .unwrap();
 
         let heap_start_int =
-            self.builder
-                .build_int_sub(heap_ptr_after.into_int_value(), size, "heap_start");
+            self.build_int_sub(heap_ptr_after.into_int_value(), size, "heap_start");
 
         let heap_start_ptr = self.builder.build_int_to_ptr(
             heap_start_int,
@@ -823,7 +850,7 @@ impl<'a> Binary<'a> {
             self.builder.build_gep(
                 self.context.i64_type(),
                 src,
-                &[self.builder.build_int_add(src_start_index, index_value, "")],
+                &[self.builder.build_int_add(index_value, src_start_index, "")],
                 "src_index_access",
             )
         };
@@ -838,7 +865,7 @@ impl<'a> Binary<'a> {
                 dest,
                 &[self
                     .builder
-                    .build_int_add(dest_start_index, index_value, "")],
+                    .build_int_add(index_value, dest_start_index, "")],
                 "dest_index_access",
             )
         };

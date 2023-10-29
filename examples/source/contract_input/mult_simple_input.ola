@@ -1,6 +1,8 @@
 contract MultInputExample {
-    fn foo(string b) {  
+    fn foo(string b, u32 a, u32 c) {  
         print(b);
+        print(a);
+        print(c);
     }
 
 }

@@ -35,16 +35,21 @@ declare void @prophet_printf(i64, i64)
 
 define ptr @myFunction() {
 entry:
-  %struct_alloca = alloca { i64, i64 }, align 8
-  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  store i64 42, ptr %"struct member", align 4
-  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  store i64 3, ptr %"struct member1", align 4
-  ret ptr %struct_alloca
+  %0 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %0, 2
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %struct_member = getelementptr { i64, i64 }, ptr %heap_to_ptr, i64 0
+  store i64 42, ptr %struct_member, align 4
+  %struct_member1 = getelementptr { i64, i64 }, ptr %heap_to_ptr, i64 1
+  store i64 3, ptr %struct_member1, align 4
+  ret ptr %heap_to_ptr
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 973764803, label %func_0_dispatch
   ]
@@ -57,16 +62,16 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %4, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
-  %elem = load i64, ptr %"struct member", align 4
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %elem, ptr %start, align 4
-  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
-  %elem2 = load i64, ptr %"struct member1", align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %elem2, ptr %start3, align 4
-  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 2, ptr %start4, align 4
+  %struct_member = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
+  %elem = load i64, ptr %struct_member, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %elem, ptr %encode_value_ptr, align 4
+  %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
+  %elem2 = load i64, ptr %struct_member1, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %elem2, ptr %encode_value_ptr3, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 2, ptr %encode_value_ptr4, align 4
   call void @set_tape_data(i64 %heap_start, i64 3)
   ret void
 }

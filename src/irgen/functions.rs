@@ -5,6 +5,7 @@ use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
+use inkwell::AddressSpace;
 
 pub type Vartable<'a> = IndexMap<usize, BasicValueEnum<'a>>;
 
@@ -84,8 +85,19 @@ pub(crate) fn populate_arguments<'a>(
             let var = &func.get_symbol_table().vars[pos];
             let arg_val = func_value.get_nth_param(i as u32).unwrap();
             if var.ty.is_reference_type(ns) {
+                let ref_alloc = bin.build_alloca(
+                    func_value,
+                    bin.llvm_var_ty(&var.ty, ns),
+                    var.id.name.as_str(),
+                );
+                bin.builder.build_store(ref_alloc, arg_val);
+                let load_value = bin.builder.build_load(
+                    bin.context.i64_type().ptr_type(AddressSpace::default()),
+                    ref_alloc,
+                    "",
+                );
                 // reference types are passed as pointers
-                var_table.insert(*pos, arg_val.into());
+                var_table.insert(*pos, load_value.into());
                 continue;
             }
             let alloc = bin.build_alloca(

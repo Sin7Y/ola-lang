@@ -77,6 +77,9 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 2371037854, label %func_0_dispatch
     i64 2062500454, label %func_1_dispatch
@@ -86,52 +89,27 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = icmp ule i64 1, %1
-  br i1 %3, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_0_dispatch
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %4 = icmp ult i64 1, %1
-  br i1 %4, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %func_0_dispatch
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  call void @setVars(i64 %value)
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %3, align 4
+  call void @setVars(i64 %decode_value)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %5 = icmp ule i64 2, %1
-  br i1 %5, label %inbounds1, label %out_of_bounds2
-
-inbounds1:                                        ; preds = %func_1_dispatch
-  %start3 = getelementptr i64, ptr %2, i64 0
-  %value4 = load i64, ptr %start3, align 4
-  %start5 = getelementptr i64, ptr %2, i64 1
-  %value6 = load i64, ptr %start5, align 4
-  %6 = icmp ult i64 2, %1
-  br i1 %6, label %not_all_bytes_read7, label %buffer_read8
-
-out_of_bounds2:                                   ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read7:                              ; preds = %inbounds1
-  unreachable
-
-buffer_read8:                                     ; preds = %inbounds1
-  %7 = call i64 @add(i64 %value4, i64 %value6)
+  %input_start1 = ptrtoint ptr %input to i64
+  %4 = inttoptr i64 %input_start1 to ptr
+  %decode_value2 = load i64, ptr %4, align 4
+  %5 = add i64 %input_start1, 1
+  %6 = inttoptr i64 %5 to ptr
+  %decode_value3 = load i64, ptr %6, align 4
+  %7 = call i64 @add(i64 %decode_value2, i64 %decode_value3)
   %8 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %8, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start9 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %7, ptr %start9, align 4
-  %start10 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start10, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %7, ptr %encode_value_ptr, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr4, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }

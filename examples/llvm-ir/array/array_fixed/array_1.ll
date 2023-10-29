@@ -36,37 +36,39 @@ declare void @prophet_printf(i64, i64)
 define void @fiex_array_test() {
 entry:
   %i = alloca i64, align 8
-  %array_literal = alloca [3 x i64], align 8
-  %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+  %0 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %0, 3
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
   store i64 0, ptr %i, align 4
   br label %cond
 
 cond:                                             ; preds = %next, %entry
-  %0 = load i64, ptr %i, align 4
-  %1 = icmp ult i64 %0, 3
-  br i1 %1, label %body, label %endfor
+  %1 = load i64, ptr %i, align 4
+  %2 = icmp ult i64 %1, 3
+  br i1 %2, label %body, label %endfor
 
 body:                                             ; preds = %cond
-  %2 = load i64, ptr %i, align 4
-  %3 = sub i64 2, %2
-  call void @builtin_range_check(i64 %3)
-  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 %2
-  %4 = load i64, ptr %index_access, align 4
-  %5 = load i64, ptr %i, align 4
-  %6 = icmp eq i64 %4, %5
-  %7 = zext i1 %6 to i64
-  call void @builtin_assert(i64 %7)
+  %3 = load i64, ptr %i, align 4
+  %4 = sub i64 2, %3
+  call void @builtin_range_check(i64 %4)
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 %3
+  %5 = load i64, ptr %index_access, align 4
+  %6 = load i64, ptr %i, align 4
+  %7 = icmp eq i64 %5, %6
+  %8 = zext i1 %7 to i64
+  call void @builtin_assert(i64 %8)
   br label %next
 
 next:                                             ; preds = %body
-  %8 = load i64, ptr %i, align 4
-  %9 = add i64 %8, 1
-  store i64 %9, ptr %i, align 4
+  %9 = load i64, ptr %i, align 4
+  %10 = add i64 %9, 1
+  store i64 %10, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %cond
@@ -75,6 +77,9 @@ endfor:                                           ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1162362798, label %func_0_dispatch
   ]
