@@ -35,24 +35,26 @@ declare void @prophet_printf(i64, i64)
 
 define i64 @array_literal() {
 entry:
-  %array_literal = alloca [3 x i64], align 8
-  %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+  %0 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %0, 3
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  %0 = load i64, ptr %index_access, align 4
-  ret i64 %0
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %1 = load i64, ptr %index_access, align 4
+  ret i64 %1
 }
 
 define i64 @array_dynamic_1() {
 entry:
-  %0 = call i64 @vector_new(i64 4)
-  %heap_start = sub i64 %0, 4
+  %0 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %0, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 3, ptr %heap_to_ptr, align 4
+  store i64 1, ptr %heap_to_ptr, align 4
   %1 = ptrtoint ptr %heap_to_ptr to i64
   %2 = add i64 %1, 1
   %vector_data = inttoptr i64 %2 to ptr
@@ -69,10 +71,10 @@ entry:
 define i64 @array_dynamic_2() {
 entry:
   %index_alloca = alloca i64, align 8
-  %0 = call i64 @vector_new(i64 6)
-  %heap_start = sub i64 %0, 6
+  %0 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %0, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 5, ptr %heap_to_ptr, align 4
+  store i64 1, ptr %heap_to_ptr, align 4
   %1 = ptrtoint ptr %heap_to_ptr to i64
   %2 = add i64 %1, 1
   %vector_data = inttoptr i64 %2 to ptr
@@ -106,6 +108,9 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1117380967, label %func_0_dispatch
     i64 2064808594, label %func_1_dispatch
@@ -120,10 +125,10 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %4, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %3, ptr %start, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %start1, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %3, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr1, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 
@@ -132,10 +137,10 @@ func_1_dispatch:                                  ; preds = %entry
   %6 = call i64 @vector_new(i64 2)
   %heap_start2 = sub i64 %6, 2
   %heap_to_ptr3 = inttoptr i64 %heap_start2 to ptr
-  %start4 = getelementptr i64, ptr %heap_to_ptr3, i64 0
-  store i64 %5, ptr %start4, align 4
-  %start5 = getelementptr i64, ptr %heap_to_ptr3, i64 1
-  store i64 1, ptr %start5, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr3, i64 0
+  store i64 %5, ptr %encode_value_ptr4, align 4
+  %encode_value_ptr5 = getelementptr i64, ptr %heap_to_ptr3, i64 1
+  store i64 1, ptr %encode_value_ptr5, align 4
   call void @set_tape_data(i64 %heap_start2, i64 2)
   ret void
 
@@ -144,10 +149,10 @@ func_2_dispatch:                                  ; preds = %entry
   %8 = call i64 @vector_new(i64 2)
   %heap_start6 = sub i64 %8, 2
   %heap_to_ptr7 = inttoptr i64 %heap_start6 to ptr
-  %start8 = getelementptr i64, ptr %heap_to_ptr7, i64 0
-  store i64 %7, ptr %start8, align 4
-  %start9 = getelementptr i64, ptr %heap_to_ptr7, i64 1
-  store i64 1, ptr %start9, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %heap_to_ptr7, i64 0
+  store i64 %7, ptr %encode_value_ptr8, align 4
+  %encode_value_ptr9 = getelementptr i64, ptr %heap_to_ptr7, i64 1
+  store i64 1, ptr %encode_value_ptr9, align 4
   call void @set_tape_data(i64 %heap_start6, i64 2)
   ret void
 }

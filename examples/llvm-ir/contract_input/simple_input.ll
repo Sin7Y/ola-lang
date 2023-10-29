@@ -1,5 +1,5 @@
-; ModuleID = 'ArrayIndexExample'
-source_filename = "examples/source/array/array_fixed/array_index.ola"
+; ModuleID = 'InputExample'
+source_filename = "examples/source/contract_input/simple_input.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -33,39 +33,29 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
-define void @test() {
+define i64 @foo(i64 %0, i64 %1) {
 entry:
-  %value = alloca i64, align 8
-  %index = alloca i64, align 8
-  store i64 2, ptr %index, align 4
-  %0 = load i64, ptr %index, align 4
-  %1 = call i64 @array_index(i64 %0)
-  store i64 %1, ptr %value, align 4
-  %2 = load i64, ptr %value, align 4
-  %3 = icmp eq i64 %2, 3
-  %4 = zext i1 %3 to i64
-  call void @builtin_assert(i64 %4)
-  ret void
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 %0, ptr %a, align 4
+  store i64 %1, ptr %b, align 4
+  %2 = load i64, ptr %a, align 4
+  %3 = load i64, ptr %b, align 4
+  %4 = add i64 %2, %3
+  call void @builtin_range_check(i64 %4)
+  ret i64 %4
 }
 
-define i64 @array_index(i64 %0) {
+define i64 @bar(i64 %0, i64 %1) {
 entry:
-  %index = alloca i64, align 8
-  store i64 %0, ptr %index, align 4
-  %1 = call i64 @vector_new(i64 3)
-  %heap_start = sub i64 %1, 3
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
-  store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
-  store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
-  store i64 3, ptr %elemptr2, align 4
-  %2 = load i64, ptr %index, align 4
-  %3 = sub i64 2, %2
-  call void @builtin_range_check(i64 %3)
-  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 %2
-  %4 = load i64, ptr %index_access, align 4
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 %0, ptr %a, align 4
+  store i64 %1, ptr %b, align 4
+  %2 = load i64, ptr %a, align 4
+  %3 = load i64, ptr %b, align 4
+  %4 = mul i64 %2, %3
+  call void @builtin_range_check(i64 %4)
   ret i64 %4
 }
 
@@ -75,30 +65,47 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1845340408, label %func_0_dispatch
-    i64 256530221, label %func_1_dispatch
+    i64 253268590, label %func_0_dispatch
+    i64 1503968193, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @test()
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
   %decode_value = load i64, ptr %3, align 4
-  %4 = call i64 @array_index(i64 %decode_value)
-  %5 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %5, 2
+  %4 = add i64 %input_start, 1
+  %5 = inttoptr i64 %4 to ptr
+  %decode_value1 = load i64, ptr %5, align 4
+  %6 = call i64 @foo(i64 %decode_value, i64 %decode_value1)
+  %7 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %7, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %4, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %6, ptr %encode_value_ptr, align 4
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr2, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
+  ret void
+
+func_1_dispatch:                                  ; preds = %entry
+  %input_start3 = ptrtoint ptr %input to i64
+  %8 = inttoptr i64 %input_start3 to ptr
+  %decode_value4 = load i64, ptr %8, align 4
+  %9 = add i64 %input_start3, 1
+  %10 = inttoptr i64 %9 to ptr
+  %decode_value5 = load i64, ptr %10, align 4
+  %11 = call i64 @bar(i64 %decode_value4, i64 %decode_value5)
+  %12 = call i64 @vector_new(i64 2)
+  %heap_start6 = sub i64 %12, 2
+  %heap_to_ptr7 = inttoptr i64 %heap_start6 to ptr
+  %encode_value_ptr8 = getelementptr i64, ptr %heap_to_ptr7, i64 0
+  store i64 %11, ptr %encode_value_ptr8, align 4
+  %encode_value_ptr9 = getelementptr i64, ptr %heap_to_ptr7, i64 1
+  store i64 1, ptr %encode_value_ptr9, align 4
+  call void @set_tape_data(i64 %heap_start6, i64 2)
   ret void
 }
 

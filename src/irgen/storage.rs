@@ -114,9 +114,7 @@ pub(crate) fn storage_array_pop<'a>(
     storage_delete(bin, &elem_ty, &mut pop_pos, func_value, ns);
 
     // set decrease length
-    let new_length =
-        bin.builder
-            .build_int_sub(array_length.into_int_value(), i64_const!(1), "new_length");
+    let new_length = bin.build_int_sub(array_length.into_int_value(), i64_const!(1), "new_length");
     storage_store(
         bin,
         &Type::Uint(32),

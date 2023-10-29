@@ -1,5 +1,5 @@
-; ModuleID = 'StructExample'
-source_filename = "examples/source/struct/struct_1.ola"
+; ModuleID = 'MultInputExample'
+source_filename = "examples/source/contract_input/mult_simple_input.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -33,46 +33,48 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
-define ptr @createBook() {
+define void @foo(ptr %0, i64 %1, i64 %2) {
 entry:
-  %struct_alloca2 = alloca { i64, i64 }, align 8
-  %struct_alloca = alloca { i64, i64 }, align 8
-  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 0
-  store i64 1, ptr %"struct member", align 4
-  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca, i32 0, i32 1
-  store i64 3, ptr %"struct member1", align 4
-  %"struct member3" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca2, i32 0, i32 0
-  store i64 2, ptr %"struct member3", align 4
-  %"struct member4" = getelementptr inbounds { i64, i64 }, ptr %struct_alloca2, i32 0, i32 1
-  store i64 4, ptr %"struct member4", align 4
-  ret ptr %struct_alloca2
+  %c = alloca i64, align 8
+  %a = alloca i64, align 8
+  %b = alloca ptr, align 8
+  store ptr %0, ptr %b, align 8
+  %3 = load ptr, ptr %b, align 8
+  store i64 %1, ptr %a, align 4
+  store i64 %2, ptr %c, align 4
+  %string_start = ptrtoint ptr %3 to i64
+  call void @prophet_printf(i64 %string_start, i64 1)
+  %4 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %4, i64 3)
+  %5 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %5, i64 3)
+  ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1078588283, label %func_0_dispatch
+    i64 3238128773, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = call ptr @createBook()
-  %4 = call i64 @vector_new(i64 3)
-  %heap_start = sub i64 %4, 3
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %"struct member" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
-  %elem = load i64, ptr %"struct member", align 4
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %elem, ptr %start, align 4
-  %"struct member1" = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
-  %elem2 = load i64, ptr %"struct member1", align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %elem2, ptr %start3, align 4
-  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 2, ptr %start4, align 4
-  call void @set_tape_data(i64 %heap_start, i64 3)
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %length = load i64, ptr %3, align 4
+  %4 = add i64 %length, 1
+  %5 = add i64 %input_start, %4
+  %6 = inttoptr i64 %5 to ptr
+  %decode_value = load i64, ptr %6, align 4
+  %7 = add i64 %5, 1
+  %8 = inttoptr i64 %7 to ptr
+  %decode_value1 = load i64, ptr %8, align 4
+  call void @foo(ptr %3, i64 %decode_value, i64 %decode_value1)
   ret void
 }
 

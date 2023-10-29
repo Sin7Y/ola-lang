@@ -101,36 +101,37 @@ impl<'a> BufferValidator<'a> {
         func_value: FunctionValue<'a>,
     ) {
         if self.validation_necessary() {
-            let offset_to_validate = bin.builder.build_int_add(offset, size, "");
+            let offset_to_validate = bin.build_int_add(size, offset, "");
 
             self.validate_offset(bin, offset_to_validate, func_value);
         }
     }
 
-    /// Validates if we have read all the bytes in a buffer
-    pub(super) fn validate_all_bytes_read(
-        &self,
-        bin: &Binary<'a>,
-        end_offset: IntValue<'a>,
-        func_value: FunctionValue<'a>,
-    ) {
-        let cond =
-            bin.builder
-                .build_int_compare(IntPredicate::ULT, end_offset, self.buffer_length, "");
+    // /// Validates if we have read all the bytes in a buffer
+    // pub(super) fn validate_all_bytes_read(
+    //     &self,
+    //     bin: &Binary<'a>,
+    //     end_offset: IntValue<'a>,
+    //     func_value: FunctionValue<'a>,
+    // ) {
+    //     let cond =
+    //         bin.builder
+    //             .build_int_compare(IntPredicate::ULT, end_offset,
+    // self.buffer_length, "");
 
-        let invaild = bin
-            .context
-            .append_basic_block(func_value, "not_all_bytes_read");
-        let valid = bin.context.append_basic_block(func_value, "buffer_read");
+    //     let invaild = bin
+    //         .context
+    //         .append_basic_block(func_value, "not_all_bytes_read");
+    //     let valid = bin.context.append_basic_block(func_value, "buffer_read");
 
-        bin.builder.build_conditional_branch(cond, invaild, valid);
+    //     bin.builder.build_conditional_branch(cond, invaild, valid);
 
-        bin.builder.position_at_end(invaild);
-        // TODO: This needs a proper error message
-        bin.builder.build_unreachable();
+    //     bin.builder.position_at_end(invaild);
+    //     // TODO: This needs a proper error message
+    //     bin.builder.build_unreachable();
 
-        bin.builder.position_at_end(valid);
-    }
+    //     bin.builder.position_at_end(valid);
+    // }
 
     /// Auxiliary function to verify if the offset is valid.
     fn _verify_buffer(
@@ -161,11 +162,11 @@ impl<'a> BufferValidator<'a> {
             advance.add_assign(self.types[i].memory_size_of(ns));
         }
 
-        let reach = bin.builder.build_int_add(
-            offset,
+        let reach = bin.build_int_add(
             bin.context
                 .i64_type()
                 .const_int(advance.to_u64().unwrap(), false),
+            offset,
             "",
         );
 
@@ -180,9 +181,12 @@ impl<'a> BufferValidator<'a> {
         offset: IntValue<'a>,
         func_value: FunctionValue<'a>,
     ) {
-        let cond = bin
-            .builder
-            .build_int_compare(IntPredicate::ULE, offset, self.buffer_length, "offset_inbounds");
+        let cond = bin.builder.build_int_compare(
+            IntPredicate::ULE,
+            offset,
+            self.buffer_length,
+            "offset_inbounds",
+        );
 
         let inbounds_block = bin.context.append_basic_block(func_value, "inbounds");
         let out_of_bounds_block = bin.context.append_basic_block(func_value, "out_of_bounds");

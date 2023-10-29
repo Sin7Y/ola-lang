@@ -3,7 +3,7 @@ use std::ops::{AddAssign, Sub};
 use inkwell::{
     basic_block::BasicBlock,
     values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue},
-    IntPredicate,
+    AddressSpace, IntPredicate,
 };
 use num_bigint::BigInt;
 use num_integer::Integer;
@@ -12,18 +12,17 @@ use num_traits::{ToPrimitive, Zero};
 use crate::sema::ast::{ArrayLength, Namespace, Type};
 
 use self::{
-    buffer_validator::BufferValidator,
     decode::read_from_buffer,
     encode::{encode_into_buffer, encode_uint},
 };
 
 use super::{binary::Binary, expression::array_subscript, storage::storage_load};
 
-mod buffer_validator;
+pub mod buffer_validator;
 
-mod decode;
+pub mod decode;
 
-mod encode;
+pub mod encode;
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
 /// Returns a pointer to the encoded data and the size as a 32bit integer.
@@ -50,7 +49,7 @@ pub(super) fn abi_encode<'a>(
             func_value,
             ns,
         );
-        offset = bin.builder.build_int_add(offset, advance, "");
+        offset = bin.build_int_add(advance, offset, "");
     }
     heap_start_ptr
 }
@@ -66,7 +65,7 @@ pub(super) fn abi_encode_store_tape<'a>(
 ) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(
+    let heap_size = bin.build_int_add(
         size,
         bin.context.i64_type().const_int(1, false),
         "heap_size",
@@ -86,7 +85,7 @@ pub(super) fn abi_encode_store_tape<'a>(
             func_value,
             ns,
         );
-        offset = bin.builder.build_int_add(offset, advance, "");
+        offset = bin.build_int_add(advance, offset, "");
     }
     // encode size to heap, the "size" here is only used for tape area
     // identification.
@@ -107,7 +106,7 @@ pub(super) fn abi_encode_with_selector<'a>(
 ) -> PointerValue<'a> {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(
+    let heap_size = bin.build_int_add(
         size,
         bin.context.i64_type().const_int(2, false),
         "heap_size",
@@ -127,7 +126,7 @@ pub(super) fn abi_encode_with_selector<'a>(
             func_value,
             ns,
         );
-        offset = bin.builder.build_int_add(offset, advance, "");
+        offset = bin.build_int_add(advance, offset, "");
     }
     // encode size to heap, the "size" here is used for tape area identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
@@ -152,23 +151,28 @@ pub(super) fn abi_decode<'a>(
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> Vec<BasicValueEnum<'a>> {
-    let mut validator = BufferValidator::new(input_length, types.clone());
+
 
     let mut read_items = vec![];
-    let mut offset = bin.context.i64_type().const_zero();
 
-    validator.initialize_validation(bin, offset, func_value, ns);
+    let mut input_start = bin.builder.build_ptr_to_int(input, bin.context.i64_type(), "input_start");
+
+    // validator.initialize_validation(bin, offset, func_value, ns);
 
     for (item_no, item) in types.iter().enumerate() {
-        validator.set_argument_number(item_no);
-        validator.validate_buffer(bin, offset, func_value, ns);
-        let (read_item, advance) =
-            read_from_buffer(input, offset, bin, item, &mut validator, func_value, ns);
+        // validator.set_argument_number(item_no);
+      
+       
+        // validator.validate_buffer(bin, offset, func_value, ns);
+        let (read_item, advance) = read_from_buffer(input_start, bin, item, func_value, ns);
         read_items.push(read_item);
-        offset = bin.builder.build_int_add(offset, advance, "");
+        if item_no < types.len() - 1 {
+            input_start = bin.build_int_add(input_start, advance, "");
+            // validator.validate_buffer_end(bin, offset, func_value, ns);
+        }
     }
 
-    validator.validate_all_bytes_read(bin, offset, func_value);
+    // validator.validate_all_bytes_read(bin, offset, func_value);
 
     read_items
 }
@@ -184,7 +188,7 @@ pub(super) fn calculate_size_args<'a>(
     let mut size = get_args_type_size(bin, args[0], &types[0], func_value, ns);
     for (i, item) in types.iter().enumerate().skip(1) {
         let additional = get_args_type_size(bin, args[i], item, func_value, ns);
-        size = bin.builder.build_int_add(size, additional, "");
+        size = bin.build_int_add(size, additional, "");
     }
     size
 }
@@ -206,7 +210,7 @@ fn get_args_type_size<'a>(
         }
 
         Type::Struct(struct_no) => {
-            calculate_struct_size(bin, arg_value, *struct_no, ty, func_value, ns)
+            calculate_struct_size(bin, arg_value, *struct_no,  func_value, ns)
         }
         Type::Slice(elem_ty) => {
             let dims = vec![ArrayLength::Dynamic];
@@ -218,7 +222,7 @@ fn get_args_type_size<'a>(
 
         Type::Ref(r) => {
             if let Type::Struct(struct_no) = &**r {
-                return calculate_struct_size(bin, arg_value, *struct_no, ty, func_value, ns);
+                return calculate_struct_size(bin, arg_value, *struct_no,  func_value, ns);
             }
 
             let loaded = bin.builder.build_load(
@@ -372,11 +376,11 @@ fn calculate_complex_array_size<'a>(
             ns,
         );
         let size = bin.vector_len(arr);
-        let size = bin.builder.build_int_add(
-            size,
+        let size = bin.build_int_add(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
+            size,
             "",
         );
         bin.builder.build_store(size_var, size);
@@ -399,7 +403,7 @@ fn calculate_complex_array_size<'a>(
         );
         let elem_size = get_args_type_size(bin, deref, elem_ty, func_value, ns);
 
-        let size = bin.builder.build_int_add(
+        let size = bin.build_int_add(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
@@ -429,7 +433,6 @@ fn calculate_struct_size<'a>(
     bin: &Binary<'a>,
     struct_ptr: BasicValueEnum<'a>,
     struct_no: usize,
-    ty: &Type,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> IntValue<'a> {
@@ -439,15 +442,20 @@ fn calculate_struct_size<'a>(
             .i64_type()
             .const_int(struct_size.to_u64().unwrap(), false);
     }
-    let first_type = ns.structs[struct_no].fields[0].ty.clone();
-    let first_field = load_struct_member(bin, ty, &first_type, struct_ptr, 0, ns);
-    let mut size = get_args_type_size(bin, first_field, &first_type, func_value, ns);
-    for i in 1..ns.structs[struct_no].fields.len() {
+
+    let struct_start = bin.builder.build_ptr_to_int(struct_ptr.into_pointer_value(), bin.context.i64_type(), "struct_start");
+
+    let mut struct_offset = struct_start.clone();
+
+    let mut struct_start_pointer = struct_ptr.into_pointer_value();
+    for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
-        let field = load_struct_member(bin, ty, &field_ty, struct_ptr, i, ns);
-        let expr_size = get_args_type_size(bin, field, &field_ty, func_value, ns).into();
-        size = bin.builder.build_int_add(size, expr_size, "");
+        let expr_size = get_args_type_size(bin, struct_start_pointer.into(), &field_ty, func_value, ns).into();
+        struct_offset = bin.build_int_add(struct_offset, expr_size, "");
+        struct_start_pointer = bin.builder.build_int_to_ptr(struct_offset, bin.context.i64_type().ptr_type(AddressSpace::default()), "");
+
     }
+    let size = bin.build_int_sub(struct_offset, struct_start,"");
     size
 }
 
@@ -468,7 +476,7 @@ fn load_struct_member<'a>(
             struct_ty,
             struct_ptr.into_pointer_value(),
             member as u32,
-            "struct member",
+            "struct_member",
         )
         .unwrap();
     if field_ty.is_primitive() {
@@ -641,17 +649,14 @@ fn set_array_loop<'a>(
 }
 
 /// Closes the for-loop when iterating over an array
-fn finish_array_loop<'a>(bin: &Binary<'a>, for_loop: &ForLoop) {
+fn finish_array_loop<'a>(bin: &Binary<'a>, for_loop: &ForLoop<'a>) {
     bin.builder.build_unconditional_branch(for_loop.next_block);
     bin.builder.position_at_end(for_loop.next_block);
-
-    let index_var = bin.builder.build_int_add(
-        bin.builder
-            .build_load(bin.context.i64_type(), for_loop.index, "index")
-            .into_int_value(),
-        bin.context.i64_type().const_int(1, false),
-        "",
-    );
+    let index = bin
+        .builder
+        .build_load(bin.context.i64_type(), for_loop.index, "index")
+        .into_int_value();
+    let index_var = bin.build_int_add(index, bin.context.i64_type().const_int(1, false), "");
     bin.builder.build_store(for_loop.index, index_var);
     bin.builder.build_unconditional_branch(for_loop.cond_block);
 
@@ -683,19 +688,3 @@ pub fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
     }
 }
 
-/// Calculate the num of element a dynamic array, whose dynamic dimension is
-/// the outer. It needs the variable saving the array's length.
-pub fn calculate_memory_size<'a>(
-    bin: &Binary<'a>,
-    length_var: IntValue<'a>,
-    elem_ty: &Type,
-    ns: &Namespace,
-) -> IntValue<'a> {
-    let elem_size = elem_ty.memory_size_of(ns);
-    let elem_size = bin
-        .context
-        .i64_type()
-        .const_int(elem_size.to_u64().unwrap(), false);
-    bin.builder
-        .build_int_mul(length_var, elem_size, "array_elem_num")
-}

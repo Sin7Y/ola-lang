@@ -44,12 +44,12 @@ entry:
   %heap_start = sub i64 %2, 4
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   store i64 3, ptr %heap_to_ptr, align 4
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %1, ptr %start, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 1, ptr %start1, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 2653574029, ptr %start2, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %1, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 1, ptr %encode_value_ptr1, align 4
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 2653574029, ptr %encode_value_ptr2, align 4
   %3 = load ptr, ptr %_contract, align 8
   %payload_len = load i64, ptr %heap_to_ptr, align 4
   %tape_size = add i64 %payload_len, 2
@@ -106,14 +106,14 @@ entry:
   %heap_start = sub i64 %3, 5
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   store i64 4, ptr %heap_to_ptr, align 4
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %1, ptr %start, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %2, ptr %start1, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 2, ptr %start2, align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 4
-  store i64 1715662714, ptr %start3, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %1, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 %2, ptr %encode_value_ptr1, align 4
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 2, ptr %encode_value_ptr2, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 4
+  store i64 1715662714, ptr %encode_value_ptr3, align 4
   %4 = load ptr, ptr %_contract, align 8
   %payload_len = load i64, ptr %heap_to_ptr, align 4
   %tape_size = add i64 %payload_len, 2
@@ -138,32 +138,22 @@ entry:
   %9 = ptrtoint ptr %heap_to_ptr8 to i64
   %10 = add i64 %9, 1
   %vector_data = inttoptr i64 %10 to ptr
-  %11 = icmp ule i64 1, %length
-  br i1 %11, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %entry
-  %start9 = getelementptr i64, ptr %vector_data, i64 0
-  %value = load i64, ptr %start9, align 4
-  %12 = icmp ult i64 1, %length
-  br i1 %12, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %entry
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  store i64 %value, ptr %result, align 4
-  %13 = load i64, ptr %result, align 4
-  %14 = icmp eq i64 %13, 300
-  %15 = zext i1 %14 to i64
-  call void @builtin_assert(i64 %15)
+  %input_start = ptrtoint ptr %vector_data to i64
+  %11 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %11, align 4
+  store i64 %decode_value, ptr %result, align 4
+  %12 = load i64, ptr %result, align 4
+  %13 = icmp eq i64 %12, 300
+  %14 = zext i1 %13 to i64
+  call void @builtin_assert(i64 %14)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 3965482278, label %func_0_dispatch
     i64 1607480800, label %func_1_dispatch
@@ -173,77 +163,15 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = icmp ule i64 4, %1
-  br i1 %3, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_0_dispatch
-  %4 = call i64 @vector_new(i64 4)
-  %heap_start = sub i64 %4, 4
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %element = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %value, ptr %element, align 4
-  %start1 = getelementptr i64, ptr %2, i64 1
-  %value2 = load i64, ptr %start1, align 4
-  %element3 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %value2, ptr %element3, align 4
-  %start4 = getelementptr i64, ptr %2, i64 2
-  %value5 = load i64, ptr %start4, align 4
-  %element6 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %value5, ptr %element6, align 4
-  %start7 = getelementptr i64, ptr %2, i64 3
-  %value8 = load i64, ptr %start7, align 4
-  %element9 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 %value8, ptr %element9, align 4
-  %5 = icmp ult i64 4, %1
-  br i1 %5, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %func_0_dispatch
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  call void @delegatecall_test(ptr %heap_to_ptr)
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  call void @delegatecall_test(ptr %3)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %6 = icmp ule i64 4, %1
-  br i1 %6, label %inbounds10, label %out_of_bounds11
-
-inbounds10:                                       ; preds = %func_1_dispatch
-  %7 = call i64 @vector_new(i64 4)
-  %heap_start12 = sub i64 %7, 4
-  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
-  %start14 = getelementptr i64, ptr %2, i64 0
-  %value15 = load i64, ptr %start14, align 4
-  %element16 = getelementptr i64, ptr %heap_to_ptr13, i64 0
-  store i64 %value15, ptr %element16, align 4
-  %start17 = getelementptr i64, ptr %2, i64 1
-  %value18 = load i64, ptr %start17, align 4
-  %element19 = getelementptr i64, ptr %heap_to_ptr13, i64 1
-  store i64 %value18, ptr %element19, align 4
-  %start20 = getelementptr i64, ptr %2, i64 2
-  %value21 = load i64, ptr %start20, align 4
-  %element22 = getelementptr i64, ptr %heap_to_ptr13, i64 2
-  store i64 %value21, ptr %element22, align 4
-  %start23 = getelementptr i64, ptr %2, i64 3
-  %value24 = load i64, ptr %start23, align 4
-  %element25 = getelementptr i64, ptr %heap_to_ptr13, i64 3
-  store i64 %value24, ptr %element25, align 4
-  %8 = icmp ult i64 4, %1
-  br i1 %8, label %not_all_bytes_read26, label %buffer_read27
-
-out_of_bounds11:                                  ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read26:                             ; preds = %inbounds10
-  unreachable
-
-buffer_read27:                                    ; preds = %inbounds10
-  call void @call_test(ptr %heap_to_ptr13)
+  %input_start1 = ptrtoint ptr %input to i64
+  %4 = inttoptr i64 %input_start1 to ptr
+  call void @call_test(ptr %4)
   ret void
 }
 

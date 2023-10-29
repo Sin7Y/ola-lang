@@ -47,14 +47,13 @@ entry:
   %0 = call i64 @vector_new(i64 4)
   %heap_start = sub i64 %0, 4
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %1 = add i64 %heap_start, 0
-  call void @get_context_data(i64 %1, i64 8)
-  %2 = add i64 %heap_start, 1
-  call void @get_context_data(i64 %2, i64 9)
-  %3 = add i64 %heap_start, 2
-  call void @get_context_data(i64 %3, i64 10)
-  %4 = add i64 %heap_start, 3
-  call void @get_context_data(i64 %4, i64 11)
+  call void @get_context_data(i64 %heap_start, i64 8)
+  %1 = add i64 %heap_start, 1
+  call void @get_context_data(i64 %1, i64 9)
+  %2 = add i64 %heap_start, 2
+  call void @get_context_data(i64 %2, i64 10)
+  %3 = add i64 %heap_start, 3
+  call void @get_context_data(i64 %3, i64 11)
   ret ptr %heap_to_ptr
 }
 
@@ -276,6 +275,9 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 3263022682, label %func_0_dispatch
     i64 1793245141, label %func_1_dispatch
@@ -295,22 +297,22 @@ func_0_dispatch:                                  ; preds = %entry
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %5 = getelementptr i64, ptr %3, i64 0
   %6 = load i64, ptr %5, align 4
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %6, ptr %start, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %6, ptr %encode_value_ptr, align 4
   %7 = getelementptr i64, ptr %3, i64 1
   %8 = load i64, ptr %7, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %8, ptr %start1, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %8, ptr %encode_value_ptr1, align 4
   %9 = getelementptr i64, ptr %3, i64 2
   %10 = load i64, ptr %9, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %10, ptr %start2, align 4
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 %10, ptr %encode_value_ptr2, align 4
   %11 = getelementptr i64, ptr %3, i64 3
   %12 = load i64, ptr %11, align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 %12, ptr %start3, align 4
-  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 4
-  store i64 4, ptr %start4, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 %12, ptr %encode_value_ptr3, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr, i64 4
+  store i64 4, ptr %encode_value_ptr4, align 4
   call void @set_tape_data(i64 %heap_start, i64 5)
   ret void
 
@@ -321,22 +323,22 @@ func_1_dispatch:                                  ; preds = %entry
   %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
   %15 = getelementptr i64, ptr %13, i64 0
   %16 = load i64, ptr %15, align 4
-  %start7 = getelementptr i64, ptr %heap_to_ptr6, i64 0
-  store i64 %16, ptr %start7, align 4
+  %encode_value_ptr7 = getelementptr i64, ptr %heap_to_ptr6, i64 0
+  store i64 %16, ptr %encode_value_ptr7, align 4
   %17 = getelementptr i64, ptr %13, i64 1
   %18 = load i64, ptr %17, align 4
-  %start8 = getelementptr i64, ptr %heap_to_ptr6, i64 1
-  store i64 %18, ptr %start8, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  store i64 %18, ptr %encode_value_ptr8, align 4
   %19 = getelementptr i64, ptr %13, i64 2
   %20 = load i64, ptr %19, align 4
-  %start9 = getelementptr i64, ptr %heap_to_ptr6, i64 2
-  store i64 %20, ptr %start9, align 4
+  %encode_value_ptr9 = getelementptr i64, ptr %heap_to_ptr6, i64 2
+  store i64 %20, ptr %encode_value_ptr9, align 4
   %21 = getelementptr i64, ptr %13, i64 3
   %22 = load i64, ptr %21, align 4
-  %start10 = getelementptr i64, ptr %heap_to_ptr6, i64 3
-  store i64 %22, ptr %start10, align 4
-  %start11 = getelementptr i64, ptr %heap_to_ptr6, i64 4
-  store i64 4, ptr %start11, align 4
+  %encode_value_ptr10 = getelementptr i64, ptr %heap_to_ptr6, i64 3
+  store i64 %22, ptr %encode_value_ptr10, align 4
+  %encode_value_ptr11 = getelementptr i64, ptr %heap_to_ptr6, i64 4
+  store i64 4, ptr %encode_value_ptr11, align 4
   call void @set_tape_data(i64 %heap_start5, i64 5)
   ret void
 
@@ -347,22 +349,22 @@ func_2_dispatch:                                  ; preds = %entry
   %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
   %25 = getelementptr i64, ptr %23, i64 0
   %26 = load i64, ptr %25, align 4
-  %start14 = getelementptr i64, ptr %heap_to_ptr13, i64 0
-  store i64 %26, ptr %start14, align 4
+  %encode_value_ptr14 = getelementptr i64, ptr %heap_to_ptr13, i64 0
+  store i64 %26, ptr %encode_value_ptr14, align 4
   %27 = getelementptr i64, ptr %23, i64 1
   %28 = load i64, ptr %27, align 4
-  %start15 = getelementptr i64, ptr %heap_to_ptr13, i64 1
-  store i64 %28, ptr %start15, align 4
+  %encode_value_ptr15 = getelementptr i64, ptr %heap_to_ptr13, i64 1
+  store i64 %28, ptr %encode_value_ptr15, align 4
   %29 = getelementptr i64, ptr %23, i64 2
   %30 = load i64, ptr %29, align 4
-  %start16 = getelementptr i64, ptr %heap_to_ptr13, i64 2
-  store i64 %30, ptr %start16, align 4
+  %encode_value_ptr16 = getelementptr i64, ptr %heap_to_ptr13, i64 2
+  store i64 %30, ptr %encode_value_ptr16, align 4
   %31 = getelementptr i64, ptr %23, i64 3
   %32 = load i64, ptr %31, align 4
-  %start17 = getelementptr i64, ptr %heap_to_ptr13, i64 3
-  store i64 %32, ptr %start17, align 4
-  %start18 = getelementptr i64, ptr %heap_to_ptr13, i64 4
-  store i64 4, ptr %start18, align 4
+  %encode_value_ptr17 = getelementptr i64, ptr %heap_to_ptr13, i64 3
+  store i64 %32, ptr %encode_value_ptr17, align 4
+  %encode_value_ptr18 = getelementptr i64, ptr %heap_to_ptr13, i64 4
+  store i64 4, ptr %encode_value_ptr18, align 4
   call void @set_tape_data(i64 %heap_start12, i64 5)
   ret void
 
@@ -373,22 +375,22 @@ func_3_dispatch:                                  ; preds = %entry
   %heap_to_ptr20 = inttoptr i64 %heap_start19 to ptr
   %35 = getelementptr i64, ptr %33, i64 0
   %36 = load i64, ptr %35, align 4
-  %start21 = getelementptr i64, ptr %heap_to_ptr20, i64 0
-  store i64 %36, ptr %start21, align 4
+  %encode_value_ptr21 = getelementptr i64, ptr %heap_to_ptr20, i64 0
+  store i64 %36, ptr %encode_value_ptr21, align 4
   %37 = getelementptr i64, ptr %33, i64 1
   %38 = load i64, ptr %37, align 4
-  %start22 = getelementptr i64, ptr %heap_to_ptr20, i64 1
-  store i64 %38, ptr %start22, align 4
+  %encode_value_ptr22 = getelementptr i64, ptr %heap_to_ptr20, i64 1
+  store i64 %38, ptr %encode_value_ptr22, align 4
   %39 = getelementptr i64, ptr %33, i64 2
   %40 = load i64, ptr %39, align 4
-  %start23 = getelementptr i64, ptr %heap_to_ptr20, i64 2
-  store i64 %40, ptr %start23, align 4
+  %encode_value_ptr23 = getelementptr i64, ptr %heap_to_ptr20, i64 2
+  store i64 %40, ptr %encode_value_ptr23, align 4
   %41 = getelementptr i64, ptr %33, i64 3
   %42 = load i64, ptr %41, align 4
-  %start24 = getelementptr i64, ptr %heap_to_ptr20, i64 3
-  store i64 %42, ptr %start24, align 4
-  %start25 = getelementptr i64, ptr %heap_to_ptr20, i64 4
-  store i64 4, ptr %start25, align 4
+  %encode_value_ptr24 = getelementptr i64, ptr %heap_to_ptr20, i64 3
+  store i64 %42, ptr %encode_value_ptr24, align 4
+  %encode_value_ptr25 = getelementptr i64, ptr %heap_to_ptr20, i64 4
+  store i64 4, ptr %encode_value_ptr25, align 4
   call void @set_tape_data(i64 %heap_start19, i64 5)
   ret void
 
@@ -397,10 +399,10 @@ func_4_dispatch:                                  ; preds = %entry
   %44 = call i64 @vector_new(i64 2)
   %heap_start26 = sub i64 %44, 2
   %heap_to_ptr27 = inttoptr i64 %heap_start26 to ptr
-  %start28 = getelementptr i64, ptr %heap_to_ptr27, i64 0
-  store i64 %43, ptr %start28, align 4
-  %start29 = getelementptr i64, ptr %heap_to_ptr27, i64 1
-  store i64 1, ptr %start29, align 4
+  %encode_value_ptr28 = getelementptr i64, ptr %heap_to_ptr27, i64 0
+  store i64 %43, ptr %encode_value_ptr28, align 4
+  %encode_value_ptr29 = getelementptr i64, ptr %heap_to_ptr27, i64 1
+  store i64 1, ptr %encode_value_ptr29, align 4
   call void @set_tape_data(i64 %heap_start26, i64 2)
   ret void
 

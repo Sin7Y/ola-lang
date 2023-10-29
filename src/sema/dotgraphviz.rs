@@ -853,7 +853,7 @@ impl Dot {
                     Node::new(
                         "structmember",
                         vec![
-                            format!("struct member #{} {}", field, ty.to_string(ns)),
+                            format!("struct_member #{} {}", field, ty.to_string(ns)),
                             ns.loc_to_string(loc),
                         ],
                     ),

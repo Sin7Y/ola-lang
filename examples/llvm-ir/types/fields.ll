@@ -46,9 +46,9 @@ entry:
   %5 = add i64 %4, 1
   %vector_data2 = inttoptr i64 %5 to ptr
   %new_len = add i64 %length, %length1
-  %size_add_one = add i64 %new_len, 1
-  %6 = call i64 @vector_new(i64 %size_add_one)
-  %heap_start = sub i64 %6, %size_add_one
+  %length_and_data = add i64 %new_len, 1
+  %6 = call i64 @vector_new(i64 %length_and_data)
+  %heap_start = sub i64 %6, %length_and_data
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   store i64 %new_len, ptr %heap_to_ptr, align 4
   %7 = ptrtoint ptr %heap_to_ptr to i64
@@ -63,10 +63,10 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %9 = add i64 0, %index_value
+  %9 = add i64 %index_value, 0
   %src_index_access = getelementptr i64, ptr %vector_data, i64 %9
   %10 = load i64, ptr %src_index_access, align 4
-  %11 = add i64 0, %index_value
+  %11 = add i64 %index_value, 0
   %dest_index_access = getelementptr i64, ptr %vector_data3, i64 %11
   store i64 %10, ptr %dest_index_access, align 4
   %next_index = add i64 %index_value, 1
@@ -83,10 +83,10 @@ cond4:                                            ; preds = %body5, %done
   br i1 %loop_cond9, label %body5, label %done6
 
 body5:                                            ; preds = %cond4
-  %12 = add i64 0, %index_value8
+  %12 = add i64 %index_value8, 0
   %src_index_access10 = getelementptr i64, ptr %vector_data2, i64 %12
   %13 = load i64, ptr %src_index_access10, align 4
-  %14 = add i64 %length, %index_value8
+  %14 = add i64 %index_value8, %length
   %dest_index_access11 = getelementptr i64, ptr %vector_data3, i64 %14
   store i64 %13, ptr %dest_index_access11, align 4
   %next_index12 = add i64 %index_value8, 1
@@ -131,6 +131,9 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 3859955665, label %func_0_dispatch
   ]
@@ -147,8 +150,8 @@ func_0_dispatch:                                  ; preds = %entry
   %heap_start = sub i64 %5, %heap_size
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
   %length1 = load i64, ptr %3, align 4
-  %start = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %length1, ptr %start, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %length1, ptr %encode_value_ptr, align 4
   %6 = ptrtoint ptr %3 to i64
   %7 = add i64 %6, 1
   %vector_data = inttoptr i64 %7 to ptr
@@ -161,9 +164,9 @@ loop_body:                                        ; preds = %loop_body, %func_0_
   %element = getelementptr ptr, ptr %vector_data, i64 %index
   %elem = load i64, ptr %element, align 4
   %offset = load i64, ptr %offset_ptr, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
-  store i64 %elem, ptr %start2, align 4
-  %next_offset = add i64 %offset, 1
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
+  store i64 %elem, ptr %encode_value_ptr2, align 4
+  %next_offset = add i64 1, %offset
   store i64 %next_offset, ptr %offset_ptr, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
@@ -172,9 +175,8 @@ loop_body:                                        ; preds = %loop_body, %func_0_
 
 loop_end:                                         ; preds = %loop_body
   %8 = add i64 %length1, 1
-  %9 = add i64 0, %8
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 %9
-  store i64 %4, ptr %start3, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 %8
+  store i64 %4, ptr %encode_value_ptr3, align 4
   call void @set_tape_data(i64 %heap_start, i64 %heap_size)
   ret void
 }

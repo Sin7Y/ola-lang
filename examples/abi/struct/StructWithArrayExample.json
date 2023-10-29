@@ -22,5 +22,35 @@
         ]
       }
     ]
+  },
+  {
+    "name": "getFirstGrade",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_student",
+        "type": "tuple",
+        "internalType": "struct StructWithArrayExample.Student",
+        "components": [
+          {
+            "name": "age",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "grades",
+            "type": "u32[]",
+            "internalType": "u32[]"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
   }
 ]

@@ -1,0 +1,97 @@
+[
+  {
+    "name": "createBook",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct BookExample.Book",
+        "components": [
+          {
+            "name": "book_id",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_name",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "getBookName",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_book",
+        "type": "tuple",
+        "internalType": "struct BookExample.Book",
+        "components": [
+          {
+            "name": "book_id",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_name",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ]
+  },
+  {
+    "name": "getBookId",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_book",
+        "type": "tuple",
+        "internalType": "struct BookExample.Book",
+        "components": [
+          {
+            "name": "book_id",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_name",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]
