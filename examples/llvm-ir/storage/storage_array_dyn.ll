@@ -110,6 +110,9 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 4130016160, label %func_0_dispatch
   ]
@@ -118,23 +121,10 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = icmp ule i64 1, %1
-  br i1 %3, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_0_dispatch
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %4 = icmp ult i64 1, %1
-  br i1 %4, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %func_0_dispatch
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  call void @addElement(i64 %value)
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %3, align 4
+  call void @addElement(i64 %decode_value)
   ret void
 }
 

@@ -37,10 +37,10 @@ define void @processDynamicArray() {
 entry:
   %index_alloca9 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
-  %0 = call i64 @vector_new(i64 4)
-  %heap_start = sub i64 %0, 4
+  %0 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %0, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 3, ptr %heap_to_ptr, align 4
+  store i64 1, ptr %heap_to_ptr, align 4
   %1 = ptrtoint ptr %heap_to_ptr to i64
   %2 = add i64 %1, 1
   %vector_data = inttoptr i64 %2 to ptr
@@ -68,10 +68,10 @@ done:                                             ; preds = %cond
   %6 = add i64 %5, 1
   %vector_data1 = inttoptr i64 %6 to ptr
   %index_access2 = getelementptr ptr, ptr %vector_data1, i64 0
-  %7 = call i64 @vector_new(i64 3)
-  %heap_start3 = sub i64 %7, 3
+  %7 = call i64 @vector_new(i64 2)
+  %heap_start3 = sub i64 %7, 2
   %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
-  store i64 2, ptr %heap_to_ptr4, align 4
+  store i64 1, ptr %heap_to_ptr4, align 4
   %8 = ptrtoint ptr %heap_to_ptr4 to i64
   %9 = add i64 %8, 1
   %vector_data5 = inttoptr i64 %9 to ptr
@@ -148,6 +148,9 @@ done8:                                            ; preds = %cond6
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1008636309, label %func_0_dispatch
   ]

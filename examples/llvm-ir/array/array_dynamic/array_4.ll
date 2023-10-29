@@ -36,10 +36,10 @@ declare void @prophet_printf(i64, i64)
 define void @test() {
 entry:
   %index_alloca = alloca i64, align 8
-  %0 = call i64 @vector_new(i64 6)
-  %heap_start = sub i64 %0, 6
+  %0 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %0, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 5, ptr %heap_to_ptr, align 4
+  store i64 1, ptr %heap_to_ptr, align 4
   %1 = ptrtoint ptr %heap_to_ptr to i64
   %2 = add i64 %1, 1
   %vector_data = inttoptr i64 %2 to ptr
@@ -102,12 +102,10 @@ entry:
   %length = alloca i64, align 8
   store i64 %0, ptr %length, align 4
   %1 = load i64, ptr %length, align 4
-  %size = mul i64 %1, 1
-  %size_add_one = add i64 %size, 1
-  %2 = call i64 @vector_new(i64 %size_add_one)
-  %heap_start = sub i64 %2, %size_add_one
+  %2 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %2, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 %size, ptr %heap_to_ptr, align 4
+  store i64 1, ptr %heap_to_ptr, align 4
   %3 = ptrtoint ptr %heap_to_ptr to i64
   %4 = add i64 %3, 1
   %vector_data = inttoptr i64 %4 to ptr
@@ -134,6 +132,9 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1845340408, label %func_0_dispatch
     i64 991959678, label %func_1_dispatch
@@ -147,45 +148,32 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %3 = icmp ule i64 1, %1
-  br i1 %3, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_1_dispatch
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %4 = icmp ult i64 1, %1
-  br i1 %4, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %func_1_dispatch
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  %5 = call ptr @array_call(i64 %value)
-  %length = load i64, ptr %5, align 4
-  %6 = mul i64 %length, 1
-  %7 = add i64 %6, 1
-  %heap_size = add i64 %7, 1
-  %8 = call i64 @vector_new(i64 %heap_size)
-  %heap_start = sub i64 %8, %heap_size
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %3, align 4
+  %4 = call ptr @array_call(i64 %decode_value)
+  %length = load i64, ptr %4, align 4
+  %5 = mul i64 %length, 1
+  %6 = add i64 %5, 1
+  %heap_size = add i64 %6, 1
+  %7 = call i64 @vector_new(i64 %heap_size)
+  %heap_start = sub i64 %7, %heap_size
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %length1 = load i64, ptr %5, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %length1, ptr %start2, align 4
+  %length1 = load i64, ptr %4, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %length1, ptr %encode_value_ptr, align 4
   store i64 1, ptr %offset_ptr, align 4
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
-loop_body:                                        ; preds = %loop_body, %buffer_read
+loop_body:                                        ; preds = %loop_body, %func_1_dispatch
   %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %5, i64 %index
+  %element = getelementptr ptr, ptr %4, i64 %index
   %elem = load i64, ptr %element, align 4
   %offset = load i64, ptr %offset_ptr, align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
-  store i64 %elem, ptr %start3, align 4
-  %next_offset = add i64 %offset, 1
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
+  store i64 %elem, ptr %encode_value_ptr2, align 4
+  %next_offset = add i64 1, %offset
   store i64 %next_offset, ptr %offset_ptr, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
@@ -193,10 +181,9 @@ loop_body:                                        ; preds = %loop_body, %buffer_
   br i1 %index_cond, label %loop_body, label %loop_end
 
 loop_end:                                         ; preds = %loop_body
-  %9 = add i64 %length1, 1
-  %10 = add i64 0, %9
-  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 %10
-  store i64 %7, ptr %start4, align 4
+  %8 = add i64 %length1, 1
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 %8
+  store i64 %6, ptr %encode_value_ptr3, align 4
   call void @set_tape_data(i64 %heap_start, i64 %heap_size)
   ret void
 }

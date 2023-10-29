@@ -1,5 +1,5 @@
-; ModuleID = 'ArrayIndexExample'
-source_filename = "examples/source/array/array_fixed/array_index.ola"
+; ModuleID = 'MultInputExample'
+source_filename = "examples/source/contract_input/mult_input.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -33,40 +33,37 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
-define void @test() {
+define void @foo(ptr %0, ptr %1, ptr %2, ptr %3, i64 %4, i64 %5) {
 entry:
-  %value = alloca i64, align 8
-  %index = alloca i64, align 8
-  store i64 2, ptr %index, align 4
-  %0 = load i64, ptr %index, align 4
-  %1 = call i64 @array_index(i64 %0)
-  store i64 %1, ptr %value, align 4
-  %2 = load i64, ptr %value, align 4
-  %3 = icmp eq i64 %2, 3
-  %4 = zext i1 %3 to i64
-  call void @builtin_assert(i64 %4)
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  %h = alloca ptr, align 8
+  %addr = alloca ptr, align 8
+  %s = alloca ptr, align 8
+  %f = alloca ptr, align 8
+  store ptr %0, ptr %f, align 8
+  %6 = load ptr, ptr %f, align 8
+  store ptr %1, ptr %s, align 8
+  %7 = load ptr, ptr %s, align 8
+  store ptr %2, ptr %addr, align 8
+  store ptr %3, ptr %h, align 8
+  store i64 %4, ptr %a, align 4
+  store i64 %5, ptr %b, align 4
+  %fields_start = ptrtoint ptr %6 to i64
+  call void @prophet_printf(i64 %fields_start, i64 1)
+  %string_start = ptrtoint ptr %7 to i64
+  call void @prophet_printf(i64 %string_start, i64 1)
+  %8 = load ptr, ptr %addr, align 8
+  %address_start = ptrtoint ptr %8 to i64
+  call void @prophet_printf(i64 %address_start, i64 2)
+  %9 = load ptr, ptr %h, align 8
+  %hash_start = ptrtoint ptr %9 to i64
+  call void @prophet_printf(i64 %hash_start, i64 2)
+  %10 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %10, i64 3)
+  %11 = load i64, ptr %b, align 4
+  call void @prophet_printf(i64 %11, i64 3)
   ret void
-}
-
-define i64 @array_index(i64 %0) {
-entry:
-  %index = alloca i64, align 8
-  store i64 %0, ptr %index, align 4
-  %1 = call i64 @vector_new(i64 3)
-  %heap_start = sub i64 %1, 3
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
-  store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
-  store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
-  store i64 3, ptr %elemptr2, align 4
-  %2 = load i64, ptr %index, align 4
-  %3 = sub i64 2, %2
-  call void @builtin_range_check(i64 %3)
-  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 %2
-  %4 = load i64, ptr %index_access, align 4
-  ret i64 %4
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -75,30 +72,32 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1845340408, label %func_0_dispatch
-    i64 256530221, label %func_1_dispatch
+    i64 251262146, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @test()
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
-  %decode_value = load i64, ptr %3, align 4
-  %4 = call i64 @array_index(i64 %decode_value)
-  %5 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %5, 2
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %4, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
-  call void @set_tape_data(i64 %heap_start, i64 2)
+  %length = load i64, ptr %3, align 4
+  %4 = add i64 %length, 1
+  %5 = add i64 %input_start, %4
+  %6 = inttoptr i64 %5 to ptr
+  %length1 = load i64, ptr %6, align 4
+  %7 = add i64 %length1, 1
+  %8 = add i64 %5, %7
+  %9 = inttoptr i64 %8 to ptr
+  %10 = add i64 %8, 4
+  %11 = inttoptr i64 %10 to ptr
+  %12 = add i64 %10, 4
+  %13 = inttoptr i64 %12 to ptr
+  %decode_value = load i64, ptr %13, align 4
+  %14 = add i64 %12, 1
+  %15 = inttoptr i64 %14 to ptr
+  %decode_value2 = load i64, ptr %15, align 4
+  call void @foo(ptr %3, ptr %6, ptr %9, ptr %11, i64 %decode_value, i64 %decode_value2)
   ret void
 }
 

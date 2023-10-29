@@ -35,23 +35,28 @@ declare void @prophet_printf(i64, i64)
 
 define void @test() {
 entry:
-  %array_literal = alloca [3 x i64], align 8
-  %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+  %0 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %0, 3
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
-  %0 = load i64, ptr %index_access, align 4
-  %1 = icmp eq i64 %0, 1
-  %2 = zext i1 %1 to i64
-  call void @builtin_assert(i64 %2)
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %1 = load i64, ptr %index_access, align 4
+  %2 = icmp eq i64 %1, 1
+  %3 = zext i1 %2 to i64
+  call void @builtin_assert(i64 %3)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1845340408, label %func_0_dispatch
   ]

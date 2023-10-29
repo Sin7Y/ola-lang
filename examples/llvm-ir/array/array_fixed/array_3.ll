@@ -35,37 +35,42 @@ declare void @prophet_printf(i64, i64)
 
 define void @test() {
 entry:
-  %array_literal = alloca [3 x i64], align 8
-  %elemptr0 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 0
+  %0 = call i64 @vector_new(i64 3)
+  %heap_start = sub i64 %0, 3
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
   store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
   store i64 0, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
   store i64 0, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
   store i64 3, ptr %index_access, align 4
-  %index_access1 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  %index_access2 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  %0 = load i64, ptr %index_access2, align 4
-  %1 = add i64 %0, 1
-  call void @builtin_range_check(i64 %1)
-  store i64 %1, ptr %index_access1, align 4
-  %index_access3 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
-  %index_access4 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 2
-  %2 = load i64, ptr %index_access4, align 4
-  %3 = sub i64 %2, 1
-  call void @builtin_range_check(i64 %3)
-  store i64 %3, ptr %index_access3, align 4
-  %index_access5 = getelementptr [3 x i64], ptr %array_literal, i64 0, i64 1
-  %4 = load i64, ptr %index_access5, align 4
-  %5 = icmp eq i64 %4, 1
-  %6 = zext i1 %5 to i64
-  call void @builtin_assert(i64 %6)
+  %index_access1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %index_access2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %1 = load i64, ptr %index_access2, align 4
+  %2 = add i64 %1, 1
+  call void @builtin_range_check(i64 %2)
+  store i64 %2, ptr %index_access1, align 4
+  %index_access3 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %index_access4 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %3 = load i64, ptr %index_access4, align 4
+  %4 = sub i64 %3, 1
+  call void @builtin_range_check(i64 %4)
+  store i64 %4, ptr %index_access3, align 4
+  %index_access5 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %5 = load i64, ptr %index_access5, align 4
+  %6 = icmp eq i64 %5, 1
+  %7 = zext i1 %6 to i64
+  call void @builtin_assert(i64 %7)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 1845340408, label %func_0_dispatch
   ]

@@ -200,7 +200,6 @@ pub fn declare_prophets(bin: &mut Binary) {
             bin.module.add_function("prophet_printf", ftype, None);
         }
 
-
         _ => {}
     });
 }
@@ -234,7 +233,7 @@ fn fields_concat<'a>(
     let left_data = bin.vector_data(left);
     let right_len = bin.vector_len(right);
     let right_data = bin.vector_data(right);
-    let new_len = bin.builder.build_int_add(left_len, right_len, "new_len");
+    let new_len = bin.build_int_add(left_len, right_len, "new_len");
     let new_fields = bin.vector_new(new_len);
 
     let new_fields_data = bin.vector_data(new_fields.as_basic_value_enum());

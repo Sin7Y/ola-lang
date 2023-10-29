@@ -1,0 +1,25 @@
+
+contract BookExample {
+    struct Book {
+        u32 book_id;
+        string book_name;
+    }
+
+    fn createBook(u32 id, string name) -> (Book) {
+        Book myBook = Book({
+            book_name: name,
+            book_id: id
+        });
+        return myBook;
+    }
+
+    fn getBookName(Book _book) -> (string) {
+        return _book.book_name;
+    }
+
+    fn getBookId(Book _book) -> (u32) {
+        u32 b = _book.book_id + 1;
+        return b;
+    }
+
+}

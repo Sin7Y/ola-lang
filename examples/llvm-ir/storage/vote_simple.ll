@@ -66,10 +66,10 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %8 = add i64 0, %index_value
+  %8 = add i64 %index_value, 0
   %src_index_access = getelementptr i64, ptr %heap_to_ptr, i64 %8
   %9 = load i64, ptr %src_index_access, align 4
-  %10 = add i64 0, %index_value
+  %10 = add i64 %index_value, 0
   %dest_index_access = getelementptr i64, ptr %heap_to_ptr2, i64 %10
   store i64 %9, ptr %dest_index_access, align 4
   %next_index = add i64 %index_value, 1
@@ -86,10 +86,10 @@ cond3:                                            ; preds = %body4, %done
   br i1 %loop_cond8, label %body4, label %done5
 
 body4:                                            ; preds = %cond3
-  %11 = add i64 0, %index_value7
+  %11 = add i64 %index_value7, 0
   %src_index_access9 = getelementptr i64, ptr %2, i64 %11
   %12 = load i64, ptr %src_index_access9, align 4
-  %13 = add i64 4, %index_value7
+  %13 = add i64 %index_value7, 4
   %dest_index_access10 = getelementptr i64, ptr %heap_to_ptr2, i64 %13
   store i64 %12, ptr %dest_index_access10, align 4
   %next_index11 = add i64 %index_value7, 1
@@ -310,6 +310,9 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
     i64 2791810083, label %func_0_dispatch
     i64 2868727644, label %func_1_dispatch
@@ -319,48 +322,35 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = icmp ule i64 1, %1
-  br i1 %3, label %inbounds, label %out_of_bounds
-
-inbounds:                                         ; preds = %func_0_dispatch
-  %start = getelementptr i64, ptr %2, i64 0
-  %value = load i64, ptr %start, align 4
-  %4 = icmp ult i64 1, %1
-  br i1 %4, label %not_all_bytes_read, label %buffer_read
-
-out_of_bounds:                                    ; preds = %func_0_dispatch
-  unreachable
-
-not_all_bytes_read:                               ; preds = %inbounds
-  unreachable
-
-buffer_read:                                      ; preds = %inbounds
-  call void @vote_proposal(i64 %value)
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %3, align 4
+  call void @vote_proposal(i64 %decode_value)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %5 = call ptr @get_caller()
-  %6 = call i64 @vector_new(i64 5)
-  %heap_start = sub i64 %6, 5
+  %4 = call ptr @get_caller()
+  %5 = call i64 @vector_new(i64 5)
+  %heap_start = sub i64 %5, 5
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %7 = getelementptr i64, ptr %5, i64 0
-  %8 = load i64, ptr %7, align 4
-  %start1 = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %8, ptr %start1, align 4
-  %9 = getelementptr i64, ptr %5, i64 1
-  %10 = load i64, ptr %9, align 4
-  %start2 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %10, ptr %start2, align 4
-  %11 = getelementptr i64, ptr %5, i64 2
-  %12 = load i64, ptr %11, align 4
-  %start3 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %12, ptr %start3, align 4
-  %13 = getelementptr i64, ptr %5, i64 3
-  %14 = load i64, ptr %13, align 4
-  %start4 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 %14, ptr %start4, align 4
-  %start5 = getelementptr i64, ptr %heap_to_ptr, i64 4
-  store i64 4, ptr %start5, align 4
+  %6 = getelementptr i64, ptr %4, i64 0
+  %7 = load i64, ptr %6, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %7, ptr %encode_value_ptr, align 4
+  %8 = getelementptr i64, ptr %4, i64 1
+  %9 = load i64, ptr %8, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 %9, ptr %encode_value_ptr1, align 4
+  %10 = getelementptr i64, ptr %4, i64 2
+  %11 = load i64, ptr %10, align 4
+  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 %11, ptr %encode_value_ptr2, align 4
+  %12 = getelementptr i64, ptr %4, i64 3
+  %13 = load i64, ptr %12, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 %13, ptr %encode_value_ptr3, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr, i64 4
+  store i64 4, ptr %encode_value_ptr4, align 4
   call void @set_tape_data(i64 %heap_start, i64 5)
   ret void
 }

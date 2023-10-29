@@ -71,10 +71,33 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
 
     let selector = func_value.get_nth_param(0).unwrap().into_int_value();
     let input_length = func_value.get_nth_param(1).unwrap().into_int_value();
-    let input = func_value.get_nth_param(2).unwrap().into_pointer_value();
-
+    let input_source = func_value.get_nth_param(2).unwrap().into_pointer_value();
     bin.builder.position_at_end(entry);
 
+    //In order for the compiler backend to correctly handle pointer type
+    // parameters, special handling is required here.
+
+    // let input_int = bin.builder.build_ptr_to_int(input_source,
+    // bin.context.i64_type(), ""); let input =
+    // bin.builder.build_int_to_ptr(input_int,
+    // bin.context.i64_type().ptr_type(AddressSpace::default()), "");
+
+    let input_alloca = bin.build_alloca(
+        func_value,
+        bin.context.i64_type().ptr_type(AddressSpace::default()),
+        "input_alloca",
+    );
+
+    bin.builder.build_store(input_alloca, input_source);
+
+    let input = bin
+        .builder
+        .build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            input_alloca,
+            "input",
+        )
+        .into_pointer_value();
     let default_case = bin
         .context
         .append_basic_block(func_value, "missing_function");

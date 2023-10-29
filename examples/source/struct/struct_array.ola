@@ -18,7 +18,7 @@ contract StructWithArrayExample {
         return myStudent;
     }
 
-    // fn getFirstGrade(Student _student) -> (u32) {
-    //     return _student.grades[0];
-    // }
+    fn getFirstGrade(Student _student) -> (u32) {
+        return _student.grades[0];
+    }
 }
