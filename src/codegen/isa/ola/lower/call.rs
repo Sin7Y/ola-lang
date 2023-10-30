@@ -79,7 +79,54 @@ pub fn lower_call(
         return Ok(());
     }
 
-    if name.as_str() == "get_ctx_data" || name.as_str() == "get_tape_data" {
+    if name.as_str() == "get_storage" {
+        let src = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let dst = get_operand_for_val(ctx, tys[2], args[2])?;
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::SLOAD,
+                operands: vec![MO::input(src.into()), MO::output(dst)],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
+    if name.as_str() == "set_storage" {
+        let src = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let dst = get_operand_for_val(ctx, tys[2], args[2])?;
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::SSTORE,
+                operands: vec![MO::input(src.into()), MO::output(dst)],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
+    if name.as_str() == "poseidon_hash" {
+        let src = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let dst = get_vreg_for_val(ctx, tys[2], args[2])?;
+        let len = get_operand_for_val(ctx, tys[3], args[3])?;
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::POSEIDON,
+                operands: vec![
+                    MO::output(dst.into()),
+                    MO::input(src.into()),
+                    MO::input(len),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
+    if name.as_str() == "get_context_data" || name.as_str() == "get_tape_data" {
         let flag_imm = if name.as_str() == "get_tape_data" {
             1
         } else {
@@ -244,9 +291,9 @@ pub fn lower_call(
 
 fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[ValueId]) -> Result<()> {
     let gpru = RegInfo::str_arg_reg_list(&ctx.call_conv);
-    let mut gpr_used = 0;
+    let mut gpr_used = args.len();
 
-    for (_, (&ty, &arg0)) in tys.iter().zip(args.iter()).enumerate() {
+    for (_, (&ty, &arg0)) in tys.iter().rev().zip(args.iter().rev()).enumerate() {
         println!(
             "type pointer {:?},{:?},arg {:?}",
             ty.is_pointer(ctx.types),
@@ -283,8 +330,8 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
             }
         } else {
             let arg = get_operand_for_val(ctx, ty, arg0)?;
+            gpr_used -= 1;
             let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, ty));
-            gpr_used += 1;
 
             // TODO: pointer with ref passing
             /* if ty.is_pointer(ctx.types) {

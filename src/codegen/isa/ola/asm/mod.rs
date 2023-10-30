@@ -100,6 +100,12 @@ const MALLOC: &'static str = "%{
     }
 %}";
 
+const PRINTF: &'static str = "%{
+    entry() {
+        printf(cid.base, cid.flag);
+    }
+%}";
+
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
@@ -250,6 +256,26 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             }]
             .to_vec(),
         },
+        "prophet_printf" => Prophet {
+            code: PRINTF.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [
+                Input {
+                    name: "cid.base".to_string(),
+                    length: 1,
+                    is_ref: false,
+                    is_input_output: false,
+                },
+                Input {
+                    name: "cid.flag".to_string(),
+                    length: 1,
+                    is_ref: false,
+                    is_input_output: false,
+                },
+            ]
+            .to_vec(),
+            outputs: [].to_vec(),
+        },
         e => todo!("{:?}", e),
     }
 }
@@ -312,15 +338,11 @@ pub fn print_function(
             } else if inst.data.opcode == Opcode::PROPHET {
                 let name = write_operand(&inst.data.operands[1].data, fn_idx);
                 code.push_str(&format!(".PROPHET{}_{}:\n", fn_idx, prophet_index));
-                code.push_str(&format!("  mov r0 psp\n"));
-                /* if name == "prophet_u32_array_sort" {
-                    for idx in 1..7 {
-                        code.push_str(&format!("  mload r{} [r{},{}]\n", idx, idx, idx));
-                    }
-                } */
-                code.push_str(&format!("  mload r0 [r0]\n"));
-
-                assert_eq!(inst.data.operands.len(), 2);
+                if name != "prophet_printf".to_string() {
+                    code.push_str(&format!("  mov r0 psp\n"));
+                    code.push_str(&format!("  mload r0 [r0]\n"));
+                    assert_eq!(inst.data.operands.len(), 2);
+                }
                 prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));
 
                 prophet_index += 1;
@@ -368,6 +390,7 @@ impl fmt::Display for Opcode {
             match self {
                 Self::ADDri | Self::ADDrr => "add",
                 Self::MULri | Self::MULrr => "mul",
+                Self::ANDri | Self::ANDrr => "and",
                 Self::MOVri | Self::MOVrr | Self::MOV => "mov",
                 Self::JMPi | Self::JMPr => "jmp",
                 Self::CJMPi | Self::CJMPr => "cjmp",

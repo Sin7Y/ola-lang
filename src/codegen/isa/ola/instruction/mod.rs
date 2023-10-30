@@ -26,6 +26,9 @@ pub enum Opcode {
     MULri,
     MULrr,
 
+    ANDri,
+    ANDrr,
+
     EQri,
     EQrr,
     ASSERTri,
