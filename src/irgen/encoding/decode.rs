@@ -1,5 +1,3 @@
-
-
 use inkwell::{
     values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
     AddressSpace,
@@ -9,11 +7,10 @@ use num_traits::ToPrimitive;
 
 use crate::{
     irgen::binary::Binary,
-    sema::ast::{ Namespace, Type},
+    sema::ast::{Namespace, Type},
 };
 
 use super::get_args_type_size;
-
 
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
 /// expression containing the read value and the number of bytes read.
@@ -32,7 +29,9 @@ pub(crate) fn read_from_buffer<'a>(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
                 "",
             );
-            let decode_value = bin.builder.build_load(bin.context.i64_type(), buffer_ptr, "decode_value");
+            let decode_value =
+                bin.builder
+                    .build_load(bin.context.i64_type(), buffer_ptr, "decode_value");
             (decode_value, size)
         }
 
@@ -53,14 +52,14 @@ pub(crate) fn read_from_buffer<'a>(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
                 "",
             );
-            let total_size =  get_args_type_size(bin, buffer_ptr.into(), ty, func_value, ns);
+            let total_size = get_args_type_size(bin, buffer_ptr.into(), ty, func_value, ns);
 
             (buffer_ptr.into(), total_size)
         }
 
         Type::UserType(type_no) => {
             let usr_type = ns.user_types[*type_no].ty.clone();
-            read_from_buffer(buffer,  bin, &usr_type, func_value, ns)
+            read_from_buffer(buffer, bin, &usr_type, func_value, ns)
         }
 
         Type::Array(..) => {
@@ -69,38 +68,23 @@ pub(crate) fn read_from_buffer<'a>(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
                 "",
             );
-            decode_array(
-                buffer.into(),
-                ty,
-                bin,
-                func_value,
-                ns,
-            )
+            decode_array(buffer.into(), ty, bin, func_value, ns)
         }
-    
+
         Type::Slice(..) => {
             let buffer = bin.builder.build_int_to_ptr(
                 buffer,
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
                 "",
             );
-            decode_array(
-                buffer,
-                ty,
-                bin,
-                func_value,
-                ns,
-            )
+            decode_array(buffer, ty, bin, func_value, ns)
         }
 
-        Type::Struct(no) => {
-            decode_struct(&mut buffer.clone(),  ty, *no, bin, func_value, ns)
-        }
+        Type::Struct(no) => decode_struct(&mut buffer.clone(), ty, *no, bin, func_value, ns),
 
         _ => unreachable!("read_from_buffer: {:?}", ty),
     }
 }
-
 
 fn decode_array<'a>(
     buffer: PointerValue<'a>,
@@ -131,10 +115,9 @@ fn decode_struct<'a>(
 
     let buffer_before = *buffer;
     let mut read_items: Vec<BasicValueEnum<'_>> = vec![];
-    
+
     for i in 0..qty {
-        let (read_expr, advance) =
-            read_from_buffer(*buffer, bin, &struct_tys[i], func_value, ns);
+        let (read_expr, advance) = read_from_buffer(*buffer, bin, &struct_tys[i], func_value, ns);
         read_items.push(read_expr);
         *buffer = bin.build_int_add(*buffer, advance, "struct_offset");
     }
@@ -177,8 +160,8 @@ pub fn struct_literal_copy<'a>(
 
 // /// Decodes a complex array from a borsh encoded buffer
 // /// Complex arrays are either dynamic arrays or arrays of dynamic types, like
-// /// structs. If this is an array of structs, whose representation in memory is
-// /// padded, the array is also complex, because it cannot be memcpy'ed
+// /// structs. If this is an array of structs, whose representation in memory
+// is /// padded, the array is also complex, because it cannot be memcpy'ed
 // fn decode_complex_array<'a>(
 //     bin: &Binary<'a>,
 //     array_var: PointerValue<'a>,
@@ -196,10 +179,10 @@ pub fn struct_literal_copy<'a>(
 //         .builder
 //         .build_load(bin.context.i64_type(), offset_var, "")
 //         .into_int_value();
-//     // If we have a 'int[3][4][] vec', we can only validate the buffer after we have
-//     // allocated the outer dimension, i.e., we are about to read a 'int[3][4]' item.
-//     // Arrays whose elements are dynamic cannot be verified.
-//     if validator.validation_necessary()
+//     // If we have a 'int[3][4][] vec', we can only validate the buffer after
+// we have     // allocated the outer dimension, i.e., we are about to read a
+// 'int[3][4]' item.     // Arrays whose elements are dynamic cannot be
+// verified.     if validator.validation_necessary()
 //         && !dims[0..(dimension + 1)]
 //             .iter()
 //             .any(|d| *d == ArrayLength::Dynamic)
@@ -214,24 +197,25 @@ pub fn struct_literal_copy<'a>(
 //             .context
 //             .i64_type()
 //             .const_int(elems.to_u64().unwrap(), false);
-//         validator.validate_offset_plus_size(bin, offset, elems_size, func_value);
-//         validator.validate_array();
+//         validator.validate_offset_plus_size(bin, offset, elems_size,
+// func_value);         validator.validate_array();
 //     }
 
-//     // Dynamic dimensions mean that the subarray we are processing must be allocated
-//     // in memory.
+//     // Dynamic dimensions mean that the subarray we are processing must be
+// allocated     // in memory.
 //     if dims[dimension] == ArrayLength::Dynamic {
 //         let length = decode_uint(buffer, offset, bin);
 
 //         let array_start =
 //             bin.builder
-//                 .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
-//         //validator.validate_offset(bin, array_start.clone(), func_value);
+//                 .build_int_add(offset, bin.context.i64_type().const_int(1,
+// false), "");         //validator.validate_offset(bin, array_start.clone(),
+// func_value);
 
 //         bin.builder.build_store(offset_var, array_start);
 
-//         // let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension +
-//         // 1)].to_vec());
+//         // let new_ty = Type::Array(Box::new(elem_ty.clone()),
+// dims[0..(dimension +         // 1)].to_vec());
 //         let allocated_array = bin.alloca_dynamic_array(
 //             func_value,
 //             array_ty,
@@ -275,8 +259,8 @@ pub fn struct_literal_copy<'a>(
 //     bin.builder.position_at_end(for_loop.body_block);
 
 //     if 0 == dimension {
-//         let (read_value, advance) = read_from_buffer(buffer, bin, elem_ty, func_value, ns);
-//         let array = bin.builder.build_load(
+//         let (read_value, advance) = read_from_buffer(buffer, bin, elem_ty,
+// func_value, ns);         let array = bin.builder.build_load(
 //             bin.context.i64_type().ptr_type(AddressSpace::default()),
 //             array_var,
 //             "",

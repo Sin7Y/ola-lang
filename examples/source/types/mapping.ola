@@ -2,8 +2,10 @@ contract NonceHolder {
 
     mapping(address => mapping(u32 => u32)) nonces;
 
-
     fn setNonce(address _address, u32 _nonce) {
-        nonces[_address][_nonce] = 100;
+        nonces[_address][_nonce] = 55;
+        u32 _nonceSet = nonces[_address][_nonce];
+        print(_nonceSet);
+
     }
 }
