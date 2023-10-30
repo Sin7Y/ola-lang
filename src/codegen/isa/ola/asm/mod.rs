@@ -94,6 +94,18 @@ const ARR_SORT: &'static str = "%{
     }
 %}";
 
+const MALLOC: &'static str = "%{
+    entry() {
+        cid.addr = malloc(cid.len);
+    }
+%}";
+
+const PRINTF: &'static str = "%{
+    entry() {
+        printf(cid.base, cid.flag);
+    }
+%}";
+
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
@@ -226,6 +238,44 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             }]
             .to_vec(),
         },
+        "vector_new" => Prophet {
+            code: MALLOC.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [Input {
+                name: "cid.len".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.addr".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+        },
+        "prophet_printf" => Prophet {
+            code: PRINTF.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [
+                Input {
+                    name: "cid.base".to_string(),
+                    length: 1,
+                    is_ref: false,
+                    is_input_output: false,
+                },
+                Input {
+                    name: "cid.flag".to_string(),
+                    length: 1,
+                    is_ref: false,
+                    is_input_output: false,
+                },
+            ]
+            .to_vec(),
+            outputs: [].to_vec(),
+        },
         e => todo!("{:?}", e),
     }
 }
@@ -264,35 +314,35 @@ pub fn print_function(
 
     for block in function.layout.block_iter() {
         code.push_str(&format!(".LBL{}_{}:\n", fn_idx, block.index()));
+        match function.layout.last_inst_of(block) {
+            Some(_) => (),
+            None => code.push_str(&format!("  ret\n")),
+        }
         for inst in function.layout.inst_iter(block) {
             let inst = function.data.inst_ref(inst);
             if Opcode::MSTOREr == inst.data.opcode {
-                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 8)))
-                    && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 8)))
+                if matches!(&inst.data.operands[0].data, OperandData::Reg(Reg(0, 9)))
+                    && matches!(&inst.data.operands[1].data, OperandData::Reg(Reg(0, 9)))
                 {
-                    code.push_str(&format!("  mstore [r8,-2] r8\n"));
+                    code.push_str(&format!("  mstore [r9,-2] r9\n"));
                     continue;
                 }
             }
 
             if Opcode::RET == inst.data.opcode {
                 let mut term = "  ret";
-                if function.ir.name() == "main" {
+                if function.ir.name() == "main" || function.ir.name() == "call" {
                     term = "  end";
                 }
                 code.push_str(&format!("{}", term));
             } else if inst.data.opcode == Opcode::PROPHET {
                 let name = write_operand(&inst.data.operands[1].data, fn_idx);
                 code.push_str(&format!(".PROPHET{}_{}:\n", fn_idx, prophet_index));
-                code.push_str(&format!("  mov r0 psp\n"));
-                /* if name == "prophet_u32_array_sort" {
-                    for idx in 1..7 {
-                        code.push_str(&format!("  mload r{} [r{},{}]\n", idx, idx, idx));
-                    }
+                if name != "prophet_printf".to_string() {
+                    code.push_str(&format!("  mov r0 psp\n"));
+                    code.push_str(&format!("  mload r0 [r0]\n"));
+                    assert_eq!(inst.data.operands.len(), 2);
                 }
-                code.push_str(&format!("  mload r0 [r0,0]\n")); */
-
-                assert_eq!(inst.data.operands.len(), 2);
                 prophets.push(from_prophet(name.as_str(), fn_idx, prophet_index));
 
                 prophet_index += 1;
@@ -340,12 +390,17 @@ impl fmt::Display for Opcode {
             match self {
                 Self::ADDri | Self::ADDrr => "add",
                 Self::MULri | Self::MULrr => "mul",
-                Self::MOVri | Self::MOVrr => "mov",
+                Self::ANDri | Self::ANDrr => "and",
+                Self::MOVri | Self::MOVrr | Self::MOV => "mov",
                 Self::JMPi | Self::JMPr => "jmp",
                 Self::CJMPi | Self::CJMPr => "cjmp",
                 Self::CALL => "call",
+                Self::SCCALL => "sccall",
                 Self::RET => "ret",
                 Self::Phi => "PHI",
+                Self::SSTORE => "sstore",
+                Self::SLOAD => "sload",
+                Self::POSEIDON => "poseidon",
                 Self::PROPHET => "prophet",
                 Self::MLOADi | Self::MLOADr => "mload",
                 Self::MSTOREi | Self::MSTOREr => "mstore",
@@ -358,6 +413,8 @@ impl fmt::Display for Opcode {
                 Self::XOR => "xor",
                 Self::RANGECHECK => "range",
                 Self::ASSERTri | Self::ASSERTrr => "assert",
+                Self::TLOADri | Self::TLOADrr => "tload",
+                Self::TSTOREi | Self::TSTOREr => "tstore",
                 e => todo!("{:?}", e),
             }
         )
@@ -371,13 +428,28 @@ fn write_operand(op: &OperandData, fn_idx: usize) -> String {
         OperandData::Slot(slot) => format!("{:?}", slot),
         OperandData::Int8(i) => format!("{}", i),
         OperandData::Int32(i) => format!("{}", i),
-        OperandData::Int64(i) => format!("{}", i),
+        OperandData::Int64(i) => {
+            if negative_as_field(*i) {
+                format!("{}", *i as usize)
+            } else {
+                format!("{}", *i)
+            }
+        }
         OperandData::Block(block) => format!(".LBL{}_{}", fn_idx, block.index()),
         OperandData::Label(name) => format!("{}", name),
         OperandData::MemStart => format!(""),
         OperandData::GlobalAddress(name) => format!("offset {}", name),
         OperandData::None => format!("none"),
     }
+}
+
+fn negative_as_field(immediate: i64) -> bool {
+    let imm = immediate as usize;
+    assert!(imm < 0xffffffffffffffff);
+    if imm > 0x7fffffffffffffff {
+        return true;
+    }
+    return false;
 }
 
 fn mem_size(_opcode: &Opcode) -> &'static str {
@@ -410,12 +482,16 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::None,
         ) => {
-            format!(
-                "[{},{}{}]",
-                reg_to_str(reg),
-                if *imm < 0 { "" } else { "+" },
-                *imm
-            )
+            if *imm == 0 {
+                format!("[{}]", reg_to_str(reg))
+            } else {
+                format!(
+                    "[{},{}{}]",
+                    reg_to_str(reg),
+                    if *imm < 0 { "" } else { "+" },
+                    *imm
+                )
+            }
         }
         (
             OperandData::None,
@@ -424,12 +500,16 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::None,
         ) => {
-            format!(
-                "[{},{}{}]",
-                reg_to_str(reg),
-                if *imm < 0 { "" } else { "+" },
-                *imm
-            )
+            if *imm == 0 {
+                format!("[{}]", reg_to_str(reg))
+            } else {
+                format!(
+                    "[{},{}{}]",
+                    reg_to_str(reg),
+                    if *imm < 0 { "" } else { "+" },
+                    *imm
+                )
+            }
         }
         (
             OperandData::None,
@@ -438,14 +518,43 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::Reg(reg2),
             OperandData::Int32(shift),
         ) => {
-            format!(
-                "[{}{}{}+{}*{}]",
-                reg_to_str(reg1),
-                if *imm < 0 { "" } else { "+" },
-                *imm,
-                reg_to_str(reg2),
-                shift
-            )
+            if *imm == 0 {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *shift < 0 { "" } else { "+" },
+                    *shift
+                )
+            } else {
+                if *shift == 0 {
+                    format!(
+                        "[{},{}{}]",
+                        reg_to_str(reg1),
+                        if *imm < 0 { "" } else { "+" },
+                        *imm
+                    )
+                } else {
+                    if *shift == 0 {
+                        format!(
+                            "[{},{}{}]",
+                            reg_to_str(reg1),
+                            if *imm < 0 { "" } else { "+" },
+                            *imm,
+                        )
+                    } else {
+                        format!(
+                            "[{},{}{},{},{}{}]",
+                            reg_to_str(reg1),
+                            if *imm < 0 { "" } else { "+" },
+                            *imm,
+                            reg_to_str(reg2),
+                            if *shift < 0 { "" } else { "+" },
+                            *shift
+                        )
+                    }
+                }
+            }
         }
         (
             OperandData::None,
@@ -454,7 +563,7 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
             OperandData::None,
         ) => {
-            format!("[{}]", reg_to_str(reg1),)
+            format!("[{}]", reg_to_str(reg1))
         }
         (
             OperandData::None,
@@ -463,7 +572,45 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::Reg(reg2),
             OperandData::Int32(mul),
         ) => {
-            format!("[{}+{}*{}]", reg_to_str(reg1), reg_to_str(reg2), mul)
+            if *mul == 0 {
+                format!("[{}]", reg_to_str(reg1),)
+            } else {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *mul < 0 { "" } else { "+" },
+                    *mul
+                )
+            }
+        }
+        (
+            OperandData::None,
+            OperandData::None,
+            OperandData::Reg(reg1),
+            OperandData::Reg(reg2),
+            OperandData::None,
+        ) => {
+            format!("[{},{}]", reg_to_str(reg1), reg_to_str(reg2),)
+        }
+        (
+            OperandData::None,
+            OperandData::None,
+            OperandData::Reg(reg1),
+            OperandData::Reg(reg2),
+            OperandData::Int64(mul),
+        ) => {
+            if *mul == 0 {
+                format!("[{}]", reg_to_str(reg1),)
+            } else {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *mul < 0 { "" } else { "+" },
+                    *mul
+                )
+            }
         }
         (
             OperandData::Label(lbl),
@@ -473,6 +620,25 @@ fn mem_op(args: &[Operand]) -> String {
             OperandData::None,
         ) => {
             format!("[{} + {lbl}]", reg_to_str(reg1))
+        }
+        (
+            OperandData::None,
+            OperandData::Int32(imm),
+            OperandData::Reg(reg1),
+            OperandData::Reg(reg2),
+            OperandData::None,
+        ) => {
+            if *imm == 0 {
+                format!("[{},{}]", reg_to_str(reg1), reg_to_str(reg2))
+            } else {
+                format!(
+                    "[{},{},{}{}]",
+                    reg_to_str(reg1),
+                    reg_to_str(reg2),
+                    if *imm < 0 { "" } else { "+" },
+                    *imm
+                )
+            }
         }
         e => todo!("{:?}", e),
     }

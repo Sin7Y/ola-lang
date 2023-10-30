@@ -54,7 +54,7 @@ pub fn lower_bin(
     };
 
     let data = match rhs {
-        OperandData::Int32(rhs) => {
+        OperandData::Int64(rhs) => {
             if IrOpcode::Sub == op {
                 insert_not(ctx);
                 insert_add(ctx);
@@ -63,7 +63,7 @@ pub fn lower_bin(
                 IrOpcode::Sub => InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(OperandData::Reg(GR::R7.into())),
                     ],
@@ -71,7 +71,15 @@ pub fn lower_bin(
                 IrOpcode::Add => InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
+                        MO::input(lhs.into()),
+                        MO::input(rhs.into()),
+                    ],
+                },
+                IrOpcode::And => InstructionData {
+                    opcode: Opcode::ANDri,
+                    operands: vec![
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -79,7 +87,7 @@ pub fn lower_bin(
                 IrOpcode::Mul => InstructionData {
                     opcode: Opcode::MULri,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -98,7 +106,7 @@ pub fn lower_bin(
                 IrOpcode::Sub => InstructionData {
                     opcode: Opcode::ADDrr,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(OperandData::Reg(GR::R7.into())),
                     ],
@@ -106,7 +114,15 @@ pub fn lower_bin(
                 IrOpcode::Add => InstructionData {
                     opcode: Opcode::ADDrr,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
+                        MO::input(lhs.into()),
+                        MO::input(rhs.into()),
+                    ],
+                },
+                IrOpcode::And => InstructionData {
+                    opcode: Opcode::ANDrr,
+                    operands: vec![
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -114,7 +130,7 @@ pub fn lower_bin(
                 IrOpcode::Mul => InstructionData {
                     opcode: Opcode::MULrr,
                     operands: vec![
-                        MO::input_output(output.into()),
+                        MO::input_output(output[0].into()),
                         MO::input(lhs.into()),
                         MO::input(rhs.into()),
                     ],
@@ -129,6 +145,29 @@ pub fn lower_bin(
 
     ctx.inst_seq
         .push(MachInstruction::new(data, ctx.block_map[&ctx.cur_block]));
+
+    Ok(())
+}
+
+pub fn lower_itp(
+    ctx: &mut LoweringContext<Ola>,
+    self_id: InstructionId,
+    tys: &[Type; 2],
+    arg: ValueId,
+) -> Result<()> {
+    let from = tys[0];
+    let to = tys[1];
+
+    let val = get_operand_for_val(ctx, from, arg)?;
+    let output = new_empty_inst_output(ctx, to, self_id);
+
+    ctx.inst_seq.push(MachInstruction::new(
+        InstructionData {
+            opcode: Opcode::MOVrr,
+            operands: vec![MO::output(output[0].into()), MO::input(val.into())],
+        },
+        ctx.block_map[&ctx.cur_block],
+    ));
 
     Ok(())
 }

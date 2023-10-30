@@ -31,15 +31,48 @@ olavm提供10个寄存器，包含前9个通用寄存器 `r0-r8` 及最后一个
 r8寄存器为fp寄存器。汇编中通用寄存器访问不能通过名字，只能通过数字索引方式访问。pc寄存器表示程序执行地址，汇编中不可访问。
 
 当涉及函数调用时，通用寄存器的分类：
-| 寄存器 |         说明                  |
-| :---  |         :---                 |
-| r0    |  保存返回值或传递参数           |
-| r1-r3 |  保存函数参数                  |
-| r4-r5 |  一般寄存器，无特殊用途          |
-| r6    |  保存返回地址(lr),disable      |    
-| r7    |  保存栈顶地址(sp),disable      |
-| r8    |  保存栈底地址(fp)              |
-| pc    |  保存当前执行指令地址,汇编不可用  |
+| 寄存器 |         功能                  |          使用场景                |          说明                |
+| :---  |         :---                 |         :---                 |        :---                 |
+| r0    |  通用、返回值、storage/poseidon传参及返回值| <br> 1）通用局部变量、表达式结果 <br> 2）普通函数调用单返回值 <br> 3）sstore/sload的value第1个参数 <br>4）poseidon第一个参数、第一个返回值| 编译器可读可写、vm可读当包含sload/poseidon时可读可写 |
+| r1-r3 |  通用、传参、storage/poseidon传参及返回值  |<br>1）通用局部变量、表达式结果 <br>2）普通函数调用传递第1/2/3个参数<br> 3）sstore/sload的value第2/3/4个参数 <br>4）poseidon第2/3/4参数、第2/3/4返回值|编译器可读可写、vm可读当包含sload/poseidon时可读可写|
+| r4-r7 |  通用、 storage/poseidon传参         |<br>1）通用局部变量、表达式结果 <br>2）sstore/sload的key第1/2/3/4个参数 <br>3）poseidon的第5/6/7/8个参数|编译器可读可写、vm可读|
+| r8    |  栈指针              |编译器函数栈指针|编译器可读可写、vm可读|
+| pc    |  当前执行指令地址  |VM标识当前执行指令地址|编译器不可见、vm可读可写|
+| psp    |  当前prophet区地址  |VM标识当前prophet内存空间地址|编译器可读、vm可读可写|
+
+
+sstore指令
+
+ir接口  `set_storage(i64 %key1, %key2, %key3, %key4, %val1, %val2, %val3, %val4)`
+
+汇编接口：
+1） 保存r0-r7通用寄存器到栈，如`mstore [r8,stOffBase],r0`  ... `mstore [r8,stOffBase+7],r7`
+2) 占用r0-r7寄存器分配参数即key及value，如`mov r4 %key1` ... `mov r7 %key4`  `mov r0 %val1` ... `mov r3 %val4`
+3) 调用sstore指令
+4）恢复r0-r7寄存器，如`mload r0,[r8,stOffBase]`  ... `mload r7,[r8,stOffBase+7]`
+
+sload指令
+
+ir接口  `get_storage(i64 %key1, i64 %key2, i64 %key3, i64 %key4, ptr %val1, ptr %val2, ptr %val3, ptr %val4)`
+
+汇编接口：
+1） 保存r0-r7通用寄存器到栈，如`mstore [r8,slOffBase],r0`  ... `mstore [r8,slOffBase+7],r7`
+2) 占用r4-r7寄存器分配参数即key及value，如`mov r4 %key1` ... `mov r7 %key4`
+3) 调用sstore指令
+4) 接收返回值，保存到栈，如`mstore [r8,slRetOffBase],r0`  ... `mstore [r8,slRetOffBase+3],r3`
+5）恢复r0-r7寄存器，如`mload r0,[r8,slOffBase]`  ... `mload r7,[r8,slOffBase+7]`
+
+
+poseidon builtin
+
+ir接口  `poseidon_hash(i64 %param1, i64 %%param2, i64 %%param3, i64 %%param4, i64 %%param5,i64 %%param5,i64 %%param7,i64 %%param8, ptr %val1, ptr %val2, ptr %val3, ptr %val4)`
+
+汇编接口：
+1） 保存r0-r7通用寄存器到栈，如`mstore [r8,psOffBase],r0`  ... `mstore [r8,psOffBase+7],r7`
+2) 占用r0-r7寄存器分配参数，如`mov r0 %param1` ... `mov r7 %param7`
+3) 调用poseidon指令
+4) 接收返回值，保存到栈，如`mstore [r8,psRetOffBase],r0`  ... `mstore [r8,psRetOffBase+3],r3`
+5）恢复r0-r7寄存器，如`mload r0,[r8,psOffBase]`  ... `mload r7,[r8,psOffBase+7]`
 
 ## 内存布局
 指令地址与内存空间共享统一空间。

@@ -61,7 +61,7 @@ pub fn parse_constant_int(
     let val = match ty {
         I1 => ConstantInt::Int1(num == "true"),
         I8 => ConstantInt::Int8(num.parse::<i8>().unwrap()),
-        I32 => ConstantInt::Int32(num.parse::<i32>().unwrap()),
+        I32 => ConstantInt::Int64(num.parse::<i64>().unwrap()),
         I64 => ConstantInt::Int64(num.parse::<i64>().unwrap()),
         _ => todo!(),
     };

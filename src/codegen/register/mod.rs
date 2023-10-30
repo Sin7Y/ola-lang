@@ -39,6 +39,7 @@ pub struct VRegUser<Data: TargetInst> {
 
 pub trait RegisterInfo {
     fn arg_reg_list(cc: &CallConvKind) -> &'static [RegUnit];
+    fn str_arg_reg_list(cc: &CallConvKind) -> &'static [RegUnit];
     fn to_reg_unit(reg: Reg) -> RegUnit;
     fn is_csr(r: RegUnit) -> bool;
 }

@@ -26,7 +26,10 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 .iter()
                 .any(|op| matches!(op.data, OperandData::Slot(_)))
             {
-                println!("slot worklist {:?}", inst.data.opcode);
+                println!(
+                    "eliminate slot pass: slot worklist opcode {:?}",
+                    inst.data.opcode
+                );
                 worklist.push(inst_id);
             }
             if inst.data.is_call() {
@@ -51,13 +54,16 @@ pub fn run_on_function(function: &mut Function<Ola>) {
         if inst.data.opcode == Opcode::ADDri
             && matches!(&inst.data.operands[len - 1].data, &OperandData::Slot(_))
         {
-            println!("add slot {:?}", inst.data.operands[len - 1].data);
+            println!("add slot data {:?}", inst.data.operands[len - 1].data);
             match &inst.data.operands[len - 1].data {
                 OperandData::Slot(slot) => {
                     let off = function.slots.get(*slot).offset;
                     let mut size = off as i32 / 4;
                     if call {
                         size = -size - 2;
+                    }
+                    if size > 0 {
+                        size = -size;
                     }
                     inst.data.operands[len - 1].data = OperandData::Int32(size);
                     function.data.instructions[inst_id] = inst;
@@ -88,13 +94,16 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                         size -= 2;
                     }
                     println!(
-                        "slot pattern 1 len: {:?}, off: {:?}, size: {:?}",
+                        "slot pattern 1 with slot, len: {:?}, off: {:?}, size: {:?}",
                         function.slots.arena.len() as i32,
                         off,
                         size
                     );
+                    if size > 0 {
+                        size = -size;
+                    }
                     mem[2].data = OperandData::Int32(size);
-                    mem[3].data = OperandData::Reg(GR::R8.into());
+                    mem[3].data = OperandData::Reg(GR::R9.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int32(imm)) => {
                     let off = function.slots.get(*slot).offset;
@@ -104,30 +113,65 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                         size -= 2;
                     }
                     println!(
-                        "slot pattern 2 len: {:?}, off: {:?}, size: {:?}, imm {:?}",
+                        "slot pattern 2 with slot+imm32, len: {:?}, off: {:?}, size: {:?}, imm {:?}",
                         function.slots.arena.len() as i32,
                         off,
                         size,
                         *imm
                     );
+                    if size > 0 {
+                        size = -size;
+                    }
                     mem[2].data = OperandData::Int32(size);
                     mem[1].data = OperandData::None;
-                    mem[3].data = OperandData::Reg(GR::R8.into());
+                    mem[3].data = OperandData::Reg(GR::R9.into());
                 }
                 (OperandData::Slot(slot), OperandData::Int64(imm)) => {
                     let off = function.slots.get(*slot).offset;
-                    let size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 + 1;
+                    // let mut size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 +
+                    // 1;
+                    let mut size = (*imm - off as i64) / 4;
+                    if call {
+                        size -= 2;
+                    }
                     println!(
-                        "slot pattern 3 len: {:?}, off: {:?}, size: {:?}",
+                        "slot pattern 3 with slot+imm64, len: {:?}, off: {:?}, size: {:?}, imm : {:?}",
                         function.slots.arena.len() as i32,
                         off,
-                        size
+                        size,
+                        *imm
                     );
+                    if size > 0 {
+                        size = -size;
+                    }
                     mem[2].data = OperandData::Int64(size);
                     mem[1].data = OperandData::None;
-                    mem[3].data = OperandData::Reg(GR::R8.into());
+                    mem[3].data = OperandData::Reg(GR::R9.into());
                 }
-                _ => todo!(),
+                (OperandData::Slot(_slot), OperandData::Reg(reg)) => {
+                    // let off = function.slots.get(*slot).offset;
+                    // let mut size = function.slots.arena.len() as i64 + (*imm - off as i64) / 4 +
+                    // 1;
+                    /*let mut size = (*imm - off as i64) / 4;
+                    if call {
+                        size -= 2;
+                    }
+                    println!(
+                        "slot pattern 3 len: {:?}, off: {:?}, size: {:?}, imm : {:?}",
+                        function.slots.arena.len() as i32,
+                        off,
+                        size,
+                        *imm
+                    );
+                    if size > 0 {
+                        size = -size;
+                    }*/
+                    mem[2].data = OperandData::Reg(*reg);
+                    mem[1].data = OperandData::None;
+                    mem[3].data = OperandData::Reg(GR::R9.into());
+                    println!("slot pattern 4 with slot+reg");
+                }
+                e => todo!("{:?}", e),
             }
 
             i += 6;

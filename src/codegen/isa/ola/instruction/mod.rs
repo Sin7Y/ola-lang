@@ -26,6 +26,9 @@ pub enum Opcode {
     MULri,
     MULrr,
 
+    ANDri,
+    ANDrr,
+
     EQri,
     EQrr,
     ASSERTri,
@@ -33,14 +36,20 @@ pub enum Opcode {
 
     MOVri,
     MOVrr,
+    MOV,
 
     JMPi,
     JMPr,
     CJMPi,
     CJMPr,
     CALL,
+    SCCALL,
     RET,
     END,
+
+    SLOAD,
+    SSTORE,
+    POSEIDON,
 
     MLOADi,
     MLOADr,
@@ -57,8 +66,12 @@ pub enum Opcode {
 
     PROPHET,
 
-    // TODO
     Phi,
+
+    TLOADri,
+    TLOADrr,
+    TSTOREi,
+    TSTOREr,
 }
 
 #[derive(Clone)]
@@ -345,7 +358,7 @@ impl OperandData {
     pub fn as_reg(&self) -> &Reg {
         match self {
             Self::Reg(r) => r,
-            _ => todo!(),
+            e => todo!("{:?}", e),
         }
     }
 
