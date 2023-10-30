@@ -675,9 +675,16 @@ pub fn expression<'a>(
         } => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_value, var_table, ns).into_pointer_value();
-            unsafe { bin.builder
-                .build_gep(struct_ty, struct_ptr, &[bin.context.i64_type().const_int(*field_no as u64, false)], "struct_member")
-                .into() }
+            unsafe {
+                bin.builder
+                    .build_gep(
+                        struct_ty,
+                        struct_ptr,
+                        &[bin.context.i64_type().const_int(*field_no as u64, false)],
+                        "struct_member",
+                    )
+                    .into()
+            }
         }
         Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_value, var_table, ns).into_pointer_value();
@@ -918,10 +925,7 @@ pub fn expression<'a>(
             let hash_input = expression(&args[0], bin, func_value, var_table, ns);
             let hash_input_length = bin.vector_len(hash_input);
             let hash_input_data = bin.vector_data(hash_input);
-            bin.poseidon_hash(
-                func_value,
-                vec![(hash_input_data.into(), hash_input_length)],
-            )
+            bin.poseidon_hash(vec![(hash_input_data.into(), hash_input_length)])
         }
 
         Expression::LibFunction {
@@ -1109,7 +1113,7 @@ pub fn array_subscript<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     if array_ty.is_mapping() {
-        return mapping_subscript(array, index, index_ty, bin, func_value);
+        return mapping_subscript(array, index, index_ty, bin);
     }
     let (array_length, fixed) = match array_ty.deref_any() {
         Type::Array(..) | Type::String | Type::DynamicBytes => match array_ty.array_length() {
@@ -1164,7 +1168,7 @@ pub fn array_subscript<'a>(
                 .build_int_add(offset, array.into_int_value(), "index_slot")
                 .into()
         } else {
-            array_offset(bin, array, index, elem_ty, func_value, ns)
+            array_offset(bin, array, index, elem_ty, ns)
         }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
@@ -1257,14 +1261,7 @@ pub fn array_slice<'a>(
     } else {
         array.into_pointer_value()
     };
-    bin.mempcy(
-        func_value,
-        src_data,
-        start,
-        dest_array,
-        bin.context.i64_type().const_zero(),
-        end_sub_start,
-    );
+    bin.mempcy(src_data, dest_array, end_sub_start);
     new_array.as_basic_value_enum()
 }
 
@@ -1273,7 +1270,6 @@ pub fn mapping_subscript<'a>(
     index: BasicValueEnum<'a>,
     index_ty: &Type,
     bin: &Binary<'a>,
-    func_value: FunctionValue<'a>,
 ) -> BasicValueEnum<'a> {
     let mut inputs = Vec::with_capacity(2);
     let slot_value = match array.get_type() {
@@ -1281,7 +1277,6 @@ pub fn mapping_subscript<'a>(
         _ => array,
     };
     inputs.push((slot_value, bin.context.i64_type().const_int(4, false)));
-
     match index_ty {
         Type::Uint(32) | Type::Field | Type::Bool | Type::Hash | Type::Address => {
             let index_value = match index.get_type() {
@@ -1296,7 +1291,7 @@ pub fn mapping_subscript<'a>(
         _ => unreachable!(),
     }
 
-    bin.poseidon_hash(func_value, inputs)
+    bin.poseidon_hash(inputs)
 }
 
 pub fn assign_single<'a>(

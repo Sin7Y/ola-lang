@@ -518,29 +518,28 @@ impl<'a> Binary<'a> {
 
     pub(crate) fn poseidon_hash(
         &self,
-        function: FunctionValue<'a>,
         hash_src: Vec<(BasicValueEnum<'a>, IntValue<'a>)>,
     ) -> BasicValueEnum<'a> {
         let (heap_src_ptr, src_len) = if hash_src.len() > 1 {
             let mut src_len = self.context.i64_type().const_zero();
 
             for (_, len) in hash_src.iter() {
-                src_len = self.builder.build_int_add(src_len, *len, "");
+                src_len = self.build_int_add(src_len, *len, "");
             }
-            let (_, heap_src_ptr) = self.heap_malloc(src_len);
-
-            let mut offset = self.context.i64_type().const_zero();
-            for (v, len) in hash_src.iter() {
-                self.mempcy(
-                    function,
-                    v.into_pointer_value(),
-                    self.context.i64_type().const_zero(),
-                    heap_src_ptr,
-                    offset,
-                    *len,
+            let (heap_src_int, heap_src_ptr) = self.heap_malloc(src_len);
+            let mut dest_offset = heap_src_int;
+            let hash_src_len = hash_src.len();
+            for (i, (v, len)) in hash_src.iter().enumerate() {
+                let dest_ptr = self.builder.build_int_to_ptr(
+                    dest_offset,
+                    self.context.i64_type().ptr_type(AddressSpace::default()),
+                    "",
                 );
-
-                offset = self.builder.build_int_add(offset, *len, "");
+                self.mempcy(v.into_pointer_value(), dest_ptr, *len);
+                // Check if this is the last iteration of the loop
+                if i < hash_src_len - 1 {
+                    dest_offset = self.build_int_add(dest_offset, *len, "next_dest_offset");
+                }
             }
             (heap_src_ptr, src_len)
         } else {
@@ -810,79 +809,11 @@ impl<'a> Binary<'a> {
         }
     }
 
-    pub fn mempcy(
-        &self,
-        function: FunctionValue<'a>,
-        src: PointerValue<'a>,
-        src_start_index: IntValue<'a>,
-        dest: PointerValue<'a>,
-        dest_start_index: IntValue<'a>,
-        len: IntValue<'a>,
-    ) {
-        let cond = self.context.append_basic_block(function, "cond");
-        let body = self.context.append_basic_block(function, "body");
-        let done = self.context.append_basic_block(function, "done");
-
-        let loop_ty = self.context.i64_type();
-        // create an alloca for the loop variable
-        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
-        // initialize the loop variable with the starting value
-        self.builder.build_store(index_alloca, loop_ty.const_zero());
-
-        self.builder.build_unconditional_branch(cond);
-        self.builder.position_at_end(cond);
-
-        // load current value of the loop variable
-        let index_value = self
-            .builder
-            .build_load(loop_ty, index_alloca, "index_value")
-            .into_int_value();
-
-        let comp = self
-            .builder
-            .build_int_compare(IntPredicate::ULT, index_value, len, "loop_cond");
-        self.builder.build_conditional_branch(comp, body, done);
-
-        // memory copy start
-        self.builder.position_at_end(body);
-
-        let src_access = unsafe {
-            self.builder.build_gep(
-                self.context.i64_type(),
-                src,
-                &[self.builder.build_int_add(index_value, src_start_index, "")],
-                "src_index_access",
-            )
-        };
-
-        let src_value = self
-            .builder
-            .build_load(self.context.i64_type(), src_access, "");
-
-        let dest_access = unsafe {
-            self.builder.build_gep(
-                self.context.i64_type(),
-                dest,
-                &[self
-                    .builder
-                    .build_int_add(index_value, dest_start_index, "")],
-                "dest_index_access",
-            )
-        };
-
-        self.builder.build_store(dest_access, src_value);
-
-        // memory copy end
-        let next_index =
-            self.builder
-                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
-
-        // store the incremented value back
-        self.builder.build_store(index_alloca, next_index);
-
-        self.builder.build_unconditional_branch(cond);
-
-        self.builder.position_at_end(done);
+    pub fn mempcy(&self, src: PointerValue<'a>, dest: PointerValue<'a>, len: IntValue<'a>) {
+        // call memory call function
+        let mempcy_function = self.module.get_function("mempcy").unwrap();
+        self.builder
+            .build_call(mempcy_function, &[src.into(), dest.into(), len.into()], "");
     }
 
     pub fn convert_uint_storage(&self, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {

@@ -1,7 +1,7 @@
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
-use inkwell::AddressSpace;
+use inkwell::{AddressSpace, IntPredicate};
 use once_cell::sync::Lazy;
 
 static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
@@ -22,7 +22,8 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
     ]
 });
 
-static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
+static BUILTIN_FUNCTIONS: Lazy<[&str; 3]> =
+    Lazy::new(|| ["builtin_assert", "builtin_range_check", "mempcy"]);
 
 // // These functions will be called implicitly by corelib
 // // May later become corelib functions open to the user as well
@@ -87,7 +88,7 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                     .position_at_end(bin.context.append_basic_block(func, "entry"));
                 let left_value = func.get_nth_param(0).unwrap().into();
                 let right_value = func.get_nth_param(1).unwrap().into();
-                let new_fields = fields_concat(left_value, right_value, func, bin);
+                let new_fields = fields_concat(left_value, right_value, bin);
                 bin.builder.build_return(Some(&new_fields));
             }
             _ => {}
@@ -219,6 +220,17 @@ pub fn declare_builtins(bin: &mut Binary) {
             let ftype = void_type.fn_type(&[i64_type.into()], false);
             bin.module.add_function("builtin_range_check", ftype, None);
         }
+        "mempcy" => {
+            let void_type = bin.context.void_type();
+            let i64_type = bin.context.i64_type();
+            let ptr_type = i64_type.ptr_type(AddressSpace::default());
+            let ftype =
+                void_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
+            let func = bin.module.add_function("mempcy", ftype, None);
+            bin.builder
+                .position_at_end(bin.context.append_basic_block(func, "entry"));
+            create_memcpy_function(bin, func);
+        }
         _ => {}
     });
 }
@@ -226,7 +238,6 @@ pub fn declare_builtins(bin: &mut Binary) {
 fn fields_concat<'a>(
     left: BasicValueEnum<'a>,
     right: BasicValueEnum<'a>,
-    function: FunctionValue<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
     let left_len = bin.vector_len(left);
@@ -234,25 +245,118 @@ fn fields_concat<'a>(
     let right_len = bin.vector_len(right);
     let right_data = bin.vector_data(right);
     let new_len = bin.build_int_add(left_len, right_len, "new_len");
-    let new_fields = bin.vector_new(new_len);
+    let dest_fields = bin.vector_new(new_len);
 
-    let new_fields_data = bin.vector_data(new_fields.as_basic_value_enum());
+    let new_fields_data = bin.vector_data(dest_fields.as_basic_value_enum());
 
-    bin.mempcy(
-        function,
-        left_data,
-        bin.context.i64_type().const_zero(),
-        new_fields_data,
-        bin.context.i64_type().const_zero(),
-        left_len,
+    bin.mempcy(left_data, dest_fields, left_len);
+    let dest_fields_int = bin
+        .builder
+        .build_ptr_to_int(new_fields_data, bin.context.i64_type(), "");
+    let new_dest_fields = bin.builder.build_int_add(dest_fields_int, left_len, "");
+    let dest_fields = bin.builder.build_int_to_ptr(
+        new_dest_fields,
+        bin.context.i64_type().ptr_type(AddressSpace::default()),
+        "",
     );
-    bin.mempcy(
-        function,
-        right_data,
-        bin.context.i64_type().const_zero(),
-        new_fields_data,
-        left_len,
-        right_len,
-    );
-    new_fields.as_basic_value_enum()
+
+    bin.mempcy(right_data, dest_fields, right_len);
+    dest_fields.as_basic_value_enum()
+}
+
+pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    let src_ptr = function.get_nth_param(0).unwrap();
+    let src_ptr_alloca = bin.build_alloca(function, src_ptr.get_type(), "src_ptr_alloca");
+    bin.builder.build_store(src_ptr_alloca, src_ptr);
+    let src_ptr = bin
+        .builder
+        .build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            src_ptr_alloca,
+            "src_ptr",
+        )
+        .into_pointer_value();
+
+    let dest_ptr = function.get_nth_param(1).unwrap();
+
+    let dest_ptr_alloca = bin.build_alloca(function, dest_ptr.get_type(), "dest_ptr_alloca");
+    bin.builder.build_store(dest_ptr_alloca, dest_ptr);
+    let dest_ptr = bin
+        .builder
+        .build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            dest_ptr_alloca,
+            "dest_ptr",
+        )
+        .into_pointer_value();
+
+    let len = function.get_nth_param(2).unwrap();
+    let len_alloca = bin.build_alloca(function, len.get_type(), "len_alloca");
+    bin.builder.build_store(len_alloca, len);
+    let len = bin
+        .builder
+        .build_load(bin.context.i64_type(), len_alloca, "len")
+        .into_int_value();
+
+    let cond = bin.context.append_basic_block(function, "cond");
+    let body = bin.context.append_basic_block(function, "body");
+    let done = bin.context.append_basic_block(function, "done");
+
+    let loop_ty = bin.context.i64_type();
+    // create an alloca for the loop variable
+    let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
+    // initialize the loop variable with the starting value
+    bin.builder.build_store(index_alloca, loop_ty.const_zero());
+
+    bin.builder.build_unconditional_branch(cond);
+    bin.builder.position_at_end(cond);
+
+    // load current value of the loop variable
+    let index_value = bin
+        .builder
+        .build_load(loop_ty, index_alloca, "index_value")
+        .into_int_value();
+
+    let comp = bin
+        .builder
+        .build_int_compare(IntPredicate::ULT, index_value, len, "loop_cond");
+    bin.builder.build_conditional_branch(comp, body, done);
+
+    // memory copy start
+    bin.builder.position_at_end(body);
+
+    let src_access = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            src_ptr,
+            &[index_value],
+            "src_index_access",
+        )
+    };
+
+    let src_value = bin
+        .builder
+        .build_load(bin.context.i64_type(), src_access, "");
+
+    let dest_access = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            dest_ptr,
+            &[index_value],
+            "dest_index_access",
+        )
+    };
+
+    bin.builder.build_store(dest_access, src_value);
+
+    // memory copy end
+    let next_index = bin.build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+
+    // store the incremented value back
+    bin.builder.build_store(index_alloca, next_index);
+
+    bin.builder.build_unconditional_branch(cond);
+
+    bin.builder.position_at_end(done);
+    bin.builder.build_return(None);
 }
