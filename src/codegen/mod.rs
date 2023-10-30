@@ -1803,193 +1803,603 @@ entry:
     fn codegen_struct_params_test() {
         // LLVM Assembly
         let asm = r#"
-define void @function_dispatch(i64 %0, ptr %2) {
+; ModuleID = 'MultInputExample'
+source_filename = "examples/source/contract_input/struct_input.ola"
+
+@heap_address = internal global i64 -4294967353
+
+declare void @builtin_assert(i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+declare void @get_context_data(i64, i64)
+
+declare void @get_tape_data(i64, i64)
+
+declare void @set_tape_data(i64, i64)
+
+declare void @get_storage(ptr, ptr)
+
+declare void @set_storage(ptr, ptr)
+
+declare void @poseidon_hash(ptr, ptr, i64)
+
+declare void @contract_call(ptr, i64)
+
+declare void @prophet_printf(i64, i64)
+
+define void @foo(ptr %0) {
 entry:
-  %struct_alloca = alloca { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, align 8
-  %offset_ptr55 = alloca i64, align 8
-  %index_ptr54 = alloca i64, align 8
-  %offset_ptr34 = alloca i64, align 8
-  %index_ptr33 = alloca i64, align 8
-  %offset_ptr = alloca i64, align 8
-  %index_ptr = alloca i64, align 8
+  %t = alloca ptr, align 8
+  store ptr %0, ptr %t, align 8
+  %1 = load ptr, ptr %t, align 8
+  %struct_member = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 0
+  %2 = load ptr, ptr %struct_member, align 8
+  %address_start = ptrtoint ptr %2 to i64
+  call void @prophet_printf(i64 %address_start, i64 2)
+  %struct_member1 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 1
+  %3 = load i64, ptr %struct_member1, align 4
+  call void @prophet_printf(i64 %3, i64 3)
+  %struct_member2 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 2
+  %4 = load i64, ptr %struct_member2, align 4
+  call void @prophet_printf(i64 %4, i64 3)
+  %struct_member3 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 3
+  %5 = load i64, ptr %struct_member3, align 4
+  call void @prophet_printf(i64 %5, i64 3)
+  %struct_member4 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 4
+  %6 = load ptr, ptr %struct_member4, align 8
+  %fields_start = ptrtoint ptr %6 to i64
+  call void @prophet_printf(i64 %fields_start, i64 1)
+  %struct_member5 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 5
+  %7 = load ptr, ptr %struct_member5, align 8
+  %fields_start6 = ptrtoint ptr %7 to i64
+  call void @prophet_printf(i64 %fields_start6, i64 1)
+  %struct_member7 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 6
+  %8 = load ptr, ptr %struct_member7, align 8
+  %fields_start8 = ptrtoint ptr %8 to i64
+  call void @prophet_printf(i64 %fields_start8, i64 1)
+  %struct_member9 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i64 7
+  %9 = load ptr, ptr %struct_member9, align 8
+  %hash_start = ptrtoint ptr %9 to i64
+  call void @prophet_printf(i64 %hash_start, i64 2)
+  ret void
+}
+
+define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+entry:
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 3469705383, label %inbounds
+    i64 3469705383, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
-inbounds:                                         ; preds = %func_0_dispatch
+func_0_dispatch:                                  ; preds = %entry
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %struct_offset = add i64 %input_start, 4
+  %4 = inttoptr i64 %struct_offset to ptr
+  %decode_value = load i64, ptr %4, align 4
+  %struct_offset1 = add i64 %struct_offset, 1
+  %5 = inttoptr i64 %struct_offset1 to ptr
+  %decode_value2 = load i64, ptr %5, align 4
+  %struct_offset3 = add i64 %struct_offset1, 1
+  %6 = inttoptr i64 %struct_offset3 to ptr
+  %decode_value4 = load i64, ptr %6, align 4
+  %struct_offset5 = add i64 %struct_offset3, 1
+  %7 = inttoptr i64 %struct_offset5 to ptr
+  %length = load i64, ptr %7, align 4
+  %8 = add i64 %length, 1
+  %struct_offset6 = add i64 %struct_offset5, %8
+  %9 = inttoptr i64 %struct_offset6 to ptr
+  %length7 = load i64, ptr %9, align 4
+  %10 = add i64 %length7, 1
+  %struct_offset8 = add i64 %struct_offset6, %10
+  %11 = inttoptr i64 %struct_offset8 to ptr
+  %length9 = load i64, ptr %11, align 4
+  %12 = add i64 %length9, 1
+  %struct_offset10 = add i64 %struct_offset8, %12
+  %13 = inttoptr i64 %struct_offset10 to ptr
+  %struct_offset11 = add i64 %struct_offset10, 4
+  %struct_decode_size = sub i64 %struct_offset11, %input_start
+  %14 = call i64 @vector_new(i64 14)
+  %heap_start = sub i64 %14, 14
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %struct_member = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 0
+  store ptr %3, ptr %struct_member, align 8
+  %struct_member12 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 1
+  store i64 %decode_value, ptr %struct_member12, align 4
+  %struct_member13 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 2
+  store i64 %decode_value2, ptr %struct_member13, align 4
+  %struct_member14 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 3
+  store i64 %decode_value4, ptr %struct_member14, align 4
+  %struct_member15 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 4
+  store ptr %7, ptr %struct_member15, align 8
+  %struct_member16 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 5
+  store ptr %9, ptr %struct_member16, align 8
+  %struct_member17 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 6
+  store ptr %11, ptr %struct_member17, align 8
+  %struct_member18 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i64 7
+  store ptr %13, ptr %struct_member18, align 8
+  call void @foo(ptr %heap_to_ptr)
+  ret void
+}
+
+define void @main() {
+entry:
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  call void @get_tape_data(i64 %heap_start, i64 13)
+  %function_selector = load i64, ptr %heap_to_ptr, align 4
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  call void @get_tape_data(i64 %heap_start1, i64 14)
+  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %2 = add i64 %input_length, 14
+  %3 = call i64 @vector_new(i64 %2)
+  %heap_start3 = sub i64 %3, %2
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @get_tape_data(i64 %heap_start3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{:#?}", code.prophets);
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r9 r9 1
+  mov r7 10
+  mstore [r9,-1] r7
+  mload r7 [r9,-1]
+  add r5 r7 20
+  add r6 r7 30
+  mul r8 r5 r6
+  not r7 r6
+  add r7 r7 1
+  add r0 r8 r7
+  add r9 r9 -1
+  end
+"
+        );
+    }
+
+    #[test]
+    fn codegen_struct_params_s_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'MultInputExample'
+source_filename = "examples/source/contract_input/struct_input.ola"
+
+@heap_address = internal global i64 -4294967353
+
+declare void @builtin_assert(i64)
+
+declare void @builtin_range_check(i64)
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+declare void @get_context_data(i64, i64)
+
+declare void @get_tape_data(i64, i64)
+
+declare void @set_tape_data(i64, i64)
+
+declare void @get_storage(ptr, ptr)
+
+declare void @set_storage(ptr, ptr)
+
+declare void @poseidon_hash(ptr, ptr, i64)
+
+declare void @contract_call(ptr, i64)
+
+declare void @prophet_printf(i64, i64)
+
+define void @foo(ptr %0) {
+entry:
+  %t = alloca ptr, align 8
+  store ptr %0, ptr %t, align 8
+  %1 = load ptr, ptr %t, align 8
+  %string_start = ptrtoint ptr %1 to i64
+  call void @prophet_printf(i64 %string_start, i64 1)
+  ret void
+}
+
+define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
+  switch i64 %0, label %missing_function [
+    i64 1768495859, label %func_0_dispatch
+  ]
+
+missing_function:                                 ; preds = %entry
+  unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %length = load i64, ptr %3, align 4
+  %4 = add i64 %length, 1
+  call void @foo(ptr %3)
+  ret void
+}
+
+define void @main() {
+entry:
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  call void @get_tape_data(i64 %heap_start, i64 13)
+  %function_selector = load i64, ptr %heap_to_ptr, align 4
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  call void @get_tape_data(i64 %heap_start1, i64 14)
+  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %2 = add i64 %input_length, 14
+  %3 = call i64 @vector_new(i64 %2)
+  %heap_start3 = sub i64 %3, %2
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @get_tape_data(i64 %heap_start3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
+  ret void
+}
+"#;
+
+        // Parse the assembly and get a module
+        let module = Module::try_from(asm).expect("failed to parse LLVM IR");
+
+        // Compile the module for Ola and get a machine module
+        let isa = Ola::default();
+        let mach_module = compile_module(&isa, &module).expect("failed to compile");
+
+        // Display the machine module as assembly
+        let code: AsmProgram =
+            serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
+        println!("{:#?}", code.prophets);
+        println!("{}", code.program);
+        assert_eq!(
+            format!("{}", code.program),
+            "main:
+.LBL0_0:
+  add r9 r9 1
+  mov r7 10
+  mstore [r9,-1] r7
+  mload r7 [r9,-1]
+  add r5 r7 20
+  add r6 r7 30
+  mul r8 r5 r6
+  not r7 r6
+  add r7 r7 1
+  add r0 r8 r7
+  add r9 r9 -1
+  end
+"
+        );
+    }
+
+    #[test]
+    fn codegen_map_test() {
+        // LLVM Assembly
+        let asm = r#"
+; ModuleID = 'NonceHolder'
+source_filename = "examples/source/types/mapping_1.ola"
+
+@heap_address = internal global i64 -4294967353
+
+declare void @builtin_assert(i64)
+
+declare void @builtin_range_check(i64)
+
+define void @mempcy(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %dest_ptr_alloca = alloca ptr, align 8
+  %src_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %src_ptr_alloca, align 8
+  %src_ptr = load ptr, ptr %src_ptr_alloca, align 8
+  store ptr %1, ptr %dest_ptr_alloca, align 8
+  %dest_ptr = load ptr, ptr %dest_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %len
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %src_index_access = getelementptr i64, ptr %src_ptr, i64 %index_value
+  %3 = load i64, ptr %src_index_access, align 4
+  %dest_index_access = getelementptr i64, ptr %dest_ptr, i64 %index_value
+  store i64 %3, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  ret void
+}
+
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+declare void @get_context_data(i64, i64)
+
+declare void @get_tape_data(i64, i64)
+
+declare void @set_tape_data(i64, i64)
+
+declare void @get_storage(ptr, ptr)
+
+declare void @set_storage(ptr, ptr)
+
+declare void @poseidon_hash(ptr, ptr, i64)
+
+declare void @contract_call(ptr, i64)
+
+declare void @prophet_printf(i64, i64)
+
+define void @setNonce(ptr %0, i64 %1) {
+entry:
+  %_nonce = alloca i64, align 8
+  %_address = alloca ptr, align 8
+  store ptr %0, ptr %_address, align 8
+  store i64 %1, ptr %_nonce, align 4
+  %2 = load ptr, ptr %_address, align 8
   %3 = call i64 @vector_new(i64 4)
   %heap_start = sub i64 %3, 4
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %decode_value_ptr = getelementptr i64, ptr %input, i64 0
-  %decode_value = load i64, ptr %decode_value_ptr, align 4
-  %element = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %decode_value, ptr %element, align 4
-  %decode_value_ptr1 = getelementptr i64, ptr %input, i64 1
-  %decode_value2 = load i64, ptr %decode_value_ptr1, align 4
-  %element3 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %decode_value2, ptr %element3, align 4
-  %decode_value_ptr4 = getelementptr i64, ptr %input, i64 2
-  %decode_value5 = load i64, ptr %decode_value_ptr4, align 4
-  %element6 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %decode_value5, ptr %element6, align 4
-  %decode_value_ptr7 = getelementptr i64, ptr %input, i64 3
-  %decode_value8 = load i64, ptr %decode_value_ptr7, align 4
-  %element9 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 %decode_value8, ptr %element9, align 4
-  %decode_value_ptr10 = getelementptr i64, ptr %input, i64 4
-  %decode_value11 = load i64, ptr %decode_value_ptr10, align 4
-  %decode_value_ptr12 = getelementptr i64, ptr %input, i64 5
-  %decode_value13 = load i64, ptr %decode_value_ptr12, align 4
-  %decode_value_ptr14 = getelementptr i64, ptr %input, i64 6
-  %decode_value15 = load i64, ptr %decode_value_ptr14, align 4
-  %decode_value_ptr16 = getelementptr i64, ptr %input, i64 7
-  %decode_value17 = load i64, ptr %decode_value_ptr16, align 4
-  %decode_total_size = add i64 %decode_value17, 1
-  %size = mul i64 %decode_value17, 1
-  %length_and_data = add i64 %size, 1
-  %4 = call i64 @vector_new(i64 %length_and_data)
-  %heap_start18 = sub i64 %4, %length_and_data
-  %heap_to_ptr19 = inttoptr i64 %heap_start18 to ptr
-  store i64 %size, ptr %heap_to_ptr19, align 4
-  %5 = ptrtoint ptr %heap_to_ptr19 to i64
-  %6 = add i64 %5, 1
-  %vector_data = inttoptr i64 %6 to ptr
-  store i64 0, ptr %index_ptr, align 4
-  store i64 8, ptr %offset_ptr, align 4
-  br label %loop_body
-
-loop_body:                                        ; preds = %loop_body, %inbounds
-  %index = load i64, ptr %index_ptr, align 4
-  %element20 = getelementptr i64, ptr %vector_data, i64 %index
-  %offset = load i64, ptr %offset_ptr, align 4
-  %decode_value_ptr21 = getelementptr i64, ptr %input, i64 %offset
-  %decode_value22 = load i64, ptr %decode_value_ptr21, align 4
-  %next_offset = add i64 %offset, 1
-  store i64 %next_offset, ptr %offset_ptr, align 4
-  store i64 %decode_value22, ptr %element20, align 4
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %decode_value17
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-loop_end:                                         ; preds = %loop_body
-  %7 = add i64 %decode_total_size, 7
-  %8 = add i64 %decode_total_size, 7
-  %decode_value_ptr23 = getelementptr i64, ptr %input, i64 %8
-  %decode_value24 = load i64, ptr %decode_value_ptr23, align 4
-  %decode_total_size25 = add i64 %decode_value24, 1
-  %decode_array_start = add i64 %8, 1
-  %size26 = mul i64 %decode_value24, 1
-  %length_and_data27 = add i64 %size26, 1
-  %9 = call i64 @vector_new(i64 %length_and_data27)
-  %heap_start28 = sub i64 %9, %length_and_data27
-  %heap_to_ptr29 = inttoptr i64 %heap_start28 to ptr
-  store i64 %size26, ptr %heap_to_ptr29, align 4
-  %10 = ptrtoint ptr %heap_to_ptr29 to i64
-  %11 = add i64 %10, 1
-  %vector_data30 = inttoptr i64 %11 to ptr
-  store i64 0, ptr %index_ptr33, align 4
-  store i64 %decode_array_start, ptr %offset_ptr34, align 4
-  br label %loop_body31
-
-loop_body31:                                      ; preds = %loop_body31, %loop_end
-  %index35 = load i64, ptr %index_ptr33, align 4
-  %element36 = getelementptr i64, ptr %vector_data30, i64 %index35
-  %offset37 = load i64, ptr %offset_ptr34, align 4
-  %decode_value_ptr38 = getelementptr i64, ptr %input, i64 %offset37
-  %decode_value39 = load i64, ptr %decode_value_ptr38, align 4
-  %next_offset40 = add i64 %offset37, 1
-  store i64 %next_offset40, ptr %offset_ptr34, align 4
-  store i64 %decode_value39, ptr %element36, align 4
-  %next_index41 = add i64 %index35, 1
-  store i64 %next_index41, ptr %index_ptr33, align 4
-  %index_cond42 = icmp ult i64 %next_index41, %decode_value24
-  br i1 %index_cond42, label %loop_body31, label %loop_end32
-
-loop_end32:                                       ; preds = %loop_body31
-  %12 = add i64 %decode_total_size25, %7
-  %13 = add i64 %decode_total_size25, %8
-  %decode_value_ptr43 = getelementptr i64, ptr %input, i64 %13
-  %decode_value44 = load i64, ptr %decode_value_ptr43, align 4
-  %decode_total_size45 = add i64 %decode_value44, 1
-  %decode_array_start46 = add i64 %13, 1
-  %size47 = mul i64 %decode_value44, 1
-  %length_and_data48 = add i64 %size47, 1
-  %14 = call i64 @vector_new(i64 %length_and_data48)
-  %heap_start49 = sub i64 %14, %length_and_data48
-  %heap_to_ptr50 = inttoptr i64 %heap_start49 to ptr
-  store i64 %size47, ptr %heap_to_ptr50, align 4
-  %15 = ptrtoint ptr %heap_to_ptr50 to i64
-  %16 = add i64 %15, 1
-  %vector_data51 = inttoptr i64 %16 to ptr
-  store i64 0, ptr %index_ptr54, align 4
-  store i64 %decode_array_start46, ptr %offset_ptr55, align 4
-  br label %loop_body52
-
-loop_body52:                                      ; preds = %loop_body52, %loop_end32
-  %index56 = load i64, ptr %index_ptr54, align 4
-  %element57 = getelementptr i64, ptr %vector_data51, i64 %index56
-  %offset58 = load i64, ptr %offset_ptr55, align 4
-  %decode_value_ptr59 = getelementptr i64, ptr %input, i64 %offset58
-  %decode_value60 = load i64, ptr %decode_value_ptr59, align 4
-  %next_offset61 = add i64 %offset58, 1
-  store i64 %next_offset61, ptr %offset_ptr55, align 4
-  store i64 %decode_value60, ptr %element57, align 4
-  %next_index62 = add i64 %index56, 1
-  store i64 %next_index62, ptr %index_ptr54, align 4
-  %index_cond63 = icmp ult i64 %next_index62, %decode_value44
-  br i1 %index_cond63, label %loop_body52, label %loop_end53
-
-loop_end53:                                       ; preds = %loop_body52
-  %17 = add i64 %decode_total_size45, %12
-  %18 = add i64 %decode_total_size45, %13
+  store i64 0, ptr %heap_to_ptr, align 4
+  %4 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 0, ptr %6, align 4
+  %7 = call i64 @vector_new(i64 8)
+  %heap_start1 = sub i64 %7, 8
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %8 = inttoptr i64 %heap_start1 to ptr
+  call void @mempcy(ptr %heap_to_ptr, ptr %8, i64 4)
+  %next_dest_offset = add i64 %heap_start1, 4
+  %9 = inttoptr i64 %next_dest_offset to ptr
+  call void @mempcy(ptr %2, ptr %9, i64 4)
+  %10 = call i64 @vector_new(i64 4)
+  %heap_start3 = sub i64 %10, 4
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr4, i64 8)
+  %11 = load i64, ptr %_nonce, align 4
+  %12 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %12, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  store i64 %11, ptr %heap_to_ptr6, align 4
+  %13 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  store i64 0, ptr %13, align 4
+  %14 = getelementptr i64, ptr %heap_to_ptr6, i64 2
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %heap_to_ptr6, i64 3
+  store i64 0, ptr %15, align 4
+  %16 = call i64 @vector_new(i64 8)
+  %heap_start7 = sub i64 %16, 8
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  %17 = inttoptr i64 %heap_start7 to ptr
+  call void @mempcy(ptr %heap_to_ptr4, ptr %17, i64 4)
+  %next_dest_offset9 = add i64 %heap_start7, 4
+  %18 = inttoptr i64 %next_dest_offset9 to ptr
+  call void @mempcy(ptr %heap_to_ptr6, ptr %18, i64 4)
   %19 = call i64 @vector_new(i64 4)
-  %heap_start64 = sub i64 %19, 4
-  %heap_to_ptr65 = inttoptr i64 %heap_start64 to ptr
-  %decode_value_ptr66 = getelementptr i64, ptr %input, i64 %18
-  %decode_value67 = load i64, ptr %decode_value_ptr66, align 4
-  %element68 = getelementptr i64, ptr %heap_to_ptr65, i64 0
-  store i64 %decode_value67, ptr %element68, align 4
-  %20 = add i64 %18, 1
-  %decode_value_ptr69 = getelementptr i64, ptr %input, i64 %20
-  %decode_value70 = load i64, ptr %decode_value_ptr69, align 4
-  %element71 = getelementptr i64, ptr %heap_to_ptr65, i64 1
-  store i64 %decode_value70, ptr %element71, align 4
-  %21 = add i64 %20, 1
-  %decode_value_ptr72 = getelementptr i64, ptr %input, i64 %21
-  %decode_value73 = load i64, ptr %decode_value_ptr72, align 4
-  %element74 = getelementptr i64, ptr %heap_to_ptr65, i64 2
-  store i64 %decode_value73, ptr %element74, align 4
-  %22 = add i64 %21, 1
-  %decode_value_ptr75 = getelementptr i64, ptr %input, i64 %22
-  %decode_value76 = load i64, ptr %decode_value_ptr75, align 4
-  %element77 = getelementptr i64, ptr %heap_to_ptr65, i64 3
-  store i64 %decode_value76, ptr %element77, align 4
-  %23 = add i64 %22, 1
-  %24 = add i64 4, %17
-  %"struct member" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 0
-  store ptr %heap_to_ptr, ptr %"struct member", align 8
-  %"struct member78" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 1
-  store i64 %decode_value11, ptr %"struct member78", align 4
-  %"struct member79" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 2
-  store i64 %decode_value13, ptr %"struct member79", align 4
-  %"struct member80" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 3
-  store i64 %decode_value15, ptr %"struct member80", align 4
-  %"struct member81" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 4
-  store ptr %heap_to_ptr19, ptr %"struct member81", align 8
-  %"struct member82" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 5
-  store ptr %heap_to_ptr29, ptr %"struct member82", align 8
-  %"struct member83" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 6
-  store ptr %heap_to_ptr50, ptr %"struct member83", align 8
-  %"struct member84" = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %struct_alloca, i32 0, i32 7
-  store ptr %heap_to_ptr65, ptr %"struct member84", align 8
-  ;call void @foo(ptr %struct_alloca)
+  %heap_start10 = sub i64 %19, 4
+  %heap_to_ptr11 = inttoptr i64 %heap_start10 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr8, ptr %heap_to_ptr11, i64 8)
+  %20 = call i64 @vector_new(i64 4)
+  %heap_start12 = sub i64 %20, 4
+  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
+  call void @get_storage(ptr %heap_to_ptr11, ptr %heap_to_ptr13)
+  %storage_value = load i64, ptr %heap_to_ptr13, align 4
+  %21 = icmp eq i64 %storage_value, 0
+  %22 = zext i1 %21 to i64
+  call void @builtin_assert(i64 %22)
+  %23 = load ptr, ptr %_address, align 8
+  %24 = call i64 @vector_new(i64 4)
+  %heap_start14 = sub i64 %24, 4
+  %heap_to_ptr15 = inttoptr i64 %heap_start14 to ptr
+  store i64 0, ptr %heap_to_ptr15, align 4
+  %25 = getelementptr i64, ptr %heap_to_ptr15, i64 1
+  store i64 0, ptr %25, align 4
+  %26 = getelementptr i64, ptr %heap_to_ptr15, i64 2
+  store i64 0, ptr %26, align 4
+  %27 = getelementptr i64, ptr %heap_to_ptr15, i64 3
+  store i64 0, ptr %27, align 4
+  %28 = call i64 @vector_new(i64 8)
+  %heap_start16 = sub i64 %28, 8
+  %heap_to_ptr17 = inttoptr i64 %heap_start16 to ptr
+  %29 = inttoptr i64 %heap_start16 to ptr
+  call void @mempcy(ptr %heap_to_ptr15, ptr %29, i64 4)
+  %next_dest_offset18 = add i64 %heap_start16, 4
+  %30 = inttoptr i64 %next_dest_offset18 to ptr
+  call void @mempcy(ptr %23, ptr %30, i64 4)
+  %31 = call i64 @vector_new(i64 4)
+  %heap_start19 = sub i64 %31, 4
+  %heap_to_ptr20 = inttoptr i64 %heap_start19 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr17, ptr %heap_to_ptr20, i64 8)
+  %32 = load i64, ptr %_nonce, align 4
+  %33 = call i64 @vector_new(i64 4)
+  %heap_start21 = sub i64 %33, 4
+  %heap_to_ptr22 = inttoptr i64 %heap_start21 to ptr
+  store i64 %32, ptr %heap_to_ptr22, align 4
+  %34 = getelementptr i64, ptr %heap_to_ptr22, i64 1
+  store i64 0, ptr %34, align 4
+  %35 = getelementptr i64, ptr %heap_to_ptr22, i64 2
+  store i64 0, ptr %35, align 4
+  %36 = getelementptr i64, ptr %heap_to_ptr22, i64 3
+  store i64 0, ptr %36, align 4
+  %37 = call i64 @vector_new(i64 8)
+  %heap_start23 = sub i64 %37, 8
+  %heap_to_ptr24 = inttoptr i64 %heap_start23 to ptr
+  %38 = inttoptr i64 %heap_start23 to ptr
+  call void @mempcy(ptr %heap_to_ptr20, ptr %38, i64 4)
+  %next_dest_offset25 = add i64 %heap_start23, 4
+  %39 = inttoptr i64 %next_dest_offset25 to ptr
+  call void @mempcy(ptr %heap_to_ptr22, ptr %39, i64 4)
+  %40 = call i64 @vector_new(i64 4)
+  %heap_start26 = sub i64 %40, 4
+  %heap_to_ptr27 = inttoptr i64 %heap_start26 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr24, ptr %heap_to_ptr27, i64 8)
+  %41 = call i64 @vector_new(i64 4)
+  %heap_start28 = sub i64 %41, 4
+  %heap_to_ptr29 = inttoptr i64 %heap_start28 to ptr
+  store i64 1, ptr %heap_to_ptr29, align 4
+  %42 = getelementptr i64, ptr %heap_to_ptr29, i64 1
+  store i64 0, ptr %42, align 4
+  %43 = getelementptr i64, ptr %heap_to_ptr29, i64 2
+  store i64 0, ptr %43, align 4
+  %44 = getelementptr i64, ptr %heap_to_ptr29, i64 3
+  store i64 0, ptr %44, align 4
+  call void @set_storage(ptr %heap_to_ptr27, ptr %heap_to_ptr29)
+  %45 = load ptr, ptr %_address, align 8
+  %46 = call i64 @vector_new(i64 4)
+  %heap_start30 = sub i64 %46, 4
+  %heap_to_ptr31 = inttoptr i64 %heap_start30 to ptr
+  store i64 0, ptr %heap_to_ptr31, align 4
+  %47 = getelementptr i64, ptr %heap_to_ptr31, i64 1
+  store i64 0, ptr %47, align 4
+  %48 = getelementptr i64, ptr %heap_to_ptr31, i64 2
+  store i64 0, ptr %48, align 4
+  %49 = getelementptr i64, ptr %heap_to_ptr31, i64 3
+  store i64 0, ptr %49, align 4
+  %50 = call i64 @vector_new(i64 8)
+  %heap_start32 = sub i64 %50, 8
+  %heap_to_ptr33 = inttoptr i64 %heap_start32 to ptr
+  %51 = inttoptr i64 %heap_start32 to ptr
+  call void @mempcy(ptr %heap_to_ptr31, ptr %51, i64 4)
+  %next_dest_offset34 = add i64 %heap_start32, 4
+  %52 = inttoptr i64 %next_dest_offset34 to ptr
+  call void @mempcy(ptr %45, ptr %52, i64 4)
+  %53 = call i64 @vector_new(i64 4)
+  %heap_start35 = sub i64 %53, 4
+  %heap_to_ptr36 = inttoptr i64 %heap_start35 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr33, ptr %heap_to_ptr36, i64 8)
+  %54 = load i64, ptr %_nonce, align 4
+  %55 = call i64 @vector_new(i64 4)
+  %heap_start37 = sub i64 %55, 4
+  %heap_to_ptr38 = inttoptr i64 %heap_start37 to ptr
+  store i64 %54, ptr %heap_to_ptr38, align 4
+  %56 = getelementptr i64, ptr %heap_to_ptr38, i64 1
+  store i64 0, ptr %56, align 4
+  %57 = getelementptr i64, ptr %heap_to_ptr38, i64 2
+  store i64 0, ptr %57, align 4
+  %58 = getelementptr i64, ptr %heap_to_ptr38, i64 3
+  store i64 0, ptr %58, align 4
+  %59 = call i64 @vector_new(i64 8)
+  %heap_start39 = sub i64 %59, 8
+  %heap_to_ptr40 = inttoptr i64 %heap_start39 to ptr
+  %60 = inttoptr i64 %heap_start39 to ptr
+  call void @mempcy(ptr %heap_to_ptr36, ptr %60, i64 4)
+  %next_dest_offset41 = add i64 %heap_start39, 4
+  %61 = inttoptr i64 %next_dest_offset41 to ptr
+  call void @mempcy(ptr %heap_to_ptr38, ptr %61, i64 4)
+  %62 = call i64 @vector_new(i64 4)
+  %heap_start42 = sub i64 %62, 4
+  %heap_to_ptr43 = inttoptr i64 %heap_start42 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr40, ptr %heap_to_ptr43, i64 8)
+  %63 = call i64 @vector_new(i64 4)
+  %heap_start44 = sub i64 %63, 4
+  %heap_to_ptr45 = inttoptr i64 %heap_start44 to ptr
+  call void @get_storage(ptr %heap_to_ptr43, ptr %heap_to_ptr45)
+  %storage_value46 = load i64, ptr %heap_to_ptr45, align 4
+  call void @builtin_assert(i64 %storage_value46)
+  ret void
+}
+
+define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
+entry:
+  %input_alloca = alloca ptr, align 8
+  store ptr %2, ptr %input_alloca, align 8
+  %input = load ptr, ptr %input_alloca, align 8
+  switch i64 %0, label %missing_function [
+    i64 3694669121, label %func_0_dispatch
+  ]
+
+missing_function:                                 ; preds = %entry
+  unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %4 = add i64 %input_start, 4
+  %5 = inttoptr i64 %4 to ptr
+  %decode_value = load i64, ptr %5, align 4
+  call void @setNonce(ptr %3, i64 %decode_value)
+  ret void
+}
+
+define void @main() {
+entry:
+  %0 = call i64 @vector_new(i64 13)
+  %heap_start = sub i64 %0, 13
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  call void @get_tape_data(i64 %heap_start, i64 13)
+  %function_selector = load i64, ptr %heap_to_ptr, align 4
+  %1 = call i64 @vector_new(i64 14)
+  %heap_start1 = sub i64 %1, 14
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  call void @get_tape_data(i64 %heap_start1, i64 14)
+  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %2 = add i64 %input_length, 14
+  %3 = call i64 @vector_new(i64 %2)
+  %heap_start3 = sub i64 %3, %2
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @get_tape_data(i64 %heap_start3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
   ret void
 }
 "#;
@@ -2030,14 +2440,47 @@ loop_end53:                                       ; preds = %loop_body52
     fn codegen_debug_test() {
         // LLVM Assembly
         let asm = r#"
-; ModuleID = 'MultInputExample'
-source_filename = "examples/source/contract_input/mult_simple_input.ola"
+; ModuleID = 'NonceHolder'
+source_filename = "examples/source/types/mapping.ola"
 
 @heap_address = internal global i64 -4294967353
 
 declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
+
+define void @mempcy(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %dest_ptr_alloca = alloca ptr, align 8
+  %src_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %src_ptr_alloca, align 8
+  %src_ptr = load ptr, ptr %src_ptr_alloca, align 8
+  store ptr %1, ptr %dest_ptr_alloca, align 8
+  %dest_ptr = load ptr, ptr %dest_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %len
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %src_index_access = getelementptr i64, ptr %src_ptr, i64 %index_value
+  %3 = load i64, ptr %src_index_access, align 4
+  %dest_index_access = getelementptr i64, ptr %dest_ptr, i64 %index_value
+  store i64 %3, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  ret void
+}
 
 declare i64 @prophet_u32_sqrt(i64)
 
@@ -2065,76 +2508,146 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
-define void @foo(ptr %0, i64 %1, i64 %2) {
+define void @setNonce(ptr %0, i64 %1) {
 entry:
-  %c = alloca i64, align 8
-  %a = alloca i64, align 8
-  %b = alloca ptr, align 8
-  store ptr %0, ptr %b, align 8
-  %3 = load ptr, ptr %b, align 8
-  store i64 %1, ptr %a, align 4
-  store i64 %2, ptr %c, align 4
-  %string_start = ptrtoint ptr %3 to i64
-  call void @prophet_printf(i64 %string_start, i64 1)
-  %4 = load i64, ptr %a, align 4
-  call void @prophet_printf(i64 %4, i64 3)
-  %5 = load i64, ptr %c, align 4
-  call void @prophet_printf(i64 %5, i64 3)
+  %_nonceSet = alloca i64, align 8
+  %_nonce = alloca i64, align 8
+  %_address = alloca ptr, align 8
+  store ptr %0, ptr %_address, align 8
+  store i64 %1, ptr %_nonce, align 4
+  %2 = load ptr, ptr %_address, align 8
+  %3 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %3, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  %4 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 0, ptr %6, align 4
+  %7 = call i64 @vector_new(i64 8)
+  %heap_start1 = sub i64 %7, 8
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %8 = inttoptr i64 %heap_start1 to ptr
+  call void @mempcy(ptr %heap_to_ptr, ptr %8, i64 4)
+  %next_dest_offset = add i64 %heap_start1, 4
+  %9 = inttoptr i64 %next_dest_offset to ptr
+  call void @mempcy(ptr %2, ptr %9, i64 4)
+  %10 = call i64 @vector_new(i64 4)
+  %heap_start3 = sub i64 %10, 4
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr4, i64 8)
+  %11 = load i64, ptr %_nonce, align 4
+  %12 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %12, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  store i64 %11, ptr %heap_to_ptr6, align 4
+  %13 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  store i64 0, ptr %13, align 4
+  %14 = getelementptr i64, ptr %heap_to_ptr6, i64 2
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %heap_to_ptr6, i64 3
+  store i64 0, ptr %15, align 4
+  %16 = call i64 @vector_new(i64 8)
+  %heap_start7 = sub i64 %16, 8
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  %17 = inttoptr i64 %heap_start7 to ptr
+  call void @mempcy(ptr %heap_to_ptr4, ptr %17, i64 4)
+  %next_dest_offset9 = add i64 %heap_start7, 4
+  %18 = inttoptr i64 %next_dest_offset9 to ptr
+  call void @mempcy(ptr %heap_to_ptr6, ptr %18, i64 4)
+  %19 = call i64 @vector_new(i64 4)
+  %heap_start10 = sub i64 %19, 4
+  %heap_to_ptr11 = inttoptr i64 %heap_start10 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr8, ptr %heap_to_ptr11, i64 8)
+  %20 = call i64 @vector_new(i64 4)
+  %heap_start12 = sub i64 %20, 4
+  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
+  store i64 55, ptr %heap_to_ptr13, align 4
+  %21 = getelementptr i64, ptr %heap_to_ptr13, i64 1
+  store i64 0, ptr %21, align 4
+  %22 = getelementptr i64, ptr %heap_to_ptr13, i64 2
+  store i64 0, ptr %22, align 4
+  %23 = getelementptr i64, ptr %heap_to_ptr13, i64 3
+  store i64 0, ptr %23, align 4
+  call void @set_storage(ptr %heap_to_ptr11, ptr %heap_to_ptr13)
+  %24 = load ptr, ptr %_address, align 8
+  %25 = call i64 @vector_new(i64 4)
+  %heap_start14 = sub i64 %25, 4
+  %heap_to_ptr15 = inttoptr i64 %heap_start14 to ptr
+  store i64 0, ptr %heap_to_ptr15, align 4
+  %26 = getelementptr i64, ptr %heap_to_ptr15, i64 1
+  store i64 0, ptr %26, align 4
+  %27 = getelementptr i64, ptr %heap_to_ptr15, i64 2
+  store i64 0, ptr %27, align 4
+  %28 = getelementptr i64, ptr %heap_to_ptr15, i64 3
+  store i64 0, ptr %28, align 4
+  %29 = call i64 @vector_new(i64 8)
+  %heap_start16 = sub i64 %29, 8
+  %heap_to_ptr17 = inttoptr i64 %heap_start16 to ptr
+  %30 = inttoptr i64 %heap_start16 to ptr
+  call void @mempcy(ptr %heap_to_ptr15, ptr %30, i64 4)
+  %next_dest_offset18 = add i64 %heap_start16, 4
+  %31 = inttoptr i64 %next_dest_offset18 to ptr
+  call void @mempcy(ptr %24, ptr %31, i64 4)
+  %32 = call i64 @vector_new(i64 4)
+  %heap_start19 = sub i64 %32, 4
+  %heap_to_ptr20 = inttoptr i64 %heap_start19 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr17, ptr %heap_to_ptr20, i64 8)
+  %33 = load i64, ptr %_nonce, align 4
+  %34 = call i64 @vector_new(i64 4)
+  %heap_start21 = sub i64 %34, 4
+  %heap_to_ptr22 = inttoptr i64 %heap_start21 to ptr
+  store i64 %33, ptr %heap_to_ptr22, align 4
+  %35 = getelementptr i64, ptr %heap_to_ptr22, i64 1
+  store i64 0, ptr %35, align 4
+  %36 = getelementptr i64, ptr %heap_to_ptr22, i64 2
+  store i64 0, ptr %36, align 4
+  %37 = getelementptr i64, ptr %heap_to_ptr22, i64 3
+  store i64 0, ptr %37, align 4
+  %38 = call i64 @vector_new(i64 8)
+  %heap_start23 = sub i64 %38, 8
+  %heap_to_ptr24 = inttoptr i64 %heap_start23 to ptr
+  %39 = inttoptr i64 %heap_start23 to ptr
+  call void @mempcy(ptr %heap_to_ptr20, ptr %39, i64 4)
+  %next_dest_offset25 = add i64 %heap_start23, 4
+  %40 = inttoptr i64 %next_dest_offset25 to ptr
+  call void @mempcy(ptr %heap_to_ptr22, ptr %40, i64 4)
+  %41 = call i64 @vector_new(i64 4)
+  %heap_start26 = sub i64 %41, 4
+  %heap_to_ptr27 = inttoptr i64 %heap_start26 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr24, ptr %heap_to_ptr27, i64 8)
+  %42 = call i64 @vector_new(i64 4)
+  %heap_start28 = sub i64 %42, 4
+  %heap_to_ptr29 = inttoptr i64 %heap_start28 to ptr
+  call void @get_storage(ptr %heap_to_ptr27, ptr %heap_to_ptr29)
+  %storage_value = load i64, ptr %heap_to_ptr29, align 4
+  store i64 %storage_value, ptr %_nonceSet, align 4
+  %43 = load i64, ptr %_nonceSet, align 4
+  call void @prophet_printf(i64 %43, i64 3)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
-  %offset_ptr = alloca i64, align 8
-  %index_ptr = alloca i64, align 8
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 3238128773, label %func_0_dispatch
+    i64 3694669121, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %decode_value_ptr = getelementptr i64, ptr %input, i64 0
-  %decode_value = load i64, ptr %decode_value_ptr, align 4
-  %decode_total_size = add i64 %decode_value, 1
-  %size = mul i64 %decode_value, 1
-  %length_and_data = add i64 %size, 1
-  %3 = call i64 @vector_new(i64 %length_and_data)
-  %heap_start = sub i64 %3, %length_and_data
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 %size, ptr %heap_to_ptr, align 4
-  %4 = ptrtoint ptr %heap_to_ptr to i64
-  %5 = add i64 %4, 1
-  %vector_data = inttoptr i64 %5 to ptr
-  store i64 0, ptr %index_ptr, align 4
-  store i64 1, ptr %offset_ptr, align 4
-  br label %loop_body
-
-loop_body:                                        ; preds = %loop_body, %func_0_dispatch
-  %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr i64, ptr %vector_data, i64 %index
-  %offset = load i64, ptr %offset_ptr, align 4
-  %decode_value_ptr1 = getelementptr i64, ptr %input, i64 %offset
-  %decode_value2 = load i64, ptr %decode_value_ptr1, align 4
-  %next_offset = add i64 %offset, 1
-  store i64 %next_offset, ptr %offset_ptr, align 4
-  store i64 %decode_value2, ptr %element, align 4
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %decode_value
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-loop_end:                                         ; preds = %loop_body
-  %decode_value_ptr3 = getelementptr i64, ptr %input, i64 %decode_total_size
-  %decode_value4 = load i64, ptr %decode_value_ptr3, align 4
-  %6 = add i64 1, %decode_total_size
-  %decode_value_ptr5 = getelementptr i64, ptr %input, i64 %6
-  %decode_value6 = load i64, ptr %decode_value_ptr5, align 4
-  call void @foo(ptr %heap_to_ptr, i64 %decode_value4, i64 %decode_value6)
+  %input_start = ptrtoint ptr %input to i64
+  %3 = inttoptr i64 %input_start to ptr
+  %4 = add i64 %input_start, 4
+  %5 = inttoptr i64 %4 to ptr
+  %decode_value = load i64, ptr %5, align 4
+  call void @setNonce(ptr %3, i64 %decode_value)
   ret void
 }
 
