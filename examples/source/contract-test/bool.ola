@@ -1,0 +1,15 @@
+contract BoolContract {
+
+    fn bool_compare(bool a) -> (bool) {
+        bool b = true;
+        bool c = false;
+        bool d = true;
+        assert(a);
+        assert(b);
+        assert(!c);
+        assert(b != c);
+        assert(a == b);
+        return d;
+    }
+
+}

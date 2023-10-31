@@ -145,7 +145,7 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
                 // Compile the module for Ola and get a machine module
                 let isa = Ola::default();
                 let code = compile_module(&isa, &module).expect("failed to compile");
-                let asm_path = output_file(matches, filename_stem.to_str().unwrap(), "asm");
+                let asm_path = output_file(matches, filename_stem.to_str().unwrap(), "json");
                 let mut asm_file = create_file(&asm_path);
 
                 if let Err(err) = asm_file.write_all(format!("{}", code.display_asm()).as_bytes()) {
