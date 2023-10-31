@@ -1,7 +1,6 @@
 use super::{get_operand_for_val, get_vreg_for_val, new_empty_inst_output};
 use crate::codegen::core::ir::{
     function::{
-        basic_block::BasicBlockId,
         data::Data as IrData,
         instruction::{ICmp, ICmpCond, InstructionId, Operand},
     },
@@ -334,7 +333,7 @@ pub fn lower_zext(
         return Ok(());
     }
 
-    Err(LoweringError::Todo("Unsupported conditional br pattern".into()).into())
+    Err(LoweringError::Todo("Unsupported zext pattern".into()).into())
 }
 
 #[cfg(test)]

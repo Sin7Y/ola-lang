@@ -513,20 +513,6 @@ fn mem_op(args: &[Operand]) -> String {
         }
         (
             OperandData::None,
-            OperandData::Int64(imm),
-            OperandData::Reg(reg),
-            OperandData::None,
-            OperandData::None,
-        ) => {
-            format!(
-                "[{},{}{}]",
-                reg_to_str(reg),
-                if *imm < 0 { "" } else { "+" },
-                *imm
-            )
-        }
-        (
-            OperandData::None,
             OperandData::Int32(imm),
             OperandData::Reg(reg1),
             OperandData::Reg(reg2),

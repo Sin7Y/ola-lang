@@ -142,6 +142,12 @@ pub struct Cast {
 }
 
 #[derive(Debug, Clone)]
+pub struct Trunc {
+    pub tys: [Type; 2], // from, to
+    pub arg: ValueId,
+}
+
+#[derive(Debug, Clone)]
 pub struct GetElementPtr {
     pub inbounds: bool,
     pub tys: Vec<Type>,
@@ -215,6 +221,7 @@ pub enum Operand {
     ExtractValue(ExtractValue),
     ICmp(ICmp),
     Cast(Cast),
+    Trunc(Trunc),
     GetElementPtr(GetElementPtr),
     Call(Call),
     Invoke(Invoke),
@@ -408,6 +415,7 @@ impl Operand {
             Self::IntBinary(IntBinary { args, .. }) => args,
             Self::ICmp(ICmp { args, .. }) => args,
             Self::Cast(Cast { arg, .. }) => slice::from_ref(arg),
+            Self::Trunc(Trunc { arg, .. }) => slice::from_ref(arg),
             Self::GetElementPtr(GetElementPtr { args, .. }) => args.as_slice(),
             Self::Call(Call { args, .. }) | Self::Invoke(Invoke { args, .. }) => args.as_slice(),
             Self::LandingPad(LandingPad { .. }) => &[],
@@ -433,6 +441,7 @@ impl Operand {
             Self::IntBinary(IntBinary { args, .. }) => args,
             Self::ICmp(ICmp { args, .. }) => args,
             Self::Cast(Cast { arg, .. }) => slice::from_mut(arg),
+            Self::Trunc(Trunc { arg, .. }) => slice::from_mut(arg),
             Self::GetElementPtr(GetElementPtr { args, .. }) => args.as_mut_slice(),
             Self::Call(Call { args, .. }) | Self::Invoke(Invoke { args, .. }) => args.as_mut(),
             Self::LandingPad(LandingPad { .. }) => &mut [],
@@ -457,6 +466,7 @@ impl Operand {
             Self::IntBinary(IntBinary { ty, .. }) => slice::from_ref(ty),
             Self::ICmp(ICmp { ty, .. }) => slice::from_ref(ty),
             Self::Cast(Cast { tys, .. }) => tys,
+            Self::Trunc(Trunc { tys, .. }) => tys,
             Self::GetElementPtr(GetElementPtr { tys, .. }) => tys.as_slice(),
             Self::Call(Call { tys, .. }) | Self::Invoke(Invoke { tys, .. }) => tys.as_slice(),
             Self::LandingPad(LandingPad { ty, .. }) => slice::from_ref(ty),
