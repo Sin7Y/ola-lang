@@ -1,6 +1,6 @@
 use inkwell::{
     values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
-    IntPredicate,
+    AddressSpace, IntPredicate,
 };
 use num_traits::ToPrimitive;
 
@@ -32,7 +32,7 @@ pub(crate) fn encode_into_buffer<'a>(
         }
 
         Type::String | Type::DynamicBytes => {
-            encode_bytes(buffer, arg, &mut offset.clone(), bin, func_value, ns)
+            encode_bytes(buffer, arg, &mut offset.clone(), bin)
         }
 
         Type::Struct(struct_no) => encode_struct(
@@ -170,30 +170,34 @@ fn encode_bytes<'a>(
     string_value: BasicValueEnum<'a>,
     offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
-    func_value: FunctionValue<'a>,
-    ns: &Namespace,
 ) -> IntValue<'a> {
     let len = bin.vector_len(string_value);
-    // First, we must save the length of the string
-    encode_uint(buffer, len.into(), *offset, bin);
     *offset = bin.build_int_add(
         *offset,
         bin.context.i64_type().const_int(1, false),
         "offset",
     );
+
+    let buffer_int = bin
+        .builder
+        .build_ptr_to_int(buffer, bin.context.i64_type(), "");
+
+    let buffer_int = bin
+        .builder
+        .build_int_add(buffer_int, *offset, "buffer_start");
+
+    let buffer = bin.builder.build_int_to_ptr(
+        buffer_int,
+        bin.context.i64_type().ptr_type(AddressSpace::default()),
+        "",
+    );
+
+    // First, we must save the length of the string
+    encode_uint(buffer, len.into(), *offset, bin);
+
     let data = bin.vector_data(string_value);
 
-    encode_dynamic_array_loop(
-        data,
-        offset,
-        len,
-        &Type::String,
-        &Type::Uint(32),
-        buffer,
-        bin,
-        func_value,
-        ns,
-    );
+    bin.mempcy(data, buffer, len);
     bin.builder
         .build_int_add(len, bin.context.i64_type().const_int(1, false), "")
 }

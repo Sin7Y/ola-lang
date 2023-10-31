@@ -7,6 +7,39 @@ declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
+define void @mempcy(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %dest_ptr_alloca = alloca ptr, align 8
+  %src_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %src_ptr_alloca, align 8
+  %src_ptr = load ptr, ptr %src_ptr_alloca, align 8
+  store ptr %1, ptr %dest_ptr_alloca, align 8
+  %dest_ptr = load ptr, ptr %dest_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_cond = icmp ult i64 %index_value, %len
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %src_index_access = getelementptr i64, ptr %src_ptr, i64 %index_value
+  %3 = load i64, ptr %src_index_access, align 4
+  %dest_index_access = getelementptr i64, ptr %dest_ptr, i64 %index_value
+  store i64 %3, ptr %dest_index_access, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br label %cond
+
+done:                                             ; preds = %cond
+  ret void
+}
+
 declare i64 @prophet_u32_sqrt(i64)
 
 declare i64 @prophet_u32_div(i64, i64)

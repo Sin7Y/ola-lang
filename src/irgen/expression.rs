@@ -518,10 +518,15 @@ pub fn expression<'a>(
             let (_, struct_alloca) = bin.heap_malloc(struct_size);
 
             for (i, expr) in values.iter().enumerate() {
-                let elemptr = bin
-                    .builder
-                    .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct_member")
-                    .unwrap();
+                let elemptr = unsafe {
+                    bin.builder
+                        .build_gep(
+                            struct_ty,
+                            struct_alloca,
+                            &[bin.context.i64_type().const_int(i as u64, false)],
+                            "struct_member",
+                        )
+                };
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
 
@@ -554,13 +559,13 @@ pub fn expression<'a>(
             let (_, array_alloca) = bin.heap_malloc(array_size);
 
             for (i, expr) in values.iter().enumerate() {
-                let mut ind = vec![bin.context.i64_type().const_zero()];
+                let mut ind = vec![];
 
                 let mut e = i as u32;
 
                 // Mapping one-dimensional array indices to multi-dimensional array indices.
                 for d in dimensions {
-                    ind.insert(1, bin.context.i64_type().const_int((e % *d).into(), false));
+                    ind.insert(0, bin.context.i64_type().const_int((e % *d).into(), false));
 
                     e /= *d;
                 }
@@ -1191,7 +1196,7 @@ pub fn array_subscript<'a>(
             bin.builder.build_gep(
                 array_type,
                 array.into_pointer_value(),
-                &[bin.context.i64_type().const_zero(), index.into_int_value()],
+                &[index.into_int_value()],
                 "index_access",
             )
         };
@@ -1578,7 +1583,7 @@ fn external_call<'a>(
     heap_start_ptr.as_basic_value_enum()
 }
 
-fn debug_print<'a>(
+pub(crate) fn debug_print<'a>(
     bin: &Binary<'a>,
     arg: BasicValueEnum<'a>,
     ty: &Type,

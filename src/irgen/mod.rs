@@ -4,7 +4,7 @@ pub mod binary;
 mod corelib;
 mod dispatch;
 mod encoding;
-mod expression;
+pub mod expression;
 mod functions;
 pub mod hash_op;
 mod statements;
