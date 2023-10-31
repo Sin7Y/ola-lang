@@ -5,7 +5,7 @@ use crate::codegen::core::ir::{
         data::Data,
         instruction::{
             Alloca, Br, Call, Cast, CondBr, ExtractValue, GetElementPtr, ICmp, InsertValue,
-            IntBinary, Invoke, LandingPad, Load, Operand, Phi, Resume, Ret, Store,
+            IntBinary, Invoke, LandingPad, Load, Operand, Phi, Resume, Ret, Store, Trunc,
         },
     },
     module::name::Name,
@@ -210,6 +210,16 @@ impl fmt::Display for DisplayInstruction<'_> {
                 )
             }
             Operand::Cast(Cast { tys, arg }) => {
+                write!(
+                    f,
+                    "%{dest:?} = {:?} {} {} to {}",
+                    self.inst.opcode,
+                    self.types.to_string(tys[0]),
+                    value_string(self, *arg),
+                    self.types.to_string(tys[1]),
+                )
+            }
+            Operand::Trunc(Trunc { tys, arg }) => {
                 write!(
                     f,
                     "%{dest:?} = {:?} {} {} to {}",

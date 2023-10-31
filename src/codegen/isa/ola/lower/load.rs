@@ -360,7 +360,7 @@ fn lower_load_gep(
 
     let output = new_empty_inst_output(ctx, tys[0], id);
 
-    let src_ty = tys[0];
+    let _src_ty = tys[0];
     //if src_ty.is_i32() || src_ty.is_i64() {
     ctx.inst_seq.append(&mut vec![MachInstruction::new(
         InstructionData {

@@ -3,7 +3,7 @@ use crate::codegen::core::ir::{
     function::{
         basic_block::BasicBlockId,
         data::Data as IrData,
-        instruction::{ICmp, ICmpCond, InstructionId, Operand},
+        instruction::{Cast, ICmp, ICmpCond, InstructionId, Operand},
     },
     types::Type,
     value::{ConstantInt, ConstantValue, Value, ValueId},
@@ -372,12 +372,62 @@ pub fn lower_condbr(
         return Ok(());
     }
 
+    fn is_cast<'a>(
+        data: &'a IrData,
+        val: &Value,
+    ) -> Option<(InstructionId, &'a Type, &'a ValueId)> {
+        match val {
+            Value::Instruction(id) => {
+                let inst = data.inst_ref(*id);
+                match &inst.operand {
+                    Operand::Cast(Cast { tys, arg }) => Some((*id, &tys[1], arg)),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
+    }
+
+    if let Some((trunc, ty, arg)) = is_cast(ctx.ir_data, arg) {
+        ctx.mark_as_merged(trunc);
+        let lhs = get_vreg_for_val(ctx, *ty, *arg)?;
+        let output = new_empty_inst_output(ctx, *ty, trunc);
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MOVrr,
+                operands: vec![MO::output(output[0].into()), MO::input(lhs.into())],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::CJMPr,
+                operands: vec![
+                    MO::input(output[0].into()),
+                    MO::new(OperandData::Block(ctx.block_map[&blocks[0]])),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::JMPr,
+                operands: vec![MO::new(OperandData::Block(ctx.block_map[&blocks[1]]))],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
     Err(LoweringError::Todo("Unsupported conditional br pattern".into()).into())
 }
 
 pub fn lower_switch(
     ctx: &mut LoweringContext<Ola>,
-    id: InstructionId,
+    _id: InstructionId,
     tys: &[Type],
     args: &[ValueId],
     blocks: &[BasicBlockId],
