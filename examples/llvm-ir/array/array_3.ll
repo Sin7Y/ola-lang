@@ -71,25 +71,25 @@ entry:
   %0 = call i64 @vector_new(i64 10)
   %heap_start = sub i64 %0, 10
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %elemptr0 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0
   store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %elemptr1 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 1
   store i64 1, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %elemptr2 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 2
   store i64 2, ptr %elemptr2, align 4
-  %elemptr3 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 3
+  %elemptr3 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 3
   store i64 3, ptr %elemptr3, align 4
-  %elemptr4 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 4
+  %elemptr4 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 4
   store i64 4, ptr %elemptr4, align 4
-  %elemptr5 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 5
+  %elemptr5 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 5
   store i64 5, ptr %elemptr5, align 4
-  %elemptr6 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 6
+  %elemptr6 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 6
   store i64 6, ptr %elemptr6, align 4
-  %elemptr7 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 7
+  %elemptr7 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 7
   store i64 7, ptr %elemptr7, align 4
-  %elemptr8 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 8
+  %elemptr8 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 8
   store i64 8, ptr %elemptr8, align 4
-  %elemptr9 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 0, i64 9
+  %elemptr9 = getelementptr [10 x i64], ptr %heap_to_ptr, i64 9
   store i64 9, ptr %elemptr9, align 4
   ret i64 10
 }

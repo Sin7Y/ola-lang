@@ -76,7 +76,6 @@ pub(super) fn abi_encode_store_tape<'a>(
     let mut offset = bin.context.i64_type().const_zero();
 
     for (arg_no, item) in args.iter().enumerate() {
-
         let advance = encode_into_buffer(
             heap_start_ptr,
             item.clone(),

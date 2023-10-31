@@ -72,11 +72,11 @@ entry:
   %0 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %0, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   store i64 3, ptr %elemptr2, align 4
   store i64 0, ptr %i, align 4
   br label %cond
@@ -90,7 +90,7 @@ body:                                             ; preds = %cond
   %3 = load i64, ptr %i, align 4
   %4 = sub i64 2, %3
   call void @builtin_range_check(i64 %4)
-  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 %3
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 %3
   %5 = load i64, ptr %index_access, align 4
   %6 = load i64, ptr %i, align 4
   %7 = icmp eq i64 %5, %6

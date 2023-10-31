@@ -71,11 +71,11 @@ entry:
   %0 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %0, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [2 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %elemptr0 = getelementptr [2 x i64], ptr %heap_to_ptr, i64 0
   store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [2 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %elemptr1 = getelementptr [2 x i64], ptr %heap_to_ptr, i64 1
   store i64 0, ptr %elemptr1, align 4
-  %index_access = getelementptr [2 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %index_access = getelementptr [2 x i64], ptr %heap_to_ptr, i64 0
   %1 = load i64, ptr %index_access, align 4
   ret i64 %1
 }

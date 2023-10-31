@@ -71,16 +71,16 @@ entry:
   %0 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %0, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0
   store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
   store i64 0, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   store i64 0, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   store i64 99, ptr %index_access, align 4
   %1 = call ptr @array_call(ptr %heap_to_ptr)
-  %index_access1 = getelementptr [3 x i64], ptr %1, i64 0, i64 2
+  %index_access1 = getelementptr [3 x i64], ptr %1, i64 2
   %2 = load i64, ptr %index_access1, align 4
   %3 = icmp eq i64 %2, 100
   %4 = zext i1 %3 to i64
@@ -93,7 +93,7 @@ entry:
   %source = alloca ptr, align 8
   store ptr %0, ptr %source, align 8
   %1 = load ptr, ptr %source, align 8
-  %index_access = getelementptr [3 x i64], ptr %1, i64 0, i64 2
+  %index_access = getelementptr [3 x i64], ptr %1, i64 2
   store i64 100, ptr %index_access, align 4
   ret ptr %1
 }

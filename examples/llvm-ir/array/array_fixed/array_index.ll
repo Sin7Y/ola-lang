@@ -88,16 +88,16 @@ entry:
   %1 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %1, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   store i64 3, ptr %elemptr2, align 4
   %2 = load i64, ptr %index, align 4
   %3 = sub i64 2, %2
   call void @builtin_range_check(i64 %3)
-  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 %2
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 %2
   %4 = load i64, ptr %index_access, align 4
   ret i64 %4
 }

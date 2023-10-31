@@ -75,13 +75,13 @@ entry:
   %2 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %2, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %struct_member = getelementptr inbounds { i64, i64 }, ptr %heap_to_ptr, i32 0, i32 0
+  %struct_member = getelementptr { i64, i64 }, ptr %heap_to_ptr, i64 0
   %3 = load i64, ptr %_id, align 4
   store i64 %3, ptr %struct_member, align 4
-  %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %heap_to_ptr, i32 0, i32 1
+  %struct_member1 = getelementptr { i64, i64 }, ptr %heap_to_ptr, i64 1
   %4 = load i64, ptr %_value, align 4
   store i64 %4, ptr %struct_member1, align 4
-  %id = getelementptr inbounds { i64, i64 }, ptr %heap_to_ptr, i32 0, i32 0
+  %id = getelementptr { i64, i64 }, ptr %heap_to_ptr, i64 0
   %5 = call i64 @vector_new(i64 4)
   %heap_start2 = sub i64 %5, 4
   %heap_to_ptr3 = inttoptr i64 %heap_start2 to ptr
@@ -93,7 +93,7 @@ entry:
   %8 = getelementptr i64, ptr %heap_to_ptr3, i64 3
   store i64 0, ptr %8, align 4
   call void @set_storage(ptr %heap_to_ptr3, ptr %id)
-  %value = getelementptr inbounds { i64, i64 }, ptr %heap_to_ptr, i32 0, i32 1
+  %value = getelementptr { i64, i64 }, ptr %heap_to_ptr, i64 1
   %9 = call i64 @vector_new(i64 4)
   %heap_start4 = sub i64 %9, 4
   %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
