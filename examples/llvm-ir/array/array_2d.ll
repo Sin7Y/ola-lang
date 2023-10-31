@@ -71,17 +71,17 @@ entry:
   %0 = call i64 @vector_new(i64 6)
   %heap_start = sub i64 %0, 6
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 0, i64 0
+  %elemptr0 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 1, i64 0
+  %elemptr2 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 1, i64 0
   store i64 3, ptr %elemptr2, align 4
-  %elemptr3 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 1, i64 1
+  %elemptr3 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 1, i64 1
   store i64 4, ptr %elemptr3, align 4
-  %elemptr4 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 2, i64 0
+  %elemptr4 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 2, i64 0
   store i64 5, ptr %elemptr4, align 4
-  %elemptr5 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 0, i64 2, i64 1
+  %elemptr5 = getelementptr [3 x [2 x i64]], ptr %heap_to_ptr, i64 2, i64 1
   store i64 6, ptr %elemptr5, align 4
   ret ptr %heap_to_ptr
 }
@@ -98,11 +98,11 @@ entry:
   %4 = load i64, ptr %_i, align 4
   %5 = sub i64 2, %4
   call void @builtin_range_check(i64 %5)
-  %index_access = getelementptr [3 x [2 x i64]], ptr %3, i64 0, i64 %4
+  %index_access = getelementptr [3 x [2 x i64]], ptr %3, i64 %4
   %6 = load i64, ptr %_j, align 4
   %7 = sub i64 1, %6
   call void @builtin_range_check(i64 %7)
-  %index_access1 = getelementptr [2 x i64], ptr %index_access, i64 0, i64 %6
+  %index_access1 = getelementptr [2 x i64], ptr %index_access, i64 %6
   %8 = load i64, ptr %index_access1, align 4
   ret i64 %8
 }

@@ -66,52 +66,36 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
-define i64 @cond_bool(i64 %0) {
+define i64 @bool_compare(i64 %0) {
 entry:
-  %ret = alloca i64, align 8
-  %a = alloca i64, align 8
-  store i64 %0, ptr %a, align 4
-  store i64 0, ptr %ret, align 4
-  %1 = load i64, ptr %a, align 4
-  %2 = trunc i64 %1 to i1
-  br i1 %2, label %then, label %else
-
-then:                                             ; preds = %entry
-  ret i64 1
-
-else:                                             ; preds = %entry
-  ret i64 2
-
-enif:                                             ; No predecessors!
-}
-
-define i64 @return_bool(i64 %0) {
-entry:
-  %a = alloca i64, align 8
-  store i64 %0, ptr %a, align 4
-  %1 = load i64, ptr %a, align 4
-  ret i64 %1
-}
-
-define void @bool_compare() {
-entry:
+  %d = alloca i64, align 8
   %c = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  store i64 0, ptr %b, align 4
-  store i64 1, ptr %c, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  %2 = icmp ne i64 %0, %1
-  %3 = zext i1 %2 to i64
-  call void @builtin_assert(i64 %3)
-  %4 = load i64, ptr %a, align 4
-  %5 = load i64, ptr %c, align 4
-  %6 = icmp eq i64 %4, %5
-  %7 = zext i1 %6 to i64
-  call void @builtin_assert(i64 %7)
-  ret void
+  store i64 %0, ptr %a, align 4
+  store i64 1, ptr %b, align 4
+  store i64 0, ptr %c, align 4
+  store i64 1, ptr %d, align 4
+  %1 = load i64, ptr %a, align 4
+  call void @builtin_assert(i64 %1)
+  %2 = load i64, ptr %b, align 4
+  call void @builtin_assert(i64 %2)
+  %3 = load i64, ptr %c, align 4
+  %4 = icmp eq i64 %3, 0
+  %5 = zext i1 %4 to i64
+  call void @builtin_assert(i64 %5)
+  %6 = load i64, ptr %b, align 4
+  %7 = load i64, ptr %c, align 4
+  %8 = icmp ne i64 %6, %7
+  %9 = zext i1 %8 to i64
+  call void @builtin_assert(i64 %9)
+  %10 = load i64, ptr %a, align 4
+  %11 = load i64, ptr %b, align 4
+  %12 = icmp eq i64 %10, %11
+  %13 = zext i1 %12 to i64
+  call void @builtin_assert(i64 %13)
+  %14 = load i64, ptr %d, align 4
+  ret i64 %14
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -120,9 +104,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1218183603, label %func_0_dispatch
-    i64 2053569270, label %func_1_dispatch
-    i64 527679565, label %func_2_dispatch
+    i64 1340861121, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -132,7 +114,7 @@ func_0_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
   %decode_value = load i64, ptr %3, align 4
-  %4 = call i64 @cond_bool(i64 %decode_value)
+  %4 = call i64 @bool_compare(i64 %decode_value)
   %5 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %5, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
@@ -141,25 +123,6 @@ func_0_dispatch:                                  ; preds = %entry
   %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
   store i64 1, ptr %encode_value_ptr1, align 4
   call void @set_tape_data(i64 %heap_start, i64 2)
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
-  %input_start2 = ptrtoint ptr %input to i64
-  %6 = inttoptr i64 %input_start2 to ptr
-  %decode_value3 = load i64, ptr %6, align 4
-  %7 = call i64 @return_bool(i64 %decode_value3)
-  %8 = call i64 @vector_new(i64 2)
-  %heap_start4 = sub i64 %8, 2
-  %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
-  %encode_value_ptr6 = getelementptr i64, ptr %heap_to_ptr5, i64 0
-  store i64 %7, ptr %encode_value_ptr6, align 4
-  %encode_value_ptr7 = getelementptr i64, ptr %heap_to_ptr5, i64 1
-  store i64 1, ptr %encode_value_ptr7, align 4
-  call void @set_tape_data(i64 %heap_start4, i64 2)
-  ret void
-
-func_2_dispatch:                                  ; preds = %entry
-  call void @bool_compare()
   ret void
 }
 

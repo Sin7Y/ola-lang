@@ -1,5 +1,5 @@
-; ModuleID = 'FixedArrayExample'
-source_filename = "examples/source/array/array_fixed/array_5.ola"
+; ModuleID = 'BoolContract'
+source_filename = "examples/source/contract-test/bool.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -66,14 +66,36 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
-define ptr @array_call(ptr %0) {
+define i64 @bool_compare(i64 %0) {
 entry:
-  %source = alloca ptr, align 8
-  store ptr %0, ptr %source, align 8
-  %1 = load ptr, ptr %source, align 8
-  %index_access = getelementptr [3 x i64], ptr %1, i64 2
-  store i64 100, ptr %index_access, align 4
-  ret ptr %1
+  %d = alloca i64, align 8
+  %c = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 %0, ptr %a, align 4
+  store i64 1, ptr %b, align 4
+  store i64 0, ptr %c, align 4
+  store i64 1, ptr %d, align 4
+  %1 = load i64, ptr %a, align 4
+  call void @builtin_assert(i64 %1)
+  %2 = load i64, ptr %b, align 4
+  call void @builtin_assert(i64 %2)
+  %3 = load i64, ptr %c, align 4
+  %4 = icmp eq i64 %3, 0
+  %5 = zext i1 %4 to i64
+  call void @builtin_assert(i64 %5)
+  %6 = load i64, ptr %b, align 4
+  %7 = load i64, ptr %c, align 4
+  %8 = icmp ne i64 %6, %7
+  %9 = zext i1 %8 to i64
+  call void @builtin_assert(i64 %9)
+  %10 = load i64, ptr %a, align 4
+  %11 = load i64, ptr %b, align 4
+  %12 = icmp eq i64 %10, %11
+  %13 = zext i1 %12 to i64
+  call void @builtin_assert(i64 %13)
+  %14 = load i64, ptr %d, align 4
+  ret i64 %14
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -82,7 +104,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 984717406, label %func_0_dispatch
+    i64 1340861121, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -91,25 +113,16 @@ missing_function:                                 ; preds = %entry
 func_0_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
-  %4 = call ptr @array_call(ptr %3)
-  %5 = call i64 @vector_new(i64 4)
-  %heap_start = sub i64 %5, 4
+  %decode_value = load i64, ptr %3, align 4
+  %4 = call i64 @bool_compare(i64 %decode_value)
+  %5 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %5, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %4, i64 0, i64 0
-  %6 = load i64, ptr %elemptr0, align 4
   %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %6, ptr %encode_value_ptr, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %4, i64 0, i64 1
-  %7 = load i64, ptr %elemptr1, align 4
+  store i64 %4, ptr %encode_value_ptr, align 4
   %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 %7, ptr %encode_value_ptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %4, i64 0, i64 2
-  %8 = load i64, ptr %elemptr2, align 4
-  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 2
-  store i64 %8, ptr %encode_value_ptr2, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 3
-  store i64 3, ptr %encode_value_ptr3, align 4
-  call void @set_tape_data(i64 %heap_start, i64 4)
+  store i64 1, ptr %encode_value_ptr1, align 4
+  call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 }
 

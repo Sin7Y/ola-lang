@@ -122,9 +122,9 @@ done:                                             ; preds = %cond
   %15 = call i64 @vector_new(i64 2)
   %heap_start9 = sub i64 %15, 2
   %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %heap_to_ptr10, i32 0, i32 0
+  %struct_member = getelementptr { i64, ptr }, ptr %heap_to_ptr10, i64 0
   store i64 20, ptr %struct_member, align 4
-  %struct_member11 = getelementptr inbounds { i64, ptr }, ptr %heap_to_ptr10, i32 0, i32 1
+  %struct_member11 = getelementptr { i64, ptr }, ptr %heap_to_ptr10, i64 1
   store ptr %heap_to_ptr, ptr %struct_member11, align 8
   ret ptr %heap_to_ptr10
 }
@@ -178,11 +178,11 @@ func_0_dispatch:                                  ; preds = %entry
   %11 = call i64 @vector_new(i64 %heap_size)
   %heap_start = sub i64 %11, %heap_size
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %struct_member = getelementptr { i64, ptr }, ptr %3, i64 0
   %elem = load i64, ptr %struct_member, align 4
   %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
   store i64 %elem, ptr %encode_value_ptr, align 4
-  %struct_member1 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %struct_member1 = getelementptr { i64, ptr }, ptr %3, i64 1
   %length2 = load i64, ptr %struct_member1, align 4
   %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 1
   store i64 %length2, ptr %encode_value_ptr3, align 4

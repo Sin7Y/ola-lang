@@ -119,7 +119,7 @@ body2:                                            ; preds = %cond1
   %12 = load i64, ptr %i, align 4
   %13 = sub i64 9, %12
   call void @builtin_range_check(i64 %13)
-  %index_access5 = getelementptr [10 x i64], ptr %1, i64 0, i64 %12
+  %index_access5 = getelementptr [10 x i64], ptr %1, i64 %12
   %14 = load i64, ptr %index_access5, align 4
   store i64 %14, ptr %index_access4, align 4
   %15 = load i64, ptr %totalSum, align 4

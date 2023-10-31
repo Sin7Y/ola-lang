@@ -95,11 +95,11 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %4, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %struct_member = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
+  %struct_member = getelementptr { i64, i64 }, ptr %3, i64 0
   %elem = load i64, ptr %struct_member, align 4
   %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
   store i64 %elem, ptr %encode_value_ptr, align 4
-  %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
+  %struct_member1 = getelementptr { i64, i64 }, ptr %3, i64 1
   %elem2 = load i64, ptr %struct_member1, align 4
   %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 1
   store i64 %elem2, ptr %encode_value_ptr3, align 4

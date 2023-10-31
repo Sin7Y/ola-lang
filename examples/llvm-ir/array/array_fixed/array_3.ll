@@ -71,27 +71,27 @@ entry:
   %0 = call i64 @vector_new(i64 3)
   %heap_start = sub i64 %0, 3
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0
   store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
   store i64 0, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   store i64 0, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %index_access = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   store i64 3, ptr %index_access, align 4
-  %index_access1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
-  %index_access2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %index_access1 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
+  %index_access2 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
   %1 = load i64, ptr %index_access2, align 4
   %2 = add i64 %1, 1
   call void @builtin_range_check(i64 %2)
   store i64 %2, ptr %index_access1, align 4
-  %index_access3 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
-  %index_access4 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 2
+  %index_access3 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
+  %index_access4 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 2
   %3 = load i64, ptr %index_access4, align 4
   %4 = sub i64 %3, 1
   call void @builtin_range_check(i64 %4)
   store i64 %4, ptr %index_access3, align 4
-  %index_access5 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 0, i64 1
+  %index_access5 = getelementptr [3 x i64], ptr %heap_to_ptr, i64 1
   %5 = load i64, ptr %index_access5, align 4
   %6 = icmp eq i64 %5, 1
   %7 = zext i1 %6 to i64
