@@ -76,6 +76,7 @@ pub(super) fn abi_encode_store_tape<'a>(
     let mut offset = bin.context.i64_type().const_zero();
 
     for (arg_no, item) in args.iter().enumerate() {
+
         let advance = encode_into_buffer(
             heap_start_ptr,
             item.clone(),
@@ -91,7 +92,11 @@ pub(super) fn abi_encode_store_tape<'a>(
     // identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
+    
     bin.tape_data_store(heap_start_int, heap_size);
+
+
+    
 }
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
@@ -477,15 +482,15 @@ fn load_struct_member<'a>(
 ) -> BasicValueEnum<'a> {
     let struct_ty = bin.llvm_type(struct_ty.deref_memory(), ns);
 
-    let struct_member = bin
-        .builder
-        .build_struct_gep(
-            struct_ty,
-            struct_ptr.into_pointer_value(),
-            member as u32,
-            "struct_member",
-        )
-        .unwrap();
+    let struct_member = unsafe {
+        bin.builder
+            .build_gep(
+                struct_ty,
+                struct_ptr.into_pointer_value(),
+                &[bin.context.i64_type().const_int(member as u64, false)],
+                "struct_member",
+            )
+    };
     if field_ty.is_primitive() {
         bin.builder
             .build_load(bin.llvm_type(field_ty, ns), struct_member, "elem")

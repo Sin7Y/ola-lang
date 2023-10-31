@@ -206,15 +206,25 @@ pub(crate) fn storage_load<'a>(
         }
         Type::Struct(no) => {
             let llvm_ty = bin.llvm_type(ty.deref_any(), ns);
-            let new_struct = bin.build_alloca(function, llvm_ty, "struct_alloca");
+            let struct_size = bin
+                .context
+                .i64_type()
+                .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
+
+            let (_, struct_alloca) = bin.heap_malloc(struct_size);
 
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
                 let val = storage_load(bin, &field.ty, slot, function, ns);
 
-                let elem = bin
-                    .builder
-                    .build_struct_gep(llvm_ty, new_struct, i as u32, field.name_as_str())
-                    .unwrap();
+                let elem = unsafe {
+                    bin.builder
+                        .build_gep(
+                            llvm_ty,
+                            struct_alloca,
+                            &[bin.context.i64_type().const_int(i as u64, false)],
+                            field.name_as_str(),
+                        )
+                };
 
                 let val = if field.ty.deref_memory().is_fixed_reference_type() {
                     let load_ty = bin.llvm_type(field.ty.deref_memory(), ns);
@@ -230,7 +240,7 @@ pub(crate) fn storage_load<'a>(
                 }
             }
 
-            new_struct.into()
+            struct_alloca.into()
         }
         Type::String => get_storage_dynamic_bytes(bin, ty, slot, function, ns),
         Type::Address | Type::Contract(_) | Type::Hash => storage_load_internal(bin, *slot).into(),
@@ -348,15 +358,15 @@ pub(crate) fn storage_store<'a>(
         }
         Type::Struct(no) => {
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
-                let elem = bin
-                    .builder
-                    .build_struct_gep(
-                        bin.llvm_type(ty.deref_any(), ns),
-                        dest.into_pointer_value(),
-                        i as u32,
-                        field.name_as_str(),
-                    )
-                    .unwrap();
+                let elem = unsafe {
+                    bin.builder
+                        .build_gep(
+                            bin.llvm_type(ty.deref_any(), ns),
+                            dest.into_pointer_value(),
+                            &[i64_const!(i as u64)],
+                            field.name_as_str(),
+                        )
+                };
 
                 storage_store(bin, &field.ty, slot, elem.into(), function, ns);
 

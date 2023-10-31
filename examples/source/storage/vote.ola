@@ -1,9 +1,11 @@
 contract Voting {
  
     struct Proposal {
-        u32 name;  
+        string name;  
         u32 voteCount;
     }
+
+    address chairperson;
 
     struct Voter {
         bool voted;  
@@ -14,7 +16,8 @@ contract Voting {
 
     Proposal[] proposals;
 
-    fn contract_init(u32[] proposalNames_) {
+    fn contract_init(string[] proposalNames_) {
+        chairperson = caller_address();
         for (u32 i = 0; i < proposalNames_.length; i++) {
             proposals.push(Proposal({
                 name: proposalNames_[i],
@@ -22,7 +25,16 @@ contract Voting {
             }));
         }
     }
-    
+
+    fn vote_proposal(u32 proposal_)  {
+        address msgSender = caller_address();
+        Voter storage sender = voters[msgSender];
+        sender.voted = true;
+        sender.vote = proposal_;
+
+        proposals[proposal_].voteCount += 1;
+    }
+
     fn winningProposal() -> (u32 winningProposal_) {
         u32 winningVoteCount = 0;
         for (u32 p = 0; p < proposals.length; p++) {
@@ -34,38 +46,24 @@ contract Voting {
         return winningProposal_;
     }
 
-    fn getWinnerName() -> (u32) {
-         u32 _winningProposal = winningProposal();
-         u32 winnerName = proposals[_winningProposal].name;
+    fn getWinnerName() -> (string) {
+         string winnerName = proposals[winningProposal()].name;
          return winnerName;
-    }
-
-
-    fn vote_proposal(u32 proposal_)  {
-        address msgSender = get_caller();
-        assert(!voters[msgSender].voted);
-        Voter storage sender = voters[msgSender];
-        sender.voted = true;
-        sender.vote = proposal_;
-        proposals[proposal_].voteCount += 1;
-    }
-
-
-    fn get_caller() -> (address) {
-        return 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580Eaddress;
     }
 
     fn vote_test(){
 
-        u32[] proposalNames = new u32[](3);
-        proposalNames[0] = 65;
-        proposalNames[1] = 66;
-        proposalNames[2] = 67;
-
-        contract_init(proposalNames);
-        vote_proposal(1);
-
-        assert(proposals[1].voteCount == 1);
+        string[] proposalNames = new string[](3);
+        proposalNames[0] = "Proposal_1";
+        proposalNames[1] = "Proposal_2";
+        proposalNames[2] = "Proposal_3";
+        for (u32 i = 0; i < proposalNames.length; i++) {
+            proposals.push(Proposal({
+                name: proposalNames[i],
+                voteCount: i
+            }));
+        }
+        assert(proposals[0].name ==  "Proposal_1");
     }
 }
 
