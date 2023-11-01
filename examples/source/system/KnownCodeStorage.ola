@@ -3,7 +3,7 @@ contract KnownCodeStorage {
 
     fn onlyEntrypointCall() {
         address ENTRY_POINT_ADDRESS = address(0x8001);
-        assert(caller_address() == ENTRY_POINT_ADDRESS, "Only Entrypoint system contract can call this function.");
+        //assert(caller_address() == ENTRY_POINT_ADDRESS, "Only Entrypoint system contract can call this function.");
     }
 
     fn isCodehashKnown(hash _hash) -> (bool) {

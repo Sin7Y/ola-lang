@@ -197,7 +197,7 @@ fn encode_bytes<'a>(
 
     let data = bin.vector_data(string_value);
 
-    bin.mempcy(data, buffer, len);
+    bin.memcpy(data, buffer, len);
     bin.builder
         .build_int_add(len, bin.context.i64_type().const_int(1, false), "")
 }

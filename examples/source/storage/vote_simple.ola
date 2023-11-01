@@ -24,9 +24,11 @@ contract Voting {
                 voteCount: 0
             }));
         }
+        assert(proposals[0].name == 64, "Proposal name is not 64");
+        assert(proposals[1].name == 65, "Proposal name is not 65");
+        assert(proposals[2].name == 66, "Proposal name is not 66");
     }
 
-    // 2
     // 2
     fn vote_proposal(u32 proposal_)  {
         address msgSender = caller_address();
@@ -34,10 +36,9 @@ contract Voting {
         assert(!sender.voted, "Already voted.");
         sender.voted = true;
         sender.vote = proposal_;
-
+        print(proposals[proposal_].name);
+        assert(proposals[proposal_].name != 0, "Vote is not initialized");
         proposals[proposal_].voteCount += 1;
-        
-        assert(proposals[2].voteCount == 2, "Vote count is not 2");
     }
 
 
