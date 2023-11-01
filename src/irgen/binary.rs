@@ -535,7 +535,7 @@ impl<'a> Binary<'a> {
                     self.context.i64_type().ptr_type(AddressSpace::default()),
                     "",
                 );
-                self.mempcy(v.into_pointer_value(), dest_ptr, *len);
+                self.memcpy(v.into_pointer_value(), dest_ptr, *len);
                 // Check if this is the last iteration of the loop
                 if i < hash_src_len - 1 {
                     dest_offset = self.build_int_add(dest_offset, *len, "next_dest_offset");
@@ -809,11 +809,29 @@ impl<'a> Binary<'a> {
         }
     }
 
-    pub fn mempcy(&self, src: PointerValue<'a>, dest: PointerValue<'a>, len: IntValue<'a>) {
+    pub fn memcpy(&self, src: PointerValue<'a>, dest: PointerValue<'a>, len: IntValue<'a>) {
         // call memory call function
-        let mempcy_function = self.module.get_function("mempcy").unwrap();
+        let mempcy_function = self.module.get_function("memcpy").unwrap();
         self.builder
             .build_call(mempcy_function, &[src.into(), dest.into(), len.into()], "");
+    }
+    pub fn memcmp(&self, left: PointerValue<'a>, right: PointerValue<'a>, len: IntValue<'a>, op: IntPredicate) -> IntValue<'a> {
+
+       let func_name =  match op {
+            IntPredicate::EQ => "memcmp_eq",
+            IntPredicate::NE => "memcmp_ne",
+            IntPredicate::UGT => "memcmp_ugt",
+            IntPredicate::UGE => "memcmp_uge",
+            _=> panic!("not implemented")
+        };
+        let mempcy_function = self.module.get_function(func_name).unwrap();
+        
+        self.builder
+            .build_call(mempcy_function, &[left.into(), right.into(), len.into()], "")
+            .try_as_basic_value()
+            .left()
+            .unwrap()
+            .into_int_value()
     }
 
     pub fn convert_uint_storage(&self, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {

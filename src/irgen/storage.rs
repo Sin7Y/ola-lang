@@ -235,7 +235,7 @@ pub(crate) fn storage_load<'a>(
                 };
 
                 bin.builder.build_store(elem, val);
-                if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) {
+                if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) && (i != ns.structs[*no].fields.len() - 1) {
                     *slot = slot_next(bin, *slot);
                 }
             }
@@ -380,13 +380,20 @@ pub(crate) fn storage_store<'a>(
         Type::String => {
             set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
-        Type::Address
-        | Type::Contract(_)
-        | Type::Uint(32)
-        | Type::Bool
-        | Type::Enum(_)
-        | Type::Hash
-        | Type::Field => storage_store_internal(bin, *slot, dest),
+        Type::Address | Type::Contract(_) | Type::Hash => {
+            storage_store_internal(bin, *slot, dest)
+        }
+         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
+            let dest = if dest.is_pointer_value() {
+                let m =
+                    bin.builder
+                        .build_load(bin.context.i64_type(), dest.into_pointer_value(), "");
+                m
+            } else {
+                dest
+            };
+            storage_store_internal(bin, *slot, dest)
+        }
         _ => {
             unimplemented!("{:?}", ty)
         }
@@ -635,7 +642,7 @@ pub(crate) fn array_offset<'a>(
             "",
         )
     };
-    let hash_value_low = bin.builder.build_load(bin.context.i64_type(), elem_ptr, "");
+    let hash_value_low = bin.builder.build_load(bin.context.i64_type(), elem_ptr, "hash_value_low");
 
     let index_with_size = bin.builder.build_int_mul(
         index.into_int_value(),
@@ -680,6 +687,6 @@ pub(crate) fn slot_offest<'a>(
         _ => slot,
     };
     bin.builder
-        .build_int_add(slot_value.into_int_value(), offset.into_int_value(), "")
+        .build_int_add(slot_value.into_int_value(), offset.into_int_value(), "slot_offest")
         .into()
 }

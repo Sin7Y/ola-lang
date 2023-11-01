@@ -1266,7 +1266,7 @@ pub fn array_slice<'a>(
     } else {
         array.into_pointer_value()
     };
-    bin.mempcy(src_data, dest_array, end_sub_start);
+    bin.memcpy(src_data, dest_array, end_sub_start);
     new_array.as_basic_value_enum()
 }
 
@@ -1395,66 +1395,7 @@ pub fn string_compare<'a>(
         "",
     );
 
-    // Create a loop for comparing each character in the strings
-    let cond = bin.context.append_basic_block(func_value, "cond");
-    let body = bin.context.append_basic_block(func_value, "body");
-    let done = bin.context.append_basic_block(func_value, "done");
-    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index");
-    bin.builder
-        .build_store(index_ptr, bin.context.i64_type().const_int(0, false));
-
-    bin.builder.build_unconditional_branch(cond);
-    bin.builder.position_at_end(cond);
-
-    let index = bin
-        .builder
-        .build_load(bin.context.i64_type(), index_ptr, "index")
-        .into_int_value();
-
-    let continue_condition = bin
-        .builder
-        .build_int_compare(IntPredicate::ULT, index, left_len, "");
-    bin.builder
-        .build_conditional_branch(continue_condition, body, done);
-
-    // build the loop body
-    bin.builder.position_at_end(body);
-
-    let left_char_ptr = unsafe {
-        bin.builder
-            .build_gep(bin.context.i64_type(), left, &[index], "left_char_ptr")
-    };
-    let right_char_ptr = unsafe {
-        bin.builder
-            .build_gep(bin.context.i64_type(), right, &[index], "right_char_ptr")
-    };
-
-    let left_char = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_char_ptr, "left_char");
-    let right_char = bin
-        .builder
-        .build_load(bin.context.i64_type(), right_char_ptr, "right_char");
-
-    let comparison = bin.builder.build_int_compare(
-        IntPredicate::EQ,
-        left_char.into_int_value(),
-        right_char.into_int_value(),
-        "comparison",
-    );
-    let next_index = bin.build_int_add(
-        index,
-        bin.context.i64_type().const_int(1, false),
-        "next_index",
-    );
-    bin.builder.build_store(index_ptr, next_index);
-
-    bin.builder.build_conditional_branch(comparison, cond, done);
-    bin.builder.position_at_end(done);
-
-    bin.builder
-        .build_int_compare(IntPredicate::EQ, index, right_len, "equal")
-        .into()
+    bin.memcmp(left, right, left_len, IntPredicate::EQ).into()
 }
 
 fn field_to_fields<'a>(source: BasicValueEnum<'a>, bin: &Binary<'a>) -> BasicValueEnum<'a> {

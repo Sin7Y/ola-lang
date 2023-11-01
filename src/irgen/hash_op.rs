@@ -15,51 +15,22 @@ pub fn hash_compare<'a>(
     ns: &Namespace,
     op: IntPredicate,
 ) -> BasicValueEnum<'a> {
-    let left = expression(l, bin, func_value, var_table, ns);
-    let right = expression(r, bin, func_value, var_table, ns);
+    let left = expression(l, bin, func_value, var_table, ns).into_pointer_value();
+    let right = expression(r, bin, func_value, var_table, ns).into_pointer_value();
+    match op {
+        IntPredicate::EQ  | IntPredicate::UGT | IntPredicate::UGE => {
+            bin.memcmp(left, right, bin.context.i64_type().const_int(4, false), op).into()
+        }
+        IntPredicate::NE => {
+            let result = bin.memcmp(left, right, bin.context.i64_type().const_int(4, false), IntPredicate::EQ);
+            bin.builder.build_int_compare(IntPredicate::EQ, result, bin.context.i64_type().const_zero(), "").into()
+        }
+        IntPredicate::ULT =>  {
+            bin.memcmp(right, left, bin.context.i64_type().const_int(4, false), IntPredicate::UGT).into()
+        }  
+        ,
+        IntPredicate::ULE => bin.memcmp(right, left, bin.context.i64_type().const_int(4, false), IntPredicate::UGE).into(),
+        _ => unreachable!()
 
-    let mut result = bin.context.i64_type().const_int(1, false);
-
-    // Compare each pair of elements
-    for i in 0..4 {
-        let left_elem_ptr = unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                left.into_pointer_value(),
-                &[bin.context.i64_type().const_int(i, false)],
-                &format!("left_elem_{}", i),
-            )
-        };
-        let left_elem = bin
-            .builder
-            .build_load(bin.context.i64_type(), left_elem_ptr, "")
-            .into_int_value();
-
-        let right_elem_ptr = unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                right.into_pointer_value(),
-                &[bin.context.i64_type().const_int(i, false)],
-                &format!("right_elem_{}", i),
-            )
-        };
-        let right_elem = bin
-            .builder
-            .build_load(bin.context.i64_type(), right_elem_ptr, "")
-            .into_int_value();
-
-        let compare =
-            bin.builder
-                .build_int_compare(op, left_elem, right_elem, &format!("compare_{}", i));
-
-        let compare = bin
-            .builder
-            .build_int_z_extend(compare, bin.context.i64_type(), "")
-            .into();
-
-        result = bin
-            .builder
-            .build_and(compare, result, &format!("result_{}", i));
     }
-    result.into()
 }
