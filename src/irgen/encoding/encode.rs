@@ -121,7 +121,6 @@ pub(crate) fn encode_uint<'a>(
     bin.builder.build_store(start, arg);
 }
 
-
 /// Encode `address` into `buffer` as an [4 * i64] array.
 fn encode_address_or_hash<'a>(
     buffer: PointerValue<'a>,

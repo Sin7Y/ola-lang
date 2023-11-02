@@ -255,22 +255,34 @@ fn lower_store_gep(
 
     let mem = match &gep_args[..] {
         [Value::Instruction(base_ptr), Const(Int(Int64(idx0))), Const(Int(Int64(idx1)))] => {
-            let base_ptr = ctx.inst_id_to_slot_id[base_ptr];
+            let mut slot = None;
+            let mut base = None;
             let base_ty = gep.operand.types()[0];
-            let offset = idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as i64
-                + idx1
+            let mut offset = idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as i64
+                - idx1
                     * ctx
                         .isa
                         .data_layout()
                         .get_size_of(ctx.types, gep.operand.types()[3])
-                        as i64;
+                        as i64
+                    / 4;
+            if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
+                slot = Some(*p);
+            } else {
+                base = Some(get_operand_for_val(
+                    ctx,
+                    gep.operand.types()[1],
+                    gep.operand.args()[0],
+                )?);
+                offset = -offset;
+            }
 
             vec![
                 MOperand::new(OperandData::MemStart),
                 MOperand::new(OperandData::None),
-                MOperand::new(OperandData::Slot(base_ptr)),
-                MOperand::new(OperandData::Int32(-offset as i32)),
-                MOperand::input(OperandData::None),
+                MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
+                MOperand::new(OperandData::Int32(offset as i32)),
+                MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::None),
                 MOperand::new(OperandData::None),
             ]

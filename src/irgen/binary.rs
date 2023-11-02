@@ -1005,7 +1005,7 @@ impl<'a> Binary<'a> {
     //         Type::Ref(ty) => {
     //             let ref_value = if ty.is_reference_type(ns) &&
     // !ty.is_fixed_reference_type() {                 let loaded_type =
-    // self.llvm_type(ty, ns).ptr_type(AddressSpace::default());                
+    // self.llvm_type(ty, ns).ptr_type(AddressSpace::default());
     // self.builder                     .build_load(loaded_type,
     // arg.into_pointer_value(), "")             } else {
     //                 let loaded_type = self.llvm_type(ty, ns);

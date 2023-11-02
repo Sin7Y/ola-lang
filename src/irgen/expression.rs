@@ -518,14 +518,10 @@ pub fn expression<'a>(
             let (_, struct_alloca) = bin.heap_malloc(struct_size);
 
             for (i, expr) in values.iter().enumerate() {
-                let elemptr =
-                    bin.builder.build_struct_gep(
-                        struct_ty,
-                        struct_alloca,
-                        i as u32,
-                        "struct_member",
-                    ).unwrap();
-                
+                let elemptr = bin
+                    .builder
+                    .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct_member")
+                    .unwrap();
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
 
@@ -679,13 +675,9 @@ pub fn expression<'a>(
         } => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_value, var_table, ns).into_pointer_value();
-                bin.builder
-                    .build_struct_gep(
-                        struct_ty,
-                        struct_ptr,
-                        *field_no as u32,
-                        "struct_member",
-                    ).unwrap()
+            bin.builder
+                .build_struct_gep(struct_ty, struct_ptr, *field_no as u32, "struct_member")
+                .unwrap()
                 .into()
         }
         Expression::Load { ty, expr, .. } => {
@@ -1628,15 +1620,19 @@ pub(crate) fn debug_print<'a>(
             );
             let mut offset = struct_start;
             for (_, field) in ns.structs[*no].fields.iter().enumerate() {
-                let field_ptr = bin.builder.build_int_to_ptr(offset, bin.context.i64_type().ptr_type(AddressSpace::default()), "");
+                let field_ptr = bin.builder.build_int_to_ptr(
+                    offset,
+                    bin.context.i64_type().ptr_type(AddressSpace::default()),
+                    "",
+                );
                 let value = match field.ty {
                     Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
-                        let value = bin.builder.build_load(bin.context.i64_type(), field_ptr, "");
+                        let value = bin
+                            .builder
+                            .build_load(bin.context.i64_type(), field_ptr, "");
                         value
                     }
-                    _=> {
-                        field_ptr.into()
-                    }
+                    _ => field_ptr.into(),
                 };
                 debug_print(bin, value, &field.ty, func_value, ns);
 

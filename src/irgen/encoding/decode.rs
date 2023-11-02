@@ -146,13 +146,10 @@ pub fn struct_literal_copy<'a>(
     let (_, struct_alloca) = bin.heap_malloc(struct_size);
 
     for (i, elem) in values.iter().enumerate() {
-        let elemptr = 
-            bin.builder.build_struct_gep(
-                struct_ty,
-                struct_alloca,
-                i as u32,
-                "struct_member",
-            ).unwrap();
+        let elemptr = bin
+            .builder
+            .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct_member")
+            .unwrap();
         bin.builder.build_store(elemptr, *elem);
     }
 

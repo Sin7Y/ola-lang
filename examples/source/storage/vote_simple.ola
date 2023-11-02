@@ -18,12 +18,18 @@ contract Voting {
     // constructor
     // [3, 64, 65, 66] 
     fn contract_init(u32[] proposalNames_) {
+        print(proposalNames_);
         for (u32 i = 0; i < proposalNames_.length; i++) {
-            proposals.push(Proposal({
+           Proposal pp = Proposal({
                 name: proposalNames_[i],
-                voteCount: 0
-            }));
+                voteCount: 99
+            });
+            print(pp);
+            proposals.push(pp);
         }
+        print(proposals[0].name);
+        print(proposals[1].name);
+        print(proposals[2].name);
         assert(proposals[0].name == 64, "Proposal name is not 64");
         assert(proposals[1].name == 65, "Proposal name is not 65");
         assert(proposals[2].name == 66, "Proposal name is not 66");
