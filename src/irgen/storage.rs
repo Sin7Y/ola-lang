@@ -741,16 +741,8 @@ pub(crate) fn slot_offest<'a>(
     emit_context!(bin);
     let slot_value = match slot.get_type() {
         BasicTypeEnum::PointerType(..) => {
-            let elem_ptr = unsafe {
-                bin.builder.build_gep(
-                    bin.context.i64_type(),
-                    slot.into_pointer_value(),
-                    &[i64_const!(3)],
-                    "",
-                )
-            };
             bin.builder
-                .build_load(bin.context.i64_type(), elem_ptr, "slot_value")
+                .build_load(bin.context.i64_type(), slot.into_pointer_value(), "slot_value")
         }
         _ => slot,
     };
