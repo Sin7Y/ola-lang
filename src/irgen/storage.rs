@@ -711,17 +711,9 @@ pub(crate) fn array_offset<'a>(
     emit_context!(bin);
     let elem_size = elem_ty.storage_slots(ns);
     let hash_ret = slot_hash(bin, start);
-    let elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            hash_ret.into_pointer_value(),
-            &[bin.context.i64_type().const_int(3, false)],
-            "",
-        )
-    };
     let hash_value_low = bin
         .builder
-        .build_load(bin.context.i64_type(), elem_ptr, "hash_value_low");
+        .build_load(bin.context.i64_type(), hash_ret.into_pointer_value(), "hash_value_low");
 
     let index_with_size = bin.builder.build_int_mul(
         index.into_int_value(),
@@ -737,7 +729,7 @@ pub(crate) fn array_offset<'a>(
         "storage_array_offset",
     );
 
-    bin.builder.build_store(elem_ptr, new_hash_low);
+    bin.builder.build_store(hash_ret.into_pointer_value(), new_hash_low);
     hash_ret
 }
 
