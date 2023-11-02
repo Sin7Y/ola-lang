@@ -227,6 +227,10 @@ fn lower_load_gep(
             ]
         }
         [Value::Instruction(base_ptr), Const(Int(Int64(idx0))), Const(Int(Int64(idx1)))] => {
+            println!(
+                "load_gep: base_ptr {:?},i64 idx0 {}, i64 idx1 {}",
+                base_ptr, idx0, idx1
+            );
             let mut slot = None;
             let mut base = None;
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
@@ -251,7 +255,7 @@ fn lower_load_gep(
                 MOperand::new(OperandData::MemStart),
                 MOperand::new(OperandData::None),
                 MOperand::new(slot.map_or(OperandData::None, |s| OperandData::Slot(s))),
-                MOperand::new(OperandData::Int32(-offset as i32)),
+                MOperand::new(OperandData::Int32(offset as i32 / 4)),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::None),
                 MOperand::new(OperandData::None),
@@ -259,7 +263,7 @@ fn lower_load_gep(
         }
         [Value::Instruction(base_ptr), Const(Int(Int32(idx0))), Const(Int(Int32(idx1)))] => {
             println!(
-                "load_gep: base_ptr {:?},idx0 {},idx1 {}",
+                "load_gep: base_ptr {:?},i32 idx0 {}, i32 idx1 {}",
                 base_ptr, idx0, idx1
             );
             let base_ptr = ctx.inst_id_to_slot_id[base_ptr];
