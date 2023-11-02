@@ -101,7 +101,8 @@
 //         func_value: FunctionValue<'a>,
 //     ) {
 //         if self.validation_necessary() {
-//             let offset_to_validate = bin.build_int_add(size, offset, "");
+//             let offset_to_validate = bin.builder.build_int_add(size, offset,
+// "");
 
 //             self.validate_offset(bin, offset_to_validate, func_value);
 //         }
@@ -163,7 +164,7 @@
 //             advance.add_assign(self.types[i].memory_size_of(ns));
 //         }
 
-//         let reach = bin.build_int_add(
+//         let reach = bin.builder.build_int_add(
 //             bin.context
 //                 .i64_type()
 //                 .const_int(advance.to_u64().unwrap(), false),

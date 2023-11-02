@@ -119,9 +119,11 @@ fn decode_struct<'a>(
     for i in 0..qty {
         let (read_expr, advance) = read_from_buffer(*buffer, bin, &struct_tys[i], func_value, ns);
         read_items.push(read_expr);
-        *buffer = bin.build_int_add(*buffer, advance, "struct_offset");
+        *buffer = bin.builder.build_int_add(*buffer, advance, "struct_offset");
     }
-    let runtime_size = bin.build_int_sub(*buffer, buffer_before, "struct_decode_size");
+    let runtime_size = bin
+        .builder
+        .build_int_sub(*buffer, buffer_before, "struct_decode_size");
 
     let struct_var = struct_literal_copy(ty, read_items, bin, ns);
     (struct_var, runtime_size)
@@ -278,7 +280,7 @@ pub fn struct_literal_copy<'a>(
 //         bin.builder
 //             .build_store(ptr.into_pointer_value(), read_value);
 
-//         let offset = bin.build_int_add(advance, offset, "");
+//         let offset = bin.builder.build_int_add(advance, offset, "");
 
 //         bin.builder.build_store(offset_var, offset);
 //     } else {

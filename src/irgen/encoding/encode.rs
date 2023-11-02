@@ -31,9 +31,7 @@ pub(crate) fn encode_into_buffer<'a>(
             bin.context.i64_type().const_int(1, false)
         }
 
-        Type::String | Type::DynamicBytes => {
-            encode_bytes(buffer, arg, &mut offset.clone(), bin)
-        }
+        Type::String | Type::DynamicBytes => encode_bytes(buffer, arg, &mut offset.clone(), bin),
 
         Type::Struct(struct_no) => encode_struct(
             arg,
@@ -172,7 +170,7 @@ fn encode_bytes<'a>(
     bin: &Binary<'a>,
 ) -> IntValue<'a> {
     let len = bin.vector_len(string_value);
-    *offset = bin.build_int_add(
+    *offset = bin.builder.build_int_add(
         *offset,
         bin.context.i64_type().const_int(1, false),
         "offset",
@@ -258,10 +256,10 @@ pub fn encode_dynamic_array_loop<'a>(
 
     bin.builder.build_store(
         offset_ptr,
-        bin.build_int_add(encode_len, offset, "next_offset"),
+        bin.builder.build_int_add(encode_len, offset, "next_offset"),
     );
 
-    let next_index = bin.build_int_add(
+    let next_index = bin.builder.build_int_add(
         index.into_int_value(),
         bin.context.i64_type().const_int(1, false),
         "next_index",
@@ -299,11 +297,11 @@ fn encode_struct<'a>(
     let mut runtime_size = advance.clone();
     for i in 1..qty {
         let ith_type = ns.structs[struct_no].fields[i].ty.clone();
-        *offset = bin.build_int_add(advance, *offset, "");
+        *offset = bin.builder.build_int_add(advance, *offset, "");
         let loaded = load_struct_member(bin, struct_ty, &ith_type, struct_value, i, ns);
         // After fetching the struct member, we can encode it
         advance = encode_into_buffer(buffer, loaded, &ith_type, *offset, bin, func_value, ns);
-        runtime_size = bin.build_int_add(advance, runtime_size, "");
+        runtime_size = bin.builder.build_int_add(advance, runtime_size, "");
     }
 
     runtime_size
@@ -383,7 +381,8 @@ fn encode_array<'a>(
         .builder
         .build_load(bin.context.i64_type(), offset_var_no, "");
 
-    bin.build_int_sub(offset_var.into_int_value(), *offset, "")
+    bin.builder
+        .build_int_sub(offset_var.into_int_value(), *offset, "")
 }
 
 /// Encode `array` into `buffer` as a complex array.
@@ -426,7 +425,7 @@ fn encode_complex_array<'a>(
 
         encode_uint(buffer, size.into(), offset_value.into_int_value(), bin);
 
-        let offset_value = bin.build_int_add(
+        let offset_value = bin.builder.build_int_add(
             offset_value.into_int_value(),
             bin.context.i64_type().const_int(1, false),
             "",
@@ -532,7 +531,7 @@ pub fn fixed_array_encode<'a>(
 
         encode_uint(buffer, elem, *offset, bin);
 
-        *offset = bin.build_int_add(
+        *offset = bin.builder.build_int_add(
             *offset,
             bin.context.i64_type().const_int(1, false),
             "offset",

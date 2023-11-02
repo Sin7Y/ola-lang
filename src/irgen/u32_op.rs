@@ -44,6 +44,7 @@ pub fn u32_sub<'a>(
     let left = expression(l, bin, func_value, var_table, ns);
     let right = expression(r, bin, func_value, var_table, ns);
     let result: BasicValueEnum = bin
+        .builder
         .build_int_sub(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
@@ -115,9 +116,10 @@ pub fn u32_div<'a>(
 
     // 0 <= right - (remainder + 1)
     let one = bin.context.i64_type().const_int(1, false);
-    let right_minus_remainder_minus_one = bin.build_int_sub(
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
         right.into_int_value(),
-        bin.build_int_add(remainder.into_int_value(), one, ""),
+        bin.builder
+            .build_int_add(remainder.into_int_value(), one, ""),
         "",
     );
     bin.builder.build_call(
@@ -151,7 +153,7 @@ pub fn u32_div<'a>(
     );
 
     // assert that quotient * right + remainder == left
-    let quotient_mul_right_plus_remainder = bin.build_int_add(
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
         bin.builder
             .build_int_mul(quotient.into_int_value(), right.into_int_value(), ""),
         remainder.into_int_value(),
@@ -213,7 +215,7 @@ pub fn u32_mod<'a>(
 
     // 0 <= right - (remainder + 1)
     let one = bin.context.i64_type().const_int(1, false);
-    let right_minus_remainder_minus_one = bin.build_int_sub(
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
         right.into_int_value(),
         bin.builder
             .build_int_add(remainder.into_int_value(), one, ""),
@@ -250,7 +252,7 @@ pub fn u32_mod<'a>(
     );
 
     // assert that quotient * right + remainder == left
-    let quotient_mul_right_plus_remainder = bin.build_int_add(
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
         bin.builder
             .build_int_mul(quotient.into_int_value(), right.into_int_value(), ""),
         remainder.into_int_value(),
@@ -384,7 +386,7 @@ pub fn u32_shift_right<'a>(
 
     // 0 <= right - (remainder + 1)
     let one = bin.context.i64_type().const_int(1, false);
-    let right_minus_remainder_minus_one = bin.build_int_sub(
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
         right,
         bin.builder
             .build_int_add(remainder.into_int_value(), one, ""),
@@ -421,7 +423,7 @@ pub fn u32_shift_right<'a>(
     );
 
     // assert that quotient * right + remainder == left
-    let quotient_mul_right_plus_remainder = bin.build_int_add(
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
         bin.builder
             .build_int_mul(quotient.into_int_value(), right, ""),
         remainder.into_int_value(),
@@ -628,7 +630,8 @@ pub fn u32_power<'a>(
 
     // Decrement the right value
     let updated_right_value =
-        bin.build_int_sub(current_right_value_loaded, i64_type.const_int(1, false), "");
+        bin.builder
+            .build_int_sub(current_right_value_loaded, i64_type.const_int(1, false), "");
     bin.builder
         .build_store(current_right_value, updated_right_value);
 

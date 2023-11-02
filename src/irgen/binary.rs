@@ -335,32 +335,32 @@ impl<'a> Binary<'a> {
     }
 
     // Creates a new stack allocation instruction in the entry block of the function
-    pub(crate) fn build_int_add(
-        &self,
-        left: IntValue<'a>,
-        right: IntValue<'a>,
-        name: &str,
-    ) -> IntValue<'a> {
-        if right == self.context.i64_type().const_zero() {
-            return left;
-        } else {
-            return self.builder.build_int_add(left, right, name);
-        }
-    }
+    // pub(crate) fn build_int_add(
+    //     &self,
+    //     left: IntValue<'a>,
+    //     right: IntValue<'a>,
+    //     name: &str,
+    // ) -> IntValue<'a> {
+    //     if right == self.context.i64_type().const_zero() {
+    //         return left;
+    //     } else {
+    //         return self.builder.build_int_add(left, right, name);
+    //     }
+    // }
 
     // Creates a new stack allocation instruction in the entry block of the function
-    pub(crate) fn build_int_sub(
-        &self,
-        left: IntValue<'a>,
-        right: IntValue<'a>,
-        name: &str,
-    ) -> IntValue<'a> {
-        if right == self.context.i64_type().const_zero() {
-            return left;
-        } else {
-            return self.builder.build_int_sub(left, right, name);
-        }
-    }
+    // pub(crate) fn build_int_sub(
+    //     &self,
+    //     left: IntValue<'a>,
+    //     right: IntValue<'a>,
+    //     name: &str,
+    // ) -> IntValue<'a> {
+    //     if right == self.context.i64_type().const_zero() {
+    //         return left;
+    //     } else {
+    //         return self.builder.build_int_sub(left, right, name);
+    //     }
+    // }
 
     /// Allocate vector on the heap and return heap address
     pub(crate) fn alloca_dynamic_array(
@@ -446,7 +446,8 @@ impl<'a> Binary<'a> {
             .unwrap();
 
         let heap_start_int =
-            self.build_int_sub(heap_ptr_after.into_int_value(), size, "heap_start");
+            self.builder
+                .build_int_sub(heap_ptr_after.into_int_value(), size, "heap_start");
 
         let heap_start_ptr = self.builder.build_int_to_ptr(
             heap_start_int,
@@ -524,7 +525,7 @@ impl<'a> Binary<'a> {
             let mut src_len = self.context.i64_type().const_zero();
 
             for (_, len) in hash_src.iter() {
-                src_len = self.build_int_add(src_len, *len, "");
+                src_len = self.builder.build_int_add(src_len, *len, "");
             }
             let (heap_src_int, heap_src_ptr) = self.heap_malloc(src_len);
             let mut dest_offset = heap_src_int;
@@ -538,7 +539,9 @@ impl<'a> Binary<'a> {
                 self.memcpy(v.into_pointer_value(), dest_ptr, *len);
                 // Check if this is the last iteration of the loop
                 if i < hash_src_len - 1 {
-                    dest_offset = self.build_int_add(dest_offset, *len, "next_dest_offset");
+                    dest_offset = self
+                        .builder
+                        .build_int_add(dest_offset, *len, "next_dest_offset");
                 }
             }
             (heap_src_ptr, src_len)
@@ -815,19 +818,28 @@ impl<'a> Binary<'a> {
         self.builder
             .build_call(mempcy_function, &[src.into(), dest.into(), len.into()], "");
     }
-    pub fn memcmp(&self, left: PointerValue<'a>, right: PointerValue<'a>, len: IntValue<'a>, op: IntPredicate) -> IntValue<'a> {
-
-       let func_name =  match op {
+    pub fn memcmp(
+        &self,
+        left: PointerValue<'a>,
+        right: PointerValue<'a>,
+        len: IntValue<'a>,
+        op: IntPredicate,
+    ) -> IntValue<'a> {
+        let func_name = match op {
             IntPredicate::EQ => "memcmp_eq",
             IntPredicate::NE => "memcmp_ne",
             IntPredicate::UGT => "memcmp_ugt",
             IntPredicate::UGE => "memcmp_uge",
-            _=> panic!("not implemented")
+            _ => panic!("not implemented"),
         };
         let mempcy_function = self.module.get_function(func_name).unwrap();
-        
+
         self.builder
-            .build_call(mempcy_function, &[left.into(), right.into(), len.into()], "")
+            .build_call(
+                mempcy_function,
+                &[left.into(), right.into(), len.into()],
+                "",
+            )
             .try_as_basic_value()
             .left()
             .unwrap()
@@ -873,8 +885,8 @@ impl<'a> Binary<'a> {
     //     ns: &Namespace,
     // ) {
     //     // print the value
-    //     let print_func: FunctionValue<'_> = self.module.get_function("prophet_printf").unwrap();
-    //     match ty {
+    //     let print_func: FunctionValue<'_> =
+    // self.module.get_function("prophet_printf").unwrap();     match ty {
     //         Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
     //             self.builder.build_call(
     //                 print_func,
@@ -915,14 +927,14 @@ impl<'a> Binary<'a> {
     //                 "",
     //             );
     //         }
-    
+
     //         Type::DynamicBytes => {
     //             let fields_start = self.builder.build_ptr_to_int(
     //                 arg.into_pointer_value(),
     //                 self.context.i64_type(),
     //                 "fields_start",
     //             );
-    
+
     //             self.builder.build_call(
     //                 print_func,
     //                 &[
@@ -953,9 +965,9 @@ impl<'a> Binary<'a> {
     //                 self.context.i64_type(),
     //                 "array_start",
     //             );
-    //             let array_len = if let Some(ArrayLength::Fixed(d)) = dims.last() {
-    //                 self.context.i64_type().const_int(d.to_u64().unwrap(), false)
-    //             } else {
+    //             let array_len = if let Some(ArrayLength::Fixed(d)) = dims.last()
+    // {                 self.context.i64_type().const_int(d.to_u64().unwrap(),
+    // false)             } else {
     //                 self.vector_len(arg)
     //             };
     //             self.builder.build_call(
@@ -991,11 +1003,11 @@ impl<'a> Binary<'a> {
     //         Type::Mapping(_) => todo!(),
     //         Type::Contract(_) => todo!(),
     //         Type::Ref(ty) => {
-    //             let ref_value = if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
-    //                 let loaded_type = self.llvm_type(ty, ns).ptr_type(AddressSpace::default());
-    //                 self.builder
-    //                     .build_load(loaded_type, arg.into_pointer_value(), "")
-    //             } else {
+    //             let ref_value = if ty.is_reference_type(ns) &&
+    // !ty.is_fixed_reference_type() {                 let loaded_type =
+    // self.llvm_type(ty, ns).ptr_type(AddressSpace::default());                
+    // self.builder                     .build_load(loaded_type,
+    // arg.into_pointer_value(), "")             } else {
     //                 let loaded_type = self.llvm_type(ty, ns);
     //                 self.builder
     //                     .build_load(loaded_type, arg.into_pointer_value(), "")
@@ -1003,8 +1015,8 @@ impl<'a> Binary<'a> {
     //             self.debug_print(ref_value, ty, func_value, ns);
     //         }
     //         Type::StorageRef(ty) => {
-    //             let value = storage_load(self, ty, &mut arg.into(), func_value, ns);
-    //             self.debug_print(value, ty, func_value, ns);
+    //             let value = storage_load(self, ty, &mut arg.into(), func_value,
+    // ns);             self.debug_print(value, ty, func_value, ns);
     //         }
     //         Type::Function { .. } => todo!(),
     //         Type::UserType(_) => todo!(),
@@ -1015,5 +1027,4 @@ impl<'a> Binary<'a> {
     //         Type::BufferPointer => todo!(),
     //     }
     // }
-    
 }
