@@ -518,14 +518,14 @@ pub fn expression<'a>(
             let (_, struct_alloca) = bin.heap_malloc(struct_size);
 
             for (i, expr) in values.iter().enumerate() {
-                let elemptr = unsafe {
-                    bin.builder.build_gep(
+                let elemptr =
+                    bin.builder.build_struct_gep(
                         struct_ty,
                         struct_alloca,
-                        &[bin.context.i64_type().const_int(i as u64, false)],
+                        i as u32,
                         "struct_member",
-                    )
-                };
+                    ).unwrap();
+                
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
 
@@ -679,16 +679,14 @@ pub fn expression<'a>(
         } => {
             let struct_ty = bin.llvm_type(var.ty().deref_memory(), ns);
             let struct_ptr = expression(var, bin, func_value, var_table, ns).into_pointer_value();
-            unsafe {
                 bin.builder
-                    .build_gep(
+                    .build_struct_gep(
                         struct_ty,
                         struct_ptr,
-                        &[bin.context.i64_type().const_int(*field_no as u64, false)],
+                        *field_no as u32,
                         "struct_member",
-                    )
-                    .into()
-            }
+                    ).unwrap()
+                .into()
         }
         Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_value, var_table, ns).into_pointer_value();

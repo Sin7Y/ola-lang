@@ -477,14 +477,13 @@ fn load_struct_member<'a>(
 ) -> BasicValueEnum<'a> {
     let struct_ty = bin.llvm_type(struct_ty.deref_memory(), ns);
 
-    let struct_member = unsafe {
-        bin.builder.build_gep(
+    let struct_member = 
+        bin.builder.build_struct_gep(
             struct_ty,
             struct_ptr.into_pointer_value(),
-            &[bin.context.i64_type().const_int(member as u64, false)],
+            member as u32,
             "struct_member",
-        )
-    };
+        ).unwrap();
     if field_ty.is_primitive() {
         bin.builder
             .build_load(bin.llvm_type(field_ty, ns), struct_member, "elem")
