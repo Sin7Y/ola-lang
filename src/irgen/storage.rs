@@ -730,7 +730,6 @@ pub(crate) fn array_offset<'a>(
         index_with_size,
         "storage_array_offset",
     );
-
     bin.builder
         .build_store(hash_ret.into_pointer_value(), new_hash_low);
     hash_ret
@@ -742,19 +741,29 @@ pub(crate) fn slot_offest<'a>(
     offset: BasicValueEnum<'a>,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
-    let slot_value = match slot.get_type() {
-        BasicTypeEnum::PointerType(..) => bin.builder.build_load(
-            bin.context.i64_type(),
-            slot.into_pointer_value(),
-            "slot_value",
-        ),
-        _ => slot,
-    };
-    bin.builder
-        .build_int_add(
-            slot_value.into_int_value(),
-            offset.into_int_value(),
-            "slot_offset",
-        )
-        .into()
+    match slot.get_type() {
+        BasicTypeEnum::PointerType(..) => {
+            let slot_value = bin.builder.build_load(
+                bin.context.i64_type(),
+                slot.into_pointer_value(),
+                "slot_value",
+            );
+            let slot_offset = bin.builder.build_int_add(
+                slot_value.into_int_value(),
+                offset.into_int_value(),
+                "slot_offset",
+            );
+            bin.builder
+                .build_store(slot.into_pointer_value(), slot_offset);
+            slot.into()
+        }
+        _ => bin
+            .builder
+            .build_int_add(
+                slot.into_int_value(),
+                offset.into_int_value(),
+                "slot_offset",
+            )
+            .into(),
+    }
 }
