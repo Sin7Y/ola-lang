@@ -29,7 +29,7 @@ contract Voting {
         assert(proposals[2].name == 66, "Proposal name is not 66");
     }
 
-    // 2
+
     fn vote_proposal(u32 proposal_)  {
         address msgSender = caller_address();
         Voter storage sender = voters[msgSender];
@@ -50,6 +50,7 @@ contract Voting {
                 winningProposal_ = p;
             }
         }
+        assert(winningProposal_ == 2, "Winning proposal is not 2");
         return winningProposal_;
     }
 

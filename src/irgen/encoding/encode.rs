@@ -121,20 +121,6 @@ pub(crate) fn encode_uint<'a>(
     bin.builder.build_store(start, arg);
 }
 
-// /// Write whatever is inside the given `arg` into `buffer` without any
-// /// modification.
-// pub(crate) fn encode_bool<'a>(
-//     buffer: PointerValue<'a>,
-//     arg: BasicValueEnum<'a>,
-//     offset: IntValue<'a>,
-//     bin: &Binary<'a>,
-// ) {
-//     let start = unsafe {
-//         bin.builder
-//             .build_gep(bin.context.bool_type(), buffer, &[offset], "start")
-//     };
-//     bin.builder.build_store(start, arg);
-// }
 
 /// Encode `address` into `buffer` as an [4 * i64] array.
 fn encode_address_or_hash<'a>(
