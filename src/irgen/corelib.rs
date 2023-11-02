@@ -1,5 +1,3 @@
-
-
 use crate::irgen::binary::Binary;
 use crate::sema::ast::Namespace;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
@@ -26,7 +24,8 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 4]> = Lazy::new(|| ["memcpy", "memcmp_eq", "memcmp_ugt", "memcmp_uge"]);
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 4]> =
+    Lazy::new(|| ["memcpy", "memcmp_eq", "memcmp_ugt", "memcmp_uge"]);
 
 // // These functions will be called implicitly by corelib
 // // May later become corelib functions open to the user as well
@@ -246,14 +245,8 @@ pub fn declare_core_lib(bin: &mut Binary) {
         "memcmp_eq" | "memcmp_ugt" | "memcmp_uge" => {
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
-            let ftype = i64_type.fn_type(
-                &[
-                    ptr_type.into(),
-                    ptr_type.into(),
-                    i64_type.into(),
-                ],
-                false,
-            );
+            let ftype =
+                i64_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
             let func = bin.module.add_function(p, ftype, None);
             bin.builder
                 .position_at_end(bin.context.append_basic_block(func, "entry"));
@@ -277,7 +270,7 @@ fn fields_concat<'a>(
     let left_data = bin.vector_data(left);
     let right_len = bin.vector_len(right);
     let right_data = bin.vector_data(right);
-    let new_len = bin.build_int_add(left_len, right_len, "new_len");
+    let new_len = bin.builder.build_int_add(left_len, right_len, "new_len");
     let dest_fields = bin.vector_new(new_len);
 
     let new_fields_data = bin.vector_data(dest_fields.as_basic_value_enum());
@@ -297,7 +290,11 @@ fn fields_concat<'a>(
     dest_fields.as_basic_value_enum()
 }
 
-pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
+pub fn create_mem_compare_function<'a>(
+    bin: &Binary<'a>,
+    function: FunctionValue<'a>,
+    op: IntPredicate,
+) {
     let left_ptr = function.get_nth_param(0).unwrap();
     let left_ptr_alloca = bin.build_alloca(function, left_ptr.get_type(), "left_ptr_alloca");
     bin.builder.build_store(left_ptr_alloca, left_ptr);
@@ -331,8 +328,7 @@ pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue
         .build_load(bin.context.i64_type(), len_alloca, "len")
         .into_int_value();
 
-
-        let loop_ty = bin.context.i64_type();
+    let loop_ty = bin.context.i64_type();
     let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
     bin.builder.build_store(index_alloca, loop_ty.const_zero());
 
@@ -340,20 +336,49 @@ pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue
     bin.builder.build_unconditional_branch(cond);
     bin.builder.position_at_end(cond);
 
-    let index_value = bin.builder.build_load(loop_ty, index_alloca, "index_value").into_int_value();
-    let loop_check = bin.builder.build_int_compare(IntPredicate::ULT, index_value, len, "loop_check");
+    let index_value = bin
+        .builder
+        .build_load(loop_ty, index_alloca, "index_value")
+        .into_int_value();
+    let loop_check =
+        bin.builder
+            .build_int_compare(IntPredicate::ULT, index_value, len, "loop_check");
     let body = bin.context.append_basic_block(function, "body");
     let done = bin.context.append_basic_block(function, "done");
     bin.builder.build_conditional_branch(loop_check, body, done);
 
     bin.builder.position_at_end(body);
-    let left_elem_ptr = unsafe { bin.builder.build_gep(bin.context.i64_type(), left_ptr, &[index_value], "left_elem_ptr") };
-    let left_elem = bin.builder.build_load(bin.context.i64_type(), left_elem_ptr, "left_elem").into_int_value();
-    let right_elem_ptr = unsafe { bin.builder.build_gep(bin.context.i64_type(), right_ptr, &[index_value], "right_elem_ptr") };
-    let right_elem = bin.builder.build_load(bin.context.i64_type(), right_elem_ptr, "right_elem").into_int_value();
-    let compare = bin.builder.build_int_compare(op, left_elem, right_elem, "compare");
+    let left_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            left_ptr,
+            &[index_value],
+            "left_elem_ptr",
+        )
+    };
+    let left_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
+        .into_int_value();
+    let right_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            right_ptr,
+            &[index_value],
+            "right_elem_ptr",
+        )
+    };
+    let right_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
+        .into_int_value();
+    let compare = bin
+        .builder
+        .build_int_compare(op, left_elem, right_elem, "compare");
 
-    let next_index = bin.build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+    let next_index =
+        bin.builder
+            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
     bin.builder.build_store(index_alloca, next_index);
 
     bin.builder.build_conditional_branch(compare, cond, done);
@@ -362,23 +387,21 @@ pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue
     let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
     phi_node.add_incoming(&[
         (&bin.context.i64_type().const_int(1, false), cond),
-        (&bin.context.i64_type().const_zero(), body)
+        (&bin.context.i64_type().const_zero(), body),
     ]);
     bin.builder.build_return(Some(&phi_node.as_basic_value()));
 
     // let cond = bin.context.append_basic_block(function, "cond");
     // let body = bin.context.append_basic_block(function, "body");
     // let done = bin.context.append_basic_block(function, "done");
-    // let continue_block = bin.context.append_basic_block(function, "continue");
-
+    // let continue_block = bin.context.append_basic_block(function,
+    // "continue");
 
     // let loop_ty = bin.context.i64_type();
     // // create an alloca for the loop variable
     // let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
     // // initialize the loop variable with the starting value
     // bin.builder.build_store(index_alloca, loop_ty.const_zero());
-
-
 
     // bin.builder.build_unconditional_branch(cond);
     // bin.builder.position_at_end(cond);
@@ -391,7 +414,8 @@ pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue
 
     // let loop_check = bin
     //     .builder
-    //     .build_int_compare(IntPredicate::ULT, index_value, len, "loop_check");
+    //     .build_int_compare(IntPredicate::ULT, index_value, len,
+    // "loop_check");
 
     // bin.builder.build_conditional_branch(loop_check, body, done);
 
@@ -426,13 +450,15 @@ pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue
 
     // let compare = bin
     //     .builder
-    //     .build_int_compare(IntPredicate::EQ, left_elem, right_elem, "compare");
+    //     .build_int_compare(IntPredicate::EQ, left_elem, right_elem,
+    // "compare");
 
     // bin.builder.build_conditional_branch(compare, body, not_equal);
 
     // bin.builder.position_at_end(continue_block);
 
-    // let next_index = bin.build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+    // let next_index = bin.builder.build_int_add(index_value,
+    // loop_ty.const_int(1, false), "next_index");
 
     // bin.builder.build_store(index_alloca, next_index);
 
@@ -442,14 +468,9 @@ pub fn create_mem_compare_function<'a>(bin: &Binary<'a>, function: FunctionValue
     // bin.builder.build_return(Some(&bin.context.i64_type().const_zero()));
 
     // bin.builder.position_at_end(done);
-    // bin.builder.build_return(Some(&bin.context.i64_type().const_int(1, false)));
+    // bin.builder.build_return(Some(&bin.context.i64_type().const_int(1,
+    // false)));
 }
-
-
-
-
-
-
 
 pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     let src_ptr = function.get_nth_param(0).unwrap();
@@ -537,7 +558,9 @@ pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>)
     bin.builder.build_store(dest_access, src_value);
 
     // memory copy end
-    let next_index = bin.build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+    let next_index =
+        bin.builder
+            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
 
     // store the incremented value back
     bin.builder.build_store(index_alloca, next_index);

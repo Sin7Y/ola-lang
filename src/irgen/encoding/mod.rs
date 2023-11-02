@@ -49,7 +49,7 @@ pub(super) fn abi_encode<'a>(
             func_value,
             ns,
         );
-        offset = bin.build_int_add(advance, offset, "");
+        offset = bin.builder.build_int_add(advance, offset, "");
     }
     heap_start_ptr
 }
@@ -65,7 +65,7 @@ pub(super) fn abi_encode_store_tape<'a>(
 ) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.build_int_add(
+    let heap_size = bin.builder.build_int_add(
         size,
         bin.context.i64_type().const_int(1, false),
         "heap_size",
@@ -85,17 +85,13 @@ pub(super) fn abi_encode_store_tape<'a>(
             func_value,
             ns,
         );
-        offset = bin.build_int_add(advance, offset, "");
+        offset = bin.builder.build_int_add(advance, offset, "");
     }
     // encode size to heap, the "size" here is only used for tape area
     // identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
-    
     bin.tape_data_store(heap_start_int, heap_size);
-
-
-    
 }
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
@@ -110,7 +106,7 @@ pub(super) fn abi_encode_with_selector<'a>(
 ) -> PointerValue<'a> {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.build_int_add(
+    let heap_size = bin.builder.build_int_add(
         size,
         bin.context.i64_type().const_int(2, false),
         "heap_size",
@@ -130,7 +126,7 @@ pub(super) fn abi_encode_with_selector<'a>(
             func_value,
             ns,
         );
-        offset = bin.build_int_add(advance, offset, "");
+        offset = bin.builder.build_int_add(advance, offset, "");
     }
     // encode size to heap, the "size" here is used for tape area identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
@@ -170,7 +166,7 @@ pub(super) fn abi_decode<'a>(
         let (read_item, advance) = read_from_buffer(input_start, bin, item, func_value, ns);
         read_items.push(read_item);
         if item_no < types.len() - 1 {
-            input_start = bin.build_int_add(input_start, advance, "");
+            input_start = bin.builder.build_int_add(input_start, advance, "");
             // validator.validate_buffer_end(bin, offset, func_value, ns);
         }
     }
@@ -191,7 +187,7 @@ pub(super) fn calculate_size_args<'a>(
     let mut size = get_args_type_size(bin, args[0], &types[0], func_value, ns);
     for (i, item) in types.iter().enumerate().skip(1) {
         let additional = get_args_type_size(bin, args[i], item, func_value, ns);
-        size = bin.build_int_add(size, additional, "");
+        size = bin.builder.build_int_add(size, additional, "");
     }
     size
 }
@@ -379,7 +375,7 @@ fn calculate_complex_array_size<'a>(
             ns,
         );
         let size = bin.vector_len(arr);
-        let size = bin.build_int_add(
+        let size = bin.builder.build_int_add(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
@@ -406,7 +402,7 @@ fn calculate_complex_array_size<'a>(
         );
         let elem_size = get_args_type_size(bin, deref, elem_ty, func_value, ns);
 
-        let size = bin.build_int_add(
+        let size = bin.builder.build_int_add(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
@@ -459,14 +455,14 @@ fn calculate_struct_size<'a>(
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
         let expr_size =
             get_args_type_size(bin, struct_start_pointer.into(), &field_ty, func_value, ns).into();
-        struct_offset = bin.build_int_add(struct_offset, expr_size, "");
+        struct_offset = bin.builder.build_int_add(struct_offset, expr_size, "");
         struct_start_pointer = bin.builder.build_int_to_ptr(
             struct_offset,
             bin.context.i64_type().ptr_type(AddressSpace::default()),
             "",
         );
     }
-    let size = bin.build_int_sub(struct_offset, struct_start, "");
+    let size = bin.builder.build_int_sub(struct_offset, struct_start, "");
     size
 }
 
@@ -482,13 +478,12 @@ fn load_struct_member<'a>(
     let struct_ty = bin.llvm_type(struct_ty.deref_memory(), ns);
 
     let struct_member = unsafe {
-        bin.builder
-            .build_gep(
-                struct_ty,
-                struct_ptr.into_pointer_value(),
-                &[bin.context.i64_type().const_int(member as u64, false)],
-                "struct_member",
-            )
+        bin.builder.build_gep(
+            struct_ty,
+            struct_ptr.into_pointer_value(),
+            &[bin.context.i64_type().const_int(member as u64, false)],
+            "struct_member",
+        )
     };
     if field_ty.is_primitive() {
         bin.builder
@@ -667,7 +662,9 @@ fn finish_array_loop<'a>(bin: &Binary<'a>, for_loop: &ForLoop<'a>) {
         .builder
         .build_load(bin.context.i64_type(), for_loop.index, "index")
         .into_int_value();
-    let index_var = bin.build_int_add(index, bin.context.i64_type().const_int(1, false), "");
+    let index_var =
+        bin.builder
+            .build_int_add(index, bin.context.i64_type().const_int(1, false), "");
     bin.builder.build_store(for_loop.index, index_var);
     bin.builder.build_unconditional_branch(for_loop.cond_block);
 

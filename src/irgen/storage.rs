@@ -107,7 +107,9 @@ pub(crate) fn storage_array_pop<'a>(
     storage_delete(bin, &elem_ty, &mut pop_pos, func_value, ns);
 
     // set decrease length
-    let new_length = bin.build_int_sub(array_length.into_int_value(), i64_const!(1), "new_length");
+    let new_length =
+        bin.builder
+            .build_int_sub(array_length.into_int_value(), i64_const!(1), "new_length");
     storage_store(
         bin,
         &Type::Uint(32),
@@ -137,7 +139,12 @@ pub(crate) fn storage_load<'a>(
 
                 let ty = ty.array_deref();
 
-                let new_array = bin.build_alloca(function, llvm_ty, "array_literal");
+                let array_size = bin
+                    .context
+                    .i64_type()
+                    .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
+
+                let (_, new_array) = bin.heap_malloc(array_size);
 
                 bin.emit_static_loop_with_int(
                     function,
@@ -217,13 +224,12 @@ pub(crate) fn storage_load<'a>(
                 let val = storage_load(bin, &field.ty, slot, function, ns);
 
                 let elem = unsafe {
-                    bin.builder
-                        .build_gep(
-                            llvm_ty,
-                            struct_alloca,
-                            &[bin.context.i64_type().const_int(i as u64, false)],
-                            field.name_as_str(),
-                        )
+                    bin.builder.build_gep(
+                        llvm_ty,
+                        struct_alloca,
+                        &[bin.context.i64_type().const_int(i as u64, false)],
+                        field.name_as_str(),
+                    )
                 };
 
                 let val = if field.ty.deref_memory().is_fixed_reference_type() {
@@ -235,19 +241,39 @@ pub(crate) fn storage_load<'a>(
                 };
 
                 bin.builder.build_store(elem, val);
-                if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) && (i != ns.structs[*no].fields.len() - 1) {
-                    *slot = slot_next(bin, *slot);
-                }
             }
 
             struct_alloca.into()
         }
-        Type::String => get_storage_dynamic_bytes(bin, ty, slot, function, ns),
-        Type::Address | Type::Contract(_) | Type::Hash => storage_load_internal(bin, *slot).into(),
+        Type::String | Type::DynamicBytes => {
+            let ret = get_storage_dynamic_bytes(bin, ty, slot, function, ns);
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
+            ret
+        }
+        Type::Address | Type::Contract(_) | Type::Hash => {
+            let ret = storage_load_internal(bin, *slot).into();
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
+            ret
+        }
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let storage_loaded = storage_load_internal(bin, *slot);
-            bin.builder
-                .build_load(bin.context.i64_type(), storage_loaded, "storage_value")
+            let ret =
+                bin.builder
+                    .build_load(bin.context.i64_type(), storage_loaded, "storage_value");
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
+            ret
         }
         _ => {
             unimplemented!("load {}", ty.to_string(ns))
@@ -296,7 +322,14 @@ pub(crate) fn storage_store<'a>(
                         storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
-                            *slot = slot_next(bin, *slot);
+                            *slot = slot_offest(
+                                bin,
+                                *slot,
+                                bin.context
+                                    .i64_type()
+                                    .const_int(elem_ty.storage_slots(ns).to_u64().unwrap(), false)
+                                    .into(),
+                            );
                         }
                     },
                 );
@@ -334,7 +367,14 @@ pub(crate) fn storage_store<'a>(
                         storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
-                            *slot = slot_next(bin, *slot);
+                            *slot = slot_offest(
+                                bin,
+                                *slot,
+                                bin.context
+                                    .i64_type()
+                                    .const_int(elem_ty.storage_slots(ns).to_u64().unwrap(), false)
+                                    .into(),
+                            );
                         }
                     },
                 );
@@ -350,7 +390,14 @@ pub(crate) fn storage_store<'a>(
                         storage_delete(bin, elem_ty, slot, function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
-                            *slot = slot_next(bin, *slot);
+                            *slot = slot_offest(
+                                bin,
+                                *slot,
+                                bin.context
+                                    .i64_type()
+                                    .const_int(elem_ty.storage_slots(ns).to_u64().unwrap(), false)
+                                    .into(),
+                            );
                         }
                     },
                 );
@@ -359,13 +406,12 @@ pub(crate) fn storage_store<'a>(
         Type::Struct(no) => {
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
                 let elem = unsafe {
-                    bin.builder
-                        .build_gep(
-                            bin.llvm_type(ty.deref_any(), ns),
-                            dest.into_pointer_value(),
-                            &[i64_const!(i as u64)],
-                            field.name_as_str(),
-                        )
+                    bin.builder.build_gep(
+                        bin.llvm_type(ty.deref_any(), ns),
+                        dest.into_pointer_value(),
+                        &[i64_const!(i as u64)],
+                        field.name_as_str(),
+                    )
                 };
 
                 storage_store(bin, &field.ty, slot, elem.into(), function, ns);
@@ -373,17 +419,22 @@ pub(crate) fn storage_store<'a>(
                 if (!field.ty.is_reference_type(ns) || matches!(field.ty, Type::String))
                     && (i != ns.structs[*no].fields.len() - 1)
                 {
-                    *slot = slot_next(bin, *slot);
+                    *slot = slot_offest(
+                        bin,
+                        *slot,
+                        bin.context
+                            .i64_type()
+                            .const_int(field.ty.storage_slots(ns).to_u64().unwrap(), false)
+                            .into(),
+                    );
                 }
             }
         }
         Type::String => {
             set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
-        Type::Address | Type::Contract(_) | Type::Hash => {
-            storage_store_internal(bin, *slot, dest)
-        }
-         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
+        Type::Address | Type::Contract(_) | Type::Hash => storage_store_internal(bin, *slot, dest),
+        Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let dest = if dest.is_pointer_value() {
                 let m =
                     bin.builder
@@ -422,7 +473,14 @@ pub(crate) fn storage_delete<'a>(
                         storage_delete(bin, &ty, slot, function, ns);
 
                         if !ty.is_reference_type(ns) {
-                            *slot = slot_next(bin, *slot);
+                            *slot = slot_offest(
+                                bin,
+                                *slot,
+                                bin.context
+                                    .i64_type()
+                                    .const_int(ty.storage_slots(ns).to_u64().unwrap(), false)
+                                    .into(),
+                            );
                         }
                     },
                 );
@@ -444,7 +502,14 @@ pub(crate) fn storage_delete<'a>(
                         storage_delete(bin, &ty, slot, function, ns);
 
                         if !ty.is_reference_type(ns) {
-                            *slot = slot_next(bin, *slot);
+                            *slot = slot_offest(
+                                bin,
+                                *slot,
+                                bin.context
+                                    .i64_type()
+                                    .const_int(ty.storage_slots(ns).to_u64().unwrap(), false)
+                                    .into(),
+                            );
                         }
                     },
                 );
@@ -458,7 +523,14 @@ pub(crate) fn storage_delete<'a>(
                 storage_delete(bin, &field.ty, slot, function, ns);
 
                 if !field.ty.is_reference_type(ns) || matches!(field.ty, Type::String) {
-                    *slot = slot_next(bin, *slot);
+                    *slot = slot_offest(
+                        bin,
+                        *slot,
+                        bin.context
+                            .i64_type()
+                            .const_int(field.ty.storage_slots(ns).to_u64().unwrap(), false)
+                            .into(),
+                    );
                 }
             }
         }
@@ -532,7 +604,11 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
             let elem = bin.array_subscript(ty, dest, elem_no, ns);
             storage_store(bin, &Type::Uint(32), slot, elem.into(), function, ns);
 
-            *slot = slot_next(bin, *slot);
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
         },
     );
 
@@ -546,7 +622,11 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
         |_: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
             storage_delete(bin, &Type::Uint(32), slot, function, ns);
 
-            *slot = slot_next(bin, *slot);
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
         },
     );
 }
@@ -642,7 +722,9 @@ pub(crate) fn array_offset<'a>(
             "",
         )
     };
-    let hash_value_low = bin.builder.build_load(bin.context.i64_type(), elem_ptr, "hash_value_low");
+    let hash_value_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), elem_ptr, "hash_value_low");
 
     let index_with_size = bin.builder.build_int_mul(
         index.into_int_value(),
@@ -652,17 +734,14 @@ pub(crate) fn array_offset<'a>(
         "",
     );
 
-    let new_hash_low =
-        bin.builder
-            .build_int_add(hash_value_low.into_int_value(), index_with_size, "");
+    let new_hash_low = bin.builder.build_int_add(
+        hash_value_low.into_int_value(),
+        index_with_size,
+        "storage_array_offset",
+    );
 
     bin.builder.build_store(elem_ptr, new_hash_low);
     hash_ret
-}
-
-pub(crate) fn slot_next<'a>(bin: &Binary<'a>, slot: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
-    emit_context!(bin);
-    slot_offest(bin, slot, i64_const!(1).into())
 }
 
 pub(crate) fn slot_offest<'a>(
@@ -687,6 +766,10 @@ pub(crate) fn slot_offest<'a>(
         _ => slot,
     };
     bin.builder
-        .build_int_add(slot_value.into_int_value(), offset.into_int_value(), "slot_offest")
+        .build_int_add(
+            slot_value.into_int_value(),
+            offset.into_int_value(),
+            "slot_offset",
+        )
         .into()
 }

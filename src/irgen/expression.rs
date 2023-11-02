@@ -283,7 +283,7 @@ pub fn expression<'a>(
                 _ => expression(expr, bin, func_value, var_table, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
-            let after = bin.build_int_sub(v.into_int_value(), one, "");
+            let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
             match expr.as_ref() {
                 Expression::Variable { var_no, .. } => {
                     let before_ptr = var_table.get(var_no).unwrap();
@@ -293,7 +293,7 @@ pub fn expression<'a>(
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_value, var_table, ns);
-                    let after = bin.build_int_sub(v.into_int_value(), one, "");
+                    let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -335,7 +335,7 @@ pub fn expression<'a>(
                 _ => expression(expr, bin, func_value, var_table, ns),
             };
             let one = bin.context.i64_type().const_int(1, false);
-            let after = bin.build_int_add(v.into_int_value(), one, "");
+            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
             match expr.as_ref() {
                 Expression::Variable { var_no, .. } => {
                     let before_ptr = var_table.get(var_no).unwrap();
@@ -345,7 +345,7 @@ pub fn expression<'a>(
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_value, var_table, ns);
-                    let after = bin.build_int_add(v.into_int_value(), one, "");
+                    let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -359,7 +359,7 @@ pub fn expression<'a>(
                             dest
                         }
                         Type::Ref(_) => {
-                            let after = bin.build_int_add(v.into_int_value(), one, "");
+                            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                             bin.builder.build_store(
                                 dest.into_pointer_value(),
                                 after.as_basic_value_enum(),
@@ -451,7 +451,7 @@ pub fn expression<'a>(
             let (heap_start_int, heap_start_ptr) =
                 bin.heap_malloc(bin.context.i64_type().const_int(4, false));
             for i in 0..4 {
-                let address_elem = bin.build_int_add(
+                let address_elem = bin.builder.build_int_add(
                     heap_start_int,
                     bin.context.i64_type().const_int(i, false),
                     "",
@@ -519,13 +519,12 @@ pub fn expression<'a>(
 
             for (i, expr) in values.iter().enumerate() {
                 let elemptr = unsafe {
-                    bin.builder
-                        .build_gep(
-                            struct_ty,
-                            struct_alloca,
-                            &[bin.context.i64_type().const_int(i as u64, false)],
-                            "struct_member",
-                        )
+                    bin.builder.build_gep(
+                        struct_ty,
+                        struct_alloca,
+                        &[bin.context.i64_type().const_int(i as u64, false)],
+                        "struct_member",
+                    )
                 };
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
@@ -1145,6 +1144,7 @@ pub fn array_subscript<'a>(
         }
     };
     let array_length_sub_one: BasicValueEnum = bin
+        .builder
         .build_int_sub(
             array_length.into_int_value(),
             bin.context.i64_type().const_int(1, false),
@@ -1241,19 +1241,20 @@ pub fn array_slice<'a>(
     };
 
     // check start index is out of bounds
-    let array_length_sub_one = bin.build_int_sub(
+    let array_length_sub_one = bin.builder.build_int_sub(
         array_length,
         bin.context.i64_type().const_int(1, false),
         "array_len_sub_one",
     );
-    let array_length_sub_one_sub_start = bin.build_int_sub(array_length_sub_one, start, "");
+    let array_length_sub_one_sub_start = bin.builder.build_int_sub(array_length_sub_one, start, "");
     bin.range_check(array_length_sub_one_sub_start);
 
-    let array_length_sub_end = bin.build_int_sub(array_length, end, "");
+    let array_length_sub_end = bin.builder.build_int_sub(array_length, end, "");
     bin.range_check(array_length_sub_end);
 
     // slice length = end - start
-    let end_sub_start: inkwell::values::IntValue<'_> = bin.build_int_sub(end, start, "slice_len");
+    let end_sub_start: inkwell::values::IntValue<'_> =
+        bin.builder.build_int_sub(end, start, "slice_len");
     bin.range_check(end_sub_start);
 
     // alloc slice
@@ -1458,7 +1459,7 @@ fn external_call<'a>(
         "payload_len",
     );
 
-    let tape_size = bin.build_int_add(
+    let tape_size = bin.builder.build_int_add(
         payload_len.into_int_value(),
         bin.context.i64_type().const_int(2, false),
         "tape_size",
@@ -1468,7 +1469,7 @@ fn external_call<'a>(
         bin.builder
             .build_ptr_to_int(args.into_pointer_value(), bin.context.i64_type(), "");
 
-    let payload_start = bin.build_int_add(
+    let payload_start = bin.builder.build_int_add(
         payload_ptr,
         bin.context.i64_type().const_int(1, false),
         "payload_start",
@@ -1499,13 +1500,13 @@ fn external_call<'a>(
         bin.builder
             .build_load(bin.context.i64_type(), length_start_ptr, "return_length");
 
-    let heap_size = bin.build_int_add(
+    let heap_size = bin.builder.build_int_add(
         return_length.into_int_value(),
         bin.context.i64_type().const_int(2, false),
         "heap_size",
     );
 
-    let tape_size = bin.build_int_add(
+    let tape_size = bin.builder.build_int_add(
         return_length.into_int_value(),
         bin.context.i64_type().const_int(1, false),
         "tape_size",
@@ -1514,7 +1515,7 @@ fn external_call<'a>(
 
     bin.builder.build_store(heap_start_ptr, return_length);
 
-    let tape_start_int = bin.build_int_add(
+    let tape_start_int = bin.builder.build_int_add(
         heap_start_int,
         bin.context.i64_type().const_int(1, false),
         "",
@@ -1606,46 +1607,49 @@ pub(crate) fn debug_print<'a>(
                 "",
             );
         }
-        Type::Array(_, dims) => {
+        Type::Array(..) => {
             let array_start = bin.builder.build_ptr_to_int(
                 arg.into_pointer_value(),
                 bin.context.i64_type(),
                 "array_start",
             );
-            let array_len = if let Some(ArrayLength::Fixed(d)) = dims.last() {
-                bin.context.i64_type().const_int(d.to_u64().unwrap(), false)
-            } else {
-                bin.vector_len(arg)
-            };
             bin.builder.build_call(
                 print_func,
                 &[
                     array_start.into(),
-                    array_len.into(),
                     bin.context.i64_type().const_zero().into(),
                 ],
                 "",
             );
         }
-        Type::Struct(_) => {
+        Type::Struct(no) => {
             let struct_start = bin.builder.build_ptr_to_int(
                 arg.into_pointer_value(),
                 bin.context.i64_type(),
                 "struct_start",
             );
-            let struct_size = bin
-                .context
-                .i64_type()
-                .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
-            bin.builder.build_call(
-                print_func,
-                &[
-                    struct_start.into(),
-                    struct_size.into(),
-                    bin.context.i64_type().const_zero().into(),
-                ],
-                "",
-            );
+            let mut offset = struct_start;
+            for (_, field) in ns.structs[*no].fields.iter().enumerate() {
+                let field_ptr = bin.builder.build_int_to_ptr(offset, bin.context.i64_type().ptr_type(AddressSpace::default()), "");
+                let value = match field.ty {
+                    Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
+                        let value = bin.builder.build_load(bin.context.i64_type(), field_ptr, "");
+                        value
+                    }
+                    _=> {
+                        field_ptr.into()
+                    }
+                };
+                debug_print(bin, value, &field.ty, func_value, ns);
+
+                offset = bin.builder.build_int_add(
+                    offset,
+                    bin.context
+                        .i64_type()
+                        .const_int(field.ty.memory_size_of(ns).to_u64().unwrap(), false),
+                    "",
+                );
+            }
         }
         Type::Mapping(_) => todo!(),
         Type::Contract(_) => todo!(),
