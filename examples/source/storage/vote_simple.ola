@@ -16,19 +16,15 @@ contract Voting {
     Proposal[] proposals;
 
     // constructor
-    // [3, 64, 65, 66] 
     fn contract_init(u32[] proposalNames_) {
        for (u32 i = 0; i < proposalNames_.length; i++) {
             proposals.push(Proposal({
-            name: proposalNames_[i],
-            voteCount: 0
+                name: proposalNames_[i],
+                voteCount: 0
             }));
+            print(proposals[0].name);
         }
-        assert(proposals[0].name == 64, "Proposal name is not 64");
-        assert(proposals[1].name == 65, "Proposal name is not 65");
-        assert(proposals[2].name == 66, "Proposal name is not 66");
     }
-
 
     fn vote_proposal(u32 proposal_)  {
         address msgSender = caller_address();
@@ -50,17 +46,15 @@ contract Voting {
                 winningProposal_ = p;
             }
         }
-        assert(winningProposal_ == 1, "Winning proposal is not 2");
+        print(winningProposal_);
         return winningProposal_;
     }
 
      fn getWinnerName() -> (u32) {
         u32 winnerP = winningProposal();
-        assert(winnerP == 2, "Winner is not 2");
         u32 winnerName = proposals[winnerP].name;
-        assert(winnerName == 66, "Winner name is not 66");
+        print(winnerName);
         return winnerName;
      }
-
 
 }
