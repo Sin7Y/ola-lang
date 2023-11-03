@@ -10,6 +10,7 @@ use crate::codegen::{
     lower::{LoweringContext, LoweringError},
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn lower_insertvalue(
     ctx: &mut LoweringContext<Ola>,
@@ -17,7 +18,7 @@ pub fn lower_insertvalue(
     tys: &[Type],
     args: &[ValueId],
 ) -> Result<()> {
-    println!("lower insertvalue");
+    debug_println!("lower insertvalue");
     let value = get_operands_for_val(ctx, tys[0], args[0])?;
     let op_value = get_operand_for_val(ctx, tys[1], args[1])?;
     let elm_ty = ctx.types.base().element(tys[0]).unwrap();
@@ -46,7 +47,7 @@ pub fn lower_insertvalue(
             opcode = Opcode::MOVrr;
             value[ist_idx as usize].clone()
         };
-        println!("insert value operand data: {:?}", input);
+        debug_println!("insert value operand data: {:?}", input);
         let opcode = match input {
             OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
             OperandData::VReg(_) => opcode,
@@ -132,7 +133,7 @@ define i64 @insert(i64 %0) {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "insert:
@@ -216,7 +217,7 @@ define void @insert(i64 %0) {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "insert:

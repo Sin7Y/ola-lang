@@ -27,7 +27,7 @@ use vicis_core::ir::module::Module;
     // Compile the module for x86 and get a machine module
     let isa = Ola::default();
     let mach_module = compile_module(&isa, &module).expect("failed to compile");
-    println!("{}",mach_module.display_asm());
+    debug_println!("{}",mach_module.display_asm());
 
     // Display the machine module as assembly
     assert_eq!(

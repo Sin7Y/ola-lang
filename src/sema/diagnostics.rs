@@ -4,6 +4,7 @@ use super::ast::{Diagnostic, ErrorType, Level, Namespace};
 use crate::file_resolver::FileResolver;
 use crate::standard_json::{LocJson, OutputJson};
 use codespan_reporting::{diagnostic, files, term};
+use debug_print::debug_println;
 use itertools::Itertools;
 use ola_parser::program::Loc;
 use std::{
@@ -198,7 +199,7 @@ impl Namespace {
 
             term::emit(&mut buffer, &config, &files, &diagnostic).unwrap();
 
-            println!("{}", buffer.into_string());
+            debug_println!("{}", buffer.into_string());
         }
     }
 

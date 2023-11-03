@@ -1299,7 +1299,7 @@ pub fn assign_single<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     match left {
-        Expression::Variable {var_no, .. } => {
+        Expression::Variable { var_no, .. } => {
             let right_value = expression(right, bin, func_value, var_table, ns);
             let left_var = var_table.get(var_no).unwrap();
             bin.builder

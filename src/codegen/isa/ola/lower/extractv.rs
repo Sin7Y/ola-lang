@@ -9,6 +9,7 @@ use crate::codegen::{
     lower::{LoweringContext, LoweringError},
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn lower_extractvalue(
     ctx: &mut LoweringContext<Ola>,
@@ -16,7 +17,7 @@ pub fn lower_extractvalue(
     tys: &Type,
     args: &[ValueId],
 ) -> Result<()> {
-    println!("lower extractvalue");
+    debug_println!("lower extractvalue");
     let value = get_operands_for_val(ctx, *tys, args[0])?;
     let elm_ty = ctx.types.base().element(*tys).unwrap();
     let op_idx = get_operand_for_val(ctx, elm_ty, args[1])?;
@@ -196,7 +197,7 @@ define i64 @get2() {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "get1:

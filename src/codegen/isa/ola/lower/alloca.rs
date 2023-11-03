@@ -13,6 +13,7 @@ use crate::codegen::{
     lower::LoweringContext,
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn lower_alloca(
     ctx: &mut LoweringContext<Ola>,
@@ -22,7 +23,7 @@ pub fn lower_alloca(
     _align: u32,
 ) -> Result<()> {
     if let Some(slot_id) = ctx.inst_id_to_slot_id.get(&id) {
-        println!("alloca slot id exists");
+        debug_println!("alloca slot id exists");
         let ty = ctx.types.base_mut().pointer(tys[0]);
         //let output = new_empty_inst_output(ctx, ty, id);
         let addr = ctx.mach_data.vregs.add_vreg_data(ty);

@@ -22,7 +22,7 @@ contract Voting {
                 name: proposalNames_[i],
                 voteCount: 0
             }));
-            print(proposals[0].name);
+            print(proposals[i].name);
         }
     }
 

@@ -16,6 +16,7 @@ use crate::codegen::{
     lower::{LoweringContext, LoweringError},
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn lower_load(
     ctx: &mut LoweringContext<Ola>,
@@ -227,9 +228,11 @@ fn lower_load_gep(
             ]
         }
         [Value::Instruction(base_ptr), Const(Int(Int64(idx0))), Const(Int(Int64(idx1)))] => {
-            println!(
+            debug_println!(
                 "load_gep: base_ptr {:?},i64 idx0 {}, i64 idx1 {}",
-                base_ptr, idx0, idx1
+                base_ptr,
+                idx0,
+                idx1
             );
             let mut slot = None;
             let mut base = None;
@@ -262,9 +265,11 @@ fn lower_load_gep(
             ]
         }
         [Value::Instruction(base_ptr), Const(Int(Int32(idx0))), Const(Int(Int32(idx1)))] => {
-            println!(
+            debug_println!(
                 "load_gep: base_ptr {:?},i32 idx0 {}, i32 idx1 {}",
-                base_ptr, idx0, idx1
+                base_ptr,
+                idx0,
+                idx1
             );
             let base_ptr = ctx.inst_id_to_slot_id[base_ptr];
             let base_ty = gep.operand.types()[0];
@@ -291,19 +296,19 @@ fn lower_load_gep(
             let mut base = None;
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
-                println!("load gep slot");
+                debug_println!("load gep slot");
             } else {
                 base = Some(get_operand_for_val(
                     ctx,
                     gep.operand.types()[1],
                     gep.operand.args()[0],
                 )?);
-                println!("load gep base");
+                debug_println!("load gep base");
             }
 
             let base_ty = gep.operand.types()[0];
             let offset = idx0 * ctx.isa.data_layout.get_size_of(ctx.types, base_ty) as i64;
-            println!("gep load off:{}", offset);
+            debug_println!("gep load off:{}", offset);
 
             let idx1_ty = gep.operand.types()[3];
             //assert!(idx1_ty.is_i64());

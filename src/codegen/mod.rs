@@ -143,8 +143,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "inc_simple:
@@ -443,8 +443,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "hash_test:
@@ -1054,8 +1054,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "caller_address_test:
@@ -1777,8 +1777,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -1970,8 +1970,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -2094,8 +2094,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -2414,8 +2414,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -2683,8 +2683,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -2880,8 +2880,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -3075,8 +3075,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{:#?}", code.prophets);
-        println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -3140,7 +3140,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -3256,7 +3256,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "inc_simple:
@@ -3330,9 +3330,9 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        //println!("{:#?}",code);
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        //debug_println!("{:#?}",code);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -3424,7 +3424,7 @@ define void @main() {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "add_mapping:
@@ -3551,7 +3551,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "str_imm:
@@ -3644,7 +3644,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "str_var:
@@ -3725,7 +3725,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "str_var:
@@ -3823,7 +3823,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "str_var:
@@ -4122,7 +4122,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -4232,7 +4232,7 @@ define i32 @bar(i32 %0, i32 %1) #0 {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -4332,7 +4332,7 @@ define i32 @bar(i32 %0, i32 %1, i32 %2, i32 %3) #0 {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -4472,7 +4472,7 @@ endfor:                                           ; preds = %cond
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -4784,7 +4784,7 @@ enif:                                             ; preds = %entry
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -5082,8 +5082,8 @@ gte_rr:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "u32_sqrt:
@@ -5284,7 +5284,7 @@ enif4:                                            ; preds = %then3, %else
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -5990,9 +5990,9 @@ done:                                             ; preds = %cond
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        //println!("{:#?}",code);
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        //debug_println!("{:#?}",code);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "contract_init:
@@ -7289,8 +7289,8 @@ done75:                                           ; preds = %cond73
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -7343,7 +7343,7 @@ done75:                                           ; preds = %cond73
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "foo:
@@ -7417,7 +7417,7 @@ end:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -7594,8 +7594,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "foo:
@@ -7880,8 +7880,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -8157,8 +8157,8 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "delegatecall_test:

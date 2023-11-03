@@ -103,11 +103,11 @@ pub fn run_on_function<T: TargetIsa>(function: &mut Function<T>) {
     for block_id in function.layout.block_iter() {
         for inst_id in function.layout.inst_iter(block_id) {
             let inst = function.data.inst_ref_mut(inst_id);
-            // println!("{:?}", inst.data);
+            // debug_println!("{:?}", inst.data);
             for vreg in inst.data.all_vregs() {
                 if let Some(reg) = assigned_regs.get(&vreg).copied() {
                     used_regs.insert(reg);
-                    // println!("{:?} => {:?}", vreg, reg);
+                    // debug_println!("{:?} => {:?}", vreg, reg);
                     inst.data.rewrite(vreg, reg);
                 }
             }

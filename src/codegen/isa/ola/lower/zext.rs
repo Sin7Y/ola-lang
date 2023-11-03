@@ -430,7 +430,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -512,7 +512,7 @@ entry:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -821,8 +821,8 @@ done:                                             ; preds = %cond
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "main:

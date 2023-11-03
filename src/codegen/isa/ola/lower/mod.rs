@@ -34,6 +34,7 @@ use crate::codegen::{
     register::{RegisterClass, RegisterInfo, VReg},
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 use alloca::lower_alloca;
 use bin::{lower_bin, lower_itp};
@@ -106,7 +107,7 @@ impl LowerTrait<Ola> for Lower {
 }
 
 fn lower(ctx: &mut LoweringContext<Ola>, inst: &IrInstruction) -> Result<()> {
-    println!("lower opcode {:?}", inst.opcode);
+    debug_println!("lower opcode {:?}", inst.opcode);
     match inst.operand {
         Operand::Alloca(Alloca {
             ref tys,
@@ -173,7 +174,7 @@ fn get_inst_output(
 
     if ctx.ir_data.inst_ref(id).parent != ctx.cur_block {
         // The instruction indexed as `id` must be placed in another basic block
-        println!("inst output ref not current block");
+        debug_println!("inst output ref not current block");
         let vreg = new_empty_inst_output(ctx, ty, id);
         return Ok(vreg);
     }
@@ -201,7 +202,7 @@ fn get_str_inst_output(
     let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty) / 4;
     if let Some(vreg) = ctx.inst_id_to_vreg.get(&id) {
         if vreg.len() == sz {
-            println!("storage insts vregs len: {:?}", vreg.len());
+            debug_println!("storage insts vregs len: {:?}", vreg.len());
             return Ok(vreg.to_vec());
         }
     }
@@ -264,7 +265,7 @@ fn get_operand_for_const(
     ty: Type,
     konst: &ConstantValue,
 ) -> Result<OperandData> {
-    println!("scalar const operand");
+    debug_println!("scalar const operand");
     match konst {
         ConstantValue::Int(ConstantInt::Int32(i)) => Ok(OperandData::Int32(*i)),
         ConstantValue::Int(ConstantInt::Int64(i)) => Ok(OperandData::Int64(*i)),
@@ -380,7 +381,7 @@ fn get_operands_for_const(
     _ty: Type,
     konst: &ConstantValue,
 ) -> Result<Vec<OperandData>> {
-    println!("aggregation const operand");
+    debug_println!("aggregation const operand");
     match konst {
         ConstantValue::Array(ConstantArray {
             ty: _,
@@ -408,7 +409,7 @@ fn get_operands_for_const(
                         },
                         ctx.block_map[&ctx.cur_block],
                     ));
-                    println!("array const operand vreg: {:?}", addr);
+                    debug_println!("array const operand vreg: {:?}", addr);
                     inputs.push(addr.into());
                 */
                 let input = match e {
@@ -417,7 +418,7 @@ fn get_operands_for_const(
                     ConstantValue::Undef(_) => 0.into(),
                     e => todo!("{:?}", e),
                 };
-                println!("array const operand vreg: {:?}", input);
+                debug_println!("array const operand vreg: {:?}", input);
                 inputs.push(input);
             }
             Ok(inputs)
@@ -436,10 +437,10 @@ fn get_operands_for_const(
                     },
                     ctx.block_map[&ctx.cur_block],
                 ));
-                println!("aggregate zero const operand vreg {:?}", addr);
+                debug_println!("aggregate zero const operand vreg {:?}", addr);
                 inputs.push(addr.into());
                 */
-                println!("aggregate zero const operand");
+                debug_println!("aggregate zero const operand");
                 inputs.push(0.into());
             }
             Ok(inputs)

@@ -22,6 +22,7 @@ use crate::codegen::{
     register::{Reg, RegisterClass, RegisterInfo},
 };
 use anyhow::{Ok, Result};
+use debug_print::debug_println;
 
 pub fn lower_call(
     ctx: &mut LoweringContext<Ola>,
@@ -294,7 +295,7 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
     let mut gpr_used = args.len();
 
     for (_, (&ty, &arg0)) in tys.iter().rev().zip(args.iter().rev()).enumerate() {
-        println!(
+        debug_println!(
             "type pointer {:?},{:?},arg {:?}",
             ty.is_pointer(ctx.types),
             ty,
@@ -472,7 +473,7 @@ pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>
                 ));
             }
         } else {
-            println!("lower return scalar");
+            debug_println!("lower return scalar");
             let vreg = get_vreg_for_val(ctx, ty, value)?;
             let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
             assert!(ty.is_integer() || ty.is_pointer(ctx.types));
@@ -480,7 +481,7 @@ pub fn lower_return(ctx: &mut LoweringContext<Ola>, arg: Option<(Type, ValueId)>
                 4 | 8 => (GR::R0.into(), Opcode::MOVrr),
                 _ => todo!(),
             };
-            println!("reg {:#?},vreg {:#?}, sz {}", reg, vreg, sz);
+            debug_println!("reg {:#?},vreg {:#?}, sz {}", reg, vreg, sz);
             ctx.inst_seq.push(MachInstruction::new(
                 InstructionData {
                     opcode,

@@ -5,6 +5,7 @@ use crate::codegen::{
     module::Module,
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn run_on_module(module: &mut Module<Ola>) -> Result<()> {
     for (_, func) in &mut module.functions {
@@ -26,7 +27,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                 .iter()
                 .any(|op| matches!(op.data, OperandData::Slot(_)))
             {
-                println!(
+                debug_println!(
                     "eliminate slot pass: slot worklist opcode {:?}",
                     inst.data.opcode
                 );
@@ -54,7 +55,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
         if inst.data.opcode == Opcode::ADDri
             && matches!(&inst.data.operands[len - 1].data, &OperandData::Slot(_))
         {
-            println!("add slot data {:?}", inst.data.operands[len - 1].data);
+            debug_println!("add slot data {:?}", inst.data.operands[len - 1].data);
             match &inst.data.operands[len - 1].data {
                 OperandData::Slot(slot) => {
                     let off = function.slots.get(*slot).offset;
@@ -93,7 +94,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     if call {
                         size -= 2;
                     }
-                    println!(
+                    debug_println!(
                         "slot pattern 1 with slot, len: {:?}, off: {:?}, size: {:?}",
                         function.slots.arena.len() as i32,
                         off,
@@ -112,7 +113,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     if call {
                         size -= 2;
                     }
-                    println!(
+                    debug_println!(
                         "slot pattern 2 with slot+imm32, len: {:?}, off: {:?}, size: {:?}, imm {:?}",
                         function.slots.arena.len() as i32,
                         off,
@@ -134,7 +135,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     if call {
                         size -= 2;
                     }
-                    println!(
+                    debug_println!(
                         "slot pattern 3 with slot+imm64, len: {:?}, off: {:?}, size: {:?}, imm : {:?}",
                         function.slots.arena.len() as i32,
                         off,
@@ -156,7 +157,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     if call {
                         size -= 2;
                     }
-                    println!(
+                    debug_println!(
                         "slot pattern 3 len: {:?}, off: {:?}, size: {:?}, imm : {:?}",
                         function.slots.arena.len() as i32,
                         off,
@@ -169,7 +170,7 @@ pub fn run_on_function(function: &mut Function<Ola>) {
                     mem[2].data = OperandData::Reg(*reg);
                     mem[1].data = OperandData::None;
                     mem[3].data = OperandData::Reg(GR::R9.into());
-                    println!("slot pattern 4 with slot+reg");
+                    debug_println!("slot pattern 4 with slot+reg");
                 }
                 e => todo!("{:?}", e),
             }

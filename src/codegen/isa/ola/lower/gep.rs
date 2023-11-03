@@ -12,6 +12,7 @@ use crate::codegen::{
     lower::LoweringContext,
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn lower_gep(
     ctx: &mut LoweringContext<Ola>,
@@ -31,7 +32,7 @@ pub fn lower_gep(
     for (&arg, &arg_ty) in gep.args[1..].iter().zip(gep.tys[2..].iter()) {
         let idx = get_operand_for_val(ctx, arg_ty, arg)?;
         if cur_ty.is_struct(ctx.types) {
-            println!("gep struct");
+            debug_println!("gep struct");
             let layout = ctx
                 .isa
                 .data_layout
@@ -45,7 +46,7 @@ pub fn lower_gep(
             cur_ty = ctx.types.base().element_at(cur_ty, idx).unwrap();
         } else {
             //cur_ty = ctx.types.get_element(cur_ty).unwrap();
-            println!("gep no struct");
+            debug_println!("gep no struct");
             let sz = ctx.isa.data_layout.get_size_of(ctx.types, cur_ty) as i64;
             if let Some(idx) = idx.sext_as_i64() {
                 if idx != 0 {
@@ -76,7 +77,7 @@ pub fn lower_gep(
             // mem_imm = x.to_owned();
             let imm = x.sext_as_i64().unwrap();
             mem_imm = (imm / 4).into();
-            println!("gep mem_imm: {:?}", mem_imm);
+            debug_println!("gep mem_imm: {:?}", mem_imm);
         }
         [(_, x)] if x.sext_as_i64().is_some() => {
             unreachable!()
@@ -84,7 +85,7 @@ pub fn lower_gep(
         [(m, x)] if matches!(m, 1 | 2 | 4 | 8) => {
             mem_ridx = x.to_owned();
             // mem_mul = (*m as i64).into();
-            println!("gep size: {:?},idx {:?}", mem_ridx, mem_mul);
+            debug_println!("gep size: {:?},idx {:?}", mem_ridx, mem_mul);
         }
         _ => simple_case = false,
     }
@@ -93,7 +94,7 @@ pub fn lower_gep(
     let output = new_empty_inst_output(ctx, ty, self_id);
 
     if simple_case {
-        println!("gep simple case");
+        debug_println!("gep simple case");
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::MLOADr,
@@ -262,7 +263,7 @@ mod test {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
     }
 
     #[test]
@@ -293,7 +294,7 @@ mod test {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "test_array:
@@ -366,7 +367,7 @@ mod test {
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "array_literal:
@@ -447,7 +448,7 @@ main:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "array_literal:
@@ -550,7 +551,7 @@ main:
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -732,7 +733,7 @@ endfor:                                           ; preds = %cond6
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
+        debug_println!("{}", code.program);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -856,8 +857,8 @@ declare i64 @tape_load(i64, i64)
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "vector_new_init:
@@ -1149,8 +1150,8 @@ done39:                                           ; preds = %cond37
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -1558,8 +1559,8 @@ done34:                                           ; preds = %cond32
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "vector_new_init:
@@ -2435,8 +2436,8 @@ done34:                                           ; preds = %cond32
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "vector_new_init:
@@ -2614,8 +2615,8 @@ endfor:                                           ; preds = %cond9
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "main:
@@ -3028,8 +3029,8 @@ done:                                             ; preds = %cond
         // Display the machine module as assembly
         let code: AsmProgram =
             serde_json::from_str(mach_module.display_asm().to_string().as_str()).unwrap();
-        println!("{}", code.program);
-        println!("{:#?}", code.prophets);
+        debug_println!("{}", code.program);
+        debug_println!("{:#?}", code.prophets);
         assert_eq!(
             format!("{}", code.program),
             "contract_init:

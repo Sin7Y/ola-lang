@@ -16,6 +16,7 @@ use crate::codegen::{
     register::Reg,
 };
 use anyhow::Result;
+use debug_print::debug_println;
 
 pub fn lower_store(
     ctx: &mut LoweringContext<Ola>,
@@ -49,7 +50,7 @@ pub fn lower_store(
     let vreg;
 
     let src = args[0];
-    println!(
+    debug_println!(
         "store inst: src value {:?}, type {:?}",
         ctx.ir_data.value_ref(src),
         tys[0]
@@ -122,14 +123,14 @@ pub fn lower_store(
             if tys[0].is_pointer(ctx.types) {
                 let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
                 let inst = ctx.ir_data.inst_ref(*id);
-                println!("store pointer opcode {:?}", inst.opcode);
+                debug_println!("store pointer opcode {:?}", inst.opcode);
                 if inst.opcode == IrOpcode::Alloca {
                     let fp: Reg = GR::R9.into();
                     let mut src_slot = None;
                     if let Some(slot_id) = ctx.inst_id_to_slot_id.get(id) {
                         src_slot = Some(*slot_id);
                     }
-                    println!("store pointer opcode {:?},slot {:?}", inst.opcode, src_slot);
+                    debug_println!("store pointer opcode {:?},slot {:?}", inst.opcode, src_slot);
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
                             opcode: Opcode::ADDri,
@@ -144,11 +145,11 @@ pub fn lower_store(
                     vreg = Some(vec![addr.into()]);
                 } else {
                     vreg = Some(get_inst_output(ctx, tys[0], *id)?);
-                    println!("store src ptr vreg: {:?}", vreg);
+                    debug_println!("store src ptr vreg: {:?}", vreg);
                 }
             } else {
                 vreg = Some(get_inst_output(ctx, tys[0], *id)?);
-                println!("store src vreg: {:?}", vreg);
+                debug_println!("store src vreg: {:?}", vreg);
             }
         }
         Value::Argument(a) => {
@@ -327,14 +328,14 @@ fn lower_store_gep(
 
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
-                println!("store gep, slot {:?}", slot);
+                debug_println!("store gep, slot {:?}", slot);
             } else {
                 base = Some(get_operand_for_val(
                     ctx,
                     gep.operand.types()[1],
                     gep.operand.args()[0],
                 )?);
-                println!("store gep, base {:?}", base);
+                debug_println!("store gep, base {:?}", base);
             }
 
             // let base_ty = gep.operand.types()[0];
@@ -510,7 +511,7 @@ fn lower_store_gep(
             )]);
         }
         Value::Instruction(id) => {
-            println!("store src ptr aggr type: {:#?}", *id);
+            debug_println!("store src ptr aggr type: {:#?}", *id);
 
             let addr = ctx.mach_data.vregs.add_vreg_data(tys[0]);
             let mut src = get_inst_output(ctx, src_ty, *id)?;
@@ -521,9 +522,10 @@ fn lower_store_gep(
                 if let Some(slot_id) = ctx.inst_id_to_slot_id.get(id) {
                     src_slot = Some(*slot_id);
                 }
-                println!(
+                debug_println!(
                     "store aggr pointer opcode {:?},slot {:?}",
-                    inst.opcode, src_slot
+                    inst.opcode,
+                    src_slot
                 );
                 ctx.inst_seq.push(MachInstruction::new(
                     InstructionData {

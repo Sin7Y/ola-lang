@@ -9,6 +9,7 @@ use crate::codegen::{
     isa::TargetIsa,
     register::VReg,
 };
+use debug_print::debug_println;
 
 pub struct Spiller<'a, 'b, T: TargetIsa> {
     function: &'a mut Function<'b, T>,
@@ -115,7 +116,7 @@ impl<'a, 'b, T: TargetIsa> Spiller<'a, 'b, T> {
         block: BasicBlockId,
     ) {
         let after_pp = self.liveness.inst_to_pp[&after];
-        println!(
+        debug_println!(
             "*************** after {:?} ",
             self.function.data.inst_ref(after)
         );
