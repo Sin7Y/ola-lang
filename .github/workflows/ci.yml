@@ -91,7 +91,7 @@ jobs:
         path: ./target/debug/olac 
   mac-arm:
     name: Mac Arm
-    runs-on: macos-latest-xlarge
+    runs-on: macos-13-arm64
     steps:
     - name: Checkout sources
       uses: actions/checkout@v3
