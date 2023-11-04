@@ -89,7 +89,7 @@ jobs:
       with:
         name: olac-mac-intel
         path: ./target/debug/olac 
- macos_m1:
+ macos-m1:
     name: macOS M1
     runs-on: macos-latest
     steps:
