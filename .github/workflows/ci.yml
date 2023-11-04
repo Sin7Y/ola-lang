@@ -56,16 +56,16 @@ jobs:
       with:
         version: 15    
     - name: Build
-      run: cargo build --verbose
+      run: cargo build 
     - name: Run tests
-      run: cargo test --verbose --workspace
+      run: cargo test --workspace
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac-linux-x86-64
         path: ./target/debug/olac
   mac-intel:
     name: Mac Intel
-    runs-on: macos-12
+    runs-on: macos-latest
     steps:
     - name: Checkout sources
       uses: actions/checkout@v3
@@ -82,16 +82,16 @@ jobs:
       with:
         version: 15      
     - name: Build
-      run: cargo build --verbose
+      run: cargo build 
     - name: Run tests
-      run: cargo test --verbose --workspace
+      run: cargo test --workspace
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac-mac-intel
         path: ./target/debug/olac 
   mac-arm:
     name: Mac Arm
-    runs-on: macos-latest
+    runs-on: macos-latest-xlarge
     steps:
     - name: Checkout sources
       uses: actions/checkout@v3
@@ -108,9 +108,9 @@ jobs:
       with:
         version: 15
     - name: Build
-      run: cargo build --verbose
+      run: cargo build 
     - name: Run tests
-      run: cargo test --verbose --workspace
+      run: cargo test --workspace
     - name: Upload binary
       uses: svenstaro/upload-release-action@v2
       with:
@@ -136,8 +136,10 @@ jobs:
       uses: KyleMayes/install-llvm-action@v1
       with:
         version: 15
+    - name: Build
+      run: cargo build 
     - name: Run tests
-      run:  cargo test --verbose --workspace
+      run:  cargo test --workspace
     - uses: actions/upload-artifact@v3.1.0
       with:
         name: olac.exe
