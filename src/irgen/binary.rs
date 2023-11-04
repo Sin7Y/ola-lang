@@ -340,12 +340,8 @@ impl<'a> Binary<'a> {
     //     left: IntValue<'a>,
     //     right: IntValue<'a>,
     //     name: &str,
-    // ) -> IntValue<'a> {
-    //     if right == self.context.i64_type().const_zero() {
-    //         return left;
-    //     } else {
-    //         return self.builder.build_int_add(left, right, name);
-    //     }
+    // ) -> IntValue<'a> { if right == self.context.i64_type().const_zero() { return
+    //   left; } else { return self.builder.build_int_add(left, right, name); }
     // }
 
     // Creates a new stack allocation instruction in the entry block of the function
@@ -354,12 +350,8 @@ impl<'a> Binary<'a> {
     //     left: IntValue<'a>,
     //     right: IntValue<'a>,
     //     name: &str,
-    // ) -> IntValue<'a> {
-    //     if right == self.context.i64_type().const_zero() {
-    //         return left;
-    //     } else {
-    //         return self.builder.build_int_sub(left, right, name);
-    //     }
+    // ) -> IntValue<'a> { if right == self.context.i64_type().const_zero() { return
+    //   left; } else { return self.builder.build_int_sub(left, right, name); }
     // }
 
     /// Allocate vector on the heap and return heap address
@@ -883,9 +875,7 @@ impl<'a> Binary<'a> {
     //     ty: &Type,
     //     func_value: FunctionValue<'a>,
     //     ns: &Namespace,
-    // ) {
-    //     // print the value
-    //     let print_func: FunctionValue<'_> =
+    // ) { // print the value let print_func: FunctionValue<'_> =
     // self.module.get_function("prophet_printf").unwrap();     match ty {
     //         Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
     //             self.builder.build_call(

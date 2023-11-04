@@ -50,10 +50,8 @@
 //         offset: IntValue<'a>,
 //         func_value: FunctionValue<'a>,
 //         ns: &Namespace,
-//     ) {
-//         // -1 means nothing has been verified yet
-//         self.verified_until = None;
-//         self._verify_buffer(bin, offset, func_value, ns);
+//     ) { // -1 means nothing has been verified yet self.verified_until = None;
+//       self._verify_buffer(bin, offset, func_value, ns);
 //     }
 
 //     /// Validate the buffer for the current argument, if necessary.
@@ -63,9 +61,8 @@
 //         offset: IntValue<'a>,
 //         func_value: FunctionValue<'a>,
 //         ns: &Namespace,
-//     ) {
-//         // We may have already verified this
-//         if self.verified_until.is_some() && self.current_arg <=
+//     ) { // We may have already verified this if self.verified_until.is_some()
+//       && self.current_arg <=
 // self.verified_until.unwrap() {             return;
 //         }
 
@@ -78,8 +75,7 @@
 //         bin: &Binary<'a>,
 //         offset: IntValue<'a>,
 //         func_value: FunctionValue<'a>,
-//     ) {
-//         self.build_out_of_bounds_fail_branch(bin, offset, func_value);
+//     ) { self.build_out_of_bounds_fail_branch(bin, offset, func_value);
 //     }
 
 //     /// Checks if a buffer validation is necessary
@@ -99,9 +95,8 @@
 //         offset: IntValue<'a>,
 //         size: IntValue<'a>,
 //         func_value: FunctionValue<'a>,
-//     ) {
-//         if self.validation_necessary() {
-//             let offset_to_validate = bin.builder.build_int_add(size, offset,
+//     ) { if self.validation_necessary() { let offset_to_validate =
+//       bin.builder.build_int_add(size, offset,
 // "");
 
 //             self.validate_offset(bin, offset_to_validate, func_value);
@@ -142,16 +137,10 @@
 //         offset: IntValue<'a>,
 //         func_value: FunctionValue<'a>,
 //         ns: &Namespace,
-//     ) {
-//         // Calculate the what arguments we can validate
-//         let mut maximum_verifiable = self.current_arg;
-//         for i in self.current_arg..self.types.len() {
-//             if !self.types[i].is_dynamic(ns) {
-//                 maximum_verifiable = i;
-//             } else {
-//                 break;
-//             }
-//         }
+//     ) { // Calculate the what arguments we can validate let mut
+//       maximum_verifiable = self.current_arg; for i in
+//       self.current_arg..self.types.len() { if !self.types[i].is_dynamic(ns) {
+//       maximum_verifiable = i; } else { break; } }
 
 //         // It is not possible to validate anything
 //         if maximum_verifiable == self.current_arg {
@@ -182,13 +171,8 @@
 //         bin: &Binary<'a>,
 //         offset: IntValue<'a>,
 //         func_value: FunctionValue<'a>,
-//     ) {
-//         let cond = bin.builder.build_int_compare(
-//             IntPredicate::ULE,
-//             offset,
-//             self.buffer_length,
-//             "offset_inbounds",
-//         );
+//     ) { let cond = bin.builder.build_int_compare( IntPredicate::ULE, offset,
+//       self.buffer_length, "offset_inbounds", );
 
 //         let inbounds_block = bin.context.append_basic_block(func_value,
 // "inbounds");         let out_of_bounds_block =
