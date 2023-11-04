@@ -7,7 +7,33 @@ declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
-define void @mempcy(ptr %0, ptr %1, i64 %2) {
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+declare void @get_context_data(i64, i64)
+
+declare void @get_tape_data(i64, i64)
+
+declare void @set_tape_data(i64, i64)
+
+declare void @get_storage(ptr, ptr)
+
+declare void @set_storage(ptr, ptr)
+
+declare void @poseidon_hash(ptr, ptr, i64)
+
+declare void @contract_call(ptr, i64)
+
+declare void @prophet_printf(i64, i64)
+
+define void @memcpy(ptr %0, ptr %1, i64 %2) {
 entry:
   %index_alloca = alloca i64, align 8
   %len_alloca = alloca i64, align 8
@@ -40,35 +66,113 @@ done:                                             ; preds = %cond
   ret void
 }
 
-declare i64 @prophet_u32_sqrt(i64)
+define i64 @memcmp_eq(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %right_ptr_alloca = alloca ptr, align 8
+  %left_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %left_ptr_alloca, align 8
+  %left_ptr = load ptr, ptr %left_ptr_alloca, align 8
+  store ptr %1, ptr %right_ptr_alloca, align 8
+  %right_ptr = load ptr, ptr %right_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
 
-declare i64 @prophet_u32_div(i64, i64)
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %len
+  br i1 %loop_check, label %body, label %done
 
-declare i64 @prophet_u32_mod(i64, i64)
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %left_ptr, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %right_ptr, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %compare = icmp eq i64 %left_elem, %right_elem
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br i1 %compare, label %cond, label %done
 
-declare ptr @prophet_u32_array_sort(ptr, i64)
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
 
-declare i64 @vector_new(i64)
+define i64 @memcmp_ugt(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %right_ptr_alloca = alloca ptr, align 8
+  %left_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %left_ptr_alloca, align 8
+  %left_ptr = load ptr, ptr %left_ptr_alloca, align 8
+  store ptr %1, ptr %right_ptr_alloca, align 8
+  %right_ptr = load ptr, ptr %right_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
 
-declare void @get_context_data(i64, i64)
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %len
+  br i1 %loop_check, label %body, label %done
 
-declare void @get_tape_data(i64, i64)
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %left_ptr, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %right_ptr, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %compare = icmp ugt i64 %left_elem, %right_elem
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br i1 %compare, label %cond, label %done
 
-declare void @set_tape_data(i64, i64)
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
 
-declare void @get_storage(ptr, ptr)
+define i64 @memcmp_uge(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %right_ptr_alloca = alloca ptr, align 8
+  %left_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %left_ptr_alloca, align 8
+  %left_ptr = load ptr, ptr %left_ptr_alloca, align 8
+  store ptr %1, ptr %right_ptr_alloca, align 8
+  %right_ptr = load ptr, ptr %right_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
 
-declare void @set_storage(ptr, ptr)
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %len
+  br i1 %loop_check, label %body, label %done
 
-declare void @poseidon_hash(ptr, ptr, i64)
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %left_ptr, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %right_ptr, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %compare = icmp uge i64 %left_elem, %right_elem
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br i1 %compare, label %cond, label %done
 
-declare void @contract_call(ptr, i64)
-
-declare void @prophet_printf(i64, i64)
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
 
 define void @test() {
 entry:
-  %index = alloca i64, align 8
   %0 = call i64 @vector_new(i64 6)
   %heap_start = sub i64 %0, 6
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
@@ -114,28 +218,8 @@ entry:
   %10 = icmp eq i64 %length, %length15
   %11 = zext i1 %10 to i64
   call void @builtin_assert(i64 %11)
-  store i64 0, ptr %index, align 4
-  br label %cond
-
-cond:                                             ; preds = %body, %entry
-  %index16 = load i64, ptr %index, align 4
-  %12 = icmp ult i64 %index16, %length
-  br i1 %12, label %body, label %done
-
-body:                                             ; preds = %cond
-  %left_char_ptr = getelementptr i64, ptr %vector_data13, i64 %index16
-  %right_char_ptr = getelementptr i64, ptr %vector_data14, i64 %index16
-  %left_char = load i64, ptr %left_char_ptr, align 4
-  %right_char = load i64, ptr %right_char_ptr, align 4
-  %comparison = icmp eq i64 %left_char, %right_char
-  %next_index = add i64 %index16, 1
-  store i64 %next_index, ptr %index, align 4
-  br i1 %comparison, label %cond, label %done
-
-done:                                             ; preds = %body, %cond
-  %equal = icmp eq i64 %index16, %length15
-  %13 = zext i1 %equal to i64
-  call void @builtin_assert(i64 %13)
+  %12 = call i64 @memcmp_eq(ptr %vector_data13, ptr %vector_data14, i64 %length)
+  call void @builtin_assert(i64 %12)
   ret void
 }
 
