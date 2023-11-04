@@ -89,14 +89,24 @@ jobs:
       with:
         name: olac-mac-intel
         path: ./target/debug/olac 
-  mac-arm:
-    name: Mac Arm
-    runs-on: macos-13-arm64
+ macos_m1:
+    name: macOS M1
+    runs-on: macos-latest
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v3
+    - name: Xcode Select
+      uses: maxim-lobanov/setup-xcode@v1
       with:
-        submodules: recursive
+        xcode-version: latest-stable
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        target: aarch64-apple-darwin
+        toolchain: stable
+        override: true
+        components: rustfmt
     - name: Rust nightly  
       uses: actions-rs/toolchain@v1
       with:
