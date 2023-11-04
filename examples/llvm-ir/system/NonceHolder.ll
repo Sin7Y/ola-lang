@@ -1,5 +1,5 @@
 ; ModuleID = 'NonceHolder'
-source_filename = "examples/source/types/mapping_1.ola"
+source_filename = "examples/source/system/NonceHolder.ola"
 
 @heap_address = internal global i64 -4294967353
 
@@ -171,12 +171,101 @@ done:                                             ; preds = %body, %cond
   ret i64 %result_phi
 }
 
+define void @onlyEntrypointCall() {
+entry:
+  %ENTRY_POINT_ADDRESS = alloca ptr, align 8
+  %0 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %0, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %index_access = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 0, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 0, ptr %index_access1, align 4
+  %index_access2 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 0, ptr %index_access2, align 4
+  %index_access3 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 32769, ptr %index_access3, align 4
+  store ptr %heap_to_ptr, ptr %ENTRY_POINT_ADDRESS, align 8
+  %1 = call i64 @vector_new(i64 12)
+  %heap_start4 = sub i64 %1, 12
+  %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
+  call void @get_tape_data(i64 %heap_start4, i64 12)
+  %2 = load ptr, ptr %ENTRY_POINT_ADDRESS, align 8
+  %3 = call i64 @memcmp_eq(ptr %heap_to_ptr5, ptr %2, i64 4)
+  call void @builtin_assert(i64 %3)
+  ret void
+}
+
+define i64 @isNonceUsed(ptr %0, i64 %1) {
+entry:
+  %_nonce = alloca i64, align 8
+  %_address = alloca ptr, align 8
+  store ptr %0, ptr %_address, align 8
+  store i64 %1, ptr %_nonce, align 4
+  %2 = load ptr, ptr %_address, align 8
+  %3 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %3, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  %4 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 0, ptr %6, align 4
+  %7 = call i64 @vector_new(i64 8)
+  %heap_start1 = sub i64 %7, 8
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %8 = inttoptr i64 %heap_start1 to ptr
+  call void @memcpy(ptr %heap_to_ptr, ptr %8, i64 4)
+  %next_dest_offset = add i64 %heap_start1, 4
+  %9 = inttoptr i64 %next_dest_offset to ptr
+  call void @memcpy(ptr %2, ptr %9, i64 4)
+  %10 = call i64 @vector_new(i64 4)
+  %heap_start3 = sub i64 %10, 4
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr4, i64 8)
+  %11 = load i64, ptr %_nonce, align 4
+  %12 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %12, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  store i64 %11, ptr %heap_to_ptr6, align 4
+  %13 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  store i64 0, ptr %13, align 4
+  %14 = getelementptr i64, ptr %heap_to_ptr6, i64 2
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %heap_to_ptr6, i64 3
+  store i64 0, ptr %15, align 4
+  %16 = call i64 @vector_new(i64 8)
+  %heap_start7 = sub i64 %16, 8
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  %17 = inttoptr i64 %heap_start7 to ptr
+  call void @memcpy(ptr %heap_to_ptr4, ptr %17, i64 4)
+  %next_dest_offset9 = add i64 %heap_start7, 4
+  %18 = inttoptr i64 %next_dest_offset9 to ptr
+  call void @memcpy(ptr %heap_to_ptr6, ptr %18, i64 4)
+  %19 = call i64 @vector_new(i64 4)
+  %heap_start10 = sub i64 %19, 4
+  %heap_to_ptr11 = inttoptr i64 %heap_start10 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr8, ptr %heap_to_ptr11, i64 8)
+  %20 = call i64 @vector_new(i64 4)
+  %heap_start12 = sub i64 %20, 4
+  %heap_to_ptr13 = inttoptr i64 %heap_start12 to ptr
+  call void @get_storage(ptr %heap_to_ptr11, ptr %heap_to_ptr13)
+  %storage_value = load i64, ptr %heap_to_ptr13, align 4
+  %slot_value = load i64, ptr %heap_to_ptr11, align 4
+  %slot_offset = add i64 %slot_value, 1
+  store i64 %slot_offset, ptr %heap_to_ptr11, align 4
+  ret i64 %storage_value
+}
+
 define void @setNonce(ptr %0, i64 %1) {
 entry:
   %_nonce = alloca i64, align 8
   %_address = alloca ptr, align 8
   store ptr %0, ptr %_address, align 8
   store i64 %1, ptr %_nonce, align 4
+  call void @onlyEntrypointCall()
   %2 = load ptr, ptr %_address, align 8
   %3 = call i64 @vector_new(i64 4)
   %heap_start = sub i64 %3, 4
@@ -295,7 +384,7 @@ entry:
   %46 = call i64 @vector_new(i64 4)
   %heap_start30 = sub i64 %46, 4
   %heap_to_ptr31 = inttoptr i64 %heap_start30 to ptr
-  store i64 0, ptr %heap_to_ptr31, align 4
+  store i64 1, ptr %heap_to_ptr31, align 4
   %47 = getelementptr i64, ptr %heap_to_ptr31, i64 1
   store i64 0, ptr %47, align 4
   %48 = getelementptr i64, ptr %heap_to_ptr31, i64 2
@@ -314,11 +403,11 @@ entry:
   %heap_start35 = sub i64 %53, 4
   %heap_to_ptr36 = inttoptr i64 %heap_start35 to ptr
   call void @poseidon_hash(ptr %heap_to_ptr33, ptr %heap_to_ptr36, i64 8)
-  %54 = load i64, ptr %_nonce, align 4
+  %54 = load ptr, ptr %_address, align 8
   %55 = call i64 @vector_new(i64 4)
   %heap_start37 = sub i64 %55, 4
   %heap_to_ptr38 = inttoptr i64 %heap_start37 to ptr
-  store i64 %54, ptr %heap_to_ptr38, align 4
+  store i64 1, ptr %heap_to_ptr38, align 4
   %56 = getelementptr i64, ptr %heap_to_ptr38, i64 1
   store i64 0, ptr %56, align 4
   %57 = getelementptr i64, ptr %heap_to_ptr38, i64 2
@@ -329,10 +418,10 @@ entry:
   %heap_start39 = sub i64 %59, 8
   %heap_to_ptr40 = inttoptr i64 %heap_start39 to ptr
   %60 = inttoptr i64 %heap_start39 to ptr
-  call void @memcpy(ptr %heap_to_ptr36, ptr %60, i64 4)
+  call void @memcpy(ptr %heap_to_ptr38, ptr %60, i64 4)
   %next_dest_offset41 = add i64 %heap_start39, 4
   %61 = inttoptr i64 %next_dest_offset41 to ptr
-  call void @memcpy(ptr %heap_to_ptr38, ptr %61, i64 4)
+  call void @memcpy(ptr %54, ptr %61, i64 4)
   %62 = call i64 @vector_new(i64 4)
   %heap_start42 = sub i64 %62, 4
   %heap_to_ptr43 = inttoptr i64 %heap_start42 to ptr
@@ -345,8 +434,58 @@ entry:
   %slot_value47 = load i64, ptr %heap_to_ptr43, align 4
   %slot_offset48 = add i64 %slot_value47, 1
   store i64 %slot_offset48, ptr %heap_to_ptr43, align 4
-  call void @builtin_assert(i64 %storage_value46)
+  %64 = add i64 %storage_value46, 1
+  call void @builtin_range_check(i64 %64)
+  %65 = call i64 @vector_new(i64 4)
+  %heap_start49 = sub i64 %65, 4
+  %heap_to_ptr50 = inttoptr i64 %heap_start49 to ptr
+  store i64 %64, ptr %heap_to_ptr50, align 4
+  %66 = getelementptr i64, ptr %heap_to_ptr50, i64 1
+  store i64 0, ptr %66, align 4
+  %67 = getelementptr i64, ptr %heap_to_ptr50, i64 2
+  store i64 0, ptr %67, align 4
+  %68 = getelementptr i64, ptr %heap_to_ptr50, i64 3
+  store i64 0, ptr %68, align 4
+  call void @set_storage(ptr %heap_to_ptr36, ptr %heap_to_ptr50)
   ret void
+}
+
+define i64 @usedNonces(ptr %0) {
+entry:
+  %_address = alloca ptr, align 8
+  store ptr %0, ptr %_address, align 8
+  %1 = load ptr, ptr %_address, align 8
+  %2 = call i64 @vector_new(i64 4)
+  %heap_start = sub i64 %2, 4
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 1, ptr %heap_to_ptr, align 4
+  %3 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 0, ptr %3, align 4
+  %4 = getelementptr i64, ptr %heap_to_ptr, i64 2
+  store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %heap_to_ptr, i64 3
+  store i64 0, ptr %5, align 4
+  %6 = call i64 @vector_new(i64 8)
+  %heap_start1 = sub i64 %6, 8
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %7 = inttoptr i64 %heap_start1 to ptr
+  call void @memcpy(ptr %heap_to_ptr, ptr %7, i64 4)
+  %next_dest_offset = add i64 %heap_start1, 4
+  %8 = inttoptr i64 %next_dest_offset to ptr
+  call void @memcpy(ptr %1, ptr %8, i64 4)
+  %9 = call i64 @vector_new(i64 4)
+  %heap_start3 = sub i64 %9, 4
+  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
+  call void @poseidon_hash(ptr %heap_to_ptr2, ptr %heap_to_ptr4, i64 8)
+  %10 = call i64 @vector_new(i64 4)
+  %heap_start5 = sub i64 %10, 4
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  call void @get_storage(ptr %heap_to_ptr4, ptr %heap_to_ptr6)
+  %storage_value = load i64, ptr %heap_to_ptr6, align 4
+  %slot_value = load i64, ptr %heap_to_ptr4, align 4
+  %slot_offset = add i64 %slot_value, 1
+  store i64 %slot_offset, ptr %heap_to_ptr4, align 4
+  ret i64 %storage_value
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -355,19 +494,57 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 3694669121, label %func_0_dispatch
+    i64 698884830, label %func_0_dispatch
+    i64 1390938593, label %func_1_dispatch
+    i64 3694669121, label %func_2_dispatch
+    i64 3422263526, label %func_3_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
+  call void @onlyEntrypointCall()
+  ret void
+
+func_1_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
   %4 = add i64 %input_start, 4
   %5 = inttoptr i64 %4 to ptr
   %decode_value = load i64, ptr %5, align 4
-  call void @setNonce(ptr %3, i64 %decode_value)
+  %6 = call i64 @isNonceUsed(ptr %3, i64 %decode_value)
+  %7 = call i64 @vector_new(i64 2)
+  %heap_start = sub i64 %7, 2
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
+  store i64 %6, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
+  store i64 1, ptr %encode_value_ptr1, align 4
+  call void @set_tape_data(i64 %heap_start, i64 2)
+  ret void
+
+func_2_dispatch:                                  ; preds = %entry
+  %input_start2 = ptrtoint ptr %input to i64
+  %8 = inttoptr i64 %input_start2 to ptr
+  %9 = add i64 %input_start2, 4
+  %10 = inttoptr i64 %9 to ptr
+  %decode_value3 = load i64, ptr %10, align 4
+  call void @setNonce(ptr %8, i64 %decode_value3)
+  ret void
+
+func_3_dispatch:                                  ; preds = %entry
+  %input_start4 = ptrtoint ptr %input to i64
+  %11 = inttoptr i64 %input_start4 to ptr
+  %12 = call i64 @usedNonces(ptr %11)
+  %13 = call i64 @vector_new(i64 2)
+  %heap_start5 = sub i64 %13, 2
+  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
+  %encode_value_ptr7 = getelementptr i64, ptr %heap_to_ptr6, i64 0
+  store i64 %12, ptr %encode_value_ptr7, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %heap_to_ptr6, i64 1
+  store i64 1, ptr %encode_value_ptr8, align 4
+  call void @set_tape_data(i64 %heap_start5, i64 2)
   ret void
 }
 

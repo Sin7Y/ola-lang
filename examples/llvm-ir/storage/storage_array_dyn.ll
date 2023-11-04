@@ -7,7 +7,33 @@ declare void @builtin_assert(i64)
 
 declare void @builtin_range_check(i64)
 
-define void @mempcy(ptr %0, ptr %1, i64 %2) {
+declare i64 @prophet_u32_sqrt(i64)
+
+declare i64 @prophet_u32_div(i64, i64)
+
+declare i64 @prophet_u32_mod(i64, i64)
+
+declare ptr @prophet_u32_array_sort(ptr, i64)
+
+declare i64 @vector_new(i64)
+
+declare void @get_context_data(i64, i64)
+
+declare void @get_tape_data(i64, i64)
+
+declare void @set_tape_data(i64, i64)
+
+declare void @get_storage(ptr, ptr)
+
+declare void @set_storage(ptr, ptr)
+
+declare void @poseidon_hash(ptr, ptr, i64)
+
+declare void @contract_call(ptr, i64)
+
+declare void @prophet_printf(i64, i64)
+
+define void @memcpy(ptr %0, ptr %1, i64 %2) {
 entry:
   %index_alloca = alloca i64, align 8
   %len_alloca = alloca i64, align 8
@@ -40,31 +66,110 @@ done:                                             ; preds = %cond
   ret void
 }
 
-declare i64 @prophet_u32_sqrt(i64)
+define i64 @memcmp_eq(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %right_ptr_alloca = alloca ptr, align 8
+  %left_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %left_ptr_alloca, align 8
+  %left_ptr = load ptr, ptr %left_ptr_alloca, align 8
+  store ptr %1, ptr %right_ptr_alloca, align 8
+  %right_ptr = load ptr, ptr %right_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
 
-declare i64 @prophet_u32_div(i64, i64)
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %len
+  br i1 %loop_check, label %body, label %done
 
-declare i64 @prophet_u32_mod(i64, i64)
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %left_ptr, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %right_ptr, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %compare = icmp eq i64 %left_elem, %right_elem
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br i1 %compare, label %cond, label %done
 
-declare ptr @prophet_u32_array_sort(ptr, i64)
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
 
-declare i64 @vector_new(i64)
+define i64 @memcmp_ugt(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %right_ptr_alloca = alloca ptr, align 8
+  %left_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %left_ptr_alloca, align 8
+  %left_ptr = load ptr, ptr %left_ptr_alloca, align 8
+  store ptr %1, ptr %right_ptr_alloca, align 8
+  %right_ptr = load ptr, ptr %right_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
 
-declare void @get_context_data(i64, i64)
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %len
+  br i1 %loop_check, label %body, label %done
 
-declare void @get_tape_data(i64, i64)
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %left_ptr, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %right_ptr, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %compare = icmp ugt i64 %left_elem, %right_elem
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br i1 %compare, label %cond, label %done
 
-declare void @set_tape_data(i64, i64)
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
 
-declare void @get_storage(ptr, ptr)
+define i64 @memcmp_uge(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  %len_alloca = alloca i64, align 8
+  %right_ptr_alloca = alloca ptr, align 8
+  %left_ptr_alloca = alloca ptr, align 8
+  store ptr %0, ptr %left_ptr_alloca, align 8
+  %left_ptr = load ptr, ptr %left_ptr_alloca, align 8
+  store ptr %1, ptr %right_ptr_alloca, align 8
+  %right_ptr = load ptr, ptr %right_ptr_alloca, align 8
+  store i64 %2, ptr %len_alloca, align 4
+  %len = load i64, ptr %len_alloca, align 4
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
 
-declare void @set_storage(ptr, ptr)
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %len
+  br i1 %loop_check, label %body, label %done
 
-declare void @poseidon_hash(ptr, ptr, i64)
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %left_ptr, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %right_ptr, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %compare = icmp uge i64 %left_elem, %right_elem
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  br i1 %compare, label %cond, label %done
 
-declare void @contract_call(ptr, i64)
-
-declare void @prophet_printf(i64, i64)
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
 
 define void @addElement(i64 %0) {
 entry:
@@ -99,44 +204,43 @@ entry:
   %heap_start5 = sub i64 %10, 4
   %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
   call void @poseidon_hash(ptr %heap_to_ptr4, ptr %heap_to_ptr6, i64 4)
-  %11 = getelementptr i64, ptr %heap_to_ptr6, i64 3
-  %12 = load i64, ptr %11, align 4
-  %13 = mul i64 %storage_value, 1
-  %14 = add i64 %12, %13
-  store i64 %14, ptr %11, align 4
-  %15 = load i64, ptr %element, align 4
-  %16 = call i64 @vector_new(i64 4)
-  %heap_start7 = sub i64 %16, 4
+  %hash_value_low = load i64, ptr %heap_to_ptr6, align 4
+  %11 = mul i64 %storage_value, 1
+  %storage_array_offset = add i64 %hash_value_low, %11
+  store i64 %storage_array_offset, ptr %heap_to_ptr6, align 4
+  %12 = load i64, ptr %element, align 4
+  %13 = call i64 @vector_new(i64 4)
+  %heap_start7 = sub i64 %13, 4
   %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
-  store i64 %15, ptr %heap_to_ptr8, align 4
-  %17 = getelementptr i64, ptr %heap_to_ptr8, i64 1
-  store i64 0, ptr %17, align 4
-  %18 = getelementptr i64, ptr %heap_to_ptr8, i64 2
-  store i64 0, ptr %18, align 4
-  %19 = getelementptr i64, ptr %heap_to_ptr8, i64 3
-  store i64 0, ptr %19, align 4
+  store i64 %12, ptr %heap_to_ptr8, align 4
+  %14 = getelementptr i64, ptr %heap_to_ptr8, i64 1
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %heap_to_ptr8, i64 2
+  store i64 0, ptr %15, align 4
+  %16 = getelementptr i64, ptr %heap_to_ptr8, i64 3
+  store i64 0, ptr %16, align 4
   call void @set_storage(ptr %heap_to_ptr6, ptr %heap_to_ptr8)
   %new_length = add i64 %storage_value, 1
-  %20 = call i64 @vector_new(i64 4)
-  %heap_start9 = sub i64 %20, 4
+  %17 = call i64 @vector_new(i64 4)
+  %heap_start9 = sub i64 %17, 4
   %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
   store i64 0, ptr %heap_to_ptr10, align 4
-  %21 = getelementptr i64, ptr %heap_to_ptr10, i64 1
-  store i64 0, ptr %21, align 4
-  %22 = getelementptr i64, ptr %heap_to_ptr10, i64 2
-  store i64 0, ptr %22, align 4
-  %23 = getelementptr i64, ptr %heap_to_ptr10, i64 3
-  store i64 0, ptr %23, align 4
-  %24 = call i64 @vector_new(i64 4)
-  %heap_start11 = sub i64 %24, 4
+  %18 = getelementptr i64, ptr %heap_to_ptr10, i64 1
+  store i64 0, ptr %18, align 4
+  %19 = getelementptr i64, ptr %heap_to_ptr10, i64 2
+  store i64 0, ptr %19, align 4
+  %20 = getelementptr i64, ptr %heap_to_ptr10, i64 3
+  store i64 0, ptr %20, align 4
+  %21 = call i64 @vector_new(i64 4)
+  %heap_start11 = sub i64 %21, 4
   %heap_to_ptr12 = inttoptr i64 %heap_start11 to ptr
   store i64 %new_length, ptr %heap_to_ptr12, align 4
-  %25 = getelementptr i64, ptr %heap_to_ptr12, i64 1
-  store i64 0, ptr %25, align 4
-  %26 = getelementptr i64, ptr %heap_to_ptr12, i64 2
-  store i64 0, ptr %26, align 4
-  %27 = getelementptr i64, ptr %heap_to_ptr12, i64 3
-  store i64 0, ptr %27, align 4
+  %22 = getelementptr i64, ptr %heap_to_ptr12, i64 1
+  store i64 0, ptr %22, align 4
+  %23 = getelementptr i64, ptr %heap_to_ptr12, i64 2
+  store i64 0, ptr %23, align 4
+  %24 = getelementptr i64, ptr %heap_to_ptr12, i64 3
+  store i64 0, ptr %24, align 4
   call void @set_storage(ptr %heap_to_ptr10, ptr %heap_to_ptr12)
   ret void
 }
