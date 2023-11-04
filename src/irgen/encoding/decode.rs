@@ -172,12 +172,9 @@ pub fn struct_literal_copy<'a>(
 //     func_value: FunctionValue<'a>,
 //     ns: &Namespace,
 //     indexes: &mut Vec<IntValue<'a>>,
-// ) {
-//     let offset = bin
-//         .builder
-//         .build_load(bin.context.i64_type(), offset_var, "")
-//         .into_int_value();
-//     // If we have a 'int[3][4][] vec', we can only validate the buffer after
+// ) { let offset = bin .builder .build_load(bin.context.i64_type(), offset_var,
+//   "") .into_int_value(); // If we have a 'int[3][4][] vec', we can only
+//   validate the buffer after
 // we have     // allocated the outer dimension, i.e., we are about to read a
 // 'int[3][4]' item.     // Arrays whose elements are dynamic cannot be
 // verified.     if validator.validation_necessary()

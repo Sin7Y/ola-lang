@@ -1,0 +1,8 @@
+contract SqrtContract {
+
+    fn sqrt_test(u32 n) -> (u32) {
+        u32 b = u32_sqrt(n);
+        return b;
+    }
+
+}
