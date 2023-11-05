@@ -27,7 +27,7 @@ jobs:
       with:
         version: 15    
     - name: Build
-      run: cargo build 
+      run: cargo build --release
     - name: Upload binary
       uses: svenstaro/upload-release-action@v2
       with:
@@ -52,7 +52,7 @@ jobs:
       with:
         version: 15      
     - name: Build
-      run: cargo build 
+      run: cargo build --release
     - name: Upload binary
       uses: svenstaro/upload-release-action@v2
       with:
@@ -73,9 +73,9 @@ jobs:
       with:
         components: rustfmt
     - name: Get LLVM
-      run: curl -sSL --output clang+llvm-15.0.0-arm64-apple-darwin21.0.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.0/clang+llvm-15.0.0-arm64-apple-darwin21.0.tar.xz
+      run: curl -sSL --output clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz
     - name: Extract LLVM
-      run: tar Jxf clang+llvm-15.0.0-arm64-apple-darwin21.0.tar.xz && mv clang+llvm-15.0.0-arm64-apple-darwin21.0 llvm15.0
+      run: tar Jxf clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz && mv clang+llvm-15.0.7-arm64-apple-darwin22.0 llvm15.0
     - name: Add LLVM to Path
       run: echo "$(pwd)/llvm15.0/bin" >> $GITHUB_PATH 
     - name: Build
