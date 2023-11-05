@@ -18,12 +18,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: recursive   
-    - name: Rust nightly  
-      uses: actions-rs/toolchain@v1
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@nightly
       with:
-        toolchain: nightly
         components: rustfmt
-        override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
       with:
@@ -45,12 +43,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: recursive   
-    - name: Rust nightly  
-      uses: actions-rs/toolchain@v1
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@nightly
       with:
-        toolchain: nightly
         components: rustfmt
-        override: true
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
       with:
@@ -73,11 +69,9 @@ jobs:
       with:
         submodules: recursive  
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@nightly
       with:
-        toolchain: nightly
         components: rustfmt
-        override: true
     - name: Get LLVM
       run: curl -sSL --output clang+llvm-15.0.0-arm64-apple-darwin21.0.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.0/clang+llvm-15.0.0-arm64-apple-darwin21.0.tar.xz
     - name: Extract LLVM
@@ -101,12 +95,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: recursive   
-    - name: Rust nightly  
-      uses: actions-rs/toolchain@v1
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@nightly
       with:
-        toolchain: nightly
         components: rustfmt
-        override: true
     - name: Download LLVM
       run: curl -sSL -o c:\llvm.zip https://github.com/hyperledger/solang-llvm/releases/download/llvm15-1/llvm15.0-win.zip
     - name: Extract LLVM
