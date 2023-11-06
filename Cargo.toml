@@ -7,7 +7,7 @@ authors = ["contact@sin7y.org"]
 documentation = "https://olang.readthedocs.io/"
 homepage = "https://github.com/Sin7Y/ola-lang"
 description = "Ola Language Compiler"
-keywords = [ "olac", "olavm", "ola"]
+keywords = [ "olac", "olavm", "ola", "olang", "compiler"]
 
 [[bin]]
 name = "olac"

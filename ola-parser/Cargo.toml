@@ -4,6 +4,10 @@ version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
 build = "build.rs"
+description = "Ola Language Parser"
+documentation = "https://olang.readthedocs.io/"
+homepage = "https://github.com/Sin7Y/ola-lang"
+keywords = [ "olac", "olavm", "parser", "ola", "olang" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
