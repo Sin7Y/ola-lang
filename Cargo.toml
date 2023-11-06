@@ -1,12 +1,13 @@
 [package]
 name = "ola-lang"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
 authors = ["contact@sin7y.org"]
 documentation = "https://olang.readthedocs.io/"
 homepage = "https://github.com/Sin7Y/ola-lang"
 description = "Ola Language Compiler"
+keywords = [ "olac", "olavm", "ola"]
 
 [[bin]]
 name = "olac"
@@ -20,7 +21,7 @@ num-traits = "0.2"
 num-integer = "0.1.44"
 hex = "0.4"
 itertools = "0.10"
-ola-parser = { path = "./ola-parser" }
+ola-parser = { path = "ola-parser", version = "1.0.0" }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = { version = "1.0" }
