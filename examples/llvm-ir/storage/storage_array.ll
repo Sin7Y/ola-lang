@@ -1,5 +1,5 @@
 ; ModuleID = 'StaticArrayExample'
-source_filename = "examples/source/storage/storage_array.ola"
+source_filename = "storage_array"
 
 @heap_address = internal global i64 -4294967353
 

@@ -1,5 +1,5 @@
 ; ModuleID = 'DynamicArrayExample'
-source_filename = "examples/source/assert/array_assert.ola"
+source_filename = "array_assert"
 
 @heap_address = internal global i64 -4294967353
 

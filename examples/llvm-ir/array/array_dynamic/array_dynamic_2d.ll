@@ -1,5 +1,5 @@
 ; ModuleID = 'DynamicTwoDimensionalArrayInMemory'
-source_filename = "examples/source/array/array_dynamic/array_dynamic_2d.ola"
+source_filename = "array_dynamic_2d"
 
 @heap_address = internal global i64 -4294967353
 

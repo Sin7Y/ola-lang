@@ -1,5 +1,5 @@
 ; ModuleID = 'BoolContract'
-source_filename = "examples/source/types/bool.ola"
+source_filename = "bool"
 
 @heap_address = internal global i64 -4294967353
 

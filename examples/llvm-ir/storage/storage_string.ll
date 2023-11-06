@@ -1,5 +1,5 @@
 ; ModuleID = 'StringExample'
-source_filename = "examples/source/storage/storage_string.ola"
+source_filename = "storage_string"
 
 @heap_address = internal global i64 -4294967353
 

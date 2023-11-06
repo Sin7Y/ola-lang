@@ -1,5 +1,5 @@
 ; ModuleID = 'BookExample'
-source_filename = "examples/source/struct/books.ola"
+source_filename = "books"
 
 @heap_address = internal global i64 -4294967353
 

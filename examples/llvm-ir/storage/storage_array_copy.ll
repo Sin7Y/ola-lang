@@ -1,5 +1,5 @@
 ; ModuleID = 'StorageToStorage'
-source_filename = "examples/source/storage/storage_array_copy.ola"
+source_filename = "storage_array_copy"
 
 @heap_address = internal global i64 -4294967353
 

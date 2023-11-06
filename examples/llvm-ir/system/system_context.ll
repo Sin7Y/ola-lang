@@ -1,5 +1,5 @@
 ; ModuleID = 'SystemContextExample'
-source_filename = "examples/source/system/system_context.ola"
+source_filename = "system_context"
 
 @heap_address = internal global i64 -4294967353
 

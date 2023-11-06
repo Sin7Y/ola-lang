@@ -1,5 +1,5 @@
 ; ModuleID = 'NonceHolder'
-source_filename = "examples/source/types/mapping_1.ola"
+source_filename = "mapping_1"
 
 @heap_address = internal global i64 -4294967353
 

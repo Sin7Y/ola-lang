@@ -1,5 +1,5 @@
 ; ModuleID = 'SimpleMappingExample'
-source_filename = "examples/source/storage/storage_mapping.ola"
+source_filename = "storage_mapping"
 
 @heap_address = internal global i64 -4294967353
 

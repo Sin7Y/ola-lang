@@ -1,5 +1,5 @@
 ; ModuleID = 'Array'
-source_filename = "examples/source/array/array.ola"
+source_filename = "array"
 
 @heap_address = internal global i64 -4294967353
 

@@ -10,6 +10,7 @@ use ola_lang::codegen::lower::compile_module;
 use ola_lang::file_resolver::FileResolver;
 use ola_lang::sema::ast::Namespace;
 use ola_lang::{codegen::core::ir::module::Module, sema::ast::Layout};
+use std::env;
 use std::{
     ffi::{OsStr, OsString},
     fs::{create_dir_all, File},
@@ -21,10 +22,9 @@ use std::{
 fn main() {
     let app = || {
         Command::new("olac")
-            .version("v0.1.0")
+            .version(env!("CARGO_PKG_VERSION"))
             .author(env!("CARGO_PKG_AUTHORS"))
             .about(env!("CARGO_PKG_DESCRIPTION"))
-            .subcommand_required(true)
             .subcommand(
                 Command::new("compile")
                     .about("Compile ola source files")
@@ -56,7 +56,10 @@ fn main() {
 
     match matches.subcommand() {
         Some(("compile", matches)) => compile(matches),
-        _ => unreachable!(),
+        None | Some(_) => {
+            app().print_help().unwrap();
+            println!();
+        }
     }
 }
 
@@ -95,69 +98,85 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
         layout(contract_no, &mut ns);
     }
 
-    // gen ast
-    if let Some("ast") = matches.get_one::<String>("Generate").map(|v| v.as_str()) {
-        let filepath = PathBuf::from(filename);
-        let stem = filepath.file_stem().unwrap().to_string_lossy();
-        let dot_filename = output_file(matches, &stem, "dot");
-
-        let dot = ns.dotgraphviz();
-
-        let mut file = create_file(&dot_filename);
-
-        if let Err(err) = file.write_all(dot.as_bytes()) {
-            eprintln!("{}: error: {}", dot_filename.display(), err);
-            exit(1);
-        }
-
-        return ns;
-    }
-
-    // gen llvm ir、asm
+    // gen llvm ir、asm、abi、ast phase
     for contract_no in 0..ns.contracts.len() {
-        let resolved_contract = &ns.contracts[contract_no];
 
-        let context = inkwell::context::Context::create();
         let filename_lossy = filename.to_string_lossy().clone();
         let filename_string = String::from(filename_lossy);
         let filename_stem = Path::new(&filename_string).file_prefix().unwrap();
 
-        let binary = resolved_contract.binary(&ns, &context, &filename_string);
-
         match matches.get_one::<String>("Generate").map(|v| v.as_str()) {
             Some("llvm-ir") => {
-                let llvm_filename = output_file(matches, filename_stem.to_str().unwrap(), "ll");
-
-                binary.dump_llvm(&llvm_filename).unwrap();
+                generate_llvm_ir(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
             }
-
             Some("abi") => {
-                let (metadata, meta_ext) = abi::generate_abi(contract_no, &ns);
-                let meta_filename = output_file(matches, &binary.name, meta_ext);
-                let mut file = create_file(&meta_filename);
-                file.write_all(metadata.as_bytes()).unwrap();
+                generate_abi(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
             }
-
             Some("asm") => {
-                // Parse the assembly and get a module
-                let module = Module::try_from(binary.module.to_string().as_str())
-                    .expect("failed to parse LLVM IR");
-                // Compile the module for Ola and get a machine module
-                let isa = Ola::default();
-                let code = compile_module(&isa, &module).expect("failed to compile");
-                let asm_path = output_file(matches, filename_stem.to_str().unwrap(), "json");
-                let mut asm_file = create_file(&asm_path);
-
-                if let Err(err) = asm_file.write_all(format!("{}", code.display_asm()).as_bytes()) {
-                    eprintln!("{}: error: {}", asm_path.display(), err);
-                    exit(1);
-                }
+                generate_asm(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
             }
-            _ => {}
+            Some("ast") => {
+                generate_ast( matches, filename_stem.to_string_lossy().to_string(), &mut ns);
+            }
+            None | Some(_) => {
+                generate_abi(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_abi", &mut ns);
+                generate_asm(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_asm", &mut ns);
+            }
         }
     }
 
     ns
+}
+
+
+fn generate_ast(matches: &ArgMatches, name: String, ns: &mut Namespace) {
+    let filepath = PathBuf::from(name);
+    let stem = filepath.file_stem().unwrap().to_string_lossy();
+    let dot_filename = output_file(matches, &stem, "dot");
+
+    let dot = ns.dotgraphviz();
+
+    let mut file = create_file(&dot_filename);
+
+    if let Err(err) = file.write_all(dot.as_bytes()) {
+        eprintln!("{}: error: {}", dot_filename.display(), err);
+        exit(1);
+    }
+}
+
+fn generate_abi(contract_no: usize,matches: &ArgMatches, name: String, ns: &mut Namespace) {
+    let (metadata, meta_ext) = abi::generate_abi(contract_no, &ns);
+    let meta_filename = output_file(matches, &name, meta_ext);
+    let mut file = create_file(&meta_filename);
+    file.write_all(metadata.as_bytes()).unwrap();
+}
+
+
+fn generate_llvm_ir(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut Namespace) {
+    let resolved_contract = &ns.contracts[contract_no];
+    let context = inkwell::context::Context::create();
+    let binary = resolved_contract.binary(&ns, &context, &name);
+    let llvm_filename = output_file(matches, &name, "ll");
+    binary.dump_llvm(&llvm_filename).unwrap();
+}
+
+fn generate_asm(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut Namespace) {
+    let resolved_contract = &ns.contracts[contract_no];
+    let context = inkwell::context::Context::create();
+    let binary = resolved_contract.binary(&ns, &context, &name);
+    // Parse the assembly and get a module
+    let module = Module::try_from(binary.module.to_string().as_str())
+        .expect("failed to parse LLVM IR");
+    // Compile the module for Ola and get a machine module
+    let isa = Ola::default();
+    let code = compile_module(&isa, &module).expect("failed to compile");
+    let asm_path = output_file(matches, &name, "json");
+    let mut asm_file = create_file(&asm_path);
+
+    if let Err(err) = asm_file.write_all(format!("{}", code.display_asm()).as_bytes()) {
+        eprintln!("{}: error: {}", asm_path.display(), err);
+        exit(1);
+    }
 }
 
 fn output_file(matches: &ArgMatches, stem: &str, ext: &str) -> PathBuf {

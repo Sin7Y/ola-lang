@@ -1,5 +1,5 @@
 ; ModuleID = 'HashContract'
-source_filename = "examples/source/types/hash.ola"
+source_filename = "hash"
 
 @heap_address = internal global i64 -4294967353
 

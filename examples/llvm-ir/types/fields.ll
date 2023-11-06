@@ -1,5 +1,5 @@
 ; ModuleID = 'FieldsContract'
-source_filename = "examples/source/types/fields.ola"
+source_filename = "fields"
 
 @heap_address = internal global i64 -4294967353
 

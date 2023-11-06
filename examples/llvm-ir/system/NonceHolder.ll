@@ -1,5 +1,5 @@
 ; ModuleID = 'NonceHolder'
-source_filename = "examples/source/system/NonceHolder.ola"
+source_filename = "NonceHolder"
 
 @heap_address = internal global i64 -4294967353
 

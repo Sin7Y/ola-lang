@@ -1,5 +1,5 @@
 ; ModuleID = 'Caller'
-source_filename = "examples/source/cross_call/caller.ola"
+source_filename = "caller"
 
 @heap_address = internal global i64 -4294967353
 

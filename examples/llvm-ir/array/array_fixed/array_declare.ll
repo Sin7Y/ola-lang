@@ -1,5 +1,5 @@
 ; ModuleID = 'FixedArrayExample'
-source_filename = "examples/source/array/array_fixed/array_declare.ola"
+source_filename = "array_declare"
 
 @heap_address = internal global i64 -4294967353
 

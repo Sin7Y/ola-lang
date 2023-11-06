@@ -1,5 +1,5 @@
 ; ModuleID = 'InputExample'
-source_filename = "examples/source/contract_input/simple_input.ola"
+source_filename = "simple_input"
 
 @heap_address = internal global i64 -4294967353
 

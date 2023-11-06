@@ -1,5 +1,5 @@
 ; ModuleID = 'StructArrayExample'
-source_filename = "examples/source/array/dynamic_array_struct.ola"
+source_filename = "dynamic_array_struct"
 
 @heap_address = internal global i64 -4294967353
 

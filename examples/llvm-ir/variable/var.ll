@@ -1,5 +1,5 @@
 ; ModuleID = 'Fibonacci'
-source_filename = "examples/source/variable/var.ola"
+source_filename = "var"
 
 @heap_address = internal global i64 -4294967353
 

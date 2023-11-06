@@ -1,5 +1,5 @@
 ; ModuleID = 'SimpleVar'
-source_filename = "examples/source/storage/storage_u32.ola"
+source_filename = "storage_u32"
 
 @heap_address = internal global i64 -4294967353
 

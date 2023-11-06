@@ -1,5 +1,5 @@
 ; ModuleID = 'ArraySortExample'
-source_filename = "examples/source/array/array_sort.ola"
+source_filename = "array_sort"
 
 @heap_address = internal global i64 -4294967353
 

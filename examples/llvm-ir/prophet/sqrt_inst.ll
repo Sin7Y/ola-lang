@@ -1,5 +1,5 @@
 ; ModuleID = 'SqrtContract'
-source_filename = "examples/source/prophet/sqrt_inst.ola"
+source_filename = "sqrt_inst"
 
 @heap_address = internal global i64 -4294967353
 

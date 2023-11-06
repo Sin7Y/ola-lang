@@ -1,5 +1,5 @@
 ; ModuleID = 'ContractDeployer'
-source_filename = "examples/source/system/ContractDeployer.ola"
+source_filename = "ContractDeployer"
 
 @heap_address = internal global i64 -4294967353
 

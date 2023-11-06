@@ -1,5 +1,5 @@
 ; ModuleID = 'StructArrayExample'
-source_filename = "examples/source/array/array_struct.ola"
+source_filename = "array_struct"
 
 @heap_address = internal global i64 -4294967353
 

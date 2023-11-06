@@ -1,5 +1,5 @@
 ; ModuleID = 'Voting'
-source_filename = "examples/source/storage/vote.ola"
+source_filename = "vote"
 
 @heap_address = internal global i64 -4294967353
 

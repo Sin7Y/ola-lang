@@ -1,5 +1,5 @@
 ; ModuleID = 'Entrypoint'
-source_filename = "examples/source/system/Entrypoint.ola"
+source_filename = "Entrypoint"
 
 @heap_address = internal global i64 -4294967353
 

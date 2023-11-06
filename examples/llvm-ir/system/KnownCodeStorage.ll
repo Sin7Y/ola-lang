@@ -1,5 +1,5 @@
 ; ModuleID = 'KnownCodeStorage'
-source_filename = "examples/source/system/KnownCodeStorage.ola"
+source_filename = "KnownCodeStorage"
 
 @heap_address = internal global i64 -4294967353
 

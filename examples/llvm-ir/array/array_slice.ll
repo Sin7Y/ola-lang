@@ -1,5 +1,5 @@
 ; ModuleID = 'ArraySlice'
-source_filename = "examples/source/array/array_slice.ola"
+source_filename = "array_slice"
 
 @heap_address = internal global i64 -4294967353
 

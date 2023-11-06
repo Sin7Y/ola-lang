@@ -1,5 +1,5 @@
 ; ModuleID = 'DefaultAccount'
-source_filename = "examples/source/system/DefaultAccount.ola"
+source_filename = "DefaultAccount"
 
 @heap_address = internal global i64 -4294967353
 

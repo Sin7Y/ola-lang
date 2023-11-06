@@ -1,5 +1,5 @@
 ; ModuleID = 'AccountCodeStorage'
-source_filename = "examples/source/system/AccountCodeStorage.ola"
+source_filename = "AccountCodeStorage"
 
 @heap_address = internal global i64 -4294967353
 

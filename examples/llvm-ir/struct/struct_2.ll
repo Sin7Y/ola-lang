@@ -1,5 +1,5 @@
 ; ModuleID = 'MyContract'
-source_filename = "examples/source/struct/struct_2.ola"
+source_filename = "struct_2"
 
 @heap_address = internal global i64 -4294967353
 

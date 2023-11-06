@@ -1,5 +1,5 @@
 ; ModuleID = 'DynamicArrayExample'
-source_filename = "examples/source/storage/storage_array_dyn.ola"
+source_filename = "storage_array_dyn"
 
 @heap_address = internal global i64 -4294967353
 

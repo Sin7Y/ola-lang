@@ -1,5 +1,5 @@
 ; ModuleID = 'AssertContract'
-source_filename = "examples/source/assert/string_assert.ola"
+source_filename = "string_assert"
 
 @heap_address = internal global i64 -4294967353
 
