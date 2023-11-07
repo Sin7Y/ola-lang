@@ -1,4 +1,4 @@
-<svg class="railroad" viewBox="0 0 339 42" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg class="railroad" viewBox="0 0 387 75" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <style type="text/css">
 
 svg.railroad {
@@ -58,29 +58,51 @@ svg.railroad g.labeledbox &gt; rect {
 </style>
 <g class="sequence">
 <path d=" M 10 21 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
-<g class="sequence">
+<g class="choice">
+<path d=" M 35 21 h 24 m 264 0 h 24"/>
 <g class="sequence">
 <g class="nonterminal">
-<rect height="22" width="100" x="35" y="10"/>
-<text x="85" y="26">
+<rect height="22" width="100" x="59" y="10"/>
+<text x="109" y="26">
 Identifier</text>
 </g>
 <g class="terminal">
-<rect height="22" rx="10" ry="10" width="44" x="145" y="10"/>
-<text x="167" y="26">
+<rect height="22" rx="10" ry="10" width="44" x="169" y="10"/>
+<text x="191" y="26">
 &quot;:&quot;</text>
 </g>
 <g class="nonterminal">
-<rect height="22" width="100" x="199" y="10"/>
-<text x="249" y="26">
+<rect height="22" width="100" x="223" y="10"/>
+<text x="273" y="26">
 Expression</text>
 </g>
-<path d=" M 135 21 h 10"/>
-<path d=" M 189 21 h 10"/>
+<path d=" M 159 21 h 10"/>
+<path d=" M 213 21 h 10"/>
+</g>
+<path d=" M 35 21 a 12 12 0 0 1 12 12 v 9 m 288 0 v -9 a 12 12 0 0 1 12 -12"/>
+<path d=" M 47 42 v 0 a 12 12 0 0 0 12 12 m 256 0 h 8 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="92" x="59" y="43"/>
+<text x="105" y="59">
+&quot;address&quot;</text>
+</g>
+<g class="terminal">
+<rect height="22" rx="10" ry="10" width="44" x="161" y="43"/>
+<text x="183" y="59">
+&quot;:&quot;</text>
+</g>
+<g class="nonterminal">
+<rect height="22" width="100" x="215" y="43"/>
+<text x="265" y="59">
+Expression</text>
+</g>
+<path d=" M 151 54 h 10"/>
+<path d=" M 205 54 h 10"/>
 </g>
 </g>
-<path d=" M 309 21 h 20 m -10 -10 v 20 m 10 -20 v 20"/>
+<path d=" M 357 21 h 20 m -10 -10 v 20 m 10 -20 v 20"/>
 <path d=" M 25 21 h 10"/>
-<path d=" M 299 21 h 10"/>
+<path d=" M 347 21 h 10"/>
 </g>
 </svg>

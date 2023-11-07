@@ -1,4 +1,4 @@
-<svg class="railroad" viewBox="0 0 199 108" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg class="railroad" viewBox="0 0 271 253" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <style type="text/css">
 
 svg.railroad {
@@ -59,7 +59,7 @@ svg.railroad g.labeledbox &gt; rect {
 <g class="sequence">
 <path d=" M 10 21 a 5 5 0 0 1 5 -5 a 5 5 0 0 1 5 5 a 5 5 0 0 1 -5 5 a 5 5 0 0 1 -5 -5 m 10 0 h 5"/>
 <g class="choice">
-<path d=" M 35 21 h 24 m 68 0 h 32"/>
+<path d=" M 35 21 h 24 m 68 0 h 104 m -49 0 l -5 -5 m 0 10 l 5 -5 m 49 0"/>
 <g class="sequence">
 <g class="terminal">
 <rect height="22" rx="10" ry="10" width="68" x="59" y="10"/>
@@ -67,9 +67,13 @@ svg.railroad g.labeledbox &gt; rect {
 &quot;true&quot;</text>
 </g>
 </g>
-<path d=" M 35 21 a 12 12 0 0 1 12 12 v 9 m 100 0 v -9 a 12 12 0 0 1 12 -12"/>
-<path d=" M 47 42 v 33 m 100 0 v -33"/>
-<path d=" M 47 42 v 0 a 12 12 0 0 0 12 12 m 76 0 h 0 a 12 12 0 0 0 12 -12 v 0"/>
+<path d=" M 35 21 a 12 12 0 0 1 12 12 v 9 m 172 0 v -9 a 12 12 0 0 1 12 -12"/>
+<path d=" M 47 42 v 33 m 172 0 v -33"/>
+<path d=" M 47 75 v 33 m 172 0 v -33"/>
+<path d=" M 47 108 v 33 m 172 0 v -33"/>
+<path d=" M 47 141 v 46 m 172 0 v -46"/>
+<path d=" M 47 187 v 33 m 172 0 v -33"/>
+<path d=" M 47 42 v 0 a 12 12 0 0 0 12 12 m 76 0 h 72 m -33 0 l -5 -5 m 0 10 l 5 -5 m 33 0 a 12 12 0 0 0 12 -12 v 0"/>
 <g class="sequence">
 <g class="terminal">
 <rect height="22" rx="10" ry="10" width="76" x="59" y="43"/>
@@ -77,7 +81,7 @@ svg.railroad g.labeledbox &gt; rect {
 &quot;false&quot;</text>
 </g>
 </g>
-<path d=" M 47 75 v 0 a 12 12 0 0 0 12 12 m 68 0 h 8 a 12 12 0 0 0 12 -12 v 0"/>
+<path d=" M 47 75 v 0 a 12 12 0 0 0 12 12 m 68 0 h 80 m -37 0 l -5 -5 m 0 10 l 5 -5 m 37 0 a 12 12 0 0 0 12 -12 v 0"/>
 <g class="sequence">
 <g class="nonterminal">
 <rect height="22" width="68" x="59" y="76"/>
@@ -85,9 +89,50 @@ svg.railroad g.labeledbox &gt; rect {
 Number</text>
 </g>
 </g>
+<path d=" M 47 108 v 0 a 12 12 0 0 0 12 12 m 92 0 h 56 m -25 0 l -5 -5 m 0 10 l 5 -5 m 25 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="nonterminal">
+<rect height="22" width="92" x="59" y="109"/>
+<text x="105" y="125">
+HexNumber</text>
 </g>
-<path d=" M 169 21 h 20 m -10 -10 v 20 m 10 -20 v 20"/>
+</g>
+<path d=" M 47 141 v 0 a 12 12 0 0 0 12 12 m 148 0 h 0 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="choice">
+<path d=" M 59 153 h 0 m 148 0 h 0"/>
+<g class="repeat">
+<path d=" M 59 153 h 12 m 124 0 h 12 m -12 0 a 12 12 0 0 1 12 12 v 0 a 12 12 0 0 1 -12 12 m 0 0 h -124 m 65 0 l 5 -5 m 0 10 l -5 -5 m -65 0 a 12 12 0 0 1 -12 -12 v 0 a 12 12 0 0 1 12 -12"/>
+<g/>
+<g class="sequence">
+<g class="nonterminal">
+<rect height="22" width="124" x="71" y="142"/>
+<text x="133" y="158">
+StringLiteral</text>
+</g>
+</g>
+</g>
+</g>
+</g>
+<path d=" M 47 187 v 0 a 12 12 0 0 0 12 12 m 132 0 h 16 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="nonterminal">
+<rect height="22" width="132" x="59" y="188"/>
+<text x="125" y="204">
+AddressLiteral</text>
+</g>
+</g>
+<path d=" M 47 220 v 0 a 12 12 0 0 0 12 12 m 108 0 h 40 a 12 12 0 0 0 12 -12 v 0"/>
+<g class="sequence">
+<g class="nonterminal">
+<rect height="22" width="108" x="59" y="221"/>
+<text x="113" y="237">
+HashLiteral</text>
+</g>
+</g>
+</g>
+<path d=" M 241 21 h 20 m -10 -10 v 20 m 10 -20 v 20"/>
 <path d=" M 25 21 h 10"/>
-<path d=" M 159 21 h 10"/>
+<path d=" M 231 21 h 10"/>
 </g>
 </svg>

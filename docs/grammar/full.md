@@ -1,7 +1,6 @@
-# Ola Language Grammar
+# Full Grammar
 
 ## Rule SourceUnit
-
 
 ![SourceUnit](svg/sourceunit.svg)
 
@@ -49,10 +48,29 @@ rule ImportDirective ::=
 ```ebnf
 rule Type ::=
      'bool' 
-  |  'field' 
   |  'u32' 
   |  'u64' 
   |  'u256' 
+  |  'address' 
+  |  'field' 
+  |  'hash' 
+  |  'fields' 
+  |  'string' 
+  |  'mapping'  '(' Precedence0 Identifier ?   '=>' Precedence0 Identifier ?   ')' 
+  ;
+
+```
+
+
+
+## Rule StorageLocation
+
+![StorageLocation](svg/storagelocation.svg)
+
+```ebnf
+rule StorageLocation ::=
+     'memory' 
+  |  'storage' 
   ;
 
 ```
@@ -79,7 +97,7 @@ rule IdentifierOrError ::=
 
 ```ebnf
 rule VariableDeclaration ::=
-    Precedence0 IdentifierOrError 
+    Precedence0 StorageLocation ?  IdentifierOrError 
   ;
 
 ```
@@ -392,6 +410,8 @@ rule Precedence3 ::=
 rule Precedence2 ::=
      '!' Precedence2 
   |  '~' Precedence2 
+  |  'delete' Precedence2 
+  |  'new' Precedence2 
   | Precedence0 
   ;
 
@@ -406,6 +426,7 @@ rule Precedence2 ::=
 ```ebnf
 rule NamedArgument ::=
     Identifier  ':' Expression 
+  |  'address'  ':' Expression 
   ;
 
 ```
@@ -419,6 +440,7 @@ rule NamedArgument ::=
 ```ebnf
 rule FunctionCall ::=
     Precedence0  '(' Comma!(Expression)  ')' 
+  | Precedence0 BlockStatement 
   | Precedence0  '('  '{' Comma!(NamedArgument)  '}'  ')' 
   ;
 
@@ -458,6 +480,10 @@ rule LiteralExpression ::=
      'true' 
   |  'false' 
   | Number 
+  | HexNumber 
+  | StringLiteral +  
+  | AddressLiteral 
+  | HashLiteral 
   ;
 
 ```
@@ -554,7 +580,8 @@ rule BlockStatement ::=
 rule OpenStatement ::=
      'if'  '(' Expression  ')' Statement 
   |  'if'  '(' Expression  ')' ClosedStatement  'else' OpenStatement 
-  |  'for'  '(' SimpleStatement ?   ';' Expression ?   ';' SimpleStatement ?   ')' OpenStatement 
+  |  'for'  '(' SimpleStatement ?   ';' Expression ?   ';' Expression ?   ')' OpenStatement 
+  |  'while'  '(' Expression  ')' OpenStatement 
   ;
 
 ```
@@ -569,8 +596,9 @@ rule OpenStatement ::=
 rule ClosedStatement ::=
     NonIfStatement 
   |  'if'  '(' Expression  ')' ClosedStatement  'else' ClosedStatement 
-  |  'for'  '(' SimpleStatement ?   ';' Expression ?   ';' SimpleStatement ?   ')' ClosedStatement 
-  |  'for'  '(' SimpleStatement ?   ';' Expression ?   ';' SimpleStatement ?   ')'  ';' 
+  |  'while'  '(' Expression  ')' ClosedStatement 
+  |  'for'  '(' SimpleStatement ?   ';' Expression ?   ';' Expression ?   ')' ClosedStatement 
+  |  'for'  '(' SimpleStatement ?   ';' Expression ?   ';' Expression ?   ')'  ';' 
   ;
 
 ```
@@ -614,6 +642,7 @@ rule SimpleStatement ::=
 rule NonIfStatement ::=
     BlockStatement 
   | SimpleStatement  ';' 
+  |  'do' Statement  'while'  '(' Expression  ')'  ';' 
   |  'continue'  ';' 
   |  'break'  ';' 
   |  'return'  ';' 
@@ -664,20 +693,6 @@ macro CommaTwo<T> ::=
 
 
 
-## Rule Number
-
-![Number](svg/number.svg)
-
-```ebnf
-rule Number ::=
-     'r#([1-9][0-9]*|0)(u|ll|l)?#' 
-  |  'r#0x[0-9A-Fa-f]*(u|ll|l)?#' 
-  ;
-
-```
-
-
-
 ## Rule Identifier
 
 ![Identifier](svg/identifier.svg)
@@ -685,6 +700,58 @@ rule Number ::=
 ```ebnf
 rule Identifier ::=
      'r#[$_]*[a-zA-Z][a-zA-Z$_0-9]*#' 
+  ;
+
+```
+
+
+
+## Rule Number
+
+![Number](svg/number.svg)
+
+```ebnf
+rule Number ::=
+     'r#([1-9][0-9]*|0)#' 
+  ;
+
+```
+
+
+
+## Rule HexNumber
+
+![HexNumber](svg/hexnumber.svg)
+
+```ebnf
+rule HexNumber ::=
+     'r#0x[0-9A-Fa-f]+#' 
+  ;
+
+```
+
+
+
+## Rule AddressLiteral
+
+![AddressLiteral](svg/addressliteral.svg)
+
+```ebnf
+rule AddressLiteral ::=
+     'r#0x([0-9A-Fa-f]{64})address#' 
+  ;
+
+```
+
+
+
+## Rule HashLiteral
+
+![HashLiteral](svg/hashliteral.svg)
+
+```ebnf
+rule HashLiteral ::=
+     'r#0x[0-9A-Fa-f]{64}hash#' 
   ;
 
 ```

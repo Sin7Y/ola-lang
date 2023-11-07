@@ -84,13 +84,10 @@ ParameterList</text>
 <text x="447" y="39">
 &quot;-&gt;&quot;</text>
 </g>
-<g class="choice">
-<path d=" M 483 34 h 0 m 124 0 h 0"/>
 <g class="nonterminal">
 <rect height="22" width="124" x="483" y="23"/>
 <text x="545" y="39">
 ParameterList</text>
-</g>
 </g>
 <path d=" M 473 34 h 10"/>
 </g>
