@@ -1,4 +1,4 @@
-# Ola Language Syntax
+# Ola Language
 
 ### Variables
 
@@ -79,21 +79,34 @@ Three basic types and multiple complex types are supported.
 
 #### Basic Types
 
-There are three types of basic types, namely integer, field and Boolean
+ Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `address`,`hash`.
 
 ##### Integer Type
 
-There are several types of integer types: `u32`, `u64`, and `u256`, and currently only unsigned integer operations are supported. 
+There are several types of integer types: `u32`, `u64`, `u256`, and currently only `u32` integer operations are supported. 
 All types are built on the basis of the `field` type.
 Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic.
 Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal. 
 
 ```
-u32 a = 2; // u32
-u64 b = 2; // u64
-u64 b  = 0xffffl; // u64
-u256 d = 102411ll  // u256
+u32 a = 2u32; // u32
+u32 b = 43; // u32
+u64 b = 2u64; // u64
 ```
+
+##### Field Elements Type
+
+Ola supports the `field` type for elements of the base field of the elliptic curve. These are unsigned integers less than the modulus of the base field. The following are the smallest and largest field elements.
+
+The `filed` type is a goldilocks field number, with a maximum value of `2^64 - 2^32 + 1`.
+
+```
+field a = 32field
+field b = 22field
+field c = a + b;
+```
+
+The `filed` type has limited operations because it is based on elliptic curves in a finite field. It can only support basic `+` and `- `operations, as well as accept some special function return values.
 
 ##### Boolean
 
@@ -102,9 +115,28 @@ Bool indicates that the value of `field` is `0` or `1`, which is declared using 
 bool a = true;
 bool b = false;
 ```
+##### Address
+
+The address type is an array composed of 4 fields. The address is calculated by Poseidon hash on certain inputs, and the first 4 fields of the hash return value are used as the address.
+
+```
+address addr = address(0x0000000001);
+address bar = 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203address
+```
+
+##### Hash
+
+Hash and address types are similar, both are arrays of 4 field elements. 
+
+```
+ string a = "helloworld";
+ hash h = poseidon_hash(a);
+ assert(h == 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash);
+```
+
 #### Complex Types
 
-Ola supports a variety of complex types such as`Arrays`,`Slice`,`Tuples`,`Structs`,`Enumerations`,`Map`。
+Ola supports a variety of complex types such as `Arrays`, `String`, `Fields` ,`Slice`, `Tuples`,`Structs`,`Enumerations`,`Mapping`。
 
 ##### Arrays
 
@@ -114,6 +146,7 @@ Array elements are numbered from zero and are accessed using`[index]`for address
 
 Array declarations must be initialized, and the array declaration format is为`type`and`[]`(`type []`),and the array size must be specified.
 Two ways to initialize arrays are provided:
+
 - Split the list of elements by commas,`[array_element1,array_element2,...]`。
 - Array declaration and initialization with consistent array elements,`[array_value; size]`。
 
@@ -143,6 +176,46 @@ Similar to rust, arrays can be created by slicing an array to copy the generated
 field[5] a = [1, 2, 3, 4, 5];
 field[3] b = a[2..4];   // initialize an array copying a slice from `a`
 // array b is [3, 4, 5]
+```
+
+Memory dynamic arrays must be allocated with `new` before they can be used. The `new` expression requires a single unsigned integer argument. The length can be read using `length` member variable.
+
+```
+u32[] b = new u32[](10);
+assert(b.length == 10);
+```
+
+##### String
+
+`String` can be initialized with a string literal Strings can be concatenated and compared equal, no other operations are allowed on strings 
+
+Note:  The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
+
+```
+  fn test1(string s) -> (bool) {
+      string str = "Hello, " + s + "!";
+      return (str == "Hello, World!");
+  }
+```
+
+##### Fields
+
+Fields is a dynamic array representation of the filed type. fields can be concatenated using the system library provided by the ola language.
+
+Fields types can be converted to string types and vice versa.
+
+```
+fn fields_concat_test() -> (fields){
+   string a = "ola";
+   string b = "vm";
+   fields a_b = fields_concat(fields(a), fields(b));
+   return a_b;
+}
+
+fn encode_test() -> (fields) {
+	fields call_data = abi.encodeWithSignature("setVars(u32)", 12);
+	return call_data;
+}
 ```
 
 ##### Tuples
@@ -193,9 +266,23 @@ contract Foo {
 }
 ````
 
-##### Map
+##### Mapping
 
-TODO
+Mappings are a dictionary type, or associative arrays. Mappings have a number of limitations:
+
+- They only work as storage variables
+- They are not iterable
+- The key cannot be a `struct`, array, or another mapping.
+
+Mappings are declared with `mapping(keytype => valuetype)`, for example:
+
+```
+struct user {
+    bool exists;
+    address addr;
+}
+mapping(string => user) users;
+```
 
 #### Type Alias
 
@@ -203,7 +290,7 @@ To increase code readability, defining a type alias for each type is supported.
 At compile time, the type alias will be replaced with real types.
 
 ```
-type balance = uint256;
+type balance = u256;
 
 fn main() -> balance {
     balance a = 32ll;
@@ -335,6 +422,74 @@ fn foo() -> u32 {
 }
 ```
 
+#### While statement
+
+Repeated execution of a block can be achieved using while. It syntax is similar to if, however the block is repeatedly executed until the condition evaluates to false. If the condition is not true on first execution, then the loop body is never executed:
+
+```
+contract Foo {
+    fn foo(u32 n) {
+        while (n >= 10) {
+            n -= 1;
+        }
+    }
+}
+```
+
+It is possible to terminate execution of the while statement by using the `break` statement. Execution will continue to next statement in the function. Alternatively, `continue` will cease execution of the block, but repeat the loop if the condition still holds: 
+
+```
+
+  fn bar(u32 n) -> (bool) {
+        return false;
+   }
+   
+  fn foo(u32 n) {
+      while (n >= 10) {
+          n--;
+
+          if (n >= 100) {
+              // do not execute the if statement below, but loop again
+              continue;
+          }
+
+          if (bar(n)) {
+              // cease execution of this while loop and jump to the "n = 102" statement
+              break;
+          }
+
+          // only executed if both if statements were false
+          print("neither true");
+      }
+
+      n = 102;
+  }
+
+```
+
+#### Do While statement
+
+A `do { ... } while (condition);` statement is much like the `while (condition) { ... }` except that the condition is evaluated after executing the block. This means that the block is always executed at least once, which is not true for `while` statements:
+
+```
+fn foo(u32 n) {
+        do {
+            n--;
+            if (n >= 100) {
+                // do not execute the if statement below, but loop again
+                continue;
+            }
+
+            if (bar(n)) {
+                // cease execution of this while loop and jump to the "n = 102" statement
+                break;
+            }
+        } while (n > 10);
+
+        n = 102;
+    }
+```
+
 ### Functions
 
 It is the basic module unit of Ola, containing declarations and statements.
@@ -370,21 +525,62 @@ fn sum(u32 a, u32 b) -> u32 {
 }
 ```
 
-### Imports
+### Prophet Fuctions
 
-In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name.
-Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development.
-The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
-```
-import "path-spec"
-import "path-spec" as alias_name
-```
-e.g.:
+Ola supports the "prophet" function, which utilizes prophet features to make previously difficult-to-prove but easy-to-verify computation processes now easily provable and verifiable, improving ZK circuit proof efficiency.
+
+The following demonstrates the usage of the u32_sqrt prophet function supported by ola.
 
 ```
-import "./math/uint256.ola";
-import "crypto/sha256.ola" as sha256;
+  fn sqrt_test(u32 n) -> (u32) {
+      u32 b = u32_sqrt(n);
+      return b;
+  }
 ```
+
+We can also use the Ola language to implement a simplified version of the sqrt function.
+
+```
+  // native approach
+  fn sqrt_test(u32 a) -> (u32) {
+      u32 result = 0;
+      if (a > 3) {
+          result = a;
+          u32 x = a / 2 + 1;
+          // assume the maximum iteration is 100
+          for (u32 i = 0; i < 100; i++) {
+              if (x >= result) break;
+              result = x;
+              x = (a / x + x) / 2;
+          }
+      } else if (a != 0) {
+          result = 1;
+      }
+      return result;
+  }
+```
+
+![ed08fd9e-2d57-4cc7-8201-25520d72ee59](https://s2.loli.net/2023/11/07/AHhaYLNMe96CFcs.png)
+
+## Core Functions
+
+   The goal of the Ola-lang high-level language library is to provide a set of high-level APIs that can be used to quickly develop applications. The Core lib functions  provides commonly used functions and modules, such as Ola Standard Library, integer type operations, math calculations,  assert function ,  print function , which can greatly improve the development efficiency of programmers.
+
+| function name           | Params                                | returns                                              | Usage                                                        |
+| ----------------------- | ------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| assert                  | bool                                  |                                                      | assert(a == b);                                              |
+| u32_array_sort          | u32 array                             | sorted array                                         | u32_array_sort([2, 1, 3, 4]);                                |
+| print                   | all type value                        |                                                      | print(var_a) ;                                               |
+| caller_address          |                                       | contract caller address                              | address caller = caller_address()                            |
+| origin_address          |                                       | contract origin caller address                       | address origin = origin_address()                            |
+| code_address            |                                       | current execute code contract address                | address code_addr = code_address()                           |
+| current_address         |                                       | current state write and read contract address        | address state_addr = current_address()                       |
+| poseidon_hash           | string/ fields                        | hash type                                            | hash CREATE2_PREFIX = poseidon_hash("OlaCreate2");           |
+| chain_id                |                                       | u32 (The future may be replaced by other data types. | u32 chainID = chain_id();                                    |
+| fields_concat           | fields a and fields b                 | new fields                                           | fields ret = fields_concat(a, b);                            |
+| abi.encode              | various types of uncertain quantities | fields                                               | fields encode_value = abi.encode(a, b);                      |
+| abi.decode              | fields data wtih various types        | tuple with all type value                            | u32 result = abi.decode(data, (u32));                        |
+| abi.encodeWithSignature | String function selector and params   | fields                                               | fields call_data = abi.encodeWithSignature("add(u32,u32)", a, b); |
 
 ### Comment Lines
 
@@ -411,3 +607,35 @@ fn sum(u32 a, u32 b) -> u32 {
     return a + b;  
 }
 ```
+
+## Features TODO
+
+### Imports
+
+In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name.
+Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development.
+The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
+
+```
+import "path-spec"
+import "path-spec" as alias_name
+```
+
+e.g.:
+
+```
+import "./math/u256.ola";
+import "crypto/sha256.ola" as sha256;
+```
+
+### Object-oriented features of contracts
+
+Support for object-oriented features can make contract functionality more robust, and cross-contract invocations will be easier.
+
+### More core libraries
+
+The currently supported core libraries include u64 operation library, u256 operation library, signature and verification library.
+
+### Contract event
+
+Contract events can help users debug contracts and facilitate communication between layer2 and layer1.
