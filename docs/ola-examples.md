@@ -1,9 +1,9 @@
-# Smart contracts
+# Ola Language examples
 
 Ola contracts allow users to write complex business logic that will be deployed to Ola's l2 network, 
 and cross-contract calls can be written between different contracts just like solidity.
 
-## Examples
+## Fibonacci
 
 The following example shows a recursive and non-recursive ola smart contract implementation of Fibonacci numbers.
 
@@ -37,7 +37,7 @@ contract Fibonacci {
 }
 
 ````
-
+## Person 
 The following shows a simple Person contract that contains a person structure, 
 assigns a value to the person structure and reads the status of the person.
 
@@ -74,7 +74,121 @@ contract Person {
 ````
 
 
-## Multiple files
+
+## Vote conctact
+The following example demonstrates a simple voting contract.
+
+```
+contract Voting {
+ 
+    struct Proposal {
+        u32 name;  
+        u32 voteCount;
+    }
+
+
+    struct Voter {
+        bool voted;  
+        u32 vote;   
+    }
+
+    mapping(address => Voter) voters;
+
+    Proposal[] proposals;
+
+    // constructor
+    fn contract_init(u32[] proposalNames_) {
+       for (u32 i = 0; i < proposalNames_.length; i++) {
+            proposals.push(Proposal({
+                name: proposalNames_[i],
+                voteCount: 0
+            }));
+            print(proposals[i].name);
+        }
+    }
+
+    fn vote_proposal(u32 proposal_)  {
+        address msgSender = caller_address();
+        Voter storage sender = voters[msgSender];
+        assert(!sender.voted, "Already voted.");
+        sender.voted = true;
+        sender.vote = proposal_;
+        print(proposals[proposal_].name);
+        assert(proposals[proposal_].name != 0, "Vote is not initialized");
+        proposals[proposal_].voteCount += 1;
+    }
+
+
+    fn winningProposal() -> (u32 winningProposal_) {
+        u32 winningVoteCount = 0;
+        for (u32 p = 0; p < proposals.length; p++) {
+            if (proposals[p].voteCount > winningVoteCount) {
+                winningVoteCount = proposals[p].voteCount;
+                winningProposal_ = p;
+            }
+        }
+        print(winningProposal_);
+        return winningProposal_;
+    }
+
+     fn getWinnerName() -> (u32) {
+        u32 winnerP = winningProposal();
+        u32 winnerName = proposals[winnerP].name;
+        print(winnerName);
+        return winnerName;
+     }
+
+}
+```
+
+## Cross-contract invocation
+
+The following example demonstrates the usage of cross-contract invocation.
+
+**Caller contract**
+
+```
+
+contract Caller {
+    u32 num;
+
+
+    fn delegatecall_test(address _contract) {
+        u32 set_data = 66;
+        fields call_data = abi.encodeWithSignature("setVars(u32)", set_data);
+        _contract.delegatecall(call_data);
+        assert(num == 66);
+    }
+
+    fn call_test(address _contract) {
+        u32 a = 100;
+        u32 b = 200;
+        fields call_data = abi.encodeWithSignature("add(u32,u32)", a, b);
+        fields memory data = _contract.call(call_data);
+        u32 result = abi.decode(data, (u32));
+        assert(result == 300);
+    }
+}
+```
+
+**Callee contract**
+
+```
+contract Callee {
+    u32 num;
+
+    fn setVars(u32 data)  {
+        num = data;
+    }
+
+    fn add(u32 a, u32 b) -> (u32) {
+        return a + b;
+    }
+}
+
+```
+
+## Multiple files (TODO)
 
 For better project organisation and clearer logic, 
 it is common to split the contents of a file into multiple files.
@@ -115,8 +229,8 @@ contract SquareCalculator {
 **Contract Calculator**
 ```javascript
 
-import "./RectangularCalculator";
-import "./SquareCalculator";
+import "./RectangularCalculator.ola";
+import "./SquareCalculator.ola";
 
 contract Calculator {
   
@@ -129,10 +243,3 @@ contract Calculator {
 
 ```
 
-
-## More Features
-
-* String and Mapping Support - More data types can be combined.
-* Library functions  - Support for native fields and cryptography-related library functions.
-* Cross-contract calls - Support for more complex business logic.
-* ... - Coming soon.
