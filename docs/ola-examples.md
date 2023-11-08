@@ -1,4 +1,4 @@
-# Ola Examples
+# 👀 Ola Examples
 
 Ola contracts allow users to write complex business logic that will be deployed to Ola's l2 network, and cross-contract calls can be written between different contracts just like solidity.
 
@@ -41,7 +41,7 @@ contract Fibonacci {
 
 The following shows a simple Person contract that contains a person structure, assigns a value to the person structure and reads the status of the person.
 
-```javascript
+```rust
 
 contract Person {
 
@@ -77,7 +77,7 @@ contract Person {
 
 The following example demonstrates a simple voting contract.
 
-```
+```rust
 contract Voting {
  
     struct Proposal {
@@ -146,7 +146,7 @@ The following example demonstrates the usage of cross-contract invocation.
 
 **Caller contract**
 
-```
+```rust
 
 contract Caller {
     u32 num;
@@ -172,7 +172,7 @@ contract Caller {
 
 **Callee contract**
 
-```
+```rust
 contract Callee {
     u32 num;
 
@@ -195,7 +195,7 @@ An example of a multi-file contract is shown below.
 
 **Contract RectangularCalculator**
 
-```javascript
+```rust
 
 contract RectangularCalculator {
   
@@ -211,7 +211,7 @@ contract RectangularCalculator {
 
 **Contract ShapeCalculator**
 
-```javascript
+```rust
 
 contract SquareCalculator {
 
@@ -226,7 +226,7 @@ contract SquareCalculator {
 
 **Contract Calculator**
 
-```javascript
+```rust
 
 import "./RectangularCalculator.ola";
 import "./SquareCalculator.ola";

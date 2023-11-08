@@ -1,4 +1,4 @@
-# Ola Language
+# 👏 Ola Language
 
 ### Variables
 
@@ -559,9 +559,7 @@ We can also use the Ola language to implement a simplified version of the sqrt f
 
 ![ed08fd9e-2d57-4cc7-8201-25520d72ee59](https://s2.loli.net/2023/11/07/AHhaYLNMe96CFcs.png)
 
-## Core Functions
-
-
+### Core Functions
 
 The goal of the Ola-lang high-level language library is to provide a set of high-level APIs that can be used to quickly develop applications. The Core lib functions provides commonly used functions and modules, such as Ola Standard Library, integer type operations, math calculations, `assert` function , `print` function , which can greatly improve the development efficiency of programmers.
 
@@ -609,9 +607,9 @@ fn sum(u32 a, u32 b) -> u32 {
 }
 ```
 
-## Features TODO
+### 🚧 Features TODO
 
-### Imports
+#### Imports
 
 In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name. Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development. The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
 
@@ -627,14 +625,14 @@ import "./math/u256.ola";
 import "crypto/sha256.ola" as sha256;
 ```
 
-### Object-oriented features of contracts
+#### Object-oriented features of contracts
 
 Support for object-oriented features can make contract functionality more robust, and cross-contract invocations will be easier.
 
-### More core libraries
+#### More core libraries
 
 The currently supported core libraries include u64 operation library, u256 operation library, signature and verification library.
 
-### Contract event
+#### Contract event
 
 Contract events can help users debug contracts and facilitate communication between layer2 and layer1.

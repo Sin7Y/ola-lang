@@ -2,9 +2,9 @@
 
 * [README](README.md)
 * [Introduction](introduction.md)
-* [Quick Start](quick-start.md)
-* [Ola Language](ola-langugae.md)
-* [Ola Examples](ola-examples.md)
+* [🏃♂ Quick Start](quick-start.md)
+* [👏 Ola Language](ola-langugae.md)
+* [👀 Ola Examples](ola-examples.md)
 * [Ola ABI](ola-abi.md)
 * [Ola Compiler](ola-compiler/compiler-introduction.md)
   * [Compiler Frontend](ola-compiler/compiler-frontend.md)

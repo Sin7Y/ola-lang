@@ -1,9 +1,10 @@
-# Ola language ABI
+# Ola ABI
+
 In order to interact programmatically with compiled ola programs, Ola language supports passing arguments using an ABI.
 
 To illustrate this, we'll use the following example program:
 
-```
+```rust
 
 contract BookExample {
     struct Book {
@@ -141,4 +142,4 @@ In this example, the ABI specification is:
 
 We can use the tools provided by ola-lang-abi to generate function selectors and function parameters corresponding to ABI.
 
-https://github.com/Sin7Y/ola-lang-abi/tree/main/examples
+[https://github.com/Sin7Y/ola-lang-abi/tree/main/examples](https://github.com/Sin7Y/ola-lang-abi/tree/main/examples)
