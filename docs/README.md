@@ -35,4 +35,4 @@ Ola primary design goal:
 
 ## Documentation Updates
 
-Ola language is currently iterating and developing rapidly, and the document will be updated continuously. We welcome all interested developers to build it with us. If you need Ola support, please send an email to contact@sin7y.com.
+Ola language is currently iterating and developing rapidly, and the document will be updated continuously. We welcome all interested developers to build it with us. If you need Ola support, please send an email to **contact@olavm.org.**
