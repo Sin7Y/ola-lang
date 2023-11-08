@@ -1,13 +1,12 @@
-# Ola Language examples
+# Ola Examples
 
-Ola contracts allow users to write complex business logic that will be deployed to Ola's l2 network, 
-and cross-contract calls can be written between different contracts just like solidity.
+Ola contracts allow users to write complex business logic that will be deployed to Ola's l2 network, and cross-contract calls can be written between different contracts just like solidity.
 
 ## Fibonacci
 
 The following example shows a recursive and non-recursive ola smart contract implementation of Fibonacci numbers.
 
-````javascript
+```rust
 
 contract Fibonacci {
 
@@ -36,12 +35,13 @@ contract Fibonacci {
 
 }
 
-````
-## Person 
-The following shows a simple Person contract that contains a person structure, 
-assigns a value to the person structure and reads the status of the person.
+```
 
-````javascript
+## Person
+
+The following shows a simple Person contract that contains a person structure, assigns a value to the person structure and reads the status of the person.
+
+```javascript
 
 contract Person {
 
@@ -71,11 +71,10 @@ contract Person {
     }
 }
 
-````
-
-
+```
 
 ## Vote conctact
+
 The following example demonstrates a simple voting contract.
 
 ```
@@ -190,15 +189,13 @@ contract Callee {
 
 ## Multiple files (TODO)
 
-For better project organisation and clearer logic, 
-it is common to split the contents of a file into multiple files.
-ola language supports the import of another contract within a contract through the `import` keyword.
+For better project organisation and clearer logic, it is common to split the contents of a file into multiple files. ola language supports the import of another contract within a contract through the `import` keyword.
 
 An example of a multi-file contract is shown below.
 
-
 **Contract RectangularCalculator**
-````javascript
+
+```javascript
 
 contract RectangularCalculator {
   
@@ -210,10 +207,11 @@ contract RectangularCalculator {
     }
 }
 
-````
+```
 
 **Contract ShapeCalculator**
-````javascript
+
+```javascript
 
 contract SquareCalculator {
 
@@ -224,9 +222,10 @@ contract SquareCalculator {
     }
 }
 
-````
+```
 
 **Contract Calculator**
+
 ```javascript
 
 import "./RectangularCalculator.ola";
@@ -242,4 +241,3 @@ contract Calculator {
 }
 
 ```
-
