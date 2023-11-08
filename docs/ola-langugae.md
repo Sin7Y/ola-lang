@@ -4,11 +4,9 @@
 
 #### Identifier
 
-Variables consist of numbers (`0-9`), ASCII uppercase and lowercase letters (`a-zA-Z`), underscores (`_`).
-Variables cannot start with a number, and cannot use 
+Variables consist of numbers (`0-9`), ASCII uppercase and lowercase letters (`a-zA-Z`), underscores (`_`). Variables cannot start with a number, and cannot use
 
-
-```
+```rust
 fn foo() {
     // declare and ine `_variable`
     u32 _aBC123 = 2;   // identifiers start with "_"
@@ -18,9 +16,9 @@ fn foo() {
 
 #### Declaration
 
-Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time. 
+Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time.
 
-```
+```rust
 fn foo() {
     // declare and define `a`
     u32 a = 2;
@@ -31,10 +29,9 @@ fn foo() {
 
 #### Scope
 
-For security reasons, variable definitions do not support Shadowing. 
-If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
+For security reasons, variable definitions do not support Shadowing. If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
 
-```
+```rust
 fn foo() {
     u32 a = 5;
     {        
@@ -45,9 +42,10 @@ fn foo() {
     a = 25; // ok
 }
 ```
+
 Variables differ from constants in that the scope of a variable is limited to the current function itself and global variables are not supported.
 
-```
+```rust
 fn foo() -> u32 {
     // return a; <- not allowed
     return 2;
@@ -61,7 +59,7 @@ fn bar() -> u32 {
 
 Variables in a `For-Loop` loop are scoped only inside the loop.
 
-```
+```rust
 fn foo() -> u32 {
     u32 a = 0;
     for (u32 i = 0; i < 5; i++) {
@@ -74,61 +72,59 @@ fn foo() -> u32 {
 
 ### Data Type
 
-Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. 
-Three basic types and multiple complex types are supported.
+Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. Three basic types and multiple complex types are supported.
 
 #### Basic Types
 
- Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `address`,`hash`.
+Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `address`,`hash`.
 
-##### Integer Type
+**Integer Type**
 
-There are several types of integer types: `u32`, `u64`, `u256`, and currently only `u32` integer operations are supported. 
-All types are built on the basis of the `field` type.
-Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic.
-Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal. 
+There are several types of integer types: `u32`, `u64`, `u256`, and currently only `u32` integer operations are supported. All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
 
-```
+```rust
 u32 a = 2u32; // u32
 u32 b = 43; // u32
 u64 b = 2u64; // u64
 ```
 
-##### Field Elements Type
+**Field Elements Type**
 
 Ola supports the `field` type for elements of the base field of the elliptic curve. These are unsigned integers less than the modulus of the base field. The following are the smallest and largest field elements.
 
 The `filed` type is a goldilocks field number, with a maximum value of `2^64 - 2^32 + 1`.
 
-```
+```rust
 field a = 32field
 field b = 22field
 field c = a + b;
 ```
 
-The `filed` type has limited operations because it is based on elliptic curves in a finite field. It can only support basic `+` and `- `operations, as well as accept some special function return values.
+The `filed` type has limited operations because it is based on elliptic curves in a finite field. It can only support basic `+` and `-` operations, as well as accept some special function return values.
 
-##### Boolean
+**Boolean**
 
 Bool indicates that the value of `field` is `0` or `1`, which is declared using the keyword `bool`.
-```
+
+```rust
 bool a = true;
 bool b = false;
 ```
-##### Address
+
+**Address**
 
 The address type is an array composed of 4 fields. The address is calculated by Poseidon hash on certain inputs, and the first 4 fields of the hash return value are used as the address.
 
-```
+```rust
 address addr = address(0x0000000001);
 address bar = 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203address
 ```
 
-##### Hash
+**Hash**
 
-Hash and address types are similar, both are arrays of 4 field elements. 
+Hash and address types are similar, both are arrays of 4 field elements.
 
-```
+```rust
  string a = "helloworld";
  hash h = poseidon_hash(a);
  assert(h == 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash);
@@ -138,30 +134,29 @@ Hash and address types are similar, both are arrays of 4 field elements.
 
 Ola supports a variety of complex types such as `Arrays`, `String`, `Fields` ,`Slice`, `Tuples`,`Structs`,`Enumerations`,`Mapping`。
 
-##### Arrays
+**Arrays**
 
-Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time. 
+Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time.
 
 Array elements are numbered from zero and are accessed using`[index]`for addressing.
 
-Array declarations must be initialized, and the array declaration format is为`type`and`[]`(`type []`),and the array size must be specified.
-Two ways to initialize arrays are provided:
+Array declarations must be initialized, and the array declaration format is为`type`and`[]`(`type []`),and the array size must be specified. Two ways to initialize arrays are provided:
 
-- Split the list of elements by commas,`[array_element1,array_element2,...]`。
-- Array declaration and initialization with consistent array elements,`[array_value; size]`。
+* Split the list of elements by commas,`[array_element1,array_element2,...]`。
+* Array declaration and initialization with consistent array elements,`[array_value; size]`。
 
-```
+```rust
 field[5] a = [1, 2, 3, 4, 5]; // initialize a field array with field values
 bool[3] b = [true; 3]; // initialize a bool array with value true
 ```
 
 Two-dimensional Arrays
 
-Two-dimensional arrays are declared and used similarly to one-dimensional arrays, except that the internal elements of a two-dimensional array are also one-dimensional arrays. 
+Two-dimensional arrays are declared and used similarly to one-dimensional arrays, except that the internal elements of a two-dimensional array are also one-dimensional arrays.
 
 Declar`type [row_size][col_size]`, and initializ`[[],[],...]`。
 
-```
+```rust
 // Array of two elements of array of 3 elements
 
 field[2][4] a = [[1, 2, 3, 4],[4, 5, 6, 7]];
@@ -172,7 +167,8 @@ field[4] b = a[1]; // should be [4, 5, 6, 7]
 Array Slicing
 
 Similar to rust, arrays can be created by slicing an array to copy the generated array,`[from_index..to_index]`。
-```
+
+```rust
 field[5] a = [1, 2, 3, 4, 5];
 field[3] b = a[2..4];   // initialize an array copying a slice from `a`
 // array b is [3, 4, 5]
@@ -180,31 +176,31 @@ field[3] b = a[2..4];   // initialize an array copying a slice from `a`
 
 Memory dynamic arrays must be allocated with `new` before they can be used. The `new` expression requires a single unsigned integer argument. The length can be read using `length` member variable.
 
-```
+```rust
 u32[] b = new u32[](10);
 assert(b.length == 10);
 ```
 
-##### String
+**String**
 
-`String` can be initialized with a string literal Strings can be concatenated and compared equal, no other operations are allowed on strings 
+`String` can be initialized with a string literal Strings can be concatenated and compared equal, no other operations are allowed on strings
 
-Note:  The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
+Note: The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
 
+```rust
+fn test1(string s) -> (bool) {
+  string str = "Hello, " + s + "!";
+  return (str == "Hello, World!");
+}
 ```
-  fn test1(string s) -> (bool) {
-      string str = "Hello, " + s + "!";
-      return (str == "Hello, World!");
-  }
-```
 
-##### Fields
+**Fields**
 
 Fields is a dynamic array representation of the filed type. fields can be concatenated using the system library provided by the ola language.
 
 Fields types can be converted to string types and vice versa.
 
-```
+```rust
 fn fields_concat_test() -> (fields){
    string a = "ola";
    string b = "vm";
@@ -218,11 +214,11 @@ fn encode_test() -> (fields) {
 }
 ```
 
-##### Tuples
+**Tuples**
 
 A collection of elements of two types, with each element in the collection accessed through`.`(`t.0`、`t.1`).
 
-```
+```rust
 fn main() -> bool {
     (field[2], bool) v = ([1, 2], true);
     v.0 = [2, 3];
@@ -230,11 +226,11 @@ fn main() -> bool {
 }
 ```
 
-##### Structs
-A combination of multiple data types to form a new custom combination type. 
-Struct members are accessed via`.` (`struct_name.struct_field`)
+**Structs**
 
-```
+A combination of multiple data types to form a new custom combination type. Struct members are accessed via`.` (`struct_name.struct_field`)
+
+```rust
 struct Person {
     age: u32,
     id: u64,
@@ -249,11 +245,11 @@ fn foo() {
 }
 ```
 
-##### Enumerations
+**Enumerations**
 
 The enumeration type is defined by the keyword `enum`.
 
-````
+```rust
 contract Foo {
     u256 const x = 56;
     enum ActionChoices {
@@ -264,19 +260,19 @@ contract Foo {
     }
     ActionChoices const choices = ActionChoices.GoLeft;
 }
-````
+```
 
-##### Mapping
+**Mapping**
 
 Mappings are a dictionary type, or associative arrays. Mappings have a number of limitations:
 
-- They only work as storage variables
-- They are not iterable
-- The key cannot be a `struct`, array, or another mapping.
+* They only work as storage variables
+* They are not iterable
+* The key cannot be a `struct`, array, or another mapping.
 
 Mappings are declared with `mapping(keytype => valuetype)`, for example:
 
-```
+```rust
 struct user {
     bool exists;
     address addr;
@@ -286,10 +282,9 @@ mapping(string => user) users;
 
 #### Type Alias
 
-To increase code readability, defining a type alias for each type is supported.
-At compile time, the type alias will be replaced with real types.
+To increase code readability, defining a type alias for each type is supported. At compile time, the type alias will be replaced with real types.
 
-```
+```rust
 type balance = u256;
 
 fn main() -> balance {
@@ -303,8 +298,9 @@ fn main() -> balance {
 
 Constants can only be declared as constant expressions when defined with the `const` keyword.
 
-Compile time determination cannot be redeclared and assigned, that is, once defined, it can only be used within its scope, and it is recommended to declare with all capital letters and `_` concatenation. 
-```
+Compile time determination cannot be redeclared and assigned, that is, once defined, it can only be used within its scope, and it is recommended to declare with all capital letters and `_` concatenation.
+
+```rust
 const field ONE = 1;
 const field TWO = ONE + ONE;
 
@@ -317,72 +313,71 @@ fn hash_size() -> field {
 
 ### Operators
 
-Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics. 
+Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics.
 
 #### Arithmetic operators
 
 All arithmetic operators are Mod p.
 
-Arithmetic operators can be combined with the assignment operator`=`to form new compound operators `+=`、`-=`、`*=`、`/=`、`%=`, with arithmetic operators having higher priority than compound operators. 
+Arithmetic operators can be combined with the assignment operator`=`to form new compound operators `+=`、`-=`、`*=`、`/=`、`%=`, with arithmetic operators having higher priority than compound operators.
 
-| Operat |Example|Explanation|
-|:---:| :--:| :---: |
-|  +  | a + b |Arithmetic addition modulo p |
-|  -  | a-b |Arithmetic subtraction modulo p |
-|  *  | a * b |Arithmetic multiplication modulo p |
-|  /  | a / b |Arithmetic multiplication inverse modulo p |
-|  %  | a%b |The modulo of arithmetic integer division|
-| **  | a**b |Power modulo p|
+| Operat | Example |                 Explanation                |
+| :----: | :-----: | :----------------------------------------: |
+|    +   |  a + b  |        Arithmetic addition modulo p        |
+|    -   |   a-b   |       Arithmetic subtraction modulo p      |
+|   \*   |  a \* b |     Arithmetic multiplication modulo p     |
+|    /   |  a / b  | Arithmetic multiplication inverse modulo p |
+|    %   |   a%b   |  The modulo of arithmetic integer division |
+|  \*\*  |  a\*\*b |               Power modulo p               |
 
 #### Boolean operators
 
 Support with AND(`&&`)as well as OR(`||`),with the latter having higher priority.
 
-| Operator | Example | Explanation |
-| :--- | :--- | :--- |
-| && | a && b | Boolean operator and (AND) |
-| \|\| | a \|\| b | Boolean operator or (OR) |
-| ! | ! a | Boolean operator NEGATION |
+| Operator | Example  | Explanation                |
+| -------- | -------- | -------------------------- |
+| &&       | a && b   | Boolean operator and (AND) |
+| \|\|     | a \|\| b | Boolean operator or (OR)   |
+| !        | ! a      | Boolean operator NEGATION  |
 
 #### Relational operators
 
 The return result of the relational operator is type`bool`
 
-|Operator|Example|Explanation|
-| :--- | :--- | :--- |
-| == | a == b |equal|
-| != | a ！= b | not equal|
-| < | a < b | less than |
-| > | a >b  | greater than |
-|<= | a <= b  |less than or equal to |
-| >= | a >= b | greater than or equal to | 
+| Operator | Example | Explanation              |
+| -------- | ------- | ------------------------ |
+| ==       | a == b  | equal                    |
+| !=       | a ！= b  | not equal                |
+| <        | a < b   | less than                |
+| >        | a >b    | greater than             |
+| <=       | a <= b  | less than or equal to    |
+| >=       | a >= b  | greater than or equal to |
 
 #### Bitwise operators
 
 All bitwise operators are modulo p, containing bit or and non and shift operations.
 
-|Operator|Example|Explanation|
-| :--- | :--- | :--- |
-| & | a & b |bit and|
-| \| | a \| b |bit or|
-| ^ | a ^ b |XOR 32 bits|
-|<<| a << 3 | shift left |
-| >> | a >> 3 | shift right |
-| ~ | ~a | Complement 32  bits |
+| Operator | Example | Explanation        |
+| -------- | ------- | ------------------ |
+| &        | a & b   | bit and            |
+| \|       | a \| b  | bit or             |
+| ^        | a ^ b   | XOR 32 bits        |
+| <<       | a << 3  | shift left         |
+| >>       | a >> 3  | shift right        |
+| \~       | \~a     | Complement 32 bits |
 
-Bitwise operators can be combined with the assignment operator`=`to form the new compound operators`&=`、`|=`、`^=`、`<<=`、`>>=`, with bitwise operators taking precedence over compound operators. 
+Bitwise operators can be combined with the assignment operator`=`to form the new compound operators`&=`、`|=`、`^=`、`<<=`、`>>=`, with bitwise operators taking precedence over compound operators.
 
 ### Control Flow
 
 #### Conditional statement
 
-Control conditional branch and select different branch programs to execute according to different conditions. If the expression value is nonzero, the branch body is executed.
-It comes in two forms:
+Control conditional branch and select different branch programs to execute according to different conditions. If the expression value is nonzero, the branch body is executed. It comes in two forms:
 
-- Contains only single branch`if`,`if conditional_expression {statements}`。
-- Contains multiple branches of`if`and`else`,`if conditional_expression {statements} else {statements}`.
+* Contains only single branch`if`,`if conditional_expression {statements}`。
+* Contains multiple branches of`if`and`else`,`if conditional_expression {statements} else {statements}`.
 
-```
+```rust
 fn foo(field a) -> field {
     
     // Similar to rust, the result of a conditional expression 
@@ -391,9 +386,10 @@ fn foo(field a) -> field {
     return b;
 }
 ```
+
 Note: Conditional statements support ternary conditional operators.
 
-```
+```rust
 fn foo(field a) -> field {
     field b = a + 1 == 2 ? 1 : 3;
     return b;
@@ -404,15 +400,15 @@ fn foo(field a) -> field {
 
 Repeats the statement within the loop for a specified number of times based on the loop condition.
 
-`for-loop`statement is supported. Its syntax is
-`for (init_expression; conditional_expression; loop_expression) {statements}` 
+`for-loop`statement is supported. Its syntax is `for (init_expression; conditional_expression; loop_expression) {statements}`
 
 The execution process is:
-- Calculate the`init_expression`，namely the loop initialization.
-- Calculate the`conditional_expression`.If the result is`true`,the loop body`statements`are executed, followed by the`loop_expression`.
-- If the result is`false`,`for-loop`statement terminates. Sequential execution starts with the next`statement`.
 
-```
+* Calculate the`init_expression`，namely the loop initialization.
+* Calculate the`conditional_expression`.If the result is`true`,the loop body`statements`are executed, followed by the`loop_expression`.
+* If the result is`false`,`for-loop`statement terminates. Sequential execution starts with the next`statement`.
+
+```rust
 fn foo() -> u32 {
     u32 res = 0u;
     for (u32 i = 0u; i <= 10u; i++) {
@@ -426,7 +422,7 @@ fn foo() -> u32 {
 
 Repeated execution of a block can be achieved using while. It syntax is similar to if, however the block is repeatedly executed until the condition evaluates to false. If the condition is not true on first execution, then the loop body is never executed:
 
-```
+```rust
 contract Foo {
     fn foo(u32 n) {
         while (n >= 10) {
@@ -436,9 +432,9 @@ contract Foo {
 }
 ```
 
-It is possible to terminate execution of the while statement by using the `break` statement. Execution will continue to next statement in the function. Alternatively, `continue` will cease execution of the block, but repeat the loop if the condition still holds: 
+It is possible to terminate execution of the while statement by using the `break` statement. Execution will continue to next statement in the function. Alternatively, `continue` will cease execution of the block, but repeat the loop if the condition still holds:
 
-```
+```rust
 
   fn bar(u32 n) -> (bool) {
         return false;
@@ -471,7 +467,7 @@ It is possible to terminate execution of the while statement by using the `break
 
 A `do { ... } while (condition);` statement is much like the `while (condition) { ... }` except that the condition is evaluated after executing the block. This means that the block is always executed at least once, which is not true for `while` statements:
 
-```
+```rust
 fn foo(u32 n) {
         do {
             n--;
@@ -496,22 +492,23 @@ It is the basic module unit of Ola, containing declarations and statements.
 
 If the`fn`keyword is used, the function name must be explicitly provided. parameters, and return values are optional, and parameters are passed by value.
 
-The function return type must be specified after`->`.
-
-- - When a function call occurs, program execution control is passed from the calling function to the called function, and the parameters are passed to the called function by value. 
-- The called function executes the return control to the calling function through the`return`statement, and returns the return value to the calling function.
+* The function return type must be specified after`->`.
+* When a function call occurs, program execution control is passed from the calling function to the called function, and the parameters are passed to the called function by value.
+* The called function executes the return control to the calling function through the`return`statement, and returns the return value to the calling function.
 
 The basic syntax is:
 
-```
+```rust
 fn function_name(parameter_declaration_list) -> return_parameter_list {
     // compound-statement
     statements
     return_statement
 }
 ```
+
 e.g.:
-```
+
+```rust
 fn foo() -> u32 {
     return sum(1u, 2u)
 }
@@ -529,9 +526,9 @@ fn sum(u32 a, u32 b) -> u32 {
 
 Ola supports the "prophet" function, which utilizes prophet features to make previously difficult-to-prove but easy-to-verify computation processes now easily provable and verifiable, improving ZK circuit proof efficiency.
 
-The following demonstrates the usage of the u32_sqrt prophet function supported by ola.
+The following demonstrates the usage of the `u32_sqrt` prophet function supported by ola.
 
-```
+```rust
   fn sqrt_test(u32 n) -> (u32) {
       u32 b = u32_sqrt(n);
       return b;
@@ -540,7 +537,7 @@ The following demonstrates the usage of the u32_sqrt prophet function supported 
 
 We can also use the Ola language to implement a simplified version of the sqrt function.
 
-```
+```rust
   // native approach
   fn sqrt_test(u32 a) -> (u32) {
       u32 result = 0;
@@ -564,23 +561,25 @@ We can also use the Ola language to implement a simplified version of the sqrt f
 
 ## Core Functions
 
-   The goal of the Ola-lang high-level language library is to provide a set of high-level APIs that can be used to quickly develop applications. The Core lib functions  provides commonly used functions and modules, such as Ola Standard Library, integer type operations, math calculations,  assert function ,  print function , which can greatly improve the development efficiency of programmers.
 
-| function name           | Params                                | returns                                              | Usage                                                        |
-| ----------------------- | ------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
-| assert                  | bool                                  |                                                      | assert(a == b);                                              |
-| u32_array_sort          | u32 array                             | sorted array                                         | u32_array_sort([2, 1, 3, 4]);                                |
-| print                   | all type value                        |                                                      | print(var_a) ;                                               |
-| caller_address          |                                       | contract caller address                              | address caller = caller_address()                            |
-| origin_address          |                                       | contract origin caller address                       | address origin = origin_address()                            |
-| code_address            |                                       | current execute code contract address                | address code_addr = code_address()                           |
-| current_address         |                                       | current state write and read contract address        | address state_addr = current_address()                       |
-| poseidon_hash           | string/ fields                        | hash type                                            | hash CREATE2_PREFIX = poseidon_hash("OlaCreate2");           |
-| chain_id                |                                       | u32 (The future may be replaced by other data types. | u32 chainID = chain_id();                                    |
-| fields_concat           | fields a and fields b                 | new fields                                           | fields ret = fields_concat(a, b);                            |
-| abi.encode              | various types of uncertain quantities | fields                                               | fields encode_value = abi.encode(a, b);                      |
-| abi.decode              | fields data wtih various types        | tuple with all type value                            | u32 result = abi.decode(data, (u32));                        |
-| abi.encodeWithSignature | String function selector and params   | fields                                               | fields call_data = abi.encodeWithSignature("add(u32,u32)", a, b); |
+
+The goal of the Ola-lang high-level language library is to provide a set of high-level APIs that can be used to quickly develop applications. The Core lib functions provides commonly used functions and modules, such as Ola Standard Library, integer type operations, math calculations, `assert` function , `print` function , which can greatly improve the development efficiency of programmers.
+
+| function name           | Params                                | returns                                              | Usage                                                              |
+| ----------------------- | ------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ |
+| assert                  | bool                                  |                                                      | assert(a == b);                                                    |
+| u32\_array\_sort        | u32 array                             | sorted array                                         | u32\_array\_sort(\[2, 1, 3, 4]);                                   |
+| print                   | all type value                        |                                                      | print(var\_a) ;                                                    |
+| caller\_address         |                                       | contract caller address                              | address caller = caller\_address()                                 |
+| origin\_address         |                                       | contract origin caller address                       | address origin = origin\_address()                                 |
+| code\_address           |                                       | current execute code contract address                | address code\_addr = code\_address()                               |
+| current\_address        |                                       | current state write and read contract address        | address state\_addr = current\_address()                           |
+| poseidon\_hash          | string/ fields                        | hash type                                            | hash CREATE2\_PREFIX = poseidon\_hash("OlaCreate2");               |
+| chain\_id               |                                       | u32 (The future may be replaced by other data types. | u32 chainID = chain\_id();                                         |
+| fields\_concat          | fields a and fields b                 | new fields                                           | fields ret = fields\_concat(a, b);                                 |
+| abi.encode              | various types of uncertain quantities | fields                                               | fields encode\_value = abi.encode(a, b);                           |
+| abi.decode              | fields data wtih various types        | tuple with all type value                            | u32 result = abi.decode(data, (u32));                              |
+| abi.encodeWithSignature | String function selector and params   | fields                                               | fields call\_data = abi.encodeWithSignature("add(u32,u32)", a, b); |
 
 ### Comment Lines
 
@@ -589,7 +588,8 @@ They are in-code documentation. When comments are inserted into the code, the co
 ingle-line comments start with `//` and multi-line paragraph comments start with `/*` and end with `*/` .
 
 Single line using`//`:
-```
+
+```rust
 // Using this, we can comment a line.
 fn main(field a) -> field {
     field b = a + 1 == 2 ? 1 : 3;
@@ -598,7 +598,8 @@ fn main(field a) -> field {
 ```
 
 Multi-line paragraph comments using`/*` 及 `*/`:
-```
+
+```rust
 fn sum(u32 a, u32 b) -> u32 {
 /* 
  *  Unlike rust, the return value of 
@@ -612,18 +613,16 @@ fn sum(u32 a, u32 b) -> u32 {
 
 ### Imports
 
-In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name.
-Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development.
-The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
+In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name. Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development. The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
 
-```
+```rust
 import "path-spec"
 import "path-spec" as alias_name
 ```
 
 e.g.:
 
-```
+```rust
 import "./math/u256.ola";
 import "crypto/sha256.ola" as sha256;
 ```

@@ -28,8 +28,8 @@ The following list shows the keywords and reserved words for ola-lang.
 | hash     | hash value                                                 |
 | fields   | field dynamic length array                                 |
 | string   | string value                                               |
-| true     | boolean  ture                                              |
-| false    | boolean  false                                             |
+| true     | boolean ture                                               |
+| false    | boolean false                                              |
 | assert   | Assertion of the input expression                          |
 | import   | Importing other files                                      |
 | contract | Definition of a smart contract                             |
@@ -39,12 +39,11 @@ The following list shows the keywords and reserved words for ola-lang.
 ```rust
 pub
 impl
-while
-do
 loop
 use
 match
 static
 u128
 in
+override
 ```
