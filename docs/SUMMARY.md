@@ -1,7 +1,6 @@
 # Table of contents
 
-* [README](README.md)
-* [Introduction](introduction.md)
+* [Introduction](README.md)
 * [🏃♂ Quick Start](quick-start.md)
 * [👏 Ola Language](ola-langugae.md)
 * [👀 Ola Examples](ola-examples.md)
