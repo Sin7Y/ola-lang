@@ -65,11 +65,11 @@ export PATH=$(pwd)/llvm15.0/bin:$PATH
 
 **Windows**
 
-For Windows users, the official LLVM does not provide additional tools like `llvm-config`, which causes Olac to fail to build. Therefore, we provide pre-built versions for Windows. is available at https://github.com/Sin7Y/ola-llvm/releases/download/llvm15-0/llvm15.0-win.zip
+For Windows users, the official LLVM does not provide additional tools like `llvm-config`, which causes Olac to fail to build. Therefore, we provide pre-built versions for Windows. is available at [https://github.com/Sin7Y/ola-llvm/releases/download/llvm15-0/llvm15.0-win.zip](https://github.com/Sin7Y/ola-llvm/releases/download/llvm15-0/llvm15.0-win.zip)
 
 After unzipping the file, add the bin directory to your path.
 
-```
+```bash
 set PATH=%PATH%;C:\llvm15.0\bin
 ```
 
@@ -81,9 +81,9 @@ For macOS users, installing LLVM is very simple. You can use the `brew` command 
 brew install llvm@15
 ```
 
-Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz. and for arm macs there is https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz After downloading, untar the file in a terminal and add it to your path like so:
+Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz). and for arm macs there is [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz) After downloading, untar the file in a terminal and add it to your path like so:
 
-```
+```bash
 tar Jxf clang+llvm-15.0.7-x86_64-apple-darwin21.0.tar.xz
 mv clang+llvm-15.0.7-x86_64-apple-darwin21.0 llvm15.0
 xattr -rd com.apple.quarantine llvm15.0 
@@ -94,7 +94,7 @@ export PATH=$(pwd)/llvm15.0/bin:$PATH
 
 Once you have the correct LLVM version in your path, ensure you have GNU make installed and simply run:
 
-```
+```bash
 git clone https://github.com/Sin7Y/ola-lang
 cd ola-lang
 cargo build --release
@@ -106,7 +106,7 @@ The executable will be in `target/release/olac`
 
 The latest Ola release is on [crates.io](https://crates.io/crates/ola-lang). Once you have the correct LLVM version in your path, ensure you have GNU make installed and simply run:
 
-```
+```bash
 cargo install olac
 ```
 
@@ -120,7 +120,7 @@ olac compile \[OLA SOURCE FILE] ... \[OPTIONS]…
 
 Assuming there is a Fibonacci sequence contract, the command to compile this contract is:
 
-```
+```bash
 olac compile fib.ola
 ```
 
@@ -152,7 +152,7 @@ The extension can be found on the [Visual Studio Marketplace](https://marketplac
 
 After configuring the above environment, we can happily write Ola smart contracts named fib.ola on vscode with ola extension. The following is an example of a Fibonacci sequence.
 
-```
+```rust
 contract Fibonacci {
 
     fn fib_recursive(u32 n) -> (u32) {
