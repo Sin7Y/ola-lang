@@ -8,6 +8,7 @@ documentation = "https://olang.readthedocs.io/"
 homepage = "https://github.com/Sin7Y/ola-lang"
 description = "Ola Language Compiler"
 keywords = [ "olac", "olavm", "ola", "olang", "compiler"]
+exclude = ["/docs",  "/examples", "/bench"]
 
 [[bin]]
 name = "olac"
