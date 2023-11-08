@@ -14,7 +14,7 @@ The backend of the Ola compiler compiles IR into target assembly code. It takes 
 
 Its pipeline process is as follows figure ![ola-lang-backend](../images/ola-lang-backend.png)
 
-### LLVM IR Parser
+## LLVM IR Parser
 
 The role of IR parser is to parse LLVM IR to Module Instruction. Its parsing briefly process is as follows:
 
@@ -25,11 +25,11 @@ The role of IR parser is to parse LLVM IR to Module Instruction. Its parsing bri
 5. Parser parse function which is mainly divided into arguments list and function body, the result is function structure in module instruction.
 6. Parser parse metadata, the result is metadata map in module.
 
-### Optimizer: Optimization Passes on Parsed IR
+## Optimizer: Optimization Passes on Parsed IR
 
 Usually there are two kinds of compiler Optimization (Opt) passes, one is analysis passes and the other is transform passes. Currently our analysis pass is mainly Dominator Tree analysis pass, while transform passes contains Dead Code Elimination (DCE), Promote Memory to Register (Mem2Reg), Sparse Conditional Constant Propagation (SCCP).
 
-### Register and Instruction
+## Register and Instruction
 
 The register description is as follows:
 
@@ -42,7 +42,7 @@ The register description is as follows:
 | stack pointer        | Function's stack pointer                                             | `[r8]`             |
 | special registers    | Interact with vm: pc for program counter and psp for prophet pointer | `[pc, psp]`        |
 
-### ABI Lower: Lowering Function Call
+## ABI Lower: Lowering Function Call
 
 Ola Procedure Call Standard (OPCS) are as follows:
 
@@ -114,7 +114,7 @@ mload r0 [r0,0]  // used returned r0 as indexed addressing
 
 Please note that Markdown doesn't support referencing figures with labels as LaTeX does, so you'd typically just describe the figure and provide a link to it or insert it directly if the platform allows for image embedding.
 
-### Instruction Selection Pattern
+## Instruction Selection Pattern
 
 | Pattern Type       | Description                                                              |
 | ------------------ | ------------------------------------------------------------------------ |
@@ -127,7 +127,7 @@ Please note that Markdown doesn't support referencing figures with labels as LaT
 | Branch             | branch control flow, selected to jump operations                         |
 | Conditional Branch | conditional branch control flow, selected to compare and jump operations |
 
-#### Conditional Branch Selection Pattern
+## Conditional Branch Selection Pattern
 
 | Operator | Reg and Imm                                                                                                                             | Reg and Reg                                                                                                    | Cycles                              |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
@@ -138,7 +138,7 @@ Please note that Markdown doesn't support referencing figures with labels as LaT
 | >=       | <p>mov tmpReg imm<br>gte tmpReg regA tmpReg<br>cjmp tmpReg labelTrue</p>                                                                | <p>gte tmpReg regA regB<br>cjmp tmpReg labelTrue</p>                                                           | <p>3inst + 2reg<br>2inst + 3reg</p> |
 | !=       | <p>mov tmpReg imm<br>neq tmpReg regA tmpReg<br>cjmp tmpReg labelTrue</p>                                                                | <p>neq tmpReg regA regB<br>cjmp tmpReg labelTrue</p>                                                           | <p>3inst + 2reg<br>2inst + 3reg</p> |
 
-### Slot Elimination
+## Slot Elimination
 
 This pass handles the stack slot for local variables.
 
@@ -156,7 +156,7 @@ VistModule
 
 ```
 
-### Register Allocation and Coalescing
+## Register Allocation and Coalescing
 
 Register allocation use linear scan method, its briefly steps as follows:
 
@@ -170,7 +170,7 @@ While the steps for register coalescing is as follows:
 5. If the two registers of operands are the same, then we push the instructions into the work list.
 6. We can then remove the instructions in the work list from the function.
 
-### Assembly Printing
+## Assembly Printing
 
 The basic format of the Ola assembly language is as follows:
 
@@ -184,13 +184,13 @@ The basic format of the Ola assembly language is as follows:
 * **Pseudo instruction** means a pseudo instruction.
 * Directives, pseudo operations, and pseudo instruction helpers are all case-sensitive, but cannot be mixed.
 
-#### Assembly Instructions
+### Assembly Instructions
 
 For simplicity, pseudo operations and pseudo instructions like `.global` are not considered for now. Function entries that start with `funcName` and end with `:` are treated as a label. For example, `main:` defines a label for a function named main.
 
 **Note:** The symbols that usually start with `.` indicate pseudo directives or pseudo operations, such as different segments. Symbols ending with `:` indicate labels, such as function names and basic block numbers.
 
-#### Instruction Format
+### Instruction Format
 
 The format of the internal assembly instruction is in the form of a three-address code:
 
@@ -203,6 +203,6 @@ The format of the internal assembly instruction is in the form of a three-addres
 * `Rn` indicates the first source operand of the instruction, usually a register defined by OlaVM.
 * `shifter_operand` indicates the instruction data processing operand, usually an immediate or register defined by OlaVM.
 
-#### Memory Layout
+### Memory Layout
 
 After the program is loaded, `pc` points to the zero address and the function stack frame is switched according to the hierarchy of function calls, and the memory address stack grows from a low address to a high address. When prophets are present in the program, an indexed addressing register is required to interact with the prophet memory.

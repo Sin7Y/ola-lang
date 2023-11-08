@@ -1,8 +1,8 @@
 # 👏 Ola Language
 
-### Variables
+## Variables
 
-#### Identifier
+### Identifier
 
 Variables consist of numbers (`0-9`), ASCII uppercase and lowercase letters (`a-zA-Z`), underscores (`_`). Variables cannot start with a number, and cannot use
 
@@ -14,7 +14,7 @@ fn foo() {
 }
 ```
 
-#### Declaration
+### Declaration
 
 Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time.
 
@@ -27,7 +27,7 @@ fn foo() {
 }
 ```
 
-#### Scope
+### Scope
 
 For security reasons, variable definitions do not support Shadowing. If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
 
@@ -70,15 +70,15 @@ fn foo() -> u32 {
 }
 ```
 
-### Data Type
+## Data Type
 
 Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. Three basic types and multiple complex types are supported.
 
-#### Basic Types
+### Basic Types
 
 Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `address`,`hash`.
 
-**Integer Type**
+#### **Integer Type**
 
 There are several types of integer types: `u32`, `u64`, `u256`, and currently only `u32` integer operations are supported. All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
 
@@ -88,7 +88,7 @@ u32 b = 43; // u32
 u64 b = 2u64; // u64
 ```
 
-**Field Elements Type**
+#### **Field Elements Type**
 
 Ola supports the `field` type for elements of the base field of the elliptic curve. These are unsigned integers less than the modulus of the base field. The following are the smallest and largest field elements.
 
@@ -102,7 +102,7 @@ field c = a + b;
 
 The `filed` type has limited operations because it is based on elliptic curves in a finite field. It can only support basic `+` and `-` operations, as well as accept some special function return values.
 
-**Boolean**
+#### **Boolean**
 
 Bool indicates that the value of `field` is `0` or `1`, which is declared using the keyword `bool`.
 
@@ -111,7 +111,7 @@ bool a = true;
 bool b = false;
 ```
 
-**Address**
+#### **Address**
 
 The address type is an array composed of 4 fields. The address is calculated by Poseidon hash on certain inputs, and the first 4 fields of the hash return value are used as the address.
 
@@ -120,7 +120,7 @@ address addr = address(0x0000000001);
 address bar = 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203address
 ```
 
-**Hash**
+#### **Hash**
 
 Hash and address types are similar, both are arrays of 4 field elements.
 
@@ -130,11 +130,11 @@ Hash and address types are similar, both are arrays of 4 field elements.
  assert(h == 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash);
 ```
 
-#### Complex Types
+### Complex Types
 
 Ola supports a variety of complex types such as `Arrays`, `String`, `Fields` ,`Slice`, `Tuples`,`Structs`,`Enumerations`,`Mapping`。
 
-**Arrays**
+#### **Arrays**
 
 Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time.
 
@@ -280,7 +280,7 @@ struct user {
 mapping(string => user) users;
 ```
 
-#### Type Alias
+### Type Alias
 
 To increase code readability, defining a type alias for each type is supported. At compile time, the type alias will be replaced with real types.
 
@@ -294,7 +294,7 @@ fn main() -> balance {
 }
 ```
 
-### Constant
+## Constant
 
 Constants can only be declared as constant expressions when defined with the `const` keyword.
 
@@ -311,11 +311,11 @@ fn hash_size() -> field {
 }
 ```
 
-### Operators
+## Operators
 
 Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics.
 
-#### Arithmetic operators
+### Arithmetic operators
 
 All arithmetic operators are Mod p.
 
@@ -330,7 +330,7 @@ Arithmetic operators can be combined with the assignment operator`=`to form new 
 |    %   |   a%b   |  The modulo of arithmetic integer division |
 |  \*\*  |  a\*\*b |               Power modulo p               |
 
-#### Boolean operators
+### Boolean operators
 
 Support with AND(`&&`)as well as OR(`||`),with the latter having higher priority.
 
@@ -340,7 +340,7 @@ Support with AND(`&&`)as well as OR(`||`),with the latter having higher priority
 | \|\|     | a \|\| b | Boolean operator or (OR)   |
 | !        | ! a      | Boolean operator NEGATION  |
 
-#### Relational operators
+### Relational operators
 
 The return result of the relational operator is type`bool`
 
@@ -353,7 +353,7 @@ The return result of the relational operator is type`bool`
 | <=       | a <= b  | less than or equal to    |
 | >=       | a >= b  | greater than or equal to |
 
-#### Bitwise operators
+### Bitwise operators
 
 All bitwise operators are modulo p, containing bit or and non and shift operations.
 
@@ -368,9 +368,9 @@ All bitwise operators are modulo p, containing bit or and non and shift operatio
 
 Bitwise operators can be combined with the assignment operator`=`to form the new compound operators`&=`、`|=`、`^=`、`<<=`、`>>=`, with bitwise operators taking precedence over compound operators.
 
-### Control Flow
+## Control Flow
 
-#### Conditional statement
+### Conditional statement
 
 Control conditional branch and select different branch programs to execute according to different conditions. If the expression value is nonzero, the branch body is executed. It comes in two forms:
 
@@ -396,7 +396,7 @@ fn foo(field a) -> field {
 }
 ```
 
-#### Loop statement
+### Loop statement
 
 Repeats the statement within the loop for a specified number of times based on the loop condition.
 
@@ -418,7 +418,7 @@ fn foo() -> u32 {
 }
 ```
 
-#### While statement
+### While statement
 
 Repeated execution of a block can be achieved using while. It syntax is similar to if, however the block is repeatedly executed until the condition evaluates to false. If the condition is not true on first execution, then the loop body is never executed:
 
@@ -463,7 +463,7 @@ It is possible to terminate execution of the while statement by using the `break
 
 ```
 
-#### Do While statement
+### Do While statement
 
 A `do { ... } while (condition);` statement is much like the `while (condition) { ... }` except that the condition is evaluated after executing the block. This means that the block is always executed at least once, which is not true for `while` statements:
 
@@ -486,7 +486,7 @@ fn foo(u32 n) {
     }
 ```
 
-### Functions
+## Functions
 
 It is the basic module unit of Ola, containing declarations and statements.
 
@@ -522,7 +522,7 @@ fn sum(u32 a, u32 b) -> u32 {
 }
 ```
 
-### Prophet Fuctions
+## Prophet Fuctions
 
 Ola supports the "prophet" function, which utilizes prophet features to make previously difficult-to-prove but easy-to-verify computation processes now easily provable and verifiable, improving ZK circuit proof efficiency.
 
@@ -559,7 +559,7 @@ We can also use the Ola language to implement a simplified version of the sqrt f
 
 ![ed08fd9e-2d57-4cc7-8201-25520d72ee59](https://s2.loli.net/2023/11/07/AHhaYLNMe96CFcs.png)
 
-### Core Functions
+## Core Functions
 
 The goal of the Ola-lang high-level language library is to provide a set of high-level APIs that can be used to quickly develop applications. The Core lib functions provides commonly used functions and modules, such as Ola Standard Library, integer type operations, math calculations, `assert` function , `print` function , which can greatly improve the development efficiency of programmers.
 
@@ -579,7 +579,7 @@ The goal of the Ola-lang high-level language library is to provide a set of high
 | abi.decode              | fields data wtih various types        | tuple with all type value                            | u32 result = abi.decode(data, (u32));                              |
 | abi.encodeWithSignature | String function selector and params   | fields                                               | fields call\_data = abi.encodeWithSignature("add(u32,u32)", a, b); |
 
-### Comment Lines
+## Comment Lines
 
 They are in-code documentation. When comments are inserted into the code, the compiler simply ignores them. Comment lines only serve as an aid in understanding the code.
 
@@ -607,9 +607,9 @@ fn sum(u32 a, u32 b) -> u32 {
 }
 ```
 
-### 🚧 Features TODO
+## 🚧 Features TODO
 
-#### Imports
+### Imports
 
 In order to use the code from other files, we can import them into our program using the keyword `import` and `as`with the corresponding file name. Using `import` makes it easier for us to import some modular ibs, eliminating the need for repeated development. The basic syntax is as follow,`path-spec`can be absolute path(the full path of source file) or relative path (file path starts with`./` or `../`).
 
@@ -625,14 +625,14 @@ import "./math/u256.ola";
 import "crypto/sha256.ola" as sha256;
 ```
 
-#### Object-oriented features of contracts
+### Object-oriented features of contracts
 
 Support for object-oriented features can make contract functionality more robust, and cross-contract invocations will be easier.
 
-#### More core libraries
+### More core libraries
 
 The currently supported core libraries include u64 operation library, u256 operation library, signature and verification library.
 
-#### Contract event
+### Contract event
 
 Contract events can help users debug contracts and facilitate communication between layer2 and layer1.

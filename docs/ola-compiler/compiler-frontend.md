@@ -4,7 +4,7 @@ The processing of the Ola language compiler frontend is divided into the process
 
 The processing flow of the compiler frontend is shown in the following figure ![ola-lang-compiler-frontend](../images/ola-lang-frontend.png)
 
-### Ola Language Parser
+## Ola Language Parser
 
 Lexical analysis is the first stage of the compiler frontend. In this phase, the goal is to break down the source code into a series of tokens. The Ola language lexer will handle the following elements:
 
@@ -17,13 +17,13 @@ Lexical analysis is the first stage of the compiler frontend. In this phase, the
 
 Additionally, the lexer will eliminate whitespace and comments, ensuring a clean token stream for the next phase.
 
-### Syntax Parsing
+## Syntax Parsing
 
 Syntax parsing is the process of transforming the tokens generated in the lexical analysis phase into an Abstract Syntax Tree (AST). The Ola language compiler will implement a top-down parser, such as a Recursive Descent Parser, to support Ola language's grammar.
 
 This section will also discuss the implementation of error handling and recovery mechanisms, ensuring that the parser can handle syntax errors gracefully and provide helpful error messages to the user.
 
-### Abstract Syntax Tree (AST) Generation
+## Abstract Syntax Tree (AST) Generation
 
 During the syntax parsing phase, the parser will generate an AST representing the program's structure. This section will explain the design of the AST data structures and the process of constructing the AST during parsing. Additionally, it will cover the benefits of using an AST, such as enabling easier manipulation and analysis of the code's structure.
 
@@ -39,23 +39,23 @@ Once the lexical analysis phase is complete, the generated sequence of tokens ca
 
 By leveraging the powerful LALRPOP framework, the Ola compiler can efficiently perform lexical analysis and provide robust error handling, ensuring that the compiler is user-friendly and capable of handling complex Ola source code.
 
-### Semantic Analysis
+## Semantic Analysis
 
 The Semantic Analysis phase of the Ola compiler is an extensive process that ensures the program's correctness and consistency. As previously mentioned, this phase consists of several sub-tasks. Here, we delve deeper into each sub-task, providing a more detailed and comprehensive explanation of the process.
 
-### Symbol Resolution
+## Symbol Resolution
 
 The compiler analyzes the program's scope and context to resolve symbols accurately. It distinguishes between local and global variables, function declarations, and type definitions. The symbol table, which holds information about each symbol, is updated as the compiler traverses the AST. During this process, the compiler also checks for naming conflicts and multiple declarations, ensuring that the program adheres to Ola's scoping rules.
 
-### LibFunction Identification
+## LibFunction Identification
 
 In the semantic analysis phase, we will identify all libFunction names that users call. We will also construct prototype code for these LibFunctions and verify whether the parameters used to call them match the parameter types and numbers in the prototype code. If there is a match, we will record them for easy processing of IR generation for Lib Functions in subsequent LLVM IR generation phases.
 
-### Type Checking
+## Type Checking
 
 The compiler ensures that each operation and expression in the program involves operands of compatible types. In this stage, the compiler also infers the types of expressions when necessary and enforces type constraints for function calls, assignments, and arithmetic operations.
 
-### Control Flow Analysis
+## Control Flow Analysis
 
 In addition to checking for unreachable code and infinite loops, the control flow analysis process verifies that:
 
@@ -63,7 +63,7 @@ In addition to checking for unreachable code and infinite loops, the control flo
 * Break and continue statements appear only within loops.
 * Variables are declared before they are used.
 
-### Constant Expression Evaluation
+## Constant Expression Evaluation
 
 During this step, the compiler performs the following tasks:
 
@@ -71,7 +71,7 @@ During this step, the compiler performs the following tasks:
 * Detects potential errors, such as array index out-of-bounds, by evaluating expressions that involve constants.
 * Folds constant expressions, such as mathematical operations or string concatenations, reducing the code size and improving execution efficiency.
 
-### Semantic Validation
+## Semantic Validation
 
 The final step of the semantic analysis phase consists of several validation checks, including:
 
@@ -82,6 +82,6 @@ The final step of the semantic analysis phase consists of several validation che
 
 The Semantic Analysis phase is crucial for the robustness and correctness of the Ola compiler. By performing these comprehensive checks, the compiler can guarantee that the generated code adheres to the language's semantic rules and is free from errors that might lead to unexpected behavior during execution. With a semantically verified AST, the Ola compiler proceeds to the subsequent phases of the compilation process, ensuring the efficient translation of the source code into executable code tailored for the OlaVM.
 
-### LLVM IR Generation
+## LLVM IR Generation
 
 The LLVM IR Generation phase is a crucial step in the Ola compiler, as it translates the Abstract Syntax Tree (AST) obtained from the semantic analysis into LLVM Intermediate Representation (IR). This phase leverages the Inkwell framework, a powerful and user-friendly library that simplifies the process of generating LLVM IR code in Rust.

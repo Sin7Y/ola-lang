@@ -114,7 +114,7 @@ cargo install olac
 
 The olac compiler is run on the command line. The ola source file names are provided as command line arguments; the output is an optimized asm file and anabi file (also known as the abi).
 
-## Compiler Usage
+### Compiler Usage
 
 olac compile \[OLA SOURCE FILE] ... \[OPTIONS]…
 
