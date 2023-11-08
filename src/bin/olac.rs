@@ -110,10 +110,10 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
                 generate_llvm_ir(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
             }
             Some("abi") => {
-                generate_abi(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
+                generate_abi(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_abi", &mut ns);
             }
             Some("asm") => {
-                generate_asm(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
+                generate_asm(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_asm", &mut ns);
             }
             Some("ast") => {
                 generate_ast( matches, filename_stem.to_string_lossy().to_string(), &mut ns);
