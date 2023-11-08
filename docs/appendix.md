@@ -1,6 +1,6 @@
-### Appendix
+# Appendix
 
-#### Keywords
+## Keywords
 
 The following list shows the keywords and reserved words for ola-lang.
 
@@ -34,7 +34,7 @@ The following list shows the keywords and reserved words for ola-lang.
 | import   | Importing other files                                      |
 | contract | Definition of a smart contract                             |
 
-#### Reservation keywords
+## Reservation keywords
 
 ```rust
 pub
