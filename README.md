@@ -1,20 +1,14 @@
 <img src="./docs/.gitbook/assets/ola.jpg" alt="Ola Logo" style="align:center" />
-<img src="./docs/.gitbook/assets/ola.jpg" alt="Ola Logo" style="align:center" />
 
- [![CI](https://img.shields.io/github/actions/workflow/status/Sin7y/ola-lang/release.yml)](https://github.com/Sin7Y/ola-lang/actions)
  [![CI](https://img.shields.io/github/actions/workflow/status/Sin7y/ola-lang/release.yml)](https://github.com/Sin7Y/ola-lang/actions)
  [![Project license](https://img.shields.io/github/license/Sin7y/ola-lang)](LICENSE)
  [![LoC](https://tokei.rs/b1/github/Sin7y/ola-lang?category=lines)](https://github.com/Sin7y/ola-lang)
  [![Twitter](https://img.shields.io/twitter/follow/ola_zkzkvm?style=social)](https://twitter.com/ola_zkzkvm)
- [![Twitter](https://img.shields.io/twitter/follow/ola_zkzkvm?style=social)](https://twitter.com/ola_zkzkvm)
 
- ## Introduction
  ## Introduction
 
 Ola is a high-level programming language for developing OlaVM smart contracts. It is Turing complete and can be used to write arithmetic programs. The computing process is proven by the OlaVM back-end proof system, which verifies that the OlaVM processing is accurate. Most of the existing programming languages in the ZKP field require fundamental knowledge of the circuit field, which is not universal, or the execution process is difficult to be proven and verified by ZKP.
-Ola is a high-level programming language for developing OlaVM smart contracts. It is Turing complete and can be used to write arithmetic programs. The computing process is proven by the OlaVM back-end proof system, which verifies that the OlaVM processing is accurate. Most of the existing programming languages in the ZKP field require fundamental knowledge of the circuit field, which is not universal, or the execution process is difficult to be proven and verified by ZKP.
 
- ## 📖 [Ola Language Documentation](https://olang.gitbook.io/ola-lang/)
  ## 📖 [Ola Language Documentation](https://olang.gitbook.io/ola-lang/)
 
 ## Simple Example
