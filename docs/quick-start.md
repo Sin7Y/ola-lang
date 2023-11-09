@@ -196,13 +196,10 @@ Options:
 
 This option is can be used for debugging Olac itself. This is used to output early phases of compilation.
 
-**abi** Ouput Ola contract's ABI information
-
-**ast** Output Abstract Syntax Tree as a graphviz dot file. This can be viewed with xdot or any other tool that can visualize graphviz dot files.
-
-**llvm-ir** Output llvm IR as text.
-
-**asm** Output assembly text file.
+* **abi** Ouput Ola contract's ABI information
+* **ast** Output Abstract Syntax Tree as a graphviz dot file. This can be viewed with xdot or any other tool that can visualize graphviz dot files.
+* **llvm-ir** Output llvm IR as text.
+* **asm** Output assembly text file.
 
 ## Write Ola using an IDE
 
