@@ -4,7 +4,7 @@ The processing of the Ola language compiler frontend is divided into the process
 
 The processing flow of the compiler frontend is shown in the following figure&#x20;
 
-<figure><img src="../src/img/ola-lang-frontend.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/ola-lang-frontend.png" alt=""><figcaption></figcaption></figure>
 
 ## Ola Language Parser
 
