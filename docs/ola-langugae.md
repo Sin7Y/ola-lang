@@ -557,7 +557,7 @@ We can also use the Ola language to implement a simplified version of the sqrt f
   }
 ```
 
-![ed08fd9e-2d57-4cc7-8201-25520d72ee59](https://s2.loli.net/2023/11/07/AHhaYLNMe96CFcs.png)
+##
 
 ## Core Functions
 

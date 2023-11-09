@@ -81,13 +81,28 @@ For macOS users, installing LLVM is very simple. You can use the `brew` command 
 brew install llvm@15
 ```
 
-Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz). and for arm macs there is [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz) After downloading, untar the file in a terminal and add it to your path like so:
+Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz).  After downloading, untar the file in a terminal and add it to your path like so:
 
 ```bash
 tar Jxf clang+llvm-15.0.7-x86_64-apple-darwin21.0.tar.xz
 mv clang+llvm-15.0.7-x86_64-apple-darwin21.0 llvm15.0
 xattr -rd com.apple.quarantine llvm15.0 
 export PATH=$(pwd)/llvm15.0/bin:$PATH
+```
+
+arm macs there is [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz)  After downloading, untar the file in a terminal and add it to your path like so:
+
+```bash
+tar Jxf clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz
+mv clang+llvm-15.0.7-arm64-apple-darwin22.0 llvm15.0
+xattr -rd com.apple.quarantine llvm15.0 
+export PATH=$(pwd)/llvm15.0/bin:$PATH
+```
+
+**💡Note**:  After you finish installing LLVM, you should try the llvm-config command to check if the output version is correct.
+
+```
+llvm-config --version
 ```
 
 #### Step 3: Build Olac
