@@ -2,9 +2,9 @@
 
 The processing of the Ola language compiler frontend is divided into the processes of lexical analysis, syntax parsing, abstract syntax tree (AST) generation, semantic analysis, and LLVM intermediate representation (IR) generation.
 
-The processing flow of the compiler frontend is shown in the following figure&#x20;
+The processing flow of the compiler frontend is shown in the following figure
 
-<figure><img src="../.gitbook/assets/ola-lang-frontend.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/ola-lang-frontend.png" alt=""><figcaption><p>ola compiler frontend</p></figcaption></figure>
 
 ## Ola Language Parser
 

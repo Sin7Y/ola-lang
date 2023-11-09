@@ -14,7 +14,7 @@ The backend of the Ola compiler compiles IR into target assembly code. It takes 
 
 Its pipeline process is as follows figure&#x20;
 
-<figure><img src="../.gitbook/assets/ola-lang-backend.png" alt=""><figcaption><p>ola language backend</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/ola-lang-backend.png" alt=""><figcaption><p>ola compiler backend</p></figcaption></figure>
 
 ## LLVM IR Parser
 
