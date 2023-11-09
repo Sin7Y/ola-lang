@@ -5,7 +5,7 @@ edition = "2021"
 license = "Apache-2.0"
 build = "build.rs"
 description = "Ola Language Parser"
-documentation = "https://olang.readthedocs.io/"
+documentation = "https://olang.gitbook.io/ola-lang/"
 homepage = "https://github.com/Sin7Y/ola-lang"
 keywords = [ "olac", "olavm", "parser", "ola", "olang" ]
 

@@ -1,14 +1,15 @@
 <img src="./docs/.gitbook/assets/ola.jpg" alt="Ola Logo" style="align:center" />
 
  [![CI](https://img.shields.io/github/actions/workflow/status/Sin7y/ola-lang/release.yml)](https://github.com/Sin7Y/ola-lang/actions)
- [![Documentation Status](https://img.shields.io/readthedocs/olang)](https://olang.gitbook.io/ola-lang/)
  [![Project license](https://img.shields.io/github/license/Sin7y/ola-lang)](LICENSE)
  [![LoC](https://tokei.rs/b1/github/Sin7y/ola-lang?category=lines)](https://github.com/Sin7y/ola-lang)
  [![Twitter](https://img.shields.io/twitter/follow/ola_zkzkvm?style=social)](https://twitter.com/ola_zkzkvm)
 
-## Introduction
+ ## Introduction
 
 Ola is a high-level programming language for developing OlaVM smart contracts. It is Turing complete and can be used to write arithmetic programs. The computing process is proven by the OlaVM back-end proof system, which verifies that the OlaVM processing is accurate. Most of the existing programming languages in the ZKP field require fundamental knowledge of the circuit field, which is not universal, or the execution process is difficult to be proven and verified by ZKP.
+
+ ## 📖 [Ola Language Documentation](https://olang.gitbook.io/ola-lang/)
 
 ## Simple Example
 
@@ -18,10 +19,6 @@ The following shows a simple contract for calculating the Fibonacci function
 
 ```
 contract Fibonacci {
-
-    fn main() {
-       fib_non_recursive(10);
-    }
 
     fn fib_recursive(u32 n) -> (u32) {
         if (n <= 2) {
@@ -48,7 +45,6 @@ contract Fibonacci {
 
 ## Roadmap
 
-
 | Milestone                                                    | Status      | Difficulty                      |
 | ------------------------------------------------------------ | ----------- | ------------------------------- |
 | Support for simple calculations and function calls           | Completed   | Easy:grinning:                  |
@@ -63,10 +59,8 @@ In addition to the milestone design above， there are more details that need to
 
 See the [open issues](https://github.com/Sin7Y/ola-lang/issues) for a list of proposed features (and known issues).
 
-## Contact us
-
-Email：<contact@olavm.org>
-*******************************
+🧰 Troubleshooting
+If you are having trouble installing and using Ola,  please open an [issue](https://github.com/Sin7Y/ola-lang/issues/new).
 
 ## License
 
