@@ -53,14 +53,23 @@ If you do not have the correct version of rust installed, go to [rustup](https:/
 
 Ola needs a build of LLVM Libraries, You can download the pre-built libraries from [github](https://github.com/llvm/llvm-project/releases/tag/llvmorg-15.0.7) After that, you need to add the `bin` of your LLVM directory to your path, so that the build system of O la c can find the correct version of LLVM to use.
 
-**Linux**
+**Linux(Ubuntu)**
 
-A pre-built version of LLVM, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-powerpc64le-linux-ubuntu-18.04.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-powerpc64le-linux-ubuntu-18.04.tar.xz)
+A pre-built version of LLVM, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86\_64-linux-gnu-ubuntu-18.04.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86\_64-linux-gnu-ubuntu-18.04.tar.xz)
 
 ```shell
-tar Jxf clang+llvm-15.0.7-powerpc64le-linux-ubuntu-18.04.tar.xz
-mv clang+llvm-15.0.7-powerpc64le-linux-ubuntu-18.04 llvm15.0
-export PATH=$(pwd)/llvm15.0/bin:$PATH
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+tar Jxf clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+mv clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04 llvm15.0
+```
+
+{% hint style="info" %}
+You need to replace your llvm download directory here.
+{% endhint %}
+
+```bash
+echo 'export PATH=~/llvm15.0/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 **Windows**
@@ -68,6 +77,10 @@ export PATH=$(pwd)/llvm15.0/bin:$PATH
 For Windows users, the official LLVM does not provide additional tools like `llvm-config`, which causes Olac to fail to build. Therefore, we provide pre-built versions for Windows. is available at [https://github.com/Sin7Y/ola-llvm/releases/download/llvm15-0/llvm15.0-win.zip](https://github.com/Sin7Y/ola-llvm/releases/download/llvm15-0/llvm15.0-win.zip)
 
 After unzipping the file, add the bin directory to your path.
+
+{% hint style="info" %}
+You need to replace your llvm download directory here.
+{% endhint %}
 
 ```bash
 set PATH=%PATH%;C:\llvm15.0\bin
@@ -79,39 +92,73 @@ For macOS users, installing LLVM is very simple. You can use the `brew` command 
 
 ```
 brew install llvm@15
+echo 'export PATH="/usr/local/opt/llvm@15/bin:$PATH"' >> ~/.bash_profile
+source ~/.bash_profile
 ```
 
-Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz).  After downloading, untar the file in a terminal and add it to your path like so:
+Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz). After downloading, untar the file in a terminal and add it to your path like so:
 
 ```bash
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86_64-apple-darwin21.0.tar.xz
 tar Jxf clang+llvm-15.0.7-x86_64-apple-darwin21.0.tar.xz
 mv clang+llvm-15.0.7-x86_64-apple-darwin21.0 llvm15.0
 xattr -rd com.apple.quarantine llvm15.0 
-export PATH=$(pwd)/llvm15.0/bin:$PATH
 ```
 
-arm macs there is [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz)  After downloading, untar the file in a terminal and add it to your path like so:
+arm macs there is [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz) After downloading, untar the file in a terminal and add it to your path like so:
 
 ```bash
+wget  https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz
 tar Jxf clang+llvm-15.0.7-arm64-apple-darwin22.0.tar.xz
 mv clang+llvm-15.0.7-arm64-apple-darwin22.0 llvm15.0
 xattr -rd com.apple.quarantine llvm15.0 
-export PATH=$(pwd)/llvm15.0/bin:$PATH
 ```
 
-**💡Note**:  After you finish installing LLVM, you should try the llvm-config command to check if the output version is correct.
+{% hint style="info" %}
+You need to replace your llvm download directory here.
+{% endhint %}
 
+```bash
+echo 'export PATH=~/Downloads/llvm15.0/bin:$PATH' >> ~/.bash_profile
+source ~/.bash_profile
 ```
+
+After you finish installing LLVM, you should try the llvm-config command to check if the output version is correct.
+
+```bash
 llvm-config --version
 ```
 
 #### Step 3: Build Olac
 
-Once you have the correct LLVM version in your path, ensure you have GNU make installed and simply run:
+Once you have the correct LLVM version in your path, simply run:
 
 ```bash
 git clone https://github.com/Sin7Y/ola-lang
 cd ola-lang
+cargo build --release
+```
+
+If you encounter the following error message, then you need to check if llvm is installed correctly and if the llvm-config command can be executed correctly.
+
+{% hint style="danger" %}
+error: No suitable version of LLVM was found system-wide or pointed to by LLVM\_SYS\_150\_PREFIX.
+
+```
+          Consider using `llvmenv` to compile an appropriate copy of LLVM, and
+          refer to the llvm-sys documentation for more information.
+   
+          llvm-sys: https://crates.io/crates/llvm-sys
+          llvmenv: https://crates.io/crates/llvmenv
+```
+{% endhint %}
+
+{% hint style="info" %}
+After you ensure that the LLVM environment variable is configured, you can clean the cargo build cache and re-build.
+{% endhint %}
+
+```bash
+cargo clean
 cargo build --release
 ```
 
