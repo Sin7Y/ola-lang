@@ -1,5 +1,10 @@
 ---
+cover: .gitbook/assets/ola.jpg
+coverY: 0
 layout:
+  cover:
+    visible: true
+    size: hero
   title:
     visible: true
   description:
