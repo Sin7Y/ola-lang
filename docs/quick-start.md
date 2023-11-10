@@ -88,15 +88,7 @@ set PATH=%PATH%;C:\llvm15.0\bin
 
 **Mac**
 
-For macOS users, installing LLVM is very simple. You can use the `brew` command install llvm
-
-```
-brew install llvm@15
-echo 'export PATH="/usr/local/opt/llvm@15/bin:$PATH"' >> ~/.bash_profile
-source ~/.bash_profile
-```
-
-Or you can download the official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz). After downloading, untar the file in a terminal and add it to your path like so:
+For macOS users, you can download the llvm official build package. A pre-built version of LLVM for intel macs, is available at [https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz](https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86\_64-apple-darwin21.0.tar.xz). After downloading, untar the file in a terminal and add it to your path like so:
 
 ```bash
 wget https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.7/clang+llvm-15.0.7-x86_64-apple-darwin21.0.tar.xz
