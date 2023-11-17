@@ -8,6 +8,8 @@ use crate::sema::expression::{ExprContext, ResolveTo};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::{assigned_variable, used_variable};
 use crate::sema::Recurse;
+use num_bigint::BigInt;
+use num_traits::Zero;
 use ola_parser::diagnostics::Diagnostic;
 use ola_parser::program;
 use ola_parser::program::CodeLocation;
@@ -238,18 +240,47 @@ pub(super) fn assign_expr(
                 left: Box::new(assign),
                 right: Box::new(set),
             },
-            program::Expression::AssignDivide(..) => Expression::Divide {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
-            program::Expression::AssignModulo(..) => Expression::Modulo {
-                loc: *loc,
-                ty: ty.clone(),
-                left: Box::new(assign),
-                right: Box::new(set),
-            },
+            program::Expression::AssignDivide(..) => {
+                match set {
+                    Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
+                    diagnostics.push(Diagnostic::error(
+                            *loc,
+                            format!(
+                                "Division by zero is not allowed."
+                            ),
+                        ));
+                        return Err(());
+                    }
+                    _ => {},
+                }
+                Expression::Divide {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                }
+
+            }
+            program::Expression::AssignModulo(..) => {
+                match set {
+                    Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
+                    diagnostics.push(Diagnostic::error(
+                            *loc,
+                            format!(
+                                "Modulo by zero is not allowed."
+                            ),
+                        ));
+                        return Err(());
+                    }
+                    _ => {},
+                }
+                Expression::Modulo {
+                    loc: *loc,
+                    ty: ty.clone(),
+                    left: Box::new(assign),
+                    right: Box::new(set),
+                }
+            }
             _ => unreachable!(),
         })
     };

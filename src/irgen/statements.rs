@@ -31,8 +31,15 @@ pub(crate) fn statement<'a>(
                 statement(stmt, bin, func_value, func, var_table, ns);
             }
         }
-        Statement::VariableDecl(_, pos, param, Some(init)) => {
-            let var_value = expression(init, bin, func_value, var_table, ns);
+        Statement::VariableDecl(_, pos, param, init) => {
+            let var_value = match init {
+                Some(init) => {
+                    expression(init, bin, func_value, var_table, ns)
+                }
+                None => {
+                    param.ty.default(bin, func_value, ns).unwrap()
+                }
+            };
 
             let alloca = if param.ty.is_reference_type(ns) && !param.ty.is_contract_storage() {
                 var_value.into_pointer_value()
@@ -48,11 +55,7 @@ pub(crate) fn statement<'a>(
             };
 
             var_table.insert(*pos, alloca.as_basic_value_enum());
-        }
 
-        Statement::VariableDecl(_, pos, param, None) => {
-            let default_value = param.ty.default(bin, func_value, ns).unwrap();
-            var_table.insert(*pos, default_value);
         }
 
         Statement::Return(_, expr) => match expr {

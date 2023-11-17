@@ -6,6 +6,8 @@ use crate::sema::expression::resolve_expression::expression;
 use crate::sema::expression::{ExprContext, ResolveTo};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::{check_var_usage_expression, used_variable};
+use num_bigint::BigInt;
+use num_traits::Zero;
 use ola_parser::diagnostics::Diagnostic;
 use ola_parser::program;
 use ola_parser::program::CodeLocation;
@@ -222,6 +224,19 @@ pub(super) fn divide(
     let left = expression(l, context, ns, symtable, diagnostics, resolve_to)?;
     let right = expression(r, context, ns, symtable, diagnostics, resolve_to)?;
 
+    match right {
+        Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
+        diagnostics.push(Diagnostic::error(
+                *loc,
+                format!(
+                    "Division by zero is not allowed."
+                ),
+            ));
+            return Err(());
+        }
+        _ => {},
+    }
+
     check_var_usage_expression(ns, &left, &right, symtable);
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
@@ -246,6 +261,19 @@ pub(super) fn modulo(
 ) -> Result<Expression, ()> {
     let left = expression(l, context, ns, symtable, diagnostics, resolve_to)?;
     let right = expression(r, context, ns, symtable, diagnostics, resolve_to)?;
+
+    match right {
+        Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
+        diagnostics.push(Diagnostic::error(
+                *loc,
+                format!(
+                    "Modulo by zero is not allowed."
+                ),
+            ));
+            return Err(());
+        }
+        _ => {},
+    }
 
     check_var_usage_expression(ns, &left, &right, symtable);
 
