@@ -35,7 +35,7 @@ contract Entrypoint {
     //      signature: "ef"
     //      codeHash: null
     // bool: 0
-    fn system_entrance(Transaction _tx, bool _isETHCall) -> (fields) {
+    fn system_entrance(Transaction _tx, bool _isETHCall) {
         // MOCK_TEST:
         // assert(_tx.sender == 0x0000000000000008000000000000000800000000000000080000000000000008address);
         // assert(_tx.nonce == 1);

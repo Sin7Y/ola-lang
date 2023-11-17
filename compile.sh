@@ -22,6 +22,16 @@ compile_files() {
         
         echo "Compiling $src_file..."
         ./target/debug/olac compile "$src_file" --gen "$gen_type" --output "$dst_dir"
+        if [ "$gen_type" = "llvm-ir" ]; then
+            local ir_file="$dst_dir/$(basename "$base_name").ll"
+            echo "Validating LLVM IR for $ir_file..."
+            llc "$ir_file" -o /dev/null
+            if [ $? -ne 0 ]; then
+                echo "Validation failed for $ir_file"
+            else
+                echo "Validation successful for $ir_file"
+            fi
+        fi
     done
 }
 

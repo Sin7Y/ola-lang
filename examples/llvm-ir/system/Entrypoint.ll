@@ -171,6 +171,60 @@ done:                                             ; preds = %body, %cond
   ret i64 %result_phi
 }
 
+define void @u32_div_mod(i64 %0, i64 %1, ptr %2, ptr %3) {
+entry:
+  %remainder_alloca = alloca ptr, align 8
+  %quotient_alloca = alloca ptr, align 8
+  %divisor_alloca = alloca i64, align 8
+  %dividend_alloca = alloca i64, align 8
+  store i64 %0, ptr %dividend_alloca, align 4
+  %dividend = load i64, ptr %dividend_alloca, align 4
+  store i64 %1, ptr %divisor_alloca, align 4
+  %divisor = load i64, ptr %divisor_alloca, align 4
+  store ptr %2, ptr %quotient_alloca, align 8
+  %quotient = load ptr, ptr %quotient_alloca, align 8
+  store ptr %3, ptr %remainder_alloca, align 8
+  %remainder = load ptr, ptr %remainder_alloca, align 8
+  %4 = call i64 @prophet_u32_mod(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(i64 %4)
+  %5 = add i64 %4, 1
+  %6 = sub i64 %divisor, %5
+  call void @builtin_range_check(i64 %6)
+  %7 = call i64 @prophet_u32_div(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(ptr %quotient)
+  %8 = mul i64 %7, %divisor
+  %9 = add i64 %8, %4
+  %10 = icmp eq i64 %9, %dividend
+  %11 = zext i1 %10 to i64
+  call void @builtin_assert(i64 %11)
+  store i64 %7, ptr %quotient, align 4
+  store i64 %4, ptr %remainder, align 4
+  ret void
+}
+
+define i64 @u32_power(i64 %0, i64 %1) {
+entry:
+  %exponent_alloca = alloca i64, align 8
+  %base_alloca = alloca i64, align 8
+  store i64 %0, ptr %base_alloca, align 4
+  %base = load i64, ptr %base_alloca, align 4
+  store i64 %1, ptr %exponent_alloca, align 4
+  %exponent = load i64, ptr %exponent_alloca, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %base
+  %loopcond = icmp ule i64 %inc, %exponent
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+}
+
 define ptr @fields_concat(ptr %0, ptr %1) {
 entry:
   %length = load i64, ptr %0, align 4
@@ -198,7 +252,7 @@ entry:
   ret ptr %11
 }
 
-define ptr @system_entrance(ptr %0, i64 %1) {
+define void @system_entrance(ptr %0, i64 %1) {
 entry:
   %_isETHCall = alloca i64, align 8
   %_tx = alloca ptr, align 8
@@ -219,6 +273,7 @@ else:                                             ; preds = %entry
   br label %enif
 
 enif:                                             ; preds = %else, %then
+  ret void
 }
 
 define void @validateTxStructure(ptr %0) {
@@ -1961,502 +2016,481 @@ func_0_dispatch:                                  ; preds = %entry
   %15 = add i64 %input_start, %struct_decode_size
   %16 = inttoptr i64 %15 to ptr
   %decode_value19 = load i64, ptr %16, align 4
-  %17 = call ptr @system_entrance(ptr %heap_to_ptr, i64 %decode_value19)
-  %length20 = load i64, ptr %17, align 4
-  %18 = add i64 %length20, 1
-  %heap_size = add i64 %18, 1
-  %19 = call i64 @vector_new(i64 %heap_size)
-  %heap_start21 = sub i64 %19, %heap_size
-  %heap_to_ptr22 = inttoptr i64 %heap_start21 to ptr
-  %length23 = load i64, ptr %17, align 4
-  %20 = ptrtoint ptr %heap_to_ptr22 to i64
-  %buffer_start = add i64 %20, 1
-  %21 = inttoptr i64 %buffer_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %21, i64 1
-  store i64 %length23, ptr %encode_value_ptr, align 4
-  %22 = ptrtoint ptr %17 to i64
-  %23 = add i64 %22, 1
-  %vector_data = inttoptr i64 %23 to ptr
-  call void @memcpy(ptr %vector_data, ptr %21, i64 %length23)
-  %24 = add i64 %length23, 1
-  %25 = add i64 %24, 0
-  %encode_value_ptr24 = getelementptr i64, ptr %heap_to_ptr22, i64 %25
-  store i64 %18, ptr %encode_value_ptr24, align 4
-  call void @set_tape_data(i64 %heap_start21, i64 %heap_size)
+  call void @system_entrance(ptr %heap_to_ptr, i64 %decode_value19)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %input_start25 = ptrtoint ptr %input to i64
-  %26 = inttoptr i64 %input_start25 to ptr
-  %struct_offset26 = add i64 %input_start25, 4
-  %27 = inttoptr i64 %struct_offset26 to ptr
-  %decode_value27 = load i64, ptr %27, align 4
-  %struct_offset28 = add i64 %struct_offset26, 1
-  %28 = inttoptr i64 %struct_offset28 to ptr
-  %decode_value29 = load i64, ptr %28, align 4
-  %struct_offset30 = add i64 %struct_offset28, 1
-  %29 = inttoptr i64 %struct_offset30 to ptr
-  %decode_value31 = load i64, ptr %29, align 4
-  %struct_offset32 = add i64 %struct_offset30, 1
-  %30 = inttoptr i64 %struct_offset32 to ptr
-  %length33 = load i64, ptr %30, align 4
-  %31 = add i64 %length33, 1
-  %struct_offset34 = add i64 %struct_offset32, %31
-  %32 = inttoptr i64 %struct_offset34 to ptr
-  %length35 = load i64, ptr %32, align 4
-  %33 = add i64 %length35, 1
-  %struct_offset36 = add i64 %struct_offset34, %33
-  %34 = inttoptr i64 %struct_offset36 to ptr
-  %length37 = load i64, ptr %34, align 4
-  %35 = add i64 %length37, 1
-  %struct_offset38 = add i64 %struct_offset36, %35
-  %36 = inttoptr i64 %struct_offset38 to ptr
-  %struct_offset39 = add i64 %struct_offset38, 4
-  %struct_decode_size40 = sub i64 %struct_offset39, %input_start25
-  %37 = call i64 @vector_new(i64 14)
-  %heap_start41 = sub i64 %37, 14
-  %heap_to_ptr42 = inttoptr i64 %heap_start41 to ptr
-  %struct_member43 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 0
-  store ptr %26, ptr %struct_member43, align 8
-  %struct_member44 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 1
-  store i64 %decode_value27, ptr %struct_member44, align 4
-  %struct_member45 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 2
-  store i64 %decode_value29, ptr %struct_member45, align 4
-  %struct_member46 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 3
-  store i64 %decode_value31, ptr %struct_member46, align 4
-  %struct_member47 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 4
-  store ptr %30, ptr %struct_member47, align 8
-  %struct_member48 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 5
-  store ptr %32, ptr %struct_member48, align 8
-  %struct_member49 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 6
-  store ptr %34, ptr %struct_member49, align 8
-  %struct_member50 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr42, i32 0, i32 7
-  store ptr %36, ptr %struct_member50, align 8
-  call void @validateTxStructure(ptr %heap_to_ptr42)
+  %input_start20 = ptrtoint ptr %input to i64
+  %17 = inttoptr i64 %input_start20 to ptr
+  %struct_offset21 = add i64 %input_start20, 4
+  %18 = inttoptr i64 %struct_offset21 to ptr
+  %decode_value22 = load i64, ptr %18, align 4
+  %struct_offset23 = add i64 %struct_offset21, 1
+  %19 = inttoptr i64 %struct_offset23 to ptr
+  %decode_value24 = load i64, ptr %19, align 4
+  %struct_offset25 = add i64 %struct_offset23, 1
+  %20 = inttoptr i64 %struct_offset25 to ptr
+  %decode_value26 = load i64, ptr %20, align 4
+  %struct_offset27 = add i64 %struct_offset25, 1
+  %21 = inttoptr i64 %struct_offset27 to ptr
+  %length28 = load i64, ptr %21, align 4
+  %22 = add i64 %length28, 1
+  %struct_offset29 = add i64 %struct_offset27, %22
+  %23 = inttoptr i64 %struct_offset29 to ptr
+  %length30 = load i64, ptr %23, align 4
+  %24 = add i64 %length30, 1
+  %struct_offset31 = add i64 %struct_offset29, %24
+  %25 = inttoptr i64 %struct_offset31 to ptr
+  %length32 = load i64, ptr %25, align 4
+  %26 = add i64 %length32, 1
+  %struct_offset33 = add i64 %struct_offset31, %26
+  %27 = inttoptr i64 %struct_offset33 to ptr
+  %struct_offset34 = add i64 %struct_offset33, 4
+  %struct_decode_size35 = sub i64 %struct_offset34, %input_start20
+  %28 = call i64 @vector_new(i64 14)
+  %heap_start36 = sub i64 %28, 14
+  %heap_to_ptr37 = inttoptr i64 %heap_start36 to ptr
+  %struct_member38 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 0
+  store ptr %17, ptr %struct_member38, align 8
+  %struct_member39 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 1
+  store i64 %decode_value22, ptr %struct_member39, align 4
+  %struct_member40 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 2
+  store i64 %decode_value24, ptr %struct_member40, align 4
+  %struct_member41 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 3
+  store i64 %decode_value26, ptr %struct_member41, align 4
+  %struct_member42 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 4
+  store ptr %21, ptr %struct_member42, align 8
+  %struct_member43 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 5
+  store ptr %23, ptr %struct_member43, align 8
+  %struct_member44 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 6
+  store ptr %25, ptr %struct_member44, align 8
+  %struct_member45 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 7
+  store ptr %27, ptr %struct_member45, align 8
+  call void @validateTxStructure(ptr %heap_to_ptr37)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %input_start51 = ptrtoint ptr %input to i64
-  %38 = inttoptr i64 %input_start51 to ptr
-  %struct_offset52 = add i64 %input_start51, 4
-  %39 = inttoptr i64 %struct_offset52 to ptr
-  %decode_value53 = load i64, ptr %39, align 4
-  %struct_offset54 = add i64 %struct_offset52, 1
-  %40 = inttoptr i64 %struct_offset54 to ptr
-  %decode_value55 = load i64, ptr %40, align 4
-  %struct_offset56 = add i64 %struct_offset54, 1
-  %41 = inttoptr i64 %struct_offset56 to ptr
-  %decode_value57 = load i64, ptr %41, align 4
-  %struct_offset58 = add i64 %struct_offset56, 1
-  %42 = inttoptr i64 %struct_offset58 to ptr
-  %length59 = load i64, ptr %42, align 4
-  %43 = add i64 %length59, 1
-  %struct_offset60 = add i64 %struct_offset58, %43
-  %44 = inttoptr i64 %struct_offset60 to ptr
-  %length61 = load i64, ptr %44, align 4
-  %45 = add i64 %length61, 1
-  %struct_offset62 = add i64 %struct_offset60, %45
-  %46 = inttoptr i64 %struct_offset62 to ptr
-  %length63 = load i64, ptr %46, align 4
-  %47 = add i64 %length63, 1
-  %struct_offset64 = add i64 %struct_offset62, %47
-  %48 = inttoptr i64 %struct_offset64 to ptr
-  %struct_offset65 = add i64 %struct_offset64, 4
-  %struct_decode_size66 = sub i64 %struct_offset65, %input_start51
-  %49 = call i64 @vector_new(i64 14)
-  %heap_start67 = sub i64 %49, 14
-  %heap_to_ptr68 = inttoptr i64 %heap_start67 to ptr
-  %struct_member69 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 0
-  store ptr %38, ptr %struct_member69, align 8
-  %struct_member70 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 1
-  store i64 %decode_value53, ptr %struct_member70, align 4
-  %struct_member71 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 2
-  store i64 %decode_value55, ptr %struct_member71, align 4
-  %struct_member72 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 3
-  store i64 %decode_value57, ptr %struct_member72, align 4
-  %struct_member73 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 4
-  store ptr %42, ptr %struct_member73, align 8
-  %struct_member74 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 5
-  store ptr %44, ptr %struct_member74, align 8
-  %struct_member75 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 6
-  store ptr %46, ptr %struct_member75, align 8
-  %struct_member76 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr68, i32 0, i32 7
-  store ptr %48, ptr %struct_member76, align 8
-  %50 = call ptr @callTx(ptr %heap_to_ptr68)
-  %length77 = load i64, ptr %50, align 4
-  %51 = add i64 %length77, 1
-  %heap_size78 = add i64 %51, 1
-  %52 = call i64 @vector_new(i64 %heap_size78)
-  %heap_start79 = sub i64 %52, %heap_size78
-  %heap_to_ptr80 = inttoptr i64 %heap_start79 to ptr
-  %length81 = load i64, ptr %50, align 4
-  %53 = ptrtoint ptr %heap_to_ptr80 to i64
-  %buffer_start82 = add i64 %53, 1
-  %54 = inttoptr i64 %buffer_start82 to ptr
-  %encode_value_ptr83 = getelementptr i64, ptr %54, i64 1
-  store i64 %length81, ptr %encode_value_ptr83, align 4
-  %55 = ptrtoint ptr %50 to i64
-  %56 = add i64 %55, 1
-  %vector_data84 = inttoptr i64 %56 to ptr
-  call void @memcpy(ptr %vector_data84, ptr %54, i64 %length81)
-  %57 = add i64 %length81, 1
-  %58 = add i64 %57, 0
-  %encode_value_ptr85 = getelementptr i64, ptr %heap_to_ptr80, i64 %58
-  store i64 %51, ptr %encode_value_ptr85, align 4
-  call void @set_tape_data(i64 %heap_start79, i64 %heap_size78)
+  %input_start46 = ptrtoint ptr %input to i64
+  %29 = inttoptr i64 %input_start46 to ptr
+  %struct_offset47 = add i64 %input_start46, 4
+  %30 = inttoptr i64 %struct_offset47 to ptr
+  %decode_value48 = load i64, ptr %30, align 4
+  %struct_offset49 = add i64 %struct_offset47, 1
+  %31 = inttoptr i64 %struct_offset49 to ptr
+  %decode_value50 = load i64, ptr %31, align 4
+  %struct_offset51 = add i64 %struct_offset49, 1
+  %32 = inttoptr i64 %struct_offset51 to ptr
+  %decode_value52 = load i64, ptr %32, align 4
+  %struct_offset53 = add i64 %struct_offset51, 1
+  %33 = inttoptr i64 %struct_offset53 to ptr
+  %length54 = load i64, ptr %33, align 4
+  %34 = add i64 %length54, 1
+  %struct_offset55 = add i64 %struct_offset53, %34
+  %35 = inttoptr i64 %struct_offset55 to ptr
+  %length56 = load i64, ptr %35, align 4
+  %36 = add i64 %length56, 1
+  %struct_offset57 = add i64 %struct_offset55, %36
+  %37 = inttoptr i64 %struct_offset57 to ptr
+  %length58 = load i64, ptr %37, align 4
+  %38 = add i64 %length58, 1
+  %struct_offset59 = add i64 %struct_offset57, %38
+  %39 = inttoptr i64 %struct_offset59 to ptr
+  %struct_offset60 = add i64 %struct_offset59, 4
+  %struct_decode_size61 = sub i64 %struct_offset60, %input_start46
+  %40 = call i64 @vector_new(i64 14)
+  %heap_start62 = sub i64 %40, 14
+  %heap_to_ptr63 = inttoptr i64 %heap_start62 to ptr
+  %struct_member64 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 0
+  store ptr %29, ptr %struct_member64, align 8
+  %struct_member65 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 1
+  store i64 %decode_value48, ptr %struct_member65, align 4
+  %struct_member66 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 2
+  store i64 %decode_value50, ptr %struct_member66, align 4
+  %struct_member67 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 3
+  store i64 %decode_value52, ptr %struct_member67, align 4
+  %struct_member68 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 4
+  store ptr %33, ptr %struct_member68, align 8
+  %struct_member69 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 5
+  store ptr %35, ptr %struct_member69, align 8
+  %struct_member70 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 6
+  store ptr %37, ptr %struct_member70, align 8
+  %struct_member71 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr63, i32 0, i32 7
+  store ptr %39, ptr %struct_member71, align 8
+  %41 = call ptr @callTx(ptr %heap_to_ptr63)
+  %length72 = load i64, ptr %41, align 4
+  %42 = add i64 %length72, 1
+  %heap_size = add i64 %42, 1
+  %43 = call i64 @vector_new(i64 %heap_size)
+  %heap_start73 = sub i64 %43, %heap_size
+  %heap_to_ptr74 = inttoptr i64 %heap_start73 to ptr
+  %length75 = load i64, ptr %41, align 4
+  %44 = ptrtoint ptr %heap_to_ptr74 to i64
+  %buffer_start = add i64 %44, 1
+  %45 = inttoptr i64 %buffer_start to ptr
+  %encode_value_ptr = getelementptr i64, ptr %45, i64 1
+  store i64 %length75, ptr %encode_value_ptr, align 4
+  %46 = ptrtoint ptr %41 to i64
+  %47 = add i64 %46, 1
+  %vector_data = inttoptr i64 %47 to ptr
+  call void @memcpy(ptr %vector_data, ptr %45, i64 %length75)
+  %48 = add i64 %length75, 1
+  %49 = add i64 %48, 0
+  %encode_value_ptr76 = getelementptr i64, ptr %heap_to_ptr74, i64 %49
+  store i64 %42, ptr %encode_value_ptr76, align 4
+  call void @set_tape_data(i64 %heap_start73, i64 %heap_size)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %input_start86 = ptrtoint ptr %input to i64
-  %59 = inttoptr i64 %input_start86 to ptr
-  %struct_offset87 = add i64 %input_start86, 4
-  %60 = inttoptr i64 %struct_offset87 to ptr
-  %decode_value88 = load i64, ptr %60, align 4
-  %struct_offset89 = add i64 %struct_offset87, 1
-  %61 = inttoptr i64 %struct_offset89 to ptr
-  %decode_value90 = load i64, ptr %61, align 4
-  %struct_offset91 = add i64 %struct_offset89, 1
-  %62 = inttoptr i64 %struct_offset91 to ptr
-  %decode_value92 = load i64, ptr %62, align 4
-  %struct_offset93 = add i64 %struct_offset91, 1
-  %63 = inttoptr i64 %struct_offset93 to ptr
-  %length94 = load i64, ptr %63, align 4
-  %64 = add i64 %length94, 1
-  %struct_offset95 = add i64 %struct_offset93, %64
-  %65 = inttoptr i64 %struct_offset95 to ptr
-  %length96 = load i64, ptr %65, align 4
-  %66 = add i64 %length96, 1
-  %struct_offset97 = add i64 %struct_offset95, %66
-  %67 = inttoptr i64 %struct_offset97 to ptr
-  %length98 = load i64, ptr %67, align 4
-  %68 = add i64 %length98, 1
-  %struct_offset99 = add i64 %struct_offset97, %68
-  %69 = inttoptr i64 %struct_offset99 to ptr
-  %struct_offset100 = add i64 %struct_offset99, 4
-  %struct_decode_size101 = sub i64 %struct_offset100, %input_start86
-  %70 = call i64 @vector_new(i64 14)
-  %heap_start102 = sub i64 %70, 14
-  %heap_to_ptr103 = inttoptr i64 %heap_start102 to ptr
-  %struct_member104 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 0
-  store ptr %59, ptr %struct_member104, align 8
-  %struct_member105 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 1
-  store i64 %decode_value88, ptr %struct_member105, align 4
-  %struct_member106 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 2
-  store i64 %decode_value90, ptr %struct_member106, align 4
-  %struct_member107 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 3
-  store i64 %decode_value92, ptr %struct_member107, align 4
-  %struct_member108 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 4
-  store ptr %63, ptr %struct_member108, align 8
-  %struct_member109 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 5
-  store ptr %65, ptr %struct_member109, align 8
-  %struct_member110 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 6
-  store ptr %67, ptr %struct_member110, align 8
-  %struct_member111 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr103, i32 0, i32 7
-  store ptr %69, ptr %struct_member111, align 8
-  call void @sendTx(ptr %heap_to_ptr103)
+  %input_start77 = ptrtoint ptr %input to i64
+  %50 = inttoptr i64 %input_start77 to ptr
+  %struct_offset78 = add i64 %input_start77, 4
+  %51 = inttoptr i64 %struct_offset78 to ptr
+  %decode_value79 = load i64, ptr %51, align 4
+  %struct_offset80 = add i64 %struct_offset78, 1
+  %52 = inttoptr i64 %struct_offset80 to ptr
+  %decode_value81 = load i64, ptr %52, align 4
+  %struct_offset82 = add i64 %struct_offset80, 1
+  %53 = inttoptr i64 %struct_offset82 to ptr
+  %decode_value83 = load i64, ptr %53, align 4
+  %struct_offset84 = add i64 %struct_offset82, 1
+  %54 = inttoptr i64 %struct_offset84 to ptr
+  %length85 = load i64, ptr %54, align 4
+  %55 = add i64 %length85, 1
+  %struct_offset86 = add i64 %struct_offset84, %55
+  %56 = inttoptr i64 %struct_offset86 to ptr
+  %length87 = load i64, ptr %56, align 4
+  %57 = add i64 %length87, 1
+  %struct_offset88 = add i64 %struct_offset86, %57
+  %58 = inttoptr i64 %struct_offset88 to ptr
+  %length89 = load i64, ptr %58, align 4
+  %59 = add i64 %length89, 1
+  %struct_offset90 = add i64 %struct_offset88, %59
+  %60 = inttoptr i64 %struct_offset90 to ptr
+  %struct_offset91 = add i64 %struct_offset90, 4
+  %struct_decode_size92 = sub i64 %struct_offset91, %input_start77
+  %61 = call i64 @vector_new(i64 14)
+  %heap_start93 = sub i64 %61, 14
+  %heap_to_ptr94 = inttoptr i64 %heap_start93 to ptr
+  %struct_member95 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 0
+  store ptr %50, ptr %struct_member95, align 8
+  %struct_member96 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 1
+  store i64 %decode_value79, ptr %struct_member96, align 4
+  %struct_member97 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 2
+  store i64 %decode_value81, ptr %struct_member97, align 4
+  %struct_member98 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 3
+  store i64 %decode_value83, ptr %struct_member98, align 4
+  %struct_member99 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 4
+  store ptr %54, ptr %struct_member99, align 8
+  %struct_member100 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 5
+  store ptr %56, ptr %struct_member100, align 8
+  %struct_member101 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 6
+  store ptr %58, ptr %struct_member101, align 8
+  %struct_member102 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 7
+  store ptr %60, ptr %struct_member102, align 8
+  call void @sendTx(ptr %heap_to_ptr94)
   ret void
 
 func_4_dispatch:                                  ; preds = %entry
-  %input_start112 = ptrtoint ptr %input to i64
-  %71 = inttoptr i64 %input_start112 to ptr
-  %struct_offset113 = add i64 %input_start112, 4
-  %72 = inttoptr i64 %struct_offset113 to ptr
-  %decode_value114 = load i64, ptr %72, align 4
-  %struct_offset115 = add i64 %struct_offset113, 1
-  %73 = inttoptr i64 %struct_offset115 to ptr
-  %decode_value116 = load i64, ptr %73, align 4
-  %struct_offset117 = add i64 %struct_offset115, 1
-  %74 = inttoptr i64 %struct_offset117 to ptr
-  %decode_value118 = load i64, ptr %74, align 4
-  %struct_offset119 = add i64 %struct_offset117, 1
-  %75 = inttoptr i64 %struct_offset119 to ptr
-  %length120 = load i64, ptr %75, align 4
-  %76 = add i64 %length120, 1
-  %struct_offset121 = add i64 %struct_offset119, %76
-  %77 = inttoptr i64 %struct_offset121 to ptr
-  %length122 = load i64, ptr %77, align 4
-  %78 = add i64 %length122, 1
-  %struct_offset123 = add i64 %struct_offset121, %78
-  %79 = inttoptr i64 %struct_offset123 to ptr
-  %length124 = load i64, ptr %79, align 4
-  %80 = add i64 %length124, 1
-  %struct_offset125 = add i64 %struct_offset123, %80
-  %81 = inttoptr i64 %struct_offset125 to ptr
-  %struct_offset126 = add i64 %struct_offset125, 4
-  %struct_decode_size127 = sub i64 %struct_offset126, %input_start112
-  %82 = call i64 @vector_new(i64 14)
-  %heap_start128 = sub i64 %82, 14
-  %heap_to_ptr129 = inttoptr i64 %heap_start128 to ptr
-  %struct_member130 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 0
-  store ptr %71, ptr %struct_member130, align 8
-  %struct_member131 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 1
-  store i64 %decode_value114, ptr %struct_member131, align 4
-  %struct_member132 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 2
-  store i64 %decode_value116, ptr %struct_member132, align 4
-  %struct_member133 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 3
-  store i64 %decode_value118, ptr %struct_member133, align 4
-  %struct_member134 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 4
-  store ptr %75, ptr %struct_member134, align 8
-  %struct_member135 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 5
-  store ptr %77, ptr %struct_member135, align 8
-  %struct_member136 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 6
-  store ptr %79, ptr %struct_member136, align 8
-  %struct_member137 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr129, i32 0, i32 7
-  store ptr %81, ptr %struct_member137, align 8
-  call void @validateTx(ptr %heap_to_ptr129)
+  %input_start103 = ptrtoint ptr %input to i64
+  %62 = inttoptr i64 %input_start103 to ptr
+  %struct_offset104 = add i64 %input_start103, 4
+  %63 = inttoptr i64 %struct_offset104 to ptr
+  %decode_value105 = load i64, ptr %63, align 4
+  %struct_offset106 = add i64 %struct_offset104, 1
+  %64 = inttoptr i64 %struct_offset106 to ptr
+  %decode_value107 = load i64, ptr %64, align 4
+  %struct_offset108 = add i64 %struct_offset106, 1
+  %65 = inttoptr i64 %struct_offset108 to ptr
+  %decode_value109 = load i64, ptr %65, align 4
+  %struct_offset110 = add i64 %struct_offset108, 1
+  %66 = inttoptr i64 %struct_offset110 to ptr
+  %length111 = load i64, ptr %66, align 4
+  %67 = add i64 %length111, 1
+  %struct_offset112 = add i64 %struct_offset110, %67
+  %68 = inttoptr i64 %struct_offset112 to ptr
+  %length113 = load i64, ptr %68, align 4
+  %69 = add i64 %length113, 1
+  %struct_offset114 = add i64 %struct_offset112, %69
+  %70 = inttoptr i64 %struct_offset114 to ptr
+  %length115 = load i64, ptr %70, align 4
+  %71 = add i64 %length115, 1
+  %struct_offset116 = add i64 %struct_offset114, %71
+  %72 = inttoptr i64 %struct_offset116 to ptr
+  %struct_offset117 = add i64 %struct_offset116, 4
+  %struct_decode_size118 = sub i64 %struct_offset117, %input_start103
+  %73 = call i64 @vector_new(i64 14)
+  %heap_start119 = sub i64 %73, 14
+  %heap_to_ptr120 = inttoptr i64 %heap_start119 to ptr
+  %struct_member121 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 0
+  store ptr %62, ptr %struct_member121, align 8
+  %struct_member122 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 1
+  store i64 %decode_value105, ptr %struct_member122, align 4
+  %struct_member123 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 2
+  store i64 %decode_value107, ptr %struct_member123, align 4
+  %struct_member124 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 3
+  store i64 %decode_value109, ptr %struct_member124, align 4
+  %struct_member125 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 4
+  store ptr %66, ptr %struct_member125, align 8
+  %struct_member126 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 5
+  store ptr %68, ptr %struct_member126, align 8
+  %struct_member127 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 6
+  store ptr %70, ptr %struct_member127, align 8
+  %struct_member128 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 7
+  store ptr %72, ptr %struct_member128, align 8
+  call void @validateTx(ptr %heap_to_ptr120)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
-  %input_start138 = ptrtoint ptr %input to i64
-  %83 = inttoptr i64 %input_start138 to ptr
-  %struct_offset139 = add i64 %input_start138, 4
-  %84 = inttoptr i64 %struct_offset139 to ptr
-  %decode_value140 = load i64, ptr %84, align 4
-  %struct_offset141 = add i64 %struct_offset139, 1
-  %85 = inttoptr i64 %struct_offset141 to ptr
-  %decode_value142 = load i64, ptr %85, align 4
-  %struct_offset143 = add i64 %struct_offset141, 1
-  %86 = inttoptr i64 %struct_offset143 to ptr
-  %decode_value144 = load i64, ptr %86, align 4
-  %struct_offset145 = add i64 %struct_offset143, 1
-  %87 = inttoptr i64 %struct_offset145 to ptr
-  %length146 = load i64, ptr %87, align 4
-  %88 = add i64 %length146, 1
-  %struct_offset147 = add i64 %struct_offset145, %88
-  %89 = inttoptr i64 %struct_offset147 to ptr
-  %length148 = load i64, ptr %89, align 4
-  %90 = add i64 %length148, 1
-  %struct_offset149 = add i64 %struct_offset147, %90
-  %91 = inttoptr i64 %struct_offset149 to ptr
-  %length150 = load i64, ptr %91, align 4
-  %92 = add i64 %length150, 1
-  %struct_offset151 = add i64 %struct_offset149, %92
-  %93 = inttoptr i64 %struct_offset151 to ptr
-  %struct_offset152 = add i64 %struct_offset151, 4
-  %struct_decode_size153 = sub i64 %struct_offset152, %input_start138
-  %94 = call i64 @vector_new(i64 14)
-  %heap_start154 = sub i64 %94, 14
-  %heap_to_ptr155 = inttoptr i64 %heap_start154 to ptr
-  %struct_member156 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 0
-  store ptr %83, ptr %struct_member156, align 8
-  %struct_member157 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 1
-  store i64 %decode_value140, ptr %struct_member157, align 4
-  %struct_member158 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 2
-  store i64 %decode_value142, ptr %struct_member158, align 4
-  %struct_member159 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 3
-  store i64 %decode_value144, ptr %struct_member159, align 4
-  %struct_member160 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 4
-  store ptr %87, ptr %struct_member160, align 8
-  %struct_member161 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 5
-  store ptr %89, ptr %struct_member161, align 8
-  %struct_member162 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 6
-  store ptr %91, ptr %struct_member162, align 8
-  %struct_member163 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr155, i32 0, i32 7
-  store ptr %93, ptr %struct_member163, align 8
-  call void @validateDeployment(ptr %heap_to_ptr155)
+  %input_start129 = ptrtoint ptr %input to i64
+  %74 = inttoptr i64 %input_start129 to ptr
+  %struct_offset130 = add i64 %input_start129, 4
+  %75 = inttoptr i64 %struct_offset130 to ptr
+  %decode_value131 = load i64, ptr %75, align 4
+  %struct_offset132 = add i64 %struct_offset130, 1
+  %76 = inttoptr i64 %struct_offset132 to ptr
+  %decode_value133 = load i64, ptr %76, align 4
+  %struct_offset134 = add i64 %struct_offset132, 1
+  %77 = inttoptr i64 %struct_offset134 to ptr
+  %decode_value135 = load i64, ptr %77, align 4
+  %struct_offset136 = add i64 %struct_offset134, 1
+  %78 = inttoptr i64 %struct_offset136 to ptr
+  %length137 = load i64, ptr %78, align 4
+  %79 = add i64 %length137, 1
+  %struct_offset138 = add i64 %struct_offset136, %79
+  %80 = inttoptr i64 %struct_offset138 to ptr
+  %length139 = load i64, ptr %80, align 4
+  %81 = add i64 %length139, 1
+  %struct_offset140 = add i64 %struct_offset138, %81
+  %82 = inttoptr i64 %struct_offset140 to ptr
+  %length141 = load i64, ptr %82, align 4
+  %83 = add i64 %length141, 1
+  %struct_offset142 = add i64 %struct_offset140, %83
+  %84 = inttoptr i64 %struct_offset142 to ptr
+  %struct_offset143 = add i64 %struct_offset142, 4
+  %struct_decode_size144 = sub i64 %struct_offset143, %input_start129
+  %85 = call i64 @vector_new(i64 14)
+  %heap_start145 = sub i64 %85, 14
+  %heap_to_ptr146 = inttoptr i64 %heap_start145 to ptr
+  %struct_member147 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 0
+  store ptr %74, ptr %struct_member147, align 8
+  %struct_member148 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 1
+  store i64 %decode_value131, ptr %struct_member148, align 4
+  %struct_member149 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 2
+  store i64 %decode_value133, ptr %struct_member149, align 4
+  %struct_member150 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 3
+  store i64 %decode_value135, ptr %struct_member150, align 4
+  %struct_member151 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 4
+  store ptr %78, ptr %struct_member151, align 8
+  %struct_member152 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 5
+  store ptr %80, ptr %struct_member152, align 8
+  %struct_member153 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 6
+  store ptr %82, ptr %struct_member153, align 8
+  %struct_member154 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 7
+  store ptr %84, ptr %struct_member154, align 8
+  call void @validateDeployment(ptr %heap_to_ptr146)
   ret void
 
 func_6_dispatch:                                  ; preds = %entry
-  %input_start164 = ptrtoint ptr %input to i64
-  %95 = inttoptr i64 %input_start164 to ptr
-  %struct_offset165 = add i64 %input_start164, 4
-  %96 = inttoptr i64 %struct_offset165 to ptr
-  %decode_value166 = load i64, ptr %96, align 4
-  %struct_offset167 = add i64 %struct_offset165, 1
-  %97 = inttoptr i64 %struct_offset167 to ptr
-  %decode_value168 = load i64, ptr %97, align 4
-  %struct_offset169 = add i64 %struct_offset167, 1
-  %98 = inttoptr i64 %struct_offset169 to ptr
-  %decode_value170 = load i64, ptr %98, align 4
-  %struct_offset171 = add i64 %struct_offset169, 1
-  %99 = inttoptr i64 %struct_offset171 to ptr
-  %length172 = load i64, ptr %99, align 4
-  %100 = add i64 %length172, 1
-  %struct_offset173 = add i64 %struct_offset171, %100
-  %101 = inttoptr i64 %struct_offset173 to ptr
-  %length174 = load i64, ptr %101, align 4
-  %102 = add i64 %length174, 1
-  %struct_offset175 = add i64 %struct_offset173, %102
-  %103 = inttoptr i64 %struct_offset175 to ptr
-  %length176 = load i64, ptr %103, align 4
-  %104 = add i64 %length176, 1
-  %struct_offset177 = add i64 %struct_offset175, %104
-  %105 = inttoptr i64 %struct_offset177 to ptr
-  %struct_offset178 = add i64 %struct_offset177, 4
-  %struct_decode_size179 = sub i64 %struct_offset178, %input_start164
-  %106 = call i64 @vector_new(i64 14)
-  %heap_start180 = sub i64 %106, 14
-  %heap_to_ptr181 = inttoptr i64 %heap_start180 to ptr
-  %struct_member182 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 0
-  store ptr %95, ptr %struct_member182, align 8
-  %struct_member183 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 1
-  store i64 %decode_value166, ptr %struct_member183, align 4
-  %struct_member184 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 2
-  store i64 %decode_value168, ptr %struct_member184, align 4
-  %struct_member185 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 3
-  store i64 %decode_value170, ptr %struct_member185, align 4
-  %struct_member186 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 4
-  store ptr %99, ptr %struct_member186, align 8
-  %struct_member187 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 5
-  store ptr %101, ptr %struct_member187, align 8
-  %struct_member188 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 6
-  store ptr %103, ptr %struct_member188, align 8
-  %struct_member189 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr181, i32 0, i32 7
-  store ptr %105, ptr %struct_member189, align 8
-  %107 = call ptr @getSignedHash(ptr %heap_to_ptr181)
-  %108 = call i64 @vector_new(i64 5)
-  %heap_start190 = sub i64 %108, 5
+  %input_start155 = ptrtoint ptr %input to i64
+  %86 = inttoptr i64 %input_start155 to ptr
+  %struct_offset156 = add i64 %input_start155, 4
+  %87 = inttoptr i64 %struct_offset156 to ptr
+  %decode_value157 = load i64, ptr %87, align 4
+  %struct_offset158 = add i64 %struct_offset156, 1
+  %88 = inttoptr i64 %struct_offset158 to ptr
+  %decode_value159 = load i64, ptr %88, align 4
+  %struct_offset160 = add i64 %struct_offset158, 1
+  %89 = inttoptr i64 %struct_offset160 to ptr
+  %decode_value161 = load i64, ptr %89, align 4
+  %struct_offset162 = add i64 %struct_offset160, 1
+  %90 = inttoptr i64 %struct_offset162 to ptr
+  %length163 = load i64, ptr %90, align 4
+  %91 = add i64 %length163, 1
+  %struct_offset164 = add i64 %struct_offset162, %91
+  %92 = inttoptr i64 %struct_offset164 to ptr
+  %length165 = load i64, ptr %92, align 4
+  %93 = add i64 %length165, 1
+  %struct_offset166 = add i64 %struct_offset164, %93
+  %94 = inttoptr i64 %struct_offset166 to ptr
+  %length167 = load i64, ptr %94, align 4
+  %95 = add i64 %length167, 1
+  %struct_offset168 = add i64 %struct_offset166, %95
+  %96 = inttoptr i64 %struct_offset168 to ptr
+  %struct_offset169 = add i64 %struct_offset168, 4
+  %struct_decode_size170 = sub i64 %struct_offset169, %input_start155
+  %97 = call i64 @vector_new(i64 14)
+  %heap_start171 = sub i64 %97, 14
+  %heap_to_ptr172 = inttoptr i64 %heap_start171 to ptr
+  %struct_member173 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 0
+  store ptr %86, ptr %struct_member173, align 8
+  %struct_member174 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 1
+  store i64 %decode_value157, ptr %struct_member174, align 4
+  %struct_member175 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 2
+  store i64 %decode_value159, ptr %struct_member175, align 4
+  %struct_member176 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 3
+  store i64 %decode_value161, ptr %struct_member176, align 4
+  %struct_member177 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 4
+  store ptr %90, ptr %struct_member177, align 8
+  %struct_member178 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 5
+  store ptr %92, ptr %struct_member178, align 8
+  %struct_member179 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 6
+  store ptr %94, ptr %struct_member179, align 8
+  %struct_member180 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr172, i32 0, i32 7
+  store ptr %96, ptr %struct_member180, align 8
+  %98 = call ptr @getSignedHash(ptr %heap_to_ptr172)
+  %99 = call i64 @vector_new(i64 5)
+  %heap_start181 = sub i64 %99, 5
+  %heap_to_ptr182 = inttoptr i64 %heap_start181 to ptr
+  %100 = getelementptr i64, ptr %98, i64 0
+  %101 = load i64, ptr %100, align 4
+  %encode_value_ptr183 = getelementptr i64, ptr %heap_to_ptr182, i64 0
+  store i64 %101, ptr %encode_value_ptr183, align 4
+  %102 = getelementptr i64, ptr %98, i64 1
+  %103 = load i64, ptr %102, align 4
+  %encode_value_ptr184 = getelementptr i64, ptr %heap_to_ptr182, i64 1
+  store i64 %103, ptr %encode_value_ptr184, align 4
+  %104 = getelementptr i64, ptr %98, i64 2
+  %105 = load i64, ptr %104, align 4
+  %encode_value_ptr185 = getelementptr i64, ptr %heap_to_ptr182, i64 2
+  store i64 %105, ptr %encode_value_ptr185, align 4
+  %106 = getelementptr i64, ptr %98, i64 3
+  %107 = load i64, ptr %106, align 4
+  %encode_value_ptr186 = getelementptr i64, ptr %heap_to_ptr182, i64 3
+  store i64 %107, ptr %encode_value_ptr186, align 4
+  %encode_value_ptr187 = getelementptr i64, ptr %heap_to_ptr182, i64 4
+  store i64 4, ptr %encode_value_ptr187, align 4
+  call void @set_tape_data(i64 %heap_start181, i64 5)
+  ret void
+
+func_7_dispatch:                                  ; preds = %entry
+  %input_start188 = ptrtoint ptr %input to i64
+  %108 = inttoptr i64 %input_start188 to ptr
+  %109 = add i64 %input_start188, 4
+  %110 = inttoptr i64 %109 to ptr
+  %length189 = load i64, ptr %110, align 4
+  %111 = add i64 %length189, 1
+  %112 = call ptr @getTransactionHash(ptr %108, ptr %110)
+  %113 = call i64 @vector_new(i64 5)
+  %heap_start190 = sub i64 %113, 5
   %heap_to_ptr191 = inttoptr i64 %heap_start190 to ptr
-  %109 = getelementptr i64, ptr %107, i64 0
-  %110 = load i64, ptr %109, align 4
+  %114 = getelementptr i64, ptr %112, i64 0
+  %115 = load i64, ptr %114, align 4
   %encode_value_ptr192 = getelementptr i64, ptr %heap_to_ptr191, i64 0
-  store i64 %110, ptr %encode_value_ptr192, align 4
-  %111 = getelementptr i64, ptr %107, i64 1
-  %112 = load i64, ptr %111, align 4
+  store i64 %115, ptr %encode_value_ptr192, align 4
+  %116 = getelementptr i64, ptr %112, i64 1
+  %117 = load i64, ptr %116, align 4
   %encode_value_ptr193 = getelementptr i64, ptr %heap_to_ptr191, i64 1
-  store i64 %112, ptr %encode_value_ptr193, align 4
-  %113 = getelementptr i64, ptr %107, i64 2
-  %114 = load i64, ptr %113, align 4
+  store i64 %117, ptr %encode_value_ptr193, align 4
+  %118 = getelementptr i64, ptr %112, i64 2
+  %119 = load i64, ptr %118, align 4
   %encode_value_ptr194 = getelementptr i64, ptr %heap_to_ptr191, i64 2
-  store i64 %114, ptr %encode_value_ptr194, align 4
-  %115 = getelementptr i64, ptr %107, i64 3
-  %116 = load i64, ptr %115, align 4
+  store i64 %119, ptr %encode_value_ptr194, align 4
+  %120 = getelementptr i64, ptr %112, i64 3
+  %121 = load i64, ptr %120, align 4
   %encode_value_ptr195 = getelementptr i64, ptr %heap_to_ptr191, i64 3
-  store i64 %116, ptr %encode_value_ptr195, align 4
+  store i64 %121, ptr %encode_value_ptr195, align 4
   %encode_value_ptr196 = getelementptr i64, ptr %heap_to_ptr191, i64 4
   store i64 4, ptr %encode_value_ptr196, align 4
   call void @set_tape_data(i64 %heap_start190, i64 5)
   ret void
 
-func_7_dispatch:                                  ; preds = %entry
-  %input_start197 = ptrtoint ptr %input to i64
-  %117 = inttoptr i64 %input_start197 to ptr
-  %118 = add i64 %input_start197, 4
-  %119 = inttoptr i64 %118 to ptr
-  %length198 = load i64, ptr %119, align 4
-  %120 = add i64 %length198, 1
-  %121 = call ptr @getTransactionHash(ptr %117, ptr %119)
-  %122 = call i64 @vector_new(i64 5)
-  %heap_start199 = sub i64 %122, 5
-  %heap_to_ptr200 = inttoptr i64 %heap_start199 to ptr
-  %123 = getelementptr i64, ptr %121, i64 0
-  %124 = load i64, ptr %123, align 4
-  %encode_value_ptr201 = getelementptr i64, ptr %heap_to_ptr200, i64 0
-  store i64 %124, ptr %encode_value_ptr201, align 4
-  %125 = getelementptr i64, ptr %121, i64 1
-  %126 = load i64, ptr %125, align 4
-  %encode_value_ptr202 = getelementptr i64, ptr %heap_to_ptr200, i64 1
-  store i64 %126, ptr %encode_value_ptr202, align 4
-  %127 = getelementptr i64, ptr %121, i64 2
-  %128 = load i64, ptr %127, align 4
-  %encode_value_ptr203 = getelementptr i64, ptr %heap_to_ptr200, i64 2
-  store i64 %128, ptr %encode_value_ptr203, align 4
-  %129 = getelementptr i64, ptr %121, i64 3
-  %130 = load i64, ptr %129, align 4
-  %encode_value_ptr204 = getelementptr i64, ptr %heap_to_ptr200, i64 3
-  store i64 %130, ptr %encode_value_ptr204, align 4
-  %encode_value_ptr205 = getelementptr i64, ptr %heap_to_ptr200, i64 4
-  store i64 4, ptr %encode_value_ptr205, align 4
-  call void @set_tape_data(i64 %heap_start199, i64 5)
-  ret void
-
 func_8_dispatch:                                  ; preds = %entry
-  %input_start206 = ptrtoint ptr %input to i64
-  %131 = inttoptr i64 %input_start206 to ptr
-  call void @validate_sender(ptr %131)
+  %input_start197 = ptrtoint ptr %input to i64
+  %122 = inttoptr i64 %input_start197 to ptr
+  call void @validate_sender(ptr %122)
   ret void
 
 func_9_dispatch:                                  ; preds = %entry
-  %input_start207 = ptrtoint ptr %input to i64
-  %132 = inttoptr i64 %input_start207 to ptr
-  %133 = add i64 %input_start207, 4
-  %134 = inttoptr i64 %133 to ptr
-  %decode_value208 = load i64, ptr %134, align 4
-  call void @validate_nonce(ptr %132, i64 %decode_value208)
+  %input_start198 = ptrtoint ptr %input to i64
+  %123 = inttoptr i64 %input_start198 to ptr
+  %124 = add i64 %input_start198, 4
+  %125 = inttoptr i64 %124 to ptr
+  %decode_value199 = load i64, ptr %125, align 4
+  call void @validate_nonce(ptr %123, i64 %decode_value199)
   ret void
 
 func_10_dispatch:                                 ; preds = %entry
-  %input_start209 = ptrtoint ptr %input to i64
-  %135 = inttoptr i64 %input_start209 to ptr
-  %136 = add i64 %input_start209, 4
-  %137 = inttoptr i64 %136 to ptr
-  %138 = add i64 %136, 4
-  %139 = inttoptr i64 %138 to ptr
-  %struct_offset210 = add i64 %138, 4
-  %140 = inttoptr i64 %struct_offset210 to ptr
-  %decode_value211 = load i64, ptr %140, align 4
-  %struct_offset212 = add i64 %struct_offset210, 1
-  %141 = inttoptr i64 %struct_offset212 to ptr
-  %decode_value213 = load i64, ptr %141, align 4
-  %struct_offset214 = add i64 %struct_offset212, 1
-  %142 = inttoptr i64 %struct_offset214 to ptr
-  %decode_value215 = load i64, ptr %142, align 4
-  %struct_offset216 = add i64 %struct_offset214, 1
-  %143 = inttoptr i64 %struct_offset216 to ptr
-  %length217 = load i64, ptr %143, align 4
-  %144 = add i64 %length217, 1
-  %struct_offset218 = add i64 %struct_offset216, %144
-  %145 = inttoptr i64 %struct_offset218 to ptr
-  %length219 = load i64, ptr %145, align 4
-  %146 = add i64 %length219, 1
-  %struct_offset220 = add i64 %struct_offset218, %146
-  %147 = inttoptr i64 %struct_offset220 to ptr
-  %length221 = load i64, ptr %147, align 4
-  %148 = add i64 %length221, 1
-  %struct_offset222 = add i64 %struct_offset220, %148
-  %149 = inttoptr i64 %struct_offset222 to ptr
-  %struct_offset223 = add i64 %struct_offset222, 4
-  %struct_decode_size224 = sub i64 %struct_offset223, %138
-  %150 = call i64 @vector_new(i64 14)
-  %heap_start225 = sub i64 %150, 14
-  %heap_to_ptr226 = inttoptr i64 %heap_start225 to ptr
-  %struct_member227 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 0
-  store ptr %139, ptr %struct_member227, align 8
-  %struct_member228 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 1
-  store i64 %decode_value211, ptr %struct_member228, align 4
-  %struct_member229 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 2
-  store i64 %decode_value213, ptr %struct_member229, align 4
-  %struct_member230 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 3
-  store i64 %decode_value215, ptr %struct_member230, align 4
-  %struct_member231 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 4
-  store ptr %143, ptr %struct_member231, align 8
-  %struct_member232 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 5
-  store ptr %145, ptr %struct_member232, align 8
-  %struct_member233 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 6
-  store ptr %147, ptr %struct_member233, align 8
-  %struct_member234 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr226, i32 0, i32 7
-  store ptr %149, ptr %struct_member234, align 8
-  call void @validate_tx(ptr %135, ptr %137, ptr %heap_to_ptr226)
+  %input_start200 = ptrtoint ptr %input to i64
+  %126 = inttoptr i64 %input_start200 to ptr
+  %127 = add i64 %input_start200, 4
+  %128 = inttoptr i64 %127 to ptr
+  %129 = add i64 %127, 4
+  %130 = inttoptr i64 %129 to ptr
+  %struct_offset201 = add i64 %129, 4
+  %131 = inttoptr i64 %struct_offset201 to ptr
+  %decode_value202 = load i64, ptr %131, align 4
+  %struct_offset203 = add i64 %struct_offset201, 1
+  %132 = inttoptr i64 %struct_offset203 to ptr
+  %decode_value204 = load i64, ptr %132, align 4
+  %struct_offset205 = add i64 %struct_offset203, 1
+  %133 = inttoptr i64 %struct_offset205 to ptr
+  %decode_value206 = load i64, ptr %133, align 4
+  %struct_offset207 = add i64 %struct_offset205, 1
+  %134 = inttoptr i64 %struct_offset207 to ptr
+  %length208 = load i64, ptr %134, align 4
+  %135 = add i64 %length208, 1
+  %struct_offset209 = add i64 %struct_offset207, %135
+  %136 = inttoptr i64 %struct_offset209 to ptr
+  %length210 = load i64, ptr %136, align 4
+  %137 = add i64 %length210, 1
+  %struct_offset211 = add i64 %struct_offset209, %137
+  %138 = inttoptr i64 %struct_offset211 to ptr
+  %length212 = load i64, ptr %138, align 4
+  %139 = add i64 %length212, 1
+  %struct_offset213 = add i64 %struct_offset211, %139
+  %140 = inttoptr i64 %struct_offset213 to ptr
+  %struct_offset214 = add i64 %struct_offset213, 4
+  %struct_decode_size215 = sub i64 %struct_offset214, %129
+  %141 = call i64 @vector_new(i64 14)
+  %heap_start216 = sub i64 %141, 14
+  %heap_to_ptr217 = inttoptr i64 %heap_start216 to ptr
+  %struct_member218 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 0
+  store ptr %130, ptr %struct_member218, align 8
+  %struct_member219 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 1
+  store i64 %decode_value202, ptr %struct_member219, align 4
+  %struct_member220 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 2
+  store i64 %decode_value204, ptr %struct_member220, align 4
+  %struct_member221 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 3
+  store i64 %decode_value206, ptr %struct_member221, align 4
+  %struct_member222 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 4
+  store ptr %134, ptr %struct_member222, align 8
+  %struct_member223 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 5
+  store ptr %136, ptr %struct_member223, align 8
+  %struct_member224 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 6
+  store ptr %138, ptr %struct_member224, align 8
+  %struct_member225 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 7
+  store ptr %140, ptr %struct_member225, align 8
+  call void @validate_tx(ptr %126, ptr %128, ptr %heap_to_ptr217)
   ret void
 
 func_11_dispatch:                                 ; preds = %entry
-  %input_start235 = ptrtoint ptr %input to i64
-  %151 = inttoptr i64 %input_start235 to ptr
-  %length236 = load i64, ptr %151, align 4
-  %152 = add i64 %length236, 1
-  %153 = call ptr @hashL2Bytecode(ptr %151)
-  %154 = call i64 @vector_new(i64 5)
-  %heap_start237 = sub i64 %154, 5
-  %heap_to_ptr238 = inttoptr i64 %heap_start237 to ptr
-  %155 = getelementptr i64, ptr %153, i64 0
-  %156 = load i64, ptr %155, align 4
-  %encode_value_ptr239 = getelementptr i64, ptr %heap_to_ptr238, i64 0
-  store i64 %156, ptr %encode_value_ptr239, align 4
-  %157 = getelementptr i64, ptr %153, i64 1
-  %158 = load i64, ptr %157, align 4
-  %encode_value_ptr240 = getelementptr i64, ptr %heap_to_ptr238, i64 1
-  store i64 %158, ptr %encode_value_ptr240, align 4
-  %159 = getelementptr i64, ptr %153, i64 2
-  %160 = load i64, ptr %159, align 4
-  %encode_value_ptr241 = getelementptr i64, ptr %heap_to_ptr238, i64 2
-  store i64 %160, ptr %encode_value_ptr241, align 4
-  %161 = getelementptr i64, ptr %153, i64 3
-  %162 = load i64, ptr %161, align 4
-  %encode_value_ptr242 = getelementptr i64, ptr %heap_to_ptr238, i64 3
-  store i64 %162, ptr %encode_value_ptr242, align 4
-  %encode_value_ptr243 = getelementptr i64, ptr %heap_to_ptr238, i64 4
-  store i64 4, ptr %encode_value_ptr243, align 4
-  call void @set_tape_data(i64 %heap_start237, i64 5)
+  %input_start226 = ptrtoint ptr %input to i64
+  %142 = inttoptr i64 %input_start226 to ptr
+  %length227 = load i64, ptr %142, align 4
+  %143 = add i64 %length227, 1
+  %144 = call ptr @hashL2Bytecode(ptr %142)
+  %145 = call i64 @vector_new(i64 5)
+  %heap_start228 = sub i64 %145, 5
+  %heap_to_ptr229 = inttoptr i64 %heap_start228 to ptr
+  %146 = getelementptr i64, ptr %144, i64 0
+  %147 = load i64, ptr %146, align 4
+  %encode_value_ptr230 = getelementptr i64, ptr %heap_to_ptr229, i64 0
+  store i64 %147, ptr %encode_value_ptr230, align 4
+  %148 = getelementptr i64, ptr %144, i64 1
+  %149 = load i64, ptr %148, align 4
+  %encode_value_ptr231 = getelementptr i64, ptr %heap_to_ptr229, i64 1
+  store i64 %149, ptr %encode_value_ptr231, align 4
+  %150 = getelementptr i64, ptr %144, i64 2
+  %151 = load i64, ptr %150, align 4
+  %encode_value_ptr232 = getelementptr i64, ptr %heap_to_ptr229, i64 2
+  store i64 %151, ptr %encode_value_ptr232, align 4
+  %152 = getelementptr i64, ptr %144, i64 3
+  %153 = load i64, ptr %152, align 4
+  %encode_value_ptr233 = getelementptr i64, ptr %heap_to_ptr229, i64 3
+  store i64 %153, ptr %encode_value_ptr233, align 4
+  %encode_value_ptr234 = getelementptr i64, ptr %heap_to_ptr229, i64 4
+  store i64 4, ptr %encode_value_ptr234, align 4
+  call void @set_tape_data(i64 %heap_start228, i64 5)
   ret void
 }
 

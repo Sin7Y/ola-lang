@@ -171,6 +171,60 @@ done:                                             ; preds = %body, %cond
   ret i64 %result_phi
 }
 
+define void @u32_div_mod(i64 %0, i64 %1, ptr %2, ptr %3) {
+entry:
+  %remainder_alloca = alloca ptr, align 8
+  %quotient_alloca = alloca ptr, align 8
+  %divisor_alloca = alloca i64, align 8
+  %dividend_alloca = alloca i64, align 8
+  store i64 %0, ptr %dividend_alloca, align 4
+  %dividend = load i64, ptr %dividend_alloca, align 4
+  store i64 %1, ptr %divisor_alloca, align 4
+  %divisor = load i64, ptr %divisor_alloca, align 4
+  store ptr %2, ptr %quotient_alloca, align 8
+  %quotient = load ptr, ptr %quotient_alloca, align 8
+  store ptr %3, ptr %remainder_alloca, align 8
+  %remainder = load ptr, ptr %remainder_alloca, align 8
+  %4 = call i64 @prophet_u32_mod(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(i64 %4)
+  %5 = add i64 %4, 1
+  %6 = sub i64 %divisor, %5
+  call void @builtin_range_check(i64 %6)
+  %7 = call i64 @prophet_u32_div(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(ptr %quotient)
+  %8 = mul i64 %7, %divisor
+  %9 = add i64 %8, %4
+  %10 = icmp eq i64 %9, %dividend
+  %11 = zext i1 %10 to i64
+  call void @builtin_assert(i64 %11)
+  store i64 %7, ptr %quotient, align 4
+  store i64 %4, ptr %remainder, align 4
+  ret void
+}
+
+define i64 @u32_power(i64 %0, i64 %1) {
+entry:
+  %exponent_alloca = alloca i64, align 8
+  %base_alloca = alloca i64, align 8
+  store i64 %0, ptr %base_alloca, align 4
+  %base = load i64, ptr %base_alloca, align 4
+  store i64 %1, ptr %exponent_alloca, align 4
+  %exponent = load i64, ptr %exponent_alloca, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %base
+  %loopcond = icmp ule i64 %inc, %exponent
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+}
+
 define ptr @u32_to_address() {
 entry:
   %b = alloca i64, align 8
