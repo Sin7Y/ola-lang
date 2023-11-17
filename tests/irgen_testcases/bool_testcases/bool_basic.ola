@@ -1,0 +1,124 @@
+
+contract BoolBasicTest {
+
+    // BEGIN-CHECK: define void @testBoolDeclareUninitialized() 
+    fn testBoolDeclareUninitialized() {
+        // CHECK: %a = alloca i64, align 8
+	    // CHECK: store i64 0, ptr %a, align 4
+         bool a; 
+         print(a);
+    }
+
+    // BEGIN-CHECK: define void @testBoolDeclareUninitialized()
+    fn testBoolDeclareInitialized() { 
+        // CHECK: %a = alloca i64, align 8
+	    // CHECK: store i64 1, ptr %a, align 4
+        bool a = true;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testBoolDeclareThenInitialized()
+    fn testBoolDeclareThenInitialized() {
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 0, ptr %a, align 4
+        // CHECK: store i64 1, ptr %a, align 4
+        bool a;
+        a = true;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testBoolInitializedByOther()
+    fn testBoolInitializedByOther() {
+        // CHECK: %b = alloca i64, align 8
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 1, ptr %a, align 4
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: store i64 %0, ptr %b, align 4
+        bool a = true;
+        bool b = a;
+        print(b);
+    }
+
+
+    // BEGIN-CHECK: define void @testBoolAsParameter(i64 %0)
+    fn testBoolAsParameter(bool x) {
+        // CHECK: %x = alloca i64, align 8
+        // CHECK: store i64 %0, ptr %x, align 4
+        print(x);
+    }
+
+    // BEGIN-CHECK: define i64 @testBoolAsReturnValue()
+    fn testBoolAsReturnValue() -> (bool) {
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 1, ptr %a, align 4
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: ret i64 %0
+        bool a = true;
+        return a;
+    }
+
+    // BEGIN-CHECK: define i64 @testBoolAsReturnConstValue()
+    fn testBoolAsReturnConstValue() -> (bool) {
+        // CHECK: ret i64 1
+        return true;
+    }
+
+    // BEGIN-CHECK: define void @testBoolAndOperation()
+    fn testBoolAndOperation() {
+        bool a = true;
+        bool b = false;
+        bool c = a && b;
+        print(c);
+    }
+
+    // BEGIN-CHECK: define void @testBoolOrOperation()
+    fn testBoolOrOperation() {
+        bool a = true;
+        bool b = false;
+        bool c = a || b;
+        print(c);
+    }
+
+    fn testBoolEqualOperation() {
+        bool a = true;
+        bool b = false;
+        bool c = a == b;
+        print(c);
+    }
+
+    fn testBoolNotEqualOperation() {
+        bool a = true;
+        bool b = false;
+        bool c = a != b;
+        print(c);
+    }
+
+    fn testBoolStateChange() {
+        bool a = false;
+        a = !a;
+        print(a);
+    }
+
+    fn testBoolIfStatement() {
+        bool a = true;
+        if (a) {
+            print(1);
+        } else {
+            print(0);
+        }
+
+    }
+
+    fn testBoolComplexCondition() {
+        bool a = true;
+        bool b = false;
+        if (a && !b) {
+            print(1);
+        } else {
+            print(0);
+        }
+    }
+
+
+
+}

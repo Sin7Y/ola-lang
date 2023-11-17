@@ -171,64 +171,111 @@ done:                                             ; preds = %body, %cond
   ret i64 %result_phi
 }
 
+define void @u32_div_mod(i64 %0, i64 %1, ptr %2, ptr %3) {
+entry:
+  %remainder_alloca = alloca ptr, align 8
+  %quotient_alloca = alloca ptr, align 8
+  %divisor_alloca = alloca i64, align 8
+  %dividend_alloca = alloca i64, align 8
+  store i64 %0, ptr %dividend_alloca, align 4
+  %dividend = load i64, ptr %dividend_alloca, align 4
+  store i64 %1, ptr %divisor_alloca, align 4
+  %divisor = load i64, ptr %divisor_alloca, align 4
+  store ptr %2, ptr %quotient_alloca, align 8
+  %quotient = load ptr, ptr %quotient_alloca, align 8
+  store ptr %3, ptr %remainder_alloca, align 8
+  %remainder = load ptr, ptr %remainder_alloca, align 8
+  %4 = call i64 @prophet_u32_mod(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(i64 %4)
+  %5 = add i64 %4, 1
+  %6 = sub i64 %divisor, %5
+  call void @builtin_range_check(i64 %6)
+  %7 = call i64 @prophet_u32_div(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(ptr %quotient)
+  %8 = mul i64 %7, %divisor
+  %9 = add i64 %8, %4
+  %10 = icmp eq i64 %9, %dividend
+  %11 = zext i1 %10 to i64
+  call void @builtin_assert(i64 %11)
+  store i64 %7, ptr %quotient, align 4
+  store i64 %4, ptr %remainder, align 4
+  ret void
+}
+
+define i64 @u32_power(i64 %0, i64 %1) {
+entry:
+  %exponent_alloca = alloca i64, align 8
+  %base_alloca = alloca i64, align 8
+  store i64 %0, ptr %base_alloca, align 4
+  %base = load i64, ptr %base_alloca, align 4
+  store i64 %1, ptr %exponent_alloca, align 4
+  %exponent = load i64, ptr %exponent_alloca, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %base
+  %loopcond = icmp ule i64 %inc, %exponent
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+}
+
 define i64 @sqrt_test(i64 %0) {
 entry:
+  %1 = alloca i64, align 8
+  %2 = alloca i64, align 8
   %i = alloca i64, align 8
   %x = alloca i64, align 8
+  %3 = alloca i64, align 8
   %result = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 %0, ptr %a, align 4
   store i64 0, ptr %result, align 4
-  %1 = load i64, ptr %a, align 4
-  %2 = icmp ugt i64 %1, 3
-  br i1 %2, label %then, label %else
+  %4 = load i64, ptr %a, align 4
+  %5 = icmp ugt i64 %4, 3
+  br i1 %5, label %then, label %else
 
 then:                                             ; preds = %entry
-  %3 = load i64, ptr %a, align 4
-  store i64 %3, ptr %result, align 4
-  %4 = load i64, ptr %a, align 4
-  %5 = call i64 @prophet_u32_mod(i64 %4, i64 2)
-  call void @builtin_range_check(i64 %5)
-  %6 = add i64 %5, 1
-  %7 = sub i64 2, %6
-  call void @builtin_range_check(i64 %7)
-  %8 = call i64 @prophet_u32_div(i64 %4, i64 2)
-  call void @builtin_range_check(i64 %8)
-  %9 = mul i64 %8, 2
-  %10 = add i64 %9, %5
-  %11 = icmp eq i64 %10, %4
-  %12 = zext i1 %11 to i64
-  call void @builtin_assert(i64 %12)
-  %13 = add i64 %8, 1
-  call void @builtin_range_check(i64 %13)
-  store i64 %13, ptr %x, align 4
+  %6 = load i64, ptr %a, align 4
+  store i64 %6, ptr %result, align 4
+  %7 = load i64, ptr %a, align 4
+  call void @u32_div_mod(i64 %7, i64 2, ptr %3, ptr null)
+  %8 = load i64, ptr %3, align 4
+  %9 = add i64 %8, 1
+  call void @builtin_range_check(i64 %9)
+  store i64 %9, ptr %x, align 4
   store i64 0, ptr %i, align 4
   br label %cond
 
 else:                                             ; preds = %entry
-  %14 = load i64, ptr %a, align 4
-  %15 = icmp ne i64 %14, 0
-  br i1 %15, label %then3, label %enif4
+  %10 = load i64, ptr %a, align 4
+  %11 = icmp ne i64 %10, 0
+  br i1 %11, label %then3, label %enif4
 
 enif:                                             ; preds = %enif4, %endfor
-  %16 = load i64, ptr %result, align 4
-  ret i64 %16
+  %12 = load i64, ptr %result, align 4
+  ret i64 %12
 
 cond:                                             ; preds = %next, %then
-  %17 = load i64, ptr %i, align 4
-  %18 = icmp ult i64 %17, 100
-  br i1 %18, label %body, label %endfor
+  %13 = load i64, ptr %i, align 4
+  %14 = icmp ult i64 %13, 100
+  br i1 %14, label %body, label %endfor
 
 body:                                             ; preds = %cond
-  %19 = load i64, ptr %x, align 4
-  %20 = load i64, ptr %result, align 4
-  %21 = icmp uge i64 %19, %20
-  br i1 %21, label %then1, label %enif2
+  %15 = load i64, ptr %x, align 4
+  %16 = load i64, ptr %result, align 4
+  %17 = icmp uge i64 %15, %16
+  br i1 %17, label %then1, label %enif2
 
 next:                                             ; preds = %enif2
-  %22 = load i64, ptr %i, align 4
-  %23 = add i64 %22, 1
-  store i64 %23, ptr %i, align 4
+  %18 = load i64, ptr %i, align 4
+  %19 = add i64 %18, 1
+  store i64 %19, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %then1, %cond
@@ -238,38 +285,18 @@ then1:                                            ; preds = %body
   br label %endfor
 
 enif2:                                            ; preds = %body
+  %20 = load i64, ptr %x, align 4
+  store i64 %20, ptr %result, align 4
+  %21 = load i64, ptr %a, align 4
+  %22 = load i64, ptr %x, align 4
+  call void @u32_div_mod(i64 %21, i64 %22, ptr %2, ptr null)
+  %23 = load i64, ptr %2, align 4
   %24 = load i64, ptr %x, align 4
-  store i64 %24, ptr %result, align 4
-  %25 = load i64, ptr %a, align 4
-  %26 = load i64, ptr %x, align 4
-  %27 = call i64 @prophet_u32_mod(i64 %25, i64 %26)
-  call void @builtin_range_check(i64 %27)
-  %28 = add i64 %27, 1
-  %29 = sub i64 %26, %28
-  call void @builtin_range_check(i64 %29)
-  %30 = call i64 @prophet_u32_div(i64 %25, i64 %26)
-  call void @builtin_range_check(i64 %30)
-  %31 = mul i64 %30, %26
-  %32 = add i64 %31, %27
-  %33 = icmp eq i64 %32, %25
-  %34 = zext i1 %33 to i64
-  call void @builtin_assert(i64 %34)
-  %35 = load i64, ptr %x, align 4
-  %36 = add i64 %30, %35
-  call void @builtin_range_check(i64 %36)
-  %37 = call i64 @prophet_u32_mod(i64 %36, i64 2)
-  call void @builtin_range_check(i64 %37)
-  %38 = add i64 %37, 1
-  %39 = sub i64 2, %38
-  call void @builtin_range_check(i64 %39)
-  %40 = call i64 @prophet_u32_div(i64 %36, i64 2)
-  call void @builtin_range_check(i64 %40)
-  %41 = mul i64 %40, 2
-  %42 = add i64 %41, %37
-  %43 = icmp eq i64 %42, %36
-  %44 = zext i1 %43 to i64
-  call void @builtin_assert(i64 %44)
-  store i64 %40, ptr %x, align 4
+  %25 = add i64 %23, %24
+  call void @builtin_range_check(i64 %25)
+  call void @u32_div_mod(i64 %25, i64 2, ptr %1, ptr null)
+  %26 = load i64, ptr %1, align 4
+  store i64 %26, ptr %x, align 4
   br label %next
 
 then3:                                            ; preds = %else

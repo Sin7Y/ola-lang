@@ -48,6 +48,8 @@ color-backtrace = "0.5.1"
 env_logger = "0.10.0"
 insta = "^1.7.1"
 structopt = "0.3.26"
+rayon = "1"
+assert_cmd = "2.0"
 
 [workspace]
 members = ["ola-parser"]

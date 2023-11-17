@@ -14,5 +14,6 @@ contract AddressExample {
 
     fn get_caller() -> (address caller_) {
         caller_ = 0x0595c3e78A0Df589B486778c4d81a3605A37Fb041466a0CFA2DA9151fd6b580Eaddress;
+        return caller_;
     }
 }

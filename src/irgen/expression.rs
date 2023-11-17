@@ -1,7 +1,7 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::u32_op::{
-    u32_add, u32_and, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, u32_bitwise_xor, u32_div,
-    u32_mod, u32_mul, u32_not, u32_or, u32_power, u32_shift_left, u32_shift_right, u32_sub,
+    logic_not, u32_add, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, logic_and, logic_or, u32_bitwise_xor,
+    u32_div, u32_mod, u32_mul, u32_power, u32_shift_left, u32_shift_right, u32_sub,u32_compare
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
@@ -26,7 +26,6 @@ use super::storage::{
     array_offset, slot_offest, storage_array_pop, storage_array_push, storage_load, storage_store,
 };
 use super::strings::string_location;
-use super::u32_op::u32_compare;
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -259,12 +258,12 @@ pub fn expression<'a>(
             _ => unimplemented!("less equal for type {:?}", left.ty()),
         },
 
-        Expression::Not { expr, .. } => u32_not(expr, bin, func_value, var_table, ns),
+        Expression::Not { expr, .. } => logic_not(expr, bin, func_value, var_table, ns),
         Expression::BitwiseNot { expr, .. } => {
             u32_bitwise_not(expr, bin, func_value, var_table, ns)
         }
-        Expression::Or { left, right, .. } => u32_or(left, right, bin, func_value, var_table, ns),
-        Expression::And { left, right, .. } => u32_and(left, right, bin, func_value, var_table, ns),
+        Expression::Or { left, right, .. } => logic_and(left, right, bin, func_value, var_table, ns),
+        Expression::And { left, right, .. } => logic_or(left, right, bin, func_value, var_table, ns),
 
         Expression::Decrement { loc, ty, expr } => {
             let v = match expr.ty() {

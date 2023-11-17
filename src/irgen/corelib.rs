@@ -24,8 +24,16 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 4]> =
-    Lazy::new(|| ["memcpy", "memcmp_eq", "memcmp_ugt", "memcmp_uge"]);
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 6]> = Lazy::new(|| {
+    [
+        "memcpy",
+        "memcmp_eq",
+        "memcmp_ugt",
+        "memcmp_uge",
+        "u32_div_mod",
+        "u32_power",
+    ]
+});
 
 // // These functions will be called implicitly by corelib
 // // May later become corelib functions open to the user as well
@@ -258,6 +266,33 @@ pub fn declare_core_lib(bin: &mut Binary) {
             };
             create_mem_compare_function(bin, func, op);
         }
+        "u32_div_mod" => {
+            let i64_type = bin.context.i64_type();
+            let void_type = bin.context.void_type();
+            let ptr_type = i64_type.ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(
+                &[
+                    i64_type.into(),
+                    i64_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                ],
+                false,
+            );
+            let func = bin.module.add_function(p, ftype, None);
+            bin.builder
+                .position_at_end(bin.context.append_basic_block(func, "entry"));
+            create_u32_div_mod_function(bin, func);
+        }
+        "u32_power" => {
+            let i64_type = bin.context.i64_type();
+            let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
+            let func = bin.module.add_function(p, ftype, None);
+            bin.builder
+                .position_at_end(bin.context.append_basic_block(func, "entry"));
+            create_u32_power_function(bin, func);
+        }
+
         _ => {}
     });
 }
@@ -390,86 +425,6 @@ pub fn create_mem_compare_function<'a>(
         (&bin.context.i64_type().const_zero(), body),
     ]);
     bin.builder.build_return(Some(&phi_node.as_basic_value()));
-
-    // let cond = bin.context.append_basic_block(function, "cond");
-    // let body = bin.context.append_basic_block(function, "body");
-    // let done = bin.context.append_basic_block(function, "done");
-    // let continue_block = bin.context.append_basic_block(function,
-    // "continue");
-
-    // let loop_ty = bin.context.i64_type();
-    // // create an alloca for the loop variable
-    // let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
-    // // initialize the loop variable with the starting value
-    // bin.builder.build_store(index_alloca, loop_ty.const_zero());
-
-    // bin.builder.build_unconditional_branch(cond);
-    // bin.builder.position_at_end(cond);
-
-    // // load current value of the loop variable
-    // let index_value = bin
-    //     .builder
-    //     .build_load(loop_ty, index_alloca, "index_value")
-    //     .into_int_value();
-
-    // let loop_check = bin
-    //     .builder
-    //     .build_int_compare(IntPredicate::ULT, index_value, len,
-    // "loop_check");
-
-    // bin.builder.build_conditional_branch(loop_check, body, done);
-
-    // // memory copy start
-    // bin.builder.position_at_end(body);
-
-    // let left_elem_ptr = unsafe {
-    //     bin.builder.build_gep(
-    //         bin.context.i64_type(),
-    //         left_ptr,
-    //         &[index_value],
-    //         "left_elem_ptr",
-    //     )
-    // };
-    // let left_elem = bin
-    //     .builder
-    //     .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
-    //     .into_int_value();
-
-    // let right_elem_ptr = unsafe {
-    //     bin.builder.build_gep(
-    //         bin.context.i64_type(),
-    //         right_ptr,
-    //         &[index_value],
-    //         "right_elem_ptr",
-    //     )
-    // };
-    // let right_elem = bin
-    //     .builder
-    //     .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
-    //     .into_int_value();
-
-    // let compare = bin
-    //     .builder
-    //     .build_int_compare(IntPredicate::EQ, left_elem, right_elem,
-    // "compare");
-
-    // bin.builder.build_conditional_branch(compare, body, not_equal);
-
-    // bin.builder.position_at_end(continue_block);
-
-    // let next_index = bin.builder.build_int_add(index_value,
-    // loop_ty.const_int(1, false), "next_index");
-
-    // bin.builder.build_store(index_alloca, next_index);
-
-    // bin.builder.build_unconditional_branch(cond);
-
-    // bin.builder.position_at_end(not_equal);
-    // bin.builder.build_return(Some(&bin.context.i64_type().const_zero()));
-
-    // bin.builder.position_at_end(done);
-    // bin.builder.build_return(Some(&bin.context.i64_type().const_int(1,
-    // false)));
 }
 
 pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
@@ -569,4 +524,189 @@ pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>)
 
     bin.builder.position_at_end(done);
     bin.builder.build_return(None);
+}
+
+pub fn create_u32_div_mod_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    let dividend = function.get_nth_param(0).unwrap();
+    let divisor = function.get_nth_param(1).unwrap();
+    let quotient = function.get_nth_param(2).unwrap();
+    let remainder = function.get_nth_param(3).unwrap();
+    let dividend_alloca = bin.build_alloca(function, dividend.get_type(), "dividend_alloca");
+    bin.builder.build_store(dividend_alloca, dividend);
+    let dividend = bin
+        .builder
+        .build_load(bin.context.i64_type(), dividend_alloca, "dividend");
+
+    let divisor_alloca = bin.build_alloca(function, divisor.get_type(), "divisor_alloca");
+    bin.builder.build_store(divisor_alloca, divisor);
+    let divisor = bin
+        .builder
+        .build_load(bin.context.i64_type(), divisor_alloca, "divisor");
+    let quotient_alloca = bin.build_alloca(function, quotient.get_type(), "quotient_alloca");
+    bin.builder.build_store(quotient_alloca, quotient);
+    let quotient = bin
+        .builder
+        .build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            quotient_alloca,
+            "quotient",
+        )
+        .into_pointer_value();
+    let remainder_alloca = bin.build_alloca(function, remainder.get_type(), "remainder_alloca");
+    bin.builder.build_store(remainder_alloca, remainder);
+    let remainder = bin
+        .builder
+        .build_load(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            remainder_alloca,
+            "remainder",
+        )
+        .into_pointer_value();
+
+    let remainder_ret = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_mod")
+                .expect("prophet_u32_mod should have been defined before"),
+            &[dividend.into(), divisor.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // remainder should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[remainder_ret.into()],
+        "",
+    );
+
+    // 0 <= right - (remainder + 1)
+    let one = bin.context.i64_type().const_int(1, false);
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
+        divisor.into_int_value(),
+        bin.builder
+            .build_int_add(remainder_ret.into_int_value(), one, ""),
+        "",
+    );
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[right_minus_remainder_minus_one.into()],
+        "",
+    );
+
+    let quotient_ret = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_div")
+                .expect("prophet_u32_div should have been defined before"),
+            &[dividend.into(), divisor.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // quotient should be in the u32 range
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[quotient.into()],
+        "",
+    );
+
+    // assert that quotient * right + remainder == left
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
+        bin.builder
+            .build_int_mul(quotient_ret.into_int_value(), divisor.into_int_value(), ""),
+        remainder_ret.into_int_value(),
+        "",
+    );
+
+    let equal = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        quotient_mul_right_plus_remainder,
+        dividend.into_int_value(),
+        "",
+    );
+
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_assert")
+            .expect("builtin_assert should have been defined before"),
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
+        "",
+    );
+    bin.builder.build_store(quotient, quotient_ret);
+    bin.builder.build_store(remainder, remainder_ret);
+    bin.builder.build_return(None);
+}
+
+pub fn create_u32_power_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    let loop_block = bin.context.append_basic_block(function, "loop");
+    let exit_block = bin.context.append_basic_block(function, "exit");
+    let base = function.get_nth_param(0).unwrap();
+    let exponent = function.get_nth_param(1).unwrap();
+    let i64_type = bin.context.i64_type();
+
+
+    let base_alloca = bin.build_alloca(function, base.get_type(), "base_alloca");
+    let exponent_alloca = bin.build_alloca( function, exponent.get_type(), "exponent_alloca");
+
+    bin.builder.build_store(base_alloca, base);
+    let base = bin
+        .builder
+        .build_load(bin.context.i64_type(), base_alloca, "base")
+        .into_int_value();
+
+    bin.builder.build_store(exponent_alloca, exponent);
+    let exponent = bin
+        .builder
+        .build_load(bin.context.i64_type(), exponent_alloca, "exponent")
+        .into_int_value();
+
+    bin.builder.build_unconditional_branch(loop_block);
+    bin.builder.position_at_end(loop_block);
+
+    let counter_phi = bin.builder.build_phi(i64_type, "");
+    counter_phi.add_incoming(&[(&i64_type.const_zero(), function.get_first_basic_block().unwrap())]);
+
+    let result_phi = bin.builder.build_phi(i64_type, "");
+    result_phi.add_incoming(&[(&i64_type.const_int(1, false), function.get_first_basic_block().unwrap())]);
+
+    let counter_val = counter_phi.as_basic_value().into_int_value();
+    let result_val = result_phi.as_basic_value().into_int_value();
+
+    let new_counter = bin.builder.build_int_add(counter_val, i64_type.const_int(1, false), "inc");
+    let new_result = bin.builder.build_int_mul(result_val, base, "multmp");
+
+    let cond = bin.builder.build_int_compare(inkwell::IntPredicate::ULE, new_counter, exponent, "loopcond");
+    bin.builder.build_conditional_branch(cond, loop_block, exit_block);
+
+    counter_phi.add_incoming(&[(&new_counter, loop_block)]);
+    result_phi.add_incoming(&[(&new_result, loop_block)]);
+
+
+    bin.builder.position_at_end(exit_block);
+    bin.builder.build_call(
+        bin.module
+            .get_function("builtin_range_check")
+            .expect("builtin_range_check should have been defined before"),
+        &[result_phi.as_basic_value().into()],
+        "",
+    );
+
+
+    bin.builder.build_return(Some(&result_phi.as_basic_value()));
 }
