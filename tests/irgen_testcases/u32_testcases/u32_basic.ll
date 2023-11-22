@@ -171,6 +171,60 @@ done:                                             ; preds = %body, %cond
   ret i64 %result_phi
 }
 
+define void @u32_div_mod(i64 %0, i64 %1, ptr %2, ptr %3) {
+entry:
+  %remainder_alloca = alloca ptr, align 8
+  %quotient_alloca = alloca ptr, align 8
+  %divisor_alloca = alloca i64, align 8
+  %dividend_alloca = alloca i64, align 8
+  store i64 %0, ptr %dividend_alloca, align 4
+  %dividend = load i64, ptr %dividend_alloca, align 4
+  store i64 %1, ptr %divisor_alloca, align 4
+  %divisor = load i64, ptr %divisor_alloca, align 4
+  store ptr %2, ptr %quotient_alloca, align 8
+  %quotient = load ptr, ptr %quotient_alloca, align 8
+  store ptr %3, ptr %remainder_alloca, align 8
+  %remainder = load ptr, ptr %remainder_alloca, align 8
+  %4 = call i64 @prophet_u32_mod(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(i64 %4)
+  %5 = add i64 %4, 1
+  %6 = sub i64 %divisor, %5
+  call void @builtin_range_check(i64 %6)
+  %7 = call i64 @prophet_u32_div(i64 %dividend, i64 %divisor)
+  call void @builtin_range_check(ptr %quotient)
+  %8 = mul i64 %7, %divisor
+  %9 = add i64 %8, %4
+  %10 = icmp eq i64 %9, %dividend
+  %11 = zext i1 %10 to i64
+  call void @builtin_assert(i64 %11)
+  store i64 %7, ptr %quotient, align 4
+  store i64 %4, ptr %remainder, align 4
+  ret void
+}
+
+define i64 @u32_power(i64 %0, i64 %1) {
+entry:
+  %exponent_alloca = alloca i64, align 8
+  %base_alloca = alloca i64, align 8
+  store i64 %0, ptr %base_alloca, align 4
+  %base = load i64, ptr %base_alloca, align 4
+  store i64 %1, ptr %exponent_alloca, align 4
+  %exponent = load i64, ptr %exponent_alloca, align 4
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %base
+  %loopcond = icmp ule i64 %inc, %exponent
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+}
+
 define void @testU32DeclareUninitialized() {
 entry:
   %a = alloca i64, align 8
@@ -370,106 +424,70 @@ entry:
 define void @testU32DivOperation() {
 entry:
   %c = alloca i64, align 8
+  %0 = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 10, ptr %a, align 4
   store i64 5, ptr %b, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  %2 = call i64 @prophet_u32_mod(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %2)
-  %3 = add i64 %2, 1
-  %4 = sub i64 %1, %3
-  call void @builtin_range_check(i64 %4)
-  %5 = call i64 @prophet_u32_div(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %5)
-  %6 = mul i64 %5, %1
-  %7 = add i64 %6, %2
-  %8 = icmp eq i64 %7, %0
-  %9 = zext i1 %8 to i64
-  call void @builtin_assert(i64 %9)
-  store i64 %5, ptr %c, align 4
-  %10 = load i64, ptr %c, align 4
-  call void @prophet_printf(i64 %10, i64 3)
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  call void @u32_div_mod(i64 %1, i64 %2, ptr %0, ptr null)
+  %3 = load i64, ptr %0, align 4
+  store i64 %3, ptr %c, align 4
+  %4 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %4, i64 3)
   ret void
 }
 
 define void @testU32DivAssignOperation() {
 entry:
+  %0 = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 10, ptr %a, align 4
   store i64 5, ptr %b, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  %2 = call i64 @prophet_u32_mod(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %2)
-  %3 = add i64 %2, 1
-  %4 = sub i64 %1, %3
-  call void @builtin_range_check(i64 %4)
-  %5 = call i64 @prophet_u32_div(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %5)
-  %6 = mul i64 %5, %1
-  %7 = add i64 %6, %2
-  %8 = icmp eq i64 %7, %0
-  %9 = zext i1 %8 to i64
-  call void @builtin_assert(i64 %9)
-  store i64 %5, ptr %a, align 4
-  %10 = load i64, ptr %a, align 4
-  call void @prophet_printf(i64 %10, i64 3)
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  call void @u32_div_mod(i64 %1, i64 %2, ptr %0, ptr null)
+  %3 = load i64, ptr %0, align 4
+  store i64 %3, ptr %a, align 4
+  %4 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %4, i64 3)
   ret void
 }
 
 define void @testU32ModOperation() {
 entry:
   %c = alloca i64, align 8
+  %0 = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 10, ptr %a, align 4
   store i64 5, ptr %b, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  %2 = call i64 @prophet_u32_mod(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %2)
-  %3 = add i64 %2, 1
-  %4 = sub i64 %1, %3
-  call void @builtin_range_check(i64 %4)
-  %5 = call i64 @prophet_u32_div(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %5)
-  %6 = mul i64 %5, %1
-  %7 = add i64 %6, %2
-  %8 = icmp eq i64 %7, %0
-  %9 = zext i1 %8 to i64
-  call void @builtin_assert(i64 %9)
-  store i64 %2, ptr %c, align 4
-  %10 = load i64, ptr %c, align 4
-  call void @prophet_printf(i64 %10, i64 3)
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  call void @u32_div_mod(i64 %1, i64 %2, ptr null, ptr %0)
+  %3 = load i64, ptr %0, align 4
+  store i64 %3, ptr %c, align 4
+  %4 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %4, i64 3)
   ret void
 }
 
 define void @testU32ModAssignOperation() {
 entry:
+  %0 = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 10, ptr %a, align 4
   store i64 5, ptr %b, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  %2 = call i64 @prophet_u32_mod(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %2)
-  %3 = add i64 %2, 1
-  %4 = sub i64 %1, %3
-  call void @builtin_range_check(i64 %4)
-  %5 = call i64 @prophet_u32_div(i64 %0, i64 %1)
-  call void @builtin_range_check(i64 %5)
-  %6 = mul i64 %5, %1
-  %7 = add i64 %6, %2
-  %8 = icmp eq i64 %7, %0
-  %9 = zext i1 %8 to i64
-  call void @builtin_assert(i64 %9)
-  store i64 %2, ptr %a, align 4
-  %10 = load i64, ptr %a, align 4
-  call void @prophet_printf(i64 %10, i64 3)
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  call void @u32_div_mod(i64 %1, i64 %2, ptr null, ptr %0)
+  %3 = load i64, ptr %0, align 4
+  store i64 %3, ptr %a, align 4
+  %4 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %4, i64 3)
   ret void
 }
 
@@ -569,201 +587,88 @@ entry:
 define void @testU32PowerOperation() {
 entry:
   %c = alloca i64, align 8
-  %index_alloca = alloca i64, align 8
-  %accumulator_alloca = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 5, ptr %a, align 4
   store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
-  store i64 1, ptr %accumulator_alloca, align 4
-  store i64 %1, ptr %index_alloca, align 4
-  br label %loop
-
-loop:                                             ; preds = %loop, %loop, %entry
-  %index = load i64, ptr %index_alloca, align 4
-  %2 = icmp eq i64 %index, 0
-  br i1 %2, label %exit, label %loop
-  %accumulator = load i64, ptr %accumulator_alloca, align 4
-  %3 = mul i64 %accumulator, %0
-  store i64 %3, ptr %accumulator_alloca, align 4
-  %4 = sub i64 %index, 1
-  store i64 %4, ptr %index_alloca, align 4
-  br label %loop
-
-exit:                                             ; preds = %loop
-  %5 = load i64, ptr %accumulator_alloca, align 4
-  call void @builtin_range_check(i64 %5)
-  store i64 %5, ptr %c, align 4
-  %6 = load i64, ptr %c, align 4
-  call void @prophet_printf(i64 %6, i64 3)
+  %2 = call i64 @u32_power(i64 %0, i64 %1)
+  store i64 %2, ptr %c, align 4
+  %3 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %3, i64 3)
   ret void
 }
 
 define void @testU32LeftShiftOperation() {
 entry:
   %c = alloca i64, align 8
-  %index_alloca = alloca i64, align 8
-  %accumulator_alloca = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 5, ptr %a, align 4
   store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
-  store i64 1, ptr %accumulator_alloca, align 4
-  store i64 %1, ptr %index_alloca, align 4
-  br label %loop
-
-loop:                                             ; preds = %loop, %loop, %entry
-  %index = load i64, ptr %index_alloca, align 4
-  %2 = icmp eq i64 %index, 0
-  br i1 %2, label %exit, label %loop
-  %accumulator = load i64, ptr %accumulator_alloca, align 4
-  %3 = mul i64 %accumulator, 2
-  store i64 %3, ptr %accumulator_alloca, align 4
-  %4 = sub i64 %index, 1
-  store i64 %4, ptr %index_alloca, align 4
-  br label %loop
-
-exit:                                             ; preds = %loop
-  %5 = load i64, ptr %accumulator_alloca, align 4
-  call void @builtin_range_check(i64 %5)
-  %6 = mul i64 %0, %5
-  call void @builtin_range_check(i64 %6)
-  store i64 %6, ptr %c, align 4
-  %7 = load i64, ptr %c, align 4
-  call void @prophet_printf(i64 %7, i64 3)
+  %2 = call i64 @u32_power(i64 2, i64 %1)
+  %3 = mul i64 %0, %2
+  call void @builtin_range_check(i64 %3)
+  store i64 %3, ptr %c, align 4
+  %4 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %4, i64 3)
   ret void
 }
 
 define void @testU32LeftShiftAssignOperation() {
 entry:
-  %index_alloca = alloca i64, align 8
-  %accumulator_alloca = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 5, ptr %a, align 4
   store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
-  store i64 1, ptr %accumulator_alloca, align 4
-  store i64 %1, ptr %index_alloca, align 4
-  br label %loop
-
-loop:                                             ; preds = %loop, %loop, %entry
-  %index = load i64, ptr %index_alloca, align 4
-  %2 = icmp eq i64 %index, 0
-  br i1 %2, label %exit, label %loop
-  %accumulator = load i64, ptr %accumulator_alloca, align 4
-  %3 = mul i64 %accumulator, 2
-  store i64 %3, ptr %accumulator_alloca, align 4
-  %4 = sub i64 %index, 1
-  store i64 %4, ptr %index_alloca, align 4
-  br label %loop
-
-exit:                                             ; preds = %loop
-  %5 = load i64, ptr %accumulator_alloca, align 4
-  call void @builtin_range_check(i64 %5)
-  %6 = mul i64 %0, %5
-  call void @builtin_range_check(i64 %6)
-  store i64 %6, ptr %a, align 4
-  %7 = load i64, ptr %a, align 4
-  call void @prophet_printf(i64 %7, i64 3)
+  %2 = call i64 @u32_power(i64 2, i64 %1)
+  %3 = mul i64 %0, %2
+  call void @builtin_range_check(i64 %3)
+  store i64 %3, ptr %a, align 4
+  %4 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %4, i64 3)
   ret void
 }
 
 define void @testU32RightShiftOperation() {
 entry:
   %c = alloca i64, align 8
-  %index_alloca = alloca i64, align 8
-  %accumulator_alloca = alloca i64, align 8
+  %0 = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 5, ptr %a, align 4
   store i64 10, ptr %b, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  store i64 1, ptr %accumulator_alloca, align 4
-  store i64 %1, ptr %index_alloca, align 4
-  br label %loop
-
-loop:                                             ; preds = %loop, %loop, %entry
-  %index = load i64, ptr %index_alloca, align 4
-  %2 = icmp eq i64 %index, 0
-  br i1 %2, label %exit, label %loop
-  %accumulator = load i64, ptr %accumulator_alloca, align 4
-  %3 = mul i64 %accumulator, 2
-  store i64 %3, ptr %accumulator_alloca, align 4
-  %4 = sub i64 %index, 1
-  store i64 %4, ptr %index_alloca, align 4
-  br label %loop
-
-exit:                                             ; preds = %loop
-  %5 = load i64, ptr %accumulator_alloca, align 4
-  call void @builtin_range_check(i64 %5)
-  %6 = call i64 @prophet_u32_mod(i64 %0, i64 %5)
-  call void @builtin_range_check(i64 %6)
-  %7 = add i64 %6, 1
-  %8 = sub i64 %5, %7
-  call void @builtin_range_check(i64 %8)
-  %9 = call i64 @prophet_u32_div(i64 %0, i64 %5)
-  call void @builtin_range_check(i64 %9)
-  %10 = mul i64 %9, %5
-  %11 = add i64 %10, %6
-  %12 = icmp eq i64 %11, %0
-  %13 = zext i1 %12 to i64
-  call void @builtin_assert(i64 %13)
-  store i64 %9, ptr %c, align 4
-  %14 = load i64, ptr %c, align 4
-  call void @prophet_printf(i64 %14, i64 3)
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = call i64 @u32_power(i64 2, i64 %2)
+  call void @u32_div_mod(i64 %1, i64 %3, ptr %0, ptr null)
+  %4 = load i64, ptr %0, align 4
+  store i64 %4, ptr %c, align 4
+  %5 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %5, i64 3)
   ret void
 }
 
 define void @testU32RightShiftAssignOperation() {
 entry:
-  %index_alloca = alloca i64, align 8
-  %accumulator_alloca = alloca i64, align 8
+  %0 = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
   store i64 5, ptr %a, align 4
   store i64 10, ptr %b, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = load i64, ptr %b, align 4
-  store i64 1, ptr %accumulator_alloca, align 4
-  store i64 %1, ptr %index_alloca, align 4
-  br label %loop
-
-loop:                                             ; preds = %loop, %loop, %entry
-  %index = load i64, ptr %index_alloca, align 4
-  %2 = icmp eq i64 %index, 0
-  br i1 %2, label %exit, label %loop
-  %accumulator = load i64, ptr %accumulator_alloca, align 4
-  %3 = mul i64 %accumulator, 2
-  store i64 %3, ptr %accumulator_alloca, align 4
-  %4 = sub i64 %index, 1
-  store i64 %4, ptr %index_alloca, align 4
-  br label %loop
-
-exit:                                             ; preds = %loop
-  %5 = load i64, ptr %accumulator_alloca, align 4
-  call void @builtin_range_check(i64 %5)
-  %6 = call i64 @prophet_u32_mod(i64 %0, i64 %5)
-  call void @builtin_range_check(i64 %6)
-  %7 = add i64 %6, 1
-  %8 = sub i64 %5, %7
-  call void @builtin_range_check(i64 %8)
-  %9 = call i64 @prophet_u32_div(i64 %0, i64 %5)
-  call void @builtin_range_check(i64 %9)
-  %10 = mul i64 %9, %5
-  %11 = add i64 %10, %6
-  %12 = icmp eq i64 %11, %0
-  %13 = zext i1 %12 to i64
-  call void @builtin_assert(i64 %13)
-  store i64 %9, ptr %a, align 4
-  %14 = load i64, ptr %a, align 4
-  call void @prophet_printf(i64 %14, i64 3)
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = call i64 @u32_power(i64 2, i64 %2)
+  call void @u32_div_mod(i64 %1, i64 %3, ptr %0, ptr null)
+  %4 = load i64, ptr %0, align 4
+  store i64 %4, ptr %a, align 4
+  %5 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %5, i64 3)
   ret void
 }
 
@@ -913,7 +818,7 @@ entry:
   %2 = add i64 %0, %1
   call void @builtin_range_check(i64 %2)
   store i64 %2, ptr %c, align 4
-  %3 = load i64, ptr %a, align 4
+  %3 = load i64, ptr %c, align 4
   call void @prophet_printf(i64 %3, i64 3)
   ret void
 }
@@ -930,7 +835,7 @@ entry:
   %2 = sub i64 %0, %1
   call void @builtin_range_check(i64 %2)
   store i64 %2, ptr %c, align 4
-  %3 = load i64, ptr %a, align 4
+  %3 = load i64, ptr %c, align 4
   call void @prophet_printf(i64 %3, i64 3)
   ret void
 }
@@ -939,7 +844,7 @@ define void @testU32LocalScope() {
 entry:
   %a1 = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 5, ptr %a, align 4
+  store i64 15, ptr %a, align 4
   %0 = load i64, ptr %a, align 4
   call void @prophet_printf(i64 %0, i64 3)
   store i64 10, ptr %a1, align 4
@@ -971,7 +876,7 @@ enif:                                             ; preds = %else, %then
 
 define void @testU32InLoopStatement() {
 entry:
-  %value = alloca i64, align 8
+  %a = alloca i64, align 8
   %i = alloca i64, align 8
   store i64 0, ptr %i, align 4
   br label %cond
@@ -983,17 +888,15 @@ cond:                                             ; preds = %next, %entry
 
 body:                                             ; preds = %cond
   %2 = load i64, ptr %i, align 4
-  %3 = mul i64 %2, 2
-  call void @builtin_range_check(i64 %3)
-  store i64 %3, ptr %value, align 4
-  %4 = load i64, ptr %value, align 4
-  call void @prophet_printf(i64 %4, i64 3)
+  store i64 %2, ptr %a, align 4
+  %3 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %3, i64 3)
   br label %next
 
 next:                                             ; preds = %body
-  %5 = load i64, ptr %i, align 4
-  %6 = add i64 %5, 1
-  store i64 %6, ptr %i, align 4
+  %4 = load i64, ptr %i, align 4
+  %5 = add i64 %4, 1
+  store i64 %5, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %cond
