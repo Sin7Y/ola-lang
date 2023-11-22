@@ -1,17 +1,15 @@
 
 contract U32BasicTest {
 
-    
-
     // BEGIN-CHECK: define void @testU32DeclareUninitialized() 
     fn testU32DeclareUninitialized() {
         // CHECK: %a = alloca i64, align 8
 	    // CHECK: store i64 0, ptr %a, align 4
-         u32 a = 1; 
+         u32 a; 
          print(a);
     }
 
-    // BEGIN-CHECK: define void @testU32DeclareUninitialized()
+    // BEGIN-CHECK: define void @testU32DeclareInitialized()
     fn testU32DeclareInitialized() { 
         // CHECK: %a = alloca i64, align 8
 	    // CHECK: store i64 5, ptr %a, align 4
@@ -23,8 +21,8 @@ contract U32BasicTest {
     fn testU32DeclareThenInitialized() {
         // CHECK: %a = alloca i64, align 8
         // CHECK: store i64 0, ptr %a, align 4
-        // CHECK: store i64 5, ptr %a, align 4
         u32 a;
+        // CHECK: store i64 5, ptr %a, align 4
         a = 5;
         print(a);
     }
@@ -34,9 +32,9 @@ contract U32BasicTest {
         // CHECK: %b = alloca i64, align 8
         // CHECK: %a = alloca i64, align 8
         // CHECK: store i64 5, ptr %a, align 4
+        u32 a = 5;
         // CHECK: %0 = load i64, ptr %a, align 4
         // CHECK: store i64 %0, ptr %b, align 4
-        u32 a = 5;
         u32 b = a;
         print(b);
     }
@@ -45,9 +43,9 @@ contract U32BasicTest {
     fn testU32LeftValueExpression() {
         // CHECK: %a = alloca i64, align 8
         // CHECK: store i64 5, ptr %a, align 4
+        u32 a = 5;
         // CHECK: %0 = load i64, ptr %a, align 4
         // CHECK: store i64 %0, ptr %a, align 4
-        u32 a = 5;
         a = a;
         print(a);
     }   
@@ -57,11 +55,11 @@ contract U32BasicTest {
         // CHECK: %b = alloca i64, align 8
         // CHECK: %a = alloca i64, align 8
         // CHECK: store i64 5, ptr %a, align 4
+        u32 a = 5;
         // CHECK: %0 = load i64, ptr %a, align 4
         // CHECK: %1 = load i64, ptr %a, align 4
         // CHECK: %2 = add i64 %0, %1
         // CHECK: store i64 %2, ptr %b, align 4
-        u32 a = 5;
         u32 b = a + a;
         print(b);
     }
@@ -87,9 +85,9 @@ contract U32BasicTest {
     fn testU32AsReturnValue() -> (u32) {
         // CHECK: %a = alloca i64, align 8
         // CHECK: store i64 10, ptr %a, align 4
+        u32 a = 10;
         // CHECK: %0 = load i64, ptr %a, align 4
         // CHECK: ret i64 %0
-        u32 a = 10;
         return a;
     }
 
