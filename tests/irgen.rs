@@ -34,6 +34,7 @@ fn run_test_for_path(path: &str) {
 
 #[derive(Debug)]
 enum Test {
+    BeginCheck(usize, String),
     Check(String, usize, String),
     CheckAbsent(String, usize, String),
     NotCheck(String, usize, String),
@@ -49,11 +50,17 @@ fn testcase(path: PathBuf) {
 
     let mut current_function = String::new();
     for (line_no, line) in reader.lines().enumerate() {
+        // make line numbers 1-based
+        let line_no = line_no + 1; 
         let mut line = line.unwrap();
         line = line.trim().parse().unwrap();
 
         if let Some(func_name) = line.strip_prefix("// BEGIN-CHECK:") {
             current_function = func_name.trim().to_string();
+            checks.push(Test::BeginCheck(
+                line_no,
+                func_name.trim().to_string(),
+            ));
         } else if let Some(check) = line.strip_prefix("// CHECK:") {
             checks.push(Test::Check(
                 current_function.clone(),
@@ -112,7 +119,16 @@ fn testcase(path: PathBuf) {
         if line.trim().starts_with("define") {
             current_function = line.to_string().clone();
         }
+
+        if line.trim().starts_with("}") {
+            current_function = String::new();
+        }
         match checks.get(current_check) {
+            Some(Test::BeginCheck(_, func_name)) => {
+                if current_function.contains(func_name) {
+                    current_check += 1;
+                }
+            }
             Some(Test::Check(func_name, _, needle)) => {
                 if current_function.contains(func_name) && line.contains(needle) {
                     current_check += 1;
