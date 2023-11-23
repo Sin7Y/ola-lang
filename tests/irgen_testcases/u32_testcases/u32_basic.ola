@@ -97,253 +97,426 @@ contract U32BasicTest {
         return 5;
     }
 
+    // BEGIN-CHECK: define void @testU32AddOperation()
     fn testU32AddOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = add i64 %0, %1
         u32 c = a + b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32AddAssignOperation()
     fn testU32AddAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = add i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
         a += b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32SubOperation()
     fn testU32SubOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = sub i64 %0, %1
         u32 c = a - b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32SubAssignOperation()
     fn testU32SubAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = sub i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
         a -= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32MulOperatoin()
     fn testU32MulOperatoin() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = mul i64 %0, %1
         u32 c = a * b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32MulAssignOperation()
     fn testU32MulAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = mul i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
         a *= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32DivOperation()
     fn testU32DivOperation() {
         u32 a = 10;
         u32 b = 5;
+        // CHECK: %1 = load i64, ptr %a, align 4
+        // CHECK: %2 = load i64, ptr %b, align 4
+        // CHECK: call void @u32_div_mod(i64 %1, i64 %2, ptr %0, ptr null)
+        // CHECK: %3 = load i64, ptr %0, align 4
         u32 c = a / b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32DivAssignOperation()
     fn testU32DivAssignOperation() {
         u32 a = 10;
         u32 b = 5;
+        // CHECK: %1 = load i64, ptr %a, align 4
+        // CHECK: %2 = load i64, ptr %b, align 4
+        // CHECK: call void @u32_div_mod(i64 %1, i64 %2, ptr %0, ptr null)
+        // CHECK: %3 = load i64, ptr %0, align 4
+        // CHECK: store i64 %3, ptr %a, align 4
         a /= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32ModOperation()
     fn testU32ModOperation() {
         u32 a = 10;
         u32 b = 5;
+        // CHECK: %1 = load i64, ptr %a, align 4
+        // CHECK: %2 = load i64, ptr %b, align 4
+        // CHECK: call void @u32_div_mod(i64 %1, i64 %2, ptr null, ptr %0)
+        // CHECK: %3 = load i64, ptr %0, align 4
         u32 c = a % b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32ModAssignOperation()
     fn testU32ModAssignOperation() {
         u32 a = 10;
         u32 b = 5;
+        // CHECK: %1 = load i64, ptr %a, align 4
+        // CHECK: %2 = load i64, ptr %b, align 4
+        // CHECK: call void @u32_div_mod(i64 %1, i64 %2, ptr null, ptr %0)
+        // CHECK: %3 = load i64, ptr %0, align 4
+        // CHECK: store i64 %3, ptr %a, align 4
         a %= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32BitWiseXorOperation()
     fn testU32BitWiseXorOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = xor i64 %0, %1
         u32 c = a ^ b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32BitWiseXorAssignOperation()
     fn testU32BitWiseXorAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = xor i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
         a ^= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32AndOperation()
     fn testU32AndOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = and i64 %0, %1
         u32 c = a & b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32AndAssignOperation()
     fn testU32AndAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = and i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
         a &= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32BitWiseOrOperation()
     fn testU32BitWiseOrOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = or i64 %0, %1
         u32 c = a | b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32BitWiseOrAssignOperation()
     fn testU32BitWiseOrAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = or i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
         a |= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32PowerOperation()
     fn testU32PowerOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = call i64 @u32_power(i64 %0, i64 %1)
         u32 c = a ** b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32LeftShiftOperation()
     fn testU32LeftShiftOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = call i64 @u32_power(i64 2, i64 %1)
+        // CHECK: %3 = mul i64 %0, %2
         u32 c = a << b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32LeftShiftAssignOperation()
     fn testU32LeftShiftAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = call i64 @u32_power(i64 2, i64 %1)
+        // CHECK: %3 = mul i64 %0, %2
+        // CHECK: store i64 %3, ptr %a, align 4   
         a <<= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32RightShiftOperation()
     fn testU32RightShiftOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %1 = load i64, ptr %a, align 4
+        // CHECK: %2 = load i64, ptr %b, align 4
+        // CHECK: %3 = call i64 @u32_power(i64 2, i64 %2)
+        // CHECK: call void @u32_div_mod(i64 %1, i64 %3, ptr %0, ptr null)
+        // CHECK: %4 = load i64, ptr %0, align 4
         u32 c = a >> b;
         print(c);
-    }
+    }   
 
+    // BEGIN-CHECK: define void @testU32RightShiftAssignOperation()
     fn testU32RightShiftAssignOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %1 = load i64, ptr %a, align 4
+        // CHECK: %2 = load i64, ptr %b, align 4
+        // CHECK: %3 = call i64 @u32_power(i64 2, i64 %2)
+        // CHECK: call void @u32_div_mod(i64 %1, i64 %3, ptr %0, ptr null)
+        // CHECK: %4 = load i64, ptr %0, align 4
+        // CHECK: store i64 %4, ptr %a, align 4
         a >>= b;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32EqualOperation()
     fn testU32EqualOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp eq i64 %0, %1
         bool c = a == b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32NotEqualOperation()
     fn testU32NotEqualOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp ne i64 %0, %1
+        // CHECK: store i1 %2, ptr %c, align 1
         bool c = a != b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32GreaterOperation()
     fn testU32GreaterOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp ugt i64 %0, %1
         bool c = a > b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32GreaterEqualOperation()
     fn testU32GreaterEqualOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp uge i64 %0, %1
         bool c = a >= b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32LessOperation()
     fn testU32LessOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp ult i64 %0, %1
         bool c = a < b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32LessEqualOperation()
     fn testU32LessEqualOperation() {
         u32 a = 5;
         u32 b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp ule i64 %0, %1
         bool c = a <= b;
         print(c);
     }
 
-
+    // BEGIN-CHECK: define void @testU32BitWiseNotOperation()
     fn testU32BitWiseNotOperation() {
         u32 a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = sub i64 4294967295, %0
         u32 c = ~a;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32IncrementOperation()
     fn testU32IncrementOperation() {
         u32 a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = add i64 %0, 1
+        // CHECK: store i64 %1, ptr %a, align 4
         a++;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32DecrementOperation()
     fn testU32DecrementOperation() {
         u32 a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = sub i64 %0, 1
+        // CHECK: store i64 %1, ptr %a, align 4
         a--;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32AddOverflow()
     fn testU32AddOverflow() {
         u32 a = 4294967295;
         u32 b = 1;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = add i64 %0, %1
+        // CHECK: call void @builtin_range_check(i64 %2)
         u32 c = a + b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32SubOverflow()
     fn testU32SubOverflow() {
         u32 a = 0;
         u32 b = 1;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = sub i64 %0, %1
+        // CHECK: call void @builtin_range_check(i64 %2)
         u32 c = a - b;
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32LocalScope()
     fn testU32LocalScope() {
+        // CHECK: %a1 = alloca i64, align 8
+        // CHECK: %a = alloca i64, align 8
         {
+            // CHECK: store i64 15, ptr %a, align 4
             u32 a = 15;
             print(a);
         }
         // a not found
-        //print(a);
+        // print(a);
+        // CHECK: store i64 10, ptr %a1, align 4
         u32 a = 10;
         print(a);
     }
 
+    // BEGIN-CHECK: define void @testU32IfStatement()
     fn testU32IfStatement() {
         u32 a = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = icmp ugt i64 %0, 5
+        // CHECK: br i1 %1, label %then, label %else
         if (a > 5) {
+            // CHECK: then:
+            // CHECK: %2 = load i64, ptr %a, align 4
             print(a);
         } else {
+            // CHECK: else:
+            // CHECK: br label %endif
             print(0);
         }
+        // CHECK: endif:
+        // CHECK: ret void
     }
 
+    // BEGIN-CHECK: define void @testU32InLoopStatement()
     fn testU32InLoopStatement() {
+        // CHECK: %0 = load i64, ptr %i, align 4
+        // CHECK:%1 = icmp ult i64 %0, 10
+        // CHECK: br i1 %1, label %body, label %endfor
         for (u32 i = 0; i < 10; i++) {
+            // CHECK: body:
+            // CHECK: %2 = load i64, ptr %i, align 4
+            // CHECK: store i64 %2, ptr %a, align 4
             u32 a = i;
             print(a);
+            // CHECK: br label %next
         }
+        // CHECK: endfor:
     }
 
 }

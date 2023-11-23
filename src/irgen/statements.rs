@@ -301,7 +301,7 @@ fn if_then<'a>(
         .build_int_truncate(cond.into_int_value(), bin.context.bool_type(), "");
 
     let then = bin.context.append_basic_block(func_value, "then");
-    let endif = bin.context.append_basic_block(func_value, "enif");
+    let endif = bin.context.append_basic_block(func_value, "endif");
     bin.builder.position_at_end(pos);
 
     bin.builder.build_conditional_branch(cond, then, endif);
@@ -337,7 +337,7 @@ fn if_then_else<'a>(
 
     let then = bin.context.append_basic_block(func_value, "then");
     let else_ = bin.context.append_basic_block(func_value, "else");
-    let endif = bin.context.append_basic_block(func_value, "enif");
+    let endif = bin.context.append_basic_block(func_value, "endif");
     bin.builder.position_at_end(pos);
 
     bin.builder.build_conditional_branch(cond, then, else_);
