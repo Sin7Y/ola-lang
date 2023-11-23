@@ -864,13 +864,13 @@ entry:
 then:                                             ; preds = %entry
   %2 = load i64, ptr %a, align 4
   call void @prophet_printf(i64 %2, i64 3)
-  br label %enif
+  br label %endif
 
 else:                                             ; preds = %entry
   call void @prophet_printf(i64 0, i64 3)
-  br label %enif
+  br label %endif
 
-enif:                                             ; preds = %else, %then
+endif:                                            ; preds = %else, %then
   ret void
 }
 
