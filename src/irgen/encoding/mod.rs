@@ -65,11 +65,12 @@ pub(super) fn abi_encode_store_tape<'a>(
 ) {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(
-        size,
-        bin.context.i64_type().const_int(1, false),
-        "heap_size",
-    );
+    let heap_size =
+        bin.builder.build_int_add(
+            size,
+            bin.context.i64_type().const_int(1, false),
+            "heap_size",
+        );
 
     let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size);
 
@@ -106,26 +107,28 @@ pub(super) fn abi_encode_with_selector<'a>(
 ) -> PointerValue<'a> {
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
-    let heap_size = bin.builder.build_int_add(
-        size,
-        bin.context.i64_type().const_int(2, false),
-        "heap_size",
-    );
+    let heap_size =
+        bin.builder.build_int_add(
+            size,
+            bin.context.i64_type().const_int(2, false),
+            "heap_size",
+        );
 
     let heap_start_ptr = bin.vector_new(heap_size);
 
     let mut offset = bin.context.i64_type().const_int(1, false);
 
     for (arg_no, item) in args.iter().enumerate() {
-        let advance = encode_into_buffer(
-            heap_start_ptr,
-            item.clone(),
-            &types[arg_no],
-            offset,
-            bin,
-            func_value,
-            ns,
-        );
+        let advance =
+            encode_into_buffer(
+                heap_start_ptr,
+                item.clone(),
+                &types[arg_no],
+                offset,
+                bin,
+                func_value,
+                ns,
+            );
         offset = bin.builder.build_int_add(advance, offset, "");
     }
     // encode size to heap, the "size" here is used for tape area identification.
@@ -281,17 +284,18 @@ fn calculate_array_size<'a>(
         dyn_dims == 0 || (dyn_dims == 1 && dims.last() == Some(&ArrayLength::Dynamic));
 
     // Check if the array contains only fixed sized elements
-    let primitive_size = if elem_ty.is_primitive() && direct_assessment {
-        Some(elem_ty.memory_size_of(ns))
-    } else if let Type::Struct(struct_no) = elem_ty {
-        if direct_assessment {
-            calculate_struct_non_padded_size(*struct_no, ns)
+    let primitive_size =
+        if elem_ty.is_primitive() && direct_assessment {
+            Some(elem_ty.memory_size_of(ns))
+        } else if let Type::Struct(struct_no) = elem_ty {
+            if direct_assessment {
+                calculate_struct_non_padded_size(*struct_no, ns)
+            } else {
+                None
+            }
         } else {
             None
-        }
-    } else {
-        None
-    };
+        };
 
     if let Some(compile_type_size) = primitive_size {
         // If the array saves primitive-type elements, its size is
@@ -365,15 +369,16 @@ fn calculate_complex_array_size<'a>(
 ) {
     // If this dimension is dynamic, account for the encoded vector length variable.
     if dims[dimension] == ArrayLength::Dynamic {
-        let arr = index_array(
-            bin,
-            &mut array.clone(),
-            &mut array_ty.clone(),
-            dims,
-            indexes,
-            func_value,
-            ns,
-        );
+        let arr =
+            index_array(
+                bin,
+                &mut array.clone(),
+                &mut array_ty.clone(),
+                dims,
+                indexes,
+                func_value,
+                ns,
+            );
         let size = bin.vector_len(arr);
         let size = bin.builder.build_int_add(
             bin.builder
@@ -391,15 +396,16 @@ fn calculate_complex_array_size<'a>(
     bin.builder.position_at_end(for_loop.body_block);
 
     if 0 == dimension {
-        let deref = index_array(
-            bin,
-            &mut array.clone(),
-            &mut array_ty.clone(),
-            dims,
-            indexes,
-            func_value,
-            ns,
-        );
+        let deref =
+            index_array(
+                bin,
+                &mut array.clone(),
+                &mut array_ty.clone(),
+                dims,
+                indexes,
+                func_value,
+                ns,
+            );
         let elem_size = get_args_type_size(bin, deref, elem_ty, func_value, ns);
 
         let size = bin.builder.build_int_add(
@@ -621,23 +627,25 @@ fn set_array_loop<'a>(
     bin.builder.position_at_end(cond_block);
 
     // Get the array length at dimension 'index'
-    let bound = if let ArrayLength::Fixed(dim) = &dims[dimension] {
-        bin.context
-            .i64_type()
-            .const_int(dim.to_u64().unwrap(), false)
-    } else {
-        let sub_array = index_array(
-            bin,
-            &mut arr.clone(),
-            &mut ty.clone(),
-            dims,
-            &indexes[..indexes.len() - 1],
-            func_value,
-            ns,
-        );
+    let bound =
+        if let ArrayLength::Fixed(dim) = &dims[dimension] {
+            bin.context
+                .i64_type()
+                .const_int(dim.to_u64().unwrap(), false)
+        } else {
+            let sub_array =
+                index_array(
+                    bin,
+                    &mut arr.clone(),
+                    &mut ty.clone(),
+                    dims,
+                    &indexes[..indexes.len() - 1],
+                    func_value,
+                    ns,
+                );
 
-        bin.vector_len(sub_array)
-    };
+            bin.vector_len(sub_array)
+        };
 
     let cond = bin
         .builder

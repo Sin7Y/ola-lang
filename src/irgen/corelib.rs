@@ -24,16 +24,17 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 6]> = Lazy::new(|| {
-    [
-        "memcpy",
-        "memcmp_eq",
-        "memcmp_ugt",
-        "memcmp_uge",
-        "u32_div_mod",
-        "u32_power",
-    ]
-});
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 6]> =
+    Lazy::new(|| {
+        [
+            "memcpy",
+            "memcmp_eq",
+            "memcmp_ugt",
+            "memcmp_uge",
+            "u32_div_mod",
+            "u32_power",
+        ]
+    });
 
 // // These functions will be called implicitly by corelib
 // // May later become corelib functions open to the user as well
@@ -270,15 +271,16 @@ pub fn declare_core_lib(bin: &mut Binary) {
             let i64_type = bin.context.i64_type();
             let void_type = bin.context.void_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
-            let ftype = void_type.fn_type(
-                &[
-                    i64_type.into(),
-                    i64_type.into(),
-                    ptr_type.into(),
-                    ptr_type.into(),
-                ],
-                false,
-            );
+            let ftype =
+                void_type.fn_type(
+                    &[
+                        i64_type.into(),
+                        i64_type.into(),
+                        ptr_type.into(),
+                        ptr_type.into(),
+                    ],
+                    false,
+                );
             let func = bin.module.add_function(p, ftype, None);
             bin.builder
                 .position_at_end(bin.context.append_basic_block(func, "entry"));
@@ -383,26 +385,28 @@ pub fn create_mem_compare_function<'a>(
     bin.builder.build_conditional_branch(loop_check, body, done);
 
     bin.builder.position_at_end(body);
-    let left_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            left_ptr,
-            &[index_value],
-            "left_elem_ptr",
-        )
-    };
+    let left_elem_ptr =
+        unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                left_ptr,
+                &[index_value],
+                "left_elem_ptr",
+            )
+        };
     let left_elem = bin
         .builder
         .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
         .into_int_value();
-    let right_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            right_ptr,
-            &[index_value],
-            "right_elem_ptr",
-        )
-    };
+    let right_elem_ptr =
+        unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                right_ptr,
+                &[index_value],
+                "right_elem_ptr",
+            )
+        };
     let right_elem = bin
         .builder
         .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
@@ -488,14 +492,15 @@ pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>)
     // memory copy start
     bin.builder.position_at_end(body);
 
-    let src_access = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            src_ptr,
-            &[index_value],
-            "src_index_access",
-        )
-    };
+    let src_access =
+        unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                src_ptr,
+                &[index_value],
+                "src_index_access",
+            )
+        };
 
     let src_value = bin
         .builder
@@ -660,9 +665,8 @@ pub fn create_u32_power_function<'a>(bin: &Binary<'a>, function: FunctionValue<'
     let exponent = function.get_nth_param(1).unwrap();
     let i64_type = bin.context.i64_type();
 
-
     let base_alloca = bin.build_alloca(function, base.get_type(), "base_alloca");
-    let exponent_alloca = bin.build_alloca( function, exponent.get_type(), "exponent_alloca");
+    let exponent_alloca = bin.build_alloca(function, exponent.get_type(), "exponent_alloca");
 
     bin.builder.build_store(base_alloca, base);
     let base = bin
@@ -680,23 +684,36 @@ pub fn create_u32_power_function<'a>(bin: &Binary<'a>, function: FunctionValue<'
     bin.builder.position_at_end(loop_block);
 
     let counter_phi = bin.builder.build_phi(i64_type, "");
-    counter_phi.add_incoming(&[(&i64_type.const_zero(), function.get_first_basic_block().unwrap())]);
+    counter_phi.add_incoming(&[(
+        &i64_type.const_zero(),
+        function.get_first_basic_block().unwrap(),
+    )]);
 
     let result_phi = bin.builder.build_phi(i64_type, "");
-    result_phi.add_incoming(&[(&i64_type.const_int(1, false), function.get_first_basic_block().unwrap())]);
+    result_phi.add_incoming(&[(
+        &i64_type.const_int(1, false),
+        function.get_first_basic_block().unwrap(),
+    )]);
 
     let counter_val = counter_phi.as_basic_value().into_int_value();
     let result_val = result_phi.as_basic_value().into_int_value();
 
-    let new_counter = bin.builder.build_int_add(counter_val, i64_type.const_int(1, false), "inc");
+    let new_counter = bin
+        .builder
+        .build_int_add(counter_val, i64_type.const_int(1, false), "inc");
     let new_result = bin.builder.build_int_mul(result_val, base, "multmp");
 
-    let cond = bin.builder.build_int_compare(inkwell::IntPredicate::ULE, new_counter, exponent, "loopcond");
-    bin.builder.build_conditional_branch(cond, loop_block, exit_block);
+    let cond = bin.builder.build_int_compare(
+        inkwell::IntPredicate::ULE,
+        new_counter,
+        exponent,
+        "loopcond",
+    );
+    bin.builder
+        .build_conditional_branch(cond, loop_block, exit_block);
 
     counter_phi.add_incoming(&[(&new_counter, loop_block)]);
     result_phi.add_incoming(&[(&new_result, loop_block)]);
-
 
     bin.builder.position_at_end(exit_block);
     bin.builder.build_call(
@@ -706,7 +723,6 @@ pub fn create_u32_power_function<'a>(bin: &Binary<'a>, function: FunctionValue<'
         &[result_phi.as_basic_value().into()],
         "",
     );
-
 
     bin.builder.build_return(Some(&result_phi.as_basic_value()));
 }

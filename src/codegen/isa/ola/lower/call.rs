@@ -193,11 +193,12 @@ pub fn lower_call(
         let ret_reg2: Reg = GR::R3.into();
         let ret_reg3: Reg = GR::R4.into();
 
-        let opcode = if name.as_str() == "get_storage" {
-            Opcode::SLOAD
-        } else {
-            Opcode::POSEIDON
-        };
+        let opcode =
+            if name.as_str() == "get_storage" {
+                Opcode::SLOAD
+            } else {
+                Opcode::POSEIDON
+            };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode,
@@ -241,7 +242,8 @@ pub fn lower_call(
     }
 
     let result_ty = if let Some(ty) = ctx.types.get(tys[0])
-                    && let CompoundType::Function(FunctionType { ret, .. }) = &*ty {
+        && let CompoundType::Function(FunctionType { ret, .. }) = &*ty
+    {
         *ret
     } else {
         tys[0]
@@ -361,29 +363,30 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
                 continue;
             } */
 
-            let opcode = match &arg {
-                OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
-                OperandData::Reg(_) => Opcode::MOVrr,
-                OperandData::VReg(vreg) => {
-                    let ty = ctx.mach_data.vregs.type_for(*vreg);
-                    let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
-                    match sz {
-                        4 | 8 => Opcode::MOVrr,
-                        e => {
-                            return Err(LoweringError::Todo(format!(
-                                "Unsupported argument size: {:?}",
-                                e
-                            ))
-                            .into())
+            let opcode =
+                match &arg {
+                    OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+                    OperandData::Reg(_) => Opcode::MOVrr,
+                    OperandData::VReg(vreg) => {
+                        let ty = ctx.mach_data.vregs.type_for(*vreg);
+                        let sz = ctx.isa.data_layout().get_size_of(ctx.types, ty);
+                        match sz {
+                            4 | 8 => Opcode::MOVrr,
+                            e => {
+                                return Err(LoweringError::Todo(format!(
+                                    "Unsupported argument size: {:?}",
+                                    e
+                                ))
+                                .into())
+                            }
                         }
                     }
-                }
-                e => {
-                    return Err(
-                        LoweringError::Todo(format!("Unsupported argument: {:?}", e)).into(),
-                    )
-                }
-            };
+                    e => {
+                        return Err(
+                            LoweringError::Todo(format!("Unsupported argument: {:?}", e)).into(),
+                        )
+                    }
+                };
             ctx.inst_seq.push(MachInstruction::new(
                 InstructionData {
                     opcode,
@@ -417,16 +420,19 @@ fn pass_str_args_to_regs(
         let cur_ty = ctx.types.base().element(tys[0]).unwrap();
         let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, cur_ty));
 
-        let opcode = match &arg {
-            OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
-            OperandData::Reg(_) => Opcode::MOVrr,
-            OperandData::VReg(_) => Opcode::MOVrr,
-            e => {
-                return Err(
-                    LoweringError::Todo(format!("Unsupported storage argument: {:?}", e)).into(),
-                )
-            }
-        };
+        let opcode =
+            match &arg {
+                OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+                OperandData::Reg(_) => Opcode::MOVrr,
+                OperandData::VReg(_) => Opcode::MOVrr,
+                e => {
+                    return Err(LoweringError::Todo(format!(
+                        "Unsupported storage argument: {:?}",
+                        e
+                    ))
+                    .into())
+                }
+            };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode,

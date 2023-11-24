@@ -116,23 +116,25 @@ pub fn parse_load<'a, 'b>(
     let (source, _) = preceded(spaces, char(','))(source)?;
     let (source, addr_ty) = super::types::parse(ctx.types)(source)?;
     let (source, addr) = super::value::parse(source, ctx, addr_ty)?;
-    let (source, align) = opt(preceded(
-        spaces,
-        preceded(
-            char(','),
-            preceded(spaces, preceded(tag("align"), preceded(spaces, digit1))),
-        ),
-    ))(source)?;
+    let (source, align) =
+        opt(preceded(
+            spaces,
+            preceded(
+                char(','),
+                preceded(spaces, preceded(tag("align"), preceded(spaces, digit1))),
+            ),
+        ))(source)?;
     let (source, _) = opt(parse_metadata("!nonnull"))(source)?; // TODO: FIXME: don't ignore !nonnull
     let (source, _) = opt(parse_metadata("!range"))(source)?; // TODO: FIXME: don't ignore !range
-    let inst = Opcode::Load
-        .with_block(ctx.cur_block)
-        .with_operand(Operand::Load(Load {
-            tys: [ty, addr_ty],
-            addr,
-            align: align.map_or(0, |align| align.parse::<u32>().unwrap_or(0)),
-        }))
-        .with_ty(ty);
+    let inst =
+        Opcode::Load
+            .with_block(ctx.cur_block)
+            .with_operand(Operand::Load(Load {
+                tys: [ty, addr_ty],
+                addr,
+                align: align.map_or(0, |align| align.parse::<u32>().unwrap_or(0)),
+            }))
+            .with_ty(ty);
     Ok((source, inst))
 }
 
@@ -146,13 +148,14 @@ pub fn parse_store<'a, 'b>(
     let (source, _) = preceded(spaces, char(','))(source)?;
     let (source, dst_ty) = super::types::parse(ctx.types)(source)?;
     let (source, dst) = super::value::parse(source, ctx, dst_ty)?;
-    let (source, align) = opt(preceded(
-        spaces,
-        preceded(
-            char(','),
-            preceded(spaces, preceded(tag("align"), preceded(spaces, digit1))),
-        ),
-    ))(source)?;
+    let (source, align) =
+        opt(preceded(
+            spaces,
+            preceded(
+                char(','),
+                preceded(spaces, preceded(tag("align"), preceded(spaces, digit1))),
+            ),
+        ))(source)?;
     Ok((
         source,
         Opcode::Store
@@ -424,16 +427,17 @@ pub fn parse_call<'a, 'b>(
     let (source, _) = opt(parse_metadata("!srcloc"))(source)?; // TODO: FIXME: don't ignore !srcloc
     tys.insert(0, ty);
     args.insert(0, callee);
-    let inst = Opcode::Call
-        .with_block(ctx.cur_block)
-        .with_operand(Operand::Call(Call {
-            tys,
-            args,
-            param_attrs,
-            ret_attrs,
-            func_attrs,
-        }))
-        .with_ty(ty);
+    let inst =
+        Opcode::Call
+            .with_block(ctx.cur_block)
+            .with_operand(Operand::Call(Call {
+                tys,
+                args,
+                param_attrs,
+                ret_attrs,
+                func_attrs,
+            }))
+            .with_ty(ty);
     Ok((source, inst))
 }
 
@@ -572,21 +576,23 @@ pub fn parse_br<'a, 'b>(
         assert!(ty.is_i1());
         let (source, arg) = super::value::parse(source, ctx, ty)?;
         let (source, _) = preceded(spaces, char(','))(source)?;
-        let (source, iftrue) = preceded(
-            spaces,
+        let (source, iftrue) =
             preceded(
-                tag("label"),
-                preceded(spaces, preceded(char('%'), super::name::parse)),
-            ),
-        )(source)?;
+                spaces,
+                preceded(
+                    tag("label"),
+                    preceded(spaces, preceded(char('%'), super::name::parse)),
+                ),
+            )(source)?;
         let (source, _) = preceded(spaces, char(','))(source)?;
-        let (source, iffalse) = preceded(
-            spaces,
+        let (source, iffalse) =
             preceded(
-                tag("label"),
-                preceded(spaces, preceded(char('%'), super::name::parse)),
-            ),
-        )(source)?;
+                spaces,
+                preceded(
+                    tag("label"),
+                    preceded(spaces, preceded(char('%'), super::name::parse)),
+                ),
+            )(source)?;
         let iftrue = ctx.get_or_create_named_block(iftrue);
         let iffalse = ctx.get_or_create_named_block(iffalse);
         let inst = Opcode::CondBr
@@ -629,13 +635,14 @@ pub fn parse_switch<'a, 'b>(
         assert!(case_ty == cond_ty);
         let (source_, case) = super::value::parse(source_, ctx, case_ty)?;
         let (source_, _) = preceded(spaces, char(','))(source_)?;
-        let (source_, block) = preceded(
-            spaces,
+        let (source_, block) =
             preceded(
-                tag("label"),
-                preceded(spaces, preceded(char('%'), super::name::parse)),
-            ),
-        )(source_)?;
+                spaces,
+                preceded(
+                    tag("label"),
+                    preceded(spaces, preceded(char('%'), super::name::parse)),
+                ),
+            )(source_)?;
         let block = ctx.get_or_create_named_block(block);
         tys.push(case_ty);
         args.push(case);
@@ -685,15 +692,16 @@ fn parse_metadata<'a>(
     name: &'static str,
 ) -> impl Fn(&'a str) -> IResult<&'a str, &'a str, VerboseError<&'a str>> {
     move |source: &'a str| {
-        let (source, (_, _, _, _, _, _, num)) = tuple((
-            spaces,
-            char(','),
-            spaces,
-            tag(name),
-            spaces,
-            char('!'),
-            digit1,
-        ))(source)?;
+        let (source, (_, _, _, _, _, _, num)) =
+            tuple((
+                spaces,
+                char(','),
+                spaces,
+                tag(name),
+                spaces,
+                char('!'),
+                digit1,
+            ))(source)?;
         Ok((source, num))
     }
 }
@@ -721,13 +729,14 @@ pub fn parse<'a, 'b>(
     source: &'a str,
     ctx: &mut ParserContext<'b>,
 ) -> IResult<&'a str, InstructionId, VerboseError<&'a str>> {
-    let (source, name) = opt(tuple((
-        spaces,
-        char('%'),
-        super::name::parse,
-        spaces,
-        char('='),
-    )))(source)?;
+    let (source, name) =
+        opt(tuple((
+            spaces,
+            char('%'),
+            super::name::parse,
+            spaces,
+            char('='),
+        )))(source)?;
     let name = name.map(|(_, _, name, _, _)| name);
     for f in [
         parse_alloca,

@@ -162,9 +162,6 @@ pub enum Type {
         /// The code location.
         loc: Loc,
         /// The key expression.
-        ///
-        /// This is only allowed to be an elementary type or a user defined
-        /// type.
         key: Box<Expression>,
         /// The optional key identifier.
         key_name: Option<Identifier>,

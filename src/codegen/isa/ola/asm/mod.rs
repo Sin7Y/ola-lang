@@ -126,58 +126,62 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             }]
             .to_vec(),
         },
-        "prophet_u32_div" => Prophet {
-            code: DIV.to_string(),
-            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: [
-                Input {
-                    name: "cid.x".to_string(),
+        "prophet_u32_div" => {
+            Prophet {
+                code: DIV.to_string(),
+                label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+                inputs: [
+                    Input {
+                        name: "cid.x".to_string(),
+                        length: 1,
+                        is_ref: false,
+                        is_input_output: false,
+                    },
+                    Input {
+                        name: "cid.y".to_string(),
+                        length: 1,
+                        is_ref: false,
+                        is_input_output: false,
+                    },
+                ]
+                .to_vec(),
+                outputs: [Output {
+                    name: "cid.q".to_string(),
                     length: 1,
                     is_ref: false,
                     is_input_output: false,
-                },
-                Input {
-                    name: "cid.y".to_string(),
+                }]
+                .to_vec(),
+            }
+        }
+        "prophet_u32_mod" => {
+            Prophet {
+                code: MOD.to_string(),
+                label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+                inputs: [
+                    Input {
+                        name: "cid.x".to_string(),
+                        length: 1,
+                        is_ref: false,
+                        is_input_output: false,
+                    },
+                    Input {
+                        name: "cid.y".to_string(),
+                        length: 1,
+                        is_ref: false,
+                        is_input_output: false,
+                    },
+                ]
+                .to_vec(),
+                outputs: [Output {
+                    name: "cid.r".to_string(),
                     length: 1,
                     is_ref: false,
                     is_input_output: false,
-                },
-            ]
-            .to_vec(),
-            outputs: [Output {
-                name: "cid.q".to_string(),
-                length: 1,
-                is_ref: false,
-                is_input_output: false,
-            }]
-            .to_vec(),
-        },
-        "prophet_u32_mod" => Prophet {
-            code: MOD.to_string(),
-            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: [
-                Input {
-                    name: "cid.x".to_string(),
-                    length: 1,
-                    is_ref: false,
-                    is_input_output: false,
-                },
-                Input {
-                    name: "cid.y".to_string(),
-                    length: 1,
-                    is_ref: false,
-                    is_input_output: false,
-                },
-            ]
-            .to_vec(),
-            outputs: [Output {
-                name: "cid.r".to_string(),
-                length: 1,
-                is_ref: false,
-                is_input_output: false,
-            }]
-            .to_vec(),
-        },
+                }]
+                .to_vec(),
+            }
+        }
         "prophet_div_mod" => Prophet {
             code: DIV_MOD.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
@@ -212,32 +216,34 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             ]
             .to_vec(),
         },
-        "prophet_u32_array_sort" => Prophet {
-            code: ARR_SORT.to_string(),
-            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
-            inputs: [
-                Input {
-                    name: "cid.arrIn".to_string(),
+        "prophet_u32_array_sort" => {
+            Prophet {
+                code: ARR_SORT.to_string(),
+                label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+                inputs: [
+                    Input {
+                        name: "cid.arrIn".to_string(),
+                        length: 1,
+                        is_ref: true,
+                        is_input_output: false,
+                    },
+                    Input {
+                        name: "cid.len".to_string(),
+                        length: 1,
+                        is_ref: true,
+                        is_input_output: false,
+                    },
+                ]
+                .to_vec(),
+                outputs: [Output {
+                    name: "cid.arrOut".to_string(),
                     length: 1,
                     is_ref: true,
                     is_input_output: false,
-                },
-                Input {
-                    name: "cid.len".to_string(),
-                    length: 1,
-                    is_ref: true,
-                    is_input_output: false,
-                },
-            ]
-            .to_vec(),
-            outputs: [Output {
-                name: "cid.arrOut".to_string(),
-                length: 1,
-                is_ref: true,
-                is_input_output: false,
-            }]
-            .to_vec(),
-        },
+                }]
+                .to_vec(),
+            }
+        }
         "vector_new" => Prophet {
             code: MALLOC.to_string(),
             label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),

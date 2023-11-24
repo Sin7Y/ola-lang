@@ -1,7 +1,8 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::u32_op::{
-    logic_not, u32_add, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or, logic_and, logic_or, u32_bitwise_xor,
-    u32_div, u32_mod, u32_mul, u32_power, u32_shift_left, u32_shift_right, u32_sub,u32_compare
+    logic_and, logic_not, logic_or, u32_add, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or,
+    u32_bitwise_xor, u32_compare, u32_div, u32_mod, u32_mul, u32_power, u32_shift_left,
+    u32_shift_right, u32_sub,
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
@@ -262,8 +263,12 @@ pub fn expression<'a>(
         Expression::BitwiseNot { expr, .. } => {
             u32_bitwise_not(expr, bin, func_value, var_table, ns)
         }
-        Expression::Or { left, right, .. } => logic_and(left, right, bin, func_value, var_table, ns),
-        Expression::And { left, right, .. } => logic_or(left, right, bin, func_value, var_table, ns),
+        Expression::Or { left, right, .. } => {
+            logic_and(left, right, bin, func_value, var_table, ns)
+        }
+        Expression::And { left, right, .. } => {
+            logic_or(left, right, bin, func_value, var_table, ns)
+        }
 
         Expression::Decrement { loc, ty, expr } => {
             let v = match expr.ty() {
@@ -754,14 +759,15 @@ pub fn expression<'a>(
                 bin.heap_malloc(bin.context.i64_type().const_int(value.len() as u64, false));
             for (i, v) in value.iter().enumerate() {
                 let index = bin.context.i64_type().const_int(i as u64, false);
-                let index_access = unsafe {
-                    bin.builder.build_gep(
-                        bin.context.i64_type(),
-                        heap_ptr,
-                        &[index],
-                        "index_access",
-                    )
-                };
+                let index_access =
+                    unsafe {
+                        bin.builder.build_gep(
+                            bin.context.i64_type(),
+                            heap_ptr,
+                            &[index],
+                            "index_access",
+                        )
+                    };
                 bin.builder
                     .build_store(index_access, v.clone().as_basic_value_enum());
             }
@@ -830,12 +836,13 @@ pub fn expression<'a>(
             args,
         } => {
             let array = expression(&args[0], bin, func_value, var_table, ns);
-            let vector_length_expr = Expression::LibFunction {
-                loc: *loc,
-                tys: tys.clone(),
-                kind: LibFunc::ArrayLength,
-                args: args.clone(),
-            };
+            let vector_length_expr =
+                Expression::LibFunction {
+                    loc: *loc,
+                    tys: tys.clone(),
+                    kind: LibFunc::ArrayLength,
+                    args: args.clone(),
+                };
             let array_length = expression(&vector_length_expr, bin, func_value, var_table, ns);
 
             let array_sorted = bin
@@ -875,14 +882,15 @@ pub fn expression<'a>(
             ..
         } => {
             let selector = expression(&args[0], bin, func_value, var_table, ns);
-            let (types, encoder_args): (Vec<_>, Vec<_>) = args[1..]
-                .iter()
-                .map(|a| {
-                    let ty = a.ty();
-                    let expr = expression(a, bin, func_value, var_table, ns);
-                    (ty, expr)
-                })
-                .unzip();
+            let (types, encoder_args): (Vec<_>, Vec<_>) =
+                args[1..]
+                    .iter()
+                    .map(|a| {
+                        let ty = a.ty();
+                        let expr = expression(a, bin, func_value, var_table, ns);
+                        (ty, expr)
+                    })
+                    .unzip();
 
             abi_encode_with_selector(bin, selector, encoder_args, &types, func_value, ns)
                 .as_basic_value_enum()
@@ -956,11 +964,12 @@ pub fn array_literal_to_memory_array<'a>(
         ns,
     );
 
-    let elements = if let Expression::ArrayLiteral { values: items, .. } = expr {
-        items
-    } else {
-        unreachable!()
-    };
+    let elements =
+        if let Expression::ArrayLiteral { values: items, .. } = expr {
+            items
+        } else {
+            unreachable!()
+        };
     let vector_data = bin.vector_data(array_vector.as_basic_value_enum());
     for (item_no, item) in elements.iter().enumerate() {
         let item = expression(item, bin, func_value, var_table, ns);
@@ -1108,56 +1117,59 @@ pub fn array_subscript<'a>(
     if array_ty.is_mapping() {
         return mapping_subscript(array, index, index_ty, bin);
     }
-    let (array_length, fixed) = match array_ty.deref_any() {
-        Type::Array(..) | Type::String | Type::DynamicBytes => match array_ty.array_length() {
-            None => {
-                if let Type::StorageRef(..) = array_ty {
-                    let array_length =
-                        storage_load(bin, &Type::Uint(32), &mut array.clone(), func_value, ns);
-                    (array_length, false)
-                } else {
-                    (bin.vector_len(array).into(), false)
+    let (array_length, fixed) =
+        match array_ty.deref_any() {
+            Type::Array(..) | Type::String | Type::DynamicBytes => match array_ty.array_length() {
+                None => {
+                    if let Type::StorageRef(..) = array_ty {
+                        let array_length =
+                            storage_load(bin, &Type::Uint(32), &mut array.clone(), func_value, ns);
+                        (array_length, false)
+                    } else {
+                        (bin.vector_len(array).into(), false)
+                    }
                 }
-            }
 
-            Some(l) => (
-                bin.context
-                    .i64_type()
-                    .const_int(l.to_u64().unwrap(), false)
-                    .into(),
-                true,
-            ),
-        },
-        _ => {
-            unreachable!()
-        }
-    };
-    let array_length_sub_one: BasicValueEnum = bin
-        .builder
-        .build_int_sub(
-            array_length.into_int_value(),
-            bin.context.i64_type().const_int(1, false),
+                Some(l) => (
+                    bin.context
+                        .i64_type()
+                        .const_int(l.to_u64().unwrap(), false)
+                        .into(),
+                    true,
+                ),
+            },
+            _ => {
+                unreachable!()
+            }
+        };
+    let array_length_sub_one: BasicValueEnum =
+        bin.builder
+            .build_int_sub(
+                array_length.into_int_value(),
+                bin.context.i64_type().const_int(1, false),
+                "",
+            )
+            .into();
+    let array_length_sub_one_sub_index =
+        bin.builder.build_int_sub(
+            array_length_sub_one.into_int_value(),
+            index.into_int_value(),
             "",
-        )
-        .into();
-    let array_length_sub_one_sub_index = bin.builder.build_int_sub(
-        array_length_sub_one.into_int_value(),
-        index.into_int_value(),
-        "",
-    );
+        );
     bin.range_check(array_length_sub_one_sub_index);
 
     if let Type::StorageRef(ty) = &array_ty {
         let elem_ty = ty.storage_array_elem();
         if fixed {
             let elem_size = elem_ty.storage_slots(ns);
-            let offset = bin.builder.build_int_mul(
-                index.into_int_value(),
-                bin.context
-                    .i64_type()
-                    .const_int(elem_size.to_u64().unwrap(), false),
-                "index_offset",
-            );
+            let offset =
+                bin.builder.build_int_mul(
+                    index.into_int_value(),
+                    bin.context
+                        .i64_type()
+                        .const_int(elem_size.to_u64().unwrap(), false),
+                    "index_offset",
+                );
             bin.builder
                 .build_int_add(offset, array.into_int_value(), "index_slot")
                 .into()
@@ -1251,11 +1263,12 @@ pub fn array_slice<'a>(
 
     let dest_array = bin.vector_data(new_array.into());
 
-    let src_data = if array_ty.is_dynamic_memory() {
-        bin.vector_data(array)
-    } else {
-        array.into_pointer_value()
-    };
+    let src_data =
+        if array_ty.is_dynamic_memory() {
+            bin.vector_data(array)
+        } else {
+            array.into_pointer_value()
+        };
     bin.memcpy(src_data, dest_array, end_sub_start);
     new_array.as_basic_value_enum()
 }
@@ -1267,10 +1280,11 @@ pub fn mapping_subscript<'a>(
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
     let mut inputs = Vec::with_capacity(2);
-    let slot_value = match array.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(array),
-        _ => array,
-    };
+    let slot_value =
+        match array.get_type() {
+            BasicTypeEnum::IntType(..) => bin.convert_uint_storage(array),
+            _ => array,
+        };
     inputs.push((slot_value, bin.context.i64_type().const_int(4, false)));
     match index_ty {
         Type::Uint(32) | Type::Field | Type::Bool | Type::Hash | Type::Address => {
@@ -1312,22 +1326,23 @@ pub fn assign_single<'a>(
 
             let mut dest = expression(left, bin, func_value, var_table, ns);
 
-            let expr_right =
-                if !left_ty.is_contract_storage() && right.ty().is_fixed_reference_type() {
-                    expression(
-                        &Expression::Load {
-                            loc: program::Loc::IRgen,
-                            ty: right.ty(),
-                            expr: Box::new(right.clone()),
-                        },
-                        bin,
-                        func_value,
-                        var_table,
-                        ns,
-                    )
-                } else {
-                    expression(right, bin, func_value, var_table, ns)
-                };
+            let expr_right = if !left_ty.is_contract_storage()
+                && right.ty().is_fixed_reference_type()
+            {
+                expression(
+                    &Expression::Load {
+                        loc: program::Loc::IRgen,
+                        ty: right.ty(),
+                        expr: Box::new(right.clone()),
+                    },
+                    bin,
+                    func_value,
+                    var_table,
+                    ns,
+                )
+            } else {
+                expression(right, bin, func_value, var_table, ns)
+            };
             match left_ty {
                 Type::StorageRef(..) => {
                     storage_store(
@@ -1383,14 +1398,15 @@ pub fn string_compare<'a>(
 fn field_to_fields<'a>(source: BasicValueEnum<'a>, bin: &Binary<'a>) -> BasicValueEnum<'a> {
     let left_len = bin.context.i64_type().const_int(1, false);
     let new_fields = bin.vector_new(left_len);
-    let dest_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            new_fields,
-            &[bin.context.i64_type().const_zero()],
-            "",
-        )
-    };
+    let dest_elem_ptr =
+        unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                new_fields,
+                &[bin.context.i64_type().const_zero()],
+                "",
+            )
+        };
     bin.builder.build_store(dest_elem_ptr, source);
     new_fields.as_basic_value_enum()
 }
@@ -1402,14 +1418,15 @@ fn hash_or_address_to_fields<'a>(
     let left_len = bin.context.i64_type().const_int(4, false);
     let new_fields = bin.vector_new(left_len);
     for i in 0..4 {
-        let source_elem_ptr = unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                source.into_pointer_value(),
-                &[bin.context.i64_type().const_int(i, false)],
-                "",
-            )
-        };
+        let source_elem_ptr =
+            unsafe {
+                bin.builder.build_gep(
+                    bin.context.i64_type(),
+                    source.into_pointer_value(),
+                    &[bin.context.i64_type().const_int(i, false)],
+                    "",
+                )
+            };
         let source_value = bin
             .builder
             .build_load(bin.context.i64_type(), source_elem_ptr, "");
@@ -1434,11 +1451,12 @@ fn external_call<'a>(
     address: BasicValueEnum<'a>,
     call_type: CallTy,
 ) -> BasicValueEnum<'a> {
-    let payload_len = bin.builder.build_load(
-        bin.context.i64_type(),
-        args.into_pointer_value(),
-        "payload_len",
-    );
+    let payload_len =
+        bin.builder.build_load(
+            bin.context.i64_type(),
+            args.into_pointer_value(),
+            "payload_len",
+        );
 
     let tape_size = bin.builder.build_int_add(
         payload_len.into_int_value(),
@@ -1496,11 +1514,12 @@ fn external_call<'a>(
 
     bin.builder.build_store(heap_start_ptr, return_length);
 
-    let tape_start_int = bin.builder.build_int_add(
-        heap_start_int,
-        bin.context.i64_type().const_int(1, false),
-        "",
-    );
+    let tape_start_int =
+        bin.builder.build_int_add(
+            heap_start_int,
+            bin.context.i64_type().const_int(1, false),
+            "",
+        );
 
     bin.tape_data_load(tape_start_int, tape_size);
     heap_start_ptr.as_basic_value_enum()
@@ -1611,11 +1630,12 @@ pub(crate) fn debug_print<'a>(
             );
             let mut offset = struct_start;
             for (_, field) in ns.structs[*no].fields.iter().enumerate() {
-                let field_ptr = bin.builder.build_int_to_ptr(
-                    offset,
-                    bin.context.i64_type().ptr_type(AddressSpace::default()),
-                    "",
-                );
+                let field_ptr =
+                    bin.builder.build_int_to_ptr(
+                        offset,
+                        bin.context.i64_type().ptr_type(AddressSpace::default()),
+                        "",
+                    );
                 let value = match field.ty {
                     Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
                         let value = bin

@@ -152,11 +152,8 @@ fn lower_load_gep(
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
             }
 
             vec![
@@ -239,11 +236,8 @@ fn lower_load_gep(
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
             }
             let base_ty = gep.operand.types()[0];
             let offset = idx0 * ctx.isa.data_layout.get_size_of(ctx.types, base_ty) as i64
@@ -298,11 +292,8 @@ fn lower_load_gep(
                 slot = Some(*p);
                 debug_println!("load gep slot");
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
                 debug_println!("load gep base");
             }
 
@@ -338,11 +329,8 @@ fn lower_load_gep(
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
             }
 
             // let base_ty = gep.operand.types()[0];

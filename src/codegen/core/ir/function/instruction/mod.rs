@@ -3,7 +3,6 @@ mod display;
 mod ty;
 
 pub use display::*;
-pub use ty::*;
 
 use crate::codegen::core::ir::{
     function::{basic_block::BasicBlockId, data::Data, param_attrs::ParameterAttribute},

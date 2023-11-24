@@ -243,15 +243,13 @@ pub(super) fn assign_expr(
             program::Expression::AssignDivide(..) => {
                 match set {
                     Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-                    diagnostics.push(Diagnostic::error(
+                        diagnostics.push(Diagnostic::error(
                             *loc,
-                            format!(
-                                "Division by zero is not allowed."
-                            ),
+                            format!("Division by zero is not allowed."),
                         ));
                         return Err(());
                     }
-                    _ => {},
+                    _ => {}
                 }
                 Expression::Divide {
                     loc: *loc,
@@ -259,20 +257,17 @@ pub(super) fn assign_expr(
                     left: Box::new(assign),
                     right: Box::new(set),
                 }
-
             }
             program::Expression::AssignModulo(..) => {
                 match set {
                     Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-                    diagnostics.push(Diagnostic::error(
-                            *loc,
-                            format!(
-                                "Modulo by zero is not allowed."
-                            ),
-                        ));
+                        diagnostics
+                            .push(
+                                Diagnostic::error(*loc, format!("Modulo by zero is not allowed."))
+                            );
                         return Err(());
                     }
-                    _ => {},
+                    _ => {}
                 }
                 Expression::Modulo {
                     loc: *loc,
@@ -341,12 +336,9 @@ pub(super) fn assign_expr(
                     loc: *loc,
                     ty: *r_ty.clone(),
                     left: Box::new(var.clone()),
-                    right: Box::new(op(
-                        var.cast(loc, r_ty, ns, diagnostics)?,
-                        r_ty,
-                        ns,
-                        diagnostics,
-                    )?),
+                    right: Box::new(
+                        op(var.cast(loc, r_ty, ns, diagnostics)?, r_ty, ns, diagnostics)?
+                    ),
                 }),
                 // If the variable is a Type::Ref(Type::Ref(..)), we must load it first.
                 Type::Ref(inner) if matches!(**inner, Type::Uint(_)) => Ok(Expression::Assign {
@@ -373,12 +365,9 @@ pub(super) fn assign_expr(
                     loc: *loc,
                     ty: *r_ty.clone(),
                     left: Box::new(var.clone()),
-                    right: Box::new(op(
-                        var.cast(loc, r_ty, ns, diagnostics)?,
-                        r_ty,
-                        ns,
-                        diagnostics,
-                    )?),
+                    right: Box::new(
+                        op(var.cast(loc, r_ty, ns, diagnostics)?, r_ty, ns, diagnostics)?
+                    ),
                 }),
                 _ => {
                     diagnostics.push(Diagnostic::error(

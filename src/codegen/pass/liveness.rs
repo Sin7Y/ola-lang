@@ -451,7 +451,9 @@ impl<T: TargetIsa> Liveness<T> {
         }
 
         for pred_id in func.data.basic_blocks[block_id].preds.iter() {
-            if let Some(phi_pred) = phi_pred && *pred_id != phi_pred {
+            if let Some(phi_pred) = phi_pred
+                && *pred_id != phi_pred
+            {
                 continue;
             }
             if self

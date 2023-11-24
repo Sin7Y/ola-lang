@@ -100,10 +100,9 @@ pub(super) fn array_subscript(
             }
         }
         _ => {
-            diagnostics.push(Diagnostic::error(
-                array.loc(),
-                "expression is not an array".to_string(),
-            ));
+            diagnostics.push(
+                Diagnostic::error(array.loc(), "expression is not an array".to_string())
+            );
             Err(())
         }
     }

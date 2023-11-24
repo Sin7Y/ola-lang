@@ -42,13 +42,14 @@ pub(crate) fn storage_array_push<'a>(
     emit_context!(bin);
     let mut array_slot = expression(&args[0], bin, func_value, var_table, ns);
 
-    let array_length = storage_load(
-        bin,
-        &Type::Uint(32),
-        &mut array_slot.clone(),
-        func_value,
-        ns,
-    );
+    let array_length =
+        storage_load(
+            bin,
+            &Type::Uint(32),
+            &mut array_slot.clone(),
+            func_value,
+            ns,
+        );
 
     let elem_ty = args[0].ty().storage_array_elem();
 
@@ -88,13 +89,14 @@ pub(crate) fn storage_array_pop<'a>(
     emit_context!(bin);
     let mut array_slot = expression(&args[0], bin, func_value, var_table, ns);
 
-    let array_length = storage_load(
-        bin,
-        &Type::Uint(32),
-        &mut array_slot.clone(),
-        func_value,
-        ns,
-    );
+    let array_length =
+        storage_load(
+            bin,
+            &Type::Uint(32),
+            &mut array_slot.clone(),
+            func_value,
+            ns,
+        );
     let elem_ty = args[0].ty().storage_array_elem();
 
     let mut pop_pos = array_offset(bin, array_slot, array_length, elem_ty, ns);
@@ -432,14 +434,17 @@ pub(crate) fn storage_store<'a>(
         }
         Type::Address | Type::Contract(_) | Type::Hash => storage_store_internal(bin, *slot, dest),
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
-            let dest = if dest.is_pointer_value() {
-                let m =
-                    bin.builder
-                        .build_load(bin.context.i64_type(), dest.into_pointer_value(), "");
-                m
-            } else {
-                dest
-            };
+            let dest =
+                if dest.is_pointer_value() {
+                    let m = bin.builder.build_load(
+                        bin.context.i64_type(),
+                        dest.into_pointer_value(),
+                        "",
+                    );
+                    m
+                } else {
+                    dest
+                };
             storage_store_internal(bin, *slot, dest)
         }
         _ => {
@@ -682,10 +687,11 @@ pub(crate) fn storage_store_internal<'a>(
         BasicTypeEnum::IntType(..) => bin.convert_uint_storage(key),
         _ => key,
     };
-    let storage_value: BasicValueEnum<'_> = match value.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(value),
-        _ => value,
-    };
+    let storage_value: BasicValueEnum<'_> =
+        match value.get_type() {
+            BasicTypeEnum::IntType(..) => bin.convert_uint_storage(value),
+            _ => value,
+        };
     call!("set_storage", &[storage_key.into(), storage_value.into()]);
 }
 
@@ -693,10 +699,11 @@ pub(crate) fn slot_hash<'a>(bin: &Binary<'a>, slot: BasicValueEnum<'a>) -> Basic
     emit_context!(bin);
 
     let mut inputs = Vec::with_capacity(1);
-    let slot_value = match slot.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(slot),
-        _ => slot,
-    };
+    let slot_value =
+        match slot.get_type() {
+            BasicTypeEnum::IntType(..) => bin.convert_uint_storage(slot),
+            _ => slot,
+        };
     inputs.push((slot_value.into(), i64_const!(4)));
     bin.poseidon_hash(inputs)
 }

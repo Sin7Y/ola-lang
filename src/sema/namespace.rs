@@ -47,17 +47,16 @@ impl Namespace {
         symbol: Symbol,
     ) -> bool {
         if corelib::is_reserved(&id.name) {
-            self.diagnostics.push(Diagnostic::error(
-                id.loc,
-                format!("'{}' shadows name of a builtin", id.name),
-            ));
+            self.diagnostics.push(
+                Diagnostic::error(id.loc, format!("'{}' shadows name of a builtin", id.name))
+            );
 
             return false;
         }
 
-        if let Some(Symbol::Function(v)) =
-            self.function_symbols
-                .get(&(file_no, contract_no, id.name.to_owned()))
+        if let Some(Symbol::Function(v)) = self
+            .function_symbols
+            .get(&(file_no, contract_no, id.name.to_owned()))
         {
             let notes = v
                 .iter()
@@ -137,9 +136,9 @@ impl Namespace {
 
         // if there is nothing on the contract level
         if contract_no.is_some() {
-            if let Some(Symbol::Function(v)) =
-                self.function_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
+            if let Some(Symbol::Function(v)) = self
+                .function_symbols
+                .get(&(file_no, None, id.name.to_owned()))
             {
                 let notes = v
                     .iter()
@@ -232,17 +231,17 @@ impl Namespace {
         contract_no: Option<usize>,
         id: &program::Identifier,
     ) -> Option<usize> {
-        if let Some(Symbol::Enum(_, n)) =
-            self.variable_symbols
-                .get(&(file_no, contract_no, id.name.to_owned()))
+        if let Some(Symbol::Enum(_, n)) = self
+            .variable_symbols
+            .get(&(file_no, contract_no, id.name.to_owned()))
         {
             return Some(*n);
         }
 
         if contract_no.is_some() {
-            if let Some(Symbol::Enum(_, n)) =
-                self.variable_symbols
-                    .get(&(file_no, None, id.name.to_owned()))
+            if let Some(Symbol::Enum(_, n)) = self
+                .variable_symbols
+                .get(&(file_no, None, id.name.to_owned()))
             {
                 return Some(*n);
             }
@@ -253,9 +252,9 @@ impl Namespace {
 
     /// Resolve a contract name
     pub fn resolve_contract(&self, file_no: usize, id: &program::Identifier) -> Option<usize> {
-        if let Some(Symbol::Contract(_, n)) =
-            self.variable_symbols
-                .get(&(file_no, None, id.name.to_owned()))
+        if let Some(Symbol::Contract(_, n)) = self
+            .variable_symbols
+            .get(&(file_no, None, id.name.to_owned()))
         {
             return Some(*n);
         }
@@ -339,10 +338,9 @@ impl Namespace {
         id: &program::Identifier,
     ) {
         if corelib::is_reserved(&id.name) {
-            self.diagnostics.push(Diagnostic::warning(
-                id.loc,
-                format!("'{}' shadows name of a corelib", id.name),
-            ));
+            self.diagnostics.push(
+                Diagnostic::warning(id.loc, format!("'{}' shadows name of a corelib", id.name))
+            );
             return;
         }
 
@@ -610,9 +608,9 @@ impl Namespace {
         let mut import_file_no = file_no;
 
         while !namespace.is_empty() {
-            if let Some(Symbol::Import(_, file_no)) =
-                self.variable_symbols
-                    .get(&(import_file_no, None, namespace[0].name.clone()))
+            if let Some(Symbol::Import(_, file_no)) = self
+                .variable_symbols
+                .get(&(import_file_no, None, namespace[0].name.clone()))
             {
                 import_file_no = *file_no;
                 namespace.remove(0);
