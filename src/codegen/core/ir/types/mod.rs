@@ -106,7 +106,9 @@ impl Types {
         if ty.is_primitive() {
             return None;
         }
-        Some(RefMut::map(self.0.borrow_mut(), |base| base.get_mut(ty).unwrap()))
+        Some(RefMut::map(self.0.borrow_mut(), |base| {
+            base.get_mut(ty).unwrap()
+        }))
     }
 
     pub fn get_element(&self, ty: Type) -> Option<Type> {

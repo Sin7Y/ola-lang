@@ -56,9 +56,7 @@ pub(super) fn bitwise_or(
     if ty == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -91,9 +89,7 @@ pub(super) fn bitwise_and(
     if ty == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -126,9 +122,7 @@ pub(super) fn bitwise_xor(
     if ty == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -165,9 +159,7 @@ pub(super) fn shift_left(
     if left_type == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -204,9 +196,7 @@ pub(super) fn shift_right(
     if left_type == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -291,9 +281,7 @@ pub(super) fn divide(
     if ty == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -337,9 +325,7 @@ pub(super) fn modulo(
     if ty == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -389,9 +375,7 @@ pub(super) fn power(
     if ty == Type::Field {
         diagnostics.push(Diagnostic::error(
             *loc,
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }

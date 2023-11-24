@@ -247,9 +247,9 @@ pub(super) fn named_struct_literal(
             },
         );
         for a in args {
-            match struct_def.fields.iter().enumerate().find(
-                |(_, f)| f.id.as_ref().map(|id| id.name.as_str()) == Some(a.name.name.as_str())
-            ) {
+            match struct_def.fields.iter().enumerate().find(|(_, f)| {
+                f.id.as_ref().map(|id| id.name.as_str()) == Some(a.name.name.as_str())
+            }) {
                 Some((i, f)) => {
                     let expr = expression(
                         &a.expr,
@@ -374,8 +374,10 @@ pub(super) fn array_literal(
     )?;
 
     if flattened.is_empty() {
-        diagnostics
-            .push(Diagnostic::error(*loc, "array requires at least one element".to_string()));
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            "array requires at least one element".to_string(),
+        ));
         return Err(());
     }
 

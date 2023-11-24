@@ -1003,11 +1003,10 @@ impl Dot {
                 args,
                 ..
             } => {
-                let labels =
-                    vec![
-                        String::from("call internal function"),
-                        ns.loc_to_string(loc),
-                    ];
+                let labels = vec![
+                    String::from("call internal function"),
+                    ns.loc_to_string(loc),
+                ];
 
                 let node = self.add_node(
                     Node::new("call_internal_function", labels),
@@ -1029,11 +1028,10 @@ impl Dot {
                 call_args,
                 ..
             } => {
-                let labels =
-                    vec![
-                        String::from("call external function"),
-                        ns.loc_to_string(loc),
-                    ];
+                let labels = vec![
+                    String::from("call external function"),
+                    ns.loc_to_string(loc),
+                ];
 
                 let node = self.add_node(
                     Node::new("call_external_function", labels),

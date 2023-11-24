@@ -39,16 +39,14 @@ pub fn resolve_function_body(
     for (i, p) in def.params.iter().enumerate() {
         let p = p.1.as_ref().unwrap();
         if let Some(ref name) = p.name {
-            if let Some(pos) =
-                symtable.add(
-                    name,
-                    ns.functions[function_no].params[i].ty.clone(),
-                    ns,
-                    VariableInitializer::Ola(None),
-                    VariableUsage::Parameter,
-                    None,
-                )
-            {
+            if let Some(pos) = symtable.add(
+                name,
+                ns.functions[function_no].params[i].ty.clone(),
+                ns,
+                VariableInitializer::Ola(None),
+                VariableUsage::Parameter,
+                None,
+            ) {
                 ns.check_shadowing(file_no, contract_no, name);
 
                 symtable.arguments.push(Some(pos));
@@ -172,7 +170,12 @@ fn statement(
                 expr.recurse(ns, check_term_for_constant_overflow);
                 used_variable(ns, &expr, symtable);
 
-                Some(Arc::new(expr.cast(&expr.loc(), &var_ty, ns, diagnostics)?))
+                Some(Arc::new(expr.cast(
+                    &expr.loc(),
+                    &var_ty,
+                    ns,
+                    diagnostics,
+                )?))
             } else {
                 None
             };
@@ -605,9 +608,15 @@ fn statement(
                     // is it a destructure statement
                     if let program::Expression::Assign(_, var, expr) = expr {
                         if let program::Expression::List(_, var) = var.as_ref() {
-                            res.push(
-                                destructure(loc, var, expr, context, symtable, ns, diagnostics)?
-                            );
+                            res.push(destructure(
+                                loc,
+                                var,
+                                expr,
+                                context,
+                                symtable,
+                                ns,
+                                diagnostics,
+                            )?);
 
                             // if a noreturn function was called, then the destructure would not
                             // resolve
@@ -689,18 +698,16 @@ fn destructure(
                     }
 
                     Expression::Variable { .. } => (),
-                    _ => {
-                        match e.ty() {
-                            Type::Ref(_) | Type::StorageRef(_) => (),
-                            _ => {
-                                diagnostics.push(Diagnostic::error(
-                                    *loc,
-                                    "expression is not assignable".to_string(),
-                                ));
-                                return Err(());
-                            }
+                    _ => match e.ty() {
+                        Type::Ref(_) | Type::StorageRef(_) => (),
+                        _ => {
+                            diagnostics.push(Diagnostic::error(
+                                *loc,
+                                "expression is not assignable".to_string(),
+                            ));
+                            return Err(());
                         }
-                    }
+                    },
                 }
 
                 assigned_variable(ns, &e, symtable);
@@ -714,16 +721,14 @@ fn destructure(
             }) => {
                 let (ty, ty_loc) = resolve_var_decl_ty(ty, &None, context, ns, diagnostics)?;
 
-                if let Some(pos) =
-                    symtable.add(
-                        name,
-                        ty.clone(),
-                        ns,
-                        VariableInitializer::Ola(None),
-                        VariableUsage::DestructureVariable,
-                        None,
-                    )
-                {
+                if let Some(pos) = symtable.add(
+                    name,
+                    ty.clone(),
+                    ns,
+                    VariableInitializer::Ola(None),
+                    VariableUsage::DestructureVariable,
+                    None,
+                ) {
                     ns.check_shadowing(context.file_no, context.contract_no, name);
 
                     left_tys.push(Some(ty.clone()));
@@ -744,17 +749,16 @@ fn destructure(
         }
     }
 
-    let expr =
-        destructure_values(
-            loc,
-            expr,
-            &left_tys,
-            &fields,
-            context,
-            symtable,
-            ns,
-            diagnostics,
-        )?;
+    let expr = destructure_values(
+        loc,
+        expr,
+        &left_tys,
+        &fields,
+        context,
+        symtable,
+        ns,
+        diagnostics,
+    )?;
 
     Ok(Statement::Destructure(*loc, fields, expr))
 }
@@ -820,17 +824,16 @@ fn destructure_values(
                 diagnostics,
             )?;
             used_variable(ns, &left, symtable);
-            let right =
-                destructure_values(
-                    &right.loc(),
-                    right,
-                    left_tys,
-                    fields,
-                    context,
-                    symtable,
-                    ns,
-                    diagnostics,
-                )?;
+            let right = destructure_values(
+                &right.loc(),
+                right,
+                left_tys,
+                fields,
+                context,
+                symtable,
+                ns,
+                diagnostics,
+            )?;
             used_variable(ns, &right, symtable);
 
             return Ok(Expression::ConditionalOperator {
@@ -954,14 +957,18 @@ fn resolve_var_decl_ty(
     }
 
     if var_ty.contains_mapping(ns) && !var_ty.is_contract_storage() {
-        diagnostics
-            .push(Diagnostic::error(ty.loc(), "mapping only allowed in storage".to_string()));
+        diagnostics.push(Diagnostic::error(
+            ty.loc(),
+            "mapping only allowed in storage".to_string(),
+        ));
         return Err(());
     }
 
     if !var_ty.is_contract_storage() && !var_ty.fits_in_memory(ns) {
-        diagnostics
-            .push(Diagnostic::error(ty.loc(), "type is too large to fit into memory".to_string()));
+        diagnostics.push(Diagnostic::error(
+            ty.loc(),
+            "type is too large to fit into memory".to_string(),
+        ));
         return Err(());
     }
     Ok((var_ty, loc_ty))
@@ -1047,9 +1054,10 @@ fn return_with_values(
             }
 
             if no_returns == 0 && !returns.is_empty() {
-                diagnostics.push(
-                    Diagnostic::error(*loc, "function has no return values".to_string())
-                );
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    "function has no return values".to_string(),
+                ));
                 return Err(());
             }
 
@@ -1118,7 +1126,10 @@ fn return_with_values(
     }
 
     if no_returns == 0 && !expr_return_tys.is_empty() {
-        diagnostics.push(Diagnostic::error(*loc, "function has no return values".to_string()));
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            "function has no return values".to_string(),
+        ));
         return Err(());
     }
 
@@ -1178,8 +1189,10 @@ pub fn parameter_list_to_expr_list<'a>(
                     Some(program::Parameter {
                         name: Some(name), ..
                     }) => {
-                        diagnostics
-                            .push(Diagnostic::error(name.loc, "single value expected".to_string()));
+                        diagnostics.push(Diagnostic::error(
+                            name.loc,
+                            "single value expected".to_string(),
+                        ));
                         broken = true;
                     }
                     Some(program::Parameter { ty, .. }) => {
