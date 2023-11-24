@@ -24,17 +24,16 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 13]> = Lazy::new(|| {
 
 static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 6]> =
-    Lazy::new(|| {
-        [
-            "memcpy",
-            "memcmp_eq",
-            "memcmp_ugt",
-            "memcmp_uge",
-            "u32_div_mod",
-            "u32_power",
-        ]
-    });
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 6]> = Lazy::new(|| {
+    [
+        "memcpy",
+        "memcmp_eq",
+        "memcmp_ugt",
+        "memcmp_uge",
+        "u32_div_mod",
+        "u32_power",
+    ]
+});
 
 // // These functions will be called implicitly by corelib
 // // May later become corelib functions open to the user as well
@@ -271,16 +270,15 @@ pub fn declare_core_lib(bin: &mut Binary) {
             let i64_type = bin.context.i64_type();
             let void_type = bin.context.void_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
-            let ftype =
-                void_type.fn_type(
-                    &[
-                        i64_type.into(),
-                        i64_type.into(),
-                        ptr_type.into(),
-                        ptr_type.into(),
-                    ],
-                    false,
-                );
+            let ftype = void_type.fn_type(
+                &[
+                    i64_type.into(),
+                    i64_type.into(),
+                    ptr_type.into(),
+                    ptr_type.into(),
+                ],
+                false,
+            );
             let func = bin.module.add_function(p, ftype, None);
             bin.builder
                 .position_at_end(bin.context.append_basic_block(func, "entry"));
@@ -385,28 +383,26 @@ pub fn create_mem_compare_function<'a>(
     bin.builder.build_conditional_branch(loop_check, body, done);
 
     bin.builder.position_at_end(body);
-    let left_elem_ptr =
-        unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                left_ptr,
-                &[index_value],
-                "left_elem_ptr",
-            )
-        };
+    let left_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            left_ptr,
+            &[index_value],
+            "left_elem_ptr",
+        )
+    };
     let left_elem = bin
         .builder
         .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
         .into_int_value();
-    let right_elem_ptr =
-        unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                right_ptr,
-                &[index_value],
-                "right_elem_ptr",
-            )
-        };
+    let right_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            right_ptr,
+            &[index_value],
+            "right_elem_ptr",
+        )
+    };
     let right_elem = bin
         .builder
         .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
@@ -492,15 +488,14 @@ pub fn create_memcpy_function<'a>(bin: &Binary<'a>, function: FunctionValue<'a>)
     // memory copy start
     bin.builder.position_at_end(body);
 
-    let src_access =
-        unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                src_ptr,
-                &[index_value],
-                "src_index_access",
-            )
-        };
+    let src_access = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            src_ptr,
+            &[index_value],
+            "src_index_access",
+        )
+    };
 
     let src_value = bin
         .builder

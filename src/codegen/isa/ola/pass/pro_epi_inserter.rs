@@ -59,33 +59,31 @@ pub fn run_on_function(function: &mut Function<Ola>) {
         }
     }
     if call {
-        let mstore =
-            function.data.create_inst(Instruction::new(
-                InstructionData {
-                    opcode: Opcode::MSTOREr,
-                    operands: vec![
-                        Operand::output(GR::R9.into()),
-                        Operand::input(GR::R9.into()),
-                    ],
-                },
-                entry,
-            ));
+        let mstore = function.data.create_inst(Instruction::new(
+            InstructionData {
+                opcode: Opcode::MSTOREr,
+                operands: vec![
+                    Operand::output(GR::R9.into()),
+                    Operand::input(GR::R9.into()),
+                ],
+            },
+            entry,
+        ));
         function.layout.insert_inst_at_start(mstore, entry);
     }
 
     if adj > 0 {
-        let sub =
-            function.data.create_inst(Instruction::new(
-                InstructionData {
-                    opcode: Opcode::ADDri,
-                    operands: vec![
-                        Operand::input_output(GR::R9.into()),
-                        Operand::input_output(GR::R9.into()),
-                        Operand::input(adj.into()),
-                    ],
-                },
-                entry,
-            ));
+        let sub = function.data.create_inst(Instruction::new(
+            InstructionData {
+                opcode: Opcode::ADDri,
+                operands: vec![
+                    Operand::input_output(GR::R9.into()),
+                    Operand::input_output(GR::R9.into()),
+                    Operand::input(adj.into()),
+                ],
+            },
+            entry,
+        ));
         function.layout.insert_inst_at_start(sub, entry);
     }
 

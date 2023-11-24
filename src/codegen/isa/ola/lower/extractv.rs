@@ -22,32 +22,30 @@ pub fn lower_extractvalue(
     let elm_ty = ctx.types.base().element(*tys).unwrap();
     let op_idx = get_operand_for_val(ctx, elm_ty, args[1])?;
 
-    let idx =
-        match op_idx {
-            OperandData::Int32(i) => i as usize,
-            OperandData::Int64(i) => i as usize,
-            e => {
-                return Err(LoweringError::Todo(format!(
-                    "Unsupported extractvalue idx operand: {:?}",
-                    e
-                ))
-                .into())
-            }
-        };
+    let idx = match op_idx {
+        OperandData::Int32(i) => i as usize,
+        OperandData::Int64(i) => i as usize,
+        e => {
+            return Err(LoweringError::Todo(format!(
+                "Unsupported extractvalue idx operand: {:?}",
+                e
+            ))
+            .into())
+        }
+    };
     let output = new_empty_inst_output(ctx, elm_ty, id);
 
-    let opcode =
-        match value[idx as usize].clone() {
-            OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
-            OperandData::VReg(_) => Opcode::MOVrr,
-            e => {
-                return Err(LoweringError::Todo(format!(
-                    "Unsupported extractvalue idx operand data type: {:?}",
-                    e
-                ))
-                .into())
-            }
-        };
+    let opcode = match value[idx as usize].clone() {
+        OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+        OperandData::VReg(_) => Opcode::MOVrr,
+        e => {
+            return Err(LoweringError::Todo(format!(
+                "Unsupported extractvalue idx operand data type: {:?}",
+                e
+            ))
+            .into())
+        }
+    };
 
     ctx.inst_seq.push(MachInstruction::new(
         InstructionData {

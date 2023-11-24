@@ -55,18 +55,17 @@ pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
 /// It returns the following values:
 
 pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
-    let ty =
-        bin.context.void_type().fn_type(
-            &[
-                bin.context.i64_type().into(),
-                bin.context.i64_type().into(),
-                bin.context
-                    .i64_type()
-                    .ptr_type(AddressSpace::default())
-                    .into(),
-            ],
-            false,
-        );
+    let ty = bin.context.void_type().fn_type(
+        &[
+            bin.context.i64_type().into(),
+            bin.context.i64_type().into(),
+            bin.context
+                .i64_type()
+                .ptr_type(AddressSpace::default())
+                .into(),
+        ],
+        false,
+    );
     let func_value = bin.module.add_function("function_dispatch", ty, None);
     let entry = bin.context.append_basic_block(func_value, "entry");
 
@@ -184,7 +183,8 @@ fn dispatch_case<'a>(
         returns.push(ret.unwrap());
         abi_encode_store_tape(bin, returns, &return_tys, func_value, ns);
     } else {
-        // If the function has no return values, we still need to encode the zero into the tape
+        // If the function has no return values, we still need to encode the zero into
+        // the tape
         let zero = bin.context.i64_type().const_zero();
         bin.tape_data_store(zero, zero);
     }

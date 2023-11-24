@@ -152,13 +152,14 @@ pub(super) fn assign_expr(
     // Check if the variable is a field, and if so, only allow += and -=
     if !matches!(
         expr,
-        program::Expression::AssignAdd(..) | program::Expression::AssignSubtract(..) | program::Expression::AssignMultiply(..) 
-    ) && var_ty == Type::Field {
+        program::Expression::AssignAdd(..)
+            | program::Expression::AssignSubtract(..)
+            | program::Expression::AssignMultiply(..)
+    ) && var_ty == Type::Field
+    {
         diagnostics.push(Diagnostic::error(
             var.loc(),
-            format!(
-                "operator is not allowed on type field",
-            ),
+            format!("operator is not allowed on type field",),
         ));
         return Err(());
     }
@@ -326,7 +327,7 @@ pub(super) fn assign_expr(
         }
         Expression::Variable { var_no, .. } => {
             match var_ty {
-                Type::Uint(_) | Type::Field=> (),
+                Type::Uint(_) | Type::Field => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),

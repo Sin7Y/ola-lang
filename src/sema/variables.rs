@@ -63,9 +63,10 @@ pub fn variable_decl<'a>(
     for attr in attrs {
         if let program::VariableAttribute::Constant(loc) = &attr {
             if constant {
-                ns.diagnostics.push(
-                    Diagnostic::error(*loc, "duplicate constant attribute".to_string())
-                );
+                ns.diagnostics.push(Diagnostic::error(
+                    *loc,
+                    "duplicate constant attribute".to_string(),
+                ));
             }
             constant = true;
         }
@@ -74,14 +75,13 @@ pub fn variable_decl<'a>(
     let initializer = if constant {
         if let Some(initializer) = &def.initializer {
             let mut diagnostics = Diagnostics::default();
-            let context =
-                ExprContext {
-                    file_no,
-                    contract_no,
-                    function_no: None,
-                    constant,
-                    lvalue: false,
-                };
+            let context = ExprContext {
+                file_no,
+                contract_no,
+                function_no: None,
+                constant,
+                lvalue: false,
+            };
             match expression(
                 initializer,
                 &context,
@@ -109,9 +109,10 @@ pub fn variable_decl<'a>(
                 }
             }
         } else {
-            ns.diagnostics.push(
-                Diagnostic::decl_error(def.loc, "missing initializer for constant".to_string())
-            );
+            ns.diagnostics.push(Diagnostic::decl_error(
+                def.loc,
+                "missing initializer for constant".to_string(),
+            ));
 
             None
         }
@@ -119,16 +120,15 @@ pub fn variable_decl<'a>(
         None
     };
 
-    let sdecl =
-        Variable {
-            name: def.name.as_ref().unwrap().name.to_string(),
-            loc: def.loc,
-            ty: ty.clone(),
-            constant,
-            assigned: def.initializer.is_some(),
-            initializer,
-            read: true,
-        };
+    let sdecl = Variable {
+        name: def.name.as_ref().unwrap().name.to_string(),
+        loc: def.loc,
+        ty: ty.clone(),
+        constant,
+        assigned: def.initializer.is_some(),
+        initializer,
+        read: true,
+    };
 
     let var_no = if let Some(contract_no) = contract_no {
         let var_no = ns.contracts[contract_no].variables.len();
@@ -181,25 +181,22 @@ pub fn resolve_initializers(
         let var = &ns.contracts[*contract_no].variables[*var_no];
         let ty = var.ty.clone();
 
-        let context =
-            ExprContext {
-                file_no,
-                contract_no: Some(*contract_no),
-                function_no: None,
-                constant: false,
-                lvalue: false,
-            };
+        let context = ExprContext {
+            file_no,
+            contract_no: Some(*contract_no),
+            function_no: None,
+            constant: false,
+            lvalue: false,
+        };
 
-        if let Ok(res) =
-            expression(
-                initializer,
-                &context,
-                ns,
-                &mut symtable,
-                &mut diagnostics,
-                ResolveTo::Type(&ty),
-            )
-        {
+        if let Ok(res) = expression(
+            initializer,
+            &context,
+            ns,
+            &mut symtable,
+            &mut diagnostics,
+            ResolveTo::Type(&ty),
+        ) {
             if let Ok(res) = res.cast(&initializer.loc(), &ty, ns, &mut diagnostics) {
                 res.recurse(ns, check_term_for_constant_overflow);
                 ns.contracts[*contract_no].variables[*var_no].initializer = Some(res);

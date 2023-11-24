@@ -122,9 +122,7 @@ pub fn expression(
             if ty == Type::Field {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "operator is not allowed on type field",
-                    ),
+                    format!("operator is not allowed on type field",),
                 ));
                 return Err(());
             }
@@ -147,9 +145,7 @@ pub fn expression(
             if ty == Type::Field {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "operator is not allowed on type field",
-                    ),
+                    format!("operator is not allowed on type field",),
                 ));
                 return Err(());
             }
@@ -170,9 +166,7 @@ pub fn expression(
             if ty == Type::Field {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "operator is not allowed on type field",
-                    ),
+                    format!("operator is not allowed on type field",),
                 ));
                 return Err(());
             }
@@ -194,9 +188,7 @@ pub fn expression(
             if ty == Type::Field {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "operator is not allowed on type field",
-                    ),
+                    format!("operator is not allowed on type field",),
                 ));
                 return Err(());
             }
@@ -225,9 +217,7 @@ pub fn expression(
             if expr_ty == Type::Field {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "operator is not allowed on type field",
-                    ),
+                    format!("operator is not allowed on type field",),
                 ));
                 return Err(());
             }
@@ -245,9 +235,7 @@ pub fn expression(
             if expr_ty == Type::Field {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "operator is not allowed on type field",
-                    ),
+                    format!("operator is not allowed on type field",),
                 ));
                 return Err(());
             }
@@ -325,8 +313,8 @@ pub fn expression(
                     "assignment not allowed in constant context".to_string(),
                 ));
                 return Err(());
-            };  
-            
+            };
+
             let expr = assign_expr(loc, var, expr, e, context, ns, symtable, diagnostics);
             if let Ok(expression) = &expr {
                 expression.recurse(ns, check_term_for_constant_overflow);
@@ -380,9 +368,10 @@ pub fn expression(
             }
         }
         program::Expression::Delete(loc, _) => {
-            diagnostics.push(
-                Diagnostic::error(*loc, "delete not allowed in expression".to_string())
-            );
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                "delete not allowed in expression".to_string(),
+            ));
             Err(())
         }
 
@@ -397,9 +386,10 @@ pub fn expression(
             resolve_to,
         ),
         program::Expression::ArraySubscript(loc, _, None) => {
-            diagnostics.push(
-                Diagnostic::error(*loc, "expected expression before ']' token".to_string())
-            );
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                "expected expression before ']' token".to_string(),
+            ));
 
             Err(())
         }
@@ -488,7 +478,10 @@ pub fn expression(
             Err(())
         }
         program::Expression::FunctionCallBlock(loc, ..) => {
-            diagnostics.push(Diagnostic::error(*loc, "unexpect block encountered".to_owned()));
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                "unexpect block encountered".to_owned(),
+            ));
             Err(())
         }
     }

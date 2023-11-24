@@ -149,14 +149,13 @@ fn convert_diagnostic(
     msg: &Diagnostic,
     file_id: &HashMap<usize, usize>,
 ) -> diagnostic::Diagnostic<usize> {
-    let diagnostic =
-        diagnostic::Diagnostic::new(match msg.level {
-            Level::Debug => diagnostic::Severity::Help,
-            Level::Info => diagnostic::Severity::Note,
-            Level::Error => diagnostic::Severity::Error,
-            Level::Warning => diagnostic::Severity::Warning,
-        })
-        .with_message(msg.message.to_owned());
+    let diagnostic = diagnostic::Diagnostic::new(match msg.level {
+        Level::Debug => diagnostic::Severity::Help,
+        Level::Info => diagnostic::Severity::Note,
+        Level::Error => diagnostic::Severity::Error,
+        Level::Warning => diagnostic::Severity::Warning,
+    })
+    .with_message(msg.message.to_owned());
 
     let mut labels = Vec::new();
 

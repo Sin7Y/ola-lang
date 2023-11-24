@@ -323,12 +323,11 @@ pub fn u32_bitwise_not<'a>(
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
-    let u32_max =
-        NumberLiteral {
-            loc: Loc::IRgen,
-            ty: Type::Uint(32),
-            value: BigInt::from(u32::MAX),
-        };
+    let u32_max = NumberLiteral {
+        loc: Loc::IRgen,
+        ty: Type::Uint(32),
+        value: BigInt::from(u32::MAX),
+    };
     u32_sub(&u32_max, expr, bin, func_value, var_table, ns)
 }
 

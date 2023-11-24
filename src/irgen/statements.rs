@@ -37,19 +37,18 @@ pub(crate) fn statement<'a>(
                 None => param.ty.default(bin, func_value, ns).unwrap(),
             };
 
-            let alloca =
-                if param.ty.is_reference_type(ns) && !param.ty.is_contract_storage() {
-                    var_value.into_pointer_value()
-                } else {
-                    let alloca = bin.build_alloca(
-                        func_value,
-                        bin.llvm_type(&param.ty, ns),
-                        param.name_as_str(),
-                    );
+            let alloca = if param.ty.is_reference_type(ns) && !param.ty.is_contract_storage() {
+                var_value.into_pointer_value()
+            } else {
+                let alloca = bin.build_alloca(
+                    func_value,
+                    bin.llvm_type(&param.ty, ns),
+                    param.name_as_str(),
+                );
 
-                    bin.builder.build_store(alloca, var_value);
-                    alloca
-                };
+                bin.builder.build_store(alloca, var_value);
+                alloca
+            };
 
             var_table.insert(*pos, alloca.as_basic_value_enum());
         }

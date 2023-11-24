@@ -34,55 +34,54 @@ fn test_ext_source() {
             .unwrap()
             .into_iter();
 
-    let errors =
-        semantic_tests
-            .map::<Result<_, String>, _>(|entry| {
-                if entry.file_name().to_string_lossy().ends_with(".ola") {
-                    let source = match fs::read_to_string(entry.path()) {
-                        Ok(source) => source,
-                        Err(err) if matches!(err.kind(), std::io::ErrorKind::InvalidData) => {
-                            return Ok(vec![])
-                        }
-                        Err(err) => return Err(err.to_string()),
-                    };
-                    Ok(source_delimiter
-                        .split(&source)
-                        .filter(|source_part| !source_part.is_empty())
-                        .map(|part| (entry.path().to_string_lossy().to_string(), part.to_string()))
-                        .collect::<Vec<_>>())
-                } else {
-                    Ok(vec![])
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap()
-            .into_iter()
-            .flatten()
-            .filter_map(|(path, source_part)| {
-                let result = match timeout_after(Duration::from_secs(5), move || {
-                    crate::parse(&source_part, 0)
-                }) {
-                    Ok(result) => result,
-                    Err(err) => return Some(format!("{:?}: \n\t{}", path, err)),
+    let errors = semantic_tests
+        .map::<Result<_, String>, _>(|entry| {
+            if entry.file_name().to_string_lossy().ends_with(".ola") {
+                let source = match fs::read_to_string(entry.path()) {
+                    Ok(source) => source,
+                    Err(err) if matches!(err.kind(), std::io::ErrorKind::InvalidData) => {
+                        return Ok(vec![])
+                    }
+                    Err(err) => return Err(err.to_string()),
                 };
+                Ok(source_delimiter
+                    .split(&source)
+                    .filter(|source_part| !source_part.is_empty())
+                    .map(|part| (entry.path().to_string_lossy().to_string(), part.to_string()))
+                    .collect::<Vec<_>>())
+            } else {
+                Ok(vec![])
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap()
+        .into_iter()
+        .flatten()
+        .filter_map(|(path, source_part)| {
+            let result = match timeout_after(Duration::from_secs(5), move || {
+                crate::parse(&source_part, 0)
+            }) {
+                Ok(result) => result,
+                Err(err) => return Some(format!("{:?}: \n\t{}", path, err)),
+            };
 
-                if let Err(err) = result.map_err(|diags| {
-                    format!(
-                        "{:?}:\n\t{}",
-                        path,
-                        diags
-                            .iter()
-                            .map(|diag| format!("{diag:?}"))
-                            .collect::<Vec<_>>()
-                            .join("\n\t")
-                    )
-                }) {
-                    return Some(err);
-                }
+            if let Err(err) = result.map_err(|diags| {
+                format!(
+                    "{:?}:\n\t{}",
+                    path,
+                    diags
+                        .iter()
+                        .map(|diag| format!("{diag:?}"))
+                        .collect::<Vec<_>>()
+                        .join("\n\t")
+                )
+            }) {
+                return Some(err);
+            }
 
-                None
-            })
-            .collect::<Vec<_>>();
+            None
+        })
+        .collect::<Vec<_>>();
 
     assert!(errors.is_empty(), "{}", errors.join("\n"));
 }

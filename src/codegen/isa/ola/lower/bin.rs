@@ -60,16 +60,14 @@ pub fn lower_bin(
                 insert_add(ctx);
             }
             match op {
-                IrOpcode::Sub => {
-                    InstructionData {
-                        opcode: Opcode::ADDri,
-                        operands: vec![
-                            MO::input_output(output[0].into()),
-                            MO::input(lhs.into()),
-                            MO::input(OperandData::Reg(GR::R7.into())),
-                        ],
-                    }
-                }
+                IrOpcode::Sub => InstructionData {
+                    opcode: Opcode::ADDri,
+                    operands: vec![
+                        MO::input_output(output[0].into()),
+                        MO::input(lhs.into()),
+                        MO::input(OperandData::Reg(GR::R7.into())),
+                    ],
+                },
                 IrOpcode::Add => InstructionData {
                     opcode: Opcode::ADDri,
                     operands: vec![
@@ -105,16 +103,14 @@ pub fn lower_bin(
                 insert_add(ctx);
             }
             match op {
-                IrOpcode::Sub => {
-                    InstructionData {
-                        opcode: Opcode::ADDrr,
-                        operands: vec![
-                            MO::input_output(output[0].into()),
-                            MO::input(lhs.into()),
-                            MO::input(OperandData::Reg(GR::R7.into())),
-                        ],
-                    }
-                }
+                IrOpcode::Sub => InstructionData {
+                    opcode: Opcode::ADDrr,
+                    operands: vec![
+                        MO::input_output(output[0].into()),
+                        MO::input(lhs.into()),
+                        MO::input(OperandData::Reg(GR::R7.into())),
+                    ],
+                },
                 IrOpcode::Add => InstructionData {
                     opcode: Opcode::ADDrr,
                     operands: vec![

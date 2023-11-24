@@ -108,15 +108,14 @@ impl<'a> Binary<'a> {
         let ty = self.context.i64_type();
         for (i, v) in value.iter().enumerate() {
             let index = self.context.i64_type().const_int(i as u64, false);
-            let index_access =
-                unsafe {
-                    self.builder.build_gep(
-                        self.context.i64_type(),
-                        address_heap_ptr,
-                        &[index],
-                        "index_access",
-                    )
-                };
+            let index_access = unsafe {
+                self.builder.build_gep(
+                    self.context.i64_type(),
+                    address_heap_ptr,
+                    &[index],
+                    "index_access",
+                )
+            };
             self.builder
                 .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
         }
@@ -504,12 +503,11 @@ impl<'a> Binary<'a> {
             let mut dest_offset = heap_src_int;
             let hash_src_len = hash_src.len();
             for (i, (v, len)) in hash_src.iter().enumerate() {
-                let dest_ptr =
-                    self.builder.build_int_to_ptr(
-                        dest_offset,
-                        self.context.i64_type().ptr_type(AddressSpace::default()),
-                        "",
-                    );
+                let dest_ptr = self.builder.build_int_to_ptr(
+                    dest_offset,
+                    self.context.i64_type().ptr_type(AddressSpace::default()),
+                    "",
+                );
                 self.memcpy(v.into_pointer_value(), dest_ptr, *len);
                 // Check if this is the last iteration of the loop
                 if i < hash_src_len - 1 {
