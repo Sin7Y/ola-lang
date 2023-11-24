@@ -17,6 +17,11 @@ fn bool_testcases() {
     run_test_for_path("./tests/irgen_testcases/bool_testcases");
 }
 
+#[test]
+fn field_testcases() {
+    run_test_for_path("./tests/irgen_testcases/field_testcases");
+}
+
 fn run_test_for_path(path: &str) {
     let mut tests = Vec::new();
 
@@ -51,16 +56,13 @@ fn testcase(path: PathBuf) {
     let mut current_function = String::new();
     for (line_no, line) in reader.lines().enumerate() {
         // make line numbers 1-based
-        let line_no = line_no + 1; 
+        let line_no = line_no + 1;
         let mut line = line.unwrap();
         line = line.trim().parse().unwrap();
 
         if let Some(func_name) = line.strip_prefix("// BEGIN-CHECK:") {
             current_function = func_name.trim().to_string();
-            checks.push(Test::BeginCheck(
-                line_no,
-                func_name.trim().to_string(),
-            ));
+            checks.push(Test::BeginCheck(line_no, func_name.trim().to_string()));
         } else if let Some(check) = line.strip_prefix("// CHECK:") {
             checks.push(Test::Check(
                 current_function.clone(),

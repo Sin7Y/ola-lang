@@ -545,7 +545,7 @@ impl Type {
     ) -> Option<BasicValueEnum<'a>> {
         let mut var_table: Vartable = IndexMap::new();
         match self {
-            Type::Uint(..) => {
+            Type::Uint(..) | Type::Field => {
                 let num_expr = Expression::NumberLiteral {
                     loc: IRgen,
                     ty: self.clone(),
@@ -663,7 +663,7 @@ impl Type {
                 }
             }
             Type::Function { .. } => None,
-            Type::String => Some(
+            Type::String | Type::DynamicBytes => Some(
                 bin.context
                     .i64_type()
                     .ptr_type(AddressSpace::default())

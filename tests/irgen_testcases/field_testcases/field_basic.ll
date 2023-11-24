@@ -1,5 +1,5 @@
-; ModuleID = 'BoolBasicTest'
-source_filename = "bool_basic"
+; ModuleID = 'FieldBasicTest'
+source_filename = "field_basic"
 
 @heap_address = internal global i64 -4294967353
 
@@ -225,7 +225,7 @@ exit:                                             ; preds = %loop
   ret i64 %3
 }
 
-define void @testBoolDeclareUninitialized() {
+define void @testFieldDeclareUninitialized() {
 entry:
   %a = alloca i64, align 8
   store i64 0, ptr %a, align 4
@@ -234,30 +234,30 @@ entry:
   ret void
 }
 
-define void @testBoolDeclareInitialized() {
+define void @testFieldDeclareInitialized() {
 entry:
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
+  store i64 5, ptr %a, align 4
   %0 = load i64, ptr %a, align 4
   call void @prophet_printf(i64 %0, i64 3)
   ret void
 }
 
-define void @testBoolDeclareThenInitialized() {
+define void @testFieldDeclareThenInitialized() {
 entry:
   %a = alloca i64, align 8
   store i64 0, ptr %a, align 4
-  store i64 1, ptr %a, align 4
+  store i64 5, ptr %a, align 4
   %0 = load i64, ptr %a, align 4
   call void @prophet_printf(i64 %0, i64 3)
   ret void
 }
 
-define void @testBoolInitializedByOther() {
+define void @testFieldInitializedByOther() {
 entry:
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
+  store i64 5, ptr %a, align 4
   %0 = load i64, ptr %a, align 4
   store i64 %0, ptr %b, align 4
   %1 = load i64, ptr %b, align 4
@@ -265,7 +265,7 @@ entry:
   ret void
 }
 
-define void @testBoolAsParameter(i64 %0) {
+define void @testFieldAsParameter(i64 %0) {
 entry:
   %x = alloca i64, align 8
   store i64 %0, ptr %x, align 4
@@ -274,58 +274,134 @@ entry:
   ret void
 }
 
-define i64 @testBoolAsReturnValue() {
+define void @testFieldCallByValue() {
 entry:
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
+  store i64 5, ptr %a, align 4
+  %0 = load i64, ptr %a, align 4
+  call void @testFieldAsParameter(i64 %0)
+  ret void
+}
+
+define i64 @testFieldAsReturnValue() {
+entry:
+  %a = alloca i64, align 8
+  store i64 10, ptr %a, align 4
   %0 = load i64, ptr %a, align 4
   ret i64 %0
 }
 
-define i64 @testBoolAsReturnConstValue() {
+define i64 @testFieldAsReturnConstValue() {
 entry:
-  ret i64 1
+  ret i64 5
 }
 
-define void @testBoolAndOperation() {
+define void @testFieldAddOperation() {
 entry:
   %c = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  store i64 0, ptr %b, align 4
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
-  %2 = and i64 %0, %1
+  %2 = add i64 %0, %1
+  call void @builtin_range_check(i64 %2)
   store i64 %2, ptr %c, align 4
   %3 = load i64, ptr %c, align 4
   call void @prophet_printf(i64 %3, i64 3)
   ret void
 }
 
-define void @testBoolOrOperation() {
+define void @testFieldAddAssignOperation() {
+entry:
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = load i64, ptr %b, align 4
+  %2 = add i64 %0, %1
+  call void @builtin_range_check(i64 %2)
+  store i64 %2, ptr %a, align 4
+  %3 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %3, i64 3)
+  ret void
+}
+
+define void @testFieldSubOperation() {
 entry:
   %c = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  store i64 0, ptr %b, align 4
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
-  %2 = or i64 %0, %1
+  %2 = sub i64 %0, %1
+  call void @builtin_range_check(i64 %2)
   store i64 %2, ptr %c, align 4
   %3 = load i64, ptr %c, align 4
   call void @prophet_printf(i64 %3, i64 3)
   ret void
 }
 
-define void @testBoolEqualOperation() {
+define void @testFieldSubAssignOperation() {
+entry:
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = load i64, ptr %b, align 4
+  %2 = sub i64 %0, %1
+  call void @builtin_range_check(i64 %2)
+  store i64 %2, ptr %a, align 4
+  %3 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %3, i64 3)
+  ret void
+}
+
+define void @testFieldMulOperatoin() {
 entry:
   %c = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  store i64 0, ptr %b, align 4
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = load i64, ptr %b, align 4
+  %2 = mul i64 %0, %1
+  call void @builtin_range_check(i64 %2)
+  store i64 %2, ptr %c, align 4
+  %3 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %3, i64 3)
+  ret void
+}
+
+define void @testFieldMulAssignOperation() {
+entry:
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = load i64, ptr %b, align 4
+  %2 = mul i64 %0, %1
+  call void @builtin_range_check(i64 %2)
+  store i64 %2, ptr %a, align 4
+  %3 = load i64, ptr %a, align 4
+  call void @prophet_printf(i64 %3, i64 3)
+  ret void
+}
+
+define void @testFieldEqualOperation() {
+entry:
+  %c = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
   %2 = icmp eq i64 %0, %1
@@ -335,13 +411,13 @@ entry:
   ret void
 }
 
-define void @testBoolNotEqualOperation() {
+define void @testFieldNotEqualOperation() {
 entry:
   %c = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  store i64 0, ptr %b, align 4
+  store i64 5, ptr %a, align 4
+  store i64 10, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
   %2 = icmp ne i64 %0, %1
@@ -351,61 +427,46 @@ entry:
   ret void
 }
 
-define void @testBoolStateChange() {
+define void @testFieldDecrementOperation() {
 entry:
   %a = alloca i64, align 8
-  store i64 0, ptr %a, align 4
+  store i64 5, ptr %a, align 4
   %0 = load i64, ptr %a, align 4
-  %1 = icmp eq i64 %0, 0
-  store i1 %1, ptr %a, align 1
+  %1 = sub i64 %0, 1
+  store i64 %1, ptr %a, align 4
   %2 = load i64, ptr %a, align 4
   call void @prophet_printf(i64 %2, i64 3)
   ret void
 }
 
-define void @testBoolIfStatement() {
-entry:
-  %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  %0 = load i64, ptr %a, align 4
-  %1 = trunc i64 %0 to i1
-  br i1 %1, label %then, label %else
-
-then:                                             ; preds = %entry
-  call void @prophet_printf(i64 1, i64 3)
-  br label %endif
-
-else:                                             ; preds = %entry
-  call void @prophet_printf(i64 0, i64 3)
-  br label %endif
-
-endif:                                            ; preds = %else, %then
-  ret void
-}
-
-define void @testBoolComplexCondition() {
+define void @testFieldAddOverflow() {
 entry:
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  store i64 1, ptr %a, align 4
-  store i64 0, ptr %b, align 4
+  store i64 -4294967295, ptr %a, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = add i64 %0, 1
+  call void @builtin_range_check(i64 %1)
+  store i64 %1, ptr %b, align 4
+  %2 = load i64, ptr %b, align 4
+  call void @prophet_printf(i64 %2, i64 3)
+  ret void
+}
+
+define void @testFieldSubOverflow() {
+entry:
+  %c = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 0, ptr %a, align 4
+  store i64 1, ptr %b, align 4
   %0 = load i64, ptr %a, align 4
   %1 = load i64, ptr %b, align 4
-  %2 = icmp eq i64 %1, 0
-  %3 = zext i1 %2 to i64
-  %4 = and i64 %0, %3
-  %5 = trunc i64 %4 to i1
-  br i1 %5, label %then, label %else
-
-then:                                             ; preds = %entry
-  call void @prophet_printf(i64 1, i64 3)
-  br label %endif
-
-else:                                             ; preds = %entry
-  call void @prophet_printf(i64 0, i64 3)
-  br label %endif
-
-endif:                                            ; preds = %else, %then
+  %2 = sub i64 %0, %1
+  call void @builtin_range_check(i64 %2)
+  store i64 %2, ptr %c, align 4
+  %3 = load i64, ptr %c, align 4
+  call void @prophet_printf(i64 %3, i64 3)
   ret void
 }
 
@@ -415,42 +476,47 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 545713831, label %func_0_dispatch
-    i64 221470895, label %func_1_dispatch
-    i64 440254908, label %func_2_dispatch
-    i64 2809465727, label %func_3_dispatch
-    i64 427194971, label %func_4_dispatch
-    i64 2396581718, label %func_5_dispatch
-    i64 2005518468, label %func_6_dispatch
-    i64 3600410652, label %func_7_dispatch
-    i64 112580652, label %func_8_dispatch
-    i64 2552612239, label %func_9_dispatch
-    i64 1656297549, label %func_10_dispatch
-    i64 3577672189, label %func_11_dispatch
-    i64 4013971707, label %func_12_dispatch
-    i64 2069354807, label %func_13_dispatch
+    i64 152984180, label %func_0_dispatch
+    i64 3609461752, label %func_1_dispatch
+    i64 3131860681, label %func_2_dispatch
+    i64 569873571, label %func_3_dispatch
+    i64 1659209820, label %func_4_dispatch
+    i64 2579366386, label %func_5_dispatch
+    i64 3239687250, label %func_6_dispatch
+    i64 1020199043, label %func_7_dispatch
+    i64 2485347696, label %func_8_dispatch
+    i64 1818912378, label %func_9_dispatch
+    i64 768394166, label %func_10_dispatch
+    i64 2063831242, label %func_11_dispatch
+    i64 3137010963, label %func_12_dispatch
+    i64 2675702497, label %func_13_dispatch
+    i64 1852256813, label %func_14_dispatch
+    i64 2384806460, label %func_15_dispatch
+    i64 2173053447, label %func_16_dispatch
+    i64 1016974912, label %func_17_dispatch
+    i64 2507941948, label %func_18_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @testBoolDeclareUninitialized()
+  call void @testFieldDeclareUninitialized()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  call void @testBoolDeclareInitialized()
+  call void @testFieldDeclareInitialized()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  call void @testBoolDeclareThenInitialized()
+  call void @testFieldDeclareThenInitialized()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  call void @testBoolInitializedByOther()
+  call void @testFieldInitializedByOther()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
@@ -458,12 +524,17 @@ func_4_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
   %decode_value = load i64, ptr %3, align 4
-  call void @testBoolAsParameter(i64 %decode_value)
+  call void @testFieldAsParameter(i64 %decode_value)
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
-  %4 = call i64 @testBoolAsReturnValue()
+  call void @testFieldCallByValue()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_6_dispatch:                                  ; preds = %entry
+  %4 = call i64 @testFieldAsReturnValue()
   %5 = call i64 @vector_new(i64 2)
   %heap_start = sub i64 %5, 2
   %heap_to_ptr = inttoptr i64 %heap_start to ptr
@@ -474,8 +545,8 @@ func_5_dispatch:                                  ; preds = %entry
   call void @set_tape_data(i64 %heap_start, i64 2)
   ret void
 
-func_6_dispatch:                                  ; preds = %entry
-  %6 = call i64 @testBoolAsReturnConstValue()
+func_7_dispatch:                                  ; preds = %entry
+  %6 = call i64 @testFieldAsReturnConstValue()
   %7 = call i64 @vector_new(i64 2)
   %heap_start2 = sub i64 %7, 2
   %heap_to_ptr3 = inttoptr i64 %heap_start2 to ptr
@@ -486,38 +557,58 @@ func_6_dispatch:                                  ; preds = %entry
   call void @set_tape_data(i64 %heap_start2, i64 2)
   ret void
 
-func_7_dispatch:                                  ; preds = %entry
-  call void @testBoolAndOperation()
-  call void @set_tape_data(i64 0, i64 0)
-  ret void
-
 func_8_dispatch:                                  ; preds = %entry
-  call void @testBoolOrOperation()
+  call void @testFieldAddOperation()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_9_dispatch:                                  ; preds = %entry
-  call void @testBoolEqualOperation()
+  call void @testFieldAddAssignOperation()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_10_dispatch:                                 ; preds = %entry
-  call void @testBoolNotEqualOperation()
+  call void @testFieldSubOperation()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_11_dispatch:                                 ; preds = %entry
-  call void @testBoolStateChange()
+  call void @testFieldSubAssignOperation()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_12_dispatch:                                 ; preds = %entry
-  call void @testBoolIfStatement()
+  call void @testFieldMulOperatoin()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_13_dispatch:                                 ; preds = %entry
-  call void @testBoolComplexCondition()
+  call void @testFieldMulAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_14_dispatch:                                 ; preds = %entry
+  call void @testFieldEqualOperation()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_15_dispatch:                                 ; preds = %entry
+  call void @testFieldNotEqualOperation()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_16_dispatch:                                 ; preds = %entry
+  call void @testFieldDecrementOperation()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_17_dispatch:                                 ; preds = %entry
+  call void @testFieldAddOverflow()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_18_dispatch:                                 ; preds = %entry
+  call void @testFieldSubOverflow()
   call void @set_tape_data(i64 0, i64 0)
   ret void
 }

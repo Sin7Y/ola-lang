@@ -113,6 +113,7 @@ impl Type {
     pub fn get_type_size(&self) -> u16 {
         match self {
             Type::Uint(n) => *n,
+            Type::Field => 64,
             Type::Bool => 1,
             _ => unimplemented!("size of type not known"),
         }

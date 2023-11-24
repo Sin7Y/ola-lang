@@ -559,6 +559,7 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @onlyEntrypointCall()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -585,6 +586,7 @@ func_2_dispatch:                                  ; preds = %entry
   %10 = inttoptr i64 %9 to ptr
   %decode_value3 = load i64, ptr %10, align 4
   call void @setNonce(ptr %8, i64 %decode_value3)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry

@@ -266,13 +266,13 @@ entry:
 
 then:                                             ; preds = %entry
   %5 = call ptr @callTx(ptr %2)
-  br label %enif
+  br label %endif
 
 else:                                             ; preds = %entry
   call void @sendTx(ptr %2)
-  br label %enif
+  br label %endif
 
-enif:                                             ; preds = %else, %then
+endif:                                            ; preds = %else, %then
   ret void
 }
 
@@ -497,7 +497,7 @@ entry:
   store i64 %length, ptr %code_len, align 4
   %3 = load i64, ptr %code_len, align 4
   %4 = icmp ne i64 %3, 0
-  br i1 %4, label %then, label %enif
+  br i1 %4, label %then, label %endif
 
 then:                                             ; preds = %entry
   %struct_member1 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 5
@@ -576,9 +576,9 @@ then:                                             ; preds = %entry
   store i64 %decode_value, ptr %is_codehash_known, align 4
   %29 = load i64, ptr %is_codehash_known, align 4
   %30 = icmp eq i64 %29, 0
-  br i1 %30, label %then19, label %enif20
+  br i1 %30, label %then19, label %endif20
 
-enif:                                             ; preds = %enif20, %entry
+endif:                                            ; preds = %endif20, %entry
   ret void
 
 then19:                                           ; preds = %then
@@ -627,9 +627,9 @@ then19:                                           ; preds = %then
   store i64 %return_length34, ptr %heap_to_ptr38, align 4
   %45 = add i64 %heap_start37, 1
   call void @get_tape_data(i64 %45, i64 %tape_size36)
-  br label %enif20
+  br label %endif20
 
-enif20:                                           ; preds = %then19, %then
+endif20:                                          ; preds = %then19, %then
   %46 = call i64 @vector_new(i64 4)
   %heap_start39 = sub i64 %46, 4
   %heap_to_ptr40 = inttoptr i64 %heap_start39 to ptr
@@ -672,7 +672,7 @@ enif20:                                           ; preds = %then19, %then
   %59 = load ptr, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
   %60 = call i64 @memcmp_eq(ptr %58, ptr %59, i64 4)
   call void @builtin_assert(i64 %60)
-  br label %enif
+  br label %endif
 }
 
 define ptr @getSignedHash(ptr %0) {
@@ -2017,6 +2017,7 @@ func_0_dispatch:                                  ; preds = %entry
   %16 = inttoptr i64 %15 to ptr
   %decode_value19 = load i64, ptr %16, align 4
   call void @system_entrance(ptr %heap_to_ptr, i64 %decode_value19)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -2067,6 +2068,7 @@ func_1_dispatch:                                  ; preds = %entry
   %struct_member45 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr37, i32 0, i32 7
   store ptr %27, ptr %struct_member45, align 8
   call void @validateTxStructure(ptr %heap_to_ptr37)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
@@ -2188,6 +2190,7 @@ func_3_dispatch:                                  ; preds = %entry
   %struct_member102 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr94, i32 0, i32 7
   store ptr %60, ptr %struct_member102, align 8
   call void @sendTx(ptr %heap_to_ptr94)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_4_dispatch:                                  ; preds = %entry
@@ -2238,6 +2241,7 @@ func_4_dispatch:                                  ; preds = %entry
   %struct_member128 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr120, i32 0, i32 7
   store ptr %72, ptr %struct_member128, align 8
   call void @validateTx(ptr %heap_to_ptr120)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
@@ -2288,6 +2292,7 @@ func_5_dispatch:                                  ; preds = %entry
   %struct_member154 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr146, i32 0, i32 7
   store ptr %84, ptr %struct_member154, align 8
   call void @validateDeployment(ptr %heap_to_ptr146)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_6_dispatch:                                  ; preds = %entry
@@ -2398,6 +2403,7 @@ func_8_dispatch:                                  ; preds = %entry
   %input_start197 = ptrtoint ptr %input to i64
   %122 = inttoptr i64 %input_start197 to ptr
   call void @validate_sender(ptr %122)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_9_dispatch:                                  ; preds = %entry
@@ -2407,6 +2413,7 @@ func_9_dispatch:                                  ; preds = %entry
   %125 = inttoptr i64 %124 to ptr
   %decode_value199 = load i64, ptr %125, align 4
   call void @validate_nonce(ptr %123, i64 %decode_value199)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_10_dispatch:                                 ; preds = %entry
@@ -2461,6 +2468,7 @@ func_10_dispatch:                                 ; preds = %entry
   %struct_member225 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr217, i32 0, i32 7
   store ptr %140, ptr %struct_member225, align 8
   call void @validate_tx(ptr %126, ptr %128, ptr %heap_to_ptr217)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_11_dispatch:                                 ; preds = %entry

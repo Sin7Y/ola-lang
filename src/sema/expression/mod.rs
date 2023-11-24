@@ -286,7 +286,7 @@ impl Expression {
                     expr: Box::new(self.clone()),
                 }),
             },
-            (Type::Field, Type::Uint(32)) | (Type::Uint(32), Type::Field) => Ok(self.clone()),
+            (Type::Uint(32), Type::Field) => Ok(self.clone()),
             (Type::Field, Type::DynamicBytes) | (Type::DynamicBytes, Type::Field) => {
                 Ok(Expression::BytesCast {
                     loc: *loc,

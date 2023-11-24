@@ -290,6 +290,7 @@ func_0_dispatch:                                  ; preds = %entry
   %15 = inttoptr i64 %14 to ptr
   %decode_value2 = load i64, ptr %15, align 4
   call void @foo(ptr %3, ptr %6, ptr %9, ptr %11, i64 %decode_value, i64 %decode_value2)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 

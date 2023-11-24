@@ -468,6 +468,15 @@ contract U32BasicTest {
         print(c);
     }
 
+    // BEGIN-CHECK: define void @testU32ConvertToField()
+    fn testU32ConvertToField() {
+        u32 a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: store i64 %0, ptr %f, align 4
+        field f = field(a);
+        print(f);
+    }
+
     // BEGIN-CHECK: define void @testU32LocalScope()
     fn testU32LocalScope() {
         // CHECK: %a1 = alloca i64, align 8

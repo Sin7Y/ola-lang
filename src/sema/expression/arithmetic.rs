@@ -53,6 +53,15 @@ pub(super) fn bitwise_or(
     check_var_usage_expression(ns, &left, &right, symtable);
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+    if ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
 
     Ok(Expression::BitwiseOr {
         loc: *loc,
@@ -79,6 +88,16 @@ pub(super) fn bitwise_and(
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
 
+    if ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
+
     Ok(Expression::BitwiseAnd {
         loc: *loc,
         ty: ty.clone(),
@@ -103,6 +122,16 @@ pub(super) fn bitwise_xor(
     check_var_usage_expression(ns, &left, &right, symtable);
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+
+    if ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
 
     Ok(Expression::BitwiseXor {
         loc: *loc,
@@ -133,6 +162,16 @@ pub(super) fn shift_left(
 
     let left_type = left.ty().deref_any().clone();
 
+    if left_type == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
+
     Ok(Expression::ShiftLeft {
         loc: *loc,
         ty: left_type.clone(),
@@ -161,6 +200,16 @@ pub(super) fn shift_right(
     // right hand size may be int/uint
     let _ = type_bits(&left_type, &l.loc(), ns, diagnostics)?;
     let right_length = type_bits(&right.ty(), &r.loc(), ns, diagnostics)?;
+
+    if left_type == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
 
     Ok(Expression::ShiftRight {
         loc: *loc,
@@ -226,7 +275,10 @@ pub(super) fn divide(
 
     match right {
         Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-            diagnostics.push(Diagnostic::error(*loc, format!("Division by zero is not allowed.")));
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                format!("Division by zero is not allowed."),
+            ));
             return Err(());
         }
         _ => {}
@@ -235,6 +287,16 @@ pub(super) fn divide(
     check_var_usage_expression(ns, &left, &right, symtable);
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+
+    if ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
 
     Ok(Expression::Divide {
         loc: *loc,
@@ -259,7 +321,10 @@ pub(super) fn modulo(
 
     match right {
         Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-            diagnostics.push(Diagnostic::error(*loc, format!("Modulo by zero is not allowed.")));
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                format!("Modulo by zero is not allowed."),
+            ));
             return Err(());
         }
         _ => {}
@@ -268,6 +333,16 @@ pub(super) fn modulo(
     check_var_usage_expression(ns, &left, &right, symtable);
 
     let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+
+    if ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
 
     Ok(Expression::Modulo {
         loc: *loc,
@@ -310,6 +385,16 @@ pub(super) fn power(
     let exp_type = exp.ty();
 
     let ty = coerce_number(&base_type, &b.loc(), &exp_type, &e.loc(), ns, diagnostics)?;
+
+    if ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
 
     Ok(Expression::Power {
         loc: *loc,
@@ -407,9 +492,12 @@ pub(super) fn is_string_equal(
         | (Expression::BytesLiteral { value: l, .. }, Type::DynamicBytes) => {
             return Ok(Some(Expression::StringCompare {
                 loc: *loc,
-                left: StringLocation::RunTime(
-                    Box::new(right.cast(&right.loc(), right_type.deref_any(), ns, diagnostics)?)
-                ),
+                left: StringLocation::RunTime(Box::new(right.cast(
+                    &right.loc(),
+                    right_type.deref_any(),
+                    ns,
+                    diagnostics,
+                )?)),
                 right: StringLocation::CompileTime(l.clone()),
             }));
         }
@@ -421,9 +509,12 @@ pub(super) fn is_string_equal(
         | (Expression::BytesLiteral { value, .. }, Type::DynamicBytes) => {
             return Ok(Some(Expression::StringCompare {
                 loc: *loc,
-                left: StringLocation::RunTime(
-                    Box::new(left.cast(&left.loc(), left_type.deref_any(), ns, diagnostics)?)
-                ),
+                left: StringLocation::RunTime(Box::new(left.cast(
+                    &left.loc(),
+                    left_type.deref_any(),
+                    ns,
+                    diagnostics,
+                )?)),
                 right: StringLocation::CompileTime(value.clone()),
             }));
         }
@@ -434,12 +525,18 @@ pub(super) fn is_string_equal(
         (Type::String, Type::String) => {
             return Ok(Some(Expression::StringCompare {
                 loc: *loc,
-                left: StringLocation::RunTime(
-                    Box::new(left.cast(&left.loc(), left_type.deref_any(), ns, diagnostics)?)
-                ),
-                right: StringLocation::RunTime(
-                    Box::new(right.cast(&right.loc(), right_type.deref_any(), ns, diagnostics)?)
-                ),
+                left: StringLocation::RunTime(Box::new(left.cast(
+                    &left.loc(),
+                    left_type.deref_any(),
+                    ns,
+                    diagnostics,
+                )?)),
+                right: StringLocation::RunTime(Box::new(right.cast(
+                    &right.loc(),
+                    right_type.deref_any(),
+                    ns,
+                    diagnostics,
+                )?)),
             }));
         }
         _ => {}
@@ -507,22 +604,21 @@ pub(super) fn incr_decr(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-    let op =
-        |e: Expression, ty: Type| -> Expression {
-            match expr {
-                program::Expression::Increment(loc, _) => Expression::Increment {
-                    loc: *loc,
-                    ty,
-                    expr: Box::new(e),
-                },
-                program::Expression::Decrement(loc, _) => Expression::Decrement {
-                    loc: *loc,
-                    ty,
-                    expr: Box::new(e),
-                },
-                _ => unreachable!(),
-            }
-        };
+    let op = |e: Expression, ty: Type| -> Expression {
+        match expr {
+            program::Expression::Increment(loc, _) => Expression::Increment {
+                loc: *loc,
+                ty,
+                expr: Box::new(e),
+            },
+            program::Expression::Decrement(loc, _) => Expression::Decrement {
+                loc: *loc,
+                ty,
+                expr: Box::new(e),
+            },
+            _ => unreachable!(),
+        }
+    };
 
     let mut context = context.clone();
 
@@ -562,7 +658,7 @@ pub(super) fn incr_decr(
         }
         Expression::Variable { ty, var_no, .. } => {
             match ty {
-                Type::Uint(_) => (),
+                Type::Uint(_) | Type::Field => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -579,7 +675,7 @@ pub(super) fn incr_decr(
         }
         _ => match &var_ty {
             Type::Ref(r_ty) => match r_ty.as_ref() {
-                Type::Uint(_) => Ok(op(var, r_ty.as_ref().clone())),
+                Type::Uint(_) | Type::Field => Ok(op(var, r_ty.as_ref().clone())),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),

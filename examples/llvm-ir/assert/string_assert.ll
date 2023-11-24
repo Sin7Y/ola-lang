@@ -291,6 +291,7 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @test()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 
