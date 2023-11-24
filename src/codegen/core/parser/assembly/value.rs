@@ -53,10 +53,7 @@ pub fn parse_constant_int(
 ) -> IResult<&str, ConstantInt, VerboseError<&str>> {
     let (source, num) = preceded(
         spaces,
-        recognize(tuple((
-            opt(char('-')),
-            alt((digit1, tag("true"), tag("false"))),
-        ))),
+        recognize(tuple((opt(char('-')), alt((digit1, tag("true"), tag("false")))))),
     )(source)?;
     let val = match ty {
         I1 => ConstantInt::Int1(num == "true"),

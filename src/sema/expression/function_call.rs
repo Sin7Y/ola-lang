@@ -262,10 +262,9 @@ fn function_call_named_args(
 
     match function_nos.len() {
         0 => {
-            diagnostics.push(Diagnostic::error(
-                id.loc,
-                format!("unknown function or type '{}'", id.name),
-            ));
+            diagnostics.push(
+                Diagnostic::error(id.loc, format!("unknown function or type '{}'", id.name))
+            );
         }
         1 => diagnostics.extend(errors),
         _ => {
@@ -665,12 +664,9 @@ fn try_type_method(
                     loc: *loc,
                     ty,
                     args: Box::new(args),
-                    address: Box::new(var_expr.cast(
-                        &var_expr.loc(),
-                        &Type::Address,
-                        ns,
-                        diagnostics,
-                    )?),
+                    address: Box::new(
+                        var_expr.cast(&var_expr.loc(), &Type::Address, ns, diagnostics)?
+                    ),
                     call_args,
                 }));
             }
@@ -721,12 +717,7 @@ pub(super) fn parse_call_args(
                     ResolveTo::Type(&ty),
                 )?;
 
-                res.value = Some(Box::new(expr.cast(
-                    &arg.expr.loc(),
-                    &ty,
-                    ns,
-                    diagnostics,
-                )?));
+                res.value = Some(Box::new(expr.cast(&arg.expr.loc(), &ty, ns, diagnostics)?));
             }
             "gas" => {
                 let ty = Type::Uint(32);
@@ -740,12 +731,7 @@ pub(super) fn parse_call_args(
                     ResolveTo::Type(&ty),
                 )?;
 
-                res.gas = Some(Box::new(expr.cast(
-                    &arg.expr.loc(),
-                    &ty,
-                    ns,
-                    diagnostics,
-                )?));
+                res.gas = Some(Box::new(expr.cast(&arg.expr.loc(), &ty, ns, diagnostics)?));
             }
             _ => {
                 diagnostics.push(Diagnostic::error(
@@ -796,16 +782,18 @@ pub(super) fn method_call_pos_args(
         return Ok(expr);
     }
 
-    if let Some(resolved_call) = try_storage_reference(
-        &var_expr,
-        func,
-        args,
-        context,
-        diagnostics,
-        ns,
-        symtable,
-        &resolve_to,
-    )? {
+    if let Some(resolved_call) =
+        try_storage_reference(
+            &var_expr,
+            func,
+            args,
+            context,
+            diagnostics,
+            ns,
+            symtable,
+            &resolve_to,
+        )?
+    {
         return Ok(resolved_call);
     }
 
@@ -837,10 +825,8 @@ pub(super) fn method_call_pos_args(
     match diagnostics_type {
         1 => diagnostics.extend(type_method_diagnostics),
         // If 'diagnostics_type' is 2, we have errors from both type_method and resolve_using.
-        _ => diagnostics.push(Diagnostic::error(
-            func.loc,
-            format!("method '{}' does not exist", func.name),
-        )),
+        _ => diagnostics
+            .push(Diagnostic::error(func.loc, format!("method '{}' does not exist", func.name))),
     }
 
     Err(())
@@ -875,10 +861,9 @@ pub fn collect_call_args<'a>(
             }
             program::Statement::Block { statements, .. } if statements.is_empty() => {
                 // {}
-                diagnostics.push(Diagnostic::error(
-                    block.loc(),
-                    "missing call arguments".to_string(),
-                ));
+                diagnostics.push(
+                    Diagnostic::error(block.loc(), "missing call arguments".to_string())
+                );
                 return Err(());
             }
             _ => {
@@ -916,10 +901,7 @@ pub fn named_call_expr(
             return named_struct_literal(loc, &str_ty, args, context, ns, symtable, diagnostics);
         }
         Ok(_) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "struct or function expected".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "struct or function expected".to_string()));
             return Err(());
         }
         _ => {}
@@ -934,16 +916,17 @@ pub fn named_call_expr(
         return Err(());
     }
 
-    let expr = named_function_call_expr(
-        loc,
-        ty,
-        args,
-        context,
-        ns,
-        symtable,
-        diagnostics,
-        resolve_to,
-    )?;
+    let expr =
+        named_function_call_expr(
+            loc,
+            ty,
+            args,
+            context,
+            ns,
+            symtable,
+            diagnostics,
+            resolve_to,
+        )?;
 
     check_function_call(ns, &expr, symtable);
     if expr.tys().len() > 1 && !is_destructible {
@@ -978,16 +961,10 @@ pub fn call_expr(
         Ok(to) => {
             // Cast
             return if args.is_empty() {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "missing argument to cast".to_string(),
-                ));
+                diagnostics.push(Diagnostic::error(*loc, "missing argument to cast".to_string()));
                 Err(())
             } else if args.len() > 1 {
-                diagnostics.push(Diagnostic::error(
-                    *loc,
-                    "too many arguments to cast".to_string(),
-                ));
+                diagnostics.push(Diagnostic::error(*loc, "too many arguments to cast".to_string()));
                 Err(())
             } else {
                 let expr = expression(
@@ -1012,16 +989,18 @@ pub fn call_expr(
         {
             new(loc, ty, args, context, ns, symtable, diagnostics)?
         }
-        _ => function_call_expr(
-            loc,
-            ty,
-            args,
-            context,
-            ns,
-            symtable,
-            diagnostics,
-            resolve_to,
-        )?,
+        _ => {
+            function_call_expr(
+                loc,
+                ty,
+                args,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                resolve_to,
+            )?
+        }
     };
 
     check_function_call(ns, &expr, symtable);
@@ -1114,10 +1093,7 @@ pub fn function_call_expr(
             )
         }
         _ => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "expression is not a function".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "expression is not a function".to_string()));
             Err(())
         }
     }
@@ -1157,17 +1133,13 @@ pub fn named_function_call_expr(
             )
         }
         program::Expression::ArraySubscript(..) => {
-            diagnostics.push(Diagnostic::error(
-                ty.loc(),
-                "unexpected array type".to_string(),
-            ));
+            diagnostics.push(Diagnostic::error(ty.loc(), "unexpected array type".to_string()));
             Err(())
         }
         _ => {
-            diagnostics.push(Diagnostic::error(
-                ty.loc(),
-                "expression not expected here".to_string(),
-            ));
+            diagnostics.push(
+                Diagnostic::error(ty.loc(), "expression not expected here".to_string())
+            );
             Err(())
         }
     }

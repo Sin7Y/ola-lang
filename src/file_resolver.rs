@@ -241,20 +241,22 @@ impl FileResolver {
         file: &ast::File,
         loc: &Loc,
     ) -> (String, usize, usize, usize) {
-        let (start, end) = if let Loc::File(_, start, end) = loc {
-            (start, end)
-        } else {
-            unreachable!();
-        };
+        let (start, end) =
+            if let Loc::File(_, start, end) = loc {
+                (start, end)
+            } else {
+                unreachable!();
+            };
         let cache_no = file.cache_no.unwrap();
         let (begin_line, mut begin_column) = file.offset_to_line_column(*start);
         let (end_line, mut end_column) = file.offset_to_line_column(*end);
 
-        let mut full_line = self.files[cache_no]
-            .lines()
-            .nth(begin_line)
-            .unwrap()
-            .to_owned();
+        let mut full_line =
+            self.files[cache_no]
+                .lines()
+                .nth(begin_line)
+                .unwrap()
+                .to_owned();
 
         // If the loc spans across multiple lines, we concatenate them
         if begin_line != end_line {

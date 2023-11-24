@@ -183,9 +183,7 @@ impl<'a, 'b: 'a> FunctionAsmPrinter<'a, 'b> {
             "{}",
             inst.display(data, types)
                 .set_inst_name_fn(Box::new(|id| { self.indexes.get(&Ids::Inst(id)).cloned() }))
-                .set_block_name_fn(Box::new(|id| {
-                    self.indexes.get(&Ids::Block(id)).cloned()
-                }))
+                .set_block_name_fn(Box::new(|id| { self.indexes.get(&Ids::Block(id)).cloned() }))
         )?;
 
         for (kind, meta) in &inst.metadata {

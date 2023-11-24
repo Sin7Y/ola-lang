@@ -33,14 +33,8 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 15]> = Lazy::new(|| {
             libfunc: LibFunc::ArraySort,
             namespace: None,
             name: "u32_array_sort",
-            params: vec![Type::Array(
-                Box::new(Type::Uint(32)),
-                vec![ArrayLength::Dynamic],
-            )],
-            ret: vec![Type::Array(
-                Box::new(Type::Uint(32)),
-                vec![ArrayLength::Dynamic],
-            )],
+            params: vec![Type::Array(Box::new(Type::Uint(32)), vec![ArrayLength::Dynamic])],
+            ret: vec![Type::Array(Box::new(Type::Uint(32)), vec![ArrayLength::Dynamic])],
         },
         Prototype {
             libfunc: LibFunc::Assert,
@@ -558,11 +552,12 @@ pub fn resolve_method_call(
         } else {
             cast_args.insert(0, expr.clone());
 
-            let returns = if func.ret.is_empty() {
-                vec![Type::Void]
-            } else {
-                func.ret.to_vec()
-            };
+            let returns =
+                if func.ret.is_empty() {
+                    vec![Type::Void]
+                } else {
+                    func.ret.to_vec()
+                };
 
             return Ok(Some(Expression::LibFunction {
                 loc: id.loc,

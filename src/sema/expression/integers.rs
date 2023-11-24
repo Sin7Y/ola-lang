@@ -44,10 +44,9 @@ pub(super) fn type_bits(
         Type::Uint(n) => Ok(*n),
         Type::Field => Ok(32),
         Type::Enum(n) => {
-            diagnostics.push(Diagnostic::error(
-                *l_loc,
-                format!("type enum {} not allowed", ns.enums[*n]),
-            ));
+            diagnostics.push(
+                Diagnostic::error(*l_loc, format!("type enum {} not allowed", ns.enums[*n]))
+            );
             Err(())
         }
         Type::Struct(no) => {

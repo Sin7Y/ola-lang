@@ -51,14 +51,69 @@ fn main() {
                             .value_parser(ValueParser::os_string()),
                     ),
             )
+            .subcommand(
+                Command::new("compile-ir")
+                    .about("Compile ir source files")
+                    .arg(
+                        Arg::new("INPUT")
+                            .help("Ola input files")
+                            .required(true)
+                            .value_parser(ValueParser::os_string())
+                            .num_args(1..),
+                    )
+                    .arg(
+                        Arg::new("OUTPUT")
+                            .help("output directory")
+                            .short('o')
+                            .long("output")
+                            .num_args(1)
+                            .value_parser(ValueParser::os_string()),
+                    ),
+            )
     };
     let matches = app().get_matches();
 
     match matches.subcommand() {
         Some(("compile", matches)) => compile(matches),
+        Some(("compile-ir", matches)) => compile_ir(matches),
         None | Some(_) => {
             app().print_help().unwrap();
             println!();
+        }
+    }
+}
+
+fn compile_ir(matches: &ArgMatches) {
+    let mut resolver = imports_arg(matches);
+
+    for filename in matches.get_many::<OsString>("INPUT").unwrap() {
+        process_ir_file(filename, &mut resolver, matches);
+    }
+}
+
+fn process_ir_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatches) {
+    match resolver.resolve_file(None, filename) {
+        Err(_) => (),
+        Ok(file) => {
+            let (source_code, _) = resolver.get_file_contents_and_number(&file.full_path);
+            // Parse the assembly and get a module
+            let module = Module::try_from(source_code.to_string().as_str())
+                .expect("failed to parse LLVM IR");
+            // Compile the module for Ola and get a machine module
+            let isa = Ola::default();
+            let code = compile_module(&isa, &module).expect("failed to compile");
+
+            let filename_lossy = filename.to_string_lossy().clone();
+            let filename_string = String::from(filename_lossy);
+            let filename_stem = Path::new(&filename_string).file_prefix().unwrap();
+            let stem = filename_stem.to_string_lossy().to_string() + "_asm";
+            let asm_path = output_file(matches, &stem, "json");
+            let mut asm_file = create_file(&asm_path);
+
+            if let Err(err) = asm_file.write_all(format!("{}", code.display_asm()).as_bytes()) {
+                eprintln!("{}: error: {}", asm_path.display(), err);
+                exit(1);
+            }
         }
     }
 }
@@ -100,34 +155,61 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
 
     // gen llvm ir、asm、abi、ast phase
     for contract_no in 0..ns.contracts.len() {
-
         let filename_lossy = filename.to_string_lossy().clone();
         let filename_string = String::from(filename_lossy);
         let filename_stem = Path::new(&filename_string).file_prefix().unwrap();
 
         match matches.get_one::<String>("Generate").map(|v| v.as_str()) {
             Some("llvm-ir") => {
-                generate_llvm_ir(contract_no, matches, filename_stem.to_string_lossy().to_string(), &mut ns);
+                generate_llvm_ir(
+                    contract_no,
+                    matches,
+                    filename_stem.to_string_lossy().to_string(),
+                    &mut ns,
+                );
             }
             Some("abi") => {
-                generate_abi(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_abi", &mut ns);
+                generate_abi(
+                    contract_no,
+                    matches,
+                    filename_stem.to_string_lossy().to_string() + "_abi",
+                    &mut ns,
+                );
             }
             Some("asm") => {
-                generate_asm(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_asm", &mut ns);
+                generate_asm(
+                    contract_no,
+                    matches,
+                    filename_stem.to_string_lossy().to_string() + "_asm",
+                    &mut ns,
+                );
             }
             Some("ast") => {
-                generate_ast( matches, filename_stem.to_string_lossy().to_string(), &mut ns);
+                generate_ast(
+                    matches,
+                    filename_stem.to_string_lossy().to_string(),
+                    &mut ns,
+                );
             }
             None | Some(_) => {
-                generate_abi(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_abi", &mut ns);
-                generate_asm(contract_no, matches, filename_stem.to_string_lossy().to_string() + "_asm", &mut ns);
+                generate_abi(
+                    contract_no,
+                    matches,
+                    filename_stem.to_string_lossy().to_string() + "_abi",
+                    &mut ns,
+                );
+                generate_asm(
+                    contract_no,
+                    matches,
+                    filename_stem.to_string_lossy().to_string() + "_asm",
+                    &mut ns,
+                );
             }
         }
     }
 
     ns
 }
-
 
 fn generate_ast(matches: &ArgMatches, name: String, ns: &mut Namespace) {
     let filepath = PathBuf::from(name);
@@ -144,13 +226,12 @@ fn generate_ast(matches: &ArgMatches, name: String, ns: &mut Namespace) {
     }
 }
 
-fn generate_abi(contract_no: usize,matches: &ArgMatches, name: String, ns: &mut Namespace) {
+fn generate_abi(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut Namespace) {
     let (metadata, meta_ext) = abi::generate_abi(contract_no, &ns);
     let meta_filename = output_file(matches, &name, meta_ext);
     let mut file = create_file(&meta_filename);
     file.write_all(metadata.as_bytes()).unwrap();
 }
-
 
 fn generate_llvm_ir(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut Namespace) {
     let resolved_contract = &ns.contracts[contract_no];
@@ -165,8 +246,8 @@ fn generate_asm(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut
     let context = inkwell::context::Context::create();
     let binary = resolved_contract.binary(&ns, &context, &name);
     // Parse the assembly and get a module
-    let module = Module::try_from(binary.module.to_string().as_str())
-        .expect("failed to parse LLVM IR");
+    let module =
+        Module::try_from(binary.module.to_string().as_str()).expect("failed to parse LLVM IR");
     // Compile the module for Ola and get a machine module
     let isa = Ola::default();
     let code = compile_module(&isa, &module).expect("failed to compile");

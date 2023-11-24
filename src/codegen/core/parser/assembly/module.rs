@@ -230,7 +230,7 @@ fn parse_module2() {
             Attribute::NoInline,
             Attribute::NoUnwind,
             Attribute::OptNone,
-            Attribute::UWTable, 
+            Attribute::UWTable,
             Attribute::StringAttribute {kind: "correctly-rounded-divide-sqrt-fp-math".to_string(), value: "false"                     .to_string()},
             Attribute::StringAttribute {kind: "disable-tail-calls"                   .to_string(), value: "false"                     .to_string()},
             Attribute::StringAttribute {kind: "frame-pointer"                        .to_string(), value: "all"                       .to_string()},

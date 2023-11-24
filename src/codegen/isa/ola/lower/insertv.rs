@@ -48,17 +48,18 @@ pub fn lower_insertvalue(
             value[ist_idx as usize].clone()
         };
         debug_println!("insert value operand data: {:?}", input);
-        let opcode = match input {
-            OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
-            OperandData::VReg(_) => opcode,
-            e => {
-                return Err(LoweringError::Todo(format!(
-                    "Unsupported insertvalue idx operand data type: {:?}",
-                    e
-                ))
-                .into())
-            }
-        };
+        let opcode =
+            match input {
+                OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
+                OperandData::VReg(_) => opcode,
+                e => {
+                    return Err(LoweringError::Todo(format!(
+                        "Unsupported insertvalue idx operand data type: {:?}",
+                        e
+                    ))
+                    .into())
+                }
+            };
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode,

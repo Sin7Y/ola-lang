@@ -226,15 +226,10 @@ pub(super) fn divide(
 
     match right {
         Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-        diagnostics.push(Diagnostic::error(
-                *loc,
-                format!(
-                    "Division by zero is not allowed."
-                ),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, format!("Division by zero is not allowed.")));
             return Err(());
         }
-        _ => {},
+        _ => {}
     }
 
     check_var_usage_expression(ns, &left, &right, symtable);
@@ -264,15 +259,10 @@ pub(super) fn modulo(
 
     match right {
         Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-        diagnostics.push(Diagnostic::error(
-                *loc,
-                format!(
-                    "Modulo by zero is not allowed."
-                ),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, format!("Modulo by zero is not allowed.")));
             return Err(());
         }
-        _ => {},
+        _ => {}
     }
 
     check_var_usage_expression(ns, &left, &right, symtable);
@@ -417,12 +407,9 @@ pub(super) fn is_string_equal(
         | (Expression::BytesLiteral { value: l, .. }, Type::DynamicBytes) => {
             return Ok(Some(Expression::StringCompare {
                 loc: *loc,
-                left: StringLocation::RunTime(Box::new(right.cast(
-                    &right.loc(),
-                    right_type.deref_any(),
-                    ns,
-                    diagnostics,
-                )?)),
+                left: StringLocation::RunTime(
+                    Box::new(right.cast(&right.loc(), right_type.deref_any(), ns, diagnostics)?)
+                ),
                 right: StringLocation::CompileTime(l.clone()),
             }));
         }
@@ -434,12 +421,9 @@ pub(super) fn is_string_equal(
         | (Expression::BytesLiteral { value, .. }, Type::DynamicBytes) => {
             return Ok(Some(Expression::StringCompare {
                 loc: *loc,
-                left: StringLocation::RunTime(Box::new(left.cast(
-                    &left.loc(),
-                    left_type.deref_any(),
-                    ns,
-                    diagnostics,
-                )?)),
+                left: StringLocation::RunTime(
+                    Box::new(left.cast(&left.loc(), left_type.deref_any(), ns, diagnostics)?)
+                ),
                 right: StringLocation::CompileTime(value.clone()),
             }));
         }
@@ -450,18 +434,12 @@ pub(super) fn is_string_equal(
         (Type::String, Type::String) => {
             return Ok(Some(Expression::StringCompare {
                 loc: *loc,
-                left: StringLocation::RunTime(Box::new(left.cast(
-                    &left.loc(),
-                    left_type.deref_any(),
-                    ns,
-                    diagnostics,
-                )?)),
-                right: StringLocation::RunTime(Box::new(right.cast(
-                    &right.loc(),
-                    right_type.deref_any(),
-                    ns,
-                    diagnostics,
-                )?)),
+                left: StringLocation::RunTime(
+                    Box::new(left.cast(&left.loc(), left_type.deref_any(), ns, diagnostics)?)
+                ),
+                right: StringLocation::RunTime(
+                    Box::new(right.cast(&right.loc(), right_type.deref_any(), ns, diagnostics)?)
+                ),
             }));
         }
         _ => {}
@@ -529,21 +507,22 @@ pub(super) fn incr_decr(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
-    let op = |e: Expression, ty: Type| -> Expression {
-        match expr {
-            program::Expression::Increment(loc, _) => Expression::Increment {
-                loc: *loc,
-                ty,
-                expr: Box::new(e),
-            },
-            program::Expression::Decrement(loc, _) => Expression::Decrement {
-                loc: *loc,
-                ty,
-                expr: Box::new(e),
-            },
-            _ => unreachable!(),
-        }
-    };
+    let op =
+        |e: Expression, ty: Type| -> Expression {
+            match expr {
+                program::Expression::Increment(loc, _) => Expression::Increment {
+                    loc: *loc,
+                    ty,
+                    expr: Box::new(e),
+                },
+                program::Expression::Decrement(loc, _) => Expression::Decrement {
+                    loc: *loc,
+                    ty,
+                    expr: Box::new(e),
+                },
+                _ => unreachable!(),
+            }
+        };
 
     let mut context = context.clone();
 

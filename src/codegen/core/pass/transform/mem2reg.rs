@@ -186,13 +186,14 @@ impl<'a> Mem2Reg<'a> {
 
         for load_id in loads {
             let load_idx = self.inst_indexes.get(self.func, load_id);
-            let nearest_store_id = match find_nearest_store(&store_indexes, load_idx) {
-                Some(nearest_store_id) => nearest_store_id,
-                None => {
-                    remove_all_access = false;
-                    continue;
-                }
-            };
+            let nearest_store_id =
+                match find_nearest_store(&store_indexes, load_idx) {
+                    Some(nearest_store_id) => nearest_store_id,
+                    None => {
+                        remove_all_access = false;
+                        continue;
+                    }
+                };
             let nearest_store = self.func.data.inst_ref(nearest_store_id);
             let src = nearest_store.operand.as_store().unwrap().src_val();
 
@@ -320,11 +321,12 @@ impl<'a> Mem2Reg<'a> {
         let entry = self.func.layout.first_block.unwrap();
 
         let mut visited = FxHashSet::default();
-        let mut worklist = vec![RenameData {
-            cur: entry,
-            pred: None,
-            incoming: FxHashMap::default(),
-        }];
+        let mut worklist =
+            vec![RenameData {
+                cur: entry,
+                pred: None,
+                incoming: FxHashMap::default(),
+            }];
 
         while let Some(data) = worklist.pop() {
             self.rename_sub(

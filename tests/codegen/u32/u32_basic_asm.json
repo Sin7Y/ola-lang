@@ -1,0 +1,24 @@
+{
+  "program": "testU32DeclareUninitialized:\n.LBL0_0:\n  add r9 r9 1\n  mov r1 0\n  mstore [r9,-1] r1\n  mload r1 [r9,-1]\n  mov r2 3\n.PROPHET0_0:\n  add r9 r9 -1\n  ret\n",
+  "prophets": [
+    {
+      "label": ".PROPHET0_0",
+      "code": "%{\n    entry() {\n        printf(cid.base, cid.flag);\n    }\n%}",
+      "inputs": [
+        {
+          "name": "cid.base",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        },
+        {
+          "name": "cid.flag",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ],
+      "outputs": []
+    }
+  ]
+}

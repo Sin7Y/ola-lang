@@ -174,10 +174,11 @@ pub fn parse(source: &str, types: Types) -> Result<(&str, Function), Error> {
     let (source, (params, is_var_arg)) = parse_argument_list(source, &types)?;
     let (source, unnamed_addr) = opt(preceded(spaces, super::unnamed_addr::parse))(source)?;
     let (source, func_attrs) = super::attributes::parse_attributes(source)?;
-    let (source, section) = opt(map(
-        tuple((spaces, tag("section"), spaces, string_literal)),
-        |(_, _, _, section)| section,
-    ))(source)?;
+    let (source, section) =
+        opt(map(
+            tuple((spaces, tag("section"), spaces, string_literal)),
+            |(_, _, _, section)| section,
+        ))(source)?;
     let (source, _comdat) = opt(preceded(spaces, tag("comdat")))(source)?;
     let (source, _) = opt(tuple((spaces, tag("align"), spaces, digit1)))(source)?; // TODO: do not ignore 'align N'
     let (mut source, personality) = parse_personality(source, &types)?;
@@ -189,11 +190,9 @@ pub fn parse(source: &str, types: Types) -> Result<(&str, Function), Error> {
     let dummy_block = data.create_block();
 
     for (i, param) in params.iter().enumerate() {
-        let arg = data.create_value(Value::Argument(ArgumentValue::new(
-            i,
-            param.ty,
-            Some(param.name.clone()),
-        )));
+        let arg = data.create_value(
+            Value::Argument(ArgumentValue::new(i, param.ty, Some(param.name.clone())))
+        );
         name_to_value.insert(param.name.clone(), arg);
     }
 

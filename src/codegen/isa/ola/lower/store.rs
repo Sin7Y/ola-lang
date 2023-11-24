@@ -259,22 +259,20 @@ fn lower_store_gep(
             let mut slot = None;
             let mut base = None;
             let base_ty = gep.operand.types()[0];
-            let mut offset = idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as i64
-                - idx1
-                    * ctx
-                        .isa
-                        .data_layout()
-                        .get_size_of(ctx.types, gep.operand.types()[3])
-                        as i64
-                    / 4;
+            let mut offset =
+                idx0 * ctx.isa.data_layout().get_size_of(ctx.types, base_ty) as i64
+                    - idx1
+                        * ctx
+                            .isa
+                            .data_layout()
+                            .get_size_of(ctx.types, gep.operand.types()[3])
+                            as i64
+                        / 4;
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
                 offset = -offset;
             }
 
@@ -297,11 +295,8 @@ fn lower_store_gep(
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
                 offset = -offset;
             }
 
@@ -330,11 +325,8 @@ fn lower_store_gep(
                 slot = Some(*p);
                 debug_println!("store gep, slot {:?}", slot);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
                 debug_println!("store gep, base {:?}", base);
             }
 
@@ -378,11 +370,8 @@ fn lower_store_gep(
             if let Some(p) = ctx.inst_id_to_slot_id.get(base_ptr) {
                 slot = Some(*p);
             } else {
-                base = Some(get_operand_for_val(
-                    ctx,
-                    gep.operand.types()[1],
-                    gep.operand.args()[0],
-                )?);
+                base =
+                    Some(get_operand_for_val(ctx, gep.operand.types()[1], gep.operand.args()[0])?);
             }
 
             let base_ty = gep.operand.types()[0];
