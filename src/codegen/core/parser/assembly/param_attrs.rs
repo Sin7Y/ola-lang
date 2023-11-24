@@ -82,7 +82,5 @@ pub fn parse_param_attrs<'a>(
     source: &'a str,
     types: &types::Types,
 ) -> IResult<&'a str, Vec<ParameterAttribute>, VerboseError<&'a str>> {
-    many0(preceded(spaces, |source: &'a str| {
-        parse_param_attr(source, types)
-    }))(source)
+    many0(preceded(spaces, |source: &'a str| parse_param_attr(source, types)))(source)
 }

@@ -48,13 +48,14 @@ pub fn parse<'a>(
     } else {
         parse_init(source, types, ty)?
     };
-    let (source, align) = opt(preceded(
-        spaces,
-        preceded(
-            char(','),
-            preceded(spaces, preceded(tag("align"), preceded(spaces, digit1))),
-        ),
-    ))(source)?;
+    let (source, align) =
+        opt(preceded(
+            spaces,
+            preceded(
+                char(','),
+                preceded(spaces, preceded(tag("align"), preceded(spaces, digit1))),
+            ),
+        ))(source)?;
     Ok((
         source,
         GlobalVariable {

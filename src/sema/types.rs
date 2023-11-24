@@ -146,11 +146,6 @@ fn check_infinite_struct_size(graph: &Graph, nodes: Vec<usize>, ns: &mut Namespa
 }
 
 /// A struct field is recursive, if it is connected to a cyclic path.
-///
-/// This function checks all structs in the `ns` for any paths leading into the
-/// given `node`. `node` is supposed to be inside a cycle.
-/// All affected struct fields will be flagged as recursive (and infinite size
-/// as well, if they are).
 fn check_recursive_struct_field(node: usize, graph: &Graph, ns: &mut Namespace) {
     for n in 0..ns.structs.len() {
         for path in all_simple_paths::<Vec<_>, &Graph>(graph, n.into(), node.into(), 0, None) {
@@ -303,13 +298,14 @@ pub fn struct_decl(
     for field in &def.fields {
         let mut diagnostics = Diagnostics::default();
 
-        let ty = match ns.resolve_type(file_no, contract_no, &field.ty, &mut diagnostics) {
-            Ok(s) => s,
-            Err(()) => {
-                ns.diagnostics.extend(diagnostics);
-                Type::Unresolved
-            }
-        };
+        let ty =
+            match ns.resolve_type(file_no, contract_no, &field.ty, &mut diagnostics) {
+                Ok(s) => s,
+                Err(()) => {
+                    ns.diagnostics.extend(diagnostics);
+                    Type::Unresolved
+                }
+            };
 
         if let Some(other) = fields.iter().find(|f| {
             f.id.as_ref().map(|id| id.name.as_str())
@@ -427,16 +423,17 @@ fn enum_decl(
         );
     }
 
-    let decl = EnumDecl {
-        name: enum_.name.as_ref().unwrap().name.to_string(),
-        loc: enum_.loc,
-        contract: match contract_no {
-            Some(c) => Some(ns.contracts[c].name.to_owned()),
-            None => None,
-        },
-        ty: Type::Uint(32),
-        values: entries,
-    };
+    let decl =
+        EnumDecl {
+            name: enum_.name.as_ref().unwrap().name.to_string(),
+            loc: enum_.loc,
+            contract: match contract_no {
+                Some(c) => Some(ns.contracts[c].name.to_owned()),
+                None => None,
+            },
+            ty: Type::Uint(32),
+            values: entries,
+        };
 
     let pos = ns.enums.len();
 
@@ -745,10 +742,9 @@ impl Type {
         match self {
             Type::Mapping(Mapping { value, .. }) => Type::StorageRef(value.clone()),
             Type::DynamicBytes | Type::String => Type::Uint(32),
-            Type::Array(ty, dim) if dim.len() > 1 => Type::StorageRef(Box::new(Type::Array(
-                ty.clone(),
-                dim[..dim.len() - 1].to_vec(),
-            ))),
+            Type::Array(ty, dim) if dim.len() > 1 => {
+                Type::StorageRef(Box::new(Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())))
+            }
             Type::Array(ty, dim) if dim.len() == 1 => Type::StorageRef(ty.clone()),
             Type::StorageRef(ty) => ty.storage_array_elem(),
             _ => panic!("deref on non-array"),
@@ -887,12 +883,14 @@ impl Type {
     /// Calculate the alignment
     pub fn align_of(&self, ns: &Namespace) -> usize {
         match self {
-            Type::Struct(n) => ns.structs[*n]
-                .fields
-                .iter()
-                .map(|f| if f.recursive { 1 } else { f.ty.align_of(ns) })
-                .max()
-                .unwrap(),
+            Type::Struct(n) => {
+                ns.structs[*n]
+                    .fields
+                    .iter()
+                    .map(|f| if f.recursive { 1 } else { f.ty.align_of(ns) })
+                    .max()
+                    .unwrap()
+            }
             _ => 1,
         }
     }
@@ -957,10 +955,9 @@ impl Type {
         match self {
             Type::String | Type::DynamicBytes => Type::Ref(Box::new(Type::Uint(32))),
             Type::Ref(t) => t.array_deref(),
-            Type::Array(ty, dim) if dim.len() > 1 => Type::Ref(Box::new(Type::Array(
-                ty.clone(),
-                dim[..dim.len() - 1].to_vec(),
-            ))),
+            Type::Array(ty, dim) if dim.len() > 1 => {
+                Type::Ref(Box::new(Type::Array(ty.clone(), dim[..dim.len() - 1].to_vec())))
+            }
             Type::Array(ty, dim) if dim.len() == 1 => Type::Ref(ty.clone()),
             Type::Slice(ty) => Type::Ref(Box::new(*ty.clone())),
             _ => panic!("deref on non-array"),

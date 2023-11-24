@@ -34,9 +34,9 @@ fn run_test_for_path(path: &str) {
 
 #[derive(Debug)]
 enum Test {
-    Check(String, usize, String, ),
+    Check(String, usize, String),
     CheckAbsent(String, usize, String),
-    NotCheck(String, usize, String, ),
+    NotCheck(String, usize, String),
 }
 
 fn testcase(path: PathBuf) {
@@ -47,23 +47,35 @@ fn testcase(path: PathBuf) {
     let reader = BufReader::new(file);
     let mut checks = Vec::new();
 
-    let mut current_function = String::new(); 
+    let mut current_function = String::new();
     for (line_no, line) in reader.lines().enumerate() {
         let mut line = line.unwrap();
         line = line.trim().parse().unwrap();
 
         if let Some(func_name) = line.strip_prefix("// BEGIN-CHECK:") {
             current_function = func_name.trim().to_string();
-        }else if let Some(check) = line.strip_prefix("// CHECK:") {
-            checks.push(Test::Check(current_function.clone(), line_no, check.trim().to_string(), ));
+        } else if let Some(check) = line.strip_prefix("// CHECK:") {
+            checks.push(Test::Check(
+                current_function.clone(),
+                line_no,
+                check.trim().to_string(),
+            ));
             // Ensure that the following line in the input does not match
         } else if let Some(not_check) = line.strip_prefix("// NOT-CHECK:") {
-            checks.push(Test::NotCheck(current_function.clone(), line_no, not_check.trim().to_string(), ));
+            checks.push(Test::NotCheck(
+                current_function.clone(),
+                line_no,
+                not_check.trim().to_string(),
+            ));
         // Check the output from here until the end of the file does not contain
         // the needle
         } else if let Some(check_absent) = line.strip_prefix("// CHECK-ABSENT:") {
-            checks.push(Test::CheckAbsent(current_function.clone(), line_no, check_absent.trim().to_string(), ));
-        } 
+            checks.push(Test::CheckAbsent(
+                current_function.clone(),
+                line_no,
+                check_absent.trim().to_string(),
+            ));
+        }
     }
 
     assert_ne!(checks.len(), 0);
@@ -97,35 +109,35 @@ fn testcase(path: PathBuf) {
     while current_line < lines.len() {
         let line = lines[current_line];
 
-    if line.trim().starts_with("define") {
-        current_function = line.to_string().clone();    
-    }
-            match checks.get(current_check) {
-                Some(Test::Check(func_name, _, needle)) => {
-                    if current_function.contains(func_name) && line.contains(needle) {
-                        current_check += 1;
-                    } 
-                }
-                Some(Test::NotCheck(func_name, _, needle)) => {
-                    if !line.contains(needle) && current_function.contains(func_name) {
-                        current_check += 1;
-                        // We should not advance line during a not check
-                        current_line -= 1;
-                    }
-                }
-                Some(Test::CheckAbsent(func_name, _, needle)) => {
-                    for line in lines.iter().skip(current_line) {
-                        if line.contains(needle) && current_function.contains(func_name){
-                            panic!(
-                                "FOUND CHECK-ABSENT: {:?}, {}",
-                                checks[current_check],
-                                path.display()
-                            );
-                        }
-                    }
+        if line.trim().starts_with("define") {
+            current_function = line.to_string().clone();
+        }
+        match checks.get(current_check) {
+            Some(Test::Check(func_name, _, needle)) => {
+                if current_function.contains(func_name) && line.contains(needle) {
                     current_check += 1;
                 }
-                _ => (),
+            }
+            Some(Test::NotCheck(func_name, _, needle)) => {
+                if !line.contains(needle) && current_function.contains(func_name) {
+                    current_check += 1;
+                    // We should not advance line during a not check
+                    current_line -= 1;
+                }
+            }
+            Some(Test::CheckAbsent(func_name, _, needle)) => {
+                for line in lines.iter().skip(current_line) {
+                    if line.contains(needle) && current_function.contains(func_name) {
+                        panic!(
+                            "FOUND CHECK-ABSENT: {:?}, {}",
+                            checks[current_check],
+                            path.display()
+                        );
+                    }
+                }
+                current_check += 1;
+            }
+            _ => (),
         }
 
         current_line += 1;

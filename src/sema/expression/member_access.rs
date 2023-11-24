@@ -48,16 +48,18 @@ pub(super) fn member_access(
         return Ok(expr);
     }
 
-    if let Some(expr) = contract_constant(
-        loc,
-        e,
-        id,
-        context.file_no,
-        ns,
-        symtable,
-        diagnostics,
-        resolve_to,
-    )? {
+    if let Some(expr) =
+        contract_constant(
+            loc,
+            e,
+            id,
+            context.file_no,
+            ns,
+            symtable,
+            diagnostics,
+            resolve_to,
+        )?
+    {
         return Ok(expr);
     }
 

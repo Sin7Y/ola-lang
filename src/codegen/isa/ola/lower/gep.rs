@@ -20,7 +20,8 @@ pub fn lower_gep(
     gep: &GetElementPtr,
 ) -> Result<()> {
     let base = if let Value::Instruction(id) = &ctx.ir_data.values[gep.args[0]]
-               && let Some(slot) = ctx.inst_id_to_slot_id.get(id).copied() {
+        && let Some(slot) = ctx.inst_id_to_slot_id.get(id).copied()
+    {
         OperandData::Slot(slot)
     } else {
         get_operand_for_val(ctx, gep.tys[1], gep.args[0])?

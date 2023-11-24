@@ -320,10 +320,9 @@ pub fn expression(
             }
         }
         program::Expression::Delete(loc, _) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "delete not allowed in expression".to_string(),
-            ));
+            diagnostics.push(
+                Diagnostic::error(*loc, "delete not allowed in expression".to_string())
+            );
             Err(())
         }
 
@@ -338,10 +337,9 @@ pub fn expression(
             resolve_to,
         ),
         program::Expression::ArraySubscript(loc, _, None) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "expected expression before ']' token".to_string(),
-            ));
+            diagnostics.push(
+                Diagnostic::error(*loc, "expected expression before ']' token".to_string())
+            );
 
             Err(())
         }
@@ -430,10 +428,7 @@ pub fn expression(
             Err(())
         }
         program::Expression::FunctionCallBlock(loc, ..) => {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "unexpect block encountered".to_owned(),
-            ));
+            diagnostics.push(Diagnostic::error(*loc, "unexpect block encountered".to_owned()));
             Err(())
         }
     }
