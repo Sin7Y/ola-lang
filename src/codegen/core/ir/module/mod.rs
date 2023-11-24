@@ -97,8 +97,13 @@ impl Module {
         params: Vec<Parameter>,
         is_var_arg: bool,
     ) -> Id<Function> {
-        self.functions
-            .alloc(Function::new(name, result_ty, params, is_var_arg, self.types.clone()))
+        self.functions.alloc(Function::new(
+            name,
+            result_ty,
+            params,
+            is_var_arg,
+            self.types.clone(),
+        ))
     }
 
     pub fn find_function_by_name<T: AsRef<str>>(&self, name: T) -> Option<FunctionId> {

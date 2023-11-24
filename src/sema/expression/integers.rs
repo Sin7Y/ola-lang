@@ -44,9 +44,10 @@ pub(super) fn type_bits(
         Type::Uint(n) => Ok(*n),
         Type::Field => Ok(64),
         Type::Enum(n) => {
-            diagnostics.push(
-                Diagnostic::error(*l_loc, format!("type enum {} not allowed", ns.enums[*n]))
-            );
+            diagnostics.push(Diagnostic::error(
+                *l_loc,
+                format!("type enum {} not allowed", ns.enums[*n]),
+            ));
             Err(())
         }
         Type::Struct(no) => {
@@ -103,7 +104,7 @@ pub fn coerce_number(
         (Type::Field, Type::Uint(_)) => {
             return Ok(l.clone());
         }
-        (Type::Uint(_), Type::Field)  => {
+        (Type::Uint(_), Type::Field) => {
             return Ok(r.clone());
         }
         (Type::Field, Type::Field) => {

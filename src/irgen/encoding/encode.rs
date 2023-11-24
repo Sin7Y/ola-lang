@@ -110,15 +110,14 @@ pub(crate) fn encode_uint<'a>(
     offset: IntValue<'a>,
     bin: &Binary<'a>,
 ) {
-    let start =
-        unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                buffer,
-                &[offset],
-                "encode_value_ptr",
-            )
-        };
+    let start = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            buffer,
+            &[offset],
+            "encode_value_ptr",
+        )
+    };
     bin.builder.build_store(start, arg);
 }
 
@@ -130,15 +129,14 @@ fn encode_address_or_hash<'a>(
     bin: &Binary<'a>,
 ) {
     for i in 0..4 {
-        let value_ptr =
-            unsafe {
-                bin.builder.build_gep(
-                    bin.context.i64_type(),
-                    address.into_pointer_value(),
-                    &[bin.context.i64_type().const_int(i, false)],
-                    "",
-                )
-            };
+        let value_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                address.into_pointer_value(),
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
         let value = bin
             .builder
             .build_load(bin.context.i64_type(), value_ptr, "");
@@ -157,12 +155,11 @@ fn encode_bytes<'a>(
     bin: &Binary<'a>,
 ) -> IntValue<'a> {
     let len = bin.vector_len(string_value);
-    *offset =
-        bin.builder.build_int_add(
-            *offset,
-            bin.context.i64_type().const_int(1, false),
-            "offset",
-        );
+    *offset = bin.builder.build_int_add(
+        *offset,
+        bin.context.i64_type().const_int(1, false),
+        "offset",
+    );
 
     let buffer_int = bin
         .builder
@@ -220,15 +217,14 @@ pub fn encode_dynamic_array_loop<'a>(
         .builder
         .build_load(bin.context.i64_type(), index_ptr, "index");
 
-    let elem_ptr =
-        unsafe {
-            bin.builder.build_gep(
-                bin.llvm_type(array_ty, ns),
-                array,
-                &[index.into_int_value()],
-                "element",
-            )
-        };
+    let elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.llvm_type(array_ty, ns),
+            array,
+            &[index.into_int_value()],
+            "element",
+        )
+    };
 
     let elem = if elem_ty.is_primitive() {
         bin.builder
@@ -396,16 +392,15 @@ fn encode_complex_array<'a>(
     let mut array = array.clone();
     // If this dimension is dynamic, we must save its length before all elements
     if dims[dimension] == ArrayLength::Dynamic {
-        let sub_array =
-            index_array(
-                bin,
-                &mut array,
-                &mut array_ty,
-                dims,
-                indexes,
-                func_value,
-                ns,
-            );
+        let sub_array = index_array(
+            bin,
+            &mut array,
+            &mut array_ty,
+            dims,
+            indexes,
+            func_value,
+            ns,
+        );
 
         let size = bin.vector_len(sub_array);
 
@@ -429,29 +424,27 @@ fn encode_complex_array<'a>(
     if 0 == dimension {
         // If we are indexing the last dimension, we have an element, so we can encode
         // it.
-        let deref =
-            index_array(
-                bin,
-                &mut array,
-                &mut array_ty,
-                dims,
-                indexes,
-                func_value,
-                ns,
-            );
+        let deref = index_array(
+            bin,
+            &mut array,
+            &mut array_ty,
+            dims,
+            indexes,
+            func_value,
+            ns,
+        );
         let offset_value = bin
             .builder
             .build_load(bin.context.i64_type(), offset_var, "");
-        let elem_size =
-            encode_into_buffer(
-                buffer,
-                deref,
-                &array_ty,
-                offset_value.into_int_value(),
-                bin,
-                func_value,
-                ns,
-            );
+        let elem_size = encode_into_buffer(
+            buffer,
+            deref,
+            &array_ty,
+            offset_value.into_int_value(),
+            bin,
+            func_value,
+            ns,
+        );
         let offset_value = bin
             .builder
             .build_int_add(offset_value.into_int_value(), elem_size, "");
@@ -511,16 +504,15 @@ pub fn fixed_array_encode<'a>(
             .builder
             .build_load(bin.llvm_type(elem_ty, ns), elem_ptr, "");
 
-        let elem =
-            if elem_ty.is_fixed_reference_type() {
-                bin.builder.build_load(
-                    bin.llvm_type(elem_ty, ns),
-                    elem.into_pointer_value(),
-                    "elem",
-                )
-            } else {
-                elem
-            };
+        let elem = if elem_ty.is_fixed_reference_type() {
+            bin.builder.build_load(
+                bin.llvm_type(elem_ty, ns),
+                elem.into_pointer_value(),
+                "elem",
+            )
+        } else {
+            elem
+        };
 
         encode_uint(buffer, elem, *offset, bin);
 

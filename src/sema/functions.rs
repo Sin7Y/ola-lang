@@ -24,30 +24,30 @@ pub fn contract_function(
             return None;
         }
     } else {
-        ns.diagnostics
-            .push(Diagnostic::error(func.loc, "function must have a name".to_string()));
+        ns.diagnostics.push(Diagnostic::error(
+            func.loc,
+            "function must have a name".to_string(),
+        ));
         return None;
     }
 
     let mut diagnostics = Diagnostics::default();
 
-    let (params, params_success) =
-        resolve_params(
-            &func.params,
-            file_no,
-            Some(contract_no),
-            ns,
-            &mut diagnostics,
-        );
+    let (params, params_success) = resolve_params(
+        &func.params,
+        file_no,
+        Some(contract_no),
+        ns,
+        &mut diagnostics,
+    );
 
-    let (returns, returns_success) =
-        resolve_returns(
-            &func.returns,
-            file_no,
-            Some(contract_no),
-            ns,
-            &mut diagnostics,
-        );
+    let (returns, returns_success) = resolve_returns(
+        &func.returns,
+        file_no,
+        Some(contract_no),
+        ns,
+        &mut diagnostics,
+    );
 
     ns.diagnostics.extend(diagnostics);
 
@@ -92,9 +92,9 @@ pub fn contract_function(
     ns.functions.push(fdecl);
     ns.contracts[contract_no].functions.push(func_no);
 
-    if let Some(Symbol::Function(ref mut v)) = ns
-        .function_symbols
-        .get_mut(&(file_no, Some(contract_no), id.name.to_owned()))
+    if let Some(Symbol::Function(ref mut v)) =
+        ns.function_symbols
+            .get_mut(&(file_no, Some(contract_no), id.name.to_owned()))
     {
         v.push((func.loc, func_no));
     } else {
@@ -121,15 +121,14 @@ pub fn resolve_params(
     let mut success = true;
 
     for (loc, p) in parameters {
-        let p =
-            match p {
-                Some(p) => p,
-                None => {
-                    diagnostics.push(Diagnostic::error(*loc, "missing parameter type".to_owned()));
-                    success = false;
-                    continue;
-                }
-            };
+        let p = match p {
+            Some(p) => p,
+            None => {
+                diagnostics.push(Diagnostic::error(*loc, "missing parameter type".to_owned()));
+                success = false;
+                continue;
+            }
+        };
 
         let ty_loc = p.ty.loc();
 
@@ -164,15 +163,14 @@ pub fn resolve_returns(
     let mut success = true;
 
     for (loc, r) in returns {
-        let r =
-            match r {
-                Some(r) => r,
-                None => {
-                    diagnostics.push(Diagnostic::error(*loc, "missing return type".to_owned()));
-                    success = false;
-                    continue;
-                }
-            };
+        let r = match r {
+            Some(r) => r,
+            None => {
+                diagnostics.push(Diagnostic::error(*loc, "missing return type".to_owned()));
+                success = false;
+                continue;
+            }
+        };
 
         let ty_loc = r.ty.loc();
 

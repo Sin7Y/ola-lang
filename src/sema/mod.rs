@@ -48,32 +48,30 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
         file_cache_no,
     ));
 
-    let pt =
-        match parse(&source_code, file_no) {
-            Ok(s) => s,
-            Err(mut errors) => {
-                ns.diagnostics.append(&mut errors);
+    let pt = match parse(&source_code, file_no) {
+        Ok(s) => s,
+        Err(mut errors) => {
+            ns.diagnostics.append(&mut errors);
 
-                return;
-            }
-        };
+            return;
+        }
+    };
 
     // We need to iterate over the parsed contracts a few times, so create a
     // temporary vector This should be done before the contract types are
     // created so the contract type numbers line up
-    let contracts_to_resolve = pt
-        .0
-        .iter()
-        .filter_map(|part| {
-            if let program::SourceUnitPart::ContractDefinition(def) = part {
-                Some(def)
-            } else {
-                None
-            }
-        })
-        .enumerate()
-        .map(|(no, def)| (no + ns.contracts.len(), def.as_ref()))
-        .collect::<Vec<(usize, &program::ContractDefinition)>>();
+    let contracts_to_resolve =
+        pt.0.iter()
+            .filter_map(|part| {
+                if let program::SourceUnitPart::ContractDefinition(def) = part {
+                    Some(def)
+                } else {
+                    None
+                }
+            })
+            .enumerate()
+            .map(|(no, def)| (no + ns.contracts.len(), def.as_ref()))
+            .collect::<Vec<(usize, &program::ContractDefinition)>>();
 
     // first resolve all the types we can find
     let fields = types::resolve_typenames(&pt, file_no, ns);

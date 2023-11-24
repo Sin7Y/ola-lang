@@ -143,9 +143,10 @@ pub(super) fn array_slice(
             }
         }
         _ => {
-            diagnostics.push(
-                Diagnostic::error(array.loc(), "expression is not an array".to_string())
-            );
+            diagnostics.push(Diagnostic::error(
+                array.loc(),
+                "expression is not an array".to_string(),
+            ));
             Err(())
         }
     }
