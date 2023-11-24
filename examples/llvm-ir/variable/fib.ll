@@ -231,20 +231,20 @@ entry:
   store i64 %0, ptr %n, align 4
   %1 = load i64, ptr %n, align 4
   %2 = icmp eq i64 %1, 0
-  br i1 %2, label %then, label %enif
+  br i1 %2, label %then, label %endif
 
 then:                                             ; preds = %entry
   ret i64 0
 
-enif:                                             ; preds = %entry
+endif:                                            ; preds = %entry
   %3 = load i64, ptr %n, align 4
   %4 = icmp eq i64 %3, 1
-  br i1 %4, label %then1, label %enif2
+  br i1 %4, label %then1, label %endif2
 
-then1:                                            ; preds = %enif
+then1:                                            ; preds = %endif
   ret i64 1
 
-enif2:                                            ; preds = %enif
+endif2:                                           ; preds = %endif
   %5 = load i64, ptr %n, align 4
   %6 = sub i64 %5, 1
   call void @builtin_range_check(i64 %6)
@@ -268,19 +268,19 @@ entry:
   store i64 %0, ptr %n, align 4
   %1 = load i64, ptr %n, align 4
   %2 = icmp eq i64 %1, 0
-  br i1 %2, label %then, label %enif
+  br i1 %2, label %then, label %endif
 
 then:                                             ; preds = %entry
   ret i64 0
 
-enif:                                             ; preds = %entry
+endif:                                            ; preds = %entry
   store i64 0, ptr %first, align 4
   store i64 1, ptr %second, align 4
   store i64 1, ptr %third, align 4
   store i64 2, ptr %i, align 4
   br label %cond
 
-cond:                                             ; preds = %next, %enif
+cond:                                             ; preds = %next, %endif
   %3 = load i64, ptr %i, align 4
   %4 = load i64, ptr %n, align 4
   %5 = icmp ule i64 %3, %4

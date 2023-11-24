@@ -183,6 +183,10 @@ fn dispatch_case<'a>(
     if !func.returns.is_empty() {
         returns.push(ret.unwrap());
         abi_encode_store_tape(bin, returns, &return_tys, func_value, ns);
+    } else {
+        // If the function has no return values, we still need to encode the zero into the tape
+        let zero = bin.context.i64_type().const_zero();
+        bin.tape_data_store(zero, zero);
     }
     bin.builder.build_return(None);
 

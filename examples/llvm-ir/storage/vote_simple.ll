@@ -791,9 +791,9 @@ body:                                             ; preds = %cond
   store i64 %slot_offset16, ptr %heap_to_ptr11, align 4
   %22 = load i64, ptr %winningVoteCount, align 4
   %23 = icmp ugt i64 %storage_value14, %22
-  br i1 %23, label %then, label %enif
+  br i1 %23, label %then, label %endif
 
-next:                                             ; preds = %enif
+next:                                             ; preds = %endif
   %24 = load i64, ptr %p, align 4
   %25 = add i64 %24, 1
   store i64 %25, ptr %p, align 4
@@ -857,9 +857,9 @@ then:                                             ; preds = %body
   store i64 %storage_value32, ptr %winningVoteCount, align 4
   %43 = load i64, ptr %p, align 4
   store i64 %43, ptr %winningProposal_, align 4
-  br label %enif
+  br label %endif
 
-enif:                                             ; preds = %then, %body
+endif:                                            ; preds = %then, %body
   br label %next
 }
 
@@ -946,6 +946,7 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = mul i64 %length, 1
   %5 = add i64 %4, 1
   call void @contract_init(ptr %3)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -953,6 +954,7 @@ func_1_dispatch:                                  ; preds = %entry
   %6 = inttoptr i64 %input_start1 to ptr
   %decode_value = load i64, ptr %6, align 4
   call void @vote_proposal(i64 %decode_value)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry

@@ -147,6 +147,22 @@ pub(super) fn assign_expr(
     assigned_variable(ns, &var, symtable);
     let var_ty = var.ty();
 
+    println!("var_ty: {:?}", var_ty);
+
+    // Check if the variable is a field, and if so, only allow += and -=
+    if !matches!(
+        expr,
+        program::Expression::AssignAdd(..) | program::Expression::AssignSubtract(..) | program::Expression::AssignMultiply(..) 
+    ) && var_ty == Type::Field {
+        diagnostics.push(Diagnostic::error(
+            var.loc(),
+            format!(
+                "operator is not allowed on type field",
+            ),
+        ));
+        return Err(());
+    }
+
     let resolve_to = if matches!(
         expr,
         program::Expression::AssignShiftLeft(..) | program::Expression::AssignShiftRight(..)
@@ -261,10 +277,10 @@ pub(super) fn assign_expr(
             program::Expression::AssignModulo(..) => {
                 match set {
                     Expression::NumberLiteral { value, .. } if value.eq(&BigInt::zero()) => {
-                        diagnostics
-                            .push(
-                                Diagnostic::error(*loc, format!("Modulo by zero is not allowed."))
-                            );
+                        diagnostics.push(Diagnostic::error(
+                            *loc,
+                            format!("Modulo by zero is not allowed."),
+                        ));
                         return Err(());
                     }
                     _ => {}
@@ -310,7 +326,7 @@ pub(super) fn assign_expr(
         }
         Expression::Variable { var_no, .. } => {
             match var_ty {
-                Type::Uint(_) => (),
+                Type::Uint(_) | Type::Field=> (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         var.loc(),
@@ -332,13 +348,16 @@ pub(super) fn assign_expr(
         }
         _ => match &var_ty {
             Type::Ref(r_ty) => match r_ty.as_ref() {
-                Type::Uint(_) => Ok(Expression::Assign {
+                Type::Uint(_) | Type::Field => Ok(Expression::Assign {
                     loc: *loc,
                     ty: *r_ty.clone(),
                     left: Box::new(var.clone()),
-                    right: Box::new(
-                        op(var.cast(loc, r_ty, ns, diagnostics)?, r_ty, ns, diagnostics)?
-                    ),
+                    right: Box::new(op(
+                        var.cast(loc, r_ty, ns, diagnostics)?,
+                        r_ty,
+                        ns,
+                        diagnostics,
+                    )?),
                 }),
                 // If the variable is a Type::Ref(Type::Ref(..)), we must load it first.
                 Type::Ref(inner) if matches!(**inner, Type::Uint(_)) => Ok(Expression::Assign {
@@ -365,9 +384,12 @@ pub(super) fn assign_expr(
                     loc: *loc,
                     ty: *r_ty.clone(),
                     left: Box::new(var.clone()),
-                    right: Box::new(
-                        op(var.cast(loc, r_ty, ns, diagnostics)?, r_ty, ns, diagnostics)?
-                    ),
+                    right: Box::new(op(
+                        var.cast(loc, r_ty, ns, diagnostics)?,
+                        r_ty,
+                        ns,
+                        diagnostics,
+                    )?),
                 }),
                 _ => {
                     diagnostics.push(Diagnostic::error(

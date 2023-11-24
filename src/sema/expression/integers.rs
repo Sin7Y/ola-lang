@@ -42,7 +42,7 @@ pub(super) fn type_bits(
 ) -> Result<u16, ()> {
     match l {
         Type::Uint(n) => Ok(*n),
-        Type::Field => Ok(32),
+        Type::Field => Ok(64),
         Type::Enum(n) => {
             diagnostics.push(
                 Diagnostic::error(*l_loc, format!("type enum {} not allowed", ns.enums[*n]))
@@ -99,6 +99,15 @@ pub fn coerce_number(
         }
         (Type::Address, Type::Address) => {
             return Ok(Type::Address);
+        }
+        (Type::Field, Type::Uint(_)) => {
+            return Ok(l.clone());
+        }
+        (Type::Uint(_), Type::Field)  => {
+            return Ok(r.clone());
+        }
+        (Type::Field, Type::Field) => {
+            return Ok(Type::Field);
         }
         _ => (),
     }

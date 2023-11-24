@@ -840,6 +840,18 @@ entry:
   ret void
 }
 
+define void @testU32ConvertToField() {
+entry:
+  %f = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 5, ptr %a, align 4
+  %0 = load i64, ptr %a, align 4
+  store i64 %0, ptr %f, align 4
+  %1 = load i64, ptr %f, align 4
+  call void @prophet_printf(i64 %1, i64 3)
+  ret void
+}
+
 define void @testU32LocalScope() {
 entry:
   %a1 = alloca i64, align 8
@@ -951,9 +963,10 @@ entry:
     i64 2776752803, label %func_39_dispatch
     i64 1750839130, label %func_40_dispatch
     i64 54477038, label %func_41_dispatch
-    i64 93771482, label %func_42_dispatch
-    i64 2672728224, label %func_43_dispatch
-    i64 2918218605, label %func_44_dispatch
+    i64 523492367, label %func_42_dispatch
+    i64 93771482, label %func_43_dispatch
+    i64 2672728224, label %func_44_dispatch
+    i64 2918218605, label %func_45_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -961,26 +974,32 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @testU32DeclareUninitialized()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   call void @testU32DeclareInitialized()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
   call void @testU32DeclareThenInitialized()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
   call void @testU32InitializedByOther()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_4_dispatch:                                  ; preds = %entry
   call void @testU32LeftValueExpression()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
   call void @testU32RightValueExpression()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_6_dispatch:                                  ; preds = %entry
@@ -988,10 +1007,12 @@ func_6_dispatch:                                  ; preds = %entry
   %3 = inttoptr i64 %input_start to ptr
   %decode_value = load i64, ptr %3, align 4
   call void @testU32AsParameter(i64 %decode_value)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_7_dispatch:                                  ; preds = %entry
   call void @testU32CallByValue()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_8_dispatch:                                  ; preds = %entry
@@ -1020,142 +1041,182 @@ func_9_dispatch:                                  ; preds = %entry
 
 func_10_dispatch:                                 ; preds = %entry
   call void @testU32AddOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_11_dispatch:                                 ; preds = %entry
   call void @testU32AddAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_12_dispatch:                                 ; preds = %entry
   call void @testU32SubOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_13_dispatch:                                 ; preds = %entry
   call void @testU32SubAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_14_dispatch:                                 ; preds = %entry
   call void @testU32MulOperatoin()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_15_dispatch:                                 ; preds = %entry
   call void @testU32MulAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_16_dispatch:                                 ; preds = %entry
   call void @testU32DivOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_17_dispatch:                                 ; preds = %entry
   call void @testU32DivAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_18_dispatch:                                 ; preds = %entry
   call void @testU32ModOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_19_dispatch:                                 ; preds = %entry
   call void @testU32ModAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_20_dispatch:                                 ; preds = %entry
   call void @testU32BitWiseXorOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_21_dispatch:                                 ; preds = %entry
   call void @testU32BitWiseXorAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_22_dispatch:                                 ; preds = %entry
   call void @testU32AndOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_23_dispatch:                                 ; preds = %entry
   call void @testU32AndAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_24_dispatch:                                 ; preds = %entry
   call void @testU32BitWiseOrOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_25_dispatch:                                 ; preds = %entry
   call void @testU32BitWiseOrAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_26_dispatch:                                 ; preds = %entry
   call void @testU32PowerOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_27_dispatch:                                 ; preds = %entry
   call void @testU32LeftShiftOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_28_dispatch:                                 ; preds = %entry
   call void @testU32LeftShiftAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_29_dispatch:                                 ; preds = %entry
   call void @testU32RightShiftOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_30_dispatch:                                 ; preds = %entry
   call void @testU32RightShiftAssignOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_31_dispatch:                                 ; preds = %entry
   call void @testU32EqualOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_32_dispatch:                                 ; preds = %entry
   call void @testU32NotEqualOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_33_dispatch:                                 ; preds = %entry
   call void @testU32GreaterOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_34_dispatch:                                 ; preds = %entry
   call void @testU32GreaterEqualOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_35_dispatch:                                 ; preds = %entry
   call void @testU32LessOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_36_dispatch:                                 ; preds = %entry
   call void @testU32LessEqualOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_37_dispatch:                                 ; preds = %entry
   call void @testU32BitWiseNotOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_38_dispatch:                                 ; preds = %entry
   call void @testU32IncrementOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_39_dispatch:                                 ; preds = %entry
   call void @testU32DecrementOperation()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_40_dispatch:                                 ; preds = %entry
   call void @testU32AddOverflow()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_41_dispatch:                                 ; preds = %entry
   call void @testU32SubOverflow()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_42_dispatch:                                 ; preds = %entry
-  call void @testU32LocalScope()
+  call void @testU32ConvertToField()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_43_dispatch:                                 ; preds = %entry
-  call void @testU32IfStatement()
+  call void @testU32LocalScope()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_44_dispatch:                                 ; preds = %entry
+  call void @testU32IfStatement()
+  call void @set_tape_data(i64 0, i64 0)
+  ret void
+
+func_45_dispatch:                                 ; preds = %entry
   call void @testU32InLoopStatement()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 

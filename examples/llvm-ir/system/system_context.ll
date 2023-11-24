@@ -493,6 +493,7 @@ func_4_dispatch:                                  ; preds = %entry
 
 func_5_dispatch:                                  ; preds = %entry
   call void @all_test()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 

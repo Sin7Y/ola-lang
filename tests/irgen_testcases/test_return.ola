@@ -1,0 +1,25 @@
+contract ReturnTest {
+
+    // fn not_return() {
+        
+    // }
+    
+	// fn empty_return() -> () {
+    //     return;
+    // }
+
+    // fn return_missing() -> (u32) {
+        
+    // }
+
+    // fn no_need_return() {
+    //     return;
+    // }
+    
+    // fn named_return() -> (u32 a) {
+    //    a = 5;
+    // }
+
+
+
+}

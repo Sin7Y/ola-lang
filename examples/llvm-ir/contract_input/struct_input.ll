@@ -322,6 +322,7 @@ func_0_dispatch:                                  ; preds = %entry
   %struct_member18 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %heap_to_ptr, i32 0, i32 7
   store ptr %13, ptr %struct_member18, align 8
   call void @foo(ptr %heap_to_ptr)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 

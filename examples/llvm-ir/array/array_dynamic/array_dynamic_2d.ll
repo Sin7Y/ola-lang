@@ -655,6 +655,7 @@ end_for69:                                        ; preds = %cond66
   %81 = inttoptr i64 %80 to ptr
   %decode_value98 = load i64, ptr %81, align 4
   call void @setElement(ptr %64, i64 %decode_value96, i64 %decode_value97, i64 %decode_value98)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 cond78:                                           ; preds = %next79, %body68

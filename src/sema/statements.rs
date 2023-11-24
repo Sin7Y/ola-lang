@@ -1041,10 +1041,7 @@ fn return_with_values(
             if no_returns > 0 && returns.is_empty() {
                 diagnostics.push(Diagnostic::error(
                     *loc,
-                    format!(
-                        "missing return value, {} return values expected",
-                        no_returns
-                    ),
+                    format!("missing return value, {no_returns} return values expected",),
                 ));
                 return Err(());
             }
