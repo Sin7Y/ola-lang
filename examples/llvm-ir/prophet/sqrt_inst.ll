@@ -261,9 +261,9 @@ then:                                             ; preds = %entry
 else:                                             ; preds = %entry
   %10 = load i64, ptr %a, align 4
   %11 = icmp ne i64 %10, 0
-  br i1 %11, label %then3, label %enif4
+  br i1 %11, label %then3, label %endif4
 
-enif:                                             ; preds = %enif4, %endfor
+endif:                                            ; preds = %endif4, %endfor
   %12 = load i64, ptr %result, align 4
   ret i64 %12
 
@@ -276,21 +276,21 @@ body:                                             ; preds = %cond
   %15 = load i64, ptr %x, align 4
   %16 = load i64, ptr %result, align 4
   %17 = icmp uge i64 %15, %16
-  br i1 %17, label %then1, label %enif2
+  br i1 %17, label %then1, label %endif2
 
-next:                                             ; preds = %enif2
+next:                                             ; preds = %endif2
   %18 = load i64, ptr %i, align 4
   %19 = add i64 %18, 1
   store i64 %19, ptr %i, align 4
   br label %cond
 
 endfor:                                           ; preds = %then1, %cond
-  br label %enif
+  br label %endif
 
 then1:                                            ; preds = %body
   br label %endfor
 
-enif2:                                            ; preds = %body
+endif2:                                           ; preds = %body
   %20 = load i64, ptr %x, align 4
   store i64 %20, ptr %result, align 4
   %21 = load i64, ptr %a, align 4
@@ -307,10 +307,10 @@ enif2:                                            ; preds = %body
 
 then3:                                            ; preds = %else
   store i64 1, ptr %result, align 4
-  br label %enif4
+  br label %endif4
 
-enif4:                                            ; preds = %then3, %else
-  br label %enif
+endif4:                                           ; preds = %then3, %else
+  br label %endif
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -328,6 +328,7 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @test()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry

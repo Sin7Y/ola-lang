@@ -3,6 +3,7 @@
 use super::{
     ast::{Diagnostic, Expression, Namespace, Type},
     diagnostics::Diagnostics,
+    expression::FIELD_ORDER,
 };
 use num_bigint::BigInt;
 use num_bigint::Sign;
@@ -604,26 +605,40 @@ fn eval_constants_in_expression(
 /// the type required to represent the BigInt is not suffiecient, it will return
 /// a diagnostic.
 fn overflow_check(result: &BigInt, ty: &Type, loc: &Loc) -> Option<Diagnostic> {
-    // If the result sign is minus, throw an error.
-    if let Type::Uint(bits) = ty {
-        if let Sign::Minus = result.sign() {
-            return Some(Diagnostic::error(
-                *loc,
-                format!("negative value {} does not fit into type u{}. Cannot implicitly convert signed literal to unsigned type.", result, ty.get_type_size()),
-            ));
-        }
-
-        // If bits of the result is more than bits of the type, throw and error.
-        if result.bits() > *bits as u64 {
-            return Some(Diagnostic::error(
-                *loc,
-                format!(
-                    "value {} does not fit into type u{}.",
-                    result,
-                    ty.get_type_size(),
-                ),
-            ));
-        }
+    if let Sign::Minus = result.sign() {
+        return Some(Diagnostic::error(
+            *loc,
+            "negative value not allowed".to_string(),
+        ));
     }
-    None
+    match ty {
+        Type::Uint(bits) => {
+            if result.bits() > *bits as u64 {
+                Some(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "value {} does not fit into type u{}.",
+                        result,
+                        ty.get_type_size(),
+                    ),
+                ))
+            } else {
+                None
+            }
+        }
+        Type::Field => {
+            if result.to_u64().unwrap() > FIELD_ORDER {
+                Some(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "value {} exceeded the maximum range that field can represent.",
+                        result,
+                    ),
+                ))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
 }

@@ -9,7 +9,7 @@ contract BoolBasicTest {
          print(a);
     }
 
-    // BEGIN-CHECK: define void @testBoolDeclareUninitialized()
+    // BEGIN-CHECK: define void @testBoolDeclareInitialized()
     fn testBoolDeclareInitialized() { 
         // CHECK: %a = alloca i64, align 8
 	    // CHECK: store i64 1, ptr %a, align 4

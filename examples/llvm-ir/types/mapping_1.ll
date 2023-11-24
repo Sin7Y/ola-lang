@@ -422,6 +422,7 @@ func_0_dispatch:                                  ; preds = %entry
   %5 = inttoptr i64 %4 to ptr
   %decode_value = load i64, ptr %5, align 4
   call void @setNonce(ptr %3, i64 %decode_value)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 

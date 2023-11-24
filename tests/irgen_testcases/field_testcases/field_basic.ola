@@ -1,0 +1,198 @@
+
+contract FieldBasicTest {
+
+    // BEGIN-CHECK: define void @testFieldDeclareUninitialized() 
+    fn testFieldDeclareUninitialized() {
+        // CHECK: %a = alloca i64, align 8
+	    // CHECK: store i64 0, ptr %a, align 4
+         field a; 
+         print(a);
+    }
+
+    // BEGIN-CHECK: define void @testFieldDeclareInitialized()
+    fn testFieldDeclareInitialized() { 
+        // CHECK: %a = alloca i64, align 8
+	    // CHECK: store i64 5, ptr %a, align 4
+        field a = 5;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testFieldDeclareThenInitialized()
+    fn testFieldDeclareThenInitialized() {
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 0, ptr %a, align 4
+        field a;
+        // CHECK: store i64 5, ptr %a, align 4
+        a = 5;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testFieldInitializedByOther()
+    fn testFieldInitializedByOther() {
+        // CHECK: %b = alloca i64, align 8
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 5, ptr %a, align 4
+        field a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: store i64 %0, ptr %b, align 4
+        field b = a;
+        print(b);
+    }
+
+    // BEGIN-CHECK: define void @testFieldAsParameter(i64 %0)
+    fn testFieldAsParameter(field x) {
+        // CHECK: %x = alloca i64, align 8
+        // CHECK: store i64 %0, ptr %x, align 4
+        print(x);
+    }
+
+    // BEGIN-CHECK: define void @testFieldCallByValue()
+    fn testFieldCallByValue() {
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 5, ptr %a, align 4
+        field a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: call void @testFieldAsParameter(i64 %0)
+        testFieldAsParameter(a);
+    }
+
+    // BEGIN-CHECK: define i64 @testFieldAsReturnValue()
+    fn testFieldAsReturnValue() -> (field) {
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 10, ptr %a, align 4
+        field a = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: ret i64 %0
+        return a;
+    }
+
+    // BEGIN-CHECK: define i64 @testFieldAsReturnConstValue()
+    fn testFieldAsReturnConstValue() -> (field) {
+        // CHECK: ret i64 5
+        return 5;
+    }
+
+    // BEGIN-CHECK: define void @testFieldAddOperation()
+    fn testFieldAddOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = add i64 %0, %1
+        field c = a + b;
+        print(c);
+    }
+
+    // BEGIN-CHECK: define void @testFieldAddAssignOperation()
+    fn testFieldAddAssignOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = add i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
+        a += b;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testFieldSubOperation()
+    fn testFieldSubOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = sub i64 %0, %1
+        field c = a - b;
+        print(c);
+    }
+
+    // BEGIN-CHECK: define void @testFieldSubAssignOperation()
+    fn testFieldSubAssignOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = sub i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
+        a -= b;
+        print(a);
+    }
+
+
+    // BEGIN-CHECK: define void @testFieldMulOperatoin()
+    fn testFieldMulOperatoin() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = mul i64 %0, %1
+        field c = a * b;
+        print(c);
+    }
+
+    // BEGIN-CHECK: define void @testFieldMulAssignOperation()
+    fn testFieldMulAssignOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = mul i64 %0, %1
+        // CHECK: store i64 %2, ptr %a, align 4
+        a *= b;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testFieldEqualOperation()
+    fn testFieldEqualOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp eq i64 %0, %1
+        bool c = a == b;
+        print(c);
+    }
+
+    // BEGIN-CHECK: define void @testFieldNotEqualOperation()
+    fn testFieldNotEqualOperation() {
+        field a = 5;
+        field b = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = icmp ne i64 %0, %1
+        // CHECK: store i1 %2, ptr %c, align 1
+        bool c = a != b;
+        print(c);
+    }
+
+    // BEGIN-CHECK: define void @testFieldDecrementOperation()
+    fn testFieldDecrementOperation() {
+        field a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = sub i64 %0, 1
+        // CHECK: store i64 %1, ptr %a, align 4
+        a--;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testFieldAddOverflow()
+    fn testFieldAddOverflow() {
+        field a = 18446744069414584321;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = add i64 %0, 1
+        field b = a + 1;
+        print(b);
+    }
+
+    // BEGIN-CHECK: define void @testFieldSubOverflow()
+    fn testFieldSubOverflow() {
+        field a = 0;
+        field b = 1;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: %1 = load i64, ptr %b, align 4
+        // CHECK: %2 = sub i64 %0, %1
+        // CHECK: call void @builtin_range_check(i64 %2)
+        field c = a - b;
+        print(c);
+    }
+}

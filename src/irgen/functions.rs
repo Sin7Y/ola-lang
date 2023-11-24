@@ -1,8 +1,8 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::statements::statement;
 use crate::sema;
-use crate::sema::ast::Type;
 use crate::sema::ast::{Function, FunctionAttributes, Namespace};
+use crate::sema::ast::{Statement, Type};
 use indexmap::IndexMap;
 use inkwell::values::{BasicValueEnum, FunctionValue};
 use inkwell::AddressSpace;
@@ -67,9 +67,24 @@ pub(super) fn gen_function<'a>(
 
     for stmt in &func.body {
         statement(stmt, bin, func_value, func, var_table, ns);
+
+        if !stmt.reachable() {
+            break;
+        }
     }
 
-    // TODO add implicit return
+    if func.body.last().map(Statement::reachable).unwrap_or(true) {
+        // return
+        // add implicit return
+        func.symtable.returns.iter().for_each(|pos| {
+            let ret = var_table.get(pos).unwrap();
+            let ty = func.symtable.vars[pos].ty.clone();
+            let ret =
+                bin.builder
+                    .build_load(bin.llvm_var_ty(&ty, ns), ret.into_pointer_value(), "");
+            bin.builder.build_return(Some(&ret));
+        });
+    }
 }
 
 /// Populate the arguments of a function

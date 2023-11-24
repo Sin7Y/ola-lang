@@ -592,10 +592,12 @@ func_0_dispatch:                                  ; preds = %entry
   %length = load i64, ptr %3, align 4
   %4 = add i64 %length, 1
   call void @set(ptr %3)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   call void @setStringLiteral()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry

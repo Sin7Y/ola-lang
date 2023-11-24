@@ -119,6 +119,16 @@ pub fn expression(
             check_var_usage_expression(ns, &left, &right, symtable);
             let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
 
+            if ty == Type::Field {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "operator is not allowed on type field",
+                    ),
+                ));
+                return Err(());
+            }
+
             let expr = Expression::More {
                 loc: *loc,
                 left: Box::new(left.cast(&l.loc(), &ty, ns, diagnostics)?),
@@ -134,6 +144,16 @@ pub fn expression(
 
             let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
 
+            if ty == Type::Field {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "operator is not allowed on type field",
+                    ),
+                ));
+                return Err(());
+            }
+
             let expr = Expression::Less {
                 loc: *loc,
                 left: Box::new(left.cast(&l.loc(), &ty, ns, diagnostics)?),
@@ -147,6 +167,15 @@ pub fn expression(
             check_var_usage_expression(ns, &left, &right, symtable);
 
             let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+            if ty == Type::Field {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "operator is not allowed on type field",
+                    ),
+                ));
+                return Err(());
+            }
 
             let expr = Expression::MoreEqual {
                 loc: *loc,
@@ -162,6 +191,15 @@ pub fn expression(
             check_var_usage_expression(ns, &left, &right, symtable);
 
             let ty = coerce_number(&left.ty(), &l.loc(), &right.ty(), &r.loc(), ns, diagnostics)?;
+            if ty == Type::Field {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "operator is not allowed on type field",
+                    ),
+                ));
+                return Err(());
+            }
 
             let expr = Expression::LessEqual {
                 loc: *loc,
@@ -182,6 +220,17 @@ pub fn expression(
             let expr = expression(e, context, ns, symtable, diagnostics, resolve_to)?;
 
             used_variable(ns, &expr, symtable);
+            let expr_ty = expr.ty();
+
+            if expr_ty == Type::Field {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "operator is not allowed on type field",
+                    ),
+                ));
+                return Err(());
+            }
             Ok(Expression::Not {
                 loc: *loc,
                 expr: Box::new(expr.cast(loc, &Type::Bool, ns, diagnostics)?),
@@ -192,6 +241,16 @@ pub fn expression(
 
             used_variable(ns, &expr, symtable);
             let expr_ty = expr.ty();
+
+            if expr_ty == Type::Field {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!(
+                        "operator is not allowed on type field",
+                    ),
+                ));
+                return Err(());
+            }
 
             type_bits(&expr_ty, loc, ns, diagnostics)?;
 
@@ -266,7 +325,8 @@ pub fn expression(
                     "assignment not allowed in constant context".to_string(),
                 ));
                 return Err(());
-            };
+            };  
+            
             let expr = assign_expr(loc, var, expr, e, context, ns, symtable, diagnostics);
             if let Ok(expression) = &expr {
                 expression.recurse(ns, check_term_for_constant_overflow);

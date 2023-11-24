@@ -280,14 +280,14 @@ entry:
   %struct_member = getelementptr inbounds { i64, i64 }, ptr %heap_to_ptr6, i32 0, i32 0
   %13 = load i64, ptr %struct_member, align 4
   %14 = icmp ne i64 %13, 0
-  br i1 %14, label %then, label %enif
+  br i1 %14, label %then, label %endif
 
 then:                                             ; preds = %entry
   %struct_member14 = getelementptr inbounds { i64, i64 }, ptr %heap_to_ptr6, i32 0, i32 0
   %15 = load i64, ptr %struct_member14, align 4
   ret i64 %15
 
-enif:                                             ; preds = %entry
+endif:                                            ; preds = %entry
   %16 = call i64 @vector_new(i64 4)
   %heap_start15 = sub i64 %16, 4
   %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
@@ -366,12 +366,12 @@ enif:                                             ; preds = %entry
   store i64 0, ptr %index_access37, align 4
   %37 = call i64 @memcmp_eq(ptr %35, ptr %heap_to_ptr33, i64 4)
   %38 = trunc i64 %37 to i1
-  br i1 %38, label %then38, label %enif39
+  br i1 %38, label %then38, label %endif39
 
-then38:                                           ; preds = %enif
+then38:                                           ; preds = %endif
   ret i64 1
 
-enif39:                                           ; preds = %enif
+endif39:                                          ; preds = %endif
   ret i64 0
 }
 
@@ -1046,7 +1046,7 @@ then:                                             ; preds = %entry
   store i64 %return_length25, ptr %heap_to_ptr29, align 4
   %38 = add i64 %heap_start28, 1
   call void @get_tape_data(i64 %38, i64 %tape_size27)
-  br label %enif
+  br label %endif
 
 else:                                             ; preds = %entry
   %39 = load ptr, ptr %_newAddress, align 8
@@ -1111,9 +1111,9 @@ else:                                             ; preds = %entry
   store i64 %return_length47, ptr %heap_to_ptr51, align 4
   %62 = add i64 %heap_start50, 1
   call void @get_tape_data(i64 %62, i64 %tape_size49)
-  br label %enif
+  br label %endif
 
-enif:                                             ; preds = %else, %then
+endif:                                            ; preds = %else, %then
   ret void
 }
 
@@ -1269,6 +1269,7 @@ func_4_dispatch:                                  ; preds = %entry
   %length30 = load i64, ptr %64, align 4
   %65 = add i64 %length30, 1
   call void @_nonSystemDeployOnAddress(ptr %58, ptr %60, i64 %decode_value29, ptr %64)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
@@ -1284,6 +1285,7 @@ func_5_dispatch:                                  ; preds = %entry
   %length33 = load i64, ptr %72, align 4
   %73 = add i64 %length33, 1
   call void @_performDeployOnAddress(ptr %66, ptr %68, i64 %decode_value32, ptr %72)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_6_dispatch:                                  ; preds = %entry
@@ -1304,6 +1306,7 @@ func_6_dispatch:                                  ; preds = %entry
   %85 = inttoptr i64 %84 to ptr
   %decode_value37 = load i64, ptr %85, align 4
   call void @_constructContract(ptr %74, ptr %76, ptr %78, ptr %80, i64 %decode_value36, i64 %decode_value37)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 

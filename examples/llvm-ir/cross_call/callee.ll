@@ -285,6 +285,7 @@ func_0_dispatch:                                  ; preds = %entry
   %3 = inttoptr i64 %input_start to ptr
   %decode_value = load i64, ptr %3, align 4
   call void @setVars(i64 %decode_value)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry

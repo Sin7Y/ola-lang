@@ -338,6 +338,7 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @onlyDeployer()
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
@@ -374,6 +375,7 @@ func_2_dispatch:                                  ; preds = %entry
   %15 = add i64 %input_start5, 4
   %16 = inttoptr i64 %15 to ptr
   call void @storeCodeHash(ptr %14, ptr %16)
+  call void @set_tape_data(i64 0, i64 0)
   ret void
 }
 
