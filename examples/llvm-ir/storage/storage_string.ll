@@ -592,37 +592,45 @@ func_0_dispatch:                                  ; preds = %entry
   %length = load i64, ptr %3, align 4
   %4 = add i64 %length, 1
   call void @set(ptr %3)
-  call void @set_tape_data(i64 0, i64 0)
+  %5 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %5, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   call void @setStringLiteral()
-  call void @set_tape_data(i64 0, i64 0)
+  %6 = call i64 @vector_new(i64 1)
+  %heap_start1 = sub i64 %6, 1
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  store i64 0, ptr %heap_to_ptr2, align 4
+  call void @set_tape_data(i64 %heap_start1, i64 1)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %5 = call ptr @get()
-  %length1 = load i64, ptr %5, align 4
-  %6 = add i64 %length1, 1
-  %heap_size = add i64 %6, 1
-  %7 = call i64 @vector_new(i64 %heap_size)
-  %heap_start = sub i64 %7, %heap_size
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %length2 = load i64, ptr %5, align 4
-  %8 = ptrtoint ptr %heap_to_ptr to i64
-  %buffer_start = add i64 %8, 1
-  %9 = inttoptr i64 %buffer_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %9, i64 1
-  store i64 %length2, ptr %encode_value_ptr, align 4
-  %10 = ptrtoint ptr %5 to i64
-  %11 = add i64 %10, 1
-  %vector_data = inttoptr i64 %11 to ptr
-  call void @memcpy(ptr %vector_data, ptr %9, i64 %length2)
-  %12 = add i64 %length2, 1
-  %13 = add i64 %12, 0
-  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 %13
-  store i64 %6, ptr %encode_value_ptr3, align 4
-  call void @set_tape_data(i64 %heap_start, i64 %heap_size)
+  %7 = call ptr @get()
+  %length3 = load i64, ptr %7, align 4
+  %8 = add i64 %length3, 1
+  %heap_size = add i64 %8, 1
+  %9 = call i64 @vector_new(i64 %heap_size)
+  %heap_start4 = sub i64 %9, %heap_size
+  %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
+  %length6 = load i64, ptr %7, align 4
+  %10 = ptrtoint ptr %heap_to_ptr5 to i64
+  %buffer_start = add i64 %10, 1
+  %11 = inttoptr i64 %buffer_start to ptr
+  %encode_value_ptr = getelementptr i64, ptr %11, i64 1
+  store i64 %length6, ptr %encode_value_ptr, align 4
+  %12 = ptrtoint ptr %7 to i64
+  %13 = add i64 %12, 1
+  %vector_data = inttoptr i64 %13 to ptr
+  call void @memcpy(ptr %vector_data, ptr %11, i64 %length6)
+  %14 = add i64 %length6, 1
+  %15 = add i64 %14, 0
+  %encode_value_ptr7 = getelementptr i64, ptr %heap_to_ptr5, i64 %15
+  store i64 %8, ptr %encode_value_ptr7, align 4
+  call void @set_tape_data(i64 %heap_start4, i64 %heap_size)
   ret void
 }
 

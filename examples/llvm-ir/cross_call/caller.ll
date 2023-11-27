@@ -358,14 +358,22 @@ func_0_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
   %3 = inttoptr i64 %input_start to ptr
   call void @delegatecall_test(ptr %3)
-  call void @set_tape_data(i64 0, i64 0)
+  %4 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %4, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   %input_start1 = ptrtoint ptr %input to i64
-  %4 = inttoptr i64 %input_start1 to ptr
-  call void @call_test(ptr %4)
-  call void @set_tape_data(i64 0, i64 0)
+  %5 = inttoptr i64 %input_start1 to ptr
+  call void @call_test(ptr %5)
+  %6 = call i64 @vector_new(i64 1)
+  %heap_start2 = sub i64 %6, 1
+  %heap_to_ptr3 = inttoptr i64 %heap_start2 to ptr
+  store i64 0, ptr %heap_to_ptr3, align 4
+  call void @set_tape_data(i64 %heap_start2, i64 1)
   ret void
 }
 

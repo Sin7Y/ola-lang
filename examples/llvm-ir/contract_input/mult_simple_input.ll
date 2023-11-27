@@ -267,7 +267,11 @@ func_0_dispatch:                                  ; preds = %entry
   %8 = inttoptr i64 %7 to ptr
   %decode_value1 = load i64, ptr %8, align 4
   call void @foo(ptr %3, i64 %decode_value, i64 %decode_value1)
-  call void @set_tape_data(i64 0, i64 0)
+  %9 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %9, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 }
 

@@ -946,39 +946,47 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = mul i64 %length, 1
   %5 = add i64 %4, 1
   call void @contract_init(ptr %3)
-  call void @set_tape_data(i64 0, i64 0)
+  %6 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %6, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   %input_start1 = ptrtoint ptr %input to i64
-  %6 = inttoptr i64 %input_start1 to ptr
-  %decode_value = load i64, ptr %6, align 4
+  %7 = inttoptr i64 %input_start1 to ptr
+  %decode_value = load i64, ptr %7, align 4
   call void @vote_proposal(i64 %decode_value)
-  call void @set_tape_data(i64 0, i64 0)
+  %8 = call i64 @vector_new(i64 1)
+  %heap_start2 = sub i64 %8, 1
+  %heap_to_ptr3 = inttoptr i64 %heap_start2 to ptr
+  store i64 0, ptr %heap_to_ptr3, align 4
+  call void @set_tape_data(i64 %heap_start2, i64 1)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %7 = call i64 @winningProposal()
-  %8 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %8, 2
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %7, ptr %encode_value_ptr, align 4
-  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %encode_value_ptr2, align 4
-  call void @set_tape_data(i64 %heap_start, i64 2)
+  %9 = call i64 @winningProposal()
+  %10 = call i64 @vector_new(i64 2)
+  %heap_start4 = sub i64 %10, 2
+  %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr5, i64 0
+  store i64 %9, ptr %encode_value_ptr, align 4
+  %encode_value_ptr6 = getelementptr i64, ptr %heap_to_ptr5, i64 1
+  store i64 1, ptr %encode_value_ptr6, align 4
+  call void @set_tape_data(i64 %heap_start4, i64 2)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %9 = call i64 @getWinnerName()
-  %10 = call i64 @vector_new(i64 2)
-  %heap_start3 = sub i64 %10, 2
-  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
-  %encode_value_ptr5 = getelementptr i64, ptr %heap_to_ptr4, i64 0
-  store i64 %9, ptr %encode_value_ptr5, align 4
-  %encode_value_ptr6 = getelementptr i64, ptr %heap_to_ptr4, i64 1
-  store i64 1, ptr %encode_value_ptr6, align 4
-  call void @set_tape_data(i64 %heap_start3, i64 2)
+  %11 = call i64 @getWinnerName()
+  %12 = call i64 @vector_new(i64 2)
+  %heap_start7 = sub i64 %12, 2
+  %heap_to_ptr8 = inttoptr i64 %heap_start7 to ptr
+  %encode_value_ptr9 = getelementptr i64, ptr %heap_to_ptr8, i64 0
+  store i64 %11, ptr %encode_value_ptr9, align 4
+  %encode_value_ptr10 = getelementptr i64, ptr %heap_to_ptr8, i64 1
+  store i64 1, ptr %encode_value_ptr10, align 4
+  call void @set_tape_data(i64 %heap_start7, i64 2)
   ret void
 }
 
