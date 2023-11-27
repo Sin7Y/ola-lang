@@ -285,25 +285,29 @@ func_0_dispatch:                                  ; preds = %entry
   %3 = inttoptr i64 %input_start to ptr
   %decode_value = load i64, ptr %3, align 4
   call void @setVars(i64 %decode_value)
-  call void @set_tape_data(i64 0, i64 0)
+  %4 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %4, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   %input_start1 = ptrtoint ptr %input to i64
-  %4 = inttoptr i64 %input_start1 to ptr
-  %decode_value2 = load i64, ptr %4, align 4
-  %5 = add i64 %input_start1, 1
-  %6 = inttoptr i64 %5 to ptr
-  %decode_value3 = load i64, ptr %6, align 4
-  %7 = call i64 @add(i64 %decode_value2, i64 %decode_value3)
-  %8 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %8, 2
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %7, ptr %encode_value_ptr, align 4
-  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %encode_value_ptr4, align 4
-  call void @set_tape_data(i64 %heap_start, i64 2)
+  %5 = inttoptr i64 %input_start1 to ptr
+  %decode_value2 = load i64, ptr %5, align 4
+  %6 = add i64 %input_start1, 1
+  %7 = inttoptr i64 %6 to ptr
+  %decode_value3 = load i64, ptr %7, align 4
+  %8 = call i64 @add(i64 %decode_value2, i64 %decode_value3)
+  %9 = call i64 @vector_new(i64 2)
+  %heap_start4 = sub i64 %9, 2
+  %heap_to_ptr5 = inttoptr i64 %heap_start4 to ptr
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr5, i64 0
+  store i64 %8, ptr %encode_value_ptr, align 4
+  %encode_value_ptr6 = getelementptr i64, ptr %heap_to_ptr5, i64 1
+  store i64 1, ptr %encode_value_ptr6, align 4
+  call void @set_tape_data(i64 %heap_start4, i64 2)
   ret void
 }
 

@@ -559,48 +559,56 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @onlyEntrypointCall()
-  call void @set_tape_data(i64 0, i64 0)
+  %3 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %3, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
-  %3 = inttoptr i64 %input_start to ptr
-  %4 = add i64 %input_start, 4
-  %5 = inttoptr i64 %4 to ptr
-  %decode_value = load i64, ptr %5, align 4
-  %6 = call i64 @isNonceUsed(ptr %3, i64 %decode_value)
-  %7 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %7, 2
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %6, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
-  call void @set_tape_data(i64 %heap_start, i64 2)
+  %4 = inttoptr i64 %input_start to ptr
+  %5 = add i64 %input_start, 4
+  %6 = inttoptr i64 %5 to ptr
+  %decode_value = load i64, ptr %6, align 4
+  %7 = call i64 @isNonceUsed(ptr %4, i64 %decode_value)
+  %8 = call i64 @vector_new(i64 2)
+  %heap_start1 = sub i64 %8, 2
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr2, i64 0
+  store i64 %7, ptr %encode_value_ptr, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr2, i64 1
+  store i64 1, ptr %encode_value_ptr3, align 4
+  call void @set_tape_data(i64 %heap_start1, i64 2)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %input_start2 = ptrtoint ptr %input to i64
-  %8 = inttoptr i64 %input_start2 to ptr
-  %9 = add i64 %input_start2, 4
-  %10 = inttoptr i64 %9 to ptr
-  %decode_value3 = load i64, ptr %10, align 4
-  call void @setNonce(ptr %8, i64 %decode_value3)
-  call void @set_tape_data(i64 0, i64 0)
+  %input_start4 = ptrtoint ptr %input to i64
+  %9 = inttoptr i64 %input_start4 to ptr
+  %10 = add i64 %input_start4, 4
+  %11 = inttoptr i64 %10 to ptr
+  %decode_value5 = load i64, ptr %11, align 4
+  call void @setNonce(ptr %9, i64 %decode_value5)
+  %12 = call i64 @vector_new(i64 1)
+  %heap_start6 = sub i64 %12, 1
+  %heap_to_ptr7 = inttoptr i64 %heap_start6 to ptr
+  store i64 0, ptr %heap_to_ptr7, align 4
+  call void @set_tape_data(i64 %heap_start6, i64 1)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %input_start4 = ptrtoint ptr %input to i64
-  %11 = inttoptr i64 %input_start4 to ptr
-  %12 = call i64 @usedNonces(ptr %11)
-  %13 = call i64 @vector_new(i64 2)
-  %heap_start5 = sub i64 %13, 2
-  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
-  %encode_value_ptr7 = getelementptr i64, ptr %heap_to_ptr6, i64 0
-  store i64 %12, ptr %encode_value_ptr7, align 4
-  %encode_value_ptr8 = getelementptr i64, ptr %heap_to_ptr6, i64 1
-  store i64 1, ptr %encode_value_ptr8, align 4
-  call void @set_tape_data(i64 %heap_start5, i64 2)
+  %input_start8 = ptrtoint ptr %input to i64
+  %13 = inttoptr i64 %input_start8 to ptr
+  %14 = call i64 @usedNonces(ptr %13)
+  %15 = call i64 @vector_new(i64 2)
+  %heap_start9 = sub i64 %15, 2
+  %heap_to_ptr10 = inttoptr i64 %heap_start9 to ptr
+  %encode_value_ptr11 = getelementptr i64, ptr %heap_to_ptr10, i64 0
+  store i64 %14, ptr %encode_value_ptr11, align 4
+  %encode_value_ptr12 = getelementptr i64, ptr %heap_to_ptr10, i64 1
+  store i64 1, ptr %encode_value_ptr12, align 4
+  call void @set_tape_data(i64 %heap_start9, i64 2)
   ret void
 }
 

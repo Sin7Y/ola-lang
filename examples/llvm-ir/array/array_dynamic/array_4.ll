@@ -337,48 +337,52 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @test()
-  call void @set_tape_data(i64 0, i64 0)
+  %3 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %3, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
-  %3 = inttoptr i64 %input_start to ptr
-  %decode_value = load i64, ptr %3, align 4
-  %4 = call ptr @array_call(i64 %decode_value)
-  %length = load i64, ptr %4, align 4
-  %5 = mul i64 %length, 1
-  %6 = add i64 %5, 1
-  %heap_size = add i64 %6, 1
-  %7 = call i64 @vector_new(i64 %heap_size)
-  %heap_start = sub i64 %7, %heap_size
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %length1 = load i64, ptr %4, align 4
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %length1, ptr %encode_value_ptr, align 4
+  %4 = inttoptr i64 %input_start to ptr
+  %decode_value = load i64, ptr %4, align 4
+  %5 = call ptr @array_call(i64 %decode_value)
+  %length = load i64, ptr %5, align 4
+  %6 = mul i64 %length, 1
+  %7 = add i64 %6, 1
+  %heap_size = add i64 %7, 1
+  %8 = call i64 @vector_new(i64 %heap_size)
+  %heap_start1 = sub i64 %8, %heap_size
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %length3 = load i64, ptr %5, align 4
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr2, i64 0
+  store i64 %length3, ptr %encode_value_ptr, align 4
   store i64 1, ptr %offset_ptr, align 4
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
 loop_body:                                        ; preds = %loop_body, %func_1_dispatch
   %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %4, i64 %index
+  %element = getelementptr ptr, ptr %5, i64 %index
   %elem = load i64, ptr %element, align 4
   %offset = load i64, ptr %offset_ptr, align 4
-  %encode_value_ptr2 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
-  store i64 %elem, ptr %encode_value_ptr2, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %heap_to_ptr2, i64 %offset
+  store i64 %elem, ptr %encode_value_ptr4, align 4
   %next_offset = add i64 1, %offset
   store i64 %next_offset, ptr %offset_ptr, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %length1
+  %index_cond = icmp ult i64 %next_index, %length3
   br i1 %index_cond, label %loop_body, label %loop_end
 
 loop_end:                                         ; preds = %loop_body
-  %8 = add i64 %length1, 1
-  %9 = add i64 %8, 0
-  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr, i64 %9
-  store i64 %6, ptr %encode_value_ptr3, align 4
-  call void @set_tape_data(i64 %heap_start, i64 %heap_size)
+  %9 = add i64 %length3, 1
+  %10 = add i64 %9, 0
+  %encode_value_ptr5 = getelementptr i64, ptr %heap_to_ptr2, i64 %10
+  store i64 %7, ptr %encode_value_ptr5, align 4
+  call void @set_tape_data(i64 %heap_start1, i64 %heap_size)
   ret void
 }
 

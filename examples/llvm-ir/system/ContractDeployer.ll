@@ -1269,44 +1269,56 @@ func_4_dispatch:                                  ; preds = %entry
   %length30 = load i64, ptr %64, align 4
   %65 = add i64 %length30, 1
   call void @_nonSystemDeployOnAddress(ptr %58, ptr %60, i64 %decode_value29, ptr %64)
-  call void @set_tape_data(i64 0, i64 0)
+  %66 = call i64 @vector_new(i64 1)
+  %heap_start31 = sub i64 %66, 1
+  %heap_to_ptr32 = inttoptr i64 %heap_start31 to ptr
+  store i64 0, ptr %heap_to_ptr32, align 4
+  call void @set_tape_data(i64 %heap_start31, i64 1)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
-  %input_start31 = ptrtoint ptr %input to i64
-  %66 = inttoptr i64 %input_start31 to ptr
-  %67 = add i64 %input_start31, 4
-  %68 = inttoptr i64 %67 to ptr
-  %69 = add i64 %67, 4
-  %70 = inttoptr i64 %69 to ptr
-  %decode_value32 = load i64, ptr %70, align 4
-  %71 = add i64 %69, 1
-  %72 = inttoptr i64 %71 to ptr
-  %length33 = load i64, ptr %72, align 4
-  %73 = add i64 %length33, 1
-  call void @_performDeployOnAddress(ptr %66, ptr %68, i64 %decode_value32, ptr %72)
-  call void @set_tape_data(i64 0, i64 0)
+  %input_start33 = ptrtoint ptr %input to i64
+  %67 = inttoptr i64 %input_start33 to ptr
+  %68 = add i64 %input_start33, 4
+  %69 = inttoptr i64 %68 to ptr
+  %70 = add i64 %68, 4
+  %71 = inttoptr i64 %70 to ptr
+  %decode_value34 = load i64, ptr %71, align 4
+  %72 = add i64 %70, 1
+  %73 = inttoptr i64 %72 to ptr
+  %length35 = load i64, ptr %73, align 4
+  %74 = add i64 %length35, 1
+  call void @_performDeployOnAddress(ptr %67, ptr %69, i64 %decode_value34, ptr %73)
+  %75 = call i64 @vector_new(i64 1)
+  %heap_start36 = sub i64 %75, 1
+  %heap_to_ptr37 = inttoptr i64 %heap_start36 to ptr
+  store i64 0, ptr %heap_to_ptr37, align 4
+  call void @set_tape_data(i64 %heap_start36, i64 1)
   ret void
 
 func_6_dispatch:                                  ; preds = %entry
-  %input_start34 = ptrtoint ptr %input to i64
-  %74 = inttoptr i64 %input_start34 to ptr
-  %75 = add i64 %input_start34, 4
-  %76 = inttoptr i64 %75 to ptr
-  %77 = add i64 %75, 4
+  %input_start38 = ptrtoint ptr %input to i64
+  %76 = inttoptr i64 %input_start38 to ptr
+  %77 = add i64 %input_start38, 4
   %78 = inttoptr i64 %77 to ptr
   %79 = add i64 %77, 4
   %80 = inttoptr i64 %79 to ptr
-  %length35 = load i64, ptr %80, align 4
-  %81 = add i64 %length35, 1
-  %82 = add i64 %79, %81
-  %83 = inttoptr i64 %82 to ptr
-  %decode_value36 = load i64, ptr %83, align 4
-  %84 = add i64 %82, 1
+  %81 = add i64 %79, 4
+  %82 = inttoptr i64 %81 to ptr
+  %length39 = load i64, ptr %82, align 4
+  %83 = add i64 %length39, 1
+  %84 = add i64 %81, %83
   %85 = inttoptr i64 %84 to ptr
-  %decode_value37 = load i64, ptr %85, align 4
-  call void @_constructContract(ptr %74, ptr %76, ptr %78, ptr %80, i64 %decode_value36, i64 %decode_value37)
-  call void @set_tape_data(i64 0, i64 0)
+  %decode_value40 = load i64, ptr %85, align 4
+  %86 = add i64 %84, 1
+  %87 = inttoptr i64 %86 to ptr
+  %decode_value41 = load i64, ptr %87, align 4
+  call void @_constructContract(ptr %76, ptr %78, ptr %80, ptr %82, i64 %decode_value40, i64 %decode_value41)
+  %88 = call i64 @vector_new(i64 1)
+  %heap_start42 = sub i64 %88, 1
+  %heap_to_ptr43 = inttoptr i64 %heap_start42 to ptr
+  store i64 0, ptr %heap_to_ptr43, align 4
+  call void @set_tape_data(i64 %heap_start42, i64 1)
   ret void
 }
 

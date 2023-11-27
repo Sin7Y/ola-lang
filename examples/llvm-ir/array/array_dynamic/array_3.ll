@@ -256,7 +256,11 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @test()
-  call void @set_tape_data(i64 0, i64 0)
+  %3 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %3, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 }
 

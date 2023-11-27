@@ -493,7 +493,11 @@ func_4_dispatch:                                  ; preds = %entry
 
 func_5_dispatch:                                  ; preds = %entry
   call void @all_test()
-  call void @set_tape_data(i64 0, i64 0)
+  %45 = call i64 @vector_new(i64 1)
+  %heap_start30 = sub i64 %45, 1
+  %heap_to_ptr31 = inttoptr i64 %heap_start30 to ptr
+  store i64 0, ptr %heap_to_ptr31, align 4
+  call void @set_tape_data(i64 %heap_start30, i64 1)
   ret void
 }
 
