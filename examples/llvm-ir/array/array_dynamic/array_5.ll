@@ -325,24 +325,28 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @test()
-  call void @set_tape_data(i64 0, i64 0)
+  %3 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %3, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
   %input_start = ptrtoint ptr %input to i64
-  %3 = inttoptr i64 %input_start to ptr
-  %length = load i64, ptr %3, align 4
-  %4 = mul i64 %length, 1
-  %5 = add i64 %4, 1
-  %6 = call i64 @array_call(ptr %3)
-  %7 = call i64 @vector_new(i64 2)
-  %heap_start = sub i64 %7, 2
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 0
-  store i64 %6, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %heap_to_ptr, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
-  call void @set_tape_data(i64 %heap_start, i64 2)
+  %4 = inttoptr i64 %input_start to ptr
+  %length = load i64, ptr %4, align 4
+  %5 = mul i64 %length, 1
+  %6 = add i64 %5, 1
+  %7 = call i64 @array_call(ptr %4)
+  %8 = call i64 @vector_new(i64 2)
+  %heap_start1 = sub i64 %8, 2
+  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
+  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr2, i64 0
+  store i64 %7, ptr %encode_value_ptr, align 4
+  %encode_value_ptr3 = getelementptr i64, ptr %heap_to_ptr2, i64 1
+  store i64 1, ptr %encode_value_ptr3, align 4
+  call void @set_tape_data(i64 %heap_start1, i64 2)
   ret void
 }
 

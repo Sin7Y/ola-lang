@@ -375,7 +375,11 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = mul i64 %length, 1
   %5 = add i64 %4, 1
   call void @setArray1(ptr %3)
-  call void @set_tape_data(i64 0, i64 0)
+  %6 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %6, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 }
 

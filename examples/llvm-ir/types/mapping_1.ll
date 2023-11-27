@@ -422,7 +422,11 @@ func_0_dispatch:                                  ; preds = %entry
   %5 = inttoptr i64 %4 to ptr
   %decode_value = load i64, ptr %5, align 4
   call void @setNonce(ptr %3, i64 %decode_value)
-  call void @set_tape_data(i64 0, i64 0)
+  %6 = call i64 @vector_new(i64 1)
+  %heap_start = sub i64 %6, 1
+  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  store i64 0, ptr %heap_to_ptr, align 4
+  call void @set_tape_data(i64 %heap_start, i64 1)
   ret void
 }
 
