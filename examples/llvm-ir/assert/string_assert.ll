@@ -15,13 +15,11 @@ declare i64 @prophet_u32_mod(i64, i64)
 
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
-declare i64 @vector_new(i64)
+declare void @get_context_data(ptr, i64)
 
-declare void @get_context_data(i64, i64)
+declare void @get_tape_data(ptr, i64)
 
-declare void @get_tape_data(i64, i64)
-
-declare void @set_tape_data(i64, i64)
+declare void @set_tape_data(ptr, i64)
 
 declare void @get_storage(ptr, ptr)
 
@@ -32,6 +30,32 @@ declare void @poseidon_hash(ptr, ptr, i64)
 declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
+
+define ptr @heap_malloc(i64 %0) {
+entry:
+  %size_alloca = alloca i64, align 8
+  store i64 %0, ptr %size_alloca, align 4
+  %size = load i64, ptr %size_alloca, align 4
+  %current_address = load i64, ptr @heap_address, align 4
+  %updated_address = add i64 %current_address, %size
+  store i64 %updated_address, ptr @heap_address, align 4
+  %1 = inttoptr i64 %current_address to ptr
+  ret ptr %1
+}
+
+define ptr @vector_new(i64 %0) {
+entry:
+  %size_alloca = alloca i64, align 8
+  store i64 %0, ptr %size_alloca, align 4
+  %size = load i64, ptr %size_alloca, align 4
+  %1 = add i64 %size, 1
+  %current_address = load i64, ptr @heap_address, align 4
+  %updated_address = add i64 %current_address, %1
+  store i64 %updated_address, ptr @heap_address, align 4
+  %2 = inttoptr i64 %current_address to ptr
+  store i64 %size, ptr %2, align 4
+  ret ptr %2
+}
 
 define void @memcpy(ptr %0, ptr %1, i64 %2) {
 entry:
@@ -227,13 +251,8 @@ exit:                                             ; preds = %loop
 
 define void @test() {
 entry:
-  %0 = call i64 @vector_new(i64 6)
-  %heap_start = sub i64 %0, 6
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 5, ptr %heap_to_ptr, align 4
-  %1 = ptrtoint ptr %heap_to_ptr to i64
-  %2 = add i64 %1, 1
-  %vector_data = inttoptr i64 %2 to ptr
+  %0 = call ptr @vector_new(i64 5)
+  %vector_data = getelementptr i64, ptr %0, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 104, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %vector_data, i64 1
@@ -244,36 +263,27 @@ entry:
   store i64 108, ptr %index_access3, align 4
   %index_access4 = getelementptr i64, ptr %vector_data, i64 4
   store i64 111, ptr %index_access4, align 4
-  %3 = call i64 @vector_new(i64 6)
-  %heap_start5 = sub i64 %3, 6
-  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
-  store i64 5, ptr %heap_to_ptr6, align 4
-  %4 = ptrtoint ptr %heap_to_ptr6 to i64
-  %5 = add i64 %4, 1
-  %vector_data7 = inttoptr i64 %5 to ptr
-  %index_access8 = getelementptr i64, ptr %vector_data7, i64 0
-  store i64 104, ptr %index_access8, align 4
-  %index_access9 = getelementptr i64, ptr %vector_data7, i64 1
-  store i64 101, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %vector_data7, i64 2
-  store i64 108, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %vector_data7, i64 3
-  store i64 108, ptr %index_access11, align 4
-  %index_access12 = getelementptr i64, ptr %vector_data7, i64 4
-  store i64 111, ptr %index_access12, align 4
-  %6 = ptrtoint ptr %heap_to_ptr to i64
-  %7 = add i64 %6, 1
-  %vector_data13 = inttoptr i64 %7 to ptr
-  %length = load i64, ptr %heap_to_ptr, align 4
-  %8 = ptrtoint ptr %heap_to_ptr6 to i64
-  %9 = add i64 %8, 1
-  %vector_data14 = inttoptr i64 %9 to ptr
-  %length15 = load i64, ptr %heap_to_ptr6, align 4
-  %10 = icmp eq i64 %length, %length15
-  %11 = zext i1 %10 to i64
-  call void @builtin_assert(i64 %11)
-  %12 = call i64 @memcmp_eq(ptr %vector_data13, ptr %vector_data14, i64 %length)
-  call void @builtin_assert(i64 %12)
+  %1 = call ptr @vector_new(i64 5)
+  %vector_data5 = getelementptr i64, ptr %1, i64 1
+  %index_access6 = getelementptr i64, ptr %vector_data5, i64 0
+  store i64 104, ptr %index_access6, align 4
+  %index_access7 = getelementptr i64, ptr %vector_data5, i64 1
+  store i64 101, ptr %index_access7, align 4
+  %index_access8 = getelementptr i64, ptr %vector_data5, i64 2
+  store i64 108, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %vector_data5, i64 3
+  store i64 108, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %vector_data5, i64 4
+  store i64 111, ptr %index_access10, align 4
+  %vector_data11 = getelementptr i64, ptr %0, i64 1
+  %vector_length = load i64, ptr %0, align 4
+  %vector_data12 = getelementptr i64, ptr %1, i64 1
+  %vector_length13 = load i64, ptr %1, align 4
+  %2 = icmp eq i64 %vector_length, %vector_length13
+  %3 = zext i1 %2 to i64
+  call void @builtin_assert(i64 %3)
+  %4 = call i64 @memcmp_eq(ptr %vector_data11, ptr %vector_data12, i64 %vector_length)
+  call void @builtin_assert(i64 %4)
   ret void
 }
 
@@ -291,31 +301,23 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   call void @test()
-  %3 = call i64 @vector_new(i64 1)
-  %heap_start = sub i64 %3, 1
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  store i64 0, ptr %heap_to_ptr, align 4
-  call void @set_tape_data(i64 %heap_start, i64 1)
+  %3 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %3, align 4
+  call void @set_tape_data(ptr %3, i64 1)
   ret void
 }
 
 define void @main() {
 entry:
-  %0 = call i64 @vector_new(i64 13)
-  %heap_start = sub i64 %0, 13
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 13)
-  %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 14)
-  %heap_start1 = sub i64 %1, 14
-  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_tape_data(i64 %heap_start1, i64 14)
-  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %0 = call ptr @heap_malloc(i64 13)
+  call void @get_tape_data(ptr %0, i64 13)
+  %function_selector = load i64, ptr %0, align 4
+  %1 = call ptr @heap_malloc(i64 14)
+  call void @get_tape_data(ptr %1, i64 14)
+  %input_length = load i64, ptr %1, align 4
   %2 = add i64 %input_length, 14
-  %3 = call i64 @vector_new(i64 %2)
-  %heap_start3 = sub i64 %3, %2
-  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
-  call void @get_tape_data(i64 %heap_start3, i64 %2)
-  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
+  %3 = call ptr @heap_malloc(i64 %2)
+  call void @get_tape_data(ptr %3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %3)
   ret void
 }

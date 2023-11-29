@@ -71,7 +71,7 @@ pub(super) fn abi_encode_store_tape<'a>(
         "heap_size",
     );
 
-    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size);
+    let heap_start_ptr = bin.heap_malloc(heap_size);
 
     let mut offset = bin.context.i64_type().const_zero();
 
@@ -91,7 +91,7 @@ pub(super) fn abi_encode_store_tape<'a>(
     // identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
-    bin.tape_data_store(heap_start_int, heap_size);
+    bin.tape_data_store(heap_start_ptr, heap_size);
 }
 
 /// Insert encoding instructions into the `cfg` for any `Expression` in `args`.
@@ -153,23 +153,23 @@ pub(super) fn abi_decode<'a>(
 ) -> Vec<BasicValueEnum<'a>> {
     let mut read_items = vec![];
 
-    let mut input_start =
-        bin.builder
-            .build_ptr_to_int(input, bin.context.i64_type(), "input_start");
-
     // validator.initialize_validation(bin, offset, func_value, ns);
-
-    for (item_no, item) in types.iter().enumerate() {
+    let mut input = input.clone();
+    types.iter().for_each(|item| {
         // validator.set_argument_number(item_no);
 
         // validator.validate_buffer(bin, offset, func_value, ns);
-        let (read_item, advance) = read_from_buffer(input_start, bin, item, func_value, ns);
+        let (read_item, advance) = read_from_buffer(input, bin, item, func_value, ns);
         read_items.push(read_item);
-        if item_no < types.len() - 1 {
-            input_start = bin.builder.build_int_add(input_start, advance, "");
-            // validator.validate_buffer_end(bin, offset, func_value, ns);
-        }
-    }
+        input = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                input,
+                &[advance],
+                "",
+            )
+        };
+    });
 
     // validator.validate_all_bytes_read(bin, offset, func_value);
 
@@ -208,9 +208,13 @@ fn get_args_type_size<'a>(
             bin.context.i64_type().const_int(4, false)
         }
 
-        Type::Struct(struct_no) => {
-            calculate_struct_size(bin, arg_value, *struct_no, func_value, ns)
-        }
+        Type::Struct(struct_no) => calculate_struct_size(
+            bin,
+            arg_value.into_pointer_value(),
+            *struct_no,
+            func_value,
+            ns,
+        ),
         Type::Slice(elem_ty) => {
             let dims = vec![ArrayLength::Dynamic];
             calculate_array_size(bin, arg_value, ty, &elem_ty, &dims, func_value, ns)
@@ -221,7 +225,13 @@ fn get_args_type_size<'a>(
 
         Type::Ref(r) => {
             if let Type::Struct(struct_no) = &**r {
-                return calculate_struct_size(bin, arg_value, *struct_no, func_value, ns);
+                return calculate_struct_size(
+                    bin,
+                    arg_value.into_pointer_value(),
+                    *struct_no,
+                    func_value,
+                    ns,
+                );
             }
 
             let loaded = bin.builder.build_load(
@@ -301,7 +311,7 @@ fn calculate_array_size<'a>(
                 .i64_type()
                 .const_int(dim.to_u64().unwrap(), false)
         } else {
-            bin.vector_len(array)
+            bin.vector_len(array.into())
         };
 
         for item in dims.iter().take(dims.len() - 1) {
@@ -430,7 +440,7 @@ fn calculate_complex_array_size<'a>(
 /// Retrieves the size of a struct
 fn calculate_struct_size<'a>(
     bin: &Binary<'a>,
-    struct_ptr: BasicValueEnum<'a>,
+    struct_ptr: PointerValue<'a>,
     struct_no: usize,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -441,29 +451,23 @@ fn calculate_struct_size<'a>(
             .i64_type()
             .const_int(struct_size.to_u64().unwrap(), false);
     }
-
-    let struct_start = bin.builder.build_ptr_to_int(
-        struct_ptr.into_pointer_value(),
-        bin.context.i64_type(),
-        "struct_start",
-    );
-
-    let mut struct_offset = struct_start.clone();
-
-    let mut struct_start_pointer = struct_ptr.into_pointer_value();
+    let mut struct_start_pointer = struct_ptr.clone();
+    let mut struct_size = bin.context.i64_type().const_int(0, false);
     for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
         let expr_size =
             get_args_type_size(bin, struct_start_pointer.into(), &field_ty, func_value, ns).into();
-        struct_offset = bin.builder.build_int_add(struct_offset, expr_size, "");
-        struct_start_pointer = bin.builder.build_int_to_ptr(
-            struct_offset,
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            "",
-        );
+        struct_start_pointer = unsafe {
+            bin.builder.build_gep(
+                bin.llvm_field_ty(&field_ty, ns),
+                struct_start_pointer,
+                &[bin.context.i64_type().const_int(i as u64, false)],
+                "",
+            )
+        };
+        struct_size = bin.builder.build_int_add(struct_size, expr_size, "");
     }
-    let size = bin.builder.build_int_sub(struct_offset, struct_start, "");
-    size
+    struct_size
 }
 
 /// Loads a struct member

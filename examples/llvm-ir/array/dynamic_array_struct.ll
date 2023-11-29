@@ -15,13 +15,11 @@ declare i64 @prophet_u32_mod(i64, i64)
 
 declare ptr @prophet_u32_array_sort(ptr, i64)
 
-declare i64 @vector_new(i64)
+declare void @get_context_data(ptr, i64)
 
-declare void @get_context_data(i64, i64)
+declare void @get_tape_data(ptr, i64)
 
-declare void @get_tape_data(i64, i64)
-
-declare void @set_tape_data(i64, i64)
+declare void @set_tape_data(ptr, i64)
 
 declare void @get_storage(ptr, ptr)
 
@@ -32,6 +30,32 @@ declare void @poseidon_hash(ptr, ptr, i64)
 declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
+
+define ptr @heap_malloc(i64 %0) {
+entry:
+  %size_alloca = alloca i64, align 8
+  store i64 %0, ptr %size_alloca, align 4
+  %size = load i64, ptr %size_alloca, align 4
+  %current_address = load i64, ptr @heap_address, align 4
+  %updated_address = add i64 %current_address, %size
+  store i64 %updated_address, ptr @heap_address, align 4
+  %1 = inttoptr i64 %current_address to ptr
+  ret ptr %1
+}
+
+define ptr @vector_new(i64 %0) {
+entry:
+  %size_alloca = alloca i64, align 8
+  store i64 %0, ptr %size_alloca, align 4
+  %size = load i64, ptr %size_alloca, align 4
+  %1 = add i64 %size, 1
+  %current_address = load i64, ptr @heap_address, align 4
+  %updated_address = add i64 %current_address, %1
+  store i64 %updated_address, ptr @heap_address, align 4
+  %2 = inttoptr i64 %current_address to ptr
+  store i64 %size, ptr %2, align 4
+  ret ptr %2
+}
 
 define void @memcpy(ptr %0, ptr %1, i64 %2) {
 entry:
@@ -227,62 +251,52 @@ exit:                                             ; preds = %loop
 
 define ptr @createBooks() {
 entry:
-  %0 = call i64 @vector_new(i64 14)
-  %heap_start = sub i64 %0, 14
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  %elemptr0 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %heap_to_ptr, i64 0
-  %1 = call i64 @vector_new(i64 7)
-  %heap_start1 = sub i64 %1, 7
-  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %heap_to_ptr2, i32 0, i32 0
+  %0 = call ptr @heap_malloc(i64 14)
+  %elemptr0 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %0, i64 0
+  %1 = call ptr @heap_malloc(i64 7)
+  %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 0
   store i64 0, ptr %struct_member, align 4
-  %struct_member3 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %heap_to_ptr2, i32 0, i32 1
-  store i64 111, ptr %struct_member3, align 4
-  %struct_member4 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %heap_to_ptr2, i32 0, i32 2
-  %2 = call i64 @vector_new(i64 5)
-  %heap_start5 = sub i64 %2, 5
-  %heap_to_ptr6 = inttoptr i64 %heap_start5 to ptr
-  %elemptr07 = getelementptr [5 x i64], ptr %heap_to_ptr6, i64 0
-  store i64 1, ptr %elemptr07, align 4
-  %elemptr1 = getelementptr [5 x i64], ptr %heap_to_ptr6, i64 1
+  %struct_member1 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 1
+  store i64 111, ptr %struct_member1, align 4
+  %struct_member2 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 2
+  %2 = call ptr @heap_malloc(i64 5)
+  %elemptr03 = getelementptr [5 x i64], ptr %2, i64 0
+  store i64 1, ptr %elemptr03, align 4
+  %elemptr1 = getelementptr [5 x i64], ptr %2, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [5 x i64], ptr %heap_to_ptr6, i64 2
+  %elemptr2 = getelementptr [5 x i64], ptr %2, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %elemptr3 = getelementptr [5 x i64], ptr %heap_to_ptr6, i64 3
+  %elemptr3 = getelementptr [5 x i64], ptr %2, i64 3
   store i64 4, ptr %elemptr3, align 4
-  %elemptr4 = getelementptr [5 x i64], ptr %heap_to_ptr6, i64 4
+  %elemptr4 = getelementptr [5 x i64], ptr %2, i64 4
   store i64 5, ptr %elemptr4, align 4
-  %elem = load [5 x i64], ptr %heap_to_ptr6, align 4
-  store [5 x i64] %elem, ptr %struct_member4, align 4
-  %elem8 = load { i64, i64, [5 x i64] }, ptr %heap_to_ptr2, align 4
-  store { i64, i64, [5 x i64] } %elem8, ptr %elemptr0, align 4
-  %elemptr19 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %heap_to_ptr, i64 1
-  %3 = call i64 @vector_new(i64 7)
-  %heap_start10 = sub i64 %3, 7
-  %heap_to_ptr11 = inttoptr i64 %heap_start10 to ptr
-  %struct_member12 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %heap_to_ptr11, i32 0, i32 0
-  store i64 0, ptr %struct_member12, align 4
-  %struct_member13 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %heap_to_ptr11, i32 0, i32 1
-  store i64 0, ptr %struct_member13, align 4
-  %struct_member14 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %heap_to_ptr11, i32 0, i32 2
-  %4 = call i64 @vector_new(i64 5)
-  %heap_start15 = sub i64 %4, 5
-  %heap_to_ptr16 = inttoptr i64 %heap_start15 to ptr
-  %elemptr017 = getelementptr [5 x i64], ptr %heap_to_ptr16, i64 0
-  store i64 0, ptr %elemptr017, align 4
-  %elemptr118 = getelementptr [5 x i64], ptr %heap_to_ptr16, i64 1
-  store i64 0, ptr %elemptr118, align 4
-  %elemptr219 = getelementptr [5 x i64], ptr %heap_to_ptr16, i64 2
-  store i64 0, ptr %elemptr219, align 4
-  %elemptr320 = getelementptr [5 x i64], ptr %heap_to_ptr16, i64 3
-  store i64 0, ptr %elemptr320, align 4
-  %elemptr421 = getelementptr [5 x i64], ptr %heap_to_ptr16, i64 4
-  store i64 0, ptr %elemptr421, align 4
-  %elem22 = load [5 x i64], ptr %heap_to_ptr16, align 4
-  store [5 x i64] %elem22, ptr %struct_member14, align 4
-  %elem23 = load { i64, i64, [5 x i64] }, ptr %heap_to_ptr11, align 4
-  store { i64, i64, [5 x i64] } %elem23, ptr %elemptr19, align 4
-  ret ptr %heap_to_ptr
+  %elem = load [5 x i64], ptr %2, align 4
+  store [5 x i64] %elem, ptr %struct_member2, align 4
+  %elem4 = load { i64, i64, [5 x i64] }, ptr %1, align 4
+  store { i64, i64, [5 x i64] } %elem4, ptr %elemptr0, align 4
+  %elemptr15 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %0, i64 1
+  %3 = call ptr @heap_malloc(i64 7)
+  %struct_member6 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 0
+  store i64 0, ptr %struct_member6, align 4
+  %struct_member7 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 1
+  store i64 0, ptr %struct_member7, align 4
+  %struct_member8 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 2
+  %4 = call ptr @heap_malloc(i64 5)
+  %elemptr09 = getelementptr [5 x i64], ptr %4, i64 0
+  store i64 0, ptr %elemptr09, align 4
+  %elemptr110 = getelementptr [5 x i64], ptr %4, i64 1
+  store i64 0, ptr %elemptr110, align 4
+  %elemptr211 = getelementptr [5 x i64], ptr %4, i64 2
+  store i64 0, ptr %elemptr211, align 4
+  %elemptr312 = getelementptr [5 x i64], ptr %4, i64 3
+  store i64 0, ptr %elemptr312, align 4
+  %elemptr413 = getelementptr [5 x i64], ptr %4, i64 4
+  store i64 0, ptr %elemptr413, align 4
+  %elem14 = load [5 x i64], ptr %4, align 4
+  store [5 x i64] %elem14, ptr %struct_member8, align 4
+  %elem15 = load { i64, i64, [5 x i64] }, ptr %3, align 4
+  store { i64, i64, [5 x i64] } %elem15, ptr %elemptr15, align 4
+  ret ptr %0
 }
 
 define i64 @getFirstBookID(ptr %0) {
@@ -334,25 +348,18 @@ body:                                             ; preds = %cond
   %6 = sub i64 1, %index
   call void @builtin_range_check(i64 %6)
   %index_access = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %3, i64 %index
-  %struct_start = ptrtoint ptr %index_access to i64
-  %7 = add i64 %struct_start, 1
-  %8 = inttoptr i64 %7 to ptr
-  %9 = add i64 %7, 1
-  %10 = inttoptr i64 %9 to ptr
-  %11 = add i64 %9, 5
-  %12 = inttoptr i64 %11 to ptr
-  %13 = sub i64 %11, %struct_start
-  %14 = load i64, ptr %size_var, align 4
-  %15 = add i64 %14, %13
-  store i64 %15, ptr %size_var, align 4
+  %7 = getelementptr i64, ptr %index_access, i64 0
+  %8 = getelementptr i64, ptr %7, i64 1
+  %9 = getelementptr [5 x i64], ptr %8, i64 2
+  %10 = load i64, ptr %size_var, align 4
+  %11 = add i64 %10, 7
+  store i64 %11, ptr %size_var, align 4
   br label %next
 
 end_for:                                          ; preds = %cond
-  %16 = load i64, ptr %size_var, align 4
-  %heap_size = add i64 %16, 1
-  %17 = call i64 @vector_new(i64 %heap_size)
-  %heap_start = sub i64 %17, %heap_size
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
+  %12 = load i64, ptr %size_var, align 4
+  %heap_size = add i64 %12, 1
+  %13 = call ptr @heap_malloc(i64 %heap_size)
   %offset_var_no = alloca i64, align 8
   store i64 0, ptr %offset_var_no, align 4
   %index_ptr2 = alloca i64, align 8
@@ -361,72 +368,70 @@ end_for:                                          ; preds = %cond
   br label %cond4
 
 cond4:                                            ; preds = %next5, %end_for
-  %18 = icmp ult i64 %index3, 2
-  br i1 %18, label %body6, label %end_for7
+  %14 = icmp ult i64 %index3, 2
+  br i1 %14, label %body6, label %end_for7
 
 next5:                                            ; preds = %body6
   %index22 = load i64, ptr %index_ptr2, align 4
-  %19 = add i64 %index22, 1
-  store i64 %19, ptr %index_ptr2, align 4
+  %15 = add i64 %index22, 1
+  store i64 %15, ptr %index_ptr2, align 4
   br label %cond4
 
 body6:                                            ; preds = %cond4
-  %20 = sub i64 1, %index3
-  call void @builtin_range_check(i64 %20)
+  %16 = sub i64 1, %index3
+  call void @builtin_range_check(i64 %16)
   %index_access8 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %3, i64 %index3
-  %21 = load i64, ptr %offset_var_no, align 4
+  %17 = load i64, ptr %offset_var_no, align 4
   %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 0
   %elem = load i64, ptr %struct_member, align 4
-  %encode_value_ptr = getelementptr i64, ptr %heap_to_ptr, i64 %21
+  %encode_value_ptr = getelementptr i64, ptr %13, i64 %17
   store i64 %elem, ptr %encode_value_ptr, align 4
-  %22 = add i64 1, %21
+  %18 = add i64 1, %17
   %struct_member9 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 1
   %elem10 = load i64, ptr %struct_member9, align 4
-  %encode_value_ptr11 = getelementptr i64, ptr %heap_to_ptr, i64 %22
+  %encode_value_ptr11 = getelementptr i64, ptr %13, i64 %18
   store i64 %elem10, ptr %encode_value_ptr11, align 4
-  %23 = add i64 1, %22
+  %19 = add i64 1, %18
   %struct_member12 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 2
   %elemptr0 = getelementptr [5 x i64], ptr %struct_member12, i64 0, i64 0
-  %24 = load i64, ptr %elemptr0, align 4
-  %encode_value_ptr13 = getelementptr i64, ptr %heap_to_ptr, i64 %23
-  store i64 %24, ptr %encode_value_ptr13, align 4
-  %offset = add i64 %23, 1
+  %20 = load i64, ptr %elemptr0, align 4
+  %encode_value_ptr13 = getelementptr i64, ptr %13, i64 %19
+  store i64 %20, ptr %encode_value_ptr13, align 4
+  %offset = add i64 %19, 1
   %elemptr1 = getelementptr [5 x i64], ptr %struct_member12, i64 0, i64 1
-  %25 = load i64, ptr %elemptr1, align 4
-  %encode_value_ptr14 = getelementptr i64, ptr %heap_to_ptr, i64 %offset
-  store i64 %25, ptr %encode_value_ptr14, align 4
+  %21 = load i64, ptr %elemptr1, align 4
+  %encode_value_ptr14 = getelementptr i64, ptr %13, i64 %offset
+  store i64 %21, ptr %encode_value_ptr14, align 4
   %offset15 = add i64 %offset, 1
   %elemptr2 = getelementptr [5 x i64], ptr %struct_member12, i64 0, i64 2
-  %26 = load i64, ptr %elemptr2, align 4
-  %encode_value_ptr16 = getelementptr i64, ptr %heap_to_ptr, i64 %offset15
-  store i64 %26, ptr %encode_value_ptr16, align 4
+  %22 = load i64, ptr %elemptr2, align 4
+  %encode_value_ptr16 = getelementptr i64, ptr %13, i64 %offset15
+  store i64 %22, ptr %encode_value_ptr16, align 4
   %offset17 = add i64 %offset15, 1
   %elemptr3 = getelementptr [5 x i64], ptr %struct_member12, i64 0, i64 3
-  %27 = load i64, ptr %elemptr3, align 4
-  %encode_value_ptr18 = getelementptr i64, ptr %heap_to_ptr, i64 %offset17
-  store i64 %27, ptr %encode_value_ptr18, align 4
+  %23 = load i64, ptr %elemptr3, align 4
+  %encode_value_ptr18 = getelementptr i64, ptr %13, i64 %offset17
+  store i64 %23, ptr %encode_value_ptr18, align 4
   %offset19 = add i64 %offset17, 1
   %elemptr4 = getelementptr [5 x i64], ptr %struct_member12, i64 0, i64 4
-  %28 = load i64, ptr %elemptr4, align 4
-  %encode_value_ptr20 = getelementptr i64, ptr %heap_to_ptr, i64 %offset19
-  store i64 %28, ptr %encode_value_ptr20, align 4
+  %24 = load i64, ptr %elemptr4, align 4
+  %encode_value_ptr20 = getelementptr i64, ptr %13, i64 %offset19
+  store i64 %24, ptr %encode_value_ptr20, align 4
   %offset21 = add i64 %offset19, 1
-  %29 = add i64 %21, 7
-  store i64 %29, ptr %offset_var_no, align 4
+  %25 = add i64 %17, 7
+  store i64 %25, ptr %offset_var_no, align 4
   br label %next5
 
 end_for7:                                         ; preds = %cond4
-  %30 = load i64, ptr %offset_var_no, align 4
-  %31 = sub i64 %30, 0
-  %32 = add i64 %31, 0
-  %encode_value_ptr23 = getelementptr i64, ptr %heap_to_ptr, i64 %32
-  store i64 %16, ptr %encode_value_ptr23, align 4
-  call void @set_tape_data(i64 %heap_start, i64 %heap_size)
+  %26 = load i64, ptr %offset_var_no, align 4
+  %27 = sub i64 %26, 0
+  %28 = add i64 %27, 0
+  %encode_value_ptr23 = getelementptr i64, ptr %13, i64 %28
+  store i64 %12, ptr %encode_value_ptr23, align 4
+  call void @set_tape_data(ptr %13, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %input_start = ptrtoint ptr %input to i64
-  %33 = inttoptr i64 %input_start to ptr
   store i64 0, ptr %size_var24, align 4
   %index_ptr25 = alloca i64, align 8
   store i64 0, ptr %index_ptr25, align 4
@@ -434,63 +439,51 @@ func_1_dispatch:                                  ; preds = %entry
   br label %cond27
 
 cond27:                                           ; preds = %next28, %func_1_dispatch
-  %34 = icmp ult i64 %index26, 2
-  br i1 %34, label %body29, label %end_for30
+  %29 = icmp ult i64 %index26, 2
+  br i1 %29, label %body29, label %end_for30
 
 next28:                                           ; preds = %body29
-  %index33 = load i64, ptr %index_ptr25, align 4
-  %35 = add i64 %index33, 1
-  store i64 %35, ptr %index_ptr25, align 4
+  %index32 = load i64, ptr %index_ptr25, align 4
+  %30 = add i64 %index32, 1
+  store i64 %30, ptr %index_ptr25, align 4
   br label %cond27
 
 body29:                                           ; preds = %cond27
-  %36 = sub i64 1, %index26
-  call void @builtin_range_check(i64 %36)
-  %index_access31 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %33, i64 %index26
-  %struct_start32 = ptrtoint ptr %index_access31 to i64
-  %37 = add i64 %struct_start32, 1
-  %38 = inttoptr i64 %37 to ptr
-  %39 = add i64 %37, 1
-  %40 = inttoptr i64 %39 to ptr
-  %41 = add i64 %39, 5
-  %42 = inttoptr i64 %41 to ptr
-  %43 = sub i64 %41, %struct_start32
-  %44 = load i64, ptr %size_var24, align 4
-  %45 = add i64 %44, %43
-  store i64 %45, ptr %size_var24, align 4
+  %31 = sub i64 1, %index26
+  call void @builtin_range_check(i64 %31)
+  %index_access31 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %input, i64 %index26
+  %32 = getelementptr i64, ptr %index_access31, i64 0
+  %33 = getelementptr i64, ptr %32, i64 1
+  %34 = getelementptr [5 x i64], ptr %33, i64 2
+  %35 = load i64, ptr %size_var24, align 4
+  %36 = add i64 %35, 7
+  store i64 %36, ptr %size_var24, align 4
   br label %next28
 
 end_for30:                                        ; preds = %cond27
-  %46 = load i64, ptr %size_var24, align 4
-  %47 = call i64 @getFirstBookID(ptr %33)
-  %48 = call i64 @vector_new(i64 2)
-  %heap_start34 = sub i64 %48, 2
-  %heap_to_ptr35 = inttoptr i64 %heap_start34 to ptr
-  %encode_value_ptr36 = getelementptr i64, ptr %heap_to_ptr35, i64 0
-  store i64 %47, ptr %encode_value_ptr36, align 4
-  %encode_value_ptr37 = getelementptr i64, ptr %heap_to_ptr35, i64 1
-  store i64 1, ptr %encode_value_ptr37, align 4
-  call void @set_tape_data(i64 %heap_start34, i64 2)
+  %37 = load i64, ptr %size_var24, align 4
+  %38 = getelementptr ptr, ptr %input, i64 %37
+  %39 = call i64 @getFirstBookID(ptr %input)
+  %40 = call ptr @heap_malloc(i64 2)
+  %encode_value_ptr33 = getelementptr i64, ptr %40, i64 0
+  store i64 %39, ptr %encode_value_ptr33, align 4
+  %encode_value_ptr34 = getelementptr i64, ptr %40, i64 1
+  store i64 1, ptr %encode_value_ptr34, align 4
+  call void @set_tape_data(ptr %40, i64 2)
   ret void
 }
 
 define void @main() {
 entry:
-  %0 = call i64 @vector_new(i64 13)
-  %heap_start = sub i64 %0, 13
-  %heap_to_ptr = inttoptr i64 %heap_start to ptr
-  call void @get_tape_data(i64 %heap_start, i64 13)
-  %function_selector = load i64, ptr %heap_to_ptr, align 4
-  %1 = call i64 @vector_new(i64 14)
-  %heap_start1 = sub i64 %1, 14
-  %heap_to_ptr2 = inttoptr i64 %heap_start1 to ptr
-  call void @get_tape_data(i64 %heap_start1, i64 14)
-  %input_length = load i64, ptr %heap_to_ptr2, align 4
+  %0 = call ptr @heap_malloc(i64 13)
+  call void @get_tape_data(ptr %0, i64 13)
+  %function_selector = load i64, ptr %0, align 4
+  %1 = call ptr @heap_malloc(i64 14)
+  call void @get_tape_data(ptr %1, i64 14)
+  %input_length = load i64, ptr %1, align 4
   %2 = add i64 %input_length, 14
-  %3 = call i64 @vector_new(i64 %2)
-  %heap_start3 = sub i64 %3, %2
-  %heap_to_ptr4 = inttoptr i64 %heap_start3 to ptr
-  call void @get_tape_data(i64 %heap_start3, i64 %2)
-  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %heap_to_ptr4)
+  %3 = call ptr @heap_malloc(i64 %2)
+  call void @get_tape_data(ptr %3, i64 %2)
+  call void @function_dispatch(i64 %function_selector, i64 %input_length, ptr %3)
   ret void
 }
