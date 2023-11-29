@@ -184,10 +184,10 @@ fn dispatch_case<'a>(
         abi_encode_store_tape(bin, returns, &return_tys, func_value, ns);
     } else {
         let heap_size = bin.context.i64_type().const_int(1, false);
-        let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size);
+        let heap_start_ptr = bin.heap_malloc(heap_size);
         bin.builder
             .build_store(heap_start_ptr, bin.context.i64_type().const_int(0, false));
-        bin.tape_data_store(heap_start_int, heap_size);
+        bin.tape_data_store(heap_start_ptr, heap_size);
     }
 
     bin.builder.build_return(None);

@@ -415,9 +415,7 @@ pub fn expression<'a>(
             let root = bin
                 .builder
                 .build_call(
-                    bin.module
-                        .get_function("u32_sqrt")
-                        .expect("u32_sqrt should have been defined before"),
+                    bin.module.get_function("u32_sqrt").unwrap(),
                     &[value.into()],
                     "",
                 )
@@ -434,9 +432,7 @@ pub fn expression<'a>(
         } => {
             let cond = expression(&args[0], bin, func_value, var_table, ns);
             bin.builder.build_call(
-                bin.module
-                    .get_function("builtin_assert")
-                    .expect("builtin_assert should have been defined before"),
+                bin.module.get_function("builtin_assert").unwrap(),
                 &[bin
                     .builder
                     .build_int_z_extend(cond.into_int_value(), bin.context.i64_type(), "")
@@ -450,14 +446,16 @@ pub fn expression<'a>(
             kind: LibFunc::OriginAddress,
             ..
         } => {
-            let (heap_start_int, heap_start_ptr) =
-                bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+            let heap_start_ptr = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
             for i in 0..4 {
-                let address_elem = bin.builder.build_int_add(
-                    heap_start_int,
-                    bin.context.i64_type().const_int(i, false),
-                    "",
-                );
+                let address_elem = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        heap_start_ptr,
+                        &[bin.context.i64_type().const_int(i, false)],
+                        "origin_address",
+                    )
+                };
                 let origin_address_index = bin.context.i64_type().const_int(8 + i, false);
                 bin.context_data_load(address_elem, origin_address_index);
             }
@@ -470,9 +468,8 @@ pub fn expression<'a>(
             ..
         } => {
             let chain_id_index = bin.context.i64_type().const_int(7, false);
-            let (heap_start_int, heap_start_ptr) =
-                bin.heap_malloc(bin.context.i64_type().const_int(1, false));
-            bin.context_data_load(heap_start_int, chain_id_index);
+            let heap_start_ptr = bin.heap_malloc(bin.context.i64_type().const_int(1, false));
+            bin.context_data_load(heap_start_ptr, chain_id_index);
             bin.builder
                 .build_load(bin.context.i64_type(), heap_start_ptr, "")
         }
@@ -505,8 +502,8 @@ pub fn expression<'a>(
                 _ => unreachable!(),
             };
 
-            let (heap_start_int, heap_start_ptr) = bin.heap_malloc(address_index);
-            bin.tape_data_load(heap_start_int, address_index);
+            let heap_start_ptr = bin.heap_malloc(address_index);
+            bin.tape_data_load(heap_start_ptr, address_index);
             heap_start_ptr.into()
         }
         Expression::StructLiteral { ty, values, .. } => {
@@ -517,7 +514,7 @@ pub fn expression<'a>(
                 .i64_type()
                 .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
 
-            let (_, struct_alloca) = bin.heap_malloc(struct_size);
+            let struct_alloca = bin.heap_malloc(struct_size);
 
             for (i, expr) in values.iter().enumerate() {
                 let elemptr = bin
@@ -553,7 +550,7 @@ pub fn expression<'a>(
                 .i64_type()
                 .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
 
-            let (_, array_alloca) = bin.heap_malloc(array_size);
+            let array_alloca = bin.heap_malloc(array_size);
 
             for (i, expr) in values.iter().enumerate() {
                 let mut ind = vec![];
@@ -753,7 +750,7 @@ pub fn expression<'a>(
             let expr = expression(expr, bin, func_value, var_table, ns);
             let zero = bin.context.i64_type().const_zero();
             let value = [zero, zero, zero, expr.into_int_value()];
-            let (_, heap_ptr) =
+            let heap_ptr =
                 bin.heap_malloc(bin.context.i64_type().const_int(value.len() as u64, false));
             for (i, v) in value.iter().enumerate() {
                 let index = bin.context.i64_type().const_int(i as u64, false);
@@ -844,9 +841,7 @@ pub fn expression<'a>(
             let array_sorted = bin
                 .builder
                 .build_call(
-                    bin.module
-                        .get_function("prophet_u32_array_sort")
-                        .expect("prophet_u32_array_sort should have been defined before"),
+                    bin.module.get_function("prophet_u32_array_sort").unwrap(),
                     &[array.into(), array_length.into()],
                     "",
                 )
@@ -901,9 +896,7 @@ pub fn expression<'a>(
             let result = bin
                 .builder
                 .build_call(
-                    bin.module
-                        .get_function("fields_concat")
-                        .expect("fields_concat should have been defined before"),
+                    bin.module.get_function("fields_concat").unwrap(),
                     &[left.into(), right.into()],
                     "",
                 )
@@ -1370,9 +1363,7 @@ pub fn string_compare<'a>(
         .builder
         .build_int_compare(IntPredicate::EQ, left_len, right_len, "");
     bin.builder.build_call(
-        bin.module
-            .get_function("builtin_assert")
-            .expect("builtin_assert should have been defined before"),
+        bin.module.get_function("builtin_assert").unwrap(),
         &[bin
             .builder
             .build_int_z_extend(equal, bin.context.i64_type(), "")
@@ -1437,30 +1428,17 @@ fn external_call<'a>(
     address: BasicValueEnum<'a>,
     call_type: CallTy,
 ) -> BasicValueEnum<'a> {
-    let payload_len = bin.builder.build_load(
-        bin.context.i64_type(),
-        args.into_pointer_value(),
-        "payload_len",
-    );
+    let payload_len = bin.vector_len(args);
+    let payload_ptr = bin.vector_data(args);
 
     let tape_size = bin.builder.build_int_add(
-        payload_len.into_int_value(),
+        payload_len,
         bin.context.i64_type().const_int(2, false),
         "tape_size",
     );
 
-    let payload_ptr =
-        bin.builder
-            .build_ptr_to_int(args.into_pointer_value(), bin.context.i64_type(), "");
-
-    let payload_start = bin.builder.build_int_add(
-        payload_ptr,
-        bin.context.i64_type().const_int(1, false),
-        "payload_start",
-    );
-
     // store payload and payload len to tape
-    bin.tape_data_store(payload_start, tape_size);
+    bin.tape_data_store(payload_ptr, tape_size);
 
     let call_type = match call_type {
         CallTy::Regular => bin.context.i64_type().const_zero(),
@@ -1469,17 +1447,16 @@ fn external_call<'a>(
     };
 
     bin.builder.build_call(
-        bin.module
-            .get_function("contract_call")
-            .expect("contract_call should have been defined before"),
+        bin.module.get_function("contract_call").unwrap(),
         &[address.into(), call_type.into()],
         "",
     );
 
     // length start from index = 0 in tape data
     let length_size = bin.context.i64_type().const_int(1, false);
-    let (length_start_int, length_start_ptr) = bin.heap_malloc(length_size);
-    bin.tape_data_load(length_start_int, length_size);
+    let length_start_ptr = bin.heap_malloc(length_size);
+    bin.tape_data_load(length_start_ptr, length_size);
+
     let return_length =
         bin.builder
             .build_load(bin.context.i64_type(), length_start_ptr, "return_length");
@@ -1490,22 +1467,24 @@ fn external_call<'a>(
         "heap_size",
     );
 
-    let tape_size = bin.builder.build_int_add(
-        return_length.into_int_value(),
-        bin.context.i64_type().const_int(1, false),
-        "tape_size",
-    );
-    let (heap_start_int, heap_start_ptr) = bin.heap_malloc(heap_size);
+    let heap_start_ptr = bin.heap_malloc(heap_size);
 
+    // store return length to heap
+    // heap[0] = return_length
+    // heap[1..len] = return_data
+    // heap[len] = return_length
     bin.builder.build_store(heap_start_ptr, return_length);
 
-    let tape_start_int = bin.builder.build_int_add(
-        heap_start_int,
-        bin.context.i64_type().const_int(1, false),
-        "",
-    );
+    let return_data_start = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            heap_start_ptr,
+            &[bin.context.i64_type().const_int(1, false)],
+            "return_data_start",
+        )
+    };
 
-    bin.tape_data_load(tape_start_int, tape_size);
+    bin.tape_data_load(return_data_start, tape_size);
     heap_start_ptr.as_basic_value_enum()
 }
 
@@ -1520,10 +1499,18 @@ pub(crate) fn debug_print<'a>(
     let print_func = bin.module.get_function("prophet_printf").unwrap();
     match ty {
         Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
+            let arg_value = match arg.get_type() {
+                BasicTypeEnum::IntType(_) => arg,
+                BasicTypeEnum::PointerType(_) => {
+                    bin.builder
+                        .build_load(bin.context.i64_type(), arg.into_pointer_value(), "")
+                }
+                _ => unreachable!(),
+            };
             bin.builder.build_call(
                 print_func,
                 &[
-                    arg.into(),
+                    arg_value.into(),
                     bin.context.i64_type().const_int(3, false).into(),
                 ],
                 "",
@@ -1607,36 +1594,18 @@ pub(crate) fn debug_print<'a>(
             );
         }
         Type::Struct(no) => {
-            let struct_start = bin.builder.build_ptr_to_int(
-                arg.into_pointer_value(),
-                bin.context.i64_type(),
-                "struct_start",
-            );
-            let mut offset = struct_start;
+            let mut arg_ptr = arg.into_pointer_value();
             for (_, field) in ns.structs[*no].fields.iter().enumerate() {
-                let field_ptr = bin.builder.build_int_to_ptr(
-                    offset,
-                    bin.context.i64_type().ptr_type(AddressSpace::default()),
-                    "",
-                );
-                let value = match field.ty {
-                    Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
-                        let value = bin
-                            .builder
-                            .build_load(bin.context.i64_type(), field_ptr, "");
-                        value
-                    }
-                    _ => field_ptr.into(),
-                };
-                debug_print(bin, value, &field.ty, func_value, ns);
-
-                offset = bin.builder.build_int_add(
-                    offset,
-                    bin.context
-                        .i64_type()
-                        .const_int(field.ty.memory_size_of(ns).to_u64().unwrap(), false),
-                    "",
-                );
+                debug_print(bin, arg_ptr.into(), &field.ty, func_value, ns);
+                arg_ptr = bin
+                    .builder
+                    .build_struct_gep(
+                        bin.llvm_type(&field.ty, ns),
+                        arg_ptr,
+                        field.ty.memory_size_of(ns).to_u32().unwrap(),
+                        "struct_field",
+                    )
+                    .unwrap();
             }
         }
         Type::Mapping(_) => todo!(),
