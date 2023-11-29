@@ -1,6 +1,6 @@
 use inkwell::{
     values::{BasicValueEnum, FunctionValue, IntValue, PointerValue},
-    AddressSpace, IntPredicate,
+    IntPredicate,
 };
 use num_traits::ToPrimitive;
 
@@ -31,7 +31,7 @@ pub(crate) fn encode_into_buffer<'a>(
             bin.context.i64_type().const_int(1, false)
         }
 
-        Type::String | Type::DynamicBytes => encode_bytes(buffer, arg, &mut offset.clone(), bin),
+        Type::String | Type::DynamicBytes => encode_bytes(buffer, arg, bin),
 
         Type::Struct(struct_no) => encode_struct(
             arg,
@@ -151,38 +151,15 @@ fn encode_address_or_hash<'a>(
 fn encode_bytes<'a>(
     buffer: PointerValue<'a>,
     string_value: BasicValueEnum<'a>,
-    offset: &mut IntValue<'a>,
     bin: &Binary<'a>,
 ) -> IntValue<'a> {
     let len = bin.vector_len(string_value);
-    *offset = bin.builder.build_int_add(
-        *offset,
-        bin.context.i64_type().const_int(1, false),
-        "offset",
-    );
-
-    let buffer_int = bin
-        .builder
-        .build_ptr_to_int(buffer, bin.context.i64_type(), "");
-
-    let buffer_int = bin
-        .builder
-        .build_int_add(buffer_int, *offset, "buffer_start");
-
-    let buffer = bin.builder.build_int_to_ptr(
-        buffer_int,
-        bin.context.i64_type().ptr_type(AddressSpace::default()),
-        "",
-    );
-
-    // First, we must save the length of the string
-    encode_uint(buffer, len.into(), *offset, bin);
-
     let data = bin.vector_data(string_value);
-
-    bin.memcpy(data, buffer, len);
-    bin.builder
-        .build_int_add(len, bin.context.i64_type().const_int(1, false), "")
+    let total_len = bin
+        .builder
+        .build_int_add(len, bin.context.i64_type().const_int(1, false), "");
+    bin.memcpy(data, buffer, total_len);
+    total_len
 }
 
 /// Currently, we can only handle one-dimensional arrays.

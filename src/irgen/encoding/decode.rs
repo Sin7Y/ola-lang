@@ -15,7 +15,7 @@ use super::get_args_type_size;
 /// Read a value of type 'ty' from the buffer at a given offset. Returns an
 /// expression containing the read value and the number of bytes read.
 pub(crate) fn read_from_buffer<'a>(
-    buffer: IntValue<'a>,
+    buffer: PointerValue<'a>,
     bin: &Binary<'a>,
     ty: &Type,
     func_value: FunctionValue<'a>,
@@ -24,37 +24,20 @@ pub(crate) fn read_from_buffer<'a>(
     match ty {
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let size = get_args_type_size(bin, buffer.into(), ty, func_value, ns);
-            let buffer_ptr = bin.builder.build_int_to_ptr(
-                buffer,
-                bin.context.i64_type().ptr_type(AddressSpace::default()),
-                "",
-            );
-            let decode_value =
-                bin.builder
-                    .build_load(bin.context.i64_type(), buffer_ptr, "decode_value");
+            let decode_value = bin.builder.build_load(bin.context.i64_type(), buffer, "");
             (decode_value, size)
         }
 
         Type::Address | Type::Contract(_) | Type::Hash => {
             let size = get_args_type_size(bin, buffer.into(), ty, func_value, ns);
-            let buffer = bin.builder.build_int_to_ptr(
-                buffer,
-                bin.context.i64_type().ptr_type(AddressSpace::default()),
-                "",
-            );
             (buffer.into(), size)
         }
 
         Type::String | Type::DynamicBytes => {
             // String and Dynamic bytes are encoded as size + elements.length
-            let buffer_ptr = bin.builder.build_int_to_ptr(
-                buffer,
-                bin.context.i64_type().ptr_type(AddressSpace::default()),
-                "",
-            );
-            let total_size = get_args_type_size(bin, buffer_ptr.into(), ty, func_value, ns);
+            let total_size = get_args_type_size(bin, buffer.into(), ty, func_value, ns);
 
-            (buffer_ptr.into(), total_size)
+            (buffer.into(), total_size)
         }
 
         Type::UserType(type_no) => {
@@ -62,14 +45,7 @@ pub(crate) fn read_from_buffer<'a>(
             read_from_buffer(buffer, bin, &usr_type, func_value, ns)
         }
 
-        Type::Array(..) => {
-            let buffer = bin.builder.build_int_to_ptr(
-                buffer,
-                bin.context.i64_type().ptr_type(AddressSpace::default()),
-                "",
-            );
-            decode_array(buffer.into(), ty, bin, func_value, ns)
-        }
+        Type::Array(..) => decode_array(buffer.into(), ty, bin, func_value, ns),
 
         Type::Slice(..) => {
             let buffer = bin.builder.build_int_to_ptr(
@@ -80,7 +56,7 @@ pub(crate) fn read_from_buffer<'a>(
             decode_array(buffer, ty, bin, func_value, ns)
         }
 
-        Type::Struct(no) => decode_struct(&mut buffer.clone(), ty, *no, bin, func_value, ns),
+        Type::Struct(no) => decode_struct(buffer.clone(), ty, *no, bin, func_value, ns),
 
         _ => unreachable!("read_from_buffer: {:?}", ty),
     }
@@ -98,7 +74,7 @@ fn decode_array<'a>(
 }
 
 fn decode_struct<'a>(
-    buffer: &mut IntValue<'a>,
+    buffer: PointerValue<'a>,
     ty: &Type,
     struct_no: usize,
     bin: &Binary<'a>,
@@ -113,27 +89,35 @@ fn decode_struct<'a>(
 
     let qty = ns.structs[struct_no].fields.len();
 
-    let buffer_before = *buffer;
     let mut read_items: Vec<BasicValueEnum<'_>> = vec![];
 
+    let mut struct_size = bin.context.i64_type().const_zero();
+    let mut buffer_ptr = buffer.clone();
     for i in 0..qty {
-        let (read_expr, advance) = read_from_buffer(*buffer, bin, &struct_tys[i], func_value, ns);
+        let (read_expr, advance) =
+            read_from_buffer(buffer_ptr, bin, &struct_tys[i], func_value, ns);
         read_items.push(read_expr);
-        *buffer = bin.builder.build_int_add(*buffer, advance, "struct_offset");
+        struct_size = bin
+            .builder
+            .build_int_add(struct_size, advance, "struct_size");
+        buffer_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                buffer_ptr,
+                &[advance],
+                "struct_ptr",
+            )
+        };
     }
-    let runtime_size = bin
-        .builder
-        .build_int_sub(*buffer, buffer_before, "struct_decode_size");
 
     let struct_var = struct_literal_copy(ty, read_items, bin, ns);
-    (struct_var, runtime_size)
+    (struct_var, struct_size)
 }
 
 pub fn struct_literal_copy<'a>(
     ty: &Type,
     values: Vec<BasicValueEnum<'a>>,
     bin: &Binary<'a>,
-
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     let struct_ty = bin.llvm_type(ty, ns);
@@ -143,7 +127,7 @@ pub fn struct_literal_copy<'a>(
         .i64_type()
         .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
 
-    let (_, struct_alloca) = bin.heap_malloc(struct_size);
+    let struct_alloca = bin.heap_malloc(struct_size);
 
     for (i, elem) in values.iter().enumerate() {
         let elemptr = bin

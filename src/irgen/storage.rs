@@ -144,7 +144,7 @@ pub(crate) fn storage_load<'a>(
                     .i64_type()
                     .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
 
-                let (_, new_array) = bin.heap_malloc(array_size);
+                let new_array = bin.heap_malloc(array_size);
 
                 bin.emit_static_loop_with_int(
                     function,
@@ -218,7 +218,7 @@ pub(crate) fn storage_load<'a>(
                 .i64_type()
                 .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
 
-            let (_, struct_alloca) = bin.heap_malloc(struct_size);
+            let struct_alloca = bin.heap_malloc(struct_size);
 
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
                 let val = storage_load(bin, &field.ty, slot, function, ns);
@@ -633,7 +633,7 @@ pub(crate) fn storage_load_internal<'a>(
     key: BasicValueEnum<'a>,
 ) -> PointerValue<'a> {
     emit_context!(bin);
-    let (_, storage_value_ptr) = bin.heap_malloc(i64_const!(4));
+    let storage_value_ptr = bin.heap_malloc(i64_const!(4));
     let storage_key = match key.get_type() {
         BasicTypeEnum::IntType(..) => bin.convert_uint_storage(key),
         _ => key,
@@ -652,7 +652,7 @@ pub(crate) fn storage_clear_internal<'a>(bin: &Binary<'a>, key: BasicValueEnum<'
         _ => key,
     };
 
-    let (_, storage_value_ptr) = bin.heap_malloc(i64_const!(4));
+    let storage_value_ptr = bin.heap_malloc(i64_const!(4));
 
     for i in 0..4 {
         let elem_ptr = unsafe {

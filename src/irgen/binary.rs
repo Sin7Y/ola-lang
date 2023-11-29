@@ -69,7 +69,8 @@ impl<'a> Binary<'a> {
             "heap_address",
         );
         heap_address.set_linkage(Linkage::Internal);
-        heap_address.set_initializer(&context.i64_type().const_int(HEAP_ADDRESS_START, false));
+        let init = context.i64_type().const_int(HEAP_ADDRESS_START, false);
+        heap_address.set_initializer(&init);
 
         Binary {
             name: name.to_owned(),
@@ -103,7 +104,7 @@ impl<'a> Binary<'a> {
     }
 
     pub(crate) fn address_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
-        let (_, address_heap_ptr) =
+        let address_heap_ptr =
             self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
         let ty = self.context.i64_type();
         for (i, v) in value.iter().enumerate() {
@@ -123,7 +124,7 @@ impl<'a> Binary<'a> {
     }
 
     pub(crate) fn hash_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
-        let (_, hash_heap_ptr) =
+        let hash_heap_ptr =
             self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
         let ty = self.context.i64_type();
         for (i, v) in value.iter().enumerate() {
@@ -393,21 +394,7 @@ impl<'a> Binary<'a> {
     }
 
     pub(crate) fn vector_new(&self, size: IntValue<'a>) -> PointerValue<'a> {
-        let size_add_one = self.builder.build_int_add(
-            size,
-            self.context.i64_type().const_int(1, false),
-            "length_and_data",
-        );
-
-        let (_, heap_start_ptr) = self.heap_malloc(size_add_one);
-
-        self.builder.build_store(heap_start_ptr, size);
-        heap_start_ptr
-    }
-
-    pub(crate) fn heap_malloc(&self, size: IntValue<'a>) -> (IntValue<'a>, PointerValue<'a>) {
-        let heap_ptr_after = self
-            .builder
+        self.builder
             .build_call(
                 self.module.get_function("vector_new").unwrap(),
                 &[size.into()],
@@ -415,22 +402,51 @@ impl<'a> Binary<'a> {
             )
             .try_as_basic_value()
             .left()
-            .unwrap();
-
-        let heap_start_int =
-            self.builder
-                .build_int_sub(heap_ptr_after.into_int_value(), size, "heap_start");
-
-        let heap_start_ptr = self.builder.build_int_to_ptr(
-            heap_start_int,
-            self.context.i64_type().ptr_type(AddressSpace::default()),
-            "heap_to_ptr",
-        );
-
-        (heap_start_int, heap_start_ptr)
+            .unwrap()
+            .into_pointer_value()
     }
 
-    pub(crate) fn context_data_load(&self, heap_address: IntValue<'a>, tape_index: IntValue<'a>) {
+    pub(crate) fn heap_malloc(&self, size: IntValue<'a>) -> PointerValue<'a> {
+        self.builder
+            .build_call(
+                self.module.get_function("heap_malloc").unwrap(),
+                &[size.into()],
+                "",
+            )
+            .try_as_basic_value()
+            .left()
+            .unwrap()
+            .into_pointer_value()
+    }
+
+    /// Number of element in a vector
+    pub(crate) fn vector_len(&self, vector: BasicValueEnum<'a>) -> IntValue<'a> {
+        self.builder
+            .build_load(
+                self.context.i64_type(),
+                vector.into_pointer_value(),
+                "vector_length",
+            )
+            .into_int_value()
+    }
+
+    /// Return the pointer to the actual bytes in the vector
+    pub(crate) fn vector_data(&self, vector: BasicValueEnum<'a>) -> PointerValue<'a> {
+        unsafe {
+            self.builder.build_gep(
+                self.context.i64_type(),
+                vector.into_pointer_value(),
+                &[self.context.i64_type().const_int(1, false)],
+                "vector_data",
+            )
+        }
+    }
+
+    pub(crate) fn context_data_load(
+        &self,
+        heap_address: PointerValue<'a>,
+        tape_index: IntValue<'a>,
+    ) {
         let context_data_function = self.module.get_function("get_context_data").unwrap();
         self.builder.build_call(
             context_data_function,
@@ -438,7 +454,7 @@ impl<'a> Binary<'a> {
             "",
         );
     }
-    pub(crate) fn tape_data_load(&self, heap_address: IntValue<'a>, tape_index: IntValue<'a>) {
+    pub(crate) fn tape_data_load(&self, heap_address: PointerValue<'a>, tape_index: IntValue<'a>) {
         let tape_data_function = self.module.get_function("get_tape_data").unwrap();
         self.builder.build_call(
             tape_data_function,
@@ -447,7 +463,7 @@ impl<'a> Binary<'a> {
         );
     }
 
-    pub(crate) fn tape_data_store(&self, heap_address: IntValue<'a>, length: IntValue<'a>) {
+    pub(crate) fn tape_data_store(&self, heap_address: PointerValue<'a>, length: IntValue<'a>) {
         let tape_data_function = self.module.get_function("set_tape_data").unwrap();
         self.builder.build_call(
             tape_data_function,
@@ -462,8 +478,8 @@ impl<'a> Binary<'a> {
         // field) ｜ callee_address(4 field) | code_address(4 field)|
 
         let selector_index = self.context.i64_type().const_int(13, false);
-        let (selector_start_int, selector_start_ptr) = self.heap_malloc(selector_index);
-        self.tape_data_load(selector_start_int, selector_index);
+        let selector_start_ptr = self.heap_malloc(selector_index);
+        self.tape_data_load(selector_start_ptr, selector_index);
         let function_selector = self.builder.build_load(
             self.context.i64_type(),
             selector_start_ptr,
@@ -472,16 +488,16 @@ impl<'a> Binary<'a> {
         let length_size = self.context.i64_type().const_int(1, false);
         let length_index = self.builder.build_int_add(selector_index, length_size, "");
 
-        let (length_start_int, length_start_ptr) = self.heap_malloc(length_index);
-        self.tape_data_load(length_start_int, length_index);
+        let length_start_ptr = self.heap_malloc(length_index);
+        self.tape_data_load(length_start_ptr, length_index);
         let input_length =
             self.builder
                 .build_load(self.context.i64_type(), length_start_ptr, "input_length");
         let calldata_index =
             self.builder
                 .build_int_add(input_length.into_int_value(), length_index, "");
-        let (data_start_int, data_start_ptr) = self.heap_malloc(calldata_index);
-        self.tape_data_load(data_start_int, calldata_index);
+        let data_start_ptr = self.heap_malloc(calldata_index);
+        self.tape_data_load(data_start_ptr, calldata_index);
         (
             function_selector.into_int_value(),
             input_length.into_int_value(),
@@ -499,30 +515,22 @@ impl<'a> Binary<'a> {
             for (_, len) in hash_src.iter() {
                 src_len = self.builder.build_int_add(src_len, *len, "");
             }
-            let (heap_src_int, heap_src_ptr) = self.heap_malloc(src_len);
-            let mut dest_offset = heap_src_int;
-            let hash_src_len = hash_src.len();
-            for (i, (v, len)) in hash_src.iter().enumerate() {
-                let dest_ptr = self.builder.build_int_to_ptr(
-                    dest_offset,
-                    self.context.i64_type().ptr_type(AddressSpace::default()),
-                    "",
-                );
+            let heap_src_ptr = self.heap_malloc(src_len);
+            let mut dest_ptr = heap_src_ptr.clone();
+            hash_src.iter().for_each(|(v, len)| {
                 self.memcpy(v.into_pointer_value(), dest_ptr, *len);
-                // Check if this is the last iteration of the loop
-                if i < hash_src_len - 1 {
-                    dest_offset = self
-                        .builder
-                        .build_int_add(dest_offset, *len, "next_dest_offset");
-                }
-            }
+                dest_ptr = unsafe {
+                    self.builder
+                        .build_gep(self.context.i64_type(), dest_ptr, &[*len], "")
+                };
+            });
             (heap_src_ptr, src_len)
         } else {
             let (heap_src_ptr, src_len) = hash_src[0];
             (heap_src_ptr.into_pointer_value(), src_len)
         };
         let return_size = self.context.i64_type().const_int(4, false);
-        let (_, return_heap_ptr) = self.heap_malloc(return_size);
+        let return_heap_ptr = self.heap_malloc(return_size);
         let hash_function = self.module.get_function("poseidon_hash").unwrap();
         self.builder.build_call(
             hash_function,
@@ -530,95 +538,6 @@ impl<'a> Binary<'a> {
             "",
         );
         return_heap_ptr.as_basic_value_enum()
-    }
-
-    /// Number of element in a vector
-    pub(crate) fn vector_len(&self, vector: BasicValueEnum<'a>) -> IntValue<'a> {
-        self.builder
-            .build_load(
-                self.context.i64_type(),
-                vector.into_pointer_value(),
-                "length",
-            )
-            .into_int_value()
-    }
-
-    /// Return the pointer to the actual bytes in the vector
-    pub(crate) fn vector_data(&self, vector: BasicValueEnum<'a>) -> PointerValue<'a> {
-        let vector_int_value =
-            self.builder
-                .build_ptr_to_int(vector.into_pointer_value(), self.context.i64_type(), "");
-        // field 1 is the data
-        let vector_data = self.builder.build_int_add(
-            vector_int_value,
-            self.context.i64_type().const_int(1, false),
-            "",
-        );
-        self.builder.build_int_to_ptr(
-            vector_data,
-            self.context.i64_type().ptr_type(AddressSpace::default()),
-            "vector_data",
-        )
-    }
-
-    pub fn vector_zero_init(
-        &self,
-        function: FunctionValue<'a>,
-        ty: &Type,
-        from: IntValue<'a>,
-        to: IntValue<'a>,
-        data_ref: PointerValue<'a>,
-        ns: &Namespace,
-    ) {
-        let cond = self.context.append_basic_block(function, "cond");
-        let body = self.context.append_basic_block(function, "body");
-        let done = self.context.append_basic_block(function, "done");
-
-        let loop_ty = from.get_type();
-        // create an alloca for the loop variable
-        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
-        // initialize the loop variable with the starting value
-        self.builder.build_store(index_alloca, from);
-
-        self.builder.build_unconditional_branch(cond);
-        self.builder.position_at_end(cond);
-
-        // load current value of the loop variable
-        let index_value = self
-            .builder
-            .build_load(loop_ty, index_alloca, "index_value")
-            .into_int_value();
-
-        let comp = self
-            .builder
-            .build_int_compare(IntPredicate::ULT, index_value, to, "loop_cond");
-        self.builder.build_conditional_branch(comp, body, done);
-
-        // build the loop body
-        self.builder.position_at_end(body);
-
-        let index_access = unsafe {
-            self.builder.build_gep(
-                self.llvm_type(ty, ns),
-                data_ref,
-                &[index_value],
-                "index_access",
-            )
-        };
-
-        self.builder
-            .build_store(index_access, ty.default(&self, function, ns).unwrap());
-
-        let next_index =
-            self.builder
-                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
-
-        // store the incremented value back
-        self.builder.build_store(index_alloca, next_index);
-
-        self.builder.build_unconditional_branch(cond);
-
-        self.builder.position_at_end(done);
     }
 
     /// Emit a loop from `from` to `to`. The closure exists to insert the body
@@ -819,7 +738,7 @@ impl<'a> Binary<'a> {
     }
 
     pub fn convert_uint_storage(&self, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
-        let (_, heap_ptr) = self.heap_malloc(self.context.i64_type().const_int(4, false));
+        let heap_ptr = self.heap_malloc(self.context.i64_type().const_int(4, false));
         self.builder.build_store(heap_ptr, value);
         for i in 1..4 {
             let elem_ptr = unsafe {
@@ -840,12 +759,70 @@ impl<'a> Binary<'a> {
         if !value.is_const() {
             // check if value is out of bounds
             self.builder.build_call(
-                self.module
-                    .get_function("builtin_range_check")
-                    .expect("builtin_range_check should have been defined before"),
+                self.module.get_function("builtin_range_check").unwrap(),
                 &[value.into()],
                 "range_check",
             );
         }
+    }
+
+    pub fn vector_zero_init(
+        &self,
+        function: FunctionValue<'a>,
+        ty: &Type,
+        from: IntValue<'a>,
+        to: IntValue<'a>,
+        data_ref: PointerValue<'a>,
+        ns: &Namespace,
+    ) {
+        let cond = self.context.append_basic_block(function, "cond");
+        let body = self.context.append_basic_block(function, "body");
+        let done = self.context.append_basic_block(function, "done");
+
+        let loop_ty = from.get_type();
+        // create an alloca for the loop variable
+        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
+        // initialize the loop variable with the starting value
+        self.builder.build_store(index_alloca, from);
+
+        self.builder.build_unconditional_branch(cond);
+        self.builder.position_at_end(cond);
+
+        // load current value of the loop variable
+        let index_value = self
+            .builder
+            .build_load(loop_ty, index_alloca, "index_value")
+            .into_int_value();
+
+        let comp = self
+            .builder
+            .build_int_compare(IntPredicate::ULT, index_value, to, "loop_cond");
+        self.builder.build_conditional_branch(comp, body, done);
+
+        // build the loop body
+        self.builder.position_at_end(body);
+
+        let index_access = unsafe {
+            self.builder.build_gep(
+                self.llvm_type(ty, ns),
+                data_ref,
+                &[index_value],
+                "index_access",
+            )
+        };
+
+        self.builder
+            .build_store(index_access, ty.default(&self, function, ns).unwrap());
+
+        let next_index =
+            self.builder
+                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+
+        // store the incremented value back
+        self.builder.build_store(index_alloca, next_index);
+
+        self.builder.build_unconditional_branch(cond);
+
+        self.builder.position_at_end(done);
     }
 }

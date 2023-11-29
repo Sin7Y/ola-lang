@@ -24,9 +24,7 @@ pub fn u32_add<'a>(
         .build_int_add(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
+        bin.module.get_function("builtin_range_check").unwrap(),
         &[result.into()],
         "",
     );
@@ -48,9 +46,7 @@ pub fn u32_sub<'a>(
         .build_int_sub(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
+        bin.module.get_function("builtin_range_check").unwrap(),
         &[result.into()],
         "",
     );
@@ -72,9 +68,7 @@ pub fn u32_mul<'a>(
         .build_int_mul(left.into_int_value(), right.into_int_value(), "")
         .into();
     bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
+        bin.module.get_function("builtin_range_check").unwrap(),
         &[result.into()],
         "",
     );
@@ -94,9 +88,7 @@ pub fn u32_div<'a>(
     let ret = bin.build_alloca(func_value, bin.context.i64_type(), "");
 
     bin.builder.build_call(
-        bin.module
-            .get_function("u32_div_mod")
-            .expect("u32_div_mod should have been defined before"),
+        bin.module.get_function("u32_div_mod").unwrap(),
         &[
             left.into(),
             right.into(),
@@ -125,9 +117,7 @@ pub fn u32_mod<'a>(
     let ret = bin.build_alloca(func_value, bin.context.i64_type(), "");
 
     bin.builder.build_call(
-        bin.module
-            .get_function("u32_div_mod")
-            .expect("u32_div_mod should have been defined before"),
+        bin.module.get_function("u32_div_mod").unwrap(),
         &[
             left.into(),
             right.into(),
@@ -240,9 +230,7 @@ pub fn u32_shift_left<'a>(
     let pow_two = u32_power(&base_two, r, bin, func_value, var_table, ns).into_int_value();
     let result: BasicValueEnum = bin.builder.build_int_mul(left, pow_two, "").into();
     bin.builder.build_call(
-        bin.module
-            .get_function("builtin_range_check")
-            .expect("builtin_range_check should have been defined before"),
+        bin.module.get_function("builtin_range_check").unwrap(),
         &[result.into()],
         "",
     );
@@ -268,9 +256,7 @@ pub fn u32_shift_right<'a>(
     let ret = bin.build_alloca(func_value, bin.context.i64_type(), "");
 
     bin.builder.build_call(
-        bin.module
-            .get_function("u32_div_mod")
-            .expect("u32_div_mod should have been defined before"),
+        bin.module.get_function("u32_div_mod").unwrap(),
         &[
             left.into(),
             right.into(),
@@ -343,9 +329,7 @@ pub fn u32_power<'a>(
     let right_value = expression(r, bin, func_value, var_table, ns).into_int_value();
     bin.builder
         .build_call(
-            bin.module
-                .get_function("u32_power")
-                .expect("u32_power should have been defined before"),
+            bin.module.get_function("u32_power").unwrap(),
             &[left_value.into(), right_value.into()],
             "",
         )
