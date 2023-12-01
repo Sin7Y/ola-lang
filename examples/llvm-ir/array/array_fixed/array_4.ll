@@ -254,8 +254,10 @@ entry:
   %source = alloca ptr, align 8
   store ptr %0, ptr %source, align 8
   %1 = load ptr, ptr %source, align 8
+  call void @builtin_range_check(i64 0)
   %index_access = getelementptr [3 x i64], ptr %1, i64 2
   store i64 100, ptr %index_access, align 4
+  call void @builtin_range_check(i64 0)
   %index_access1 = getelementptr [3 x i64], ptr %1, i64 2
   %2 = load i64, ptr %index_access1, align 4
   ret i64 %2
@@ -267,7 +269,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 984717406, label %func_0_dispatch
+    i64 1587065146, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

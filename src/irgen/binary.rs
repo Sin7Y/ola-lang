@@ -756,14 +756,12 @@ impl<'a> Binary<'a> {
     }
 
     pub fn range_check(&self, value: IntValue<'a>) {
-        if !value.is_const() {
-            // check if value is out of bounds
-            self.builder.build_call(
-                self.module.get_function("builtin_range_check").unwrap(),
-                &[value.into()],
-                "range_check",
-            );
-        }
+        // check if value is out of bounds
+        self.builder.build_call(
+            self.module.get_function("builtin_range_check").unwrap(),
+            &[value.into()],
+            "range_check",
+        );
     }
 
     pub fn vector_zero_init(
