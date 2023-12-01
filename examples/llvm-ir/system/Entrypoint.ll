@@ -610,6 +610,7 @@ endif15:                                          ; preds = %then14, %then
   call void @builtin_range_check(i64 %43)
   %44 = sub i64 %vector_length33, 4
   call void @builtin_range_check(i64 %44)
+  call void @builtin_range_check(i64 4)
   %45 = call ptr @vector_new(i64 4)
   %vector_data34 = getelementptr i64, ptr %45, i64 1
   %vector_data35 = getelementptr i64, ptr %42, i64 1
@@ -1717,18 +1718,18 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 4238180920, label %func_0_dispatch
-    i64 2567667530, label %func_1_dispatch
-    i64 1681860290, label %func_2_dispatch
-    i64 4234869418, label %func_3_dispatch
-    i64 3941117412, label %func_4_dispatch
-    i64 2371655542, label %func_5_dispatch
-    i64 665363203, label %func_6_dispatch
-    i64 3738237042, label %func_7_dispatch
-    i64 233676252, label %func_8_dispatch
-    i64 3605241001, label %func_9_dispatch
-    i64 1187965026, label %func_10_dispatch
-    i64 1440883071, label %func_11_dispatch
+    i64 948084220, label %func_0_dispatch
+    i64 1249840025, label %func_1_dispatch
+    i64 3257286500, label %func_2_dispatch
+    i64 2868538108, label %func_3_dispatch
+    i64 3836602602, label %func_4_dispatch
+    i64 1989631117, label %func_5_dispatch
+    i64 61057063, label %func_6_dispatch
+    i64 1928909022, label %func_7_dispatch
+    i64 3701337357, label %func_8_dispatch
+    i64 2845631446, label %func_9_dispatch
+    i64 1659424326, label %func_10_dispatch
+    i64 2132927061, label %func_11_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

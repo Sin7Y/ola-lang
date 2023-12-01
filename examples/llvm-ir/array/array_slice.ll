@@ -269,6 +269,7 @@ entry:
   call void @builtin_range_check(i64 %1)
   %2 = sub i64 %vector_length, 2
   call void @builtin_range_check(i64 %2)
+  call void @builtin_range_check(i64 2)
   %3 = call ptr @vector_new(i64 2)
   %vector_data5 = getelementptr i64, ptr %3, i64 1
   %vector_data6 = getelementptr i64, ptr %0, i64 1
@@ -297,7 +298,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1458788567, label %func_0_dispatch
+    i64 3612930902, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

@@ -9,17 +9,32 @@ use std::{fs, path::PathBuf};
 
 #[test]
 fn u32_testcases() {
-    run_test_for_path("./tests/irgen_testcases/u32_testcases");
+    run_test_for_path("./tests/irgen_testcases/u32");
 }
 
 #[test]
 fn bool_testcases() {
-    run_test_for_path("./tests/irgen_testcases/bool_testcases");
+    run_test_for_path("./tests/irgen_testcases/bool");
 }
 
 #[test]
 fn field_testcases() {
-    run_test_for_path("./tests/irgen_testcases/field_testcases");
+    run_test_for_path("./tests/irgen_testcases/field");
+}
+
+#[test]
+fn struct_testcases() {
+    run_test_for_path("./tests/irgen_testcases/struct");
+}
+
+#[test]
+fn static_array_testcases() {
+    run_test_for_path("./tests/irgen_testcases/static_array");
+}
+
+#[test]
+fn dynamic_array_testcases() {
+    run_test_for_path("./tests/irgen_testcases/dynamic_array");
 }
 
 fn run_test_for_path(path: &str) {

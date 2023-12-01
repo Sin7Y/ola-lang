@@ -1,0 +1,142 @@
+contract StaticArrayBasicTest {
+    
+    // BEGIN-CHECK: define void @testArrayDeclareUninitialized() 
+    fn testArrayDeclareUninitialized() {
+        // CHECK: %0 = call ptr @heap_malloc(i64 3)
+        // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+        // CHECK: store i64 0, ptr %elemptr0, align 4
+        // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+        // CHECK: store i64 0, ptr %elemptr1, align 4
+        // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: store i64 0, ptr %elemptr2, align 4
+         u32[3] a; 
+         print(a);
+    }
+
+    // BEGIN-CHECK: define void @testArrayDeclareInitialized()
+    fn testArrayDeclareInitialized() { 
+        // CHECK: %0 = call ptr @heap_malloc(i64 3)
+        // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+        // CHECK: store i64 1, ptr %elemptr0, align 4
+        // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+        // CHECK: store i64 2, ptr %elemptr1, align 4
+        // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: store i64 3, ptr %elemptr2, align 4
+        u32[3] a = [1, 2, 3];
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testArrayDeclareThenInitialized()
+    fn testArrayDeclareThenInitialized() {
+        // CHECK: %0 = call ptr @heap_malloc(i64 3)
+        // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+        // CHECK: store i64 0, ptr %elemptr0, align 4
+        // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+        // CHECK: store i64 0, ptr %elemptr1, align 4
+        // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: store i64 0, ptr %elemptr2, align 4
+        u32[3] a;
+        // CHECK: %1 = call ptr @heap_malloc(i64 3)
+        // CHECK: %elemptr01 = getelementptr [3 x i64], ptr %1, i64 0
+        // CHECK: store i64 1, ptr %elemptr01, align 4
+        // CHECK: %elemptr12 = getelementptr [3 x i64], ptr %1, i64 1
+        // CHECK: store i64 2, ptr %elemptr12, align 4
+        // CHECK: %elemptr23 = getelementptr [3 x i64], ptr %1, i64 2
+        // CHECK: store i64 3, ptr %elemptr23, align 4
+        a = [1, 2, 3];
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testArrayInitializedByOther()
+    fn testArrayInitializedByOther() {
+        // CHECK: %0 = call ptr @heap_malloc(i64 3)
+        // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+        // CHECK: store i64 1, ptr %elemptr0, align 4
+        // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+        // CHECK: store i64 2, ptr %elemptr1, align 4
+        // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: store i64 3, ptr %elemptr2, align 4
+        u32[3] a = [1, 2, 3];
+        // Does not generate ir code
+        u32[3] b = a;
+        print(b);
+    }
+
+    // BEGIN-CHECK: define void @testArraySizeWithExpression()
+    fn testArraySizeWithExpression() {
+        // CHECK: %0 = call ptr @heap_malloc(i64 3)
+        // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+        // CHECK: store i64 1, ptr %elemptr0, align 4
+        // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+        // CHECK: store i64 2, ptr %elemptr1, align 4
+        // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: store i64 3, ptr %elemptr2, align 4
+        u32[1 + 2] a = [1, 2, 3];
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testArrayAsParameter(ptr %0)
+    fn testArrayAsParameter(u32[3] x) {
+        // CHECK: %x = alloca ptr, align 8
+        // CHECK: store ptr %0, ptr %x, align 8
+        // CHECK: %1 = load ptr, ptr %x, align 8
+        print(x);
+    }
+
+    // BEGIN-CHECK: define void @testArrayCallByValue()
+    fn testArrayCallByValue() {
+        u32[3] a = [1, 2, 3];
+        // CHECK: call void @testArrayAsParameter(ptr %0)
+        testArrayAsParameter(a);
+    }
+
+    // BEGIN-CHECK: define ptr @testArrayAsReturnValue()
+    fn testArrayAsReturnValue() -> (u32[3]) {
+        u32[3] a = [1, 2, 3];
+        // CHECK: ret ptr %0
+        return a;
+    }
+
+    // BEGIN-CHECK: define ptr @testArrayAsReturnConstValue()
+    fn testArrayAsReturnConstValue() -> (u32[3]) {
+        // CHECK: ret ptr %0
+        return [1, 2, 3];
+    }
+
+    // BEGIN-CHECK: define i64 @testArrayLength()
+    fn testArrayLength() -> (u32) {
+        u32[3] a = [1, 2, 3];
+        // ret i64 3
+        return a.length;
+    }
+
+    // BEGIN-CHECK: define void @testArrayGetEelement()
+    fn testArrayGetEelement() {
+        u32[3] a = [1, 2, 3];
+        // CHECK: %index_access = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: %1 = load i64, ptr %index_access, align 4
+        u32 b = a[2];
+        print(b);
+    }
+
+    // BEGIN-CHECK: define void @testArraySetEelement()
+    fn testArraySetEelement() {
+        u32[3] a = [1, 2, 3];
+        // CHECK: %index_access = getelementptr [3 x i64], ptr %0, i64 2
+        // CHECK: store i64 4, ptr %index_access, align 4
+        a[2] = 4;
+        print(a);
+    }
+
+    // BEGIN-CHECK: define void @testArrayIndexOutOfBound()
+    fn testArrayIndexOutOfBound() {
+        u32[3] a = [1, 2, 3];
+        // CHECK: call void @builtin_range_check(i64 -1)
+        // CHECK: %index_access = getelementptr [3 x i64], ptr %0, i64 3
+        // CHECK: %1 = load i64, ptr %index_access, align 4
+        u32 b = a[3];
+        print(b);
+    }
+
+
+}

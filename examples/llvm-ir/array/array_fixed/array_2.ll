@@ -258,6 +258,7 @@ entry:
   store i64 2, ptr %elemptr1, align 4
   %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
   store i64 3, ptr %elemptr2, align 4
+  call void @builtin_range_check(i64 2)
   %index_access = getelementptr [3 x i64], ptr %0, i64 0
   %1 = load i64, ptr %index_access, align 4
   %2 = icmp eq i64 %1, 1
@@ -272,7 +273,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1845340408, label %func_0_dispatch
+    i64 4171824493, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

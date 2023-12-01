@@ -74,14 +74,6 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
     let input_source = func_value.get_nth_param(2).unwrap().into_pointer_value();
     bin.builder.position_at_end(entry);
 
-    //In order for the compiler backend to correctly handle pointer type
-    // parameters, special handling is required here.
-
-    // let input_int = bin.builder.build_ptr_to_int(input_source,
-    // bin.context.i64_type(), ""); let input =
-    // bin.builder.build_int_to_ptr(input_int,
-    // bin.context.i64_type().ptr_type(AddressSpace::default()), "");
-
     let input_alloca = bin.build_alloca(
         func_value,
         bin.context.i64_type().ptr_type(AddressSpace::default()),
@@ -107,7 +99,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         .iter()
         .enumerate()
         .filter_map(|(func_no, func)| {
-            let selector = BigInt::from_bytes_le(Sign::Plus, &func.selector());
+            let selector = BigInt::from_bytes_be(Sign::Plus, &func.selector());
             let case = bin
                 .context
                 .i64_type()

@@ -1007,13 +1007,13 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 282464187, label %func_0_dispatch
-    i64 1923006418, label %func_1_dispatch
-    i64 3984217463, label %func_2_dispatch
-    i64 2063016979, label %func_3_dispatch
-    i64 893325452, label %func_4_dispatch
-    i64 4027571991, label %func_5_dispatch
-    i64 2739884532, label %func_6_dispatch
+    i64 3138377232, label %func_0_dispatch
+    i64 3535773298, label %func_1_dispatch
+    i64 2002090733, label %func_2_dispatch
+    i64 321189754, label %func_3_dispatch
+    i64 2349874997, label %func_4_dispatch
+    i64 400494576, label %func_5_dispatch
+    i64 4098969507, label %func_6_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

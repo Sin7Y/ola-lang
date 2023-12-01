@@ -304,8 +304,10 @@ entry:
   %_books = alloca ptr, align 8
   store ptr %0, ptr %_books, align 8
   %1 = load ptr, ptr %_books, align 8
+  call void @builtin_range_check(i64 1)
   %index_access = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %1, i64 0
   %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access, i32 0, i32 2
+  call void @builtin_range_check(i64 3)
   %index_access1 = getelementptr [5 x i64], ptr %struct_member, i64 1
   %2 = load i64, ptr %index_access1, align 4
   ret i64 %2
@@ -319,8 +321,8 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 2736305406, label %func_0_dispatch
-    i64 4212406781, label %func_1_dispatch
+    i64 4273215651, label %func_0_dispatch
+    i64 4248376571, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry

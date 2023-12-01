@@ -261,8 +261,8 @@ entry:
   store i64 1000, ptr %elemptr01, align 4
   %elemptr12 = getelementptr [2 x i64], ptr %1, i64 1
   store i64 1001, ptr %elemptr12, align 4
-  store ptr %1, ptr %0, align 8
-  %index_access = getelementptr [2 x i64], ptr %0, i64 0
+  call void @builtin_range_check(i64 1)
+  %index_access = getelementptr [2 x i64], ptr %1, i64 0
   %2 = load i64, ptr %index_access, align 4
   %3 = icmp eq i64 %2, 1000
   %4 = zext i1 %3 to i64
@@ -276,7 +276,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 4161128516, label %func_0_dispatch
+    i64 1153959416, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
