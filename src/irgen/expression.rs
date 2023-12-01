@@ -1294,12 +1294,15 @@ pub fn assign_single<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     match left {
-        Expression::Variable { var_no, .. } => {
+        Expression::Variable { var_no, ty, .. } => {
             let right_value = expression(right, bin, func_value, var_table, ns);
-            let left_var = var_table.get(var_no).unwrap();
-            bin.builder
-                .build_store(left_var.into_pointer_value(), right_value);
-
+            if !ty.is_reference_type(ns) {
+                let left_var = var_table.get(var_no).unwrap();
+                bin.builder
+                    .build_store(left_var.into_pointer_value(), right_value);
+            } else {
+                var_table.insert(*var_no, right_value);
+            }
             right_value
         }
         _ => {
