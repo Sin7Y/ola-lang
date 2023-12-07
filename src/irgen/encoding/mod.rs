@@ -184,9 +184,9 @@ pub(super) fn calculate_size_args<'a>(
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> IntValue<'a> {
-    let mut size = get_args_type_size(bin, args[0], &types[0], func_value, ns);
+    let mut size = get_args_type_size(bin, Some(args[0]), &types[0], func_value, ns);
     for (i, item) in types.iter().enumerate().skip(1) {
-        let additional = get_args_type_size(bin, args[i], item, func_value, ns);
+        let additional = get_args_type_size(bin, Some(args[i]), item, func_value, ns);
         size = bin.builder.build_int_add(size, additional, "");
     }
     size
@@ -195,7 +195,7 @@ pub(super) fn calculate_size_args<'a>(
 /// Calculate the size of a single arg value
 fn get_args_type_size<'a>(
     bin: &Binary<'a>,
-    arg_value: BasicValueEnum<'a>,
+    arg_value: Option<BasicValueEnum<'a>>,
     ty: &Type,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -210,24 +210,26 @@ fn get_args_type_size<'a>(
 
         Type::Struct(struct_no) => calculate_struct_size(
             bin,
-            arg_value.into_pointer_value(),
+            ty,
+            arg_value.unwrap().into_pointer_value(),
             *struct_no,
             func_value,
             ns,
         ),
         Type::Slice(elem_ty) => {
             let dims = vec![ArrayLength::Dynamic];
-            calculate_array_size(bin, arg_value, ty, &elem_ty, &dims, func_value, ns)
+            calculate_array_size(bin, arg_value.unwrap(), ty, &elem_ty, &dims, func_value, ns)
         }
         Type::Array(elem_ty, dims) => {
-            calculate_array_size(bin, arg_value, ty, &elem_ty, dims, func_value, ns)
+            calculate_array_size(bin, arg_value.unwrap(), ty, &elem_ty, dims, func_value, ns)
         }
 
         Type::Ref(r) => {
             if let Type::Struct(struct_no) = &**r {
                 return calculate_struct_size(
                     bin,
-                    arg_value.into_pointer_value(),
+                    ty,
+                    arg_value.unwrap().into_pointer_value(),
                     *struct_no,
                     func_value,
                     ns,
@@ -236,18 +238,18 @@ fn get_args_type_size<'a>(
 
             let loaded = bin.builder.build_load(
                 bin.llvm_type(ty.deref_memory(), ns),
-                arg_value.into_pointer_value(),
+                arg_value.unwrap().into_pointer_value(),
                 "",
             );
 
-            get_args_type_size(bin, loaded, r, func_value, ns)
+            get_args_type_size(bin, Some(loaded), r, func_value, ns)
         }
         Type::StorageRef(r) => {
-            let storage_var = storage_load(bin, r, &mut arg_value.clone(), func_value, ns);
-            let size = get_args_type_size(bin, storage_var, r, func_value, ns);
+            let storage_var = storage_load(bin, r, &mut arg_value.unwrap().clone(), func_value, ns);
+            let size = get_args_type_size(bin, Some(storage_var), r, func_value, ns);
             size
         }
-        Type::String | Type::DynamicBytes => calculate_string_size(bin, arg_value),
+        Type::String | Type::DynamicBytes => calculate_string_size(bin, arg_value.unwrap()),
         Type::Void
         | Type::Unreachable
         | Type::BufferPointer
@@ -410,7 +412,7 @@ fn calculate_complex_array_size<'a>(
             func_value,
             ns,
         );
-        let elem_size = get_args_type_size(bin, deref, elem_ty, func_value, ns);
+        let elem_size = get_args_type_size(bin, Some(deref), elem_ty, func_value, ns);
 
         let size = bin.builder.build_int_add(
             bin.builder
@@ -440,6 +442,7 @@ fn calculate_complex_array_size<'a>(
 /// Retrieves the size of a struct
 fn calculate_struct_size<'a>(
     bin: &Binary<'a>,
+    ty: &Type,
     struct_ptr: PointerValue<'a>,
     struct_no: usize,
     func_value: FunctionValue<'a>,
@@ -451,20 +454,22 @@ fn calculate_struct_size<'a>(
             .i64_type()
             .const_int(struct_size.to_u64().unwrap(), false);
     }
-    let mut struct_start_pointer = struct_ptr.clone();
     let mut struct_size = bin.context.i64_type().const_int(0, false);
     for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
-        let expr_size =
-            get_args_type_size(bin, struct_start_pointer.into(), &field_ty, func_value, ns).into();
-        struct_start_pointer = unsafe {
-            bin.builder.build_gep(
-                bin.llvm_field_ty(&field_ty, ns),
-                struct_start_pointer,
-                &[bin.context.i64_type().const_int(i as u64, false)],
-                "",
-            )
+        let struct_field = if field_ty.is_reference_type(ns) {
+            Some(bin.builder.build_struct_gep(
+                bin.llvm_type(ty, ns),
+                struct_ptr,
+                i as u32,
+                "struct_member",
+            ).unwrap().as_basic_value_enum())
+        } else {
+            None
         };
+
+        let expr_size =
+            get_args_type_size(bin, struct_field, &field_ty, func_value, ns).into();
         struct_size = bin.builder.build_int_add(struct_size, expr_size, "");
     }
     struct_size

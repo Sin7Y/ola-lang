@@ -1,7 +1,7 @@
 ; ModuleID = 'StructWithArrayExample'
 source_filename = "struct_array"
 
-@heap_address = internal global i64 -4294967353
+@heap_address = internal global i64 -12884901885
 
 declare void @builtin_assert(i64)
 
@@ -333,70 +333,69 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   %3 = call ptr @createStudent()
-  %4 = getelementptr i64, ptr %3, i64 0
-  %vector_length = load i64, ptr %4, align 4
-  %5 = mul i64 %vector_length, 1
-  %6 = add i64 %5, 1
-  %7 = getelementptr ptr, ptr %4, i64 1
-  %8 = add i64 1, %6
-  %heap_size = add i64 %8, 1
-  %9 = call ptr @heap_malloc(i64 %heap_size)
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
-  %elem = load i64, ptr %struct_member, align 4
-  %encode_value_ptr = getelementptr i64, ptr %9, i64 0
+  %struct_member = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %vector_length = load i64, ptr %struct_member, align 4
+  %4 = mul i64 %vector_length, 1
+  %5 = add i64 %4, 1
+  %6 = add i64 1, %5
+  %heap_size = add i64 %6, 1
+  %7 = call ptr @heap_malloc(i64 %heap_size)
+  %struct_member1 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %elem = load i64, ptr %struct_member1, align 4
+  %encode_value_ptr = getelementptr i64, ptr %7, i64 0
   store i64 %elem, ptr %encode_value_ptr, align 4
-  %struct_member1 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %vector_length2 = load i64, ptr %struct_member1, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %9, i64 1
-  store i64 %vector_length2, ptr %encode_value_ptr3, align 4
+  %struct_member2 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %vector_length3 = load i64, ptr %struct_member2, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %7, i64 1
+  store i64 %vector_length3, ptr %encode_value_ptr4, align 4
   store i64 2, ptr %offset_ptr, align 4
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
 loop_body:                                        ; preds = %loop_body, %func_0_dispatch
   %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %struct_member1, i64 %index
-  %elem4 = load i64, ptr %element, align 4
+  %element = getelementptr ptr, ptr %struct_member2, i64 %index
+  %elem5 = load i64, ptr %element, align 4
   %offset = load i64, ptr %offset_ptr, align 4
-  %encode_value_ptr5 = getelementptr i64, ptr %9, i64 %offset
-  store i64 %elem4, ptr %encode_value_ptr5, align 4
+  %encode_value_ptr6 = getelementptr i64, ptr %7, i64 %offset
+  store i64 %elem5, ptr %encode_value_ptr6, align 4
   %next_offset = add i64 1, %offset
   store i64 %next_offset, ptr %offset_ptr, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %vector_length2
+  %index_cond = icmp ult i64 %next_index, %vector_length3
   br i1 %index_cond, label %loop_body, label %loop_end
 
 loop_end:                                         ; preds = %loop_body
-  %10 = add i64 %vector_length2, 1
-  %11 = add i64 %10, 1
-  %12 = add i64 %11, 0
-  %encode_value_ptr6 = getelementptr i64, ptr %9, i64 %12
-  store i64 %8, ptr %encode_value_ptr6, align 4
-  call void @set_tape_data(ptr %9, i64 %heap_size)
+  %8 = add i64 %vector_length3, 1
+  %9 = add i64 %8, 1
+  %10 = add i64 %9, 0
+  %encode_value_ptr7 = getelementptr i64, ptr %7, i64 %10
+  store i64 %6, ptr %encode_value_ptr7, align 4
+  call void @set_tape_data(ptr %7, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %13 = load i64, ptr %input, align 4
-  %struct_ptr = getelementptr ptr, ptr %input, i64 1
-  %vector_length7 = load i64, ptr %struct_ptr, align 4
-  %14 = mul i64 %vector_length7, 1
-  %15 = add i64 %14, 1
-  %struct_size = add i64 1, %15
-  %struct_ptr8 = getelementptr ptr, ptr %struct_ptr, i64 %15
-  %16 = call ptr @heap_malloc(i64 2)
-  %struct_member9 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 0
-  store i64 %13, ptr %struct_member9, align 4
-  %struct_member10 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 1
-  store ptr %struct_ptr, ptr %struct_member10, align 8
-  %17 = getelementptr ptr, ptr %input, i64 %struct_size
-  %18 = call i64 @getFirstGrade(ptr %16)
-  %19 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr11 = getelementptr i64, ptr %19, i64 0
-  store i64 %18, ptr %encode_value_ptr11, align 4
-  %encode_value_ptr12 = getelementptr i64, ptr %19, i64 1
-  store i64 1, ptr %encode_value_ptr12, align 4
-  call void @set_tape_data(ptr %19, i64 2)
+  %decode_struct_field = getelementptr ptr, ptr %input, i64 0
+  %11 = load i64, ptr %decode_struct_field, align 4
+  %decode_struct_field8 = getelementptr ptr, ptr %input, i64 1
+  %vector_length9 = load i64, ptr %decode_struct_field8, align 4
+  %12 = mul i64 %vector_length9, 1
+  %13 = add i64 %12, 1
+  %decode_struct_offset = add i64 1, %13
+  %14 = call ptr @heap_malloc(i64 2)
+  %struct_member10 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 0
+  store i64 %11, ptr %struct_member10, align 4
+  %struct_member11 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 1
+  store ptr %decode_struct_field8, ptr %struct_member11, align 8
+  %15 = getelementptr ptr, ptr %input, i64 %decode_struct_offset
+  %16 = call i64 @getFirstGrade(ptr %14)
+  %17 = call ptr @heap_malloc(i64 2)
+  %encode_value_ptr12 = getelementptr i64, ptr %17, i64 0
+  store i64 %16, ptr %encode_value_ptr12, align 4
+  %encode_value_ptr13 = getelementptr i64, ptr %17, i64 1
+  store i64 1, ptr %encode_value_ptr13, align 4
+  call void @set_tape_data(ptr %17, i64 2)
   ret void
 }
 

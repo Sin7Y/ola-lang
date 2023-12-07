@@ -20,9 +20,7 @@ use inkwell::{AddressSpace, IntPredicate};
 
 use super::dispatch::{gen_contract_entrance, gen_func_dispatch};
 
-pub const SAPN: u64 = 2 ^ 32 - 1;
-
-pub const HEAP_ADDRESS_START: u64 = FIELD_ORDER - 2 * SAPN;
+pub const HEAP_ADDRESS_START: u64 = FIELD_ORDER - 2 * u32::MAX as u64;
 
 pub struct Binary<'a> {
     pub name: String,
