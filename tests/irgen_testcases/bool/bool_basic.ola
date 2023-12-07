@@ -118,7 +118,4 @@ contract BoolBasicTest {
             print(0);
         }
     }
-
-
-
 }

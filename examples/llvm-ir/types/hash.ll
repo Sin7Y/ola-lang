@@ -1,7 +1,7 @@
 ; ModuleID = 'HashContract'
 source_filename = "hash"
 
-@heap_address = internal global i64 -4294967353
+@heap_address = internal global i64 -12884901885
 
 declare void @builtin_assert(i64)
 

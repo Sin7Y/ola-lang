@@ -1,7 +1,7 @@
 ; ModuleID = 'SqrtContract'
 source_filename = "sqrt_inst"
 
-@heap_address = internal global i64 -4294967353
+@heap_address = internal global i64 -12884901885
 
 declare void @builtin_assert(i64)
 

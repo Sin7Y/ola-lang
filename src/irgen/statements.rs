@@ -1,6 +1,5 @@
 use indexmap::IndexMap;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
-use inkwell::AddressSpace;
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
 
@@ -590,24 +589,30 @@ impl Type {
                 };
                 Some(expression(&num_expr, bin, func_value, &mut var_table, ns))
             }
-            Type::Struct(n) => {
+            Type::Struct(..) => {
                 // make sure all our fields have default values
-                for field in &ns.structs[*n].fields {
-                    field.ty.default(bin, func_value, ns)?;
-                }
+                // let struct_ty = bin.llvm_type(self, ns);
 
-                let struct_expr = Expression::StructLiteral {
-                    loc: IRgen,
-                    ty: self.clone(),
-                    values: Vec::new(),
-                };
-                Some(expression(
-                    &struct_expr,
-                    bin,
-                    func_value,
-                    &mut var_table,
-                    ns,
-                ))
+                let struct_size = bin
+                    .context
+                    .i64_type()
+                    .const_int(self.memory_size_of(ns).to_u64().unwrap(), false);
+
+                let struct_alloca = bin.heap_malloc(struct_size);
+
+                // TODO this is not correct, we need to call the default function
+                // for (i, param) in ns.structs[*no].fields.iter().enumerate() {
+                //     let elemptr = bin
+                //         .builder
+                //         .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct_member")
+                //         .unwrap();
+
+                //     let elem = param.ty.default(bin, func_value, ns)?;
+
+                //     bin.builder.build_store(elemptr, elem);
+                // }
+
+                Some(struct_alloca.into())
             }
             Type::Ref(ty) => {
                 assert!(matches!(ty.as_ref(), Type::Address));
@@ -629,11 +634,8 @@ impl Type {
 
                 if dims.last() == Some(&ArrayLength::Dynamic) {
                     Some(
-                        bin.context
-                            .i64_type()
-                            .ptr_type(AddressSpace::default())
-                            .const_null()
-                            .into(),
+                        bin.vector_new(bin.context.i64_type().const_zero())
+                            .as_basic_value_enum(),
                     )
                 } else {
                     let dims = dims
@@ -663,11 +665,8 @@ impl Type {
             }
             Type::Function { .. } => None,
             Type::String | Type::DynamicBytes => Some(
-                bin.context
-                    .i64_type()
-                    .ptr_type(AddressSpace::default())
-                    .const_null()
-                    .into(),
+                bin.vector_new(bin.context.i64_type().const_zero())
+                    .as_basic_value_enum(),
             ),
             _ => None,
         }

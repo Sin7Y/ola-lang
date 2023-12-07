@@ -1597,18 +1597,12 @@ pub(crate) fn debug_print<'a>(
             );
         }
         Type::Struct(no) => {
-            let mut arg_ptr = arg.into_pointer_value();
-            for (_, field) in ns.structs[*no].fields.iter().enumerate() {
-                debug_print(bin, arg_ptr.into(), &field.ty, func_value, ns);
-                arg_ptr = bin
+            for (i, field) in ns.structs[*no].fields.iter().enumerate() {
+                let elem = bin
                     .builder
-                    .build_struct_gep(
-                        bin.llvm_type(&field.ty, ns),
-                        arg_ptr,
-                        field.ty.memory_size_of(ns).to_u32().unwrap(),
-                        "struct_field",
-                    )
+                    .build_struct_gep(bin.llvm_type(&ty, ns), arg.into_pointer_value(), i as u32, "struct_member")
                     .unwrap();
+                debug_print(bin, elem.into(), &field.ty, func_value, ns);
             }
         }
         Type::Mapping(_) => todo!(),

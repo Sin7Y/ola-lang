@@ -1,0 +1,145 @@
+contract StructBasicTest {
+
+    struct Foo {
+        bool a;
+        u32 b;
+    }
+    
+    // BEGIN-CHECK: define void @testStructDeclareUninitialized() 
+    fn testStructDeclareUninitialized() {
+        // CHECK: %0 = call ptr @heap_malloc(i64 2)
+        // CHECK: %elemptr0 = getelementptr [2 x i64], ptr %0, i64 0
+        // CHECK: store i64 0, ptr %elemptr0, align 4
+        // CHECK: %elemptr1 = getelementptr [2 x i64], ptr %0, i64 1
+        // CHECK: store i64 0, ptr %elemptr1, align 4
+        Foo f;
+        print(f);
+    }
+
+    fn testStructDeclareInitialized() {
+        Foo ff = Foo(true, 100);
+        // print(ff);
+    }
+
+    // BEGIN-CHECK: define void @testStructDeclareInitialized()
+    fn testStructDeclareWithNamedInitialized() { 
+        Foo ff = Foo(true, 100);
+        // print(ff);
+    }
+
+
+
+    // // BEGIN-CHECK: define void @testStructDeclareThenInitialized()
+    // fn testStructDeclareThenInitialized() {
+    //     // CHECK: %0 = call ptr @heap_malloc(i64 3)
+    //     // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+    //     // CHECK: store i64 0, ptr %elemptr0, align 4
+    //     // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+    //     // CHECK: store i64 0, ptr %elemptr1, align 4
+    //     // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+    //     // CHECK: store i64 0, ptr %elemptr2, align 4
+    //     u32[3] a;
+    //     // CHECK: %1 = call ptr @heap_malloc(i64 3)
+    //     // CHECK: %elemptr01 = getelementptr [3 x i64], ptr %1, i64 0
+    //     // CHECK: store i64 1, ptr %elemptr01, align 4
+    //     // CHECK: %elemptr12 = getelementptr [3 x i64], ptr %1, i64 1
+    //     // CHECK: store i64 2, ptr %elemptr12, align 4
+    //     // CHECK: %elemptr23 = getelementptr [3 x i64], ptr %1, i64 2
+    //     // CHECK: store i64 3, ptr %elemptr23, align 4
+    //     a = [1, 2, 3];
+    //     print(a);
+    // }
+
+    // // BEGIN-CHECK: define void @testStructInitializedByOther()
+    // fn testStructInitializedByOther() {
+    //     // CHECK: %0 = call ptr @heap_malloc(i64 3)
+    //     // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+    //     // CHECK: store i64 1, ptr %elemptr0, align 4
+    //     // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+    //     // CHECK: store i64 2, ptr %elemptr1, align 4
+    //     // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+    //     // CHECK: store i64 3, ptr %elemptr2, align 4
+    //     u32[3] a = [1, 2, 3];
+    //     // Does not generate ir code
+    //     u32[3] b = a;
+    //     print(b);
+    // }
+
+    // // BEGIN-CHECK: define void @testStructSizeWithExpression()
+    // fn testStructSizeWithExpression() {
+    //     // CHECK: %0 = call ptr @heap_malloc(i64 3)
+    //     // CHECK: %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+    //     // CHECK: store i64 1, ptr %elemptr0, align 4
+    //     // CHECK: %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+    //     // CHECK: store i64 2, ptr %elemptr1, align 4
+    //     // CHECK: %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+    //     // CHECK: store i64 3, ptr %elemptr2, align 4
+    //     u32[1 + 2] a = [1, 2, 3];
+    //     print(a);
+    // }
+
+    // // BEGIN-CHECK: define void @testStructAsParameter(ptr %0)
+    // fn testStructAsParameter(u32[3] x) {
+    //     // CHECK: %x = alloca ptr, align 8
+    //     // CHECK: store ptr %0, ptr %x, align 8
+    //     // CHECK: %1 = load ptr, ptr %x, align 8
+    //     print(x);
+    // }
+
+    // // BEGIN-CHECK: define void @testStructCallByValue()
+    // fn testStructCallByValue() {
+    //     u32[3] a = [1, 2, 3];
+    //     // CHECK: call void @testStructAsParameter(ptr %0)
+    //     testStructAsParameter(a);
+    // }
+
+    // // BEGIN-CHECK: define ptr @testStructAsReturnValue()
+    // fn testStructAsReturnValue() -> (u32[3]) {
+    //     u32[3] a = [1, 2, 3];
+    //     // CHECK: ret ptr %0
+    //     return a;
+    // }
+
+    // // BEGIN-CHECK: define ptr @testStructAsReturnConstValue()
+    // fn testStructAsReturnConstValue() -> (u32[3]) {
+    //     // CHECK: ret ptr %0
+    //     return [1, 2, 3];
+    // }
+
+    // // BEGIN-CHECK: define i64 @testStructLength()
+    // fn testStructLength() -> (u32) {
+    //     u32[3] a = [1, 2, 3];
+    //     // ret i64 3
+    //     return a.length;
+    // }
+
+    // // BEGIN-CHECK: define void @testStructGetEelement()
+    // fn testStructGetEelement() {
+    //     u32[3] a = [1, 2, 3];
+    //     // CHECK: %index_access = getelementptr [3 x i64], ptr %0, i64 2
+    //     // CHECK: %1 = load i64, ptr %index_access, align 4
+    //     u32 b = a[2];
+    //     print(b);
+    // }
+
+    // // BEGIN-CHECK: define void @testStructSetEelement()
+    // fn testStructSetEelement() {
+    //     u32[3] a = [1, 2, 3];
+    //     // CHECK: %index_access = getelementptr [3 x i64], ptr %0, i64 2
+    //     // CHECK: store i64 4, ptr %index_access, align 4
+    //     a[2] = 4;
+    //     print(a);
+    // }
+
+    // // BEGIN-CHECK: define void @testStructIndexOutOfBound()
+    // fn testStructIndexOutOfBound() {
+    //     u32[3] a = [1, 2, 3];
+    //     // CHECK: call void @builtin_range_check(i64 -1)
+    //     // CHECK: %index_access = getelementptr [3 x i64], ptr %0, i64 3
+    //     // CHECK: %1 = load i64, ptr %index_access, align 4
+    //     u32 b = a[3];
+    //     print(b);
+    // }
+
+
+}

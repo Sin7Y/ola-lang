@@ -23,19 +23,19 @@ pub(crate) fn read_from_buffer<'a>(
 ) -> (BasicValueEnum<'a>, IntValue<'a>) {
     match ty {
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
-            let size = get_args_type_size(bin, buffer.into(), ty, func_value, ns);
+            let size = get_args_type_size(bin, None, ty, func_value, ns);
             let decode_value = bin.builder.build_load(bin.context.i64_type(), buffer, "");
             (decode_value, size)
         }
 
         Type::Address | Type::Contract(_) | Type::Hash => {
-            let size = get_args_type_size(bin, buffer.into(), ty, func_value, ns);
+            let size = get_args_type_size(bin, None, ty, func_value, ns);
             (buffer.into(), size)
         }
 
         Type::String | Type::DynamicBytes => {
             // String and Dynamic bytes are encoded as size + elements.length
-            let total_size = get_args_type_size(bin, buffer.into(), ty, func_value, ns);
+            let total_size = get_args_type_size(bin, Some(buffer.into()), ty, func_value, ns);
 
             (buffer.into(), total_size)
         }
@@ -47,14 +47,7 @@ pub(crate) fn read_from_buffer<'a>(
 
         Type::Array(..) => decode_array(buffer.into(), ty, bin, func_value, ns),
 
-        Type::Slice(..) => {
-            let buffer = bin.builder.build_int_to_ptr(
-                buffer,
-                bin.context.i64_type().ptr_type(AddressSpace::default()),
-                "",
-            );
-            decode_array(buffer, ty, bin, func_value, ns)
-        }
+        Type::Slice(..) => decode_array(buffer, ty, bin, func_value, ns),
 
         Type::Struct(no) => decode_struct(buffer.clone(), ty, *no, bin, func_value, ns),
 
@@ -69,7 +62,7 @@ fn decode_array<'a>(
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> (BasicValueEnum<'a>, IntValue<'a>) {
-    let size = get_args_type_size(bin, buffer.into(), array_ty, func_value, ns);
+    let size = get_args_type_size(bin, Some(buffer.into()), array_ty, func_value, ns);
     (buffer.into(), size)
 }
 
@@ -91,27 +84,26 @@ fn decode_struct<'a>(
 
     let mut read_items: Vec<BasicValueEnum<'_>> = vec![];
 
-    let mut struct_size = bin.context.i64_type().const_zero();
-    let mut buffer_ptr = buffer.clone();
+    let mut struct_offset = bin.context.i64_type().const_zero();
     for i in 0..qty {
-        let (read_expr, advance) =
-            read_from_buffer(buffer_ptr, bin, &struct_tys[i], func_value, ns);
-        read_items.push(read_expr);
-        struct_size = bin
-            .builder
-            .build_int_add(struct_size, advance, "struct_size");
-        buffer_ptr = unsafe {
+        let struct_field = unsafe {
             bin.builder.build_gep(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
-                buffer_ptr,
-                &[advance],
-                "struct_ptr",
+                buffer,
+                &[struct_offset],
+                "decode_struct_field",
             )
         };
+        let (read_expr, advance) =
+            read_from_buffer(struct_field, bin, &struct_tys[i], func_value, ns);
+        read_items.push(read_expr);
+        struct_offset = bin
+            .builder
+            .build_int_add(struct_offset, advance, "decode_struct_offset");
     }
 
     let struct_var = struct_literal_copy(ty, read_items, bin, ns);
-    (struct_var, struct_size)
+    (struct_var, struct_offset)
 }
 
 pub fn struct_literal_copy<'a>(

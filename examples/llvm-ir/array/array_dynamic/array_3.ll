@@ -1,7 +1,7 @@
 ; ModuleID = 'DynamicArrayExample'
 source_filename = "array_3"
 
-@heap_address = internal global i64 -4294967353
+@heap_address = internal global i64 -12884901885
 
 declare void @builtin_assert(i64)
 
@@ -252,17 +252,20 @@ exit:                                             ; preds = %loop
 define void @test() {
 entry:
   %b = alloca i64, align 8
-  %vector_length = load i64, ptr null, align 4
-  %0 = sub i64 %vector_length, 1
-  %1 = sub i64 %0, 1
-  call void @builtin_range_check(i64 %1)
-  store i64 10, ptr getelementptr (i64, ptr null, i64 2), align 4
-  %vector_length1 = load i64, ptr null, align 4
+  %0 = call ptr @vector_new(i64 0)
+  %vector_length = load i64, ptr %0, align 4
+  %1 = sub i64 %vector_length, 1
+  %2 = sub i64 %1, 1
+  call void @builtin_range_check(i64 %2)
+  %vector_data = getelementptr i64, ptr %0, i64 1
+  %index_access = getelementptr i64, ptr %vector_data, i64 1
+  store i64 10, ptr %index_access, align 4
+  %vector_length1 = load i64, ptr %0, align 4
   store i64 %vector_length1, ptr %b, align 4
-  %2 = load i64, ptr %b, align 4
-  %3 = icmp eq i64 %2, 1
-  %4 = zext i1 %3 to i64
-  call void @builtin_assert(i64 %4)
+  %3 = load i64, ptr %b, align 4
+  %4 = icmp eq i64 %3, 1
+  %5 = zext i1 %4 to i64
+  call void @builtin_assert(i64 %5)
   ret void
 }
 

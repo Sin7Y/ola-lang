@@ -1,7 +1,7 @@
 ; ModuleID = 'DynamicTwoDimensionalArrayInMemory'
 source_filename = "array_dynamic_2d"
 
-@heap_address = internal global i64 -4294967353
+@heap_address = internal global i64 -12884901885
 
 declare void @builtin_assert(i64)
 
@@ -271,7 +271,8 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
-  store ptr null, ptr %index_access, align 8
+  %4 = call ptr @vector_new(i64 0)
+  store ptr %4, ptr %index_access, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -281,29 +282,29 @@ done:                                             ; preds = %cond
   br label %cond1
 
 cond1:                                            ; preds = %next, %done
-  %4 = load i64, ptr %i, align 4
-  %5 = load i64, ptr %rows, align 4
-  %6 = icmp ult i64 %4, %5
-  br i1 %6, label %body2, label %endfor
+  %5 = load i64, ptr %i, align 4
+  %6 = load i64, ptr %rows, align 4
+  %7 = icmp ult i64 %5, %6
+  br i1 %7, label %body2, label %endfor
 
 body2:                                            ; preds = %cond1
-  %7 = load i64, ptr %i, align 4
+  %8 = load i64, ptr %i, align 4
   %vector_length = load i64, ptr %3, align 4
-  %8 = sub i64 %vector_length, 1
-  %9 = sub i64 %8, %7
-  call void @builtin_range_check(i64 %9)
+  %9 = sub i64 %vector_length, 1
+  %10 = sub i64 %9, %8
+  call void @builtin_range_check(i64 %10)
   %vector_data3 = getelementptr i64, ptr %3, i64 1
-  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %7
-  %10 = load i64, ptr %columns, align 4
-  %11 = call ptr @vector_new(i64 1)
-  %vector_data5 = getelementptr i64, ptr %11, i64 1
+  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %8
+  %11 = load i64, ptr %columns, align 4
+  %12 = call ptr @vector_new(i64 1)
+  %vector_data5 = getelementptr i64, ptr %12, i64 1
   store i64 0, ptr %index_alloca9, align 4
   br label %cond6
 
 next:                                             ; preds = %done8
-  %12 = load i64, ptr %i, align 4
-  %13 = add i64 %12, 1
-  store i64 %13, ptr %i, align 4
+  %13 = load i64, ptr %i, align 4
+  %14 = add i64 %13, 1
+  store i64 %14, ptr %i, align 4
   br label %cond1
 
 endfor:                                           ; preds = %cond1
@@ -311,7 +312,7 @@ endfor:                                           ; preds = %cond1
 
 cond6:                                            ; preds = %body7, %body2
   %index_value10 = load i64, ptr %index_alloca9, align 4
-  %loop_cond11 = icmp ult i64 %index_value10, %10
+  %loop_cond11 = icmp ult i64 %index_value10, %11
   br i1 %loop_cond11, label %body7, label %done8
 
 body7:                                            ; preds = %cond6
@@ -322,7 +323,7 @@ body7:                                            ; preds = %cond6
   br label %cond6
 
 done8:                                            ; preds = %cond6
-  store ptr %11, ptr %index_access4, align 8
+  store ptr %12, ptr %index_access4, align 8
   br label %next
 }
 
