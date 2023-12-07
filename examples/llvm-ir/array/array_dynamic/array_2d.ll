@@ -1,7 +1,7 @@
 ; ModuleID = 'DynamicArrayInMemory'
 source_filename = "array_2d"
 
-@heap_address = internal global i64 -4294967353
+@heap_address = internal global i64 -12884901885
 
 declare void @builtin_assert(i64)
 
@@ -265,20 +265,21 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
-  store ptr null, ptr %index_access, align 8
+  %1 = call ptr @vector_new(i64 0)
+  store ptr %1, ptr %index_access, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
   %vector_length = load i64, ptr %0, align 4
-  %1 = sub i64 %vector_length, 1
-  %2 = sub i64 %1, 0
-  call void @builtin_range_check(i64 %2)
+  %2 = sub i64 %vector_length, 1
+  %3 = sub i64 %2, 0
+  call void @builtin_range_check(i64 %3)
   %vector_data1 = getelementptr i64, ptr %0, i64 1
   %index_access2 = getelementptr ptr, ptr %vector_data1, i64 0
-  %3 = call ptr @vector_new(i64 1)
-  %vector_data3 = getelementptr i64, ptr %3, i64 1
+  %4 = call ptr @vector_new(i64 1)
+  %vector_data3 = getelementptr i64, ptr %4, i64 1
   store i64 0, ptr %index_alloca7, align 4
   br label %cond4
 
@@ -295,48 +296,48 @@ body5:                                            ; preds = %cond4
   br label %cond4
 
 done6:                                            ; preds = %cond4
-  store ptr %3, ptr %index_access2, align 8
+  store ptr %4, ptr %index_access2, align 8
   %vector_length12 = load i64, ptr %0, align 4
-  %4 = sub i64 %vector_length12, 1
-  %5 = sub i64 %4, 0
-  call void @builtin_range_check(i64 %5)
+  %5 = sub i64 %vector_length12, 1
+  %6 = sub i64 %5, 0
+  call void @builtin_range_check(i64 %6)
   %vector_data13 = getelementptr i64, ptr %0, i64 1
   %index_access14 = getelementptr ptr, ptr %vector_data13, i64 0
-  %6 = load ptr, ptr %index_access14, align 8
-  %vector_length15 = load i64, ptr %6, align 4
-  %7 = sub i64 %vector_length15, 1
-  %8 = sub i64 %7, 0
-  call void @builtin_range_check(i64 %8)
-  %vector_data16 = getelementptr i64, ptr %6, i64 1
+  %7 = load ptr, ptr %index_access14, align 8
+  %vector_length15 = load i64, ptr %7, align 4
+  %8 = sub i64 %vector_length15, 1
+  %9 = sub i64 %8, 0
+  call void @builtin_range_check(i64 %9)
+  %vector_data16 = getelementptr i64, ptr %7, i64 1
   %index_access17 = getelementptr i64, ptr %vector_data16, i64 0
   store i64 1, ptr %index_access17, align 4
-  %vector_length18 = load i64, ptr %6, align 4
-  %9 = sub i64 %vector_length18, 1
-  %10 = sub i64 %9, 0
-  call void @builtin_range_check(i64 %10)
-  %vector_data19 = getelementptr i64, ptr %6, i64 1
+  %vector_length18 = load i64, ptr %7, align 4
+  %10 = sub i64 %vector_length18, 1
+  %11 = sub i64 %10, 0
+  call void @builtin_range_check(i64 %11)
+  %vector_data19 = getelementptr i64, ptr %7, i64 1
   %index_access20 = getelementptr i64, ptr %vector_data19, i64 0
-  %11 = load i64, ptr %index_access20, align 4
-  %12 = icmp eq i64 %11, 1
-  %13 = zext i1 %12 to i64
-  call void @builtin_assert(i64 %13)
+  %12 = load i64, ptr %index_access20, align 4
+  %13 = icmp eq i64 %12, 1
+  %14 = zext i1 %13 to i64
+  call void @builtin_assert(i64 %14)
   %vector_length21 = load i64, ptr %0, align 4
-  %14 = sub i64 %vector_length21, 1
-  %15 = sub i64 %14, 0
-  call void @builtin_range_check(i64 %15)
+  %15 = sub i64 %vector_length21, 1
+  %16 = sub i64 %15, 0
+  call void @builtin_range_check(i64 %16)
   %vector_data22 = getelementptr i64, ptr %0, i64 1
   %index_access23 = getelementptr ptr, ptr %vector_data22, i64 0
-  %16 = load ptr, ptr %index_access23, align 8
-  %vector_length24 = load i64, ptr %16, align 4
-  %17 = sub i64 %vector_length24, 1
-  %18 = sub i64 %17, 0
-  call void @builtin_range_check(i64 %18)
-  %vector_data25 = getelementptr i64, ptr %16, i64 1
+  %17 = load ptr, ptr %index_access23, align 8
+  %vector_length24 = load i64, ptr %17, align 4
+  %18 = sub i64 %vector_length24, 1
+  %19 = sub i64 %18, 0
+  call void @builtin_range_check(i64 %19)
+  %vector_data25 = getelementptr i64, ptr %17, i64 1
   %index_access26 = getelementptr i64, ptr %vector_data25, i64 0
-  %19 = load i64, ptr %index_access26, align 4
-  %20 = icmp eq i64 %19, 1
-  %21 = zext i1 %20 to i64
-  call void @builtin_assert(i64 %21)
+  %20 = load i64, ptr %index_access26, align 4
+  %21 = icmp eq i64 %20, 1
+  %22 = zext i1 %21 to i64
+  call void @builtin_assert(i64 %22)
   ret void
 }
 

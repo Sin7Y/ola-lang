@@ -1,7 +1,7 @@
-; ModuleID = 'FixedArrayExample'
-source_filename = "array"
+; ModuleID = 'StructBasicTest'
+source_filename = "struct_basic"
 
-@heap_address = internal global i64 -12884901885
+@heap_address = internal global i64 -4294967353
 
 declare void @builtin_assert(i64)
 
@@ -249,37 +249,40 @@ exit:                                             ; preds = %loop
   ret i64 %3
 }
 
-define void @fixed_array_test() {
+define void @testStructDeclareUninitialized() {
 entry:
-  %0 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
-  store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
-  store i64 0, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
-  store i64 0, ptr %elemptr2, align 4
-  call void @builtin_range_check(i64 0)
-  %index_access = getelementptr [3 x i64], ptr %0, i64 2
-  store i64 99, ptr %index_access, align 4
-  %1 = call ptr @array_call(ptr %0)
-  call void @builtin_range_check(i64 0)
-  %index_access1 = getelementptr [3 x i64], ptr %1, i64 2
-  %2 = load i64, ptr %index_access1, align 4
-  %3 = icmp eq i64 %2, 100
-  %4 = zext i1 %3 to i64
-  call void @builtin_assert(i64 %4)
+  %0 = call ptr @heap_malloc(i64 2)
+  %struct_member = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 0
+  store i64 0, ptr %struct_member, align 4
+  %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 1
+  store i64 0, ptr %struct_member1, align 4
+  %struct_member2 = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 0
+  %1 = load i64, ptr %struct_member2, align 4
+  call void @prophet_printf(i64 %1, i64 3)
+  %struct_member3 = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 1
+  %2 = load i64, ptr %struct_member3, align 4
+  call void @prophet_printf(i64 %2, i64 3)
   ret void
 }
 
-define ptr @array_call(ptr %0) {
+define void @testStructDeclareInitialized() {
 entry:
-  %source = alloca ptr, align 8
-  store ptr %0, ptr %source, align 8
-  %1 = load ptr, ptr %source, align 8
-  call void @builtin_range_check(i64 0)
-  %index_access = getelementptr [3 x i64], ptr %1, i64 2
-  store i64 100, ptr %index_access, align 4
-  ret ptr %1
+  %0 = call ptr @heap_malloc(i64 2)
+  %struct_member = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 0
+  store i64 1, ptr %struct_member, align 4
+  %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 1
+  store i64 100, ptr %struct_member1, align 4
+  ret void
+}
+
+define void @testStructDeclareWithNamedInitialized() {
+entry:
+  %0 = call ptr @heap_malloc(i64 2)
+  %struct_member = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 0
+  store i64 1, ptr %struct_member, align 4
+  %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %0, i32 0, i32 1
+  store i64 100, ptr %struct_member1, align 4
+  ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -288,39 +291,33 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 743401749, label %func_0_dispatch
-    i64 1587065146, label %func_1_dispatch
+    i64 175224551, label %func_0_dispatch
+    i64 951357368, label %func_1_dispatch
+    i64 330734231, label %func_2_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @fixed_array_test()
+  call void @testStructDeclareUninitialized()
   %3 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %3, align 4
   call void @set_tape_data(ptr %3, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = getelementptr ptr, ptr %input, i64 3
-  %5 = call ptr @array_call(ptr %input)
-  %6 = call ptr @heap_malloc(i64 4)
-  %elemptr0 = getelementptr [3 x i64], ptr %5, i64 0, i64 0
-  %7 = load i64, ptr %elemptr0, align 4
-  %encode_value_ptr = getelementptr i64, ptr %6, i64 0
-  store i64 %7, ptr %encode_value_ptr, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %5, i64 0, i64 1
-  %8 = load i64, ptr %elemptr1, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %6, i64 1
-  store i64 %8, ptr %encode_value_ptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %5, i64 0, i64 2
-  %9 = load i64, ptr %elemptr2, align 4
-  %encode_value_ptr2 = getelementptr i64, ptr %6, i64 2
-  store i64 %9, ptr %encode_value_ptr2, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %6, i64 3
-  store i64 3, ptr %encode_value_ptr3, align 4
-  call void @set_tape_data(ptr %6, i64 4)
+  call void @testStructDeclareInitialized()
+  %4 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %4, align 4
+  call void @set_tape_data(ptr %4, i64 1)
+  ret void
+
+func_2_dispatch:                                  ; preds = %entry
+  call void @testStructDeclareWithNamedInitialized()
+  %5 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %5, align 4
+  call void @set_tape_data(ptr %5, i64 1)
   ret void
 }
 
