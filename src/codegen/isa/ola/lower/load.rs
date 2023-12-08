@@ -69,9 +69,21 @@ pub fn lower_load(
             MOperand::new(OperandData::None),
         ];
     } else if let Some(gbl) = gbl {
+        assert_eq!(gbl.as_string(), "heap_address");
+        let output = ctx.mach_data.vregs.add_vreg_data(src_ty);
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MOVri,
+                operands: vec![
+                    MOperand::output(output.into()),
+                    MOperand::new(OperandData::Int64(-12884901885)),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
         mem = vec![
             MOperand::new(OperandData::MemStart),
-            MOperand::new(OperandData::Label(gbl.as_string().to_owned())),
+            MOperand::new(OperandData::VReg(output)),
             MOperand::new(OperandData::None),
             MOperand::new(OperandData::None),
             MOperand::input(OperandData::None),

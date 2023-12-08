@@ -28,6 +28,10 @@ pub enum Opcode {
 
     ANDri,
     ANDrr,
+    ORri,
+    ORrr,
+    XORri,
+    XORrr,
 
     EQri,
     EQrr,
@@ -57,9 +61,6 @@ pub enum Opcode {
     MSTOREr,
 
     RANGECHECK,
-    AND,
-    OR,
-    XOR,
     NOT,
     NEQ,
     GTE,
