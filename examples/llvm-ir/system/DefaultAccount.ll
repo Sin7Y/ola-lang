@@ -293,7 +293,7 @@ entry:
   %3 = load ptr, ptr %_tx, align 8
   call void @onlyEntrypointCall()
   call void @ignoreDelegateCall()
-  %4 = call ptr @vector_new(i64 42)
+  %4 = call ptr @vector_new(i64 1764)
   %vector_data = getelementptr i64, ptr %4, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 118, ptr %index_access, align 4

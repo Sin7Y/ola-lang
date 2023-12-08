@@ -251,7 +251,7 @@ exit:                                             ; preds = %loop
 
 define void @array_slice_test() {
 entry:
-  %0 = call ptr @vector_new(i64 5)
+  %0 = call ptr @vector_new(i64 25)
   %vector_data = getelementptr i64, ptr %0, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 104, ptr %index_access, align 4
@@ -276,7 +276,7 @@ entry:
   call void @memcpy(ptr %vector_data6, ptr %vector_data5, i64 2)
   %vector_data7 = getelementptr i64, ptr %3, i64 1
   %vector_length8 = load i64, ptr %3, align 4
-  %4 = call ptr @vector_new(i64 2)
+  %4 = call ptr @vector_new(i64 4)
   %vector_data9 = getelementptr i64, ptr %4, i64 1
   %index_access10 = getelementptr i64, ptr %vector_data9, i64 0
   store i64 104, ptr %index_access10, align 4

@@ -1600,7 +1600,12 @@ pub(crate) fn debug_print<'a>(
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
                 let elem = bin
                     .builder
-                    .build_struct_gep(bin.llvm_type(&ty, ns), arg.into_pointer_value(), i as u32, "struct_member")
+                    .build_struct_gep(
+                        bin.llvm_type(&ty, ns),
+                        arg.into_pointer_value(),
+                        i as u32,
+                        "struct_member",
+                    )
                     .unwrap();
                 debug_print(bin, elem.into(), &field.ty, func_value, ns);
             }

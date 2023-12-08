@@ -1,13 +1,13 @@
 [
   {
-    "name": "bool_bitwise",
+    "name": "u32_to_address",
     "type": "function",
     "inputs": [],
     "outputs": [
       {
         "name": "",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "address",
+        "internalType": "address"
       }
     ]
   }

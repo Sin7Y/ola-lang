@@ -1,0 +1,24 @@
+[
+  {
+    "name": "foo",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "b",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "a",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "c",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ],
+    "outputs": []
+  }
+]

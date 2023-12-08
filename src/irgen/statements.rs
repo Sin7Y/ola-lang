@@ -604,8 +604,8 @@ impl Type {
                 // for (i, param) in ns.structs[*no].fields.iter().enumerate() {
                 //     let elemptr = bin
                 //         .builder
-                //         .build_struct_gep(struct_ty, struct_alloca, i as u32, "struct_member")
-                //         .unwrap();
+                //         .build_struct_gep(struct_ty, struct_alloca, i as u32,
+                // "struct_member")         .unwrap();
 
                 //     let elem = param.ty.default(bin, func_value, ns)?;
 

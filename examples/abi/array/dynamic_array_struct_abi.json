@@ -1,0 +1,66 @@
+[
+  {
+    "name": "createBooks",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple[2]",
+        "internalType": "struct StructArrayExample.Book[2]",
+        "components": [
+          {
+            "name": "book_id",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_name",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_pages",
+            "type": "u32[5]",
+            "internalType": "u32[5]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "getFirstBookID",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_books",
+        "type": "tuple[2]",
+        "internalType": "struct StructArrayExample.Book[2]",
+        "components": [
+          {
+            "name": "book_id",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_name",
+            "type": "u32",
+            "internalType": "u32"
+          },
+          {
+            "name": "book_pages",
+            "type": "u32[5]",
+            "internalType": "u32[5]"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32",
+        "internalType": "u32"
+      }
+    ]
+  }
+]

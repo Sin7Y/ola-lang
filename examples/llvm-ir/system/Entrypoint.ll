@@ -636,7 +636,7 @@ entry:
   %_tx = alloca ptr, align 8
   store ptr %0, ptr %_tx, align 8
   %1 = load ptr, ptr %_tx, align 8
-  %2 = call ptr @vector_new(i64 109)
+  %2 = call ptr @vector_new(i64 11881)
   %vector_data = getelementptr i64, ptr %2, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 84, ptr %index_access, align 4
@@ -958,7 +958,7 @@ entry:
   %46 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %vector_data138, ptr %46, i64 %vector_length137)
   store ptr %46, ptr %structHash, align 8
-  %47 = call ptr @vector_new(i64 52)
+  %47 = call ptr @vector_new(i64 2704)
   %vector_data139 = getelementptr i64, ptr %47, i64 1
   %index_access140 = getelementptr i64, ptr %vector_data139, i64 0
   store i64 69, ptr %index_access140, align 4
@@ -1070,7 +1070,7 @@ entry:
   call void @poseidon_hash(ptr %vector_data193, ptr %48, i64 %vector_length192)
   store ptr %48, ptr %EIP712_DOMAIN_TYPEHASH, align 8
   %49 = load ptr, ptr %EIP712_DOMAIN_TYPEHASH, align 8
-  %50 = call ptr @vector_new(i64 3)
+  %50 = call ptr @vector_new(i64 9)
   %vector_data194 = getelementptr i64, ptr %50, i64 1
   %index_access195 = getelementptr i64, ptr %vector_data194, i64 0
   store i64 79, ptr %index_access195, align 4
@@ -1149,7 +1149,7 @@ entry:
   %81 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %vector_data218, ptr %81, i64 %vector_length217)
   store ptr %81, ptr %domainSeparator, align 8
-  %82 = call ptr @vector_new(i64 2)
+  %82 = call ptr @vector_new(i64 4)
   %vector_data219 = getelementptr i64, ptr %82, i64 1
   %index_access220 = getelementptr i64, ptr %vector_data219, i64 0
   store i64 25, ptr %index_access220, align 4
@@ -1569,7 +1569,7 @@ entry:
   %66 = load i64, ptr %vector_data47, align 4
   %67 = getelementptr ptr, ptr %vector_data47, i64 1
   store i64 %66, ptr %magic, align 4
-  %68 = call ptr @vector_new(i64 42)
+  %68 = call ptr @vector_new(i64 1764)
   %vector_data48 = getelementptr i64, ptr %68, i64 1
   %index_access = getelementptr i64, ptr %vector_data48, i64 0
   store i64 118, ptr %index_access, align 4
