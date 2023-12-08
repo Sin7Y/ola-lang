@@ -344,13 +344,14 @@ impl<'a> Binary<'a> {
         ns: &Namespace,
     ) -> PointerValue<'a> {
         let elem_ty = ty.array_elem();
-        let memory_size = match ty {
+        let elem_size = match ty {
             Type::Slice(_) | Type::String | Type::DynamicBytes => size,
             _ => self
                 .context
                 .i64_type()
-                .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false),
+                .const_int(elem_ty.memory_size_of(ns).to_u64().unwrap(), false),
         };
+        let memory_size = self.builder.build_int_mul(size, elem_size, "");
 
         let heap_start_ptr = self.vector_new(memory_size);
 

@@ -253,7 +253,7 @@ define void @test() {
 entry:
   %length = alloca i64, align 8
   %index_alloca = alloca i64, align 8
-  %0 = call ptr @vector_new(i64 1)
+  %0 = call ptr @vector_new(i64 5)
   %vector_data = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %index_alloca, align 4
   br label %cond

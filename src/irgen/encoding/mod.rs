@@ -458,18 +458,17 @@ fn calculate_struct_size<'a>(
     for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
         let struct_field = if field_ty.is_reference_type(ns) {
-            Some(bin.builder.build_struct_gep(
-                bin.llvm_type(ty, ns),
-                struct_ptr,
-                i as u32,
-                "struct_member",
-            ).unwrap().as_basic_value_enum())
+            Some(
+                bin.builder
+                    .build_struct_gep(bin.llvm_type(ty, ns), struct_ptr, i as u32, "struct_member")
+                    .unwrap()
+                    .as_basic_value_enum(),
+            )
         } else {
             None
         };
 
-        let expr_size =
-            get_args_type_size(bin, struct_field, &field_ty, func_value, ns).into();
+        let expr_size = get_args_type_size(bin, struct_field, &field_ty, func_value, ns).into();
         struct_size = bin.builder.build_int_add(struct_size, expr_size, "");
     }
     struct_size

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "bool_compare",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ]
+  }
+]

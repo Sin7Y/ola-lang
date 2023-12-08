@@ -251,7 +251,7 @@ exit:                                             ; preds = %loop
 
 define void @test() {
 entry:
-  %0 = call ptr @vector_new(i64 1)
+  %0 = call ptr @vector_new(i64 3)
   %vector_data = getelementptr i64, ptr %0, i64 1
   %index_access = getelementptr ptr, ptr %vector_data, i64 0
   store i64 1, ptr %index_access, align 4

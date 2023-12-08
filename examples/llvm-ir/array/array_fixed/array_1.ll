@@ -249,7 +249,7 @@ exit:                                             ; preds = %loop
   ret i64 %3
 }
 
-define void @fiex_array_test() {
+define void @fixed_array_test() {
 entry:
   %i = alloca i64, align 8
   %0 = call ptr @heap_malloc(i64 3)
@@ -295,14 +295,14 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 2923382853, label %func_0_dispatch
+    i64 743401749, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @fiex_array_test()
+  call void @fixed_array_test()
   %3 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %3, align 4
   call void @set_tape_data(ptr %3, i64 1)

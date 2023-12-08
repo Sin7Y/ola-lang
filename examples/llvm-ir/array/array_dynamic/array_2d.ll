@@ -253,7 +253,7 @@ define void @processDynamicArray() {
 entry:
   %index_alloca7 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
-  %0 = call ptr @vector_new(i64 1)
+  %0 = call ptr @vector_new(i64 3)
   %vector_data = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %index_alloca, align 4
   br label %cond
@@ -278,7 +278,7 @@ done:                                             ; preds = %cond
   call void @builtin_range_check(i64 %3)
   %vector_data1 = getelementptr i64, ptr %0, i64 1
   %index_access2 = getelementptr ptr, ptr %vector_data1, i64 0
-  %4 = call ptr @vector_new(i64 1)
+  %4 = call ptr @vector_new(i64 2)
   %vector_data3 = getelementptr i64, ptr %4, i64 1
   store i64 0, ptr %index_alloca7, align 4
   br label %cond4

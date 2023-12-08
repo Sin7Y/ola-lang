@@ -252,7 +252,7 @@ exit:                                             ; preds = %loop
 define void @hash_test() {
 entry:
   %h = alloca ptr, align 8
-  %0 = call ptr @vector_new(i64 10)
+  %0 = call ptr @vector_new(i64 100)
   %vector_data = getelementptr i64, ptr %0, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 104, ptr %index_access, align 4
