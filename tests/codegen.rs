@@ -14,6 +14,11 @@ fn u32_testcases() {
 }
 
 #[test]
+fn u32_global_testcases() {
+    run_test_for_path("./tests/codegen/global");
+}
+
+#[test]
 fn bool_testcases() {
     run_test_for_path("./tests/codegen/bool");
 }

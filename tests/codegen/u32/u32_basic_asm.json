@@ -1,8 +1,65 @@
 {
-  "program": "testU32DeclareUninitialized:\n.LBL0_0:\n  add r9 r9 1\n  mov r1 0\n  mstore [r9,-1] r1\n  mload r1 [r9,-1]\n  mov r2 3\n.PROPHET0_0:\n  add r9 r9 -1\n  ret\n",
+  "program": "testU32DeclareUninitialized:\n.LBL0_0:\n  add r9 r9 1\n  mov r1 0\n  mstore [r9,-1] r1\n  mload r1 [r9,-1]\n  mov r2 3\n.PROPHET0_0:\n  add r9 r9 -1\n  ret\ntestU32DeclareThenInitialized:\n.LBL1_0:\n  add r9 r9 1\n  mov r1 0\n  mstore [r9,-1] r1\n  mov r1 5\n  mstore [r9,-1] r1\n  mload r1 [r9,-1]\n  mov r2 3\n.PROPHET1_0:\n  add r9 r9 -1\n  ret\ntestU32InitializedByVariable:\n.LBL2_0:\n  add r9 r9 2\n  mov r1 5\n  mstore [r9,-2] r1\n  mload r1 [r9,-2]\n  mstore [r9,-1] r1\n  mload r1 [r9,-1]\n  mov r2 3\n.PROPHET2_0:\n  add r9 r9 -2\n  ret\ntestU32RightValueExpression:\n.LBL3_0:\n  add r9 r9 2\n  mov r2 5\n  mstore [r9,-2] r2\n  mload r2 [r9,-2]\n  mload r3 [r9,-2]\n  add r1 r2 r3\n  range r1\n  mstore [r9,-1] r1\n  add r9 r9 -2\n  ret\ntestU32AsParameter:\n.LBL4_0:\n  add r9 r9 1\n  mstore [r9,-1] r1\n  mload r1 [r9,-1]\n  mov r2 3\n.PROPHET4_0:\n  add r9 r9 -1\n  ret\ntestU32CallByValue:\n.LBL5_0:\n  add r9 r9 3\n  mstore [r9,-2] r9\n  mov r1 5\n  mstore [r9,-3] r1\n  mload r1 [r9,-3]\n  call testU32AsParameter\n  add r9 r9 -3\n  ret\ntestU32AsReturnValue:\n.LBL6_0:\n  add r9 r9 1\n  mov r1 10\n  mstore [r9,-1] r1\n  mload r0 [r9,-1]\n  add r9 r9 -1\n  ret\ntestU32AsReturnConstValue:\n.LBL7_0:\n  mov r0 5\n  ret\ntestU32AddOperation:\n.LBL8_0:\n  add r9 r9 3\n  mov r2 5\n  mstore [r9,-3] r2\n  mov r2 10\n  mstore [r9,-2] r2\n  mload r2 [r9,-3]\n  mload r3 [r9,-2]\n  add r1 r2 r3\n  range r1\n  add r9 r9 -3\n  ret\n",
   "prophets": [
     {
       "label": ".PROPHET0_0",
+      "code": "%{\n    entry() {\n        printf(cid.base, cid.flag);\n    }\n%}",
+      "inputs": [
+        {
+          "name": "cid.base",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        },
+        {
+          "name": "cid.flag",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "label": ".PROPHET1_0",
+      "code": "%{\n    entry() {\n        printf(cid.base, cid.flag);\n    }\n%}",
+      "inputs": [
+        {
+          "name": "cid.base",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        },
+        {
+          "name": "cid.flag",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "label": ".PROPHET2_0",
+      "code": "%{\n    entry() {\n        printf(cid.base, cid.flag);\n    }\n%}",
+      "inputs": [
+        {
+          "name": "cid.base",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        },
+        {
+          "name": "cid.flag",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "label": ".PROPHET4_0",
       "code": "%{\n    entry() {\n        printf(cid.base, cid.flag);\n    }\n%}",
       "inputs": [
         {

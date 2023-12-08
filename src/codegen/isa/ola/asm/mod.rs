@@ -391,6 +391,8 @@ impl fmt::Display for Opcode {
                 Self::ADDri | Self::ADDrr => "add",
                 Self::MULri | Self::MULrr => "mul",
                 Self::ANDri | Self::ANDrr => "and",
+                Self::ORri | Self::ORrr => "or",
+                Self::XORri | Self::XORrr => "xor",
                 Self::MOVri | Self::MOVrr | Self::MOV => "mov",
                 Self::JMPi | Self::JMPr => "jmp",
                 Self::CJMPi | Self::CJMPr => "cjmp",
@@ -408,9 +410,6 @@ impl fmt::Display for Opcode {
                 Self::GTE => "gte",
                 Self::NEQ => "neq",
                 Self::EQri | Self::EQrr => "eq",
-                Self::AND => "and",
-                Self::OR => "or",
-                Self::XOR => "xor",
                 Self::RANGECHECK => "range",
                 Self::ASSERTri | Self::ASSERTrr => "assert",
                 Self::TLOADri | Self::TLOADrr => "tload",
@@ -639,6 +638,15 @@ fn mem_op(args: &[Operand]) -> String {
                     *imm
                 )
             }
+        }
+        (
+            OperandData::Reg(reg),
+            OperandData::None,
+            OperandData::None,
+            OperandData::None,
+            OperandData::None,
+        ) => {
+            format!("[{}]", reg_to_str(reg))
         }
         e => todo!("{:?}", e),
     }

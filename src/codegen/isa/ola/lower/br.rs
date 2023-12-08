@@ -192,7 +192,7 @@ pub fn lower_condbr(
 
                     ctx.inst_seq.push(MachInstruction::new(
                         InstructionData {
-                            opcode: Opcode::AND,
+                            opcode: Opcode::ANDrr,
                             operands: vec![
                                 MO::output(OperandData::VReg(output[0])),
                                 MO::input_output(OperandData::VReg(output[0])),
@@ -297,7 +297,7 @@ pub fn lower_condbr(
 
                         ctx.inst_seq.push(MachInstruction::new(
                             InstructionData {
-                                opcode: Opcode::AND,
+                                opcode: Opcode::ANDrr,
                                 operands: vec![
                                     MO::output(OperandData::VReg(output[0])),
                                     MO::input_output(OperandData::VReg(output[0])),
@@ -336,7 +336,7 @@ pub fn lower_condbr(
 
                         ctx.inst_seq.push(MachInstruction::new(
                             InstructionData {
-                                opcode: Opcode::AND,
+                                opcode: Opcode::ANDrr,
                                 operands: vec![
                                     MO::output(OperandData::VReg(output[0])),
                                     MO::input_output(OperandData::VReg(output[0])),

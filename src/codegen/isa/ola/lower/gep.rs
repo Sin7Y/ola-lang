@@ -95,19 +95,21 @@ pub fn lower_gep(
     let output = new_empty_inst_output(ctx, ty, self_id);
 
     if simple_case {
-        debug_println!("gep simple case");
+        debug_println!(
+            "gep simple case: mem_slot {:?},mem_imm {:?},mem_rbase {:?},mem_ridx {:?},mem_mul {:?}",
+            mem_slot,
+            mem_imm,
+            mem_rbase,
+            mem_ridx,
+            mem_mul
+        );
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
-                opcode: Opcode::MLOADr,
+                opcode: Opcode::ADDrr,
                 operands: vec![
                     MOperand::output(output[0].into()),
-                    MOperand::new(OperandData::MemStart),
-                    MOperand::new(OperandData::None),
-                    MOperand::new(mem_slot),
-                    MOperand::new(mem_imm),
                     MOperand::input(mem_rbase),
-                    MOperand::input(mem_ridx),
-                    MOperand::new(mem_mul),
+                    MOperand::input(mem_imm),
                 ],
             },
             ctx.block_map[&ctx.cur_block],
