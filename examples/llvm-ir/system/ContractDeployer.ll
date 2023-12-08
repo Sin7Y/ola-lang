@@ -425,7 +425,7 @@ entry:
   store ptr %2, ptr %_salt, align 8
   store ptr %3, ptr %_input, align 8
   %4 = load ptr, ptr %_input, align 8
-  %5 = call ptr @vector_new(i64 10)
+  %5 = call ptr @vector_new(i64 100)
   %vector_data = getelementptr i64, ptr %5, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 79, ptr %index_access, align 4

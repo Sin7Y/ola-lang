@@ -266,7 +266,7 @@ entry:
 
 define ptr @fields_test() {
 entry:
-  %0 = call ptr @vector_new(i64 3)
+  %0 = call ptr @vector_new(i64 9)
   %vector_data = getelementptr i64, ptr %0, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 111, ptr %index_access, align 4
@@ -274,7 +274,7 @@ entry:
   store i64 108, ptr %index_access1, align 4
   %index_access2 = getelementptr i64, ptr %vector_data, i64 2
   store i64 97, ptr %index_access2, align 4
-  %1 = call ptr @vector_new(i64 2)
+  %1 = call ptr @vector_new(i64 4)
   %vector_data3 = getelementptr i64, ptr %1, i64 1
   %index_access4 = getelementptr i64, ptr %vector_data3, i64 0
   store i64 118, ptr %index_access4, align 4

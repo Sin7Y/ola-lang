@@ -1,0 +1,39 @@
+[
+  {
+    "name": "foo",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "f",
+        "type": "fields",
+        "internalType": "fields"
+      },
+      {
+        "name": "s",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "addr",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "h",
+        "type": "hash",
+        "internalType": "hash"
+      },
+      {
+        "name": "a",
+        "type": "u32",
+        "internalType": "u32"
+      },
+      {
+        "name": "b",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": []
+  }
+]

@@ -259,8 +259,9 @@ entry:
   store i64 %0, ptr %rows, align 4
   store i64 %1, ptr %columns, align 4
   %2 = load i64, ptr %rows, align 4
-  %3 = call ptr @vector_new(i64 1)
-  %vector_data = getelementptr i64, ptr %3, i64 1
+  %3 = mul i64 %2, 1
+  %4 = call ptr @vector_new(i64 %3)
+  %vector_data = getelementptr i64, ptr %4, i64 1
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
@@ -271,8 +272,8 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
-  %4 = call ptr @vector_new(i64 0)
-  store ptr %4, ptr %index_access, align 8
+  %5 = call ptr @vector_new(i64 0)
+  store ptr %5, ptr %index_access, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -282,37 +283,38 @@ done:                                             ; preds = %cond
   br label %cond1
 
 cond1:                                            ; preds = %next, %done
-  %5 = load i64, ptr %i, align 4
-  %6 = load i64, ptr %rows, align 4
-  %7 = icmp ult i64 %5, %6
-  br i1 %7, label %body2, label %endfor
+  %6 = load i64, ptr %i, align 4
+  %7 = load i64, ptr %rows, align 4
+  %8 = icmp ult i64 %6, %7
+  br i1 %8, label %body2, label %endfor
 
 body2:                                            ; preds = %cond1
-  %8 = load i64, ptr %i, align 4
-  %vector_length = load i64, ptr %3, align 4
-  %9 = sub i64 %vector_length, 1
-  %10 = sub i64 %9, %8
-  call void @builtin_range_check(i64 %10)
-  %vector_data3 = getelementptr i64, ptr %3, i64 1
-  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %8
-  %11 = load i64, ptr %columns, align 4
-  %12 = call ptr @vector_new(i64 1)
-  %vector_data5 = getelementptr i64, ptr %12, i64 1
+  %9 = load i64, ptr %i, align 4
+  %vector_length = load i64, ptr %4, align 4
+  %10 = sub i64 %vector_length, 1
+  %11 = sub i64 %10, %9
+  call void @builtin_range_check(i64 %11)
+  %vector_data3 = getelementptr i64, ptr %4, i64 1
+  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %9
+  %12 = load i64, ptr %columns, align 4
+  %13 = mul i64 %12, 1
+  %14 = call ptr @vector_new(i64 %13)
+  %vector_data5 = getelementptr i64, ptr %14, i64 1
   store i64 0, ptr %index_alloca9, align 4
   br label %cond6
 
 next:                                             ; preds = %done8
-  %13 = load i64, ptr %i, align 4
-  %14 = add i64 %13, 1
-  store i64 %14, ptr %i, align 4
+  %15 = load i64, ptr %i, align 4
+  %16 = add i64 %15, 1
+  store i64 %16, ptr %i, align 4
   br label %cond1
 
 endfor:                                           ; preds = %cond1
-  ret ptr %3
+  ret ptr %4
 
 cond6:                                            ; preds = %body7, %body2
   %index_value10 = load i64, ptr %index_alloca9, align 4
-  %loop_cond11 = icmp ult i64 %index_value10, %11
+  %loop_cond11 = icmp ult i64 %index_value10, %12
   br i1 %loop_cond11, label %body7, label %done8
 
 body7:                                            ; preds = %cond6
@@ -323,7 +325,7 @@ body7:                                            ; preds = %cond6
   br label %cond6
 
 done8:                                            ; preds = %cond6
-  store ptr %12, ptr %index_access4, align 8
+  store ptr %14, ptr %index_access4, align 8
   br label %next
 }
 

@@ -257,7 +257,7 @@ entry:
   %inputArray = alloca ptr, align 8
   store ptr %0, ptr %inputArray, align 8
   %1 = load ptr, ptr %inputArray, align 8
-  %2 = call ptr @vector_new(i64 1)
+  %2 = call ptr @vector_new(i64 10)
   %vector_data = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %index_alloca, align 4
   br label %cond
