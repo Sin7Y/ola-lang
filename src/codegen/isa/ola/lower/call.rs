@@ -236,7 +236,7 @@ pub fn lower_call(
     // for gfc insts pattern as args + call_inst + return
     // for prophet insts pattern as args + prophet_pseudo + return_prophet
     let mut opcode = Opcode::CALL;
-    if name.starts_with("prophet") || name.as_str() == "vector_new" {
+    if name.starts_with("prophet") {
         opcode = Opcode::PROPHET;
     }
 

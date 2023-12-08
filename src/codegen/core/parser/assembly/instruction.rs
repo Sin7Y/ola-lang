@@ -251,6 +251,7 @@ pub fn parse_add_sub_mul<'a, 'b>(
             map(tag("srem"), |_| Opcode::SRem),
             map(tag("and"), |_| Opcode::And),
             map(tag("or"), |_| Opcode::Or),
+            map(tag("xor"), |_| Opcode::Xor),
             map(tag("shl"), |_| Opcode::Shl),
             map(tag("ashr"), |_| Opcode::AShr),
             map(tag("lshr"), |_| Opcode::LShr),

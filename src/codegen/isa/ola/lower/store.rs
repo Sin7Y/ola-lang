@@ -26,6 +26,7 @@ pub fn lower_store(
 ) -> Result<()> {
     let mut dst_slot = None;
     let mut dst_vreg = None;
+    let mut gbl = None;
 
     let dst = args[1];
     match ctx.ir_data.value_ref(dst) {
@@ -38,6 +39,9 @@ pub fn lower_store(
             } else {
                 dst_vreg = Some(get_inst_output(ctx, tys[1], *id)?);
             }
+        }
+        Value::Constant(ConstantValue::GlobalRef(name, _ty)) => {
+            gbl = Some(name);
         }
         _ => {
             return Err(
@@ -161,6 +165,38 @@ pub fn lower_store(
             vreg = Some(vregs);
         }
         e => return Err(LoweringError::Todo(format!("Unsupported store source: {:?}", e)).into()),
+    }
+
+    if let Some(gbl) = gbl {
+        assert_eq!(gbl.as_string(), "heap_address");
+        let output = ctx.mach_data.vregs.add_vreg_data(tys[0]);
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MOVri,
+                operands: vec![
+                    MOperand::output(output.into()),
+                    MOperand::new(OperandData::Int64(-12884901885)),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        ctx.inst_seq.append(&mut vec![MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::MSTOREr,
+                operands: vec![
+                    MOperand::new(OperandData::MemStart),
+                    MOperand::new(OperandData::None),
+                    MOperand::new(OperandData::None),
+                    MOperand::new(OperandData::None),
+                    MOperand::input(output.into()),
+                    MOperand::input(OperandData::None),
+                    MOperand::new(OperandData::None),
+                    MOperand::input(vreg.unwrap()[0].into()),
+                ],
+            },
+            ctx.block_map[&ctx.cur_block],
+        )]);
+        return Ok(());
     }
 
     match (dst_vreg, dst_slot, vreg, konst) {
