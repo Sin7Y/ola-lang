@@ -494,12 +494,9 @@ fn load_struct_member<'a>(
             "struct_member",
         )
         .unwrap();
-    if field_ty.is_primitive() {
-        bin.builder
-            .build_load(bin.llvm_type(field_ty, ns), struct_member, "elem")
-    } else {
-        struct_member.into()
-    }
+
+    bin.builder
+        .build_load(bin.llvm_var_ty(field_ty, ns), struct_member, "elem")
 }
 
 /// Checks if struct contains only primitive types and returns its memory

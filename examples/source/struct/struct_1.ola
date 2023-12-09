@@ -1,0 +1,23 @@
+contract NestedStructsContract {
+
+    struct InnerStruct {
+        u32 innerValue;
+        string innerName;
+    }
+
+     struct OuterStruct {
+        InnerStruct innerStruct;
+        u32 outerValue;
+        string outerName;
+    }
+
+    mapping(u32 => OuterStruct) outerStructs;
+
+        // 函数，用于获取一个特定ID的OuterStruct实例
+    fn getOuterStruct(u32 _id) -> (u32) {
+        u32 a = outerStructs[_id].innerStruct.innerValue;
+        return a;
+    }
+        
+
+}

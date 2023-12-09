@@ -160,16 +160,7 @@ impl<'a> Binary<'a> {
         } else {
             // add return values
             for ty in returns {
-                args.push(if ty.is_reference_type(ns) && !ty.is_contract_storage() {
-                    self.llvm_type(ty, ns)
-                        .ptr_type(AddressSpace::default())
-                        .ptr_type(AddressSpace::default())
-                        .into()
-                } else {
-                    self.llvm_type(ty, ns)
-                        .ptr_type(AddressSpace::default())
-                        .into()
-                });
+                args.push(self.llvm_var_ty(ty, ns).into());
             }
             let void_type = self.context.void_type();
             void_type.fn_type(&args, false)
@@ -182,20 +173,6 @@ impl<'a> Binary<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {
             Type::Struct(_) | Type::Array(..) | Type::String | Type::DynamicBytes => llvm_ty
-                .ptr_type(AddressSpace::default())
-                .as_basic_type_enum(),
-            _ => llvm_ty,
-        }
-    }
-
-    /// Return the llvm type for field in struct or array
-    pub(crate) fn llvm_field_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
-        let llvm_ty = self.llvm_type(ty, ns);
-        match ty.deref_memory() {
-            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => llvm_ty
-                .ptr_type(AddressSpace::default())
-                .as_basic_type_enum(),
-            Type::DynamicBytes | Type::String => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => llvm_ty,
@@ -222,7 +199,7 @@ impl<'a> Binary<'a> {
                 .as_basic_type_enum(),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
             Type::Array(base_ty, dims) => {
-                let ty = self.llvm_field_ty(base_ty, ns);
+                let ty = self.llvm_var_ty(base_ty, ns);
 
                 let mut dims = dims.iter();
 
@@ -270,7 +247,7 @@ impl<'a> Binary<'a> {
                     &ns.structs[*n]
                         .fields
                         .iter()
-                        .map(|f| self.llvm_field_ty(&f.ty, ns))
+                        .map(|f| self.llvm_var_ty(&f.ty, ns))
                         .collect::<Vec<BasicTypeEnum>>(),
                     false,
                 )
@@ -801,7 +778,7 @@ impl<'a> Binary<'a> {
 
         let index_access = unsafe {
             self.builder.build_gep(
-                self.llvm_type(ty, ns),
+                self.llvm_var_ty(ty, ns),
                 data_ref,
                 &[index_value],
                 "index_access",

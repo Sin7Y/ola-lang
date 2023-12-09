@@ -83,9 +83,9 @@ pub(crate) fn encode_into_buffer<'a>(
                     ns,
                 );
             }
-            let loaded = bin
-                .builder
-                .build_load(bin.llvm_type(r, ns), arg.into_pointer_value(), "");
+            let loaded =
+                bin.builder
+                    .build_load(bin.llvm_var_ty(r, ns), arg.into_pointer_value(), "");
             encode_into_buffer(buffer, loaded, r, offset, bin, func_value, ns)
         }
         Type::StorageRef(r) => {
@@ -203,12 +203,16 @@ pub fn encode_dynamic_array_loop<'a>(
         )
     };
 
-    let elem = if elem_ty.is_primitive() {
-        bin.builder
-            .build_load(bin.llvm_type(elem_ty, ns), elem_ptr, "elem")
-    } else {
-        elem_ptr.into()
-    };
+    let elem = bin
+        .builder
+        .build_load(bin.llvm_var_ty(elem_ty, ns), elem_ptr, "elem");
+
+    // let elem = if elem_ty.is_primitive() {
+    //     bin.builder
+    //         .build_load(bin.llvm_type(elem_ty, ns), elem_ptr, "elem")
+    // } else {
+    //     elem_ptr.into()
+    // };
 
     let offset = bin
         .builder
@@ -479,17 +483,7 @@ pub fn fixed_array_encode<'a>(
 
         let elem = bin
             .builder
-            .build_load(bin.llvm_type(elem_ty, ns), elem_ptr, "");
-
-        let elem = if elem_ty.is_fixed_reference_type() {
-            bin.builder.build_load(
-                bin.llvm_type(elem_ty, ns),
-                elem.into_pointer_value(),
-                "elem",
-            )
-        } else {
-            elem
-        };
+            .build_load(bin.llvm_var_ty(elem_ty, ns), elem_ptr, "");
 
         encode_uint(buffer, elem, *offset, bin);
 
