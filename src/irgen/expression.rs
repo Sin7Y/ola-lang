@@ -524,13 +524,13 @@ pub fn expression<'a>(
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
 
-                let elem = if expr.ty().is_fixed_reference_type() {
-                    let load_type = bin.llvm_type(&expr.ty(), ns);
-                    bin.builder
-                        .build_load(load_type, elem.into_pointer_value(), "elem")
-                } else {
-                    elem
-                };
+                // let elem = if expr.ty().is_fixed_reference_type() {
+                //     let load_type = bin.llvm_type(&expr.ty(), ns);
+                //     bin.builder
+                //         .build_load(load_type, elem.into_pointer_value(), "elem")
+                // } else {
+                //     elem
+                // };
 
                 bin.builder.build_store(elemptr, elem);
             }
@@ -571,15 +571,15 @@ pub fn expression<'a>(
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
 
-                let elem = if expr.ty().is_fixed_reference_type() {
-                    bin.builder.build_load(
-                        bin.llvm_type(&expr.ty(), ns),
-                        elem.into_pointer_value(),
-                        "elem",
-                    )
-                } else {
-                    elem
-                };
+                // let elem = if expr.ty().is_fixed_reference_type() {
+                //     bin.builder.build_load(
+                //         bin.llvm_type(&expr.ty(), ns),
+                //         elem.into_pointer_value(),
+                //         "elem",
+                //     )
+                // } else {
+                //     elem
+                // };
 
                 bin.builder.build_store(elemptr, elem);
             }
@@ -681,13 +681,7 @@ pub fn expression<'a>(
         }
         Expression::Load { ty, expr, .. } => {
             let ptr = expression(expr, bin, func_value, var_table, ns).into_pointer_value();
-            if ty.is_reference_type(ns) && !ty.is_fixed_reference_type() {
-                let loaded_type = bin.llvm_type(ty, ns).ptr_type(AddressSpace::default());
-                bin.builder.build_load(loaded_type, ptr, "")
-            } else {
-                let loaded_type = bin.llvm_type(ty, ns);
-                bin.builder.build_load(loaded_type, ptr, "")
-            }
+            bin.builder.build_load(bin.llvm_var_ty(ty, ns), ptr, "")
         }
 
         Expression::AllocDynamicBytes {

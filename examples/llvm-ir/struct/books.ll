@@ -322,64 +322,65 @@ func_0_dispatch:                                  ; preds = %entry
   %encode_value_ptr = getelementptr i64, ptr %10, i64 0
   store i64 %elem, ptr %encode_value_ptr, align 4
   %struct_member3 = getelementptr inbounds { i64, ptr }, ptr %7, i32 0, i32 1
-  %vector_length4 = load i64, ptr %struct_member3, align 4
-  %vector_data = getelementptr i64, ptr %struct_member3, i64 1
-  %11 = add i64 %vector_length4, 1
+  %elem4 = load ptr, ptr %struct_member3, align 8
+  %vector_length5 = load i64, ptr %elem4, align 4
+  %vector_data = getelementptr i64, ptr %elem4, i64 1
+  %11 = add i64 %vector_length5, 1
   call void @memcpy(ptr %vector_data, ptr %10, i64 %11)
   %12 = add i64 %11, 1
   %13 = add i64 %12, 0
-  %encode_value_ptr5 = getelementptr i64, ptr %10, i64 %13
-  store i64 %9, ptr %encode_value_ptr5, align 4
+  %encode_value_ptr6 = getelementptr i64, ptr %10, i64 %13
+  store i64 %9, ptr %encode_value_ptr6, align 4
   call void @set_tape_data(ptr %10, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %decode_struct_field = getelementptr ptr, ptr %input, i64 0
+  %decode_struct_field = getelementptr { i64, ptr }, ptr %input, i64 0
   %14 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field6 = getelementptr ptr, ptr %input, i64 1
-  %vector_length7 = load i64, ptr %decode_struct_field6, align 4
-  %15 = add i64 %vector_length7, 1
+  %decode_struct_field7 = getelementptr { i64, ptr }, ptr %input, i64 1
+  %vector_length8 = load i64, ptr %decode_struct_field7, align 4
+  %15 = add i64 %vector_length8, 1
   %decode_struct_offset = add i64 1, %15
   %16 = call ptr @heap_malloc(i64 2)
-  %struct_member8 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 0
-  store i64 %14, ptr %struct_member8, align 4
-  %struct_member9 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 1
-  store ptr %decode_struct_field6, ptr %struct_member9, align 8
+  %struct_member9 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 0
+  store i64 %14, ptr %struct_member9, align 4
+  %struct_member10 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 1
+  store ptr %decode_struct_field7, ptr %struct_member10, align 8
   %17 = getelementptr ptr, ptr %input, i64 %decode_struct_offset
   %18 = call ptr @getBookName(ptr %16)
-  %vector_length10 = load i64, ptr %18, align 4
-  %19 = add i64 %vector_length10, 1
-  %heap_size11 = add i64 %19, 1
-  %20 = call ptr @heap_malloc(i64 %heap_size11)
-  %vector_length12 = load i64, ptr %18, align 4
-  %vector_data13 = getelementptr i64, ptr %18, i64 1
-  %21 = add i64 %vector_length12, 1
-  call void @memcpy(ptr %vector_data13, ptr %20, i64 %21)
+  %vector_length11 = load i64, ptr %18, align 4
+  %19 = add i64 %vector_length11, 1
+  %heap_size12 = add i64 %19, 1
+  %20 = call ptr @heap_malloc(i64 %heap_size12)
+  %vector_length13 = load i64, ptr %18, align 4
+  %vector_data14 = getelementptr i64, ptr %18, i64 1
+  %21 = add i64 %vector_length13, 1
+  call void @memcpy(ptr %vector_data14, ptr %20, i64 %21)
   %22 = add i64 %21, 0
-  %encode_value_ptr14 = getelementptr i64, ptr %20, i64 %22
-  store i64 %19, ptr %encode_value_ptr14, align 4
-  call void @set_tape_data(ptr %20, i64 %heap_size11)
+  %encode_value_ptr15 = getelementptr i64, ptr %20, i64 %22
+  store i64 %19, ptr %encode_value_ptr15, align 4
+  call void @set_tape_data(ptr %20, i64 %heap_size12)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %decode_struct_field15 = getelementptr ptr, ptr %input, i64 0
-  %23 = load i64, ptr %decode_struct_field15, align 4
-  %decode_struct_field16 = getelementptr ptr, ptr %input, i64 1
-  %vector_length17 = load i64, ptr %decode_struct_field16, align 4
-  %24 = add i64 %vector_length17, 1
-  %decode_struct_offset18 = add i64 1, %24
+  %decode_struct_field16 = getelementptr { i64, ptr }, ptr %input, i64 0
+  %23 = load i64, ptr %decode_struct_field16, align 4
+  %decode_struct_field17 = getelementptr { i64, ptr }, ptr %input, i64 1
+  %vector_length18 = load i64, ptr %decode_struct_field17, align 4
+  %24 = add i64 %vector_length18, 1
+  %decode_struct_offset19 = add i64 1, %24
   %25 = call ptr @heap_malloc(i64 2)
-  %struct_member19 = getelementptr inbounds { i64, ptr }, ptr %25, i32 0, i32 0
-  store i64 %23, ptr %struct_member19, align 4
-  %struct_member20 = getelementptr inbounds { i64, ptr }, ptr %25, i32 0, i32 1
-  store ptr %decode_struct_field16, ptr %struct_member20, align 8
-  %26 = getelementptr ptr, ptr %input, i64 %decode_struct_offset18
+  %struct_member20 = getelementptr inbounds { i64, ptr }, ptr %25, i32 0, i32 0
+  store i64 %23, ptr %struct_member20, align 4
+  %struct_member21 = getelementptr inbounds { i64, ptr }, ptr %25, i32 0, i32 1
+  store ptr %decode_struct_field17, ptr %struct_member21, align 8
+  %26 = getelementptr ptr, ptr %input, i64 %decode_struct_offset19
   %27 = call i64 @getBookId(ptr %25)
   %28 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr21 = getelementptr i64, ptr %28, i64 0
-  store i64 %27, ptr %encode_value_ptr21, align 4
-  %encode_value_ptr22 = getelementptr i64, ptr %28, i64 1
-  store i64 1, ptr %encode_value_ptr22, align 4
+  %encode_value_ptr22 = getelementptr i64, ptr %28, i64 0
+  store i64 %27, ptr %encode_value_ptr22, align 4
+  %encode_value_ptr23 = getelementptr i64, ptr %28, i64 1
+  store i64 1, ptr %encode_value_ptr23, align 4
   call void @set_tape_data(ptr %28, i64 2)
   ret void
 }
