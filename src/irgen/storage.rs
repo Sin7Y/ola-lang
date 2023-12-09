@@ -163,13 +163,13 @@ pub(crate) fn storage_load<'a>(
 
                         let val = storage_load(bin, &ty, slot, function, ns);
 
-                        let val = if ty.deref_memory().is_fixed_reference_type() {
-                            let load_ty = bin.llvm_type(ty.deref_any(), ns);
-                            bin.builder
-                                .build_load(load_ty, val.into_pointer_value(), "elem")
-                        } else {
-                            val
-                        };
+                        // let val = if ty.deref_memory().is_fixed_reference_type() {
+                        //     let load_ty = bin.llvm_type(ty.deref_any(), ns);
+                        //     bin.builder
+                        //         .build_load(load_ty, val.into_pointer_value(), "elem")
+                        // } else {
+                        //     val
+                        // };
 
                         bin.builder.build_store(elem, val);
                     },
@@ -194,15 +194,15 @@ pub(crate) fn storage_load<'a>(
 
                         let entry = storage_load(bin, elem_ty, slot, function, ns);
 
-                        let entry = if elem_ty.deref_memory().is_fixed_reference_type() {
-                            bin.builder.build_load(
-                                bin.llvm_type(elem_ty.deref_memory(), ns),
-                                entry.into_pointer_value(),
-                                "elem",
-                            )
-                        } else {
-                            entry
-                        };
+                        // let entry = if elem_ty.deref_memory().is_fixed_reference_type() {
+                        //     bin.builder.build_load(
+                        //         bin.llvm_type(elem_ty.deref_memory(), ns),
+                        //         entry.into_pointer_value(),
+                        //         "elem",
+                        //     )
+                        // } else {
+                        //     entry
+                        // };
 
                         bin.builder.build_store(elem, entry);
                     },
@@ -336,7 +336,7 @@ pub(crate) fn storage_store<'a>(
                     storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns)
                         .into_int_value();
 
-                let llvm_elem_ty = bin.llvm_field_ty(elem_ty, ns);
+                let llvm_elem_ty = bin.llvm_var_ty(elem_ty, ns);
 
                 // store new length
                 storage_store_internal(bin, *slot, len.into());

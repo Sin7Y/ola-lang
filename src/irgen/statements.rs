@@ -463,13 +463,13 @@ fn destructure<'a>(
             let mut values = Vec::new();
             for expr in list {
                 let elem = expression(expr, bin, func_value, var_table, ns);
-                let elem_ty = bin.llvm_type(&expr.ty(), ns);
-                let elem = if expr.ty().is_fixed_reference_type() {
-                    bin.builder
-                        .build_load(elem_ty, elem.into_pointer_value(), "elem")
-                } else {
-                    elem
-                };
+                // let elem_ty = bin.llvm_type(&expr.ty(), ns);
+                // let elem = if expr.ty().is_fixed_reference_type() {
+                //     bin.builder
+                //         .build_load(elem_ty, elem.into_pointer_value(), "elem")
+                // } else {
+                //     elem
+                // };
                 values.push(elem);
             }
             values

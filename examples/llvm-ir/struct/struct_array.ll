@@ -345,56 +345,57 @@ func_0_dispatch:                                  ; preds = %entry
   %encode_value_ptr = getelementptr i64, ptr %7, i64 0
   store i64 %elem, ptr %encode_value_ptr, align 4
   %struct_member2 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
-  %vector_length3 = load i64, ptr %struct_member2, align 4
-  %encode_value_ptr4 = getelementptr i64, ptr %7, i64 1
-  store i64 %vector_length3, ptr %encode_value_ptr4, align 4
+  %elem3 = load ptr, ptr %struct_member2, align 8
+  %vector_length4 = load i64, ptr %elem3, align 4
+  %encode_value_ptr5 = getelementptr i64, ptr %7, i64 1
+  store i64 %vector_length4, ptr %encode_value_ptr5, align 4
   store i64 2, ptr %offset_ptr, align 4
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
 loop_body:                                        ; preds = %loop_body, %func_0_dispatch
   %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %struct_member2, i64 %index
-  %elem5 = load i64, ptr %element, align 4
+  %element = getelementptr ptr, ptr %elem3, i64 %index
+  %elem6 = load i64, ptr %element, align 4
   %offset = load i64, ptr %offset_ptr, align 4
-  %encode_value_ptr6 = getelementptr i64, ptr %7, i64 %offset
-  store i64 %elem5, ptr %encode_value_ptr6, align 4
+  %encode_value_ptr7 = getelementptr i64, ptr %7, i64 %offset
+  store i64 %elem6, ptr %encode_value_ptr7, align 4
   %next_offset = add i64 1, %offset
   store i64 %next_offset, ptr %offset_ptr, align 4
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %vector_length3
+  %index_cond = icmp ult i64 %next_index, %vector_length4
   br i1 %index_cond, label %loop_body, label %loop_end
 
 loop_end:                                         ; preds = %loop_body
-  %8 = add i64 %vector_length3, 1
+  %8 = add i64 %vector_length4, 1
   %9 = add i64 %8, 1
   %10 = add i64 %9, 0
-  %encode_value_ptr7 = getelementptr i64, ptr %7, i64 %10
-  store i64 %6, ptr %encode_value_ptr7, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %7, i64 %10
+  store i64 %6, ptr %encode_value_ptr8, align 4
   call void @set_tape_data(ptr %7, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %decode_struct_field = getelementptr ptr, ptr %input, i64 0
+  %decode_struct_field = getelementptr { i64, ptr }, ptr %input, i64 0
   %11 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field8 = getelementptr ptr, ptr %input, i64 1
-  %vector_length9 = load i64, ptr %decode_struct_field8, align 4
-  %12 = mul i64 %vector_length9, 1
+  %decode_struct_field9 = getelementptr { i64, ptr }, ptr %input, i64 1
+  %vector_length10 = load i64, ptr %decode_struct_field9, align 4
+  %12 = mul i64 %vector_length10, 1
   %13 = add i64 %12, 1
   %decode_struct_offset = add i64 1, %13
   %14 = call ptr @heap_malloc(i64 2)
-  %struct_member10 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 0
-  store i64 %11, ptr %struct_member10, align 4
-  %struct_member11 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 1
-  store ptr %decode_struct_field8, ptr %struct_member11, align 8
+  %struct_member11 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 0
+  store i64 %11, ptr %struct_member11, align 4
+  %struct_member12 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 1
+  store ptr %decode_struct_field9, ptr %struct_member12, align 8
   %15 = getelementptr ptr, ptr %input, i64 %decode_struct_offset
   %16 = call i64 @getFirstGrade(ptr %14)
   %17 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr12 = getelementptr i64, ptr %17, i64 0
-  store i64 %16, ptr %encode_value_ptr12, align 4
-  %encode_value_ptr13 = getelementptr i64, ptr %17, i64 1
-  store i64 1, ptr %encode_value_ptr13, align 4
+  %encode_value_ptr13 = getelementptr i64, ptr %17, i64 0
+  store i64 %16, ptr %encode_value_ptr13, align 4
+  %encode_value_ptr14 = getelementptr i64, ptr %17, i64 1
+  store i64 1, ptr %encode_value_ptr14, align 4
   call void @set_tape_data(ptr %17, i64 2)
   ret void
 }
