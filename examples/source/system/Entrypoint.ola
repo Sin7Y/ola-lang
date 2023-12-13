@@ -72,15 +72,16 @@ contract Entrypoint {
     }
 
     fn callTx(Transaction _tx) -> (fields) {
+        print(_tx);
         // MOCK_TEST: should never been here.
-        assert(false);
+        // assert(false);
         // The layout of data field in transaction should be:
         // | destination address | function selector | arguments ... |
         // | --     8 u32     -- | --    1 u32   --  | --  N u32  -- |
 
         // TODO: get slice from array is not supported right now.
-        fields res = _tx.sender.call(_tx.data);
-        return res;
+        // fields res = _tx.sender.call(_tx.data);
+        return _tx.data;
     }
 
     fn sendTx(Transaction _tx) {
@@ -96,7 +97,8 @@ contract Entrypoint {
         // Update the nonce
         address NONCE_HOLDER_ADDRESS = address(0x8003);
         fields set_nonce_calldata = abi.encodeWithSignature("setNonce(address,u32)", _tx.sender, _tx.nonce);
-        NONCE_HOLDER_ADDRESS.call(set_nonce_calldata);
+        print(set_nonce_calldata);
+        // NONCE_HOLDER_ADDRESS.call(set_nonce_calldata);
     }
 
     fn validateTx(Transaction _tx) {
@@ -120,22 +122,25 @@ contract Entrypoint {
         if (code_len != 0) {
             // First check if hash and bytecode matches.
             hash bytecodeHash = hashL2Bytecode(_tx.codes);
-            assert(bytecodeHash == _tx.codeHash, "bytecode hash is not same as expected");
+            print(bytecodeHash);
+            // assert(bytecodeHash == _tx.codeHash, "bytecode hash is not same as expected");
 
             // Check if bytecode is already deployed contracts
             address KNOWN_CODES_STORAGE = address(0x8004);
             fields is_codehash_known_calldata = abi.encodeWithSignature("isCodehashKnown(hash)", bytecodeHash);
-            fields is_codehash_known_bytes = KNOWN_CODES_STORAGE.call(is_codehash_known_calldata);
-            bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
+            print(is_codehash_known_calldata);
+            // fields is_codehash_known_bytes = KNOWN_CODES_STORAGE.call(is_codehash_known_calldata);
+            // bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
 
             // Mark codehash as known if it is unknown
-            if (!is_codehash_known) {
-                fields mark_codehash_known = abi.encodeWithSignature("markCodehashKnown(hash)", bytecodeHash);
-                KNOWN_CODES_STORAGE.call(mark_codehash_known);
-            }
+            // if (!is_codehash_known) {
+            //     fields mark_codehash_known = abi.encodeWithSignature("markCodehashKnown(hash)", bytecodeHash);
+            //     KNOWN_CODES_STORAGE.call(mark_codehash_known);
+            // }
             // CR: constrain to == DEPLOYER
             address DEPLOYER_SYSTEM_CONTRACT = address(0x8005);
             address to = abi.decode(_tx.data[0:4], (address));
+            print(to);
             assert(to == DEPLOYER_SYSTEM_CONTRACT, "destination must be contract deployer account");
         }
     }
@@ -149,19 +154,24 @@ contract Entrypoint {
         // TODO: hash string is not supported.
         // Compute the personal magic of struct, this can be const(meaning we can do the hash offline and hardcode the magic value)
         hash TRANSACTION_TYPE_HASH = poseidon_hash("Transaction(address sender, u32 nonce, fields data, u32 chainid, u32 version, fields codes, fields signature)");
+        print(TRANSACTION_TYPE_HASH);
         // MOCK_TEST: cc6d8618e74a58d1, 0bc19b503c8f6d8e, 160e900745985a7d, 52c36b8cb2846edc
 
         // Compute the struct hash
         fields encodedStruct = abi.encode(TRANSACTION_TYPE_HASH, _tx.sender, _tx.nonce, _tx.version, _tx.chainid, poseidon_hash(_tx.data), poseidon_hash(_tx.codes));
         // MOCK_TEST: [cc6d8618e74a58d1, 0bc19b503c8f6d8e, 160e900745985a7d, 52c36b8cb2846edc, 8,8,8,8, 1, 1, 2, 5f9c6727994b89b2, 57cfa252667fbbc2, 20b48f89e1f704a0, 5f43a95b8a97ccfd, 0,0,0,0]
-
+        print(encodedStruct);
         hash structHash = poseidon_hash(encodedStruct);
+        print(structHash);
         // Compute the personal magic of EIP712, again, this can be const
         hash EIP712_DOMAIN_TYPEHASH = poseidon_hash("EIP712Domain(string name,string version,u32 chainId)");
+        print(EIP712_DOMAIN_TYPEHASH);
         // Compute the domain separator, used in EIP712 context
         hash domainSeparator = poseidon_hash(abi.encode(EIP712_DOMAIN_TYPEHASH, poseidon_hash("Ola"), poseidon_hash("1"), chain_id()));
+        print(domainSeparator);
         // Compute the signed hash
         hash signedHash = poseidon_hash(abi.encode("\x19\x01", domainSeparator, structHash));
+        print(signedHash);
         return signedHash;
     }
 
@@ -173,30 +183,35 @@ contract Entrypoint {
     fn validate_sender(address _address) {
         address DEPLOYER_SYSTEM_CONTRACT = address(0x8005);
         fields account_version_calldata = abi.encodeWithSignature("extendedAccountVersion(address)", _address);
-        fields account_version_bytes = DEPLOYER_SYSTEM_CONTRACT.call(account_version_calldata);
-        u32 account_version = abi.decode(account_version_bytes, (u32));
-        assert(account_version != 0, "sender is not an account.");
+        print(account_version_calldata);
+        // fields account_version_bytes = DEPLOYER_SYSTEM_CONTRACT.call(account_version_calldata);
+        // u32 account_version = abi.decode(account_version_bytes, (u32));
+        // assert(account_version != 0, "sender is not an account.");
     }
 
     fn validate_nonce(address _address, u32 _nonce) {
         address NONCE_HOLDER_ADDRESS = address(0x8003);
+        print(NONCE_HOLDER_ADDRESS);
         fields nonce_calldata = abi.encodeWithSignature("isNonceUsed(address,u32)", _address, _nonce);
-        fields nonce_bytes = NONCE_HOLDER_ADDRESS.call(nonce_calldata);
-        bool nonce = abi.decode(nonce_bytes, (bool));
-        assert(!nonce, "nonce is already used");
+        print(nonce_calldata);
+        // fields nonce_bytes = NONCE_HOLDER_ADDRESS.call(nonce_calldata);
+        // bool nonce = abi.decode(nonce_bytes, (bool));
+        // assert(!nonce, "nonce is already used");
     }
 
     fn validate_tx(hash _txHash, hash _signedHash, Transaction _tx) {
         // CR: struct encode is not supported.
         // CR: Default Account for EOA?
         fields validate_tx_calldata = abi.encodeWithSignature("validateTransaction(hash,hash,Transaction)", _txHash, _signedHash, _tx);
-        fields validate_tx_bytes = _tx.sender.call(validate_tx_calldata);
-        field magic = abi.decode(validate_tx_bytes, (field));
+        print(validate_tx_calldata);
+        // fields validate_tx_bytes = _tx.sender.call(validate_tx_calldata);
+        // field magic = abi.decode(validate_tx_bytes, (field));
 
         // CR: constant magic.
         hash magics = poseidon_hash("validateTransaction(hash,hash,Transaction)");
         fields hash_magic = fields(magics);
-        assert(magic == hash_magic[0], "Validate transaction failed.");
+        print(hash_magic);
+        // assert(magic == hash_magic[0], "Validate transaction failed.");
     }
 
     fn hashL2Bytecode(fields _bytecode) -> (hash) {

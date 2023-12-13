@@ -25,13 +25,15 @@ contract ContractDeployer {
 
         // It is an EOA, it is still an account(the default account of AA).
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
+        print(ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT);
         fields get_codeHash_calldata = abi.encodeWithSignature("getCodeHash(address)", _address);
-        fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
-        hash codeHash = abi.decode(get_codeHash_bytes, (hash));
-        // CR: compare codeHash with 0.
-        if (codeHash == hash(0)) {
-            return 1;
-        }
+        print(get_codeHash_calldata);
+        // fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
+        // hash codeHash = abi.decode(get_codeHash_bytes, (hash));
+        // // CR: compare codeHash with 0.
+        // if (codeHash == hash(0)) {
+        //     return 1;
+        // }
 
         // _address is normal contract
         return 0;
@@ -52,6 +54,7 @@ contract ContractDeployer {
         u32 _aaVersion
     ) -> (address) {
         address newAddress = getNewAddressCreate2(caller_address(), _bytecodeHash, _salt, _input);
+        print(newAddress);
         _nonSystemDeployOnAddress(_bytecodeHash, newAddress, _aaVersion, _input);
         return newAddress;
     }
@@ -84,17 +87,20 @@ contract ContractDeployer {
 
         // We do not allow deploying twice on the same address.
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
+        print(ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT);
         fields get_codeHash_calldata = abi.encodeWithSignature("getCodeHash(address)", _newAddress);
-        fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
-        hash codeHash = abi.decode(get_codeHash_bytes, (hash));
-        assert(codeHash == hash(0x0), "New address already deployed code");
+        print(get_codeHash_calldata);
+        // fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
+        // hash codeHash = abi.decode(get_codeHash_bytes, (hash));
+        // assert(codeHash == hash(0x0), "New address already deployed code");
 
         // Do not allow deploying contracts to default accounts that have already executed transactions.
         address NONCE_HOLDER_ADDRESS = address(0x8003);
         fields deploy_nonce_calldata = abi.encodeWithSignature("usedNonces(address)", _newAddress);
-        fields deploy_nonce_bytes = NONCE_HOLDER_ADDRESS.call(deploy_nonce_calldata);
-        u32 deploy_nonce = abi.decode(deploy_nonce_bytes, (u32));
-        assert(deploy_nonce == 0, "Account is occupied");
+        print(deploy_nonce_calldata);
+        // fields deploy_nonce_bytes = NONCE_HOLDER_ADDRESS.call(deploy_nonce_calldata);
+        // u32 deploy_nonce = abi.decode(deploy_nonce_bytes, (u32));
+        // assert(deploy_nonce == 0, "Account is occupied");
 
         _performDeployOnAddress(_bytecodeHash, _newAddress, _aaVersion, _input);
     }
@@ -108,9 +114,10 @@ contract ContractDeployer {
         // Check the bytecodeHash is known(deployed)
         address KNOWN_CODE_STORAGE_CONTRACT = address(0x8004);
         fields is_codehash_known_calldata = abi.encodeWithSignature("isCodehashKnown(hash)", _bytecodeHash);
-        fields is_codehash_known_bytes = KNOWN_CODE_STORAGE_CONTRACT.call(is_codehash_known_calldata);
-        bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
-        assert(is_codehash_known, "The code hash is not known");
+        print(is_codehash_known_calldata);
+        // fields is_codehash_known_bytes = KNOWN_CODE_STORAGE_CONTRACT.call(is_codehash_known_calldata);
+        // bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
+        // assert(is_codehash_known, "The code hash is not known");
 
         AccountInfo newAccountInfo;
         newAccountInfo.supportedAAVersion = _aaVersion;
@@ -133,6 +140,12 @@ contract ContractDeployer {
         bool _callConstructor
     ) {
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
+        print(_sender);
+        print(_newAddress);
+        print(_bytecodeHash);
+        print(_input);
+        print(_isSystem);
+        print(_callConstructor);
         if (_callConstructor) {
             // TODO: disable this for version 0.
             // Set constructing flag for newAddress
@@ -141,19 +154,21 @@ contract ContractDeployer {
             // Call construct of new deployed contract
             // TODO: we need a constructor.
             // CR: 
-            _newAddress.call(_input);
+            //_newAddress.call(_input);
             
             // TODO: disable this for version 0.
             // Set newAddress constructed and save the codeHash.
             // bytes constructed_calldata = abi.encodeWithSignature("markAccountCodeHashAsConstructed(address)", _newAddress);
             fields constructed_calldata = abi.encodeWithSignature("storeCodeHash(address,hash)", _newAddress, _bytecodeHash);
-            ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
+            print(constructed_calldata);
+            // ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
         } else {
             // TODO: disable this for version 0.
             // If we do not call the constructor, we need to set the constructed code hash.
             // bytes constructed_calldata = abi.encodeWithSignature("storeAccountConstructedCodeHash(address, hash)", _newAddress, _bytecodeHash);
-            fields constructed_calldata = abi.encodeWithSignature("storeCodeHash(address, hash)", _newAddress, _bytecodeHash);
-            ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
+            fields constructed_calldata = abi.encodeWithSignature("storeCodeHash(address,hash)", _newAddress, _bytecodeHash);
+            print(constructed_calldata);
+            // ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
         }
     }
 

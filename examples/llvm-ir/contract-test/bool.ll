@@ -294,9 +294,9 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = load i64, ptr %input, align 4
-  %4 = getelementptr ptr, ptr %input, i64 1
-  %5 = call i64 @bool_compare(i64 %3)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = load i64, ptr %3, align 4
+  %5 = call i64 @bool_compare(i64 %4)
   %6 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %6, i64 0
   store i64 %5, ptr %encode_value_ptr, align 4

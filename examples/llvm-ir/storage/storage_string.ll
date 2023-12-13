@@ -555,10 +555,10 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %vector_length = load i64, ptr %input, align 4
-  %3 = add i64 %vector_length, 1
-  %4 = getelementptr ptr, ptr %input, i64 %3
-  call void @set(ptr %input)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %vector_length = load i64, ptr %3, align 4
+  %4 = add i64 %vector_length, 1
+  call void @set(ptr %3)
   %5 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %5, align 4
   call void @set_tape_data(ptr %5, i64 1)

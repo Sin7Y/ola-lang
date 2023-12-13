@@ -322,9 +322,9 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = load i64, ptr %input, align 4
-  %4 = getelementptr ptr, ptr %input, i64 1
-  call void @addElement(i64 %3)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = load i64, ptr %3, align 4
+  call void @addElement(i64 %4)
   %5 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %5, align 4
   call void @set_tape_data(ptr %5, i64 1)

@@ -301,20 +301,20 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = load i64, ptr %input, align 4
-  %4 = getelementptr ptr, ptr %input, i64 1
-  call void @setVars(i64 %3)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = load i64, ptr %3, align 4
+  call void @setVars(i64 %4)
   %5 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %5, align 4
   call void @set_tape_data(ptr %5, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %6 = load i64, ptr %input, align 4
-  %7 = getelementptr ptr, ptr %input, i64 1
-  %8 = load i64, ptr %7, align 4
-  %9 = getelementptr ptr, ptr %7, i64 1
-  %10 = call i64 @add(i64 %6, i64 %8)
+  %6 = getelementptr ptr, ptr %input, i64 0
+  %7 = load i64, ptr %6, align 4
+  %8 = getelementptr ptr, ptr %6, i64 1
+  %9 = load i64, ptr %8, align 4
+  %10 = call i64 @add(i64 %7, i64 %9)
   %11 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %11, i64 0
   store i64 %10, ptr %encode_value_ptr, align 4

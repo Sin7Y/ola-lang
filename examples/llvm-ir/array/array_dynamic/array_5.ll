@@ -346,11 +346,11 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %vector_length = load i64, ptr %input, align 4
-  %4 = mul i64 %vector_length, 1
-  %5 = add i64 %4, 1
-  %6 = getelementptr ptr, ptr %input, i64 %5
-  %7 = call i64 @array_call(ptr %input)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %vector_length = load i64, ptr %4, align 4
+  %5 = mul i64 %vector_length, 1
+  %6 = add i64 %5, 1
+  %7 = call i64 @array_call(ptr %4)
   %8 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %8, i64 0
   store i64 %7, ptr %encode_value_ptr, align 4

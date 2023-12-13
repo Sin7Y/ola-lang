@@ -413,8 +413,8 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = getelementptr ptr, ptr %input, i64 10
-  %5 = call ptr @array_sort_test(ptr %input)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %5 = call ptr @array_sort_test(ptr %4)
   %vector_length = load i64, ptr %5, align 4
   %6 = mul i64 %vector_length, 1
   %7 = add i64 %6, 1

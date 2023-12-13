@@ -336,8 +336,8 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = getelementptr ptr, ptr %input, i64 10
-  %4 = call i64 @sum(ptr %input)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = call i64 @sum(ptr %3)
   %5 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %5, i64 0
   store i64 %4, ptr %encode_value_ptr, align 4
