@@ -60,7 +60,7 @@ pub fn lower_gep(
     }
 
     let mut mem_slot = OperandData::None;
-    let mut mem_imm = OperandData::None;
+    let mut mem_imm = 0.into();
     let mut mem_rbase = OperandData::None;
     let mut mem_ridx = OperandData::None;
     let mem_mul = OperandData::None;
@@ -84,9 +84,9 @@ pub fn lower_gep(
             unreachable!()
         }
         [(m, x)] if matches!(m, 1 | 2 | 4 | 8) => {
-            mem_ridx = x.to_owned();
+            mem_imm = x.to_owned();
             // mem_mul = (*m as i64).into();
-            debug_println!("gep size: {:?},idx {:?}", mem_ridx, mem_mul);
+            debug_println!("gep size {:?},idx {:?},imm {:?}", m, mem_ridx, mem_imm);
         }
         _ => simple_case = false,
     }
