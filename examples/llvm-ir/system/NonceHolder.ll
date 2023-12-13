@@ -510,10 +510,10 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = getelementptr ptr, ptr %input, i64 4
-  %5 = load i64, ptr %4, align 4
-  %6 = getelementptr ptr, ptr %4, i64 1
-  %7 = call i64 @isNonceUsed(ptr %input, i64 %5)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %5 = getelementptr ptr, ptr %4, i64 4
+  %6 = load i64, ptr %5, align 4
+  %7 = call i64 @isNonceUsed(ptr %4, i64 %6)
   %8 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %8, i64 0
   store i64 %7, ptr %encode_value_ptr, align 4
@@ -523,18 +523,18 @@ func_1_dispatch:                                  ; preds = %entry
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %9 = getelementptr ptr, ptr %input, i64 4
-  %10 = load i64, ptr %9, align 4
-  %11 = getelementptr ptr, ptr %9, i64 1
-  call void @setNonce(ptr %input, i64 %10)
+  %9 = getelementptr ptr, ptr %input, i64 0
+  %10 = getelementptr ptr, ptr %9, i64 4
+  %11 = load i64, ptr %10, align 4
+  call void @setNonce(ptr %9, i64 %11)
   %12 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %12, align 4
   call void @set_tape_data(ptr %12, i64 1)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %13 = getelementptr ptr, ptr %input, i64 4
-  %14 = call i64 @usedNonces(ptr %input)
+  %13 = getelementptr ptr, ptr %input, i64 0
+  %14 = call i64 @usedNonces(ptr %13)
   %15 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr2 = getelementptr i64, ptr %15, i64 0
   store i64 %14, ptr %encode_value_ptr2, align 4

@@ -429,6 +429,7 @@ end_for7:                                         ; preds = %cond4
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
+  %26 = getelementptr ptr, ptr %input, i64 0
   store i64 0, ptr %size_var26, align 4
   %index_ptr27 = alloca i64, align 8
   store i64 0, ptr %index_ptr27, align 4
@@ -436,29 +437,28 @@ func_1_dispatch:                                  ; preds = %entry
   br label %cond29
 
 cond29:                                           ; preds = %next30, %func_1_dispatch
-  %26 = icmp ult i64 %index28, 2
-  br i1 %26, label %body31, label %end_for32
+  %27 = icmp ult i64 %index28, 2
+  br i1 %27, label %body31, label %end_for32
 
 next30:                                           ; preds = %body31
   %index35 = load i64, ptr %index_ptr27, align 4
-  %27 = add i64 %index35, 1
-  store i64 %27, ptr %index_ptr27, align 4
+  %28 = add i64 %index35, 1
+  store i64 %28, ptr %index_ptr27, align 4
   br label %cond29
 
 body31:                                           ; preds = %cond29
-  %28 = sub i64 1, %index28
-  call void @builtin_range_check(i64 %28)
-  %index_access33 = getelementptr [2 x ptr], ptr %input, i64 %index28
+  %29 = sub i64 1, %index28
+  call void @builtin_range_check(i64 %29)
+  %index_access33 = getelementptr [2 x ptr], ptr %26, i64 %index28
   %struct_member34 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access33, i32 0, i32 2
-  %29 = load i64, ptr %size_var26, align 4
-  %30 = add i64 %29, 7
-  store i64 %30, ptr %size_var26, align 4
+  %30 = load i64, ptr %size_var26, align 4
+  %31 = add i64 %30, 7
+  store i64 %31, ptr %size_var26, align 4
   br label %next30
 
 end_for32:                                        ; preds = %cond29
-  %31 = load i64, ptr %size_var26, align 4
-  %32 = getelementptr ptr, ptr %input, i64 %31
-  %33 = call i64 @getFirstBookID(ptr %input)
+  %32 = load i64, ptr %size_var26, align 4
+  %33 = call i64 @getFirstBookID(ptr %26)
   %34 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr36 = getelementptr i64, ptr %34, i64 0
   store i64 %33, ptr %encode_value_ptr36, align 4

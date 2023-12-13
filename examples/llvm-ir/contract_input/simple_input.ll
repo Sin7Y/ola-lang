@@ -289,11 +289,11 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = load i64, ptr %input, align 4
-  %4 = getelementptr ptr, ptr %input, i64 1
-  %5 = load i64, ptr %4, align 4
-  %6 = getelementptr ptr, ptr %4, i64 1
-  %7 = call i64 @foo(i64 %3, i64 %5)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr ptr, ptr %3, i64 1
+  %6 = load i64, ptr %5, align 4
+  %7 = call i64 @foo(i64 %4, i64 %6)
   %8 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %8, i64 0
   store i64 %7, ptr %encode_value_ptr, align 4
@@ -303,11 +303,11 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %9 = load i64, ptr %input, align 4
-  %10 = getelementptr ptr, ptr %input, i64 1
-  %11 = load i64, ptr %10, align 4
-  %12 = getelementptr ptr, ptr %10, i64 1
-  %13 = call i64 @bar(i64 %9, i64 %11)
+  %9 = getelementptr ptr, ptr %input, i64 0
+  %10 = load i64, ptr %9, align 4
+  %11 = getelementptr ptr, ptr %9, i64 1
+  %12 = load i64, ptr %11, align 4
+  %13 = call i64 @bar(i64 %10, i64 %12)
   %14 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr2 = getelementptr i64, ptr %14, i64 0
   store i64 %13, ptr %encode_value_ptr2, align 4

@@ -270,15 +270,15 @@ entry:
   %struct_member4 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 4
   %6 = load ptr, ptr %struct_member4, align 8
   %fields_start = ptrtoint ptr %6 to i64
-  call void @prophet_printf(i64 %fields_start, i64 1)
+  call void @prophet_printf(i64 %fields_start, i64 0)
   %struct_member5 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 5
   %7 = load ptr, ptr %struct_member5, align 8
   %fields_start6 = ptrtoint ptr %7 to i64
-  call void @prophet_printf(i64 %fields_start6, i64 1)
+  call void @prophet_printf(i64 %fields_start6, i64 0)
   %struct_member7 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 6
   %8 = load ptr, ptr %struct_member7, align 8
   %fields_start8 = ptrtoint ptr %8 to i64
-  call void @prophet_printf(i64 %fields_start8, i64 1)
+  call void @prophet_printf(i64 %fields_start8, i64 0)
   %struct_member9 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 7
   %9 = load ptr, ptr %struct_member9, align 8
   %hash_start = ptrtoint ptr %9 to i64
@@ -299,46 +299,46 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %decode_struct_field = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 0
-  %decode_struct_field1 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 4
-  %3 = load i64, ptr %decode_struct_field1, align 4
-  %decode_struct_field2 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 5
-  %4 = load i64, ptr %decode_struct_field2, align 4
-  %decode_struct_field3 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 6
-  %5 = load i64, ptr %decode_struct_field3, align 4
-  %decode_struct_field4 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 7
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %decode_struct_field = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 0
+  %decode_struct_field1 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 4
+  %4 = load i64, ptr %decode_struct_field1, align 4
+  %decode_struct_field2 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 5
+  %5 = load i64, ptr %decode_struct_field2, align 4
+  %decode_struct_field3 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 6
+  %6 = load i64, ptr %decode_struct_field3, align 4
+  %decode_struct_field4 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 7
   %vector_length = load i64, ptr %decode_struct_field4, align 4
-  %6 = add i64 %vector_length, 1
-  %decode_struct_offset = add i64 7, %6
-  %decode_struct_field5 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 %decode_struct_offset
+  %7 = add i64 %vector_length, 1
+  %decode_struct_offset = add i64 7, %7
+  %decode_struct_field5 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 %decode_struct_offset
   %vector_length6 = load i64, ptr %decode_struct_field5, align 4
-  %7 = add i64 %vector_length6, 1
-  %decode_struct_offset7 = add i64 %decode_struct_offset, %7
-  %decode_struct_field8 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 %decode_struct_offset7
+  %8 = add i64 %vector_length6, 1
+  %decode_struct_offset7 = add i64 %decode_struct_offset, %8
+  %decode_struct_field8 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 %decode_struct_offset7
   %vector_length9 = load i64, ptr %decode_struct_field8, align 4
-  %8 = add i64 %vector_length9, 1
-  %decode_struct_offset10 = add i64 %decode_struct_offset7, %8
-  %decode_struct_field11 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %input, i64 %decode_struct_offset10
+  %9 = add i64 %vector_length9, 1
+  %decode_struct_offset10 = add i64 %decode_struct_offset7, %9
+  %decode_struct_field11 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 %decode_struct_offset10
   %decode_struct_offset12 = add i64 %decode_struct_offset10, 4
-  %9 = call ptr @heap_malloc(i64 14)
-  %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 0
+  %10 = call ptr @heap_malloc(i64 14)
+  %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 0
   store ptr %decode_struct_field, ptr %struct_member, align 8
-  %struct_member13 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 1
-  store i64 %3, ptr %struct_member13, align 4
-  %struct_member14 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 2
-  store i64 %4, ptr %struct_member14, align 4
-  %struct_member15 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 3
-  store i64 %5, ptr %struct_member15, align 4
-  %struct_member16 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 4
+  %struct_member13 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 1
+  store i64 %4, ptr %struct_member13, align 4
+  %struct_member14 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 2
+  store i64 %5, ptr %struct_member14, align 4
+  %struct_member15 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 3
+  store i64 %6, ptr %struct_member15, align 4
+  %struct_member16 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 4
   store ptr %decode_struct_field4, ptr %struct_member16, align 8
-  %struct_member17 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 5
+  %struct_member17 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 5
   store ptr %decode_struct_field5, ptr %struct_member17, align 8
-  %struct_member18 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 6
+  %struct_member18 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 6
   store ptr %decode_struct_field8, ptr %struct_member18, align 8
-  %struct_member19 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %9, i32 0, i32 7
+  %struct_member19 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 7
   store ptr %decode_struct_field11, ptr %struct_member19, align 8
-  %10 = getelementptr ptr, ptr %input, i64 %decode_struct_offset12
-  call void @foo(ptr %9)
+  call void @foo(ptr %10)
   %11 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %11, align 4
   call void @set_tape_data(ptr %11, i64 1)

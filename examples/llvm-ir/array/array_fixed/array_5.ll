@@ -273,8 +273,8 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = getelementptr ptr, ptr %input, i64 3
-  %4 = call ptr @array_call(ptr %input)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = call ptr @array_call(ptr %3)
   %5 = call ptr @heap_malloc(i64 4)
   %elemptr0 = getelementptr [3 x i64], ptr %4, i64 0, i64 0
   %6 = load i64, ptr %elemptr0, align 4

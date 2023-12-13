@@ -1205,54 +1205,54 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
+  %3 = getelementptr ptr, ptr %input, i64 0
   store i64 0, ptr %size_var, align 4
-  %vector_length = load i64, ptr %input, align 4
-  %3 = load i64, ptr %size_var, align 4
-  %4 = add i64 %3, %vector_length
-  store i64 %4, ptr %size_var, align 4
+  %vector_length = load i64, ptr %3, align 4
+  %4 = load i64, ptr %size_var, align 4
+  %5 = add i64 %4, %vector_length
+  store i64 %5, ptr %size_var, align 4
   %index_ptr = alloca i64, align 8
   store i64 0, ptr %index_ptr, align 4
   %index = load i64, ptr %index_ptr, align 4
   br label %cond
 
 cond:                                             ; preds = %next, %func_0_dispatch
-  %vector_length1 = load i64, ptr %input, align 4
-  %5 = icmp ult i64 %index, %vector_length1
-  br i1 %5, label %body, label %end_for
+  %vector_length1 = load i64, ptr %3, align 4
+  %6 = icmp ult i64 %index, %vector_length1
+  br i1 %6, label %body, label %end_for
 
 next:                                             ; preds = %body
   %index4 = load i64, ptr %index_ptr, align 4
-  %6 = add i64 %index4, 1
-  store i64 %6, ptr %index_ptr, align 4
+  %7 = add i64 %index4, 1
+  store i64 %7, ptr %index_ptr, align 4
   br label %cond
 
 body:                                             ; preds = %cond
-  %vector_length2 = load i64, ptr %input, align 4
-  %7 = sub i64 %vector_length2, 1
-  %8 = sub i64 %7, %index
-  call void @builtin_range_check(i64 %8)
-  %vector_data = getelementptr i64, ptr %input, i64 1
+  %vector_length2 = load i64, ptr %3, align 4
+  %8 = sub i64 %vector_length2, 1
+  %9 = sub i64 %8, %index
+  call void @builtin_range_check(i64 %9)
+  %vector_data = getelementptr i64, ptr %3, i64 1
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index
   %vector_length3 = load i64, ptr %index_access, align 4
-  %9 = add i64 %vector_length3, 1
-  %10 = load i64, ptr %size_var, align 4
-  %11 = add i64 %10, %9
-  store i64 %11, ptr %size_var, align 4
+  %10 = add i64 %vector_length3, 1
+  %11 = load i64, ptr %size_var, align 4
+  %12 = add i64 %11, %10
+  store i64 %12, ptr %size_var, align 4
   br label %next
 
 end_for:                                          ; preds = %cond
-  %12 = load i64, ptr %size_var, align 4
-  %13 = getelementptr ptr, ptr %input, i64 %12
-  call void @contract_init(ptr %input)
+  %13 = load i64, ptr %size_var, align 4
+  call void @contract_init(ptr %3)
   %14 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %14, align 4
   call void @set_tape_data(ptr %14, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %15 = load i64, ptr %input, align 4
-  %16 = getelementptr ptr, ptr %input, i64 1
-  call void @vote_proposal(i64 %15)
+  %15 = getelementptr ptr, ptr %input, i64 0
+  %16 = load i64, ptr %15, align 4
+  call void @vote_proposal(i64 %16)
   %17 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %17, align 4
   call void @set_tape_data(ptr %17, i64 1)

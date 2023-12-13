@@ -354,10 +354,10 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = getelementptr ptr, ptr %input, i64 4
-  %4 = load i64, ptr %3, align 4
-  %5 = getelementptr ptr, ptr %3, i64 1
-  call void @setNonce(ptr %input, i64 %4)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = getelementptr ptr, ptr %3, i64 4
+  %5 = load i64, ptr %4, align 4
+  call void @setNonce(ptr %3, i64 %5)
   %6 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %6, align 4
   call void @set_tape_data(ptr %6, i64 1)

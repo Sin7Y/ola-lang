@@ -334,12 +334,12 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %11 = getelementptr ptr, ptr %input, i64 6
-  %12 = load i64, ptr %11, align 4
-  %13 = getelementptr ptr, ptr %11, i64 1
-  %14 = load i64, ptr %13, align 4
-  %15 = getelementptr ptr, ptr %13, i64 1
-  %16 = call i64 @getElement(ptr %input, i64 %12, i64 %14)
+  %11 = getelementptr ptr, ptr %input, i64 0
+  %12 = getelementptr ptr, ptr %11, i64 6
+  %13 = load i64, ptr %12, align 4
+  %14 = getelementptr ptr, ptr %12, i64 1
+  %15 = load i64, ptr %14, align 4
+  %16 = call i64 @getElement(ptr %11, i64 %13, i64 %15)
   %17 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr7 = getelementptr i64, ptr %17, i64 0
   store i64 %16, ptr %encode_value_ptr7, align 4

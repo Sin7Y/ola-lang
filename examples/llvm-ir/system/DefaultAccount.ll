@@ -439,37 +439,26 @@ entry:
   call void @memcpy(ptr %vector_data1, ptr %vector_data, i64 4)
   %vector_length2 = load i64, ptr %7, align 4
   %vector_data3 = getelementptr i64, ptr %7, i64 1
-  %8 = getelementptr ptr, ptr %vector_data3, i64 4
-  store ptr %vector_data3, ptr %to, align 8
+  %8 = getelementptr ptr, ptr %vector_data3, i64 0
+  store ptr %8, ptr %to, align 8
+  %9 = load ptr, ptr %to, align 8
+  %address_start = ptrtoint ptr %9 to i64
+  call void @prophet_printf(i64 %address_start, i64 2)
   %struct_member4 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 4
-  %9 = load ptr, ptr %struct_member4, align 8
-  %vector_length5 = load i64, ptr %9, align 4
+  %10 = load ptr, ptr %struct_member4, align 8
+  %vector_length5 = load i64, ptr %10, align 4
   %array_len_sub_one6 = sub i64 %vector_length5, 1
-  %10 = sub i64 %array_len_sub_one6, 4
-  call void @builtin_range_check(i64 %10)
-  %11 = sub i64 %vector_length5, %vector_length5
+  %11 = sub i64 %array_len_sub_one6, 4
   call void @builtin_range_check(i64 %11)
+  %12 = sub i64 %vector_length5, %vector_length5
+  call void @builtin_range_check(i64 %12)
   %slice_len = sub i64 %vector_length5, 4
   call void @builtin_range_check(i64 %slice_len)
-  %12 = call ptr @vector_new(i64 %slice_len)
-  %vector_data7 = getelementptr i64, ptr %12, i64 1
-  %vector_data8 = getelementptr i64, ptr %9, i64 1
+  %13 = call ptr @vector_new(i64 %slice_len)
+  %vector_data7 = getelementptr i64, ptr %13, i64 1
+  %vector_data8 = getelementptr i64, ptr %10, i64 1
   call void @memcpy(ptr %vector_data8, ptr %vector_data7, i64 %slice_len)
-  %13 = load ptr, ptr %to, align 8
-  %vector_length9 = load i64, ptr %12, align 4
-  %vector_data10 = getelementptr i64, ptr %12, i64 1
-  %tape_size = add i64 %vector_length9, 2
-  call void @set_tape_data(ptr %vector_data10, i64 %tape_size)
-  call void @contract_call(ptr %13, i64 0)
-  %14 = call ptr @heap_malloc(i64 1)
-  call void @get_tape_data(ptr %14, i64 1)
-  %return_length = load i64, ptr %14, align 4
-  %heap_size = add i64 %return_length, 2
-  %15 = call ptr @heap_malloc(i64 %heap_size)
-  store i64 %return_length, ptr %15, align 4
-  %return_data_start = getelementptr i64, ptr %15, i64 1
-  call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
-  ret ptr %15
+  ret ptr %13
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -502,48 +491,48 @@ func_1_dispatch:                                  ; preds = %entry
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %5 = getelementptr ptr, ptr %input, i64 4
+  %5 = getelementptr ptr, ptr %input, i64 0
   %6 = getelementptr ptr, ptr %5, i64 4
-  %decode_struct_field = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 0
-  %decode_struct_field1 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 4
-  %7 = load i64, ptr %decode_struct_field1, align 4
-  %decode_struct_field2 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 5
-  %8 = load i64, ptr %decode_struct_field2, align 4
-  %decode_struct_field3 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 6
-  %9 = load i64, ptr %decode_struct_field3, align 4
-  %decode_struct_field4 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 7
+  %7 = getelementptr ptr, ptr %6, i64 4
+  %decode_struct_field = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 0
+  %decode_struct_field1 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 4
+  %8 = load i64, ptr %decode_struct_field1, align 4
+  %decode_struct_field2 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 5
+  %9 = load i64, ptr %decode_struct_field2, align 4
+  %decode_struct_field3 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 6
+  %10 = load i64, ptr %decode_struct_field3, align 4
+  %decode_struct_field4 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 7
   %vector_length = load i64, ptr %decode_struct_field4, align 4
-  %10 = add i64 %vector_length, 1
-  %decode_struct_offset = add i64 7, %10
-  %decode_struct_field5 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 %decode_struct_offset
+  %11 = add i64 %vector_length, 1
+  %decode_struct_offset = add i64 7, %11
+  %decode_struct_field5 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 %decode_struct_offset
   %vector_length6 = load i64, ptr %decode_struct_field5, align 4
-  %11 = add i64 %vector_length6, 1
-  %decode_struct_offset7 = add i64 %decode_struct_offset, %11
-  %decode_struct_field8 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 %decode_struct_offset7
+  %12 = add i64 %vector_length6, 1
+  %decode_struct_offset7 = add i64 %decode_struct_offset, %12
+  %decode_struct_field8 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 %decode_struct_offset7
   %vector_length9 = load i64, ptr %decode_struct_field8, align 4
-  %12 = add i64 %vector_length9, 1
-  %decode_struct_offset10 = add i64 %decode_struct_offset7, %12
-  %decode_struct_field11 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %6, i64 %decode_struct_offset10
+  %13 = add i64 %vector_length9, 1
+  %decode_struct_offset10 = add i64 %decode_struct_offset7, %13
+  %decode_struct_field11 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 %decode_struct_offset10
   %decode_struct_offset12 = add i64 %decode_struct_offset10, 4
-  %13 = call ptr @heap_malloc(i64 14)
-  %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 0
+  %14 = call ptr @heap_malloc(i64 14)
+  %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 0
   store ptr %decode_struct_field, ptr %struct_member, align 8
-  %struct_member13 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 1
-  store i64 %7, ptr %struct_member13, align 4
-  %struct_member14 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 2
-  store i64 %8, ptr %struct_member14, align 4
-  %struct_member15 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 3
-  store i64 %9, ptr %struct_member15, align 4
-  %struct_member16 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 4
+  %struct_member13 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 1
+  store i64 %8, ptr %struct_member13, align 4
+  %struct_member14 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 2
+  store i64 %9, ptr %struct_member14, align 4
+  %struct_member15 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 3
+  store i64 %10, ptr %struct_member15, align 4
+  %struct_member16 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 4
   store ptr %decode_struct_field4, ptr %struct_member16, align 8
-  %struct_member17 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 5
+  %struct_member17 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 5
   store ptr %decode_struct_field5, ptr %struct_member17, align 8
-  %struct_member18 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 6
+  %struct_member18 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 6
   store ptr %decode_struct_field8, ptr %struct_member18, align 8
-  %struct_member19 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %13, i32 0, i32 7
+  %struct_member19 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 7
   store ptr %decode_struct_field11, ptr %struct_member19, align 8
-  %14 = getelementptr ptr, ptr %6, i64 %decode_struct_offset12
-  %15 = call i64 @validateTransaction(ptr %input, ptr %5, ptr %13)
+  %15 = call i64 @validateTransaction(ptr %5, ptr %6, ptr %14)
   %16 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %16, i64 0
   store i64 %15, ptr %encode_value_ptr, align 4
@@ -553,48 +542,48 @@ func_2_dispatch:                                  ; preds = %entry
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %17 = getelementptr ptr, ptr %input, i64 4
+  %17 = getelementptr ptr, ptr %input, i64 0
   %18 = getelementptr ptr, ptr %17, i64 4
-  %decode_struct_field21 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 0
-  %decode_struct_field22 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 4
-  %19 = load i64, ptr %decode_struct_field22, align 4
-  %decode_struct_field23 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 5
-  %20 = load i64, ptr %decode_struct_field23, align 4
-  %decode_struct_field24 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 6
-  %21 = load i64, ptr %decode_struct_field24, align 4
-  %decode_struct_field25 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 7
+  %19 = getelementptr ptr, ptr %18, i64 4
+  %decode_struct_field21 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 0
+  %decode_struct_field22 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 4
+  %20 = load i64, ptr %decode_struct_field22, align 4
+  %decode_struct_field23 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 5
+  %21 = load i64, ptr %decode_struct_field23, align 4
+  %decode_struct_field24 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 6
+  %22 = load i64, ptr %decode_struct_field24, align 4
+  %decode_struct_field25 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 7
   %vector_length26 = load i64, ptr %decode_struct_field25, align 4
-  %22 = add i64 %vector_length26, 1
-  %decode_struct_offset27 = add i64 7, %22
-  %decode_struct_field28 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 %decode_struct_offset27
+  %23 = add i64 %vector_length26, 1
+  %decode_struct_offset27 = add i64 7, %23
+  %decode_struct_field28 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 %decode_struct_offset27
   %vector_length29 = load i64, ptr %decode_struct_field28, align 4
-  %23 = add i64 %vector_length29, 1
-  %decode_struct_offset30 = add i64 %decode_struct_offset27, %23
-  %decode_struct_field31 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 %decode_struct_offset30
+  %24 = add i64 %vector_length29, 1
+  %decode_struct_offset30 = add i64 %decode_struct_offset27, %24
+  %decode_struct_field31 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 %decode_struct_offset30
   %vector_length32 = load i64, ptr %decode_struct_field31, align 4
-  %24 = add i64 %vector_length32, 1
-  %decode_struct_offset33 = add i64 %decode_struct_offset30, %24
-  %decode_struct_field34 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %18, i64 %decode_struct_offset33
+  %25 = add i64 %vector_length32, 1
+  %decode_struct_offset33 = add i64 %decode_struct_offset30, %25
+  %decode_struct_field34 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 %decode_struct_offset33
   %decode_struct_offset35 = add i64 %decode_struct_offset33, 4
-  %25 = call ptr @heap_malloc(i64 14)
-  %struct_member36 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 0
+  %26 = call ptr @heap_malloc(i64 14)
+  %struct_member36 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 0
   store ptr %decode_struct_field21, ptr %struct_member36, align 8
-  %struct_member37 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 1
-  store i64 %19, ptr %struct_member37, align 4
-  %struct_member38 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 2
-  store i64 %20, ptr %struct_member38, align 4
-  %struct_member39 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 3
-  store i64 %21, ptr %struct_member39, align 4
-  %struct_member40 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 4
+  %struct_member37 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 1
+  store i64 %20, ptr %struct_member37, align 4
+  %struct_member38 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 2
+  store i64 %21, ptr %struct_member38, align 4
+  %struct_member39 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 3
+  store i64 %22, ptr %struct_member39, align 4
+  %struct_member40 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 4
   store ptr %decode_struct_field25, ptr %struct_member40, align 8
-  %struct_member41 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 5
+  %struct_member41 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 5
   store ptr %decode_struct_field28, ptr %struct_member41, align 8
-  %struct_member42 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 6
+  %struct_member42 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 6
   store ptr %decode_struct_field31, ptr %struct_member42, align 8
-  %struct_member43 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %25, i32 0, i32 7
+  %struct_member43 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 7
   store ptr %decode_struct_field34, ptr %struct_member43, align 8
-  %26 = getelementptr ptr, ptr %18, i64 %decode_struct_offset35
-  %27 = call ptr @executeTransaction(ptr %input, ptr %17, ptr %25)
+  %27 = call ptr @executeTransaction(ptr %17, ptr %18, ptr %26)
   %vector_length44 = load i64, ptr %27, align 4
   %28 = add i64 %vector_length44, 1
   %heap_size = add i64 %28, 1

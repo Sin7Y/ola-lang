@@ -354,8 +354,8 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = getelementptr ptr, ptr %input, i64 4
-  call void @setAddress(ptr %input)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  call void @setAddress(ptr %4)
   %5 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %5, align 4
   call void @set_tape_data(ptr %5, i64 1)
