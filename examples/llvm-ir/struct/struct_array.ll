@@ -377,20 +377,20 @@ loop_end:                                         ; preds = %loop_body
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %decode_struct_field = getelementptr { i64, ptr }, ptr %input, i64 0
-  %11 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field9 = getelementptr { i64, ptr }, ptr %input, i64 1
+  %11 = getelementptr ptr, ptr %input, i64 0
+  %decode_struct_field = getelementptr { i64, ptr }, ptr %11, i64 0
+  %12 = load i64, ptr %decode_struct_field, align 4
+  %decode_struct_field9 = getelementptr { i64, ptr }, ptr %11, i64 1
   %vector_length10 = load i64, ptr %decode_struct_field9, align 4
-  %12 = mul i64 %vector_length10, 1
-  %13 = add i64 %12, 1
-  %decode_struct_offset = add i64 1, %13
-  %14 = call ptr @heap_malloc(i64 2)
-  %struct_member11 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 0
-  store i64 %11, ptr %struct_member11, align 4
-  %struct_member12 = getelementptr inbounds { i64, ptr }, ptr %14, i32 0, i32 1
+  %13 = mul i64 %vector_length10, 1
+  %14 = add i64 %13, 1
+  %decode_struct_offset = add i64 1, %14
+  %15 = call ptr @heap_malloc(i64 2)
+  %struct_member11 = getelementptr inbounds { i64, ptr }, ptr %15, i32 0, i32 0
+  store i64 %12, ptr %struct_member11, align 4
+  %struct_member12 = getelementptr inbounds { i64, ptr }, ptr %15, i32 0, i32 1
   store ptr %decode_struct_field9, ptr %struct_member12, align 8
-  %15 = getelementptr ptr, ptr %input, i64 %decode_struct_offset
-  %16 = call i64 @getFirstGrade(ptr %14)
+  %16 = call i64 @getFirstGrade(ptr %15)
   %17 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr13 = getelementptr i64, ptr %17, i64 0
   store i64 %16, ptr %encode_value_ptr13, align 4

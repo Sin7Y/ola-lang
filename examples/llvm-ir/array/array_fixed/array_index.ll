@@ -304,9 +304,9 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = load i64, ptr %input, align 4
-  %5 = getelementptr ptr, ptr %input, i64 1
-  %6 = call i64 @array_index(i64 %4)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %5 = load i64, ptr %4, align 4
+  %6 = call i64 @array_index(i64 %5)
   %7 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %7, i64 0
   store i64 %6, ptr %encode_value_ptr, align 4

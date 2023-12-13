@@ -375,11 +375,11 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %vector_length = load i64, ptr %input, align 4
-  %3 = mul i64 %vector_length, 1
-  %4 = add i64 %3, 1
-  %5 = getelementptr ptr, ptr %input, i64 %4
-  call void @setArray1(ptr %input)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %vector_length = load i64, ptr %3, align 4
+  %4 = mul i64 %vector_length, 1
+  %5 = add i64 %4, 1
+  call void @setArray1(ptr %3)
   %6 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %6, align 4
   call void @set_tape_data(ptr %6, i64 1)

@@ -128,7 +128,7 @@ pub(super) fn abi_encode_with_selector<'a>(
         );
         offset = bin.builder.build_int_add(advance, offset, "");
     }
-    // encode size to heap, the "size" here is used for tape area identification.
+// encode size to heap, the "size" here is used for tape area identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
     offset = bin
@@ -155,20 +155,22 @@ pub(super) fn abi_decode<'a>(
 
     // validator.initialize_validation(bin, offset, func_value, ns);
     let mut input = input.clone();
+    let mut offset = bin.context.i64_type().const_zero();
     types.iter().for_each(|item| {
         // validator.set_argument_number(item_no);
-
-        // validator.validate_buffer(bin, offset, func_value, ns);
-        let (read_item, advance) = read_from_buffer(input, bin, item, func_value, ns);
-        read_items.push(read_item);
         input = unsafe {
             bin.builder.build_gep(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
                 input,
-                &[advance],
+                &[offset],
                 "",
             )
         };
+        // validator.validate_buffer(bin, offset, func_value, ns);
+        let (read_item, advance) = read_from_buffer(input, bin, item, func_value, ns);
+        read_items.push(read_item);
+        offset = advance;
+
     });
 
     // validator.validate_all_bytes_read(bin, offset, func_value);

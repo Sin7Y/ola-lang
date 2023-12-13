@@ -1427,15 +1427,8 @@ fn external_call<'a>(
 ) -> BasicValueEnum<'a> {
     let payload_len = bin.vector_len(args);
     let payload_ptr = bin.vector_data(args);
-
-    let tape_size = bin.builder.build_int_add(
-        payload_len,
-        bin.context.i64_type().const_int(2, false),
-        "tape_size",
-    );
-
     // store payload and payload len to tape
-    bin.tape_data_store(payload_ptr, tape_size);
+    bin.tape_data_store(payload_ptr, payload_len);
 
     let call_type = match call_type {
         CallTy::Regular => bin.context.i64_type().const_zero(),
@@ -1457,6 +1450,12 @@ fn external_call<'a>(
     let return_length =
         bin.builder
             .build_load(bin.context.i64_type(), length_start_ptr, "return_length");
+
+    let tape_size = bin.builder.build_int_add(
+        return_length.into_int_value(),
+        bin.context.i64_type().const_int(1, false),
+        "tape_size",
+    );
 
     let heap_size = bin.builder.build_int_add(
         return_length.into_int_value(),
@@ -1555,7 +1554,7 @@ pub(crate) fn debug_print<'a>(
                 print_func,
                 &[
                     fields_start.into(),
-                    bin.context.i64_type().const_int(1, false).into(),
+                    bin.context.i64_type().const_int(0, false).into(),
                 ],
                 "",
             );

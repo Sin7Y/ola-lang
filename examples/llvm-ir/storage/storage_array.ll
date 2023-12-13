@@ -354,11 +354,11 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = load i64, ptr %input, align 4
-  %5 = getelementptr ptr, ptr %input, i64 1
-  %6 = load i64, ptr %5, align 4
-  %7 = getelementptr ptr, ptr %5, i64 1
-  call void @setElement(i64 %4, i64 %6)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %5 = load i64, ptr %4, align 4
+  %6 = getelementptr ptr, ptr %4, i64 1
+  %7 = load i64, ptr %6, align 4
+  call void @setElement(i64 %5, i64 %7)
   %8 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %8, align 4
   call void @set_tape_data(ptr %8, i64 1)

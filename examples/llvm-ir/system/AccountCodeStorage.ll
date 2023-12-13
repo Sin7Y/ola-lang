@@ -348,8 +348,8 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = getelementptr ptr, ptr %input, i64 4
-  %5 = call ptr @getCodeHash(ptr %input)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %5 = call ptr @getCodeHash(ptr %4)
   %6 = call ptr @heap_malloc(i64 5)
   %7 = getelementptr i64, ptr %5, i64 0
   %8 = load i64, ptr %7, align 4
@@ -373,9 +373,9 @@ func_1_dispatch:                                  ; preds = %entry
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %15 = getelementptr ptr, ptr %input, i64 4
+  %15 = getelementptr ptr, ptr %input, i64 0
   %16 = getelementptr ptr, ptr %15, i64 4
-  call void @storeCodeHash(ptr %input, ptr %15)
+  call void @storeCodeHash(ptr %15, ptr %16)
   %17 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %17, align 4
   call void @set_tape_data(ptr %17, i64 1)

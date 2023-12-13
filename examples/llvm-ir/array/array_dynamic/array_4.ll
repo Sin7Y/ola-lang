@@ -352,9 +352,9 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %4 = load i64, ptr %input, align 4
-  %5 = getelementptr ptr, ptr %input, i64 1
-  %6 = call ptr @array_call(i64 %4)
+  %4 = getelementptr ptr, ptr %input, i64 0
+  %5 = load i64, ptr %4, align 4
+  %6 = call ptr @array_call(i64 %5)
   %vector_length = load i64, ptr %6, align 4
   %7 = mul i64 %vector_length, 1
   %8 = add i64 %7, 1

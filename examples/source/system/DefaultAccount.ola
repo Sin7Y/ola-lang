@@ -44,8 +44,9 @@ contract DefaultAccount {
         // TODO: how do we handle return data?
         // CR: slice
         address to = abi.decode(_tx.data[0:4], (address));
-        fields res = to.call(_tx.data[4:]);
-        return res;
+        print(to);
+        // fields res = to.call(_tx.data[4:]);
+        return _tx.data[4:];
     }
 
     // fn payForTransaction(hash _txHash, hash _signedHash) {

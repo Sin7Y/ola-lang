@@ -1,5 +1,5 @@
-; ModuleID = 'MultInputExample'
-source_filename = "mult_input"
+; ModuleID = 'NestedStructsContract'
+source_filename = "struct_1"
 
 @heap_address = internal global i64 -12884901885
 
@@ -249,37 +249,50 @@ exit:                                             ; preds = %loop
   ret i64 %3
 }
 
-define void @foo(ptr %0, ptr %1, ptr %2, ptr %3, i64 %4, i64 %5) {
+define i64 @getOuterStruct(i64 %0) {
 entry:
-  %b = alloca i64, align 8
   %a = alloca i64, align 8
-  %h = alloca ptr, align 8
-  %addr = alloca ptr, align 8
-  %s = alloca ptr, align 8
-  %f = alloca ptr, align 8
-  store ptr %0, ptr %f, align 8
-  %6 = load ptr, ptr %f, align 8
-  store ptr %1, ptr %s, align 8
-  %7 = load ptr, ptr %s, align 8
-  store ptr %2, ptr %addr, align 8
-  store ptr %3, ptr %h, align 8
-  store i64 %4, ptr %a, align 4
-  store i64 %5, ptr %b, align 4
-  %fields_start = ptrtoint ptr %6 to i64
-  call void @prophet_printf(i64 %fields_start, i64 0)
-  %string_start = ptrtoint ptr %7 to i64
-  call void @prophet_printf(i64 %string_start, i64 1)
-  %8 = load ptr, ptr %addr, align 8
-  %address_start = ptrtoint ptr %8 to i64
-  call void @prophet_printf(i64 %address_start, i64 2)
-  %9 = load ptr, ptr %h, align 8
-  %hash_start = ptrtoint ptr %9 to i64
-  call void @prophet_printf(i64 %hash_start, i64 2)
-  %10 = load i64, ptr %a, align 4
-  call void @prophet_printf(i64 %10, i64 3)
-  %11 = load i64, ptr %b, align 4
-  call void @prophet_printf(i64 %11, i64 3)
-  ret void
+  %_id = alloca i64, align 8
+  store i64 %0, ptr %_id, align 4
+  %1 = load i64, ptr %_id, align 4
+  %2 = call ptr @heap_malloc(i64 4)
+  store i64 0, ptr %2, align 4
+  %3 = getelementptr i64, ptr %2, i64 1
+  store i64 0, ptr %3, align 4
+  %4 = getelementptr i64, ptr %2, i64 2
+  store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %2, i64 3
+  store i64 0, ptr %5, align 4
+  %6 = call ptr @heap_malloc(i64 4)
+  store i64 %1, ptr %6, align 4
+  %7 = getelementptr i64, ptr %6, i64 1
+  store i64 0, ptr %7, align 4
+  %8 = getelementptr i64, ptr %6, i64 2
+  store i64 0, ptr %8, align 4
+  %9 = getelementptr i64, ptr %6, i64 3
+  store i64 0, ptr %9, align 4
+  %10 = call ptr @heap_malloc(i64 8)
+  call void @memcpy(ptr %2, ptr %10, i64 4)
+  %11 = getelementptr i64, ptr %10, i64 4
+  call void @memcpy(ptr %6, ptr %11, i64 4)
+  %12 = getelementptr i64, ptr %11, i64 4
+  %13 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %10, ptr %13, i64 8)
+  %slot_value = load i64, ptr %13, align 4
+  %slot_offset = add i64 %slot_value, 0
+  store i64 %slot_offset, ptr %13, align 4
+  %slot_value1 = load i64, ptr %13, align 4
+  %slot_offset2 = add i64 %slot_value1, 0
+  store i64 %slot_offset2, ptr %13, align 4
+  %14 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %13, ptr %14)
+  %storage_value = load i64, ptr %14, align 4
+  %slot_value3 = load i64, ptr %13, align 4
+  %slot_offset4 = add i64 %slot_value3, 1
+  store i64 %slot_offset4, ptr %13, align 4
+  store i64 %storage_value, ptr %a, align 4
+  %15 = load i64, ptr %a, align 4
+  ret i64 %15
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -288,7 +301,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 3270834446, label %func_0_dispatch
+    i64 3156182399, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -296,21 +309,14 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   %3 = getelementptr ptr, ptr %input, i64 0
-  %vector_length = load i64, ptr %3, align 4
-  %4 = add i64 %vector_length, 1
-  %5 = getelementptr ptr, ptr %3, i64 %4
-  %vector_length1 = load i64, ptr %5, align 4
-  %6 = add i64 %vector_length1, 1
-  %7 = getelementptr ptr, ptr %5, i64 %6
-  %8 = getelementptr ptr, ptr %7, i64 4
-  %9 = getelementptr ptr, ptr %8, i64 4
-  %10 = load i64, ptr %9, align 4
-  %11 = getelementptr ptr, ptr %9, i64 1
-  %12 = load i64, ptr %11, align 4
-  call void @foo(ptr %3, ptr %5, ptr %7, ptr %8, i64 %10, i64 %12)
-  %13 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %13, align 4
-  call void @set_tape_data(ptr %13, i64 1)
+  %4 = load i64, ptr %3, align 4
+  %5 = call i64 @getOuterStruct(i64 %4)
+  %6 = call ptr @heap_malloc(i64 2)
+  %encode_value_ptr = getelementptr i64, ptr %6, i64 0
+  store i64 %5, ptr %encode_value_ptr, align 4
+  %encode_value_ptr1 = getelementptr i64, ptr %6, i64 1
+  store i64 1, ptr %encode_value_ptr1, align 4
+  call void @set_tape_data(ptr %6, i64 2)
   ret void
 }
 

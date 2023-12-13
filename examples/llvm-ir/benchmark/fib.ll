@@ -347,9 +347,9 @@ missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = load i64, ptr %input, align 4
-  %4 = getelementptr ptr, ptr %input, i64 1
-  %5 = call i64 @fib_recursive(i64 %3)
+  %3 = getelementptr ptr, ptr %input, i64 0
+  %4 = load i64, ptr %3, align 4
+  %5 = call i64 @fib_recursive(i64 %4)
   %6 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr = getelementptr i64, ptr %6, i64 0
   store i64 %5, ptr %encode_value_ptr, align 4
@@ -359,9 +359,9 @@ func_0_dispatch:                                  ; preds = %entry
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %7 = load i64, ptr %input, align 4
-  %8 = getelementptr ptr, ptr %input, i64 1
-  %9 = call i64 @fib_non_recursive(i64 %7)
+  %7 = getelementptr ptr, ptr %input, i64 0
+  %8 = load i64, ptr %7, align 4
+  %9 = call i64 @fib_non_recursive(i64 %8)
   %10 = call ptr @heap_malloc(i64 2)
   %encode_value_ptr2 = getelementptr i64, ptr %10, i64 0
   store i64 %9, ptr %encode_value_ptr2, align 4
