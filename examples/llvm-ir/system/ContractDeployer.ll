@@ -313,26 +313,26 @@ endif:                                            ; preds = %entry
   call void @prophet_printf(i64 %address_start, i64 2)
   %18 = load ptr, ptr %_address, align 8
   %19 = call ptr @vector_new(i64 6)
-  %encode_value_ptr = getelementptr i64, ptr %19, i64 1
-  store i64 2179613704, ptr %encode_value_ptr, align 4
-  %encode_value_ptr8 = getelementptr i64, ptr %19, i64 2
-  store i64 4, ptr %encode_value_ptr8, align 4
   %20 = getelementptr i64, ptr %18, i64 0
   %21 = load i64, ptr %20, align 4
-  %encode_value_ptr9 = getelementptr i64, ptr %19, i64 3
-  store i64 %21, ptr %encode_value_ptr9, align 4
+  %encode_value_ptr = getelementptr i64, ptr %19, i64 1
+  store i64 %21, ptr %encode_value_ptr, align 4
   %22 = getelementptr i64, ptr %18, i64 1
   %23 = load i64, ptr %22, align 4
-  %encode_value_ptr10 = getelementptr i64, ptr %19, i64 4
-  store i64 %23, ptr %encode_value_ptr10, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %19, i64 2
+  store i64 %23, ptr %encode_value_ptr8, align 4
   %24 = getelementptr i64, ptr %18, i64 2
   %25 = load i64, ptr %24, align 4
-  %encode_value_ptr11 = getelementptr i64, ptr %19, i64 5
-  store i64 %25, ptr %encode_value_ptr11, align 4
+  %encode_value_ptr9 = getelementptr i64, ptr %19, i64 3
+  store i64 %25, ptr %encode_value_ptr9, align 4
   %26 = getelementptr i64, ptr %18, i64 3
   %27 = load i64, ptr %26, align 4
+  %encode_value_ptr10 = getelementptr i64, ptr %19, i64 4
+  store i64 %27, ptr %encode_value_ptr10, align 4
+  %encode_value_ptr11 = getelementptr i64, ptr %19, i64 5
+  store i64 4, ptr %encode_value_ptr11, align 4
   %encode_value_ptr12 = getelementptr i64, ptr %19, i64 6
-  store i64 %27, ptr %encode_value_ptr12, align 4
+  store i64 2179613704, ptr %encode_value_ptr12, align 4
   %fields_start = ptrtoint ptr %19 to i64
   call void @prophet_printf(i64 %fields_start, i64 0)
   ret i64 0
@@ -396,7 +396,7 @@ entry:
   store ptr %2, ptr %_salt, align 8
   store ptr %3, ptr %_input, align 8
   %4 = load ptr, ptr %_input, align 8
-  %5 = call ptr @vector_new(i64 100)
+  %5 = call ptr @vector_new(i64 10)
   %vector_data = getelementptr i64, ptr %5, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 79, ptr %index_access, align 4
@@ -423,104 +423,113 @@ entry:
   %6 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %vector_data10, ptr %6, i64 %vector_length)
   store ptr %6, ptr %CREATE2_PREFIX, align 8
+  %7 = load ptr, ptr %CREATE2_PREFIX, align 8
+  %hash_start = ptrtoint ptr %7 to i64
+  call void @prophet_printf(i64 %hash_start, i64 2)
   %vector_length11 = load i64, ptr %4, align 4
   %vector_data12 = getelementptr i64, ptr %4, i64 1
-  %7 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %vector_data12, ptr %7, i64 %vector_length11)
-  store ptr %7, ptr %constructorInputHash, align 8
-  %8 = load ptr, ptr %CREATE2_PREFIX, align 8
-  %9 = load ptr, ptr %_sender, align 8
-  %10 = load ptr, ptr %_salt, align 8
-  %11 = load ptr, ptr %_bytecodeHash, align 8
-  %12 = load ptr, ptr %constructorInputHash, align 8
-  %13 = call ptr @vector_new(i64 20)
-  %14 = getelementptr i64, ptr %8, i64 0
-  %15 = load i64, ptr %14, align 4
-  %encode_value_ptr = getelementptr i64, ptr %13, i64 1
-  store i64 %15, ptr %encode_value_ptr, align 4
-  %16 = getelementptr i64, ptr %8, i64 1
+  %8 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %vector_data12, ptr %8, i64 %vector_length11)
+  store ptr %8, ptr %constructorInputHash, align 8
+  %9 = load ptr, ptr %constructorInputHash, align 8
+  %hash_start13 = ptrtoint ptr %9 to i64
+  call void @prophet_printf(i64 %hash_start13, i64 2)
+  %10 = load ptr, ptr %CREATE2_PREFIX, align 8
+  %11 = load ptr, ptr %_sender, align 8
+  %12 = load ptr, ptr %_salt, align 8
+  %13 = load ptr, ptr %_bytecodeHash, align 8
+  %14 = load ptr, ptr %constructorInputHash, align 8
+  %15 = call ptr @vector_new(i64 20)
+  %16 = getelementptr i64, ptr %10, i64 0
   %17 = load i64, ptr %16, align 4
-  %encode_value_ptr13 = getelementptr i64, ptr %13, i64 2
-  store i64 %17, ptr %encode_value_ptr13, align 4
-  %18 = getelementptr i64, ptr %8, i64 2
+  %encode_value_ptr = getelementptr i64, ptr %15, i64 1
+  store i64 %17, ptr %encode_value_ptr, align 4
+  %18 = getelementptr i64, ptr %10, i64 1
   %19 = load i64, ptr %18, align 4
-  %encode_value_ptr14 = getelementptr i64, ptr %13, i64 3
+  %encode_value_ptr14 = getelementptr i64, ptr %15, i64 2
   store i64 %19, ptr %encode_value_ptr14, align 4
-  %20 = getelementptr i64, ptr %8, i64 3
+  %20 = getelementptr i64, ptr %10, i64 2
   %21 = load i64, ptr %20, align 4
-  %encode_value_ptr15 = getelementptr i64, ptr %13, i64 4
+  %encode_value_ptr15 = getelementptr i64, ptr %15, i64 3
   store i64 %21, ptr %encode_value_ptr15, align 4
-  %22 = getelementptr i64, ptr %9, i64 0
+  %22 = getelementptr i64, ptr %10, i64 3
   %23 = load i64, ptr %22, align 4
-  %encode_value_ptr16 = getelementptr i64, ptr %13, i64 5
+  %encode_value_ptr16 = getelementptr i64, ptr %15, i64 4
   store i64 %23, ptr %encode_value_ptr16, align 4
-  %24 = getelementptr i64, ptr %9, i64 1
+  %24 = getelementptr i64, ptr %11, i64 0
   %25 = load i64, ptr %24, align 4
-  %encode_value_ptr17 = getelementptr i64, ptr %13, i64 6
+  %encode_value_ptr17 = getelementptr i64, ptr %15, i64 5
   store i64 %25, ptr %encode_value_ptr17, align 4
-  %26 = getelementptr i64, ptr %9, i64 2
+  %26 = getelementptr i64, ptr %11, i64 1
   %27 = load i64, ptr %26, align 4
-  %encode_value_ptr18 = getelementptr i64, ptr %13, i64 7
+  %encode_value_ptr18 = getelementptr i64, ptr %15, i64 6
   store i64 %27, ptr %encode_value_ptr18, align 4
-  %28 = getelementptr i64, ptr %9, i64 3
+  %28 = getelementptr i64, ptr %11, i64 2
   %29 = load i64, ptr %28, align 4
-  %encode_value_ptr19 = getelementptr i64, ptr %13, i64 8
+  %encode_value_ptr19 = getelementptr i64, ptr %15, i64 7
   store i64 %29, ptr %encode_value_ptr19, align 4
-  %30 = getelementptr i64, ptr %10, i64 0
+  %30 = getelementptr i64, ptr %11, i64 3
   %31 = load i64, ptr %30, align 4
-  %encode_value_ptr20 = getelementptr i64, ptr %13, i64 9
+  %encode_value_ptr20 = getelementptr i64, ptr %15, i64 8
   store i64 %31, ptr %encode_value_ptr20, align 4
-  %32 = getelementptr i64, ptr %10, i64 1
+  %32 = getelementptr i64, ptr %12, i64 0
   %33 = load i64, ptr %32, align 4
-  %encode_value_ptr21 = getelementptr i64, ptr %13, i64 10
+  %encode_value_ptr21 = getelementptr i64, ptr %15, i64 9
   store i64 %33, ptr %encode_value_ptr21, align 4
-  %34 = getelementptr i64, ptr %10, i64 2
+  %34 = getelementptr i64, ptr %12, i64 1
   %35 = load i64, ptr %34, align 4
-  %encode_value_ptr22 = getelementptr i64, ptr %13, i64 11
+  %encode_value_ptr22 = getelementptr i64, ptr %15, i64 10
   store i64 %35, ptr %encode_value_ptr22, align 4
-  %36 = getelementptr i64, ptr %10, i64 3
+  %36 = getelementptr i64, ptr %12, i64 2
   %37 = load i64, ptr %36, align 4
-  %encode_value_ptr23 = getelementptr i64, ptr %13, i64 12
+  %encode_value_ptr23 = getelementptr i64, ptr %15, i64 11
   store i64 %37, ptr %encode_value_ptr23, align 4
-  %38 = getelementptr i64, ptr %11, i64 0
+  %38 = getelementptr i64, ptr %12, i64 3
   %39 = load i64, ptr %38, align 4
-  %encode_value_ptr24 = getelementptr i64, ptr %13, i64 13
+  %encode_value_ptr24 = getelementptr i64, ptr %15, i64 12
   store i64 %39, ptr %encode_value_ptr24, align 4
-  %40 = getelementptr i64, ptr %11, i64 1
+  %40 = getelementptr i64, ptr %13, i64 0
   %41 = load i64, ptr %40, align 4
-  %encode_value_ptr25 = getelementptr i64, ptr %13, i64 14
+  %encode_value_ptr25 = getelementptr i64, ptr %15, i64 13
   store i64 %41, ptr %encode_value_ptr25, align 4
-  %42 = getelementptr i64, ptr %11, i64 2
+  %42 = getelementptr i64, ptr %13, i64 1
   %43 = load i64, ptr %42, align 4
-  %encode_value_ptr26 = getelementptr i64, ptr %13, i64 15
+  %encode_value_ptr26 = getelementptr i64, ptr %15, i64 14
   store i64 %43, ptr %encode_value_ptr26, align 4
-  %44 = getelementptr i64, ptr %11, i64 3
+  %44 = getelementptr i64, ptr %13, i64 2
   %45 = load i64, ptr %44, align 4
-  %encode_value_ptr27 = getelementptr i64, ptr %13, i64 16
+  %encode_value_ptr27 = getelementptr i64, ptr %15, i64 15
   store i64 %45, ptr %encode_value_ptr27, align 4
-  %46 = getelementptr i64, ptr %12, i64 0
+  %46 = getelementptr i64, ptr %13, i64 3
   %47 = load i64, ptr %46, align 4
-  %encode_value_ptr28 = getelementptr i64, ptr %13, i64 17
+  %encode_value_ptr28 = getelementptr i64, ptr %15, i64 16
   store i64 %47, ptr %encode_value_ptr28, align 4
-  %48 = getelementptr i64, ptr %12, i64 1
+  %48 = getelementptr i64, ptr %14, i64 0
   %49 = load i64, ptr %48, align 4
-  %encode_value_ptr29 = getelementptr i64, ptr %13, i64 18
+  %encode_value_ptr29 = getelementptr i64, ptr %15, i64 17
   store i64 %49, ptr %encode_value_ptr29, align 4
-  %50 = getelementptr i64, ptr %12, i64 2
+  %50 = getelementptr i64, ptr %14, i64 1
   %51 = load i64, ptr %50, align 4
-  %encode_value_ptr30 = getelementptr i64, ptr %13, i64 19
+  %encode_value_ptr30 = getelementptr i64, ptr %15, i64 18
   store i64 %51, ptr %encode_value_ptr30, align 4
-  %52 = getelementptr i64, ptr %12, i64 3
+  %52 = getelementptr i64, ptr %14, i64 2
   %53 = load i64, ptr %52, align 4
-  %encode_value_ptr31 = getelementptr i64, ptr %13, i64 20
+  %encode_value_ptr31 = getelementptr i64, ptr %15, i64 19
   store i64 %53, ptr %encode_value_ptr31, align 4
-  %vector_length32 = load i64, ptr %13, align 4
-  %vector_data33 = getelementptr i64, ptr %13, i64 1
-  %54 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %vector_data33, ptr %54, i64 %vector_length32)
-  store ptr %54, ptr %_hash, align 8
-  %55 = load ptr, ptr %_hash, align 8
-  ret ptr %55
+  %54 = getelementptr i64, ptr %14, i64 3
+  %55 = load i64, ptr %54, align 4
+  %encode_value_ptr32 = getelementptr i64, ptr %15, i64 20
+  store i64 %55, ptr %encode_value_ptr32, align 4
+  %vector_length33 = load i64, ptr %15, align 4
+  %vector_data34 = getelementptr i64, ptr %15, i64 1
+  %56 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %vector_data34, ptr %56, i64 %vector_length33)
+  store ptr %56, ptr %_hash, align 8
+  %57 = load ptr, ptr %_hash, align 8
+  %hash_start35 = ptrtoint ptr %57 to i64
+  call void @prophet_printf(i64 %hash_start35, i64 2)
+  %58 = load ptr, ptr %_hash, align 8
+  ret ptr %58
 }
 
 define void @_nonSystemDeployOnAddress(ptr %0, ptr %1, i64 %2, ptr %3) {
@@ -580,26 +589,26 @@ entry:
   call void @prophet_printf(i64 %address_start, i64 2)
   %16 = load ptr, ptr %_newAddress, align 8
   %17 = call ptr @vector_new(i64 6)
-  %encode_value_ptr = getelementptr i64, ptr %17, i64 1
-  store i64 2179613704, ptr %encode_value_ptr, align 4
-  %encode_value_ptr12 = getelementptr i64, ptr %17, i64 2
-  store i64 4, ptr %encode_value_ptr12, align 4
   %18 = getelementptr i64, ptr %16, i64 0
   %19 = load i64, ptr %18, align 4
-  %encode_value_ptr13 = getelementptr i64, ptr %17, i64 3
-  store i64 %19, ptr %encode_value_ptr13, align 4
+  %encode_value_ptr = getelementptr i64, ptr %17, i64 1
+  store i64 %19, ptr %encode_value_ptr, align 4
   %20 = getelementptr i64, ptr %16, i64 1
   %21 = load i64, ptr %20, align 4
-  %encode_value_ptr14 = getelementptr i64, ptr %17, i64 4
-  store i64 %21, ptr %encode_value_ptr14, align 4
+  %encode_value_ptr12 = getelementptr i64, ptr %17, i64 2
+  store i64 %21, ptr %encode_value_ptr12, align 4
   %22 = getelementptr i64, ptr %16, i64 2
   %23 = load i64, ptr %22, align 4
-  %encode_value_ptr15 = getelementptr i64, ptr %17, i64 5
-  store i64 %23, ptr %encode_value_ptr15, align 4
+  %encode_value_ptr13 = getelementptr i64, ptr %17, i64 3
+  store i64 %23, ptr %encode_value_ptr13, align 4
   %24 = getelementptr i64, ptr %16, i64 3
   %25 = load i64, ptr %24, align 4
+  %encode_value_ptr14 = getelementptr i64, ptr %17, i64 4
+  store i64 %25, ptr %encode_value_ptr14, align 4
+  %encode_value_ptr15 = getelementptr i64, ptr %17, i64 5
+  store i64 4, ptr %encode_value_ptr15, align 4
   %encode_value_ptr16 = getelementptr i64, ptr %17, i64 6
-  store i64 %25, ptr %encode_value_ptr16, align 4
+  store i64 2179613704, ptr %encode_value_ptr16, align 4
   %fields_start = ptrtoint ptr %17 to i64
   call void @prophet_printf(i64 %fields_start, i64 0)
   %26 = call ptr @heap_malloc(i64 4)
@@ -614,26 +623,26 @@ entry:
   store ptr %26, ptr %NONCE_HOLDER_ADDRESS, align 8
   %27 = load ptr, ptr %_newAddress, align 8
   %28 = call ptr @vector_new(i64 6)
-  %encode_value_ptr21 = getelementptr i64, ptr %28, i64 1
-  store i64 3868785611, ptr %encode_value_ptr21, align 4
-  %encode_value_ptr22 = getelementptr i64, ptr %28, i64 2
-  store i64 4, ptr %encode_value_ptr22, align 4
   %29 = getelementptr i64, ptr %27, i64 0
   %30 = load i64, ptr %29, align 4
-  %encode_value_ptr23 = getelementptr i64, ptr %28, i64 3
-  store i64 %30, ptr %encode_value_ptr23, align 4
+  %encode_value_ptr21 = getelementptr i64, ptr %28, i64 1
+  store i64 %30, ptr %encode_value_ptr21, align 4
   %31 = getelementptr i64, ptr %27, i64 1
   %32 = load i64, ptr %31, align 4
-  %encode_value_ptr24 = getelementptr i64, ptr %28, i64 4
-  store i64 %32, ptr %encode_value_ptr24, align 4
+  %encode_value_ptr22 = getelementptr i64, ptr %28, i64 2
+  store i64 %32, ptr %encode_value_ptr22, align 4
   %33 = getelementptr i64, ptr %27, i64 2
   %34 = load i64, ptr %33, align 4
-  %encode_value_ptr25 = getelementptr i64, ptr %28, i64 5
-  store i64 %34, ptr %encode_value_ptr25, align 4
+  %encode_value_ptr23 = getelementptr i64, ptr %28, i64 3
+  store i64 %34, ptr %encode_value_ptr23, align 4
   %35 = getelementptr i64, ptr %27, i64 3
   %36 = load i64, ptr %35, align 4
+  %encode_value_ptr24 = getelementptr i64, ptr %28, i64 4
+  store i64 %36, ptr %encode_value_ptr24, align 4
+  %encode_value_ptr25 = getelementptr i64, ptr %28, i64 5
+  store i64 4, ptr %encode_value_ptr25, align 4
   %encode_value_ptr26 = getelementptr i64, ptr %28, i64 6
-  store i64 %36, ptr %encode_value_ptr26, align 4
+  store i64 3868785611, ptr %encode_value_ptr26, align 4
   %fields_start27 = ptrtoint ptr %28 to i64
   call void @prophet_printf(i64 %fields_start27, i64 0)
   %37 = load ptr, ptr %_bytecodeHash, align 8
@@ -667,26 +676,26 @@ entry:
   store ptr %5, ptr %KNOWN_CODE_STORAGE_CONTRACT, align 8
   %6 = load ptr, ptr %_bytecodeHash, align 8
   %7 = call ptr @vector_new(i64 6)
-  %encode_value_ptr = getelementptr i64, ptr %7, i64 1
-  store i64 4199620571, ptr %encode_value_ptr, align 4
-  %encode_value_ptr4 = getelementptr i64, ptr %7, i64 2
-  store i64 4, ptr %encode_value_ptr4, align 4
   %8 = getelementptr i64, ptr %6, i64 0
   %9 = load i64, ptr %8, align 4
-  %encode_value_ptr5 = getelementptr i64, ptr %7, i64 3
-  store i64 %9, ptr %encode_value_ptr5, align 4
+  %encode_value_ptr = getelementptr i64, ptr %7, i64 1
+  store i64 %9, ptr %encode_value_ptr, align 4
   %10 = getelementptr i64, ptr %6, i64 1
   %11 = load i64, ptr %10, align 4
-  %encode_value_ptr6 = getelementptr i64, ptr %7, i64 4
-  store i64 %11, ptr %encode_value_ptr6, align 4
+  %encode_value_ptr4 = getelementptr i64, ptr %7, i64 2
+  store i64 %11, ptr %encode_value_ptr4, align 4
   %12 = getelementptr i64, ptr %6, i64 2
   %13 = load i64, ptr %12, align 4
-  %encode_value_ptr7 = getelementptr i64, ptr %7, i64 5
-  store i64 %13, ptr %encode_value_ptr7, align 4
+  %encode_value_ptr5 = getelementptr i64, ptr %7, i64 3
+  store i64 %13, ptr %encode_value_ptr5, align 4
   %14 = getelementptr i64, ptr %6, i64 3
   %15 = load i64, ptr %14, align 4
+  %encode_value_ptr6 = getelementptr i64, ptr %7, i64 4
+  store i64 %15, ptr %encode_value_ptr6, align 4
+  %encode_value_ptr7 = getelementptr i64, ptr %7, i64 5
+  store i64 4, ptr %encode_value_ptr7, align 4
   %encode_value_ptr8 = getelementptr i64, ptr %7, i64 6
-  store i64 %15, ptr %encode_value_ptr8, align 4
+  store i64 4199620571, ptr %encode_value_ptr8, align 4
   %fields_start = ptrtoint ptr %7 to i64
   call void @prophet_printf(i64 %fields_start, i64 0)
   %16 = call ptr @heap_malloc(i64 2)
@@ -793,42 +802,42 @@ then:                                             ; preds = %entry
   %15 = load ptr, ptr %_newAddress, align 8
   %16 = load ptr, ptr %_bytecodeHash, align 8
   %17 = call ptr @vector_new(i64 10)
-  %encode_value_ptr = getelementptr i64, ptr %17, i64 1
-  store i64 3592270258, ptr %encode_value_ptr, align 4
-  %encode_value_ptr5 = getelementptr i64, ptr %17, i64 2
-  store i64 8, ptr %encode_value_ptr5, align 4
   %18 = getelementptr i64, ptr %15, i64 0
   %19 = load i64, ptr %18, align 4
-  %encode_value_ptr6 = getelementptr i64, ptr %17, i64 3
-  store i64 %19, ptr %encode_value_ptr6, align 4
+  %encode_value_ptr = getelementptr i64, ptr %17, i64 1
+  store i64 %19, ptr %encode_value_ptr, align 4
   %20 = getelementptr i64, ptr %15, i64 1
   %21 = load i64, ptr %20, align 4
-  %encode_value_ptr7 = getelementptr i64, ptr %17, i64 4
-  store i64 %21, ptr %encode_value_ptr7, align 4
+  %encode_value_ptr5 = getelementptr i64, ptr %17, i64 2
+  store i64 %21, ptr %encode_value_ptr5, align 4
   %22 = getelementptr i64, ptr %15, i64 2
   %23 = load i64, ptr %22, align 4
-  %encode_value_ptr8 = getelementptr i64, ptr %17, i64 5
-  store i64 %23, ptr %encode_value_ptr8, align 4
+  %encode_value_ptr6 = getelementptr i64, ptr %17, i64 3
+  store i64 %23, ptr %encode_value_ptr6, align 4
   %24 = getelementptr i64, ptr %15, i64 3
   %25 = load i64, ptr %24, align 4
-  %encode_value_ptr9 = getelementptr i64, ptr %17, i64 6
-  store i64 %25, ptr %encode_value_ptr9, align 4
+  %encode_value_ptr7 = getelementptr i64, ptr %17, i64 4
+  store i64 %25, ptr %encode_value_ptr7, align 4
   %26 = getelementptr i64, ptr %16, i64 0
   %27 = load i64, ptr %26, align 4
-  %encode_value_ptr10 = getelementptr i64, ptr %17, i64 7
-  store i64 %27, ptr %encode_value_ptr10, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %17, i64 5
+  store i64 %27, ptr %encode_value_ptr8, align 4
   %28 = getelementptr i64, ptr %16, i64 1
   %29 = load i64, ptr %28, align 4
-  %encode_value_ptr11 = getelementptr i64, ptr %17, i64 8
-  store i64 %29, ptr %encode_value_ptr11, align 4
+  %encode_value_ptr9 = getelementptr i64, ptr %17, i64 6
+  store i64 %29, ptr %encode_value_ptr9, align 4
   %30 = getelementptr i64, ptr %16, i64 2
   %31 = load i64, ptr %30, align 4
-  %encode_value_ptr12 = getelementptr i64, ptr %17, i64 9
-  store i64 %31, ptr %encode_value_ptr12, align 4
+  %encode_value_ptr10 = getelementptr i64, ptr %17, i64 7
+  store i64 %31, ptr %encode_value_ptr10, align 4
   %32 = getelementptr i64, ptr %16, i64 3
   %33 = load i64, ptr %32, align 4
+  %encode_value_ptr11 = getelementptr i64, ptr %17, i64 8
+  store i64 %33, ptr %encode_value_ptr11, align 4
+  %encode_value_ptr12 = getelementptr i64, ptr %17, i64 9
+  store i64 8, ptr %encode_value_ptr12, align 4
   %encode_value_ptr13 = getelementptr i64, ptr %17, i64 10
-  store i64 %33, ptr %encode_value_ptr13, align 4
+  store i64 3592270258, ptr %encode_value_ptr13, align 4
   %fields_start14 = ptrtoint ptr %17 to i64
   call void @prophet_printf(i64 %fields_start14, i64 0)
   br label %endif
@@ -837,42 +846,42 @@ else:                                             ; preds = %entry
   %34 = load ptr, ptr %_newAddress, align 8
   %35 = load ptr, ptr %_bytecodeHash, align 8
   %36 = call ptr @vector_new(i64 10)
-  %encode_value_ptr15 = getelementptr i64, ptr %36, i64 1
-  store i64 3592270258, ptr %encode_value_ptr15, align 4
-  %encode_value_ptr16 = getelementptr i64, ptr %36, i64 2
-  store i64 8, ptr %encode_value_ptr16, align 4
   %37 = getelementptr i64, ptr %34, i64 0
   %38 = load i64, ptr %37, align 4
-  %encode_value_ptr17 = getelementptr i64, ptr %36, i64 3
-  store i64 %38, ptr %encode_value_ptr17, align 4
+  %encode_value_ptr15 = getelementptr i64, ptr %36, i64 1
+  store i64 %38, ptr %encode_value_ptr15, align 4
   %39 = getelementptr i64, ptr %34, i64 1
   %40 = load i64, ptr %39, align 4
-  %encode_value_ptr18 = getelementptr i64, ptr %36, i64 4
-  store i64 %40, ptr %encode_value_ptr18, align 4
+  %encode_value_ptr16 = getelementptr i64, ptr %36, i64 2
+  store i64 %40, ptr %encode_value_ptr16, align 4
   %41 = getelementptr i64, ptr %34, i64 2
   %42 = load i64, ptr %41, align 4
-  %encode_value_ptr19 = getelementptr i64, ptr %36, i64 5
-  store i64 %42, ptr %encode_value_ptr19, align 4
+  %encode_value_ptr17 = getelementptr i64, ptr %36, i64 3
+  store i64 %42, ptr %encode_value_ptr17, align 4
   %43 = getelementptr i64, ptr %34, i64 3
   %44 = load i64, ptr %43, align 4
-  %encode_value_ptr20 = getelementptr i64, ptr %36, i64 6
-  store i64 %44, ptr %encode_value_ptr20, align 4
+  %encode_value_ptr18 = getelementptr i64, ptr %36, i64 4
+  store i64 %44, ptr %encode_value_ptr18, align 4
   %45 = getelementptr i64, ptr %35, i64 0
   %46 = load i64, ptr %45, align 4
-  %encode_value_ptr21 = getelementptr i64, ptr %36, i64 7
-  store i64 %46, ptr %encode_value_ptr21, align 4
+  %encode_value_ptr19 = getelementptr i64, ptr %36, i64 5
+  store i64 %46, ptr %encode_value_ptr19, align 4
   %47 = getelementptr i64, ptr %35, i64 1
   %48 = load i64, ptr %47, align 4
-  %encode_value_ptr22 = getelementptr i64, ptr %36, i64 8
-  store i64 %48, ptr %encode_value_ptr22, align 4
+  %encode_value_ptr20 = getelementptr i64, ptr %36, i64 6
+  store i64 %48, ptr %encode_value_ptr20, align 4
   %49 = getelementptr i64, ptr %35, i64 2
   %50 = load i64, ptr %49, align 4
-  %encode_value_ptr23 = getelementptr i64, ptr %36, i64 9
-  store i64 %50, ptr %encode_value_ptr23, align 4
+  %encode_value_ptr21 = getelementptr i64, ptr %36, i64 7
+  store i64 %50, ptr %encode_value_ptr21, align 4
   %51 = getelementptr i64, ptr %35, i64 3
   %52 = load i64, ptr %51, align 4
+  %encode_value_ptr22 = getelementptr i64, ptr %36, i64 8
+  store i64 %52, ptr %encode_value_ptr22, align 4
+  %encode_value_ptr23 = getelementptr i64, ptr %36, i64 9
+  store i64 8, ptr %encode_value_ptr23, align 4
   %encode_value_ptr24 = getelementptr i64, ptr %36, i64 10
-  store i64 %52, ptr %encode_value_ptr24, align 4
+  store i64 3592270258, ptr %encode_value_ptr24, align 4
   %fields_start25 = ptrtoint ptr %36 to i64
   call void @prophet_printf(i64 %fields_start25, i64 0)
   br label %endif

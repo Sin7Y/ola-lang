@@ -5,8 +5,7 @@
     "inputs": [
       {
         "name": "proposalNames_",
-        "type": "u32[]",
-        "internalType": "u32[]"
+        "type": "u32[]"
       }
     ],
     "outputs": []
@@ -17,8 +16,7 @@
     "inputs": [
       {
         "name": "proposal_",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []
@@ -30,8 +28,7 @@
     "outputs": [
       {
         "name": "winningProposal_",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   },
@@ -42,8 +39,7 @@
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   }

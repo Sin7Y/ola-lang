@@ -5,15 +5,13 @@
     "inputs": [
       {
         "name": "source",
-        "type": "u32[3]",
-        "internalType": "u32[3]"
+        "type": "u32[3]"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   }

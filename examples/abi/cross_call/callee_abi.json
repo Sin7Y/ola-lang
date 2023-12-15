@@ -5,8 +5,7 @@
     "inputs": [
       {
         "name": "data",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []
@@ -17,20 +16,17 @@
     "inputs": [
       {
         "name": "a",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "b",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   }

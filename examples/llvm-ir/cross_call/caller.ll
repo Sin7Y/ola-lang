@@ -258,11 +258,11 @@ entry:
   %1 = load i64, ptr %set_data, align 4
   %2 = call ptr @vector_new(i64 3)
   %encode_value_ptr = getelementptr i64, ptr %2, i64 1
-  store i64 2653574029, ptr %encode_value_ptr, align 4
+  store i64 %1, ptr %encode_value_ptr, align 4
   %encode_value_ptr1 = getelementptr i64, ptr %2, i64 2
   store i64 1, ptr %encode_value_ptr1, align 4
   %encode_value_ptr2 = getelementptr i64, ptr %2, i64 3
-  store i64 %1, ptr %encode_value_ptr2, align 4
+  store i64 2653574029, ptr %encode_value_ptr2, align 4
   %3 = load ptr, ptr %_contract, align 8
   %vector_length = load i64, ptr %2, align 4
   %vector_data = getelementptr i64, ptr %2, i64 1
@@ -307,13 +307,13 @@ entry:
   %2 = load i64, ptr %b, align 4
   %3 = call ptr @vector_new(i64 4)
   %encode_value_ptr = getelementptr i64, ptr %3, i64 1
-  store i64 1715662714, ptr %encode_value_ptr, align 4
+  store i64 %1, ptr %encode_value_ptr, align 4
   %encode_value_ptr1 = getelementptr i64, ptr %3, i64 2
-  store i64 2, ptr %encode_value_ptr1, align 4
+  store i64 %2, ptr %encode_value_ptr1, align 4
   %encode_value_ptr2 = getelementptr i64, ptr %3, i64 3
-  store i64 %1, ptr %encode_value_ptr2, align 4
+  store i64 2, ptr %encode_value_ptr2, align 4
   %encode_value_ptr3 = getelementptr i64, ptr %3, i64 4
-  store i64 %2, ptr %encode_value_ptr3, align 4
+  store i64 1715662714, ptr %encode_value_ptr3, align 4
   %4 = load ptr, ptr %_contract, align 8
   %vector_length = load i64, ptr %3, align 4
   %vector_data = getelementptr i64, ptr %3, i64 1

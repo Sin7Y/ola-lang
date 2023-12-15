@@ -5,20 +5,17 @@
     "inputs": [
       {
         "name": "rows",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "columns",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32[][]",
-        "internalType": "u32[][]"
+        "type": "u32[][]"
       }
     ]
   },
@@ -28,23 +25,19 @@
     "inputs": [
       {
         "name": "array",
-        "type": "u32[][]",
-        "internalType": "u32[][]"
+        "type": "u32[][]"
       },
       {
         "name": "row",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "column",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "value",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []
@@ -55,25 +48,21 @@
     "inputs": [
       {
         "name": "array",
-        "type": "u32[][]",
-        "internalType": "u32[][]"
+        "type": "u32[][]"
       },
       {
         "name": "row",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "column",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   }

@@ -368,7 +368,7 @@ entry:
   %index_alloca10 = alloca i64, align 8
   %1 = alloca ptr, align 8
   %index_alloca = alloca i64, align 8
-  %2 = call ptr @vector_new(i64 25)
+  %2 = call ptr @vector_new(i64 5)
   %vector_data = getelementptr i64, ptr %2, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
   store i64 104, ptr %index_access, align 4
@@ -499,7 +499,7 @@ entry:
   store i64 0, ptr %5, align 4
   call void @get_storage(ptr %2, ptr %1)
   %storage_value = load i64, ptr %1, align 4
-  %6 = mul i64 %storage_value, %storage_value
+  %6 = mul i64 %storage_value, 1
   %7 = call ptr @vector_new(i64 %6)
   %8 = call ptr @heap_malloc(i64 4)
   store i64 0, ptr %8, align 4

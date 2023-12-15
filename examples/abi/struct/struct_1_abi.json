@@ -1,17 +1,17 @@
 [
   {
-    "name": "array_call",
+    "name": "getOuterStruct",
     "type": "function",
     "inputs": [
       {
-        "name": "source",
-        "type": "u32[3]"
+        "name": "_id",
+        "type": "u32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32[3]"
+        "type": "u32"
       }
     ]
   }

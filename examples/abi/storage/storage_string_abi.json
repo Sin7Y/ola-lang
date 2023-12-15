@@ -5,8 +5,7 @@
     "inputs": [
       {
         "name": "s",
-        "type": "string",
-        "internalType": "string"
+        "type": "string"
       }
     ],
     "outputs": []
@@ -24,8 +23,7 @@
     "outputs": [
       {
         "name": "",
-        "type": "string",
-        "internalType": "string"
+        "type": "string"
       }
     ]
   }

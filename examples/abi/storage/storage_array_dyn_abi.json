@@ -5,8 +5,7 @@
     "inputs": [
       {
         "name": "element",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []
