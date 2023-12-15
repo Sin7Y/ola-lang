@@ -251,9 +251,9 @@ exit:                                             ; preds = %loop
 
 define ptr @createBooks() {
 entry:
-  %0 = call ptr @heap_malloc(i64 14)
+  %0 = call ptr @heap_malloc(i64 2)
   %elemptr0 = getelementptr [2 x ptr], ptr %0, i64 0
-  %1 = call ptr @heap_malloc(i64 7)
+  %1 = call ptr @heap_malloc(i64 3)
   %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 0
   store i64 0, ptr %struct_member, align 4
   %struct_member1 = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 1
@@ -273,7 +273,7 @@ entry:
   store ptr %2, ptr %struct_member2, align 8
   store ptr %1, ptr %elemptr0, align 8
   %elemptr14 = getelementptr [2 x ptr], ptr %0, i64 1
-  %3 = call ptr @heap_malloc(i64 7)
+  %3 = call ptr @heap_malloc(i64 3)
   %struct_member5 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 0
   store i64 0, ptr %struct_member5, align 4
   %struct_member6 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 1

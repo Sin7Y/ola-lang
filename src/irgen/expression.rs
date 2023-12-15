@@ -571,16 +571,6 @@ pub fn expression<'a>(
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
 
-                // let elem = if expr.ty().is_fixed_reference_type() {
-                //     bin.builder.build_load(
-                //         bin.llvm_type(&expr.ty(), ns),
-                //         elem.into_pointer_value(),
-                //         "elem",
-                //     )
-                // } else {
-                //     elem
-                // };
-
                 bin.builder.build_store(elemptr, elem);
             }
 
