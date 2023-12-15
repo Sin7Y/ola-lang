@@ -283,7 +283,6 @@ entry:
 
 define i64 @validateTransaction(ptr %0, ptr %1, ptr %2) {
 entry:
-  %magic = alloca ptr, align 8
   %_tx = alloca ptr, align 8
   %_signedHash = alloca ptr, align 8
   %_txHash = alloca ptr, align 8
@@ -291,155 +290,7 @@ entry:
   store ptr %1, ptr %_signedHash, align 8
   store ptr %2, ptr %_tx, align 8
   %3 = load ptr, ptr %_tx, align 8
-  %4 = load ptr, ptr %_txHash, align 8
-  %hash_start = ptrtoint ptr %4 to i64
-  call void @prophet_printf(i64 %hash_start, i64 2)
-  %5 = load ptr, ptr %_signedHash, align 8
-  %hash_start1 = ptrtoint ptr %5 to i64
-  call void @prophet_printf(i64 %hash_start1, i64 2)
-  %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 0
-  %address_start = ptrtoint ptr %struct_member to i64
-  call void @prophet_printf(i64 %address_start, i64 2)
-  %struct_member2 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 1
-  %6 = load i64, ptr %struct_member2, align 4
-  call void @prophet_printf(i64 %6, i64 3)
-  %struct_member3 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 2
-  %7 = load i64, ptr %struct_member3, align 4
-  call void @prophet_printf(i64 %7, i64 3)
-  %struct_member4 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 3
-  %8 = load i64, ptr %struct_member4, align 4
-  call void @prophet_printf(i64 %8, i64 3)
-  %struct_member5 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 4
-  %fields_start = ptrtoint ptr %struct_member5 to i64
-  call void @prophet_printf(i64 %fields_start, i64 0)
-  %struct_member6 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 5
-  %fields_start7 = ptrtoint ptr %struct_member6 to i64
-  call void @prophet_printf(i64 %fields_start7, i64 0)
-  %struct_member8 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 6
-  %fields_start9 = ptrtoint ptr %struct_member8 to i64
-  call void @prophet_printf(i64 %fields_start9, i64 0)
-  %struct_member10 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i32 0, i32 7
-  %hash_start11 = ptrtoint ptr %struct_member10 to i64
-  call void @prophet_printf(i64 %hash_start11, i64 2)
-  call void @onlyEntrypointCall()
-  call void @ignoreDelegateCall()
-  %9 = call ptr @vector_new(i64 42)
-  %vector_data = getelementptr i64, ptr %9, i64 1
-  %index_access = getelementptr i64, ptr %vector_data, i64 0
-  store i64 118, ptr %index_access, align 4
-  %index_access12 = getelementptr i64, ptr %vector_data, i64 1
-  store i64 97, ptr %index_access12, align 4
-  %index_access13 = getelementptr i64, ptr %vector_data, i64 2
-  store i64 108, ptr %index_access13, align 4
-  %index_access14 = getelementptr i64, ptr %vector_data, i64 3
-  store i64 105, ptr %index_access14, align 4
-  %index_access15 = getelementptr i64, ptr %vector_data, i64 4
-  store i64 100, ptr %index_access15, align 4
-  %index_access16 = getelementptr i64, ptr %vector_data, i64 5
-  store i64 97, ptr %index_access16, align 4
-  %index_access17 = getelementptr i64, ptr %vector_data, i64 6
-  store i64 116, ptr %index_access17, align 4
-  %index_access18 = getelementptr i64, ptr %vector_data, i64 7
-  store i64 101, ptr %index_access18, align 4
-  %index_access19 = getelementptr i64, ptr %vector_data, i64 8
-  store i64 84, ptr %index_access19, align 4
-  %index_access20 = getelementptr i64, ptr %vector_data, i64 9
-  store i64 114, ptr %index_access20, align 4
-  %index_access21 = getelementptr i64, ptr %vector_data, i64 10
-  store i64 97, ptr %index_access21, align 4
-  %index_access22 = getelementptr i64, ptr %vector_data, i64 11
-  store i64 110, ptr %index_access22, align 4
-  %index_access23 = getelementptr i64, ptr %vector_data, i64 12
-  store i64 115, ptr %index_access23, align 4
-  %index_access24 = getelementptr i64, ptr %vector_data, i64 13
-  store i64 97, ptr %index_access24, align 4
-  %index_access25 = getelementptr i64, ptr %vector_data, i64 14
-  store i64 99, ptr %index_access25, align 4
-  %index_access26 = getelementptr i64, ptr %vector_data, i64 15
-  store i64 116, ptr %index_access26, align 4
-  %index_access27 = getelementptr i64, ptr %vector_data, i64 16
-  store i64 105, ptr %index_access27, align 4
-  %index_access28 = getelementptr i64, ptr %vector_data, i64 17
-  store i64 111, ptr %index_access28, align 4
-  %index_access29 = getelementptr i64, ptr %vector_data, i64 18
-  store i64 110, ptr %index_access29, align 4
-  %index_access30 = getelementptr i64, ptr %vector_data, i64 19
-  store i64 40, ptr %index_access30, align 4
-  %index_access31 = getelementptr i64, ptr %vector_data, i64 20
-  store i64 104, ptr %index_access31, align 4
-  %index_access32 = getelementptr i64, ptr %vector_data, i64 21
-  store i64 97, ptr %index_access32, align 4
-  %index_access33 = getelementptr i64, ptr %vector_data, i64 22
-  store i64 115, ptr %index_access33, align 4
-  %index_access34 = getelementptr i64, ptr %vector_data, i64 23
-  store i64 104, ptr %index_access34, align 4
-  %index_access35 = getelementptr i64, ptr %vector_data, i64 24
-  store i64 44, ptr %index_access35, align 4
-  %index_access36 = getelementptr i64, ptr %vector_data, i64 25
-  store i64 104, ptr %index_access36, align 4
-  %index_access37 = getelementptr i64, ptr %vector_data, i64 26
-  store i64 97, ptr %index_access37, align 4
-  %index_access38 = getelementptr i64, ptr %vector_data, i64 27
-  store i64 115, ptr %index_access38, align 4
-  %index_access39 = getelementptr i64, ptr %vector_data, i64 28
-  store i64 104, ptr %index_access39, align 4
-  %index_access40 = getelementptr i64, ptr %vector_data, i64 29
-  store i64 44, ptr %index_access40, align 4
-  %index_access41 = getelementptr i64, ptr %vector_data, i64 30
-  store i64 84, ptr %index_access41, align 4
-  %index_access42 = getelementptr i64, ptr %vector_data, i64 31
-  store i64 114, ptr %index_access42, align 4
-  %index_access43 = getelementptr i64, ptr %vector_data, i64 32
-  store i64 97, ptr %index_access43, align 4
-  %index_access44 = getelementptr i64, ptr %vector_data, i64 33
-  store i64 110, ptr %index_access44, align 4
-  %index_access45 = getelementptr i64, ptr %vector_data, i64 34
-  store i64 115, ptr %index_access45, align 4
-  %index_access46 = getelementptr i64, ptr %vector_data, i64 35
-  store i64 97, ptr %index_access46, align 4
-  %index_access47 = getelementptr i64, ptr %vector_data, i64 36
-  store i64 99, ptr %index_access47, align 4
-  %index_access48 = getelementptr i64, ptr %vector_data, i64 37
-  store i64 116, ptr %index_access48, align 4
-  %index_access49 = getelementptr i64, ptr %vector_data, i64 38
-  store i64 105, ptr %index_access49, align 4
-  %index_access50 = getelementptr i64, ptr %vector_data, i64 39
-  store i64 111, ptr %index_access50, align 4
-  %index_access51 = getelementptr i64, ptr %vector_data, i64 40
-  store i64 110, ptr %index_access51, align 4
-  %index_access52 = getelementptr i64, ptr %vector_data, i64 41
-  store i64 41, ptr %index_access52, align 4
-  %vector_length = load i64, ptr %9, align 4
-  %vector_data53 = getelementptr i64, ptr %9, i64 1
-  %10 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %vector_data53, ptr %10, i64 %vector_length)
-  store ptr %10, ptr %magic, align 8
-  %11 = load ptr, ptr %magic, align 8
-  %12 = call ptr @vector_new(i64 4)
-  %13 = getelementptr i64, ptr %11, i64 0
-  %14 = load i64, ptr %13, align 4
-  %15 = getelementptr i64, ptr %12, i64 0
-  store i64 %14, ptr %15, align 4
-  %16 = getelementptr i64, ptr %11, i64 1
-  %17 = load i64, ptr %16, align 4
-  %18 = getelementptr i64, ptr %12, i64 1
-  store i64 %17, ptr %18, align 4
-  %19 = getelementptr i64, ptr %11, i64 2
-  %20 = load i64, ptr %19, align 4
-  %21 = getelementptr i64, ptr %12, i64 2
-  store i64 %20, ptr %21, align 4
-  %22 = getelementptr i64, ptr %11, i64 3
-  %23 = load i64, ptr %22, align 4
-  %24 = getelementptr i64, ptr %12, i64 3
-  store i64 %23, ptr %24, align 4
-  %vector_length54 = load i64, ptr %12, align 4
-  %25 = sub i64 %vector_length54, 1
-  %26 = sub i64 %25, 0
-  call void @builtin_range_check(i64 %26)
-  %vector_data55 = getelementptr i64, ptr %12, i64 1
-  %index_access56 = getelementptr i64, ptr %vector_data55, i64 0
-  %27 = load i64, ptr %index_access56, align 4
-  ret i64 %27
+  ret i64 0
 }
 
 define ptr @executeTransaction(ptr %0, ptr %1, ptr %2) {
@@ -575,7 +426,7 @@ func_2_dispatch:                                  ; preds = %entry
   %decode_struct_offset10 = add i64 %decode_struct_offset7, %13
   %decode_struct_field11 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %7, i64 %decode_struct_offset10
   %decode_struct_offset12 = add i64 %decode_struct_offset10, 4
-  %14 = call ptr @heap_malloc(i64 14)
+  %14 = call ptr @heap_malloc(i64 8)
   %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 0
   store ptr %decode_struct_field, ptr %struct_member, align 8
   %struct_member13 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %14, i32 0, i32 1
@@ -626,7 +477,7 @@ func_3_dispatch:                                  ; preds = %entry
   %decode_struct_offset33 = add i64 %decode_struct_offset30, %25
   %decode_struct_field34 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %19, i64 %decode_struct_offset33
   %decode_struct_offset35 = add i64 %decode_struct_offset33, 4
-  %26 = call ptr @heap_malloc(i64 14)
+  %26 = call ptr @heap_malloc(i64 8)
   %struct_member36 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 0
   store ptr %decode_struct_field21, ptr %struct_member36, align 8
   %struct_member37 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %26, i32 0, i32 1

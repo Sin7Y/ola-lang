@@ -499,20 +499,19 @@ entry:
   store i64 0, ptr %5, align 4
   call void @get_storage(ptr %2, ptr %1)
   %storage_value = load i64, ptr %1, align 4
-  %6 = mul i64 %storage_value, 1
-  %7 = call ptr @vector_new(i64 %6)
-  %8 = call ptr @heap_malloc(i64 4)
+  %6 = call ptr @vector_new(i64 %storage_value)
+  %7 = call ptr @heap_malloc(i64 4)
+  store i64 0, ptr %7, align 4
+  %8 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %8, align 4
-  %9 = getelementptr i64, ptr %8, i64 1
+  %9 = getelementptr i64, ptr %7, i64 2
   store i64 0, ptr %9, align 4
-  %10 = getelementptr i64, ptr %8, i64 2
+  %10 = getelementptr i64, ptr %7, i64 3
   store i64 0, ptr %10, align 4
-  %11 = getelementptr i64, ptr %8, i64 3
-  store i64 0, ptr %11, align 4
-  %12 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %8, ptr %12, i64 4)
+  %11 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %7, ptr %11, i64 4)
   store i64 0, ptr %index_alloca, align 4
-  store ptr %12, ptr %0, align 8
+  store ptr %11, ptr %0, align 8
   br label %cond
 
 cond:                                             ; preds = %body, %entry
@@ -521,23 +520,23 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %13 = load ptr, ptr %0, align 8
-  %vector_data = getelementptr i64, ptr %7, i64 1
+  %12 = load ptr, ptr %0, align 8
+  %vector_data = getelementptr i64, ptr %6, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
-  %14 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %13, ptr %14)
-  %storage_value1 = load i64, ptr %14, align 4
-  %slot_value = load i64, ptr %13, align 4
+  %13 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %12, ptr %13)
+  %storage_value1 = load i64, ptr %13, align 4
+  %slot_value = load i64, ptr %12, align 4
   %slot_offset = add i64 %slot_value, 1
-  store i64 %slot_offset, ptr %13, align 4
+  store i64 %slot_offset, ptr %12, align 4
   store i64 %storage_value1, ptr %index_access, align 4
-  store ptr %13, ptr %0, align 8
+  store ptr %12, ptr %0, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
-  ret ptr %7
+  ret ptr %6
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
