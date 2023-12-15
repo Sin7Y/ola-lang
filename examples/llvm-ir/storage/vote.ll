@@ -761,7 +761,7 @@ entry:
   %slot_value2 = load i64, ptr %13, align 4
   %slot_offset3 = add i64 %slot_value2, 1
   store i64 %slot_offset3, ptr %13, align 4
-  %16 = mul i64 %storage_value1, %storage_value1
+  %16 = mul i64 %storage_value1, 1
   %17 = call ptr @vector_new(i64 %16)
   %18 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %13, ptr %18, i64 4)
@@ -832,7 +832,7 @@ done:                                             ; preds = %cond
   call void @builtin_range_check(i64 %6)
   %vector_data1 = getelementptr i64, ptr %3, i64 1
   %index_access2 = getelementptr ptr, ptr %vector_data1, i64 0
-  %7 = call ptr @vector_new(i64 100)
+  %7 = call ptr @vector_new(i64 10)
   %vector_data3 = getelementptr i64, ptr %7, i64 1
   %index_access4 = getelementptr i64, ptr %vector_data3, i64 0
   store i64 80, ptr %index_access4, align 4
@@ -861,7 +861,7 @@ done:                                             ; preds = %cond
   call void @builtin_range_check(i64 %9)
   %vector_data15 = getelementptr i64, ptr %3, i64 1
   %index_access16 = getelementptr ptr, ptr %vector_data15, i64 1
-  %10 = call ptr @vector_new(i64 100)
+  %10 = call ptr @vector_new(i64 10)
   %vector_data17 = getelementptr i64, ptr %10, i64 1
   %index_access18 = getelementptr i64, ptr %vector_data17, i64 0
   store i64 80, ptr %index_access18, align 4
@@ -890,7 +890,7 @@ done:                                             ; preds = %cond
   call void @builtin_range_check(i64 %12)
   %vector_data29 = getelementptr i64, ptr %3, i64 1
   %index_access30 = getelementptr ptr, ptr %vector_data29, i64 2
-  %13 = call ptr @vector_new(i64 100)
+  %13 = call ptr @vector_new(i64 10)
   %vector_data31 = getelementptr i64, ptr %13, i64 1
   %index_access32 = getelementptr i64, ptr %vector_data31, i64 0
   store i64 80, ptr %index_access32, align 4
@@ -1028,7 +1028,7 @@ endfor:                                           ; preds = %cond42
   %slot_value82 = load i64, ptr %52, align 4
   %slot_offset83 = add i64 %slot_value82, 1
   store i64 %slot_offset83, ptr %52, align 4
-  %54 = mul i64 %storage_value81, %storage_value81
+  %54 = mul i64 %storage_value81, 1
   %55 = call ptr @vector_new(i64 %54)
   %56 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %52, ptr %56, i64 4)
@@ -1155,7 +1155,7 @@ done86:                                           ; preds = %cond84
   store i64 %slot_offset97, ptr %52, align 4
   %vector_data98 = getelementptr i64, ptr %55, i64 1
   %vector_length99 = load i64, ptr %55, align 4
-  %80 = call ptr @vector_new(i64 100)
+  %80 = call ptr @vector_new(i64 10)
   %vector_data100 = getelementptr i64, ptr %80, i64 1
   %index_access101 = getelementptr i64, ptr %vector_data100, i64 0
   store i64 80, ptr %index_access101, align 4

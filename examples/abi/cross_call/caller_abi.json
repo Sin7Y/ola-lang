@@ -5,8 +5,7 @@
     "inputs": [
       {
         "name": "_contract",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       }
     ],
     "outputs": []
@@ -17,8 +16,7 @@
     "inputs": [
       {
         "name": "_contract",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       }
     ],
     "outputs": []

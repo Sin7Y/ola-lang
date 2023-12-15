@@ -5,20 +5,17 @@
     "inputs": [
       {
         "name": "a",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "b",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   },
@@ -28,20 +25,17 @@
     "inputs": [
       {
         "name": "a",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "b",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   }

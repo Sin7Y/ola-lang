@@ -7,17 +7,14 @@
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct MyContract.MyStruct",
         "components": [
           {
             "name": "field1",
-            "type": "u32",
-            "internalType": "u32"
+            "type": "u32"
           },
           {
             "name": "field2",
-            "type": "u32",
-            "internalType": "u32"
+            "type": "u32"
           }
         ]
       }

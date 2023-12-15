@@ -11,15 +11,13 @@
     "inputs": [
       {
         "name": "_address",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "hash",
-        "internalType": "hash"
+        "type": "hash"
       }
     ]
   },
@@ -29,13 +27,11 @@
     "inputs": [
       {
         "name": "_address",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       },
       {
         "name": "_hash",
-        "type": "hash",
-        "internalType": "hash"
+        "type": "hash"
       }
     ],
     "outputs": []

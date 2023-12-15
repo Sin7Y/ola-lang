@@ -5,13 +5,11 @@
     "inputs": [
       {
         "name": "name",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       },
       {
         "name": "number",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []
@@ -22,15 +20,13 @@
     "inputs": [
       {
         "name": "name",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   },
