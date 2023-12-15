@@ -5,13 +5,11 @@
     "inputs": [
       {
         "name": "_id",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       },
       {
         "name": "_value",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []
@@ -23,8 +21,7 @@
     "outputs": [
       {
         "name": "",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ]
   }

@@ -7,17 +7,14 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct StructArrayExample.Book[]",
         "components": [
           {
             "name": "book_id",
-            "type": "u32",
-            "internalType": "u32"
+            "type": "u32"
           },
           {
             "name": "book_name",
-            "type": "u32",
-            "internalType": "u32"
+            "type": "u32"
           }
         ]
       }

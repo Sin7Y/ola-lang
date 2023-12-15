@@ -10,8 +10,6 @@ pub struct ABIParam {
     pub name: String,
     #[serde(rename = "type")]
     pub ty: String,
-    #[serde(rename = "internalType")]
-    pub internal_ty: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<ABIParam>,
 }
@@ -55,7 +53,6 @@ pub fn gen_abi(contract_no: usize, ns: &Namespace) -> Vec<ABI> {
         ABIParam {
             name: param.name_as_str().to_owned(),
             ty: param.ty.to_signature_string(true, ns),
-            internal_ty: param.ty.to_string(ns),
             components,
         }
     }

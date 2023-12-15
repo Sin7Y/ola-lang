@@ -5,13 +5,11 @@
     "inputs": [
       {
         "name": "_address",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       },
       {
         "name": "_nonce",
-        "type": "u32",
-        "internalType": "u32"
+        "type": "u32"
       }
     ],
     "outputs": []

@@ -11,15 +11,13 @@
     "inputs": [
       {
         "name": "_hash",
-        "type": "hash",
-        "internalType": "hash"
+        "type": "hash"
       }
     ],
     "outputs": [
       {
         "name": "",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ]
   },
@@ -29,8 +27,7 @@
     "inputs": [
       {
         "name": "_hash",
-        "type": "hash",
-        "internalType": "hash"
+        "type": "hash"
       }
     ],
     "outputs": []

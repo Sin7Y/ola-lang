@@ -67,9 +67,13 @@ contract ContractDeployer {
     ) -> (address) {
         // TODO: constant is not supported yet.
         hash CREATE2_PREFIX = poseidon_hash("OlaCreate2");
+        print(CREATE2_PREFIX);
         hash constructorInputHash = poseidon_hash(_input);
+        print(constructorInputHash);
         hash _hash = poseidon_hash(
             abi.encode(CREATE2_PREFIX, _sender, _salt, _bytecodeHash, constructorInputHash));
+        
+        print(_hash);
 
         return address(_hash);
     }
@@ -83,7 +87,7 @@ contract ContractDeployer {
         assert(_bytecodeHash != hash(0x0), "BytecodeHash can not be zero");
 
         address MAX_SYSTEM_CONTRACT_ADDRESS = address(0xffff);
-        assert(_newAddress > MAX_SYSTEM_CONTRACT_ADDRESS, "Can not deploy contracts in kernel space");
+        //assert(_newAddress > MAX_SYSTEM_CONTRACT_ADDRESS, "Can not deploy contracts in kernel space");
 
         // We do not allow deploying twice on the same address.
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
