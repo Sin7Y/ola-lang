@@ -321,7 +321,7 @@ func_0_dispatch:                                  ; preds = %entry
   %decode_struct_offset10 = add i64 %decode_struct_offset7, %9
   %decode_struct_field11 = getelementptr { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %3, i64 %decode_struct_offset10
   %decode_struct_offset12 = add i64 %decode_struct_offset10, 4
-  %10 = call ptr @heap_malloc(i64 14)
+  %10 = call ptr @heap_malloc(i64 8)
   %struct_member = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 0
   store ptr %decode_struct_field, ptr %struct_member, align 8
   %struct_member13 = getelementptr inbounds { ptr, i64, i64, i64, ptr, ptr, ptr, ptr }, ptr %10, i32 0, i32 1

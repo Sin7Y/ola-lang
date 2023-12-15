@@ -38,7 +38,7 @@ contract DefaultAccount {
         // hash magic = poseidon_hash("validateTransaction(hash,hash,Transaction)");
         // fields hash_magic = fields(magic);
         // return hash_magic[0];
-        return 1;
+        return 0;
     }
 
     fn executeTransaction(hash _txHash, hash _signedHash, Transaction _tx) -> (fields) {

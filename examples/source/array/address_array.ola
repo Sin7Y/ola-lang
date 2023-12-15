@@ -1,0 +1,9 @@
+
+contract AddressArrayTest {
+
+    fn address_array() -> (u32) {
+        
+        address[3] array_0 = [address(0x12), address(0x34), address(0x56)];
+        return array_0.length;
+    }
+}

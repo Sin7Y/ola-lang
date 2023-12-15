@@ -776,26 +776,21 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Field => BigInt::one(),
-            Type::Contract(_) | Type::Address | Type::Hash => BigInt::from(4),
+            Type::Contract(_) | Type::Address | Type::Hash => BigInt::one(),
             Type::Uint(32) => BigInt::one(),
             Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::one(),
-            Type::Array(ty, dims) => {
+            Type::Array(_, dims) => {
                 let pointer_size = BigInt::one();
-                ty.memory_size_of_internal(ns, structs_visited).mul(
                     dims.iter()
                         .map(|d| match d {
                             ArrayLength::Fixed(n) => n,
                             ArrayLength::Dynamic => &pointer_size,
                             ArrayLength::AnyFixed => unreachable!(),
                         })
-                        .product::<BigInt>(),
-                )
+                        .product::<BigInt>()
+                
             }
-            Type::Struct(n) => ns.structs[*n]
-                .fields
-                .iter()
-                .map(|d| d.ty.memory_size_of_internal(ns, structs_visited))
-                .sum::<BigInt>(),
+            Type::Struct(n) => BigInt::from(ns.structs[*n].fields.len()),
             Type::String
             | Type::DynamicBytes
             | Type::Ref(_)
