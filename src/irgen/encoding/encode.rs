@@ -154,11 +154,10 @@ fn encode_bytes<'a>(
     bin: &Binary<'a>,
 ) -> IntValue<'a> {
     let len = bin.vector_len(string_value);
-    let data = bin.vector_data(string_value);
     let total_len = bin
-        .builder
-        .build_int_add(len, bin.context.i64_type().const_int(1, false), "");
-    bin.memcpy(data, buffer, total_len);
+    .builder
+    .build_int_add(len, bin.context.i64_type().const_int(1, false), "");
+    bin.memcpy(string_value.into_pointer_value(), buffer, total_len);
     total_len
 }
 

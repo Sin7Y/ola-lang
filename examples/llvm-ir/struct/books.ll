@@ -336,9 +336,9 @@ func_0_dispatch:                                  ; preds = %entry
 
 func_1_dispatch:                                  ; preds = %entry
   %14 = getelementptr ptr, ptr %input, i64 0
-  %decode_struct_field = getelementptr { i64, ptr }, ptr %14, i64 0
+  %decode_struct_field = getelementptr ptr, ptr %14, i64 0
   %15 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field7 = getelementptr { i64, ptr }, ptr %14, i64 1
+  %decode_struct_field7 = getelementptr ptr, ptr %14, i64 1
   %vector_length8 = load i64, ptr %decode_struct_field7, align 4
   %16 = add i64 %vector_length8, 1
   %decode_struct_offset = add i64 1, %16
@@ -364,9 +364,9 @@ func_1_dispatch:                                  ; preds = %entry
 
 func_2_dispatch:                                  ; preds = %entry
   %23 = getelementptr ptr, ptr %input, i64 0
-  %decode_struct_field16 = getelementptr { i64, ptr }, ptr %23, i64 0
+  %decode_struct_field16 = getelementptr ptr, ptr %23, i64 0
   %24 = load i64, ptr %decode_struct_field16, align 4
-  %decode_struct_field17 = getelementptr { i64, ptr }, ptr %23, i64 1
+  %decode_struct_field17 = getelementptr ptr, ptr %23, i64 1
   %vector_length18 = load i64, ptr %decode_struct_field17, align 4
   %25 = add i64 %vector_length18, 1
   %decode_struct_offset19 = add i64 1, %25
