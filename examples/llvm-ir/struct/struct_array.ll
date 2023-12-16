@@ -378,9 +378,9 @@ loop_end:                                         ; preds = %loop_body
 
 func_1_dispatch:                                  ; preds = %entry
   %11 = getelementptr ptr, ptr %input, i64 0
-  %decode_struct_field = getelementptr { i64, ptr }, ptr %11, i64 0
+  %decode_struct_field = getelementptr ptr, ptr %11, i64 0
   %12 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field9 = getelementptr { i64, ptr }, ptr %11, i64 1
+  %decode_struct_field9 = getelementptr ptr, ptr %11, i64 1
   %vector_length10 = load i64, ptr %decode_struct_field9, align 4
   %13 = mul i64 %vector_length10, 1
   %14 = add i64 %13, 1

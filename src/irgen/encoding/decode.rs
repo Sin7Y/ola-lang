@@ -1,4 +1,4 @@
-use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
+use inkwell::{values::{BasicValueEnum, FunctionValue, IntValue, PointerValue}, AddressSpace};
 
 use num_traits::ToPrimitive;
 
@@ -85,7 +85,7 @@ fn decode_struct<'a>(
     for i in 0..qty {
         let struct_field = unsafe {
             bin.builder.build_gep(
-                bin.llvm_type(ty, ns),
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
                 buffer,
                 &[struct_offset],
                 "decode_struct_field",

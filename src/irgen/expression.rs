@@ -1364,10 +1364,11 @@ pub fn string_compare<'a>(
 fn field_to_fields<'a>(source: BasicValueEnum<'a>, bin: &Binary<'a>) -> BasicValueEnum<'a> {
     let left_len = bin.context.i64_type().const_int(1, false);
     let new_fields = bin.vector_new(left_len);
+    let new_fields_data = bin.vector_data(new_fields.into());
     let dest_elem_ptr = unsafe {
         bin.builder.build_gep(
             bin.context.i64_type(),
-            new_fields,
+            new_fields_data,
             &[bin.context.i64_type().const_zero()],
             "",
         )
@@ -1382,6 +1383,7 @@ fn hash_or_address_to_fields<'a>(
 ) -> BasicValueEnum<'a> {
     let left_len = bin.context.i64_type().const_int(4, false);
     let new_fields = bin.vector_new(left_len);
+    let new_fields_data = bin.vector_data(new_fields.into());
     for i in 0..4 {
         let source_elem_ptr = unsafe {
             bin.builder.build_gep(
@@ -1398,7 +1400,7 @@ fn hash_or_address_to_fields<'a>(
         let dest_elem_ptr = unsafe {
             bin.builder.build_gep(
                 bin.context.i64_type(),
-                new_fields,
+                new_fields_data,
                 &[bin.context.i64_type().const_int(i, false)],
                 "",
             )
@@ -1581,7 +1583,7 @@ pub(crate) fn debug_print<'a>(
         }
         Type::Struct(no) => {
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
-                let elem = bin
+                let elem_ptr = bin
                     .builder
                     .build_struct_gep(
                         bin.llvm_type(&ty, ns),
@@ -1590,6 +1592,7 @@ pub(crate) fn debug_print<'a>(
                         "struct_member",
                     )
                     .unwrap();
+                let elem = bin.builder.build_load(bin.llvm_var_ty(&field.ty, ns), elem_ptr, "");
                 debug_print(bin, elem.into(), &field.ty, func_value, ns);
             }
         }

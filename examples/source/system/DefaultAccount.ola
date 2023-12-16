@@ -24,35 +24,37 @@ contract DefaultAccount {
     }
 
     fn validateTransaction(hash _txHash, hash _signedHash, Transaction _tx) -> (field) {
-        // print(_txHash);
-        // print(_signedHash);
-        // print(_tx);
-        // onlyEntrypointCall();
-        // ignoreDelegateCall();
-
-        // // TODO: add signature verification.
-
-        // // TODO: selector is not supported right now.
-        // // return DefaultAccount.validateTransaction.selector;
-        // // we use hash to represent this for now. hash has 8 u32.
-        // hash magic = poseidon_hash("validateTransaction(hash,hash,Transaction)");
-        // fields hash_magic = fields(magic);
-        // return hash_magic[0];
-        return 0;
-    }
-
-    fn executeTransaction(hash _txHash, hash _signedHash, Transaction _tx) -> (fields) {
         print(_txHash);
         print(_signedHash);
         print(_tx);
         onlyEntrypointCall();
         ignoreDelegateCall();
 
+        // TODO: add signature verification.
+
+        // TODO: selector is not supported right now.
+        // return DefaultAccount.validateTransaction.selector;
+        // we use hash to represent this for now. hash has 8 u32.
+        hash magic = poseidon_hash("validateTransaction(hash,hash,Transaction)");
+        print(magic);
+        fields hash_magic = fields(magic);
+        print(hash_magic);
+        return hash_magic[0];
+    }
+
+    fn executeTransaction(hash _txHash, hash _signedHash, Transaction _tx) -> (fields) {
+        // print(_txHash);
+        // print(_signedHash);
+        // print(_tx);
+        // onlyEntrypointCall();
+        // ignoreDelegateCall();
+
         // TODO: how do we handle return data?
         // CR: slice
-        address to = abi.decode(_tx.data[0:4], (address));
-        print(to);
-        // fields res = to.call(_tx.data[4:]);
+        print(_tx.data[0:4]);
+        // address to = abi.decode(_tx.data[0:4], (address));
+        // print(to);
+        // // fields res = to.call(_tx.data[4:]);
         return _tx.data[4:];
     } 
 
