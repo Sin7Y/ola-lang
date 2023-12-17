@@ -474,8 +474,7 @@ entry:
   %7 = call ptr @vector_new(i64 4)
   %vector_data = getelementptr i64, ptr %7, i64 1
   %vector_data1 = getelementptr i64, ptr %4, i64 1
-  %src_data_start = getelementptr i64, ptr %vector_data1, i64 0
-  call void @memcpy(ptr %src_data_start, ptr %vector_data, i64 4)
+  call void @memcpy(ptr %vector_data1, ptr %vector_data, i64 4)
   %vector_length2 = load i64, ptr %7, align 4
   %vector_data3 = getelementptr i64, ptr %7, i64 1
   %8 = getelementptr ptr, ptr %vector_data3, i64 0
@@ -496,8 +495,7 @@ entry:
   %13 = call ptr @vector_new(i64 %slice_len)
   %vector_data7 = getelementptr i64, ptr %13, i64 1
   %vector_data8 = getelementptr i64, ptr %10, i64 1
-  %src_data_start9 = getelementptr i64, ptr %vector_data8, i64 4
-  call void @memcpy(ptr %src_data_start9, ptr %vector_data7, i64 %slice_len)
+  call void @memcpy(ptr %vector_data8, ptr %vector_data7, i64 %slice_len)
   ret ptr %13
 }
 

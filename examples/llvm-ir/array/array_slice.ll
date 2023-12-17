@@ -269,11 +269,11 @@ entry:
   call void @builtin_range_check(i64 %1)
   %2 = sub i64 %vector_length, 2
   call void @builtin_range_check(i64 %2)
-  call void @builtin_range_check(i64 2)
   %3 = call ptr @vector_new(i64 2)
   %vector_data5 = getelementptr i64, ptr %3, i64 1
   %vector_data6 = getelementptr i64, ptr %0, i64 1
-  call void @memcpy(ptr %vector_data6, ptr %vector_data5, i64 2)
+  %src_data_start = getelementptr i64, ptr %vector_data6, i64 0
+  call void @memcpy(ptr %src_data_start, ptr %vector_data5, i64 2)
   %vector_data7 = getelementptr i64, ptr %3, i64 1
   %vector_length8 = load i64, ptr %3, align 4
   %4 = call ptr @vector_new(i64 2)

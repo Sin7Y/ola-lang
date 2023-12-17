@@ -261,7 +261,6 @@ entry:
   store i64 1000, ptr %elemptr01, align 4
   %elemptr12 = getelementptr [2 x i64], ptr %1, i64 1
   store i64 1001, ptr %elemptr12, align 4
-  call void @builtin_range_check(i64 1)
   %index_access = getelementptr [2 x i64], ptr %1, i64 0
   %2 = load i64, ptr %index_access, align 4
   %3 = icmp eq i64 %2, 1000

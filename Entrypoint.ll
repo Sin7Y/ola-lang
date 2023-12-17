@@ -531,11 +531,11 @@ then:                                             ; preds = %entry
   call void @builtin_range_check(i64 %21)
   %22 = sub i64 %vector_length15, 4
   call void @builtin_range_check(i64 %22)
+  call void @builtin_range_check(i64 4)
   %23 = call ptr @vector_new(i64 4)
   %vector_data = getelementptr i64, ptr %23, i64 1
   %vector_data16 = getelementptr i64, ptr %20, i64 1
-  %src_data_start = getelementptr i64, ptr %vector_data16, i64 0
-  call void @memcpy(ptr %src_data_start, ptr %vector_data, i64 4)
+  call void @memcpy(ptr %vector_data16, ptr %vector_data, i64 4)
   %vector_length17 = load i64, ptr %23, align 4
   %vector_data18 = getelementptr i64, ptr %23, i64 1
   %24 = getelementptr ptr, ptr %vector_data18, i64 0
@@ -543,6 +543,10 @@ then:                                             ; preds = %entry
   %25 = load ptr, ptr %to, align 8
   %address_start = ptrtoint ptr %25 to i64
   call void @prophet_printf(i64 %address_start, i64 2)
+  %26 = load ptr, ptr %to, align 8
+  %27 = load ptr, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
+  %28 = call i64 @memcmp_eq(ptr %26, ptr %27, i64 4)
+  call void @builtin_assert(i64 %28)
   br label %endif
 
 endif:                                            ; preds = %then, %entry
