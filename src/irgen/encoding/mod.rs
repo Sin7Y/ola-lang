@@ -449,12 +449,12 @@ fn calculate_struct_size<'a>(
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> IntValue<'a> {
-    if let Some(struct_size) = calculate_struct_non_padded_size(struct_no, ns) {
-        return bin
-            .context
-            .i64_type()
-            .const_int(struct_size.to_u64().unwrap(), false);
-    }
+    // if let Some(struct_size) = calculate_struct_non_padded_size(struct_no, ns) {
+    //     return bin
+    //         .context
+    //         .i64_type()
+    //         .const_int(struct_size.to_u64().unwrap(), false);
+    // }
     let mut struct_size = bin.context.i64_type().const_int(0, false);
     for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();

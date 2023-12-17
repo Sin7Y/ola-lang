@@ -300,10 +300,8 @@ entry:
   %_books = alloca ptr, align 8
   store ptr %0, ptr %_books, align 8
   %1 = load ptr, ptr %_books, align 8
-  call void @builtin_range_check(i64 1)
   %index_access = getelementptr [2 x ptr], ptr %1, i64 0
   %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %index_access, i32 0, i32 2
-  call void @builtin_range_check(i64 3)
   %index_access1 = getelementptr [5 x i64], ptr %struct_member, i64 1
   %2 = load i64, ptr %index_access1, align 4
   ret i64 %2

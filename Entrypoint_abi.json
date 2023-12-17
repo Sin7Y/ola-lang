@@ -1,0 +1,446 @@
+[
+  {
+    "name": "system_entrance",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      },
+      {
+        "name": "_isETHCall",
+        "type": "bool"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "validateTxStructure",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "callTx",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "fields"
+      }
+    ]
+  },
+  {
+    "name": "sendTx",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "validateTx",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "validateDeployment",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "getSignedHash",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "hash"
+      }
+    ]
+  },
+  {
+    "name": "getTransactionHash",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_signedHash",
+        "type": "hash"
+      },
+      {
+        "name": "signature",
+        "type": "fields"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "hash"
+      }
+    ]
+  },
+  {
+    "name": "validate_sender",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "validate_nonce",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      },
+      {
+        "name": "_nonce",
+        "type": "u32"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "validate_tx",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_txHash",
+        "type": "hash"
+      },
+      {
+        "name": "_signedHash",
+        "type": "hash"
+      },
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "sender",
+            "type": "address"
+          },
+          {
+            "name": "nonce",
+            "type": "u32"
+          },
+          {
+            "name": "version",
+            "type": "u32"
+          },
+          {
+            "name": "chainid",
+            "type": "u32"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          },
+          {
+            "name": "signature",
+            "type": "fields"
+          },
+          {
+            "name": "codeHash",
+            "type": "hash"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "hashL2Bytecode",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_bytecode",
+        "type": "fields"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "hash"
+      }
+    ]
+  }
+]

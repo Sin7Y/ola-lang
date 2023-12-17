@@ -101,7 +101,8 @@ contract Entrypoint {
         print(set_nonce_calldata);
         // NONCE_HOLDER_ADDRESS.call(set_nonce_calldata);
     }
-
+   
+   // 4
     fn validateTx(Transaction _tx) {
         // Compute the hash of the transaction
         hash signedHash = getSignedHash(_tx);
@@ -117,6 +118,7 @@ contract Entrypoint {
         validate_tx(txHash, signedHash, _tx);
     }
 
+//5 ok
     fn validateDeployment(Transaction _tx) {
         // check if codes exists
         u32 code_len = _tx.codes.length;
@@ -142,7 +144,7 @@ contract Entrypoint {
             address DEPLOYER_SYSTEM_CONTRACT = address(0x8005);
             address to = abi.decode(_tx.data[0:4], (address));
             print(to);
-            assert(to == DEPLOYER_SYSTEM_CONTRACT, "destination must be contract deployer account");
+            //assert(to == DEPLOYER_SYSTEM_CONTRACT, "destination must be contract deployer account");
         }
     }
 
@@ -150,6 +152,7 @@ contract Entrypoint {
     // CR: split two return into 1 return.
     // CR: string encode
     // CR: dynamic length input of hash.
+    // 6
     fn getSignedHash(Transaction _tx) -> (hash) {
         // TODO: hash is not working right now.
         // TODO: hash string is not supported.
@@ -175,7 +178,7 @@ contract Entrypoint {
         print(signedHash);
         return signedHash;
     }
-
+    //
     fn getTransactionHash(hash _signedHash, fields signature) -> (hash) {
         hash txHash = poseidon_hash(fields_concat(_signedHash, poseidon_hash(signature)));
         return txHash;

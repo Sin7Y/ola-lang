@@ -293,7 +293,6 @@ entry:
   store i64 0, ptr %elemptr89, align 4
   %elemptr910 = getelementptr [10 x i64], ptr %1, i64 9
   store i64 0, ptr %elemptr910, align 4
-  call void @builtin_range_check(i64 7)
   %index_access = getelementptr [10 x i64], ptr %0, i64 2
   %2 = load i64, ptr %index_access, align 4
   ret i64 %2

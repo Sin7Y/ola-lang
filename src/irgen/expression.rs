@@ -1236,7 +1236,15 @@ pub fn array_slice<'a>(
     } else {
         array.into_pointer_value()
     };
-    bin.memcpy(src_data, dest_array, end_sub_start);
+    let src_data_start = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            src_data,
+            &[start],
+            "src_data_start",
+        )
+    };
+    bin.memcpy(src_data_start, dest_array, end_sub_start);
     new_array.as_basic_value_enum()
 }
 

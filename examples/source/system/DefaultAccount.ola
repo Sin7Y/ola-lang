@@ -51,9 +51,9 @@ contract DefaultAccount {
 
         // TODO: how do we handle return data?
         // CR: slice
-        print(_tx.data[0:4]);
-        // address to = abi.decode(_tx.data[0:4], (address));
-        // print(to);
+        // print(_tx.data[0:4]);
+        address to = abi.decode(_tx.data[0:4], (address));
+        print(to);
         // // fields res = to.call(_tx.data[4:]);
         return _tx.data[4:];
     } 
