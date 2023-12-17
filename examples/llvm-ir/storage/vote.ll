@@ -1273,12 +1273,11 @@ func_3_dispatch:                                  ; preds = %entry
   %heap_size = add i64 %21, 1
   %22 = call ptr @heap_malloc(i64 %heap_size)
   %vector_length7 = load i64, ptr %20, align 4
-  %vector_data8 = getelementptr i64, ptr %20, i64 1
   %23 = add i64 %vector_length7, 1
-  call void @memcpy(ptr %vector_data8, ptr %22, i64 %23)
+  call void @memcpy(ptr %20, ptr %22, i64 %23)
   %24 = add i64 %23, 0
-  %encode_value_ptr9 = getelementptr i64, ptr %22, i64 %24
-  store i64 %21, ptr %encode_value_ptr9, align 4
+  %encode_value_ptr8 = getelementptr i64, ptr %22, i64 %24
+  store i64 %21, ptr %encode_value_ptr8, align 4
   call void @set_tape_data(ptr %22, i64 %heap_size)
   ret void
 

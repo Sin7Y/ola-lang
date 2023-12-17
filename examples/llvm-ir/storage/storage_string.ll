@@ -577,9 +577,8 @@ func_2_dispatch:                                  ; preds = %entry
   %heap_size = add i64 %8, 1
   %9 = call ptr @heap_malloc(i64 %heap_size)
   %vector_length2 = load i64, ptr %7, align 4
-  %vector_data = getelementptr i64, ptr %7, i64 1
   %10 = add i64 %vector_length2, 1
-  call void @memcpy(ptr %vector_data, ptr %9, i64 %10)
+  call void @memcpy(ptr %7, ptr %9, i64 %10)
   %11 = add i64 %10, 0
   %encode_value_ptr = getelementptr i64, ptr %9, i64 %11
   store i64 %8, ptr %encode_value_ptr, align 4
