@@ -1,7 +1,9 @@
+
+
 use indexmap::IndexMap;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
+use num_traits::{ToPrimitive};
 
 use super::expression::expression;
 use super::functions::Vartable;
@@ -630,7 +632,7 @@ impl Type {
             }
             Type::StorageRef(..) => None,
             Type::Array(ty, dims) => {
-                ty.default(bin, func_value, ns)?;
+                let element_default = ty.default(bin, func_value, ns)?;
 
                 if dims.last() == Some(&ArrayLength::Dynamic) {
                     Some(
@@ -638,29 +640,45 @@ impl Type {
                             .as_basic_value_enum(),
                     )
                 } else {
-                    let dims = dims
-                        .iter()
-                        .map(|d| match d {
-                            ArrayLength::Fixed(d) => d.to_u32().unwrap(),
-                            _ => 1,
-                        })
-                        .collect::<Vec<_>>();
+                    let dimensions = dims.iter().map(|d| match d {
+                        ArrayLength::Fixed(d) => d.to_u32().unwrap(),
+                        _ => 1 as u32,
+                    }).collect::<Vec<_>>();
 
+                    let total_elements = dimensions.iter().product::<u32>();
                     let values = vec![
-                        Expression::NumberLiteral {
-                            loc: IRgen,
-                            ty: Type::Uint(32),
-                            value: BigInt::zero(),
-                        };
-                        self.array_length().unwrap().to_usize().unwrap()
+                        element_default;
+                       total_elements as usize
                     ];
-                    let array_expr = Expression::ArrayLiteral {
-                        loc: IRgen,
-                        ty: self.clone(),
-                        dimensions: dims,
-                        values,
-                    };
-                    Some(expression(&array_expr, bin, func_value, &mut var_table, ns))
+                    let array_ty = bin.llvm_type(self, ns);
+                    let array_size = bin
+                        .context
+                        .i64_type()
+                        .const_int(self.memory_size_of(ns).to_u64().unwrap(), false);
+        
+                    let array_alloca = bin.heap_malloc(array_size);
+        
+                    for (i, expr) in values.iter().enumerate() {
+                        let mut ind = vec![];
+        
+                        let mut e = i as u32;
+        
+                        // Mapping one-dimensional array indices to multi-dimensional array indices.
+                        for d in &dimensions {
+                            ind.insert(0, bin.context.i64_type().const_int((e % d).into(), false));
+        
+                            e /= d;
+                        }
+        
+                        let elemptr = unsafe {
+                            bin.builder
+                                .build_gep(array_ty, array_alloca, &ind, &format!("elemptr{i}"))
+                        };
+        
+                        bin.builder.build_store(elemptr, *expr);
+                    }
+        
+                    Some(array_alloca.into())
                 }
             }
             Type::Function { .. } => None,
