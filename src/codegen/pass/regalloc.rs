@@ -67,6 +67,19 @@ pub fn run_on_function<T: TargetIsa>(function: &mut Function<T>) {
             &mut T::RegClass::for_type(&function.types, function.data.vregs.type_for(vreg))
                 .csr_list(),
         );
+
+        for block_id in function.layout.block_iter() {
+            for inst_id in function.layout.inst_iter(block_id) {
+                let inst = function.data.inst_ref(inst_id);
+                if inst.data.is_call() {
+                    availables =
+                        T::RegClass::for_type(&function.types, function.data.vregs.type_for(vreg))
+                            .csr_list();
+                    break;
+                }
+            }
+            break;
+        }
         let _ = availables.pop(); // TODO: Don't used RBP.
         if !spill_regs.contains(&vreg) {
             availables.pop(); // TODO
