@@ -353,32 +353,32 @@ func_1_dispatch:                                  ; preds = %entry
   %6 = call ptr @heap_malloc(i64 5)
   %7 = getelementptr i64, ptr %5, i64 0
   %8 = load i64, ptr %7, align 4
-  %encode_value_ptr = getelementptr i64, ptr %6, i64 0
-  store i64 %8, ptr %encode_value_ptr, align 4
-  %9 = getelementptr i64, ptr %5, i64 1
-  %10 = load i64, ptr %9, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %6, i64 1
-  store i64 %10, ptr %encode_value_ptr1, align 4
-  %11 = getelementptr i64, ptr %5, i64 2
-  %12 = load i64, ptr %11, align 4
-  %encode_value_ptr2 = getelementptr i64, ptr %6, i64 2
-  store i64 %12, ptr %encode_value_ptr2, align 4
-  %13 = getelementptr i64, ptr %5, i64 3
+  %9 = getelementptr i64, ptr %6, i64 0
+  store i64 %8, ptr %9, align 4
+  %10 = getelementptr i64, ptr %5, i64 1
+  %11 = load i64, ptr %10, align 4
+  %12 = getelementptr i64, ptr %6, i64 1
+  store i64 %11, ptr %12, align 4
+  %13 = getelementptr i64, ptr %5, i64 2
   %14 = load i64, ptr %13, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %6, i64 3
-  store i64 %14, ptr %encode_value_ptr3, align 4
-  %encode_value_ptr4 = getelementptr i64, ptr %6, i64 4
-  store i64 4, ptr %encode_value_ptr4, align 4
+  %15 = getelementptr i64, ptr %6, i64 2
+  store i64 %14, ptr %15, align 4
+  %16 = getelementptr i64, ptr %5, i64 3
+  %17 = load i64, ptr %16, align 4
+  %18 = getelementptr i64, ptr %6, i64 3
+  store i64 %17, ptr %18, align 4
+  %19 = getelementptr ptr, ptr %6, i64 4
+  store i64 4, ptr %19, align 4
   call void @set_tape_data(ptr %6, i64 5)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %15 = getelementptr ptr, ptr %input, i64 0
-  %16 = getelementptr ptr, ptr %15, i64 4
-  call void @storeCodeHash(ptr %15, ptr %16)
-  %17 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %17, align 4
-  call void @set_tape_data(ptr %17, i64 1)
+  %20 = getelementptr ptr, ptr %input, i64 0
+  %21 = getelementptr ptr, ptr %20, i64 4
+  call void @storeCodeHash(ptr %20, ptr %21)
+  %22 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %22, align 4
+  call void @set_tape_data(ptr %22, i64 1)
   ret void
 }
 

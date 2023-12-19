@@ -277,18 +277,18 @@ func_0_dispatch:                                  ; preds = %entry
   %5 = call ptr @heap_malloc(i64 4)
   %elemptr0 = getelementptr [3 x i64], ptr %4, i64 0, i64 0
   %6 = load i64, ptr %elemptr0, align 4
-  %encode_value_ptr = getelementptr i64, ptr %5, i64 0
-  store i64 %6, ptr %encode_value_ptr, align 4
+  %7 = getelementptr ptr, ptr %5, i64 0
+  store i64 %6, ptr %7, align 4
   %elemptr1 = getelementptr [3 x i64], ptr %4, i64 0, i64 1
-  %7 = load i64, ptr %elemptr1, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %5, i64 1
-  store i64 %7, ptr %encode_value_ptr1, align 4
+  %8 = load i64, ptr %elemptr1, align 4
+  %9 = getelementptr ptr, ptr %5, i64 1
+  store i64 %8, ptr %9, align 4
   %elemptr2 = getelementptr [3 x i64], ptr %4, i64 0, i64 2
-  %8 = load i64, ptr %elemptr2, align 4
-  %encode_value_ptr2 = getelementptr i64, ptr %5, i64 2
-  store i64 %8, ptr %encode_value_ptr2, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %5, i64 3
-  store i64 3, ptr %encode_value_ptr3, align 4
+  %10 = load i64, ptr %elemptr2, align 4
+  %11 = getelementptr ptr, ptr %5, i64 2
+  store i64 %10, ptr %11, align 4
+  %12 = getelementptr ptr, ptr %5, i64 3
+  store i64 3, ptr %12, align 4
   call void @set_tape_data(ptr %5, i64 4)
   ret void
 }

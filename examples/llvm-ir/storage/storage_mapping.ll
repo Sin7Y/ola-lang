@@ -361,18 +361,17 @@ func_1_dispatch:                                  ; preds = %entry
   %7 = getelementptr ptr, ptr %input, i64 0
   %8 = call i64 @get_mapping(ptr %7)
   %9 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %9, i64 0
-  store i64 %8, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %9, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %8, ptr %9, align 4
+  %10 = getelementptr ptr, ptr %9, i64 1
+  store i64 1, ptr %10, align 4
   call void @set_tape_data(ptr %9, i64 2)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
   call void @mapping_test()
-  %10 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %10, align 4
-  call void @set_tape_data(ptr %10, i64 1)
+  %11 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %11, align 4
+  call void @set_tape_data(ptr %11, i64 1)
   ret void
 }
 

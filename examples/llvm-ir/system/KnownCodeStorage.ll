@@ -352,19 +352,18 @@ func_1_dispatch:                                  ; preds = %entry
   %4 = getelementptr ptr, ptr %input, i64 0
   %5 = call i64 @isCodehashKnown(ptr %4)
   %6 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %6, i64 0
-  store i64 %5, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %6, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %5, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 1, ptr %7, align 4
   call void @set_tape_data(ptr %6, i64 2)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %7 = getelementptr ptr, ptr %input, i64 0
-  call void @markCodehashKnown(ptr %7)
-  %8 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %8, align 4
-  call void @set_tape_data(ptr %8, i64 1)
+  %8 = getelementptr ptr, ptr %input, i64 0
+  call void @markCodehashKnown(ptr %8)
+  %9 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %9, align 4
+  call void @set_tape_data(ptr %9, i64 1)
   ret void
 }
 

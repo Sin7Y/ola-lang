@@ -303,10 +303,9 @@ missing_function:                                 ; preds = %entry
 func_0_dispatch:                                  ; preds = %entry
   %3 = call i64 @address_array()
   %4 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %4, i64 0
-  store i64 %3, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %4, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %3, ptr %4, align 4
+  %5 = getelementptr ptr, ptr %4, i64 1
+  store i64 1, ptr %5, align 4
   call void @set_tape_data(ptr %4, i64 2)
   ret void
 }

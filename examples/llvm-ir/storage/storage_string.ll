@@ -579,9 +579,8 @@ func_2_dispatch:                                  ; preds = %entry
   %vector_length2 = load i64, ptr %7, align 4
   %10 = add i64 %vector_length2, 1
   call void @memcpy(ptr %7, ptr %9, i64 %10)
-  %11 = add i64 %10, 0
-  %encode_value_ptr = getelementptr i64, ptr %9, i64 %11
-  store i64 %8, ptr %encode_value_ptr, align 4
+  %11 = getelementptr ptr, ptr %9, i64 %10
+  store i64 %8, ptr %11, align 4
   call void @set_tape_data(ptr %9, i64 %heap_size)
   ret void
 }

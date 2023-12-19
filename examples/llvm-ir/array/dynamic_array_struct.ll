@@ -309,7 +309,7 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
-  %size_var26 = alloca i64, align 8
+  %size_var17 = alloca i64, align 8
   %size_var = alloca i64, align 8
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
@@ -345,124 +345,112 @@ body:                                             ; preds = %cond
   call void @builtin_range_check(i64 %6)
   %index_access = getelementptr [2 x ptr], ptr %3, i64 %index
   %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %index_access, i32 0, i32 2
-  %7 = load i64, ptr %size_var, align 4
-  %8 = add i64 %7, 7
-  store i64 %8, ptr %size_var, align 4
+  %7 = load ptr, ptr %struct_member, align 8
+  %8 = load i64, ptr %size_var, align 4
+  %9 = add i64 %8, 7
+  store i64 %9, ptr %size_var, align 4
   br label %next
 
 end_for:                                          ; preds = %cond
-  %9 = load i64, ptr %size_var, align 4
-  %heap_size = add i64 %9, 1
-  %10 = call ptr @heap_malloc(i64 %heap_size)
-  %offset_var_no = alloca i64, align 8
-  store i64 0, ptr %offset_var_no, align 4
+  %10 = load i64, ptr %size_var, align 4
+  %heap_size = add i64 %10, 1
+  %11 = call ptr @heap_malloc(i64 %heap_size)
   %index_ptr2 = alloca i64, align 8
   store i64 0, ptr %index_ptr2, align 4
   %index3 = load i64, ptr %index_ptr2, align 4
   br label %cond4
 
 cond4:                                            ; preds = %next5, %end_for
-  %11 = icmp ult i64 %index3, 2
-  br i1 %11, label %body6, label %end_for7
+  %12 = icmp ult i64 %index3, 2
+  br i1 %12, label %body6, label %end_for7
 
 next5:                                            ; preds = %body6
-  %index24 = load i64, ptr %index_ptr2, align 4
-  %12 = add i64 %index24, 1
-  store i64 %12, ptr %index_ptr2, align 4
+  %index16 = load i64, ptr %index_ptr2, align 4
+  %13 = add i64 %index16, 1
+  store i64 %13, ptr %index_ptr2, align 4
   br label %cond4
 
 body6:                                            ; preds = %cond4
-  %13 = sub i64 1, %index3
-  call void @builtin_range_check(i64 %13)
+  %14 = sub i64 1, %index3
+  call void @builtin_range_check(i64 %14)
   %index_access8 = getelementptr [2 x ptr], ptr %3, i64 %index3
-  %14 = load i64, ptr %offset_var_no, align 4
   %struct_member9 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access8, i32 0, i32 0
-  %elem = load i64, ptr %struct_member9, align 4
-  %encode_value_ptr = getelementptr i64, ptr %10, i64 %14
-  store i64 %elem, ptr %encode_value_ptr, align 4
-  %15 = add i64 1, %14
+  %strcut_member = load i64, ptr %struct_member9, align 4
+  %encode_struct_field = getelementptr ptr, ptr %11, i64 0
+  store i64 %strcut_member, ptr %encode_struct_field, align 4
   %struct_member10 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access8, i32 0, i32 1
-  %elem11 = load i64, ptr %struct_member10, align 4
-  %encode_value_ptr12 = getelementptr i64, ptr %10, i64 %15
-  store i64 %elem11, ptr %encode_value_ptr12, align 4
-  %16 = add i64 1, %15
+  %strcut_member11 = load i64, ptr %struct_member10, align 4
+  %encode_struct_field12 = getelementptr ptr, ptr %encode_struct_field, i64 1
+  store i64 %strcut_member11, ptr %encode_struct_field12, align 4
   %struct_member13 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access8, i32 0, i32 2
-  %elem14 = load ptr, ptr %struct_member13, align 8
-  %elemptr0 = getelementptr [5 x i64], ptr %elem14, i64 0, i64 0
-  %17 = load i64, ptr %elemptr0, align 4
-  %encode_value_ptr15 = getelementptr i64, ptr %10, i64 %16
-  store i64 %17, ptr %encode_value_ptr15, align 4
-  %offset = add i64 %16, 1
-  %elemptr1 = getelementptr [5 x i64], ptr %elem14, i64 0, i64 1
-  %18 = load i64, ptr %elemptr1, align 4
-  %encode_value_ptr16 = getelementptr i64, ptr %10, i64 %offset
-  store i64 %18, ptr %encode_value_ptr16, align 4
-  %offset17 = add i64 %offset, 1
-  %elemptr2 = getelementptr [5 x i64], ptr %elem14, i64 0, i64 2
+  %strcut_member14 = load ptr, ptr %struct_member13, align 8
+  %encode_struct_field15 = getelementptr ptr, ptr %encode_struct_field12, i64 1
+  %elemptr0 = getelementptr [5 x i64], ptr %strcut_member14, i64 0, i64 0
+  %15 = load i64, ptr %elemptr0, align 4
+  %16 = getelementptr ptr, ptr %encode_struct_field15, i64 0
+  store i64 %15, ptr %16, align 4
+  %elemptr1 = getelementptr [5 x i64], ptr %strcut_member14, i64 0, i64 1
+  %17 = load i64, ptr %elemptr1, align 4
+  %18 = getelementptr ptr, ptr %encode_struct_field15, i64 1
+  store i64 %17, ptr %18, align 4
+  %elemptr2 = getelementptr [5 x i64], ptr %strcut_member14, i64 0, i64 2
   %19 = load i64, ptr %elemptr2, align 4
-  %encode_value_ptr18 = getelementptr i64, ptr %10, i64 %offset17
-  store i64 %19, ptr %encode_value_ptr18, align 4
-  %offset19 = add i64 %offset17, 1
-  %elemptr3 = getelementptr [5 x i64], ptr %elem14, i64 0, i64 3
-  %20 = load i64, ptr %elemptr3, align 4
-  %encode_value_ptr20 = getelementptr i64, ptr %10, i64 %offset19
-  store i64 %20, ptr %encode_value_ptr20, align 4
-  %offset21 = add i64 %offset19, 1
-  %elemptr4 = getelementptr [5 x i64], ptr %elem14, i64 0, i64 4
-  %21 = load i64, ptr %elemptr4, align 4
-  %encode_value_ptr22 = getelementptr i64, ptr %10, i64 %offset21
-  store i64 %21, ptr %encode_value_ptr22, align 4
-  %offset23 = add i64 %offset21, 1
-  %22 = add i64 %14, 7
-  store i64 %22, ptr %offset_var_no, align 4
+  %20 = getelementptr ptr, ptr %encode_struct_field15, i64 2
+  store i64 %19, ptr %20, align 4
+  %elemptr3 = getelementptr [5 x i64], ptr %strcut_member14, i64 0, i64 3
+  %21 = load i64, ptr %elemptr3, align 4
+  %22 = getelementptr ptr, ptr %encode_struct_field15, i64 3
+  store i64 %21, ptr %22, align 4
+  %elemptr4 = getelementptr [5 x i64], ptr %strcut_member14, i64 0, i64 4
+  %23 = load i64, ptr %elemptr4, align 4
+  %24 = getelementptr ptr, ptr %encode_struct_field15, i64 4
+  store i64 %23, ptr %24, align 4
+  %25 = getelementptr ptr, ptr %11, i64 7
   br label %next5
 
 end_for7:                                         ; preds = %cond4
-  %23 = load i64, ptr %offset_var_no, align 4
-  %24 = sub i64 %23, 0
-  %25 = add i64 %24, 0
-  %encode_value_ptr25 = getelementptr i64, ptr %10, i64 %25
-  store i64 %9, ptr %encode_value_ptr25, align 4
-  call void @set_tape_data(ptr %10, i64 %heap_size)
+  %26 = getelementptr ptr, ptr %11, i64 1
+  store i64 %10, ptr %26, align 4
+  call void @set_tape_data(ptr %11, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %26 = getelementptr ptr, ptr %input, i64 0
-  store i64 0, ptr %size_var26, align 4
-  %index_ptr27 = alloca i64, align 8
-  store i64 0, ptr %index_ptr27, align 4
-  %index28 = load i64, ptr %index_ptr27, align 4
-  br label %cond29
+  %27 = getelementptr ptr, ptr %input, i64 0
+  store i64 0, ptr %size_var17, align 4
+  %index_ptr18 = alloca i64, align 8
+  store i64 0, ptr %index_ptr18, align 4
+  %index19 = load i64, ptr %index_ptr18, align 4
+  br label %cond20
 
-cond29:                                           ; preds = %next30, %func_1_dispatch
-  %27 = icmp ult i64 %index28, 2
-  br i1 %27, label %body31, label %end_for32
+cond20:                                           ; preds = %next21, %func_1_dispatch
+  %28 = icmp ult i64 %index19, 2
+  br i1 %28, label %body22, label %end_for23
 
-next30:                                           ; preds = %body31
-  %index35 = load i64, ptr %index_ptr27, align 4
-  %28 = add i64 %index35, 1
-  store i64 %28, ptr %index_ptr27, align 4
-  br label %cond29
+next21:                                           ; preds = %body22
+  %index26 = load i64, ptr %index_ptr18, align 4
+  %29 = add i64 %index26, 1
+  store i64 %29, ptr %index_ptr18, align 4
+  br label %cond20
 
-body31:                                           ; preds = %cond29
-  %29 = sub i64 1, %index28
-  call void @builtin_range_check(i64 %29)
-  %index_access33 = getelementptr [2 x ptr], ptr %26, i64 %index28
-  %struct_member34 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access33, i32 0, i32 2
-  %30 = load i64, ptr %size_var26, align 4
-  %31 = add i64 %30, 7
-  store i64 %31, ptr %size_var26, align 4
-  br label %next30
+body22:                                           ; preds = %cond20
+  %30 = sub i64 1, %index19
+  call void @builtin_range_check(i64 %30)
+  %index_access24 = getelementptr [2 x ptr], ptr %27, i64 %index19
+  %struct_member25 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access24, i32 0, i32 2
+  %31 = load ptr, ptr %struct_member25, align 8
+  %32 = load i64, ptr %size_var17, align 4
+  %33 = add i64 %32, 7
+  store i64 %33, ptr %size_var17, align 4
+  br label %next21
 
-end_for32:                                        ; preds = %cond29
-  %32 = load i64, ptr %size_var26, align 4
-  %33 = call i64 @getFirstBookID(ptr %26)
-  %34 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr36 = getelementptr i64, ptr %34, i64 0
-  store i64 %33, ptr %encode_value_ptr36, align 4
-  %encode_value_ptr37 = getelementptr i64, ptr %34, i64 1
-  store i64 1, ptr %encode_value_ptr37, align 4
-  call void @set_tape_data(ptr %34, i64 2)
+end_for23:                                        ; preds = %cond20
+  %34 = load i64, ptr %size_var17, align 4
+  %35 = call i64 @getFirstBookID(ptr %27)
+  %36 = call ptr @heap_malloc(i64 2)
+  store i64 %35, ptr %36, align 4
+  %37 = getelementptr ptr, ptr %36, i64 1
+  store i64 1, ptr %37, align 4
+  call void @set_tape_data(ptr %36, i64 2)
   ret void
 }
 
