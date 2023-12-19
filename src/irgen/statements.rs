@@ -642,7 +642,7 @@ impl Type {
                         .iter()
                         .map(|d| match d {
                             ArrayLength::Fixed(d) => d.to_u32().unwrap(),
-                            _ => unreachable!(),
+                            _ => 1,
                         })
                         .collect::<Vec<_>>();
 
