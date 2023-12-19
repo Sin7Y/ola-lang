@@ -212,9 +212,9 @@ contract Entrypoint {
         // field magic = abi.decode(validate_tx_bytes, (field));
 
         // CR: constant magic.
-        hash magics = poseidon_hash("validateTransaction(hash,hash,Transaction)");
-        fields hash_magic = fields(magics);
-        print(hash_magic);
+        // hash magics = poseidon_hash("validateTransaction(hash,hash,Transaction)");
+        // fields hash_magic = fields(magics);
+        // print(hash_magic);
         // assert(magic == hash_magic[0], "Validate transaction failed.");
     }
 

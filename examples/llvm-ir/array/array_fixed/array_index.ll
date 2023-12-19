@@ -308,10 +308,9 @@ func_1_dispatch:                                  ; preds = %entry
   %5 = load i64, ptr %4, align 4
   %6 = call i64 @array_index(i64 %5)
   %7 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %7, i64 0
-  store i64 %6, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %7, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %6, ptr %7, align 4
+  %8 = getelementptr ptr, ptr %7, i64 1
+  store i64 1, ptr %8, align 4
   call void @set_tape_data(ptr %7, i64 2)
   ret void
 }

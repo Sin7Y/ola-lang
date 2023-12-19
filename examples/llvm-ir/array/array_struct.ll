@@ -289,7 +289,6 @@ done:                                             ; preds = %cond
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
-  %offset_ptr = alloca i64, align 8
   %index_ptr = alloca i64, align 8
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
@@ -309,9 +308,8 @@ func_0_dispatch:                                  ; preds = %entry
   %heap_size = add i64 %5, 1
   %6 = call ptr @heap_malloc(i64 %heap_size)
   %vector_length1 = load i64, ptr %3, align 4
-  %encode_value_ptr = getelementptr i64, ptr %6, i64 0
-  store i64 %vector_length1, ptr %encode_value_ptr, align 4
-  store i64 1, ptr %offset_ptr, align 4
+  store i64 %vector_length1, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
   store i64 0, ptr %index_ptr, align 4
   br label %loop_body
 
@@ -319,28 +317,24 @@ loop_body:                                        ; preds = %loop_body, %func_0_
   %index = load i64, ptr %index_ptr, align 4
   %element = getelementptr ptr, ptr %3, i64 %index
   %elem = load ptr, ptr %element, align 8
-  %offset = load i64, ptr %offset_ptr, align 4
   %struct_member = getelementptr inbounds { i64, i64 }, ptr %elem, i32 0, i32 0
-  %elem2 = load i64, ptr %struct_member, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %6, i64 %offset
-  store i64 %elem2, ptr %encode_value_ptr3, align 4
-  %7 = add i64 1, %offset
-  %struct_member4 = getelementptr inbounds { i64, i64 }, ptr %elem, i32 0, i32 1
-  %elem5 = load i64, ptr %struct_member4, align 4
-  %encode_value_ptr6 = getelementptr i64, ptr %6, i64 %7
-  store i64 %elem5, ptr %encode_value_ptr6, align 4
-  %next_offset = add i64 2, %offset
-  store i64 %next_offset, ptr %offset_ptr, align 4
+  %strcut_member = load i64, ptr %struct_member, align 4
+  %encode_struct_field = getelementptr ptr, ptr %7, i64 0
+  store i64 %strcut_member, ptr %encode_struct_field, align 4
+  %struct_member2 = getelementptr inbounds { i64, i64 }, ptr %elem, i32 0, i32 1
+  %strcut_member3 = load i64, ptr %struct_member2, align 4
+  %encode_struct_field4 = getelementptr ptr, ptr %encode_struct_field, i64 1
+  store i64 %strcut_member3, ptr %encode_struct_field4, align 4
+  %8 = getelementptr ptr, ptr %7, i64 2
   %next_index = add i64 %index, 1
   store i64 %next_index, ptr %index_ptr, align 4
   %index_cond = icmp ult i64 %next_index, %vector_length1
   br i1 %index_cond, label %loop_body, label %loop_end
 
 loop_end:                                         ; preds = %loop_body
-  %8 = add i64 %vector_length1, 1
-  %9 = add i64 %8, 0
-  %encode_value_ptr7 = getelementptr i64, ptr %6, i64 %9
-  store i64 %5, ptr %encode_value_ptr7, align 4
+  %9 = add i64 %vector_length1, 1
+  %10 = getelementptr ptr, ptr %6, i64 %9
+  store i64 %5, ptr %10, align 4
   call void @set_tape_data(ptr %6, i64 %heap_size)
   ret void
 }

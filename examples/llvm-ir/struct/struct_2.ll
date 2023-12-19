@@ -275,15 +275,15 @@ func_0_dispatch:                                  ; preds = %entry
   %3 = call ptr @myFunction()
   %4 = call ptr @heap_malloc(i64 3)
   %struct_member = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
-  %elem = load i64, ptr %struct_member, align 4
-  %encode_value_ptr = getelementptr i64, ptr %4, i64 0
-  store i64 %elem, ptr %encode_value_ptr, align 4
+  %strcut_member = load i64, ptr %struct_member, align 4
+  %encode_struct_field = getelementptr ptr, ptr %4, i64 0
+  store i64 %strcut_member, ptr %encode_struct_field, align 4
   %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
-  %elem2 = load i64, ptr %struct_member1, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %4, i64 1
-  store i64 %elem2, ptr %encode_value_ptr3, align 4
-  %encode_value_ptr4 = getelementptr i64, ptr %4, i64 2
-  store i64 2, ptr %encode_value_ptr4, align 4
+  %strcut_member2 = load i64, ptr %struct_member1, align 4
+  %encode_struct_field3 = getelementptr ptr, ptr %encode_struct_field, i64 1
+  store i64 %strcut_member2, ptr %encode_struct_field3, align 4
+  %5 = getelementptr ptr, ptr %4, i64 2
+  store i64 2, ptr %5, align 4
   call void @set_tape_data(ptr %4, i64 3)
   ret void
 }

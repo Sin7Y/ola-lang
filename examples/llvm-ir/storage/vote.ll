@@ -1259,33 +1259,31 @@ func_1_dispatch:                                  ; preds = %entry
 func_2_dispatch:                                  ; preds = %entry
   %18 = call i64 @winningProposal()
   %19 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %19, i64 0
-  store i64 %18, ptr %encode_value_ptr, align 4
-  %encode_value_ptr5 = getelementptr i64, ptr %19, i64 1
-  store i64 1, ptr %encode_value_ptr5, align 4
+  store i64 %18, ptr %19, align 4
+  %20 = getelementptr ptr, ptr %19, i64 1
+  store i64 1, ptr %20, align 4
   call void @set_tape_data(ptr %19, i64 2)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %20 = call ptr @getWinnerName()
-  %vector_length6 = load i64, ptr %20, align 4
-  %21 = add i64 %vector_length6, 1
-  %heap_size = add i64 %21, 1
-  %22 = call ptr @heap_malloc(i64 %heap_size)
-  %vector_length7 = load i64, ptr %20, align 4
-  %23 = add i64 %vector_length7, 1
-  call void @memcpy(ptr %20, ptr %22, i64 %23)
-  %24 = add i64 %23, 0
-  %encode_value_ptr8 = getelementptr i64, ptr %22, i64 %24
-  store i64 %21, ptr %encode_value_ptr8, align 4
-  call void @set_tape_data(ptr %22, i64 %heap_size)
+  %21 = call ptr @getWinnerName()
+  %vector_length5 = load i64, ptr %21, align 4
+  %22 = add i64 %vector_length5, 1
+  %heap_size = add i64 %22, 1
+  %23 = call ptr @heap_malloc(i64 %heap_size)
+  %vector_length6 = load i64, ptr %21, align 4
+  %24 = add i64 %vector_length6, 1
+  call void @memcpy(ptr %21, ptr %23, i64 %24)
+  %25 = getelementptr ptr, ptr %23, i64 %24
+  store i64 %22, ptr %25, align 4
+  call void @set_tape_data(ptr %23, i64 %heap_size)
   ret void
 
 func_4_dispatch:                                  ; preds = %entry
   call void @vote_test()
-  %25 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %25, align 4
-  call void @set_tape_data(ptr %25, i64 1)
+  %26 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %26, align 4
+  call void @set_tape_data(ptr %26, i64 1)
   ret void
 }
 
