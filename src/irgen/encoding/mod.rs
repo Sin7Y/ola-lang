@@ -13,7 +13,7 @@ use crate::sema::ast::{ArrayLength, Namespace, Type};
 
 use self::{
     decode::read_from_buffer,
-    encode::{encode_into_buffer, encode_uint},
+    encode::encode_into_buffer,
 };
 
 use super::{binary::Binary, expression::array_subscript, storage::storage_load};
@@ -37,19 +37,20 @@ pub(super) fn abi_encode<'a>(
 
     let heap_start_ptr = bin.vector_new(size);
 
-    let mut offset = bin.context.i64_type().const_int(1, false);
+    let mut buffer = heap_start_ptr;
+
+    let mut advance = bin.context.i64_type().const_int(1, false);
 
     for (arg_no, item) in args.iter().enumerate() {
-        let advance = encode_into_buffer(
-            heap_start_ptr,
-            item.clone(),
-            &types[arg_no],
-            offset.clone(),
-            bin,
-            func_value,
-            ns,
-        );
-        offset = bin.builder.build_int_add(advance, offset, "");
+        buffer = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                buffer,
+                &[advance],
+                "",
+            )
+        };
+        advance = encode_into_buffer(buffer, item.clone(), &types[arg_no], bin, func_value, ns);
     }
     heap_start_ptr
 }
@@ -73,23 +74,31 @@ pub(super) fn abi_encode_store_tape<'a>(
 
     let heap_start_ptr = bin.heap_malloc(heap_size);
 
-    let mut offset = bin.context.i64_type().const_zero();
+    let mut buffer = heap_start_ptr;
 
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
-            heap_start_ptr,
+            buffer,
             item.clone(),
             &types[arg_no],
-            offset.clone(),
             bin,
             func_value,
             ns,
         );
-        offset = bin.builder.build_int_add(advance, offset, "");
+
+        buffer = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                buffer,
+                &[advance],
+                "",
+            )
+        };
+        
     }
     // encode size to heap, the "size" here is only used for tape area
     // identification.
-    encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
+    bin.builder.build_store(buffer, size);
 
     bin.tape_data_store(heap_start_ptr, heap_size);
 }
@@ -114,29 +123,42 @@ pub(super) fn abi_encode_with_selector<'a>(
 
     let heap_start_ptr = bin.vector_new(heap_size);
 
-    let mut offset = bin.context.i64_type().const_int(1, false);
+    let vector_data = bin.vector_data(heap_start_ptr.as_basic_value_enum());
+
+    let mut buffer = vector_data;
 
     for (arg_no, item) in args.iter().enumerate() {
         let advance = encode_into_buffer(
-            heap_start_ptr,
+            buffer,
             item.clone(),
             &types[arg_no],
-            offset,
             bin,
             func_value,
             ns,
-        );
-        offset = bin.builder.build_int_add(advance, offset, "");
+        );  
+        buffer = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                buffer,
+                &[advance],
+                "",
+            )
+        };
     }
     // encode size to heap, the "size" here is used for tape area identification.
-    encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
+    bin.builder.build_store(buffer, size);
 
-    offset = bin
-        .builder
-        .build_int_add(offset, bin.context.i64_type().const_int(1, false), "");
+    buffer = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            buffer,
+            &[bin.context.i64_type().const_int(1, false)],
+            "",
+        )
+    };
 
     // encode selector to heap
-    encode_uint(heap_start_ptr, selector, offset, bin);
+    bin.builder.build_store(buffer, selector);
 
     heap_start_ptr
 }
@@ -459,12 +481,12 @@ fn calculate_struct_size<'a>(
     for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
         let struct_field = if field_ty.is_reference_type(ns) {
-            Some(
+            let field_ptr = 
                 bin.builder
                     .build_struct_gep(bin.llvm_type(ty, ns), struct_ptr, i as u32, "struct_member")
                     .unwrap()
-                    .as_basic_value_enum(),
-            )
+                    .as_basic_value_enum();
+            Some(bin.builder.build_load(bin.llvm_var_ty(&field_ty, ns), field_ptr.into_pointer_value(), ""))
         } else {
             None
         };
@@ -496,8 +518,11 @@ fn load_struct_member<'a>(
         )
         .unwrap();
 
-    bin.builder
-        .build_load(bin.llvm_var_ty(field_ty, ns), struct_member, "elem")
+    bin.builder.build_load(
+        bin.llvm_var_ty(field_ty, ns),
+        struct_member,
+        "strcut_member",
+    )
 }
 
 /// Checks if struct contains only primitive types and returns its memory

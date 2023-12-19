@@ -1,0 +1,33 @@
+[
+  {
+    "name": "setVars",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "data",
+        "type": "u32"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "add",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "u32"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  }
+]

@@ -325,31 +325,28 @@ missing_function:                                 ; preds = %entry
 func_0_dispatch:                                  ; preds = %entry
   %3 = call i64 @array_literal()
   %4 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %4, i64 0
-  store i64 %3, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %4, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %3, ptr %4, align 4
+  %5 = getelementptr ptr, ptr %4, i64 1
+  store i64 1, ptr %5, align 4
   call void @set_tape_data(ptr %4, i64 2)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %5 = call i64 @array_dynamic_1()
-  %6 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr2 = getelementptr i64, ptr %6, i64 0
-  store i64 %5, ptr %encode_value_ptr2, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %6, i64 1
-  store i64 1, ptr %encode_value_ptr3, align 4
-  call void @set_tape_data(ptr %6, i64 2)
+  %6 = call i64 @array_dynamic_1()
+  %7 = call ptr @heap_malloc(i64 2)
+  store i64 %6, ptr %7, align 4
+  %8 = getelementptr ptr, ptr %7, i64 1
+  store i64 1, ptr %8, align 4
+  call void @set_tape_data(ptr %7, i64 2)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %7 = call i64 @array_dynamic_2()
-  %8 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr4 = getelementptr i64, ptr %8, i64 0
-  store i64 %7, ptr %encode_value_ptr4, align 4
-  %encode_value_ptr5 = getelementptr i64, ptr %8, i64 1
-  store i64 1, ptr %encode_value_ptr5, align 4
-  call void @set_tape_data(ptr %8, i64 2)
+  %9 = call i64 @array_dynamic_2()
+  %10 = call ptr @heap_malloc(i64 2)
+  store i64 %9, ptr %10, align 4
+  %11 = getelementptr ptr, ptr %10, i64 1
+  store i64 1, ptr %11, align 4
+  call void @set_tape_data(ptr %10, i64 2)
   ret void
 }
 

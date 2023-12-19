@@ -351,23 +351,21 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = load i64, ptr %3, align 4
   %5 = call i64 @fib_recursive(i64 %4)
   %6 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr = getelementptr i64, ptr %6, i64 0
-  store i64 %5, ptr %encode_value_ptr, align 4
-  %encode_value_ptr1 = getelementptr i64, ptr %6, i64 1
-  store i64 1, ptr %encode_value_ptr1, align 4
+  store i64 %5, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 1, ptr %7, align 4
   call void @set_tape_data(ptr %6, i64 2)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %7 = getelementptr ptr, ptr %input, i64 0
-  %8 = load i64, ptr %7, align 4
-  %9 = call i64 @fib_non_recursive(i64 %8)
-  %10 = call ptr @heap_malloc(i64 2)
-  %encode_value_ptr2 = getelementptr i64, ptr %10, i64 0
-  store i64 %9, ptr %encode_value_ptr2, align 4
-  %encode_value_ptr3 = getelementptr i64, ptr %10, i64 1
-  store i64 1, ptr %encode_value_ptr3, align 4
-  call void @set_tape_data(ptr %10, i64 2)
+  %8 = getelementptr ptr, ptr %input, i64 0
+  %9 = load i64, ptr %8, align 4
+  %10 = call i64 @fib_non_recursive(i64 %9)
+  %11 = call ptr @heap_malloc(i64 2)
+  store i64 %10, ptr %11, align 4
+  %12 = getelementptr ptr, ptr %11, i64 1
+  store i64 1, ptr %12, align 4
+  call void @set_tape_data(ptr %11, i64 2)
   ret void
 }
 
