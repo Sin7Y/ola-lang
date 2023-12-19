@@ -428,13 +428,13 @@ pub fn fixed_array_encode<'a>(
     let size = dimensions.iter().product();
 
     for i in 0..size {
-        let mut ind = vec![bin.context.i64_type().const_zero()];
+        let mut ind = vec![];
 
         let mut e = i;
 
         // Mapping one-dimensional array indices to multi-dimensional array indices.
         for d in dimensions {
-            ind.insert(1, bin.context.i64_type().const_int((e % *d).into(), false));
+            ind.insert(0, bin.context.i64_type().const_int((e % *d).into(), false));
 
             e /= *d;
         }
