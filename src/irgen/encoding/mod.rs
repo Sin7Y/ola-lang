@@ -128,7 +128,7 @@ pub(super) fn abi_encode_with_selector<'a>(
         );
         offset = bin.builder.build_int_add(advance, offset, "");
     }
-// encode size to heap, the "size" here is used for tape area identification.
+    // encode size to heap, the "size" here is used for tape area identification.
     encode_uint(heap_start_ptr, size.as_basic_value_enum(), offset, bin);
 
     offset = bin
@@ -170,7 +170,6 @@ pub(super) fn abi_decode<'a>(
         let (read_item, advance) = read_from_buffer(input, bin, item, func_value, ns);
         read_items.push(read_item);
         offset = advance;
-
     });
 
     // validator.validate_all_bytes_read(bin, offset, func_value);
