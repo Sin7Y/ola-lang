@@ -80,7 +80,6 @@ pub fn run_on_function<T: TargetIsa>(function: &mut Function<T>) {
             }
             break;
         }
-        let _ = availables.pop(); // TODO: Don't used RBP.
         if !spill_regs.contains(&vreg) {
             availables.pop(); // TODO
         }
