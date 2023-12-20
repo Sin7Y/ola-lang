@@ -3,7 +3,7 @@
 use indexmap::IndexMap;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use num_bigint::BigInt;
-use num_traits::{ToPrimitive};
+use num_traits::ToPrimitive;
 
 use super::expression::expression;
 use super::functions::Vartable;

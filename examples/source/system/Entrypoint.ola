@@ -125,13 +125,11 @@ contract Entrypoint {
         if (code_len != 0) {
             // First check if hash and bytecode matches.
             hash bytecodeHash = hashL2Bytecode(_tx.codes);
-            print(bytecodeHash);
             // assert(bytecodeHash == _tx.codeHash, "bytecode hash is not same as expected");
 
             // Check if bytecode is already deployed contracts
             address KNOWN_CODES_STORAGE = address(0x8004);
             fields is_codehash_known_calldata = abi.encodeWithSignature("isCodehashKnown(hash)", bytecodeHash);
-            print(is_codehash_known_calldata);
             // fields is_codehash_known_bytes = KNOWN_CODES_STORAGE.call(is_codehash_known_calldata);
             // bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
 
@@ -143,7 +141,6 @@ contract Entrypoint {
             // CR: constrain to == DEPLOYER
             address DEPLOYER_SYSTEM_CONTRACT = address(0x8005);
             address to = abi.decode(_tx.data[0:4], (address));
-            print(to);
             //assert(to == DEPLOYER_SYSTEM_CONTRACT, "destination must be contract deployer account");
         }
     }
@@ -158,24 +155,18 @@ contract Entrypoint {
         // TODO: hash string is not supported.
         // Compute the personal magic of struct, this can be const(meaning we can do the hash offline and hardcode the magic value)
         hash TRANSACTION_TYPE_HASH = poseidon_hash("Transaction(address sender, u32 nonce, fields data, u32 chainid, u32 version, fields codes, fields signature)");
-        print(TRANSACTION_TYPE_HASH);
         // MOCK_TEST: cc6d8618e74a58d1, 0bc19b503c8f6d8e, 160e900745985a7d, 52c36b8cb2846edc
 
         // Compute the struct hash
         fields encodedStruct = abi.encode(TRANSACTION_TYPE_HASH, _tx.sender, _tx.nonce, _tx.version, _tx.chainid, poseidon_hash(_tx.data), poseidon_hash(_tx.codes));
         // MOCK_TEST: [cc6d8618e74a58d1, 0bc19b503c8f6d8e, 160e900745985a7d, 52c36b8cb2846edc, 8,8,8,8, 1, 1, 2, 5f9c6727994b89b2, 57cfa252667fbbc2, 20b48f89e1f704a0, 5f43a95b8a97ccfd, 0,0,0,0]
-        print(encodedStruct);
         hash structHash = poseidon_hash(encodedStruct);
-        print(structHash);
         // Compute the personal magic of EIP712, again, this can be const
         hash EIP712_DOMAIN_TYPEHASH = poseidon_hash("EIP712Domain(string name,string version,u32 chainId)");
-        print(EIP712_DOMAIN_TYPEHASH);
         // Compute the domain separator, used in EIP712 context
         hash domainSeparator = poseidon_hash(abi.encode(EIP712_DOMAIN_TYPEHASH, poseidon_hash("Ola"), poseidon_hash("1"), chain_id()));
-        print(domainSeparator);
         // Compute the signed hash
         hash signedHash = poseidon_hash(abi.encode("\x19\x01", domainSeparator, structHash));
-        print(signedHash);
         return signedHash;
     }
     //
