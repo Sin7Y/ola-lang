@@ -228,14 +228,6 @@ pub(crate) fn storage_load<'a>(
                     .build_struct_gep(llvm_ty, struct_alloca, i as u32, field.name_as_str())
                     .unwrap();
 
-                let val = if field.ty.deref_memory().is_fixed_reference_type() {
-                    let load_ty = bin.llvm_type(field.ty.deref_memory(), ns);
-                    bin.builder
-                        .build_load(load_ty, val.into_pointer_value(), field.name_as_str())
-                } else {
-                    val
-                };
-
                 bin.builder.build_store(elem, val);
             }
 
@@ -401,7 +393,7 @@ pub(crate) fn storage_store<'a>(
         }
         Type::Struct(no) => {
             for (i, field) in ns.structs[*no].fields.iter().enumerate() {
-                let elem = bin
+                let elem_ptr = bin
                     .builder
                     .build_struct_gep(
                         bin.llvm_type(ty.deref_any(), ns),
@@ -410,7 +402,7 @@ pub(crate) fn storage_store<'a>(
                         field.name_as_str(),
                     )
                     .unwrap();
-
+                let elem = bin.builder.build_load(bin.llvm_var_ty(&field.ty, ns), elem_ptr, "");
                 storage_store(bin, &field.ty, slot, elem.into(), function, ns);
 
                 if (!field.ty.is_reference_type(ns) || matches!(field.ty, Type::String))
