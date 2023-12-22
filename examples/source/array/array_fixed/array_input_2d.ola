@@ -1,25 +1,31 @@
 contract ArrayInputExample {
     
-    fn array_input_u32(u32[][3] array, u32 b) -> (u32[]) {
-        u32[] a = array[b];
-        return a;
-    }
+    // fn array_input_u32(u32[][3] array, u32 b) -> (u32[]) {
+    //     u32[] a = array[b];
+    //     return a;
+    // }
 
 
     fn array_output_u32() -> (u32[][3]) {
+        u32[] array_field1 = new u32[](2);
+        u32[] array_field2 = new u32[](2);
+        u32[] array_field3 = new u32[](2);
         u32[][3] array;
+        array[0] = array_field1;
+        array[1] = array_field2;
+        array[2] = array_field3;
         return array;
     }
     
 
-    fn array_input_address(address[][3] array, u32 b) -> (address[]) {
-        address[] a = array[b];
-        return a;
-    }
+    // fn array_input_address(address[][3] array, u32 b) -> (address[]) {
+    //     address[] a = array[b];
+    //     return a;
+    // }
 
 
-    fn array_output_address() -> (address[][3]) {
-        address[][3] array;
-        return array;
-    }
+    // fn array_output_address() -> (address[][3]) {
+    //     address[][3] array;
+    //     return array;
+    // }
 }

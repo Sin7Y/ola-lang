@@ -279,7 +279,7 @@ entry:
   %13 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %10, ptr %13, i64 8)
   %slot_value = load i64, ptr %13, align 4
-  %slot_offset = add i64 %slot_value, 0
+  %slot_offset = add i64 %slot_value, 2
   store i64 %slot_offset, ptr %13, align 4
   %slot_value1 = load i64, ptr %13, align 4
   %slot_offset2 = add i64 %slot_value1, 0

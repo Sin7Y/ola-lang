@@ -548,7 +548,7 @@ pub fn expression<'a>(
             let array_size = bin
                 .context
                 .i64_type()
-                .const_int(ty.memory_size_of(ns).to_u64().unwrap(), false);
+                .const_int(ty.type_size_of(ns).to_u64().unwrap(), false);
 
             let array_alloca = bin.heap_malloc(array_size);
 

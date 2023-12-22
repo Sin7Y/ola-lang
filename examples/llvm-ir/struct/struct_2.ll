@@ -276,12 +276,12 @@ func_0_dispatch:                                  ; preds = %entry
   %4 = call ptr @heap_malloc(i64 3)
   %struct_member = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 0
   %strcut_member = load i64, ptr %struct_member, align 4
-  %encode_struct_field = getelementptr ptr, ptr %4, i64 0
-  store i64 %strcut_member, ptr %encode_struct_field, align 4
+  %struct_offset = getelementptr ptr, ptr %4, i64 0
+  store i64 %strcut_member, ptr %struct_offset, align 4
   %struct_member1 = getelementptr inbounds { i64, i64 }, ptr %3, i32 0, i32 1
   %strcut_member2 = load i64, ptr %struct_member1, align 4
-  %encode_struct_field3 = getelementptr ptr, ptr %encode_struct_field, i64 1
-  store i64 %strcut_member2, ptr %encode_struct_field3, align 4
+  %struct_offset3 = getelementptr ptr, ptr %struct_offset, i64 1
+  store i64 %strcut_member2, ptr %struct_offset3, align 4
   %5 = getelementptr ptr, ptr %4, i64 2
   store i64 2, ptr %5, align 4
   call void @set_tape_data(ptr %4, i64 3)
