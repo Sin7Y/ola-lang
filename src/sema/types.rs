@@ -129,7 +129,6 @@ fn check_infinite_struct_size(graph: &Graph, nodes: Vec<usize>, ns: &mut Namespa
         let mut infinite_edge = false;
         for edge in graph.edges_connecting(a.into(), b.into()) {
             match &ns.structs[a].fields[*edge.weight()].ty {
-                Type::Array(_, dims) if dims.first() != Some(&ArrayLength::Dynamic) => {}
                 Type::Struct(_) => {}
                 _ => continue,
             }
@@ -633,9 +632,8 @@ impl Type {
     pub fn is_primitive(&self) -> bool {
         match self {
             Type::Bool => true,
-            Type::Address => true,
+            Type::Address | Type::Contract(_)| Type::Hash => false,
             Type::Uint(_) => true,
-            Type::Hash => true,
             Type::Field => true,
             Type::Ref(r) => r.is_primitive(),
             Type::StorageRef(r) => r.is_primitive(),
@@ -762,6 +760,47 @@ impl Type {
         }
     }
 
+    /// Return the size of the type represented in memory
+    /// dynamic data types always occupy 1 pointer space.
+    pub fn type_size_of(&self, ns: &Namespace) -> BigInt {
+        self.type_size_of_internal(ns, &mut HashSet::new())
+    }
+
+    pub fn type_size_of_internal(
+        &self,
+        ns: &Namespace,
+        structs_visited: &mut HashSet<usize>,
+    ) -> BigInt {
+        self.guarded_recursion(structs_visited, 0.into(), |structs_visited| match self {
+            Type::Enum(_) => BigInt::one(),
+            Type::Bool => BigInt::one(),
+            Type::Field => BigInt::one(),
+            Type::Contract(_) | Type::Address | Type::Hash => BigInt::one(),
+            Type::Uint(32) => BigInt::one(),
+            Type::Array(_, dims) => {
+                let pointer_size = BigInt::one();
+                dims.iter()
+                    .map(|d| match d {
+                        ArrayLength::Fixed(n) => n,
+                        ArrayLength::Dynamic => &pointer_size,
+                        ArrayLength::AnyFixed => unreachable!(),
+                    })
+                    .product::<BigInt>()
+            }
+            Type::Struct(n) => BigInt::from(ns.structs[*n].fields.len()),
+            Type::String
+            | Type::DynamicBytes
+            | Type::Ref(_)
+            | Type::Slice(_)
+            | Type::StorageRef(..) => BigInt::one(),
+            Type::Unresolved => BigInt::zero(),
+            Type::UserType(no) => ns.user_types[*no]
+                .ty
+                .type_size_of_internal(ns, structs_visited),
+            _ => unimplemented!("sizeof on {:?}", self),
+        })
+    }
+
     /// Returns the size a type occupies in memory
     pub fn memory_size_of(&self, ns: &Namespace) -> BigInt {
         self.memory_size_of_internal(ns, &mut HashSet::new())
@@ -776,19 +815,19 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Field => BigInt::one(),
-            Type::Contract(_) | Type::Address | Type::Hash => BigInt::one(),
+            Type::Contract(_) | Type::Address | Type::Hash => BigInt::from(4),
             Type::Uint(32) => BigInt::one(),
-            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => BigInt::one(),
-            Type::Array(_, dims) => {
+            Type::Array(ty, dims) => {
                 let pointer_size = BigInt::one();
+                ty.memory_size_of_internal(ns, structs_visited).mul(
                     dims.iter()
                         .map(|d| match d {
                             ArrayLength::Fixed(n) => n,
                             ArrayLength::Dynamic => &pointer_size,
                             ArrayLength::AnyFixed => unreachable!(),
                         })
-                        .product::<BigInt>()
-                
+                        .product::<BigInt>(),
+                )
             }
             Type::Struct(n) => BigInt::from(ns.structs[*n].fields.len()),
             Type::String
@@ -839,7 +878,7 @@ impl Type {
         }
     }
 
-    /// Calculate how much memory this type occupies in Solana's storage.
+    /// Calculate how much memory this type occupies in storage.
     /// Depending on the llvm implementation there might be padding between
     /// elements which is not accounted for.
     pub fn storage_size(&self, ns: &Namespace) -> BigInt {
@@ -922,7 +961,6 @@ impl Type {
                 .filter(|f| !f.infinite_size)
                 .map(|f| f.ty.storage_slots(ns))
                 .sum(),
-            Type::Array(_, dims) if dims.first() == Some(&ArrayLength::Dynamic) => 1.into(),
             Type::Array(ty, dims) => {
                 let one = 1.into();
                 ty.storage_slots(ns)

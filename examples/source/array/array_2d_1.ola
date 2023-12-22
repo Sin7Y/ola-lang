@@ -1,0 +1,24 @@
+
+
+contract TwoDArrayExample {
+    fn create2DArray() -> (u32[3][]) {
+   
+        u32[3][] array2D = new u32[3][](2);
+
+        return array2D;
+    }
+
+
+    fn create2DArray2() -> (u32[3][]) {
+   
+        u32[3][] array2D = new u32[3][](2);
+        array2D[0][1] = 2;
+
+        return array2D;
+    }
+
+    fn getElement(u32[2][3] _array2D, u32 _i, u32 _j) -> (u32) {
+       
+        return _array2D[_i][_j];
+    }
+}

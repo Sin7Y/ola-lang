@@ -252,12 +252,6 @@ exit:                                             ; preds = %loop
 define void @test() {
 entry:
   %0 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
-  store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
-  store i64 0, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
-  store i64 0, ptr %elemptr2, align 4
   %index_access = getelementptr [3 x i64], ptr %0, i64 2
   store i64 3, ptr %index_access, align 4
   %index_access1 = getelementptr [3 x i64], ptr %0, i64 1

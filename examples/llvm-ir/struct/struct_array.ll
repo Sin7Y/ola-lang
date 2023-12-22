@@ -318,7 +318,6 @@ entry:
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
-  %index_ptr = alloca i64, align 8
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
@@ -342,56 +341,41 @@ func_0_dispatch:                                  ; preds = %entry
   %8 = call ptr @heap_malloc(i64 %heap_size)
   %struct_member1 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
   %strcut_member = load i64, ptr %struct_member1, align 4
-  %encode_struct_field = getelementptr ptr, ptr %8, i64 0
-  store i64 %strcut_member, ptr %encode_struct_field, align 4
+  %struct_offset = getelementptr ptr, ptr %8, i64 0
+  store i64 %strcut_member, ptr %struct_offset, align 4
   %struct_member2 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
   %strcut_member3 = load ptr, ptr %struct_member2, align 8
-  %encode_struct_field4 = getelementptr ptr, ptr %encode_struct_field, i64 1
+  %struct_offset4 = getelementptr ptr, ptr %struct_offset, i64 1
   %vector_length5 = load i64, ptr %strcut_member3, align 4
-  store i64 %vector_length5, ptr %encode_struct_field4, align 4
-  %9 = getelementptr ptr, ptr %encode_struct_field4, i64 1
-  store i64 0, ptr %index_ptr, align 4
-  br label %loop_body
-
-loop_body:                                        ; preds = %loop_body, %func_0_dispatch
-  %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %strcut_member3, i64 %index
-  %elem = load i64, ptr %element, align 4
-  store i64 %elem, ptr %9, align 4
-  %10 = getelementptr ptr, ptr %9, i64 1
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %vector_length5
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-loop_end:                                         ; preds = %loop_body
-  %11 = add i64 %vector_length5, 1
-  %12 = add i64 %11, 1
-  %13 = getelementptr ptr, ptr %8, i64 %12
-  store i64 %7, ptr %13, align 4
+  %9 = mul i64 %vector_length5, 1
+  %10 = add i64 %9, 1
+  call void @memcpy(ptr %strcut_member3, ptr %struct_offset4, i64 %10)
+  %struct_size = add i64 %10, 1
+  %11 = getelementptr ptr, ptr %8, i64 %struct_size
+  store i64 %7, ptr %11, align 4
   call void @set_tape_data(ptr %8, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %14 = getelementptr ptr, ptr %input, i64 0
-  %decode_struct_field = getelementptr ptr, ptr %14, i64 0
-  %15 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field6 = getelementptr ptr, ptr %14, i64 1
+  %12 = getelementptr ptr, ptr %input, i64 0
+  %decode_struct_field = getelementptr ptr, ptr %12, i64 0
+  %13 = load i64, ptr %decode_struct_field, align 4
+  %decode_struct_field6 = getelementptr ptr, ptr %12, i64 1
   %vector_length7 = load i64, ptr %decode_struct_field6, align 4
-  %16 = mul i64 %vector_length7, 1
-  %17 = add i64 %16, 1
-  %decode_struct_offset = add i64 1, %17
-  %18 = call ptr @heap_malloc(i64 2)
-  %struct_member8 = getelementptr inbounds { i64, ptr }, ptr %18, i32 0, i32 0
-  store i64 %15, ptr %struct_member8, align 4
-  %struct_member9 = getelementptr inbounds { i64, ptr }, ptr %18, i32 0, i32 1
+  %14 = mul i64 %vector_length7, 1
+  %15 = add i64 %14, 1
+  %decode_struct_offset = add i64 1, %15
+  %16 = call ptr @heap_malloc(i64 2)
+  %struct_member8 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 0
+  store i64 %13, ptr %struct_member8, align 4
+  %struct_member9 = getelementptr inbounds { i64, ptr }, ptr %16, i32 0, i32 1
   store ptr %decode_struct_field6, ptr %struct_member9, align 8
-  %19 = call i64 @getFirstGrade(ptr %18)
-  %20 = call ptr @heap_malloc(i64 2)
-  store i64 %19, ptr %20, align 4
-  %21 = getelementptr ptr, ptr %20, i64 1
-  store i64 1, ptr %21, align 4
-  call void @set_tape_data(ptr %20, i64 2)
+  %17 = call i64 @getFirstGrade(ptr %16)
+  %18 = call ptr @heap_malloc(i64 2)
+  store i64 %17, ptr %18, align 4
+  %19 = getelementptr ptr, ptr %18, i64 1
+  store i64 1, ptr %19, align 4
+  call void @set_tape_data(ptr %18, i64 2)
   ret void
 }
 

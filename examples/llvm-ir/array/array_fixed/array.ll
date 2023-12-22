@@ -252,12 +252,6 @@ exit:                                             ; preds = %loop
 define void @fixed_array_test() {
 entry:
   %0 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
-  store i64 0, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
-  store i64 0, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
-  store i64 0, ptr %elemptr2, align 4
   %index_access = getelementptr [3 x i64], ptr %0, i64 2
   store i64 99, ptr %index_access, align 4
   %1 = call ptr @array_call(ptr %0)
@@ -303,20 +297,9 @@ func_1_dispatch:                                  ; preds = %entry
   %4 = getelementptr ptr, ptr %input, i64 0
   %5 = call ptr @array_call(ptr %4)
   %6 = call ptr @heap_malloc(i64 4)
-  %elemptr0 = getelementptr [3 x i64], ptr %5, i64 0, i64 0
-  %7 = load i64, ptr %elemptr0, align 4
-  %8 = getelementptr ptr, ptr %6, i64 0
-  store i64 %7, ptr %8, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %5, i64 0, i64 1
-  %9 = load i64, ptr %elemptr1, align 4
-  %10 = getelementptr ptr, ptr %6, i64 1
-  store i64 %9, ptr %10, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %5, i64 0, i64 2
-  %11 = load i64, ptr %elemptr2, align 4
-  %12 = getelementptr ptr, ptr %6, i64 2
-  store i64 %11, ptr %12, align 4
-  %13 = getelementptr ptr, ptr %6, i64 3
-  store i64 3, ptr %13, align 4
+  call void @memcpy(ptr %5, ptr %6, i64 3)
+  %7 = getelementptr ptr, ptr %6, i64 3
+  store i64 3, ptr %7, align 4
   call void @set_tape_data(ptr %6, i64 4)
   ret void
 }
