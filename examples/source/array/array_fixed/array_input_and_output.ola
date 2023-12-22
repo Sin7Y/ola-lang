@@ -22,6 +22,12 @@ contract ArrayInputExample {
         return a;
     }
 
+    fn array_input_address_2(address[2][3] array) -> (address[2][3]) {
+        fields encode_value = abi.encode(array);
+        address[2][3] a = abi.decode(encode_value, (address[2][3]));
+        return a;
+    }
+
 
     fn array_output_address() -> (address[2][3]) {
         address[2][3] array;

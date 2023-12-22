@@ -273,26 +273,6 @@ entry:
   %elemptr9 = getelementptr [10 x i64], ptr %0, i64 9
   store i64 9, ptr %elemptr9, align 4
   %1 = call ptr @heap_malloc(i64 10)
-  %elemptr01 = getelementptr [10 x i64], ptr %1, i64 0
-  store i64 0, ptr %elemptr01, align 4
-  %elemptr12 = getelementptr [10 x i64], ptr %1, i64 1
-  store i64 0, ptr %elemptr12, align 4
-  %elemptr23 = getelementptr [10 x i64], ptr %1, i64 2
-  store i64 0, ptr %elemptr23, align 4
-  %elemptr34 = getelementptr [10 x i64], ptr %1, i64 3
-  store i64 0, ptr %elemptr34, align 4
-  %elemptr45 = getelementptr [10 x i64], ptr %1, i64 4
-  store i64 0, ptr %elemptr45, align 4
-  %elemptr56 = getelementptr [10 x i64], ptr %1, i64 5
-  store i64 0, ptr %elemptr56, align 4
-  %elemptr67 = getelementptr [10 x i64], ptr %1, i64 6
-  store i64 0, ptr %elemptr67, align 4
-  %elemptr78 = getelementptr [10 x i64], ptr %1, i64 7
-  store i64 0, ptr %elemptr78, align 4
-  %elemptr89 = getelementptr [10 x i64], ptr %1, i64 8
-  store i64 0, ptr %elemptr89, align 4
-  %elemptr910 = getelementptr [10 x i64], ptr %1, i64 9
-  store i64 0, ptr %elemptr910, align 4
   %index_access = getelementptr [10 x i64], ptr %0, i64 2
   %2 = load i64, ptr %index_access, align 4
   ret i64 %2

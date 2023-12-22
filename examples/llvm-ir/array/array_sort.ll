@@ -392,7 +392,6 @@ endfor:                                           ; preds = %cond1
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
-  %index_ptr = alloca i64, align 8
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
@@ -420,26 +419,11 @@ func_1_dispatch:                                  ; preds = %entry
   %heap_size = add i64 %7, 1
   %8 = call ptr @heap_malloc(i64 %heap_size)
   %vector_length1 = load i64, ptr %5, align 4
-  store i64 %vector_length1, ptr %8, align 4
-  %9 = getelementptr ptr, ptr %8, i64 1
-  store i64 0, ptr %index_ptr, align 4
-  br label %loop_body
-
-loop_body:                                        ; preds = %loop_body, %func_1_dispatch
-  %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %5, i64 %index
-  %elem = load i64, ptr %element, align 4
-  store i64 %elem, ptr %9, align 4
-  %10 = getelementptr ptr, ptr %9, i64 1
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %vector_length1
-  br i1 %index_cond, label %loop_body, label %loop_end
-
-loop_end:                                         ; preds = %loop_body
-  %11 = add i64 %vector_length1, 1
-  %12 = getelementptr ptr, ptr %8, i64 %11
-  store i64 %7, ptr %12, align 4
+  %9 = mul i64 %vector_length1, 1
+  %10 = add i64 %9, 1
+  call void @memcpy(ptr %5, ptr %8, i64 %10)
+  %11 = getelementptr ptr, ptr %8, i64 %10
+  store i64 %7, ptr %11, align 4
   call void @set_tape_data(ptr %8, i64 %heap_size)
   ret void
 }

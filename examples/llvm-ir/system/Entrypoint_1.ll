@@ -254,26 +254,38 @@ entry:
   %_tx = alloca ptr, align 8
   store ptr %0, ptr %_tx, align 8
   %1 = load ptr, ptr %_tx, align 8
-  %struct_member = getelementptr inbounds { ptr }, ptr %1, i32 0, i32 0
+  %struct_member = getelementptr inbounds { ptr, ptr }, ptr %1, i32 0, i32 0
   %2 = load ptr, ptr %struct_member, align 8
   %vector_length = load i64, ptr %2, align 4
   %3 = add i64 %vector_length, 1
   %4 = add i64 0, %3
-  %heap_size = add i64 %4, 2
-  %5 = call ptr @vector_new(i64 %heap_size)
-  %vector_data = getelementptr i64, ptr %5, i64 1
-  %struct_member1 = getelementptr inbounds { ptr }, ptr %1, i32 0, i32 0
-  %strcut_member = load ptr, ptr %struct_member1, align 8
-  %encode_struct_field = getelementptr ptr, ptr %vector_data, i64 0
-  %vector_length2 = load i64, ptr %strcut_member, align 4
+  %struct_member1 = getelementptr inbounds { ptr, ptr }, ptr %1, i32 0, i32 1
+  %5 = load ptr, ptr %struct_member1, align 8
+  %vector_length2 = load i64, ptr %5, align 4
   %6 = add i64 %vector_length2, 1
-  call void @memcpy(ptr %strcut_member, ptr %encode_struct_field, i64 %6)
-  %7 = add i64 %6, 0
-  %8 = getelementptr ptr, ptr %vector_data, i64 %7
-  store i64 %4, ptr %8, align 4
-  %9 = getelementptr ptr, ptr %8, i64 1
-  store i64 3738116221, ptr %9, align 4
-  %fields_start = ptrtoint ptr %5 to i64
+  %7 = add i64 %4, %6
+  %heap_size = add i64 %7, 2
+  %8 = call ptr @vector_new(i64 %heap_size)
+  %vector_data = getelementptr i64, ptr %8, i64 1
+  %struct_member3 = getelementptr inbounds { ptr, ptr }, ptr %1, i32 0, i32 0
+  %strcut_member = load ptr, ptr %struct_member3, align 8
+  %struct_offset = getelementptr ptr, ptr %vector_data, i64 0
+  %vector_length4 = load i64, ptr %strcut_member, align 4
+  %9 = add i64 %vector_length4, 1
+  call void @memcpy(ptr %strcut_member, ptr %struct_offset, i64 %9)
+  %struct_size = add i64 %9, 0
+  %struct_member5 = getelementptr inbounds { ptr, ptr }, ptr %1, i32 0, i32 1
+  %strcut_member6 = load ptr, ptr %struct_member5, align 8
+  %struct_offset7 = getelementptr ptr, ptr %struct_offset, i64 %9
+  %vector_length8 = load i64, ptr %strcut_member6, align 4
+  %10 = add i64 %vector_length8, 1
+  call void @memcpy(ptr %strcut_member6, ptr %struct_offset7, i64 %10)
+  %struct_size9 = add i64 %10, %struct_size
+  %11 = getelementptr ptr, ptr %vector_data, i64 %struct_size9
+  store i64 %7, ptr %11, align 4
+  %12 = getelementptr ptr, ptr %11, i64 1
+  store i64 3738116221, ptr %12, align 4
+  %fields_start = ptrtoint ptr %8 to i64
   call void @prophet_printf(i64 %fields_start, i64 0)
   ret void
 }
@@ -284,7 +296,7 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 405695041, label %func_0_dispatch
+    i64 4069050295, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -296,13 +308,19 @@ func_0_dispatch:                                  ; preds = %entry
   %vector_length = load i64, ptr %decode_struct_field, align 4
   %4 = add i64 %vector_length, 1
   %decode_struct_offset = add i64 0, %4
-  %5 = call ptr @heap_malloc(i64 1)
-  %struct_member = getelementptr inbounds { ptr }, ptr %5, i32 0, i32 0
+  %decode_struct_field1 = getelementptr ptr, ptr %3, i64 %decode_struct_offset
+  %vector_length2 = load i64, ptr %decode_struct_field1, align 4
+  %5 = add i64 %vector_length2, 1
+  %decode_struct_offset3 = add i64 %decode_struct_offset, %5
+  %6 = call ptr @heap_malloc(i64 2)
+  %struct_member = getelementptr inbounds { ptr, ptr }, ptr %6, i32 0, i32 0
   store ptr %decode_struct_field, ptr %struct_member, align 8
-  call void @validate_tx(ptr %5)
-  %6 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %6, align 4
-  call void @set_tape_data(ptr %6, i64 1)
+  %struct_member4 = getelementptr inbounds { ptr, ptr }, ptr %6, i32 0, i32 1
+  store ptr %decode_struct_field1, ptr %struct_member4, align 8
+  call void @validate_tx(ptr %6)
+  %7 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %7, align 4
+  call void @set_tape_data(ptr %7, i64 1)
   ret void
 }
 

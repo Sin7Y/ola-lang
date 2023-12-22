@@ -290,6 +290,7 @@ done:                                             ; preds = %cond
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   %index_ptr = alloca i64, align 8
+  %buffer_offset = alloca i64, align 8
   %input_alloca = alloca ptr, align 8
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
@@ -307,34 +308,54 @@ func_0_dispatch:                                  ; preds = %entry
   %5 = add i64 %4, 1
   %heap_size = add i64 %5, 1
   %6 = call ptr @heap_malloc(i64 %heap_size)
+  store i64 0, ptr %buffer_offset, align 4
+  %7 = load i64, ptr %buffer_offset, align 4
+  %8 = add i64 %7, 1
+  store i64 %8, ptr %buffer_offset, align 4
+  %9 = getelementptr ptr, ptr %6, i64 %7
   %vector_length1 = load i64, ptr %3, align 4
-  store i64 %vector_length1, ptr %6, align 4
-  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 %vector_length1, ptr %9, align 4
   store i64 0, ptr %index_ptr, align 4
-  br label %loop_body
-
-loop_body:                                        ; preds = %loop_body, %func_0_dispatch
   %index = load i64, ptr %index_ptr, align 4
-  %element = getelementptr ptr, ptr %3, i64 %index
-  %elem = load ptr, ptr %element, align 8
-  %struct_member = getelementptr inbounds { i64, i64 }, ptr %elem, i32 0, i32 0
-  %strcut_member = load i64, ptr %struct_member, align 4
-  %encode_struct_field = getelementptr ptr, ptr %7, i64 0
-  store i64 %strcut_member, ptr %encode_struct_field, align 4
-  %struct_member2 = getelementptr inbounds { i64, i64 }, ptr %elem, i32 0, i32 1
-  %strcut_member3 = load i64, ptr %struct_member2, align 4
-  %encode_struct_field4 = getelementptr ptr, ptr %encode_struct_field, i64 1
-  store i64 %strcut_member3, ptr %encode_struct_field4, align 4
-  %8 = getelementptr ptr, ptr %7, i64 2
-  %next_index = add i64 %index, 1
-  store i64 %next_index, ptr %index_ptr, align 4
-  %index_cond = icmp ult i64 %next_index, %vector_length1
-  br i1 %index_cond, label %loop_body, label %loop_end
+  br label %cond
 
-loop_end:                                         ; preds = %loop_body
-  %9 = add i64 %vector_length1, 1
-  %10 = getelementptr ptr, ptr %6, i64 %9
-  store i64 %5, ptr %10, align 4
+cond:                                             ; preds = %next, %func_0_dispatch
+  %vector_length2 = load i64, ptr %3, align 4
+  %10 = icmp ult i64 %index, %vector_length2
+  br i1 %10, label %body, label %end_for
+
+next:                                             ; preds = %body
+  %index7 = load i64, ptr %index_ptr, align 4
+  %11 = add i64 %index7, 1
+  store i64 %11, ptr %index_ptr, align 4
+  br label %cond
+
+body:                                             ; preds = %cond
+  %vector_length3 = load i64, ptr %3, align 4
+  %12 = sub i64 %vector_length3, 1
+  %13 = sub i64 %12, %index
+  call void @builtin_range_check(i64 %13)
+  %vector_data = getelementptr i64, ptr %3, i64 1
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index
+  %14 = load i64, ptr %buffer_offset, align 4
+  %15 = getelementptr ptr, ptr %6, i64 %14
+  %struct_member = getelementptr inbounds { i64, i64 }, ptr %index_access, i32 0, i32 0
+  %strcut_member = load i64, ptr %struct_member, align 4
+  %struct_offset = getelementptr ptr, ptr %15, i64 0
+  store i64 %strcut_member, ptr %struct_offset, align 4
+  %struct_member4 = getelementptr inbounds { i64, i64 }, ptr %index_access, i32 0, i32 1
+  %strcut_member5 = load i64, ptr %struct_member4, align 4
+  %struct_offset6 = getelementptr ptr, ptr %struct_offset, i64 1
+  store i64 %strcut_member5, ptr %struct_offset6, align 4
+  %16 = load i64, ptr %buffer_offset, align 4
+  %17 = add i64 %16, 2
+  store i64 %17, ptr %buffer_offset, align 4
+  br label %next
+
+end_for:                                          ; preds = %cond
+  %18 = load i64, ptr %buffer_offset, align 4
+  %19 = getelementptr ptr, ptr %6, i64 %18
+  store i64 %5, ptr %19, align 4
   call void @set_tape_data(ptr %6, i64 %heap_size)
   ret void
 }

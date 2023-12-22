@@ -169,7 +169,6 @@ fn statement(
 
                 expr.recurse(ns, check_term_for_constant_overflow);
                 used_variable(ns, &expr, symtable);
-
                 Some(Arc::new(expr.cast(
                     &expr.loc(),
                     &var_ty,
