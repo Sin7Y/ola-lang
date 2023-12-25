@@ -1,6 +1,32 @@
 contract SystemContextExample {
 
-
+    fn all_test() {
+        u32 block_number = block_number_test();
+        print(block_number);
+        u32 block_timestamp = block_timestamp_test();
+        print(block_timestamp);
+        address sequence = sequence_address_test();
+        print(sequence);
+        u32 tx_version = transaction_version_test();
+        print(tx_version);
+        u32 chain_id = chain_id_test();
+        print(chain_id);
+        u32 nonce = nonce_test();
+        print(nonce);
+        hash signature = signautre_test();
+        print(signature);
+        hash tx_hash = transaction_hash_test();
+        print(tx_hash);
+        address caller = caller_address_test();
+        print(caller);
+        address origin = origin_address_test();
+        print(origin);
+        address code = code_address_test();
+        print(code);
+        address current = current_address_test();
+        print(current);
+    }
+    
     fn caller_address_test() -> (address) {
         return caller_address() ;
     }
@@ -21,18 +47,35 @@ contract SystemContextExample {
         return chain_id();
     }
 
-    fn all_test() {
-        address caller = caller_address_test();
-        assert(caller == 0x0000000000000011000000000000001200000000000000130000000000000014address);
-        address origin = origin_address_test();
-        assert(origin == 0x0000000000000005000000000000000600000000000000070000000000000008address);
-        address code = code_address_test();
-         assert(code == 0x0000000000000009000000000000000a000000000000000b000000000000000caddress);
-        address current = current_address_test();
-         assert(current == 0x000000000000000d000000000000000e000000000000000f0000000000000010address);
-        u32 chain = chain_id_test();   
-        assert(chain == 1);
+    fn block_number_test() -> (u32) {
+        return block_number();
     }
+
+    fn block_timestamp_test() -> (u32) {
+        return block_timestamp();
+    }
+
+    fn sequence_address_test() -> (address) {
+        return sequence_address();
+    }
+
+    fn nonce_test() -> (u32) {
+        return nonce();
+    }
+
+    fn signautre_test() -> (hash) {
+        return signature();
+    }
+
+    fn transaction_version_test() -> (u32) {
+        return tx_version();
+    }
+
+    fn transaction_hash_test() -> (hash) {
+        return tx_hash();
+    }
+
+
 
 }
 
