@@ -20,7 +20,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 15]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 23]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -64,46 +64,11 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 15]> = Lazy::new(|| {
             ret: vec![],
         },
         Prototype {
-            libfunc: LibFunc::CallerAddress,
-            namespace: None,
-            name: "caller_address",
-            params: vec![],
-            ret: vec![Type::Address],
-        },
-        Prototype {
-            libfunc: LibFunc::OriginAddress,
-            namespace: None,
-            name: "origin_address",
-            params: vec![],
-            ret: vec![Type::Address],
-        },
-        Prototype {
-            libfunc: LibFunc::CodeAddress,
-            namespace: None,
-            name: "code_address",
-            params: vec![],
-            ret: vec![Type::Address],
-        },
-        Prototype {
-            libfunc: LibFunc::CurrentAddress,
-            namespace: None,
-            name: "current_address",
-            params: vec![],
-            ret: vec![Type::Address],
-        },
-        Prototype {
             libfunc: LibFunc::PoseidonHash,
             namespace: None,
             name: "poseidon_hash",
             params: vec![Type::DynamicBytes],
             ret: vec![Type::Hash],
-        },
-        Prototype {
-            libfunc: LibFunc::ChainId,
-            namespace: None,
-            name: "chain_id",
-            params: vec![],
-            ret: vec![Type::Uint(32)],
         },
         Prototype {
             libfunc: LibFunc::AbiEncode,
@@ -132,6 +97,97 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 15]> = Lazy::new(|| {
             name: "encodeWithSignature",
             params: vec![Type::String],
             ret: vec![],
+        },
+        Prototype {
+            libfunc: LibFunc::BlockNumber,
+            namespace: None,
+            name: "block_number",
+            params: vec![],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::BlockTimestamp,
+            namespace: None,
+            name: "block_timestamp",
+            params: vec![],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::SequenceAddress,
+            namespace: None,
+            name: "sequence_address",
+            params: vec![],
+            ret: vec![Type::Address],
+        },
+        Prototype {
+            libfunc: LibFunc::TransactionVersion,
+            namespace: None,
+            name: "tx_version",
+            params: vec![],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::ChainId,
+            namespace: None,
+            name: "chain_id",
+            params: vec![],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::CallerAddress,
+            namespace: None,
+            name: "caller_address",
+            params: vec![],
+            ret: vec![Type::Address],
+        },
+        Prototype {
+            libfunc: LibFunc::Nonce,
+            namespace: None,
+            name: "nonce",
+            params: vec![],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::SignatureLength,
+            namespace: None,
+            name: "signature_length",
+            params: vec![],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::Signature,
+            namespace: None,
+            name: "signature",
+            params: vec![],
+            ret: vec![Type::Hash],
+        },
+        Prototype {
+            libfunc: LibFunc::TransactionHash,
+            namespace: None,
+            name: "tx_hash",
+            params: vec![],
+            ret: vec![Type::Hash],
+        },
+        Prototype {
+            libfunc: LibFunc::OriginAddress,
+            namespace: None,
+            name: "origin_address",
+            params: vec![],
+            ret: vec![Type::Address],
+        },
+        Prototype {
+            libfunc: LibFunc::CodeAddress,
+            namespace: None,
+            name: "code_address",
+            params: vec![],
+            ret: vec![Type::Address],
+        },
+        Prototype {
+            libfunc: LibFunc::CurrentAddress,
+            namespace: None,
+            name: "current_address",
+            params: vec![],
+            ret: vec![Type::Address],
         },
     ]
 });

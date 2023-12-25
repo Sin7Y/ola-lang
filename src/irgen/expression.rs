@@ -443,33 +443,106 @@ pub fn expression<'a>(
         }
 
         Expression::LibFunction {
+            kind: LibFunc::SequenceAddress,
+            ..
+        }
+        | Expression::LibFunction {
             kind: LibFunc::OriginAddress,
             ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::Signature,
+            ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::TransactionHash,
+            ..
         } => {
+            let context_data_index = match expr {
+                Expression::LibFunction {
+                    kind: LibFunc::SequenceAddress,
+                    ..
+                } => bin.context.i64_type().const_int(2, false),
+                Expression::LibFunction {
+                    kind: LibFunc::OriginAddress,
+                    ..
+                } => bin.context.i64_type().const_int(8, false),
+                Expression::LibFunction {
+                    kind: LibFunc::Signature,
+                    ..
+                } => bin.context.i64_type().const_int(13, false),
+                Expression::LibFunction {
+                    kind: LibFunc::TransactionHash,
+                    ..
+                } => bin.context.i64_type().const_int(17, false),
+                _ => unreachable!(),
+            };
             let heap_start_ptr = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
             for i in 0..4 {
-                let address_elem = unsafe {
+                let data_elem = unsafe {
                     bin.builder.build_gep(
                         bin.context.i64_type(),
                         heap_start_ptr,
                         &[bin.context.i64_type().const_int(i, false)],
-                        "origin_address",
+                        "",
                     )
                 };
-                let origin_address_index = bin.context.i64_type().const_int(8 + i, false);
-                bin.context_data_load(address_elem, origin_address_index);
+                let tape_index = bin.builder.build_int_add(
+                    context_data_index,
+                    bin.context.i64_type().const_int(i, false),
+                    "",
+                );
+                bin.context_data_load(data_elem, tape_index);
             }
 
             heap_start_ptr.into()
         }
 
         Expression::LibFunction {
+            kind: LibFunc::BlockNumber,
+            ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::BlockTimestamp,
+            ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::TransactionVersion,
+            ..
+        }
+        | Expression::LibFunction {
             kind: LibFunc::ChainId,
             ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::Nonce,
+            ..
         } => {
-            let chain_id_index = bin.context.i64_type().const_int(7, false);
+            let context_data_index = match expr {
+                Expression::LibFunction {
+                    kind: LibFunc::BlockNumber,
+                    ..
+                } => bin.context.i64_type().const_int(0, false),
+                Expression::LibFunction {
+                    kind: LibFunc::BlockTimestamp,
+                    ..
+                } => bin.context.i64_type().const_int(1, false),
+                Expression::LibFunction {
+                    kind: LibFunc::TransactionVersion,
+                    ..
+                } => bin.context.i64_type().const_int(6, false),
+                Expression::LibFunction {
+                    kind: LibFunc::ChainId,
+                    ..
+                } => bin.context.i64_type().const_int(7, false),
+                Expression::LibFunction {
+                    kind: LibFunc::Nonce,
+                    ..
+                } => bin.context.i64_type().const_int(12, false),
+                _ => unreachable!(),
+            };
             let heap_start_ptr = bin.heap_malloc(bin.context.i64_type().const_int(1, false));
-            bin.context_data_load(heap_start_ptr, chain_id_index);
+            bin.context_data_load(heap_start_ptr, context_data_index);
             bin.builder
                 .build_load(bin.context.i64_type(), heap_start_ptr, "")
         }
@@ -1237,12 +1310,8 @@ pub fn array_slice<'a>(
         array.into_pointer_value()
     };
     let src_data_start = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            src_data,
-            &[start],
-            "src_data_start",
-        )
+        bin.builder
+            .build_gep(bin.context.i64_type(), src_data, &[start], "src_data_start")
     };
     bin.memcpy(src_data_start, dest_array, end_sub_start);
     new_array.as_basic_value_enum()
@@ -1600,7 +1669,9 @@ pub(crate) fn debug_print<'a>(
                         "struct_member",
                     )
                     .unwrap();
-                let elem = bin.builder.build_load(bin.llvm_var_ty(&field.ty, ns), elem_ptr, "");
+                let elem = bin
+                    .builder
+                    .build_load(bin.llvm_var_ty(&field.ty, ns), elem_ptr, "");
                 debug_print(bin, elem.into(), &field.ty, func_value, ns);
             }
         }
