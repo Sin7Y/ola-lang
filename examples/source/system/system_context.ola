@@ -13,7 +13,7 @@ contract SystemContextExample {
         print(chain_id);
         u32 nonce = nonce_test();
         print(nonce);
-        hash signature = signautre_test();
+        fields signature = signautre_test();
         print(signature);
         hash tx_hash = transaction_hash_test();
         print(tx_hash);
@@ -63,7 +63,7 @@ contract SystemContextExample {
         return nonce();
     }
 
-    fn signautre_test() -> (hash) {
+    fn signautre_test() -> (fields) {
         return signature();
     }
 

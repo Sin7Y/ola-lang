@@ -249,6 +249,78 @@ exit:                                             ; preds = %loop
   ret i64 %3
 }
 
+define void @all_test() {
+entry:
+  %current = alloca ptr, align 8
+  %code = alloca ptr, align 8
+  %origin = alloca ptr, align 8
+  %caller = alloca ptr, align 8
+  %tx_hash = alloca ptr, align 8
+  %signature = alloca ptr, align 8
+  %nonce = alloca i64, align 8
+  %chain_id = alloca i64, align 8
+  %tx_version = alloca i64, align 8
+  %sequence = alloca ptr, align 8
+  %block_timestamp = alloca i64, align 8
+  %block_number = alloca i64, align 8
+  %0 = call i64 @block_number_test()
+  store i64 %0, ptr %block_number, align 4
+  %1 = load i64, ptr %block_number, align 4
+  call void @prophet_printf(i64 %1, i64 3)
+  %2 = call i64 @block_timestamp_test()
+  store i64 %2, ptr %block_timestamp, align 4
+  %3 = load i64, ptr %block_timestamp, align 4
+  call void @prophet_printf(i64 %3, i64 3)
+  %4 = call ptr @sequence_address_test()
+  store ptr %4, ptr %sequence, align 8
+  %5 = load ptr, ptr %sequence, align 8
+  %address_start = ptrtoint ptr %5 to i64
+  call void @prophet_printf(i64 %address_start, i64 2)
+  %6 = call i64 @transaction_version_test()
+  store i64 %6, ptr %tx_version, align 4
+  %7 = load i64, ptr %tx_version, align 4
+  call void @prophet_printf(i64 %7, i64 3)
+  %8 = call i64 @chain_id_test()
+  store i64 %8, ptr %chain_id, align 4
+  %9 = load i64, ptr %chain_id, align 4
+  call void @prophet_printf(i64 %9, i64 3)
+  %10 = call i64 @nonce_test()
+  store i64 %10, ptr %nonce, align 4
+  %11 = load i64, ptr %nonce, align 4
+  call void @prophet_printf(i64 %11, i64 3)
+  %12 = call ptr @signautre_test()
+  store ptr %12, ptr %signature, align 8
+  %13 = load ptr, ptr %signature, align 8
+  %hash_start = ptrtoint ptr %13 to i64
+  call void @prophet_printf(i64 %hash_start, i64 2)
+  %14 = call ptr @transaction_hash_test()
+  store ptr %14, ptr %tx_hash, align 8
+  %15 = load ptr, ptr %tx_hash, align 8
+  %hash_start1 = ptrtoint ptr %15 to i64
+  call void @prophet_printf(i64 %hash_start1, i64 2)
+  %16 = call ptr @caller_address_test()
+  store ptr %16, ptr %caller, align 8
+  %17 = load ptr, ptr %caller, align 8
+  %address_start2 = ptrtoint ptr %17 to i64
+  call void @prophet_printf(i64 %address_start2, i64 2)
+  %18 = call ptr @origin_address_test()
+  store ptr %18, ptr %origin, align 8
+  %19 = load ptr, ptr %origin, align 8
+  %address_start3 = ptrtoint ptr %19 to i64
+  call void @prophet_printf(i64 %address_start3, i64 2)
+  %20 = call ptr @code_address_test()
+  store ptr %20, ptr %code, align 8
+  %21 = load ptr, ptr %code, align 8
+  %address_start4 = ptrtoint ptr %21 to i64
+  call void @prophet_printf(i64 %address_start4, i64 2)
+  %22 = call ptr @current_address_test()
+  store ptr %22, ptr %current, align 8
+  %23 = load ptr, ptr %current, align 8
+  %address_start5 = ptrtoint ptr %23 to i64
+  call void @prophet_printf(i64 %address_start5, i64 2)
+  ret void
+}
+
 define ptr @caller_address_test() {
 entry:
   %0 = call ptr @heap_malloc(i64 12)
@@ -259,14 +331,14 @@ entry:
 define ptr @origin_address_test() {
 entry:
   %0 = call ptr @heap_malloc(i64 4)
-  %origin_address = getelementptr i64, ptr %0, i64 0
-  call void @get_context_data(ptr %origin_address, i64 8)
-  %origin_address1 = getelementptr i64, ptr %0, i64 1
-  call void @get_context_data(ptr %origin_address1, i64 9)
-  %origin_address2 = getelementptr i64, ptr %0, i64 2
-  call void @get_context_data(ptr %origin_address2, i64 10)
-  %origin_address3 = getelementptr i64, ptr %0, i64 3
-  call void @get_context_data(ptr %origin_address3, i64 11)
+  %1 = getelementptr i64, ptr %0, i64 0
+  call void @get_context_data(ptr %1, i64 8)
+  %2 = getelementptr i64, ptr %0, i64 1
+  call void @get_context_data(ptr %2, i64 9)
+  %3 = getelementptr i64, ptr %0, i64 2
+  call void @get_context_data(ptr %3, i64 10)
+  %4 = getelementptr i64, ptr %0, i64 3
+  call void @get_context_data(ptr %4, i64 11)
   ret ptr %0
 }
 
@@ -292,76 +364,78 @@ entry:
   ret i64 %1
 }
 
-define void @all_test() {
+define i64 @block_number_test() {
 entry:
-  %chain = alloca i64, align 8
-  %current = alloca ptr, align 8
-  %code = alloca ptr, align 8
-  %origin = alloca ptr, align 8
-  %caller = alloca ptr, align 8
-  %0 = call ptr @caller_address_test()
-  store ptr %0, ptr %caller, align 8
-  %1 = load ptr, ptr %caller, align 8
-  %2 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %2, i64 0
-  store i64 17, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %2, i64 1
-  store i64 18, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %2, i64 2
-  store i64 19, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %2, i64 3
-  store i64 20, ptr %index_access3, align 4
-  %3 = call i64 @memcmp_eq(ptr %1, ptr %2, i64 4)
-  call void @builtin_assert(i64 %3)
-  %4 = call ptr @origin_address_test()
-  store ptr %4, ptr %origin, align 8
-  %5 = load ptr, ptr %origin, align 8
-  %6 = call ptr @heap_malloc(i64 4)
-  %index_access4 = getelementptr i64, ptr %6, i64 0
-  store i64 5, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %6, i64 1
-  store i64 6, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %6, i64 2
-  store i64 7, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %6, i64 3
-  store i64 8, ptr %index_access7, align 4
-  %7 = call i64 @memcmp_eq(ptr %5, ptr %6, i64 4)
-  call void @builtin_assert(i64 %7)
-  %8 = call ptr @code_address_test()
-  store ptr %8, ptr %code, align 8
-  %9 = load ptr, ptr %code, align 8
-  %10 = call ptr @heap_malloc(i64 4)
-  %index_access8 = getelementptr i64, ptr %10, i64 0
-  store i64 9, ptr %index_access8, align 4
-  %index_access9 = getelementptr i64, ptr %10, i64 1
-  store i64 10, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %10, i64 2
-  store i64 11, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %10, i64 3
-  store i64 12, ptr %index_access11, align 4
-  %11 = call i64 @memcmp_eq(ptr %9, ptr %10, i64 4)
-  call void @builtin_assert(i64 %11)
-  %12 = call ptr @current_address_test()
-  store ptr %12, ptr %current, align 8
-  %13 = load ptr, ptr %current, align 8
-  %14 = call ptr @heap_malloc(i64 4)
-  %index_access12 = getelementptr i64, ptr %14, i64 0
-  store i64 13, ptr %index_access12, align 4
-  %index_access13 = getelementptr i64, ptr %14, i64 1
-  store i64 14, ptr %index_access13, align 4
-  %index_access14 = getelementptr i64, ptr %14, i64 2
-  store i64 15, ptr %index_access14, align 4
-  %index_access15 = getelementptr i64, ptr %14, i64 3
-  store i64 16, ptr %index_access15, align 4
-  %15 = call i64 @memcmp_eq(ptr %13, ptr %14, i64 4)
-  call void @builtin_assert(i64 %15)
-  %16 = call i64 @chain_id_test()
-  store i64 %16, ptr %chain, align 4
-  %17 = load i64, ptr %chain, align 4
-  %18 = icmp eq i64 %17, 1
-  %19 = zext i1 %18 to i64
-  call void @builtin_assert(i64 %19)
-  ret void
+  %0 = call ptr @heap_malloc(i64 1)
+  call void @get_context_data(ptr %0, i64 0)
+  %1 = load i64, ptr %0, align 4
+  ret i64 %1
+}
+
+define i64 @block_timestamp_test() {
+entry:
+  %0 = call ptr @heap_malloc(i64 1)
+  call void @get_context_data(ptr %0, i64 1)
+  %1 = load i64, ptr %0, align 4
+  ret i64 %1
+}
+
+define ptr @sequence_address_test() {
+entry:
+  %0 = call ptr @heap_malloc(i64 4)
+  %1 = getelementptr i64, ptr %0, i64 0
+  call void @get_context_data(ptr %1, i64 2)
+  %2 = getelementptr i64, ptr %0, i64 1
+  call void @get_context_data(ptr %2, i64 3)
+  %3 = getelementptr i64, ptr %0, i64 2
+  call void @get_context_data(ptr %3, i64 4)
+  %4 = getelementptr i64, ptr %0, i64 3
+  call void @get_context_data(ptr %4, i64 5)
+  ret ptr %0
+}
+
+define i64 @nonce_test() {
+entry:
+  %0 = call ptr @heap_malloc(i64 1)
+  call void @get_context_data(ptr %0, i64 12)
+  %1 = load i64, ptr %0, align 4
+  ret i64 %1
+}
+
+define ptr @signautre_test() {
+entry:
+  %0 = call ptr @heap_malloc(i64 4)
+  %1 = getelementptr i64, ptr %0, i64 0
+  call void @get_context_data(ptr %1, i64 13)
+  %2 = getelementptr i64, ptr %0, i64 1
+  call void @get_context_data(ptr %2, i64 14)
+  %3 = getelementptr i64, ptr %0, i64 2
+  call void @get_context_data(ptr %3, i64 15)
+  %4 = getelementptr i64, ptr %0, i64 3
+  call void @get_context_data(ptr %4, i64 16)
+  ret ptr %0
+}
+
+define i64 @transaction_version_test() {
+entry:
+  %0 = call ptr @heap_malloc(i64 1)
+  call void @get_context_data(ptr %0, i64 6)
+  %1 = load i64, ptr %0, align 4
+  ret i64 %1
+}
+
+define ptr @transaction_hash_test() {
+entry:
+  %0 = call ptr @heap_malloc(i64 4)
+  %1 = getelementptr i64, ptr %0, i64 0
+  call void @get_context_data(ptr %1, i64 17)
+  %2 = getelementptr i64, ptr %0, i64 1
+  call void @get_context_data(ptr %2, i64 18)
+  %3 = getelementptr i64, ptr %0, i64 2
+  call void @get_context_data(ptr %3, i64 19)
+  %4 = getelementptr i64, ptr %0, i64 3
+  call void @get_context_data(ptr %4, i64 20)
+  ret ptr %0
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
@@ -370,127 +444,242 @@ entry:
   store ptr %2, ptr %input_alloca, align 8
   %input = load ptr, ptr %input_alloca, align 8
   switch i64 %0, label %missing_function [
-    i64 1522957762, label %func_0_dispatch
-    i64 3586122346, label %func_1_dispatch
-    i64 1485773374, label %func_2_dispatch
-    i64 2733308081, label %func_3_dispatch
-    i64 869244242, label %func_4_dispatch
-    i64 2702975438, label %func_5_dispatch
+    i64 2702975438, label %func_0_dispatch
+    i64 1522957762, label %func_1_dispatch
+    i64 3586122346, label %func_2_dispatch
+    i64 1485773374, label %func_3_dispatch
+    i64 2733308081, label %func_4_dispatch
+    i64 869244242, label %func_5_dispatch
+    i64 3338821124, label %func_6_dispatch
+    i64 437255, label %func_7_dispatch
+    i64 583520202, label %func_8_dispatch
+    i64 2936506770, label %func_9_dispatch
+    i64 1992639626, label %func_10_dispatch
+    i64 3365981980, label %func_11_dispatch
+    i64 2802357593, label %func_12_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = call ptr @caller_address_test()
-  %4 = call ptr @heap_malloc(i64 5)
-  %5 = getelementptr i64, ptr %3, i64 0
-  %6 = load i64, ptr %5, align 4
-  %7 = getelementptr i64, ptr %4, i64 0
-  store i64 %6, ptr %7, align 4
-  %8 = getelementptr i64, ptr %3, i64 1
-  %9 = load i64, ptr %8, align 4
-  %10 = getelementptr i64, ptr %4, i64 1
-  store i64 %9, ptr %10, align 4
-  %11 = getelementptr i64, ptr %3, i64 2
-  %12 = load i64, ptr %11, align 4
-  %13 = getelementptr i64, ptr %4, i64 2
-  store i64 %12, ptr %13, align 4
-  %14 = getelementptr i64, ptr %3, i64 3
-  %15 = load i64, ptr %14, align 4
-  %16 = getelementptr i64, ptr %4, i64 3
-  store i64 %15, ptr %16, align 4
-  %17 = getelementptr ptr, ptr %4, i64 4
-  store i64 4, ptr %17, align 4
-  call void @set_tape_data(ptr %4, i64 5)
+  call void @all_test()
+  %3 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %3, align 4
+  call void @set_tape_data(ptr %3, i64 1)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %18 = call ptr @origin_address_test()
-  %19 = call ptr @heap_malloc(i64 5)
-  %20 = getelementptr i64, ptr %18, i64 0
-  %21 = load i64, ptr %20, align 4
-  %22 = getelementptr i64, ptr %19, i64 0
-  store i64 %21, ptr %22, align 4
-  %23 = getelementptr i64, ptr %18, i64 1
-  %24 = load i64, ptr %23, align 4
-  %25 = getelementptr i64, ptr %19, i64 1
-  store i64 %24, ptr %25, align 4
-  %26 = getelementptr i64, ptr %18, i64 2
-  %27 = load i64, ptr %26, align 4
-  %28 = getelementptr i64, ptr %19, i64 2
-  store i64 %27, ptr %28, align 4
-  %29 = getelementptr i64, ptr %18, i64 3
-  %30 = load i64, ptr %29, align 4
-  %31 = getelementptr i64, ptr %19, i64 3
-  store i64 %30, ptr %31, align 4
-  %32 = getelementptr ptr, ptr %19, i64 4
-  store i64 4, ptr %32, align 4
-  call void @set_tape_data(ptr %19, i64 5)
+  %4 = call ptr @caller_address_test()
+  %5 = call ptr @heap_malloc(i64 5)
+  %6 = getelementptr i64, ptr %4, i64 0
+  %7 = load i64, ptr %6, align 4
+  %8 = getelementptr i64, ptr %5, i64 0
+  store i64 %7, ptr %8, align 4
+  %9 = getelementptr i64, ptr %4, i64 1
+  %10 = load i64, ptr %9, align 4
+  %11 = getelementptr i64, ptr %5, i64 1
+  store i64 %10, ptr %11, align 4
+  %12 = getelementptr i64, ptr %4, i64 2
+  %13 = load i64, ptr %12, align 4
+  %14 = getelementptr i64, ptr %5, i64 2
+  store i64 %13, ptr %14, align 4
+  %15 = getelementptr i64, ptr %4, i64 3
+  %16 = load i64, ptr %15, align 4
+  %17 = getelementptr i64, ptr %5, i64 3
+  store i64 %16, ptr %17, align 4
+  %18 = getelementptr ptr, ptr %5, i64 4
+  store i64 4, ptr %18, align 4
+  call void @set_tape_data(ptr %5, i64 5)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %33 = call ptr @code_address_test()
-  %34 = call ptr @heap_malloc(i64 5)
-  %35 = getelementptr i64, ptr %33, i64 0
-  %36 = load i64, ptr %35, align 4
-  %37 = getelementptr i64, ptr %34, i64 0
-  store i64 %36, ptr %37, align 4
-  %38 = getelementptr i64, ptr %33, i64 1
-  %39 = load i64, ptr %38, align 4
-  %40 = getelementptr i64, ptr %34, i64 1
-  store i64 %39, ptr %40, align 4
-  %41 = getelementptr i64, ptr %33, i64 2
-  %42 = load i64, ptr %41, align 4
-  %43 = getelementptr i64, ptr %34, i64 2
-  store i64 %42, ptr %43, align 4
-  %44 = getelementptr i64, ptr %33, i64 3
-  %45 = load i64, ptr %44, align 4
-  %46 = getelementptr i64, ptr %34, i64 3
-  store i64 %45, ptr %46, align 4
-  %47 = getelementptr ptr, ptr %34, i64 4
-  store i64 4, ptr %47, align 4
-  call void @set_tape_data(ptr %34, i64 5)
+  %19 = call ptr @origin_address_test()
+  %20 = call ptr @heap_malloc(i64 5)
+  %21 = getelementptr i64, ptr %19, i64 0
+  %22 = load i64, ptr %21, align 4
+  %23 = getelementptr i64, ptr %20, i64 0
+  store i64 %22, ptr %23, align 4
+  %24 = getelementptr i64, ptr %19, i64 1
+  %25 = load i64, ptr %24, align 4
+  %26 = getelementptr i64, ptr %20, i64 1
+  store i64 %25, ptr %26, align 4
+  %27 = getelementptr i64, ptr %19, i64 2
+  %28 = load i64, ptr %27, align 4
+  %29 = getelementptr i64, ptr %20, i64 2
+  store i64 %28, ptr %29, align 4
+  %30 = getelementptr i64, ptr %19, i64 3
+  %31 = load i64, ptr %30, align 4
+  %32 = getelementptr i64, ptr %20, i64 3
+  store i64 %31, ptr %32, align 4
+  %33 = getelementptr ptr, ptr %20, i64 4
+  store i64 4, ptr %33, align 4
+  call void @set_tape_data(ptr %20, i64 5)
   ret void
 
 func_3_dispatch:                                  ; preds = %entry
-  %48 = call ptr @current_address_test()
-  %49 = call ptr @heap_malloc(i64 5)
-  %50 = getelementptr i64, ptr %48, i64 0
-  %51 = load i64, ptr %50, align 4
-  %52 = getelementptr i64, ptr %49, i64 0
-  store i64 %51, ptr %52, align 4
-  %53 = getelementptr i64, ptr %48, i64 1
-  %54 = load i64, ptr %53, align 4
-  %55 = getelementptr i64, ptr %49, i64 1
-  store i64 %54, ptr %55, align 4
-  %56 = getelementptr i64, ptr %48, i64 2
-  %57 = load i64, ptr %56, align 4
-  %58 = getelementptr i64, ptr %49, i64 2
-  store i64 %57, ptr %58, align 4
-  %59 = getelementptr i64, ptr %48, i64 3
-  %60 = load i64, ptr %59, align 4
-  %61 = getelementptr i64, ptr %49, i64 3
-  store i64 %60, ptr %61, align 4
-  %62 = getelementptr ptr, ptr %49, i64 4
-  store i64 4, ptr %62, align 4
-  call void @set_tape_data(ptr %49, i64 5)
+  %34 = call ptr @code_address_test()
+  %35 = call ptr @heap_malloc(i64 5)
+  %36 = getelementptr i64, ptr %34, i64 0
+  %37 = load i64, ptr %36, align 4
+  %38 = getelementptr i64, ptr %35, i64 0
+  store i64 %37, ptr %38, align 4
+  %39 = getelementptr i64, ptr %34, i64 1
+  %40 = load i64, ptr %39, align 4
+  %41 = getelementptr i64, ptr %35, i64 1
+  store i64 %40, ptr %41, align 4
+  %42 = getelementptr i64, ptr %34, i64 2
+  %43 = load i64, ptr %42, align 4
+  %44 = getelementptr i64, ptr %35, i64 2
+  store i64 %43, ptr %44, align 4
+  %45 = getelementptr i64, ptr %34, i64 3
+  %46 = load i64, ptr %45, align 4
+  %47 = getelementptr i64, ptr %35, i64 3
+  store i64 %46, ptr %47, align 4
+  %48 = getelementptr ptr, ptr %35, i64 4
+  store i64 4, ptr %48, align 4
+  call void @set_tape_data(ptr %35, i64 5)
   ret void
 
 func_4_dispatch:                                  ; preds = %entry
-  %63 = call i64 @chain_id_test()
-  %64 = call ptr @heap_malloc(i64 2)
-  store i64 %63, ptr %64, align 4
-  %65 = getelementptr ptr, ptr %64, i64 1
-  store i64 1, ptr %65, align 4
-  call void @set_tape_data(ptr %64, i64 2)
+  %49 = call ptr @current_address_test()
+  %50 = call ptr @heap_malloc(i64 5)
+  %51 = getelementptr i64, ptr %49, i64 0
+  %52 = load i64, ptr %51, align 4
+  %53 = getelementptr i64, ptr %50, i64 0
+  store i64 %52, ptr %53, align 4
+  %54 = getelementptr i64, ptr %49, i64 1
+  %55 = load i64, ptr %54, align 4
+  %56 = getelementptr i64, ptr %50, i64 1
+  store i64 %55, ptr %56, align 4
+  %57 = getelementptr i64, ptr %49, i64 2
+  %58 = load i64, ptr %57, align 4
+  %59 = getelementptr i64, ptr %50, i64 2
+  store i64 %58, ptr %59, align 4
+  %60 = getelementptr i64, ptr %49, i64 3
+  %61 = load i64, ptr %60, align 4
+  %62 = getelementptr i64, ptr %50, i64 3
+  store i64 %61, ptr %62, align 4
+  %63 = getelementptr ptr, ptr %50, i64 4
+  store i64 4, ptr %63, align 4
+  call void @set_tape_data(ptr %50, i64 5)
   ret void
 
 func_5_dispatch:                                  ; preds = %entry
-  call void @all_test()
-  %66 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %66, align 4
-  call void @set_tape_data(ptr %66, i64 1)
+  %64 = call i64 @chain_id_test()
+  %65 = call ptr @heap_malloc(i64 2)
+  store i64 %64, ptr %65, align 4
+  %66 = getelementptr ptr, ptr %65, i64 1
+  store i64 1, ptr %66, align 4
+  call void @set_tape_data(ptr %65, i64 2)
+  ret void
+
+func_6_dispatch:                                  ; preds = %entry
+  %67 = call i64 @block_number_test()
+  %68 = call ptr @heap_malloc(i64 2)
+  store i64 %67, ptr %68, align 4
+  %69 = getelementptr ptr, ptr %68, i64 1
+  store i64 1, ptr %69, align 4
+  call void @set_tape_data(ptr %68, i64 2)
+  ret void
+
+func_7_dispatch:                                  ; preds = %entry
+  %70 = call i64 @block_timestamp_test()
+  %71 = call ptr @heap_malloc(i64 2)
+  store i64 %70, ptr %71, align 4
+  %72 = getelementptr ptr, ptr %71, i64 1
+  store i64 1, ptr %72, align 4
+  call void @set_tape_data(ptr %71, i64 2)
+  ret void
+
+func_8_dispatch:                                  ; preds = %entry
+  %73 = call ptr @sequence_address_test()
+  %74 = call ptr @heap_malloc(i64 5)
+  %75 = getelementptr i64, ptr %73, i64 0
+  %76 = load i64, ptr %75, align 4
+  %77 = getelementptr i64, ptr %74, i64 0
+  store i64 %76, ptr %77, align 4
+  %78 = getelementptr i64, ptr %73, i64 1
+  %79 = load i64, ptr %78, align 4
+  %80 = getelementptr i64, ptr %74, i64 1
+  store i64 %79, ptr %80, align 4
+  %81 = getelementptr i64, ptr %73, i64 2
+  %82 = load i64, ptr %81, align 4
+  %83 = getelementptr i64, ptr %74, i64 2
+  store i64 %82, ptr %83, align 4
+  %84 = getelementptr i64, ptr %73, i64 3
+  %85 = load i64, ptr %84, align 4
+  %86 = getelementptr i64, ptr %74, i64 3
+  store i64 %85, ptr %86, align 4
+  %87 = getelementptr ptr, ptr %74, i64 4
+  store i64 4, ptr %87, align 4
+  call void @set_tape_data(ptr %74, i64 5)
+  ret void
+
+func_9_dispatch:                                  ; preds = %entry
+  %88 = call i64 @nonce_test()
+  %89 = call ptr @heap_malloc(i64 2)
+  store i64 %88, ptr %89, align 4
+  %90 = getelementptr ptr, ptr %89, i64 1
+  store i64 1, ptr %90, align 4
+  call void @set_tape_data(ptr %89, i64 2)
+  ret void
+
+func_10_dispatch:                                 ; preds = %entry
+  %91 = call ptr @signautre_test()
+  %92 = call ptr @heap_malloc(i64 5)
+  %93 = getelementptr i64, ptr %91, i64 0
+  %94 = load i64, ptr %93, align 4
+  %95 = getelementptr i64, ptr %92, i64 0
+  store i64 %94, ptr %95, align 4
+  %96 = getelementptr i64, ptr %91, i64 1
+  %97 = load i64, ptr %96, align 4
+  %98 = getelementptr i64, ptr %92, i64 1
+  store i64 %97, ptr %98, align 4
+  %99 = getelementptr i64, ptr %91, i64 2
+  %100 = load i64, ptr %99, align 4
+  %101 = getelementptr i64, ptr %92, i64 2
+  store i64 %100, ptr %101, align 4
+  %102 = getelementptr i64, ptr %91, i64 3
+  %103 = load i64, ptr %102, align 4
+  %104 = getelementptr i64, ptr %92, i64 3
+  store i64 %103, ptr %104, align 4
+  %105 = getelementptr ptr, ptr %92, i64 4
+  store i64 4, ptr %105, align 4
+  call void @set_tape_data(ptr %92, i64 5)
+  ret void
+
+func_11_dispatch:                                 ; preds = %entry
+  %106 = call i64 @transaction_version_test()
+  %107 = call ptr @heap_malloc(i64 2)
+  store i64 %106, ptr %107, align 4
+  %108 = getelementptr ptr, ptr %107, i64 1
+  store i64 1, ptr %108, align 4
+  call void @set_tape_data(ptr %107, i64 2)
+  ret void
+
+func_12_dispatch:                                 ; preds = %entry
+  %109 = call ptr @transaction_hash_test()
+  %110 = call ptr @heap_malloc(i64 5)
+  %111 = getelementptr i64, ptr %109, i64 0
+  %112 = load i64, ptr %111, align 4
+  %113 = getelementptr i64, ptr %110, i64 0
+  store i64 %112, ptr %113, align 4
+  %114 = getelementptr i64, ptr %109, i64 1
+  %115 = load i64, ptr %114, align 4
+  %116 = getelementptr i64, ptr %110, i64 1
+  store i64 %115, ptr %116, align 4
+  %117 = getelementptr i64, ptr %109, i64 2
+  %118 = load i64, ptr %117, align 4
+  %119 = getelementptr i64, ptr %110, i64 2
+  store i64 %118, ptr %119, align 4
+  %120 = getelementptr i64, ptr %109, i64 3
+  %121 = load i64, ptr %120, align 4
+  %122 = getelementptr i64, ptr %110, i64 3
+  store i64 %121, ptr %122, align 4
+  %123 = getelementptr ptr, ptr %110, i64 4
+  store i64 4, ptr %123, align 4
+  call void @set_tape_data(ptr %110, i64 5)
   ret void
 }
 
