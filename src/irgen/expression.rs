@@ -443,15 +443,38 @@ pub fn expression<'a>(
         }
 
         Expression::LibFunction {
+            kind: LibFunc::Signature,
+            ..
+        } => {
+           let context_data_index =bin.context.i64_type().const_int(13, false);
+           let heap_start_ptr = bin.vector_new(bin.context.i64_type().const_int(8, false));
+           let data_start_ptr = bin.vector_data(heap_start_ptr.as_basic_value_enum());
+           for i in 0..8 {
+               let data_elem = unsafe {
+                   bin.builder.build_gep(
+                       bin.context.i64_type(),
+                       data_start_ptr,
+                       &[bin.context.i64_type().const_int(i, false)],
+                       "",
+                   )
+               };
+               let tape_index = bin.builder.build_int_add(
+                   context_data_index,
+                   bin.context.i64_type().const_int(i, false),
+                   "",
+               );
+               bin.context_data_load(data_elem, tape_index);
+           }
+
+           heap_start_ptr.into()
+        }
+
+        Expression::LibFunction {
             kind: LibFunc::SequenceAddress,
             ..
         }
         | Expression::LibFunction {
             kind: LibFunc::OriginAddress,
-            ..
-        }
-        | Expression::LibFunction {
-            kind: LibFunc::Signature,
             ..
         }
         | Expression::LibFunction {
@@ -467,10 +490,7 @@ pub fn expression<'a>(
                     kind: LibFunc::OriginAddress,
                     ..
                 } => bin.context.i64_type().const_int(8, false),
-                Expression::LibFunction {
-                    kind: LibFunc::Signature,
-                    ..
-                } => bin.context.i64_type().const_int(13, false),
+
                 Expression::LibFunction {
                     kind: LibFunc::TransactionHash,
                     ..
