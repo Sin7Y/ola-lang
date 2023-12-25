@@ -159,7 +159,7 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 23]> = Lazy::new(|| {
             namespace: None,
             name: "signature",
             params: vec![],
-            ret: vec![Type::Hash],
+            ret: vec![Type::DynamicBytes],
         },
         Prototype {
             libfunc: LibFunc::TransactionHash,
