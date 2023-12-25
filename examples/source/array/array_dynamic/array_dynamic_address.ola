@@ -1,0 +1,12 @@
+
+
+contract DynamicTwoDimensionalArrayInMemory {
+    fn address_outer_dynamic(address[2][] a) -> (address[2][]) {
+        return a;
+    }
+
+    fn address_inner_dynamic(address[][2] a) -> (address[][2]) {
+        return a;
+    }
+
+}
