@@ -447,15 +447,18 @@ pub fn expression<'a>(
             args,
             ..
         } => {
-
             let msg = expression(&args[0], bin, func_value, var_table, ns);
             let pubkey = expression(&args[1], bin, func_value, var_table, ns);
             let signature = expression(&args[2], bin, func_value, var_table, ns);
-             bin.builder.build_call(
-                bin.module.get_function("check_ecdsa").unwrap(),
-                &[msg.into(), pubkey.into(), signature.into()],
-                "",
-            ).try_as_basic_value().left().expect("Should have a left return value")
+            bin.builder
+                .build_call(
+                    bin.module.get_function("check_ecdsa").unwrap(),
+                    &[msg.into(), pubkey.into(), signature.into()],
+                    "",
+                )
+                .try_as_basic_value()
+                .left()
+                .expect("Should have a left return value")
         }
 
         Expression::LibFunction {
@@ -690,7 +693,9 @@ pub fn expression<'a>(
             let array_ty = array.ty().deref_into();
             let mut array = expression(array, bin, func_value, var_table, ns);
             match array_ty {
-                Type::String | Type::DynamicBytes  => storage_load(bin, &Type::Uint(32), &mut array, func_value, ns),
+                Type::String | Type::DynamicBytes => {
+                    storage_load(bin, &Type::Uint(32), &mut array, func_value, ns)
+                }
                 Type::Array(_, dim) => match dim.last().unwrap() {
                     ArrayLength::Dynamic => {
                         storage_load(bin, &Type::Uint(32), &mut array, func_value, ns)
@@ -1026,11 +1031,10 @@ pub fn expression<'a>(
             args,
             ..
         } => {
-            // We have already completed the calculation of the function selector in the SEMA stage.
-            //  Here, we just need to return it.
+            // We have already completed the calculation of the function selector in the
+            // SEMA stage.  Here, we just need to return it.
             expression(&args[0], bin, func_value, var_table, ns)
         }
-        
 
         _ => unimplemented!("{:?}", expr),
     }

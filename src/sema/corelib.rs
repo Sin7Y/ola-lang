@@ -11,8 +11,7 @@ use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 use tiny_keccak::{Hasher, Keccak};
 
-
-#[derive(PartialEq, Eq,Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Prototype {
     pub libfunc: LibFunc,
     pub namespace: Option<&'static str>,
@@ -329,11 +328,10 @@ pub fn resolve_call(
             if id == "get_selector" {
                 let signature = args[0].clone();
                 match function_selector(loc, &signature, diagnostics) {
-                    Ok(selector) => { cast_args.insert(
-                        0,
-                        selector
-                    );}
-                    Err(_) => return Err(())
+                    Ok(selector) => {
+                        cast_args.insert(0, selector);
+                    }
+                    Err(_) => return Err(()),
                 }
             }
             return Ok(Expression::LibFunction {
@@ -492,10 +490,7 @@ pub(super) fn resolve_namespace_call(
             // first argument is signature
             if let Some(signature) = args_iter.next() {
                 let selector = function_selector(loc, signature, diagnostics);
-                resolved_args.insert(
-                    0,
-                    selector.unwrap(),
-                );
+                resolved_args.insert(0, selector.unwrap());
             } else {
                 diagnostics.push(Diagnostic::error(
                     *loc,

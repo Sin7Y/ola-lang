@@ -1,4 +1,4 @@
-// For DefaultAccount, all the methods except `setPubkey` should only be called by Entrypoint system contract.
+// For DefaultAccount, all the methods should only be called by Entrypoint system contract.
 // Although user's AA implemenation does not have this restriction.
 
 contract DefaultAccount {
@@ -8,9 +8,9 @@ contract DefaultAccount {
         address to;
         fields data; // CR: fields data;
         fields codes; // CR: fields codes;
-    }
+            }
 
-    // Public key for the default AA.
+// Public key for the default AA.
     fields pubkey;
 
     fn onlyEntrypointCall() {
@@ -39,21 +39,22 @@ contract DefaultAccount {
         // return DefaultAccount.validateTransaction.selector;
         // we use hash to represent this for now. hash has 8 u32.
         u32 magic = get_selector("validateTransaction(hash,hash,Transaction)");
-
-        // TODO: add signature verification.
-        // If this is the first time caller, it should be call `setPubkey` and this function passes.
+        
         if (pubkey.length == 0) {
             u32 len = _tx.data.length;
             u32 selector = abi.decode(_tx.data[len - 1:len], (u32));
             u32 expected = get_selector("setPubkey(fields)");
-            assert(selector == expected, "The initial transaction for account should be setPubkey.");
-            return magic;
+            if (selector == expected) {
+                return magic;
+            }
         } else {
             // The caller already set public key, just do the normal validation.
             assert(signature().length == 8, "Signature of ECDSA should be 8 fields.");
-            check_ecdsa(_signedHash, pubkey, signature());
-            return magic;
+            if (check_ecdsa(_signedHash, pubkey, signature())) {
+                return magic;
+            }
         }
+        return 0;
     }
 
     fn executeTransaction(address _to, fields _data) -> (fields){
@@ -62,19 +63,19 @@ contract DefaultAccount {
 
         fields res = _to.call(_data);
         return res;
-    }
+    } 
 
     fn payForTransaction(hash _txHash, hash _signedHash, Transaction _tx) {
-        onlyEntrypointCall();
-        ignoreDelegateCall();
+    onlyEntrypointCall();
+    ignoreDelegateCall();
 
-        // TODO: handle gas payment
+    // TODO: handle gas payment
     }
 
     fn prepareForPaymaster(hash _txHash, hash _signedHash, Transaction _tx) {
-        onlyEntrypointCall();
-        ignoreDelegateCall();
+    onlyEntrypointCall();
+    ignoreDelegateCall();
 
-        // TODO: handle allowance and approval for user and paymaster
+    // TODO: handle allowance and approval for user and paymaster
     }
 }

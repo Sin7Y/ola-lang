@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use inkwell::basic_block::BasicBlock;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -28,7 +29,11 @@ pub(crate) fn statement<'a>(
         Statement::Block { statements, .. } => {
             for stmt in statements {
                 statement(stmt, bin, func_value, func, var_table, ns);
+                if !stmt.reachable() {
+                    break;
+                }
             }
+
         }
         Statement::VariableDecl(_, pos, param, init) => {
             let var_value = match init {
@@ -291,7 +296,6 @@ fn if_then<'a>(
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
-    let pos = bin.builder.get_insert_block().unwrap();
     let cond = expression(cond, bin, func_value, var_table, ns);
 
     let cond = bin
@@ -300,7 +304,6 @@ fn if_then<'a>(
 
     let then = bin.context.append_basic_block(func_value, "then");
     let endif = bin.context.append_basic_block(func_value, "endif");
-    bin.builder.position_at_end(pos);
 
     bin.builder.build_conditional_branch(cond, then, endif);
     bin.builder.position_at_end(then);
@@ -327,7 +330,6 @@ fn if_then_else<'a>(
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
-    let pos = bin.builder.get_insert_block().unwrap();
     let cond = expression(cond, bin, func_value, var_table, ns);
     let cond = bin
         .builder
@@ -335,33 +337,40 @@ fn if_then_else<'a>(
 
     let then = bin.context.append_basic_block(func_value, "then");
     let else_ = bin.context.append_basic_block(func_value, "else");
-    let endif = bin.context.append_basic_block(func_value, "endif");
-    bin.builder.position_at_end(pos);
+
+    let mut endif: Option::<BasicBlock> = None;
 
     bin.builder.build_conditional_branch(cond, then, else_);
     bin.builder.position_at_end(then);
-    let mut reachable = true;
+    let mut then_reachable = true;
     for stmt in then_stmt {
         statement(stmt, bin, func_value, func, var_table, ns);
-        reachable = stmt.reachable();
+        then_reachable = stmt.reachable();
     }
 
-    if reachable {
-        bin.builder.build_unconditional_branch(endif);
+    if then_reachable {
+        if endif.is_none() {
+            endif = Some(bin.context.append_basic_block(func_value, "endif"));
+        }
+        bin.builder.build_unconditional_branch(endif.unwrap());
     }
 
     bin.builder.position_at_end(else_);
 
-    reachable = true;
+    let mut else_reachable = true;
     for stmt in else_stmt {
         statement(stmt, bin, func_value, func, var_table, ns);
-        reachable = stmt.reachable();
+        else_reachable = stmt.reachable();
     }
-    if reachable {
-        bin.builder.build_unconditional_branch(endif);
+    if else_reachable {
+        if endif.is_none() {
+            endif = Some(bin.context.append_basic_block(func_value, "endif"));
+        }
+        bin.builder.build_unconditional_branch(endif.unwrap());
     }
-
-    bin.builder.position_at_end(endif);
+    if let Some(endif_block) = endif {
+        bin.builder.position_at_end(endif_block);
+    }
 }
 
 fn returns<'a>(
