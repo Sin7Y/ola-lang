@@ -23,6 +23,11 @@ fn bool_testcases() {
     run_test_for_path("./tests/codegen/bool");
 }
 
+#[test]
+fn regression_testcases() {
+    run_test_for_path("./tests/codegen/regression");
+}
+
 fn run_test_for_path(path: &str) {
     let mut tests = Vec::new();
 

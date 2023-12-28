@@ -1,0 +1,4 @@
+{
+  "program": "test_store_dst_gep_arg_inst:\n.LBL0_0:\n  add r9 r9 1\n  mov r3 100\n  mstore [r9,-1] r3\n  mload r3 [r9,-1]\n  mload r1 [r1,r3]\n  mstore [r2,r3] r1\n  add r9 r9 -1\n  ret\ntest_store_dst_arg:\n.LBL1_0:\n  mov r2 200\n  mstore [r1] r2\n  ret\n",
+  "prophets": []
+}
