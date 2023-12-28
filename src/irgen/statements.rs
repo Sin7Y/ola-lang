@@ -1,5 +1,3 @@
-
-
 use indexmap::IndexMap;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use num_bigint::BigInt;
@@ -644,9 +642,9 @@ impl Type {
                         .context
                         .i64_type()
                         .const_int(self.type_size_of(ns).to_u64().unwrap(), false);
-        
+
                     let array_alloca = bin.heap_malloc(array_size);
-        
+
                     Some(array_alloca.into())
                 }
             }

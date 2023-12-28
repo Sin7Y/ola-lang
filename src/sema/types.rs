@@ -632,7 +632,7 @@ impl Type {
     pub fn is_primitive(&self) -> bool {
         match self {
             Type::Bool => true,
-            Type::Address | Type::Contract(_)| Type::Hash => false,
+            Type::Address | Type::Contract(_) | Type::Hash => false,
             Type::Uint(_) => true,
             Type::Field => true,
             Type::Ref(r) => r.is_primitive(),

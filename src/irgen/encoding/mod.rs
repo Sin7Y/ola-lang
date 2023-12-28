@@ -6,14 +6,11 @@ use inkwell::{
     AddressSpace, IntPredicate,
 };
 use num_bigint::BigInt;
-use num_traits::{ToPrimitive, One};
+use num_traits::{One, ToPrimitive};
 
 use crate::sema::ast::{ArrayLength, Namespace, Type};
 
-use self::{
-    decode::read_from_buffer,
-    encode::encode_into_buffer,
-};
+use self::{decode::read_from_buffer, encode::encode_into_buffer};
 
 use super::{binary::Binary, expression::array_subscript, storage::storage_load};
 
@@ -76,14 +73,7 @@ pub(super) fn abi_encode_store_tape<'a>(
     let mut buffer = heap_start_ptr;
 
     for (arg_no, item) in args.iter().enumerate() {
-        let advance = encode_into_buffer(
-            buffer,
-            item.clone(),
-            &types[arg_no],
-            bin,
-            func_value,
-            ns,
-        );
+        let advance = encode_into_buffer(buffer, item.clone(), &types[arg_no], bin, func_value, ns);
 
         buffer = unsafe {
             bin.builder.build_gep(
@@ -93,7 +83,6 @@ pub(super) fn abi_encode_store_tape<'a>(
                 "",
             )
         };
-        
     }
     // encode size to heap, the "size" here is only used for tape area
     // identification.
@@ -127,14 +116,7 @@ pub(super) fn abi_encode_with_selector<'a>(
     let mut buffer = vector_data;
 
     for (arg_no, item) in args.iter().enumerate() {
-        let advance = encode_into_buffer(
-            buffer,
-            item.clone(),
-            &types[arg_no],
-            bin,
-            func_value,
-            ns,
-        );  
+        let advance = encode_into_buffer(buffer, item.clone(), &types[arg_no], bin, func_value, ns);
         buffer = unsafe {
             bin.builder.build_gep(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
@@ -480,12 +462,16 @@ fn calculate_struct_size<'a>(
     for i in 0..ns.structs[struct_no].fields.len() {
         let field_ty = ns.structs[struct_no].fields[i].ty.clone();
         let struct_field = if field_ty.is_reference_type(ns) {
-            let field_ptr = 
-                bin.builder
-                    .build_struct_gep(bin.llvm_type(ty, ns), struct_ptr, i as u32, "struct_member")
-                    .unwrap()
-                    .as_basic_value_enum();
-            Some(bin.builder.build_load(bin.llvm_var_ty(&field_ty, ns), field_ptr.into_pointer_value(), ""))
+            let field_ptr = bin
+                .builder
+                .build_struct_gep(bin.llvm_type(ty, ns), struct_ptr, i as u32, "struct_member")
+                .unwrap()
+                .as_basic_value_enum();
+            Some(bin.builder.build_load(
+                bin.llvm_var_ty(&field_ty, ns),
+                field_ptr.into_pointer_value(),
+                "",
+            ))
         } else {
             None
         };
@@ -630,8 +616,7 @@ fn set_array_loop<'a>(
     ns: &Namespace,
 ) -> ForLoop<'a> {
     // Initialize index before the loop
-    let index_ptr = bin
-        .build_alloca(func_value, bin.context.i64_type(), "index_ptr");
+    let index_ptr = bin.build_alloca(func_value, bin.context.i64_type(), "index_ptr");
     bin.builder
         .build_store(index_ptr, bin.context.i64_type().const_zero());
 
@@ -726,13 +711,22 @@ pub fn allow_memcpy(ty: &Type, ns: &Namespace) -> bool {
     }
 }
 
-
-
-/// Calculate the size in bytes of a dynamic array, whose dynamic dimension is the outer.
-/// It needs the variable saving the array's length.
-pub fn calculate_array_bytes_size<'a>(bin: &Binary<'a>, length: IntValue<'a>, elem_ty: &Type, ns: &Namespace) -> IntValue<'a> {
+/// Calculate the size in bytes of a dynamic array, whose dynamic dimension is
+/// the outer. It needs the variable saving the array's length.
+pub fn calculate_array_bytes_size<'a>(
+    bin: &Binary<'a>,
+    length: IntValue<'a>,
+    elem_ty: &Type,
+    ns: &Namespace,
+) -> IntValue<'a> {
     let elem_size = elem_ty.memory_size_of(ns);
-    bin.builder.build_int_mul(length, bin.context.i64_type().const_int(elem_size.to_u64().unwrap(), false), "")
+    bin.builder.build_int_mul(
+        length,
+        bin.context
+            .i64_type()
+            .const_int(elem_size.to_u64().unwrap(), false),
+        "",
+    )
 }
 
 /// Calculate the number of bytes needed to memcpy an entire vector
