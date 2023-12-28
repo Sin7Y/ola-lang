@@ -108,7 +108,7 @@ const PRINTF: &'static str = "%{
 
 const SPLITHI: &'static str = "%{
     function split_hi(felt in) -> felt {
-        return x / 4294967296;
+        return in / 4294967296;
     }
     entry() {
         cid.out = split_hi(cid.in);
@@ -117,7 +117,7 @@ const SPLITHI: &'static str = "%{
 
 const SPLITLO: &'static str = "%{
     function split_lo(felt in) -> felt {
-        return x % 4294967296;
+        return in % 4294967296;
     }
     entry() {
         cid.out = split_lo(cid.in);

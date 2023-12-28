@@ -3,7 +3,7 @@
   "prophets": [
     {
       "label": ".PROPHET0_0",
-      "code": "%{\n    function split_hi(felt in) -> felt {\n        return x / 4294967296;\n    }\n    entry() {\n        cid.out = split_hi(cid.in);\n    }\n%}",
+      "code": "%{\n    function split_hi(felt in) -> felt {\n        return in / 4294967296;\n    }\n    entry() {\n        cid.out = split_hi(cid.in);\n    }\n%}",
       "inputs": [
         {
           "name": "cid.in",
@@ -23,7 +23,7 @@
     },
     {
       "label": ".PROPHET0_1",
-      "code": "%{\n    function split_lo(felt in) -> felt {\n        return x % 4294967296;\n    }\n    entry() {\n        cid.out = split_lo(cid.in);\n    }\n%}",
+      "code": "%{\n    function split_lo(felt in) -> felt {\n        return in % 4294967296;\n    }\n    entry() {\n        cid.out = split_lo(cid.in);\n    }\n%}",
       "inputs": [
         {
           "name": "cid.in",
