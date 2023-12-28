@@ -9,9 +9,6 @@ contract NonceHolder {
     }
 
     fn isNonceUsed(address _address, u32 _nonce) -> (bool) {
-        // MOCK_TEST:
-        // assert(_address == 0x0000000000000008000000000000000800000000000000080000000000000008address);
-        // assert(_nonce == 1);
         return nonces[_address][_nonce];
     }
 

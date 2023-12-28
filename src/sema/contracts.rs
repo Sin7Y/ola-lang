@@ -5,8 +5,6 @@ use num_bigint::BigInt;
 use num_traits::Zero;
 use ola_parser::program::{self};
 use std::collections::BTreeMap;
-use std::convert::TryInto;
-use tiny_keccak::{Hasher, Keccak};
 
 use super::{ast, functions, statements, variables};
 
@@ -37,16 +35,6 @@ impl ast::Contract {
         filename: &'a str,
     ) -> irgen::binary::Binary {
         irgen::binary::Binary::build(context, self, ns, filename)
-    }
-
-    /// Selector for this contract. This is used by Solana contract bundle
-    pub fn selector(&self) -> u32 {
-        let mut hasher = Keccak::v256();
-        let mut hash = [0u8; 32];
-        hasher.update(self.name.as_bytes());
-        hasher.finalize(&mut hash);
-
-        u32::from_be_bytes(hash[0..4].try_into().unwrap())
     }
 }
 

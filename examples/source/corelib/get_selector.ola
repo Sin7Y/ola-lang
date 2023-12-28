@@ -1,0 +1,12 @@
+
+contract GetSelector {
+    u32 num;
+
+
+    fn get_selector_test() -> (u32) {
+        u32 selector = get_selector("setVars(u32)");
+        return selector;
+    }
+
+   
+}
