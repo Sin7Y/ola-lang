@@ -4,6 +4,8 @@ contract FieldsContract {
        string a = "ola";
        string b = "vm";
        fields a_b = fields_concat(a, b);
+       u32 len = fields_concat(a, b).length;
+       assert(len == 5);
        return a_b;
     }
 

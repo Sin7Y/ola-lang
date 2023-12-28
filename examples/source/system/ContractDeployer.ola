@@ -15,8 +15,6 @@ contract ContractDeployer {
     mapping(address => AccountInfo) accountInfos;
 
     fn extendedAccountVersion(address _address) -> (u32) {
-        // MOCK_TEST:
-        // assert(_address == 0x0000000000000008000000000000000800000000000000080000000000000008address);
         // _address is AA.
         AccountInfo info = accountInfos[_address];
         if (info.supportedAAVersion != 0) {
@@ -25,15 +23,13 @@ contract ContractDeployer {
 
         // It is an EOA, it is still an account(the default account of AA).
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
-        print(ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT);
         fields get_codeHash_calldata = abi.encodeWithSignature("getCodeHash(address)", _address);
-        print(get_codeHash_calldata);
-        // fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
-        // hash codeHash = abi.decode(get_codeHash_bytes, (hash));
-        // // CR: compare codeHash with 0.
-        // if (codeHash == hash(0)) {
-        //     return 1;
-        // }
+        fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
+        hash codeHash = abi.decode(get_codeHash_bytes, (hash));
+        // CR: compare codeHash with 0.
+        if (codeHash == hash(0)) {
+            return 1;
+        }
 
         // _address is normal contract
         return 0;
@@ -41,87 +37,88 @@ contract ContractDeployer {
 
     fn create2(
         hash _salt,
-        hash _bytecodeHash,
+        hash _rawHash,
+        hash _codeHash,
         fields _input
     ) -> (address) {
-        return create2Account(_salt, _bytecodeHash, _input, 0);
+        return create2Account(_salt, _rawHash, _codeHash, _input, 0);
     }
 
+    // TODO: multiple arguments larger than 3 is not supported.
     fn create2Account(
         hash _salt,
-        hash _bytecodeHash,
+        hash _rawHash,
+        hash _codeHash,
         fields _input,
         u32 _aaVersion
     ) -> (address) {
-        address newAddress = getNewAddressCreate2(caller_address(), _bytecodeHash, _salt, _input);
-        print(newAddress);
-        _nonSystemDeployOnAddress(_bytecodeHash, newAddress, _aaVersion, _input);
+        address newAddress = getNewAddressCreate2(caller_address(), _codeHash, _salt, _input);
+        _nonSystemDeployOnAddress(_rawHash, _codeHash, newAddress, _aaVersion, _input);
         return newAddress;
     }
 
     fn getNewAddressCreate2(
-        address _sender,
-        hash _bytecodeHash,
+        address _from,
+        hash _codeHash,
         hash _salt,
         fields _input
     ) -> (address) {
         // TODO: constant is not supported yet.
         hash CREATE2_PREFIX = poseidon_hash("OlaCreate2");
-        print(CREATE2_PREFIX);
         hash constructorInputHash = poseidon_hash(_input);
-        print(constructorInputHash);
+        // TODO: bytes.concat is not supported yet, and the poseidon input is not bytes.
         hash _hash = poseidon_hash(
-            abi.encode(CREATE2_PREFIX, _sender, _salt, _bytecodeHash, constructorInputHash));
-        
-        print(_hash);
+            abi.encode(CREATE2_PREFIX, _from, _salt, _codeHash, constructorInputHash)
+        );
 
+        // CR: _address = hash_to_address(_hash)
         return address(_hash);
     }
 
     fn _nonSystemDeployOnAddress(
-        hash _bytecodeHash,
+        hash _rawHash,
+        hash _codeHash,
         address _newAddress,
         u32 _aaVersion,
         fields _input
     ) {
-        assert(_bytecodeHash != hash(0x0), "BytecodeHash can not be zero");
+        // TODO: hash's comparison is not supported yet.
+        assert(_codeHash != hash(0x0), "BytecodeHash can not be zero");
 
+        // TODO: address's comparison is not supported yet.
         address MAX_SYSTEM_CONTRACT_ADDRESS = address(0xffff);
-        //assert(_newAddress > MAX_SYSTEM_CONTRACT_ADDRESS, "Can not deploy contracts in kernel space");
+        assert(_newAddress > MAX_SYSTEM_CONTRACT_ADDRESS, "Can not deploy contracts in kernel space");
 
         // We do not allow deploying twice on the same address.
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
-        print(ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT);
         fields get_codeHash_calldata = abi.encodeWithSignature("getCodeHash(address)", _newAddress);
-        print(get_codeHash_calldata);
-        // fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
-        // hash codeHash = abi.decode(get_codeHash_bytes, (hash));
-        // assert(codeHash == hash(0x0), "New address already deployed code");
+        fields get_codeHash_bytes = ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(get_codeHash_calldata);
+        hash codeHash = abi.decode(get_codeHash_bytes, (hash));
+        assert(codeHash == hash(0x0), "New address already deployed code");
 
         // Do not allow deploying contracts to default accounts that have already executed transactions.
         address NONCE_HOLDER_ADDRESS = address(0x8003);
         fields deploy_nonce_calldata = abi.encodeWithSignature("usedNonces(address)", _newAddress);
-        print(deploy_nonce_calldata);
-        // fields deploy_nonce_bytes = NONCE_HOLDER_ADDRESS.call(deploy_nonce_calldata);
-        // u32 deploy_nonce = abi.decode(deploy_nonce_bytes, (u32));
-        // assert(deploy_nonce == 0, "Account is occupied");
+        fields deploy_nonce_bytes = NONCE_HOLDER_ADDRESS.call(deploy_nonce_calldata);
+        u32 deploy_nonce = abi.decode(deploy_nonce_bytes, (u32));
+        assert(deploy_nonce == 0, "Account is occupied");
 
-        _performDeployOnAddress(_bytecodeHash, _newAddress, _aaVersion, _input);
+        _performDeployOnAddress(_rawHash, _codeHash, _newAddress, _aaVersion, _input);
     }
 
     fn _performDeployOnAddress(
-        hash _bytecodeHash,
+        hash _rawHash,
+        hash _codeHash,
         address _newAddress,
         u32 _aaVersion,
         fields _input
     ) {
         // Check the bytecodeHash is known(deployed)
-        address KNOWN_CODE_STORAGE_CONTRACT = address(0x8004);
-        fields is_codehash_known_calldata = abi.encodeWithSignature("isCodehashKnown(hash)", _bytecodeHash);
-        print(is_codehash_known_calldata);
-        // fields is_codehash_known_bytes = KNOWN_CODE_STORAGE_CONTRACT.call(is_codehash_known_calldata);
-        // bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
-        // assert(is_codehash_known, "The code hash is not known");
+        address KNOWN_CODES_STORAGE_CONTRACT = address(0x8004);
+        fields is_codehash_known_calldata = abi.encodeWithSignature("isCodehashKnown(hash)", _codeHash);
+        fields is_codehash_known_bytes = KNOWN_CODES_STORAGE_CONTRACT.call(is_codehash_known_calldata);
+        bool is_codehash_known = abi.decode(is_codehash_known_bytes, (bool));
+        assert(is_codehash_known, "The code hash is not known");
 
         AccountInfo newAccountInfo;
         newAccountInfo.supportedAAVersion = _aaVersion;
@@ -129,27 +126,21 @@ contract ContractDeployer {
         newAccountInfo.nonceOrdering = 0;
         accountInfos[_newAddress] = newAccountInfo;
 
-        _constructContract(caller_address(), _newAddress, _bytecodeHash, _input, false, true);
+        _constructContract(caller_address(), _newAddress, _rawHash, _codeHash, _input, true);
         
         // TODO: event is not supported yet.
-        // emit ContractDeployed(caller_address(), _bytecodeHash, _newAddress);
+        //emit ContractDeployed(msg.sender, _bytecodeHash, _newAddress);
     }
 
     fn _constructContract(
-        address _sender,
+        address _from,
         address _newAddress,
-        hash _bytecodeHash,
+        hash _rawHash,
+        hash _codeHash,
         fields _input,
-        bool _isSystem,
         bool _callConstructor
     ) {
         address ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT = address(0x8002);
-        print(_sender);
-        print(_newAddress);
-        print(_bytecodeHash);
-        print(_input);
-        print(_isSystem);
-        print(_callConstructor);
         if (_callConstructor) {
             // TODO: disable this for version 0.
             // Set constructing flag for newAddress
@@ -158,21 +149,19 @@ contract ContractDeployer {
             // Call construct of new deployed contract
             // TODO: we need a constructor.
             // CR: 
-            //_newAddress.call(_input);
+            _newAddress.call(_input);
             
             // TODO: disable this for version 0.
             // Set newAddress constructed and save the codeHash.
             // bytes constructed_calldata = abi.encodeWithSignature("markAccountCodeHashAsConstructed(address)", _newAddress);
-            fields constructed_calldata = abi.encodeWithSignature("storeCodeHash(address,hash)", _newAddress, _bytecodeHash);
-            print(constructed_calldata);
-            // ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
+            fields constructed_calldata = abi.encodeWithSignature("storeBytesHash(address,hash,hash)", _newAddress, _rawHash, _codeHash);
+            ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
         } else {
             // TODO: disable this for version 0.
             // If we do not call the constructor, we need to set the constructed code hash.
             // bytes constructed_calldata = abi.encodeWithSignature("storeAccountConstructedCodeHash(address, hash)", _newAddress, _bytecodeHash);
-            fields constructed_calldata = abi.encodeWithSignature("storeCodeHash(address,hash)", _newAddress, _bytecodeHash);
-            print(constructed_calldata);
-            // ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
+            fields constructed_calldata = abi.encodeWithSignature("storeBytesHash(address,hash,hash)", _newAddress,  _rawHash, _codeHash);
+            ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT.call(constructed_calldata);
         }
     }
 

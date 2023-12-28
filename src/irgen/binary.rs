@@ -658,7 +658,7 @@ impl<'a> Binary<'a> {
                     }
                 }
             }
-            Type::String => {
+            Type::String | Type::DynamicBytes => {
                 let elem_ty = array_ty.array_deref();
                 let llvm_elem_ty = self.llvm_type(elem_ty.deref_memory(), ns);
                 let vector_ptr = self.vector_data(array.into());
@@ -683,12 +683,20 @@ impl<'a> Binary<'a> {
         right: PointerValue<'a>,
         len: IntValue<'a>,
         op: IntPredicate,
+        elem_ty: &Type,
     ) -> IntValue<'a> {
         let func_name = match op {
             IntPredicate::EQ => "memcmp_eq",
-            IntPredicate::NE => "memcmp_ne",
-            IntPredicate::UGT => "memcmp_ugt",
-            IntPredicate::UGE => "memcmp_uge",
+            IntPredicate::UGT => match elem_ty {
+                Type::Uint(32) => "memcmp_ugt",
+                Type::Field => "field_memcmp_ugt",
+                _ => panic!("not implemented"),
+            },
+            IntPredicate::UGE => match elem_ty {
+                Type::Uint(32) => "memcmp_uge",
+                Type::Field => "field_memcmp_uge",
+                _ => panic!("not implemented"),
+            },
             _ => panic!("not implemented"),
         };
         let mempcy_function = self.module.get_function(func_name).unwrap();

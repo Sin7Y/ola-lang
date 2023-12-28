@@ -4,12 +4,16 @@ use inkwell::values::{BasicValue, FunctionValue};
 use inkwell::{AddressSpace, IntPredicate};
 use once_cell::sync::Lazy;
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
+pub const TWO_POWER: u64 = u32::MAX as u64 + 1;
+
+static PROPHET_FUNCTIONS: Lazy<[&str; 14]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
+        "split_field_high",
+        "split_field_low",
         "get_context_data",
         "get_tape_data",
         "set_tape_data",
@@ -21,16 +25,25 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 12]> = Lazy::new(|| {
     ]
 });
 
-static BUILTIN_FUNCTIONS: Lazy<[&str; 2]> = Lazy::new(|| ["builtin_assert", "builtin_range_check"]);
+static BUILTIN_FUNCTIONS: Lazy<[&str; 3]> = Lazy::new(|| {
+    [
+        "builtin_assert",
+        "builtin_range_check",
+        "builtin_check_ecdsa",
+    ]
+});
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 8]> = Lazy::new(|| {
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 11]> = Lazy::new(|| {
     [
         "heap_malloc",
         "vector_new",
+        "split_field",
         "memcpy",
         "memcmp_eq",
         "memcmp_ugt",
         "memcmp_uge",
+        "field_memcmp_ugt",
+        "field_memcmp_uge",
         "u32_div_mod",
         "u32_power",
     ]
@@ -50,6 +63,9 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
 
     // Generate core lib functions
     ns.called_lib_functions.iter().for_each(|p| {
+        if bin.module.get_function(p).is_some() {
+            return;
+        }
         match p.as_str() {
             "u32_sqrt" => {
                 // build u32_sqrt function
@@ -64,6 +80,21 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                 let func = bin.module.add_function("fields_concat", ftype, None);
                 define_fields_concat(bin, func);
             }
+            "check_ecdsa" => {
+                let i64_type = bin.context.i64_type();
+                let ptr_type = i64_type.ptr_type(AddressSpace::default());
+                let ftype = i64_type.fn_type(
+                    &[
+                        ptr_type.into(),
+                        ptr_type.into(),
+                        ptr_type.into(),
+                        ptr_type.into(),
+                    ],
+                    false,
+                );
+                let func = bin.module.add_function("check_ecdsa", ftype, None);
+                define_check_ecdsa(bin, func);
+            }
             _ => {}
         }
     });
@@ -75,17 +106,27 @@ fn declare_prophets(bin: &mut Binary) {
         "prophet_u32_sqrt" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into()], false);
-            bin.module.add_function("prophet_u32_sqrt", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "prophet_u32_div" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
-            bin.module.add_function("prophet_u32_div", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "prophet_u32_mod" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
-            bin.module.add_function("prophet_u32_mod", ftype, None);
+            bin.module.add_function(p, ftype, None);
+        }
+        "split_field_low" => {
+            let i64_type = bin.context.i64_type();
+            let ftype = i64_type.fn_type(&[i64_type.into()], false);
+            bin.module.add_function(p, ftype, None);
+        }
+        "split_field_high" => {
+            let i64_type = bin.context.i64_type();
+            let ftype = i64_type.fn_type(&[i64_type.into()], false);
+            bin.module.add_function(p, ftype, None);
         }
         "get_context_data" => {
             // first param is heap address.
@@ -94,7 +135,7 @@ fn declare_prophets(bin: &mut Binary) {
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let void_type = bin.context.void_type();
             let ftype = void_type.fn_type(&[ptr_type.into(), i64_type.into()], false);
-            bin.module.add_function("get_context_data", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
 
         "get_tape_data" => {
@@ -104,7 +145,7 @@ fn declare_prophets(bin: &mut Binary) {
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let void_type = bin.context.void_type();
             let ftype = void_type.fn_type(&[ptr_type.into(), i64_type.into()], false);
-            bin.module.add_function("get_tape_data", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "set_tape_data" => {
             // first param is heap address.
@@ -113,7 +154,7 @@ fn declare_prophets(bin: &mut Binary) {
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let void_type = bin.context.void_type();
             let ftype = void_type.fn_type(&[ptr_type.into(), i64_type.into()], false);
-            bin.module.add_function("set_tape_data", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
 
         "prophet_u32_array_sort" => {
@@ -122,19 +163,19 @@ fn declare_prophets(bin: &mut Binary) {
             let ftype =
                 array_ptr_type.fn_type(&[array_ptr_type.into(), array_length_type.into()], false);
             bin.module
-                .add_function("prophet_u32_array_sort", ftype, None);
+                .add_function(p, ftype, None);
         }
         "get_storage" => {
             let void_type = bin.context.void_type();
             let param_type = bin.context.i64_type().ptr_type(AddressSpace::default());
             let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
-            bin.module.add_function("get_storage", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "set_storage" => {
             let void_type = bin.context.void_type();
             let param_type = bin.context.i64_type().ptr_type(AddressSpace::default());
             let ftype = void_type.fn_type(&[param_type.into(), param_type.into()], false);
-            bin.module.add_function("set_storage", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         // @param input heap address
         // @param output heap address
@@ -145,21 +186,21 @@ fn declare_prophets(bin: &mut Binary) {
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let ftype =
                 void_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
-            bin.module.add_function("poseidon_hash", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "contract_call" => {
             let void_type = bin.context.void_type();
             let call_type = bin.context.i64_type();
             let address_type = bin.context.i64_type().ptr_type(AddressSpace::default());
             let ftype = void_type.fn_type(&[address_type.into(), call_type.into()], false);
-            bin.module.add_function("contract_call", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
 
         "prophet_printf" => {
             let void_type = bin.context.void_type();
             let i64_type = bin.context.i64_type();
             let ftype = void_type.fn_type(&[i64_type.into(), i64_type.into()], false);
-            bin.module.add_function("prophet_printf", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
 
         _ => {}
@@ -173,13 +214,19 @@ fn declare_builtins(bin: &mut Binary) {
             let i64_type = bin.context.i64_type();
             let void_type = bin.context.void_type();
             let ftype = void_type.fn_type(&[i64_type.into()], false);
-            bin.module.add_function("builtin_assert", ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "builtin_range_check" => {
             let i64_type = bin.context.i64_type();
             let void_type = bin.context.void_type();
             let ftype = void_type.fn_type(&[i64_type.into()], false);
-            bin.module.add_function("builtin_range_check", ftype, None);
+            bin.module.add_function(p, ftype, None);
+        }
+        "builtin_check_ecdsa" => {
+            let i64_type = bin.context.i64_type();
+            let ptr_type = i64_type.ptr_type(AddressSpace::default());
+            let ftype = i64_type.fn_type(&[ptr_type.into()], false);
+            bin.module.add_function(p, ftype, None);
         }
         _ => {}
     });
@@ -192,14 +239,14 @@ fn define_core_lib(bin: &mut Binary) {
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let ftype = ptr_type.fn_type(&[i64_type.into()], false);
-            let func = bin.module.add_function("heap_malloc", ftype, None);
+            let func = bin.module.add_function(p, ftype, None);
             define_heap_malloc(bin, func);
         }
         "vector_new" => {
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let ftype = ptr_type.fn_type(&[i64_type.into()], false);
-            let func = bin.module.add_function("vector_new", ftype, None);
+            let func = bin.module.add_function(p, ftype, None);
             define_vector_new(bin, func);
         }
         "memcpy" => {
@@ -211,19 +258,31 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             define_memcpy(bin, func);
         }
-        "memcmp_eq" | "memcmp_ugt" | "memcmp_uge" => {
+
+        "split_field" => {
+            let i64_type = bin.context.i64_type();
+            let void_type = bin.context.void_type();
+            let ptr_type = i64_type.ptr_type(AddressSpace::default());
+            let ftype =
+                void_type.fn_type(&[i64_type.into(), ptr_type.into(), ptr_type.into()], false);
+            let func = bin.module.add_function(p, ftype, None);
+            define_split_field(bin, func);
+        }
+        "memcmp_eq" | "memcmp_ugt" | "memcmp_uge" | "field_memcmp_ugt"
+        | "field_memcmp_uge" => {
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let ftype =
                 i64_type.fn_type(&[ptr_type.into(), ptr_type.into(), i64_type.into()], false);
             let func = bin.module.add_function(p, ftype, None);
-            let op = match *p {
-                "memcmp_eq" => IntPredicate::EQ,
-                "memcmp_ugt" => IntPredicate::UGT,
-                "memcmp_uge" => IntPredicate::UGE,
+            match *p {
+                "memcmp_eq" => define_mem_compare(bin, func, IntPredicate::EQ),
+                "memcmp_ugt" => define_mem_compare(bin, func, IntPredicate::UGT),
+                "memcmp_uge" => define_mem_compare(bin, func, IntPredicate::UGE),
+                "field_memcmp_ugt" => define_field_mem_compare(bin, func, IntPredicate::UGT),
+                "field_memcmp_uge" => define_field_mem_compare(bin, func, IntPredicate::UGE),
                 _ => unreachable!(),
             };
-            define_mem_compare(bin, func, op);
         }
         "u32_div_mod" => {
             let i64_type = bin.context.i64_type();
@@ -247,6 +306,7 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             define_u32_power(bin, func);
         }
+
 
         _ => {}
     });
@@ -321,13 +381,7 @@ fn define_fields_concat<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 fn define_heap_malloc<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder
         .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let size = function.get_first_param().unwrap();
-    let size_alloca = bin.build_alloca(function, size.get_type(), "size_alloca");
-    bin.builder.build_store(size_alloca, size);
-    let size = bin
-        .builder
-        .build_load(bin.context.i64_type(), size_alloca, "size")
-        .into_int_value();
+    let size = function.get_first_param().unwrap().into_int_value();
     let current_heap_address = bin
         .builder
         .build_load(
@@ -355,13 +409,7 @@ fn define_heap_malloc<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 fn define_vector_new<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder
         .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let size = function.get_first_param().unwrap();
-    let size_alloca = bin.build_alloca(function, size.get_type(), "size_alloca");
-    bin.builder.build_store(size_alloca, size);
-    let size = bin
-        .builder
-        .build_load(bin.context.i64_type(), size_alloca, "size")
-        .into_int_value();
+    let size = function.get_first_param().unwrap().into_int_value();
     let size_add_one =
         bin.builder
             .build_int_add(size, bin.context.i64_type().const_int(1, false), "");
@@ -419,13 +467,7 @@ fn define_memcpy<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
         )
         .into_pointer_value();
 
-    let len = function.get_nth_param(2).unwrap();
-    let len_alloca = bin.build_alloca(function, len.get_type(), "len_alloca");
-    bin.builder.build_store(len_alloca, len);
-    let len = bin
-        .builder
-        .build_load(bin.context.i64_type(), len_alloca, "len")
-        .into_int_value();
+    let len = function.get_nth_param(2).unwrap().into_int_value();
 
     let cond = bin.context.append_basic_block(function, "cond");
     let body = bin.context.append_basic_block(function, "body");
@@ -520,13 +562,7 @@ fn define_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: Int
         )
         .into_pointer_value();
 
-    let len = function.get_nth_param(2).unwrap();
-    let len_alloca = bin.build_alloca(function, len.get_type(), "len_alloca");
-    bin.builder.build_store(len_alloca, len);
-    let len = bin
-        .builder
-        .build_load(bin.context.i64_type(), len_alloca, "len")
-        .into_int_value();
+    let len = function.get_nth_param(2).unwrap().into_int_value();
 
     let loop_ty = bin.context.i64_type();
     let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
@@ -582,6 +618,129 @@ fn define_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: Int
     bin.builder.build_store(index_alloca, next_index);
 
     bin.builder.build_conditional_branch(compare, cond, done);
+
+    bin.builder.position_at_end(done);
+    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+    phi_node.add_incoming(&[
+        (&bin.context.i64_type().const_int(1, false), cond),
+        (&bin.context.i64_type().const_zero(), body),
+    ]);
+    bin.builder.build_return(Some(&phi_node.as_basic_value()));
+}
+
+fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let left_ptr = function.get_nth_param(0).unwrap();
+    let right_ptr = function.get_nth_param(1).unwrap();
+    let len = function.get_nth_param(2).unwrap();
+
+    let loop_ty = bin.context.i64_type();
+    let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
+    bin.builder.build_store(index_alloca, loop_ty.const_zero());
+
+    let cond = bin.context.append_basic_block(function, "cond");
+    bin.builder.build_unconditional_branch(cond);
+    bin.builder.position_at_end(cond);
+
+    let index_value = bin
+        .builder
+        .build_load(loop_ty, index_alloca, "index_value")
+        .into_int_value();
+    let loop_check = bin.builder.build_int_compare(
+        IntPredicate::ULT,
+        index_value,
+        len.into_int_value(),
+        "loop_check",
+    );
+    let body = bin.context.append_basic_block(function, "body");
+    let done = bin.context.append_basic_block(function, "done");
+    let low_compare_block = bin.context.append_basic_block(function, "low_compare_block");
+    bin.builder.build_conditional_branch(loop_check, body, done);
+
+    bin.builder.position_at_end(body);
+    let left_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            left_ptr.into_pointer_value(),
+            &[index_value],
+            "left_elem_ptr",
+        )
+    };
+    let left_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
+        .into_int_value();
+
+    let left_high = bin.build_alloca(function, bin.context.i64_type(), "left_high");
+    let left_low = bin.build_alloca(function, bin.context.i64_type(), "left_low");
+
+    bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("split_field").unwrap(),
+            &[left_elem.into(), left_high.into(), left_low.into()],
+            "",
+        );
+    let left_high = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_high, "")
+        .into_int_value();
+
+    let left_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_low, "")
+        .into_int_value();
+
+    let right_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            right_ptr.into_pointer_value(),
+            &[index_value],
+            "right_elem_ptr",
+        )
+    };
+    let right_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
+        .into_int_value();
+
+    let right_high = bin.build_alloca(function, bin.context.i64_type(), "right_high");
+    let right_low = bin.build_alloca(function, bin.context.i64_type(), "right_low");
+
+    bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("split_field").unwrap(),
+            &[right_elem.into(), right_high.into(), right_low.into()],
+            "",
+        );
+
+    let right_high = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_high, "")
+        .into_int_value();
+
+    let right_low = bin.builder.build_load(bin.context.i64_type(), right_low, "").into_int_value();
+
+    let compare_high = bin
+    .builder
+    .build_int_compare(op, left_high, right_high, "compare_high");
+
+    bin.builder.build_conditional_branch(compare_high, low_compare_block, done);
+    
+    bin.builder.position_at_end(low_compare_block);
+
+    let compare_low = bin.builder.build_int_compare(op, left_low, right_low, "compare_low");
+
+    let next_index =
+        bin.builder
+            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+    bin.builder.build_store(index_alloca, next_index);
+
+    bin.builder.build_conditional_branch(compare_low, cond, done);
 
     bin.builder.position_at_end(done);
     let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
@@ -776,4 +935,125 @@ fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     );
 
     bin.builder.build_return(Some(&result_phi.as_basic_value()));
+}
+
+fn define_split_field<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let field_input = function.get_nth_param(0).unwrap();
+    let high_output = function.get_nth_param(1).unwrap();
+    let low_output = function.get_nth_param(2).unwrap();
+
+    let field_high = bin
+        .builder
+        .build_call(
+            bin.module.get_function("split_field_high").unwrap(),
+            &[field_input.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+    bin.builder.build_call(
+        bin.module.get_function("builtin_range_check").unwrap(),
+        &[field_high.into()],
+        "",
+    );
+
+    let field_low = bin
+        .builder
+        .build_call(
+            bin.module.get_function("split_field_low").unwrap(),
+            &[field_input.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+    bin.builder.build_call(
+        bin.module.get_function("builtin_range_check").unwrap(),
+        &[field_low.into()],
+        "",
+    );
+
+    let high_value = bin.builder.build_int_mul(
+        field_high.into_int_value(),
+        bin.context.i64_type().const_int(TWO_POWER, false),
+        "",
+    );
+
+    let result = bin
+        .builder
+        .build_int_add(high_value, field_low.into_int_value(), "");
+
+    let equal = bin.builder.build_int_compare(
+        inkwell::IntPredicate::EQ,
+        field_input.into_int_value(),
+        result,
+        "",
+    );
+    bin.builder.build_call(
+        bin.module.get_function("builtin_assert").unwrap(),
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
+        "",
+    );
+
+    bin.builder
+        .build_store(high_output.into_pointer_value(), field_high);
+    bin.builder
+        .build_store(low_output.into_pointer_value(), field_low);
+
+    bin.builder.build_return(None);
+}
+
+fn define_check_ecdsa<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let msg = function.get_nth_param(0).unwrap().into_pointer_value();
+    let pubkey = function.get_nth_param(1).unwrap().into_pointer_value();
+    let sig = function.get_nth_param(2).unwrap().into_pointer_value();
+
+    let mut dest = bin.heap_malloc(bin.context.i64_type().const_int(20, false));
+
+    bin.memcpy(msg, dest, bin.context.i64_type().const_int(4, false));
+
+    dest = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            dest,
+            &[bin.context.i64_type().const_int(4, false)],
+            "",
+        )
+    };
+
+    let pubkey_data = bin.vector_data(pubkey.as_basic_value_enum());
+    bin.memcpy(pubkey_data, dest, bin.context.i64_type().const_int(8, false));
+
+    dest = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type().ptr_type(AddressSpace::default()),
+            dest,
+            &[bin.context.i64_type().const_int(8, false)],
+            "",
+        )
+    };
+
+    let sig_data = bin.vector_data(sig.as_basic_value_enum());
+    bin.memcpy(sig_data, dest, bin.context.i64_type().const_int(8, false));
+
+    let result = bin
+        .builder
+        .build_call(
+            bin.module.get_function("builtin_check_ecdsa").unwrap(),
+            &[dest.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    bin.builder.build_return(Some(&result));
 }

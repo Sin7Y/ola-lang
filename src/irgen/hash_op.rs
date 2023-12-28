@@ -1,6 +1,6 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::expression;
-use crate::sema::ast::{Expression, Namespace};
+use crate::sema::ast::{Expression, Namespace, Type};
 use inkwell::values::{BasicValueEnum, FunctionValue};
 use inkwell::IntPredicate;
 
@@ -19,7 +19,13 @@ pub fn hash_compare<'a>(
     let right = expression(r, bin, func_value, var_table, ns).into_pointer_value();
     match op {
         IntPredicate::EQ | IntPredicate::UGT | IntPredicate::UGE => bin
-            .memcmp(left, right, bin.context.i64_type().const_int(4, false), op)
+            .memcmp(
+                left,
+                right,
+                bin.context.i64_type().const_int(4, false),
+                op,
+                &Type::Field,
+            )
             .into(),
         IntPredicate::NE => {
             let result = bin.memcmp(
@@ -27,6 +33,7 @@ pub fn hash_compare<'a>(
                 right,
                 bin.context.i64_type().const_int(4, false),
                 IntPredicate::EQ,
+                &Type::Field,
             );
             bin.builder
                 .build_int_compare(
@@ -43,6 +50,7 @@ pub fn hash_compare<'a>(
                 left,
                 bin.context.i64_type().const_int(4, false),
                 IntPredicate::UGT,
+                &Type::Field,
             )
             .into(),
         IntPredicate::ULE => bin
@@ -51,6 +59,7 @@ pub fn hash_compare<'a>(
                 left,
                 bin.context.i64_type().const_int(4, false),
                 IntPredicate::UGE,
+                &Type::Field,
             )
             .into(),
         _ => unreachable!(),

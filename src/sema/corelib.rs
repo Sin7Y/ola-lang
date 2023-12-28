@@ -11,6 +11,8 @@ use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 use tiny_keccak::{Hasher, Keccak};
 
+
+#[derive(PartialEq, Eq,Debug)]
 pub struct Prototype {
     pub libfunc: LibFunc,
     pub namespace: Option<&'static str>,
@@ -20,7 +22,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 23]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 25]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -189,6 +191,20 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 23]> = Lazy::new(|| {
             params: vec![],
             ret: vec![Type::Address],
         },
+        Prototype {
+            libfunc: LibFunc::GetSelector,
+            namespace: None,
+            name: "get_selector",
+            params: vec![Type::String],
+            ret: vec![Type::Uint(32)],
+        },
+        Prototype {
+            libfunc: LibFunc::CheckECDSA,
+            namespace: None,
+            name: "check_ecdsa",
+            params: vec![Type::Hash, Type::DynamicBytes, Type::DynamicBytes],
+            ret: vec![Type::Bool],
+        },
     ]
 });
 
@@ -310,6 +326,16 @@ pub fn resolve_call(
             }
         } else {
             ns.called_lib_functions.push(id.to_string());
+            if id == "get_selector" {
+                let signature = args[0].clone();
+                match function_selector(loc, &signature, diagnostics) {
+                    Ok(selector) => { cast_args.insert(
+                        0,
+                        selector
+                    );}
+                    Err(_) => return Err(())
+                }
+            }
             return Ok(Expression::LibFunction {
                 loc: *loc,
                 tys: func.ret.to_vec(),
@@ -465,34 +491,10 @@ pub(super) fn resolve_namespace_call(
         LibFunc::AbiEncodeWithSignature => {
             // first argument is signature
             if let Some(signature) = args_iter.next() {
-                let function_selector;
-                match signature {
-                    program::Expression::StringLiteral(s) => {
-                        let function_name = &s[0].string;
-                        // keccak hash the signature
-                        let mut hasher = Keccak::v256();
-                        let mut hash = [0u8; 32];
-                        hasher.update(function_name.as_bytes());
-                        hasher.finalize(&mut hash);
-
-                        function_selector = u32::from_be_bytes(hash[0..4].try_into().unwrap())
-                    }
-
-                    _ => {
-                        diagnostics.push(Diagnostic::error(
-                            *loc,
-                            "function signature must be a string literal".to_string(),
-                        ));
-                        return Err(());
-                    }
-                }
+                let selector = function_selector(loc, signature, diagnostics);
                 resolved_args.insert(
                     0,
-                    Expression::NumberLiteral {
-                        loc: *loc,
-                        ty: Type::Uint(32),
-                        value: BigInt::from(function_selector),
-                    },
+                    selector.unwrap(),
                 );
             } else {
                 diagnostics.push(Diagnostic::error(
@@ -643,6 +645,37 @@ pub fn resolve_method_call(
             ));
 
             Err(())
+        }
+    }
+}
+
+pub fn function_selector(
+    loc: &program::Loc,
+    signature: &program::Expression,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    match signature {
+        program::Expression::StringLiteral(s) => {
+            let signature = &s[0].string;
+            // keccak hash the signature
+            let mut hasher = Keccak::v256();
+            let mut hash = [0u8; 32];
+            hasher.update(signature.as_bytes());
+            hasher.finalize(&mut hash);
+
+            let selector = u32::from_be_bytes(hash[0..4].try_into().unwrap());
+            Ok(Expression::NumberLiteral {
+                loc: *loc,
+                ty: Type::Uint(32),
+                value: BigInt::from(selector),
+            })
+        }
+        _ => {
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                "function signature must be a string literal".to_string(),
+            ));
+            return Err(());
         }
     }
 }
