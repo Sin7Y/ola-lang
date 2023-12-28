@@ -1,10 +1,10 @@
 contract AddressExample {
     address myaddress;
 
-    // fn compare_address() -> (bool) {
-    //     address _address = address(0x0000000001);
-    //     return myaddress == _address;
-    // }
+    fn compare_address() -> (bool) {
+        address _address = address(0x0000000001);
+        return myaddress == _address;
+    }
 
     fn u32_to_address() -> (address) {
         u32 b = 0x0000000001;

@@ -991,6 +991,8 @@ pub enum LibFunc {
     CallerAddress,
     CodeAddress,
     CurrentAddress,
+    CheckECDSA,
+    GetSelector,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

@@ -443,6 +443,22 @@ pub fn expression<'a>(
         }
 
         Expression::LibFunction {
+            kind: LibFunc::CheckECDSA,
+            args,
+            ..
+        } => {
+
+            let msg = expression(&args[0], bin, func_value, var_table, ns);
+            let pubkey = expression(&args[1], bin, func_value, var_table, ns);
+            let signature = expression(&args[2], bin, func_value, var_table, ns);
+             bin.builder.build_call(
+                bin.module.get_function("check_ecdsa").unwrap(),
+                &[msg.into(), pubkey.into(), signature.into()],
+                "",
+            ).try_as_basic_value().left().expect("Should have a left return value")
+        }
+
+        Expression::LibFunction {
             kind: LibFunc::Signature,
             ..
         } => {
@@ -674,7 +690,7 @@ pub fn expression<'a>(
             let array_ty = array.ty().deref_into();
             let mut array = expression(array, bin, func_value, var_table, ns);
             match array_ty {
-                Type::String => storage_load(bin, &Type::Uint(32), &mut array, func_value, ns),
+                Type::String | Type::DynamicBytes  => storage_load(bin, &Type::Uint(32), &mut array, func_value, ns),
                 Type::Array(_, dim) => match dim.last().unwrap() {
                     ArrayLength::Dynamic => {
                         storage_load(bin, &Type::Uint(32), &mut array, func_value, ns)
@@ -1004,6 +1020,17 @@ pub fn expression<'a>(
             debug_print(bin, arg, &ty, func_value, ns);
             bin.context.i64_type().const_zero().into()
         }
+
+        Expression::LibFunction {
+            kind: LibFunc::GetSelector,
+            args,
+            ..
+        } => {
+            // We have already completed the calculation of the function selector in the SEMA stage.
+            //  Here, we just need to return it.
+            expression(&args[0], bin, func_value, var_table, ns)
+        }
+        
 
         _ => unimplemented!("{:?}", expr),
     }
@@ -1455,7 +1482,8 @@ pub fn string_compare<'a>(
         "",
     );
 
-    bin.memcmp(left, right, left_len, IntPredicate::EQ).into()
+    bin.memcmp(left, right, left_len, IntPredicate::EQ, &Type::Uint(32))
+        .into()
 }
 
 fn field_to_fields<'a>(source: BasicValueEnum<'a>, bin: &Binary<'a>) -> BasicValueEnum<'a> {

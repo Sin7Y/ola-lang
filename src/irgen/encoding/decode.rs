@@ -185,7 +185,7 @@ pub fn struct_literal_copy<'a>(
     struct_alloca.into()
 }
 
-/// Decodes a complex array from a borsh encoded buffer
+/// Decodes a complex array from a encoded buffer
 /// Complex arrays are either dynamic arrays or arrays of dynamic types, like
 /// structs. If this is an array of structs, whose representation in memory is
 /// padded, the array is also complex, because it cannot be memcpy'ed

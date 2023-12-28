@@ -421,7 +421,7 @@ pub(crate) fn storage_store<'a>(
                 }
             }
         }
-        Type::String => {
+        Type::String | Type::DynamicBytes => {
             set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
         Type::Address | Type::Contract(_) | Type::Hash => storage_store_internal(bin, *slot, dest),
