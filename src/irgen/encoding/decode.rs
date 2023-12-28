@@ -88,12 +88,10 @@ fn decode_array<'a>(
         // The function decode_complex_array assumes that, if the dimension is fixed,
         // there is no need to allocate an array
         if matches!(dims.last(), Some(ArrayLength::Fixed(_))) {
+            let array_literal = bin.heap_malloc(bin.context.i64_type().const_zero());
             bin.builder.build_store(
                 array_var,
-                bin.context
-                    .i64_type()
-                    .ptr_type(AddressSpace::default())
-                    .const_null(),
+                array_literal
             );
         }
         decode_complex_array(

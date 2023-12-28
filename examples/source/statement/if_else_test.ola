@@ -1,0 +1,17 @@
+// For DefaultAccount, all the methods should only be called by Entrypoint system contract.
+// Although user's AA implemenation does not have this restriction.
+
+contract IfStatement {
+
+
+    fn ifTest(u32 a) -> (u32) {
+        if (a == 1) {
+            return 1;
+        } else if (a == 2) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
+}
