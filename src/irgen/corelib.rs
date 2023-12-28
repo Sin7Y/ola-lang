@@ -12,8 +12,8 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 14]> = Lazy::new(|| {
         "prophet_u32_div",
         "prophet_u32_mod",
         "prophet_u32_array_sort",
-        "split_field_high",
-        "split_field_low",
+        "prophet_split_field_high",
+        "prophet_split_field_low",
         "get_context_data",
         "get_tape_data",
         "set_tape_data",
@@ -118,12 +118,12 @@ fn declare_prophets(bin: &mut Binary) {
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             bin.module.add_function(p, ftype, None);
         }
-        "split_field_low" => {
+        "prophet_split_field_low" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into()], false);
             bin.module.add_function(p, ftype, None);
         }
-        "split_field_high" => {
+        "prophet_split_field_high" => {
             let i64_type = bin.context.i64_type();
             let ftype = i64_type.fn_type(&[i64_type.into()], false);
             bin.module.add_function(p, ftype, None);
@@ -162,8 +162,7 @@ fn declare_prophets(bin: &mut Binary) {
             let array_length_type = bin.context.i64_type();
             let ftype =
                 array_ptr_type.fn_type(&[array_ptr_type.into(), array_length_type.into()], false);
-            bin.module
-                .add_function(p, ftype, None);
+            bin.module.add_function(p, ftype, None);
         }
         "get_storage" => {
             let void_type = bin.context.void_type();
@@ -268,8 +267,7 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             define_split_field(bin, func);
         }
-        "memcmp_eq" | "memcmp_ugt" | "memcmp_uge" | "field_memcmp_ugt"
-        | "field_memcmp_uge" => {
+        "memcmp_eq" | "memcmp_ugt" | "memcmp_uge" | "field_memcmp_ugt" | "field_memcmp_uge" => {
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let ftype =
@@ -306,7 +304,6 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             define_u32_power(bin, func);
         }
-
 
         _ => {}
     });
@@ -442,30 +439,9 @@ fn define_vector_new<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 fn define_memcpy<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder
         .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let src_ptr = function.get_nth_param(0).unwrap();
-    let src_ptr_alloca = bin.build_alloca(function, src_ptr.get_type(), "src_ptr_alloca");
-    bin.builder.build_store(src_ptr_alloca, src_ptr);
-    let src_ptr = bin
-        .builder
-        .build_load(
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            src_ptr_alloca,
-            "src_ptr",
-        )
-        .into_pointer_value();
+    let src_ptr = function.get_nth_param(0).unwrap().into_pointer_value();
 
-    let dest_ptr = function.get_nth_param(1).unwrap();
-
-    let dest_ptr_alloca = bin.build_alloca(function, dest_ptr.get_type(), "dest_ptr_alloca");
-    bin.builder.build_store(dest_ptr_alloca, dest_ptr);
-    let dest_ptr = bin
-        .builder
-        .build_load(
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            dest_ptr_alloca,
-            "dest_ptr",
-        )
-        .into_pointer_value();
+    let dest_ptr = function.get_nth_param(1).unwrap().into_pointer_value();
 
     let len = function.get_nth_param(2).unwrap().into_int_value();
 
@@ -537,31 +513,8 @@ fn define_memcpy<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 fn define_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
     bin.builder
         .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let left_ptr = function.get_nth_param(0).unwrap();
-    let left_ptr_alloca = bin.build_alloca(function, left_ptr.get_type(), "left_ptr_alloca");
-    bin.builder.build_store(left_ptr_alloca, left_ptr);
-    let left_ptr = bin
-        .builder
-        .build_load(
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            left_ptr_alloca,
-            "left_ptr",
-        )
-        .into_pointer_value();
-
-    let right_ptr = function.get_nth_param(1).unwrap();
-
-    let right_ptr_alloca = bin.build_alloca(function, right_ptr.get_type(), "right_ptr_alloca");
-    bin.builder.build_store(right_ptr_alloca, right_ptr);
-    let right_ptr = bin
-        .builder
-        .build_load(
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            right_ptr_alloca,
-            "right_ptr",
-        )
-        .into_pointer_value();
-
+    let left_ptr = function.get_nth_param(0).unwrap().into_pointer_value();
+    let right_ptr = function.get_nth_param(1).unwrap().into_pointer_value();
     let len = function.get_nth_param(2).unwrap().into_int_value();
 
     let loop_ty = bin.context.i64_type();
@@ -654,8 +607,11 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
         "loop_check",
     );
     let body = bin.context.append_basic_block(function, "body");
+    let low_compare_block = bin
+        .context
+        .append_basic_block(function, "low_compare_block");
     let done = bin.context.append_basic_block(function, "done");
-    let low_compare_block = bin.context.append_basic_block(function, "low_compare_block");
+
     bin.builder.build_conditional_branch(loop_check, body, done);
 
     bin.builder.position_at_end(body);
@@ -675,14 +631,11 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
     let left_high = bin.build_alloca(function, bin.context.i64_type(), "left_high");
     let left_low = bin.build_alloca(function, bin.context.i64_type(), "left_low");
 
-    bin
-        .builder
-        .build_call(
-            bin.module
-                .get_function("split_field").unwrap(),
-            &[left_elem.into(), left_high.into(), left_low.into()],
-            "",
-        );
+    bin.builder.build_call(
+        bin.module.get_function("split_field").unwrap(),
+        &[left_elem.into(), left_high.into(), left_low.into()],
+        "",
+    );
     let left_high = bin
         .builder
         .build_load(bin.context.i64_type(), left_high, "")
@@ -709,44 +662,49 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
     let right_high = bin.build_alloca(function, bin.context.i64_type(), "right_high");
     let right_low = bin.build_alloca(function, bin.context.i64_type(), "right_low");
 
-    bin
-        .builder
-        .build_call(
-            bin.module
-                .get_function("split_field").unwrap(),
-            &[right_elem.into(), right_high.into(), right_low.into()],
-            "",
-        );
+    bin.builder.build_call(
+        bin.module.get_function("split_field").unwrap(),
+        &[right_elem.into(), right_high.into(), right_low.into()],
+        "",
+    );
 
     let right_high = bin
         .builder
         .build_load(bin.context.i64_type(), right_high, "")
         .into_int_value();
 
-    let right_low = bin.builder.build_load(bin.context.i64_type(), right_low, "").into_int_value();
+    let right_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_low, "")
+        .into_int_value();
 
     let compare_high = bin
-    .builder
-    .build_int_compare(op, left_high, right_high, "compare_high");
+        .builder
+        .build_int_compare(op, left_high, right_high, "compare_high");
 
-    bin.builder.build_conditional_branch(compare_high, low_compare_block, done);
-    
+    bin.builder
+        .build_conditional_branch(compare_high, low_compare_block, done);
+
     bin.builder.position_at_end(low_compare_block);
 
-    let compare_low = bin.builder.build_int_compare(op, left_low, right_low, "compare_low");
+    let compare_low = bin
+        .builder
+        .build_int_compare(op, left_low, right_low, "compare_low");
 
     let next_index =
         bin.builder
             .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
     bin.builder.build_store(index_alloca, next_index);
 
-    bin.builder.build_conditional_branch(compare_low, cond, done);
+    bin.builder
+        .build_conditional_branch(compare_low, cond, done);
 
     bin.builder.position_at_end(done);
     let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
     phi_node.add_incoming(&[
         (&bin.context.i64_type().const_int(1, false), cond),
         (&bin.context.i64_type().const_zero(), body),
+        (&bin.context.i64_type().const_zero(), low_compare_block),
     ]);
     bin.builder.build_return(Some(&phi_node.as_basic_value()));
 }
@@ -756,39 +714,8 @@ fn define_u32_div_mod<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
         .position_at_end(bin.context.append_basic_block(function, "entry"));
     let dividend = function.get_nth_param(0).unwrap();
     let divisor = function.get_nth_param(1).unwrap();
-    let quotient = function.get_nth_param(2).unwrap();
-    let remainder = function.get_nth_param(3).unwrap();
-    let dividend_alloca = bin.build_alloca(function, dividend.get_type(), "dividend_alloca");
-    bin.builder.build_store(dividend_alloca, dividend);
-    let dividend = bin
-        .builder
-        .build_load(bin.context.i64_type(), dividend_alloca, "dividend");
-
-    let divisor_alloca = bin.build_alloca(function, divisor.get_type(), "divisor_alloca");
-    bin.builder.build_store(divisor_alloca, divisor);
-    let divisor = bin
-        .builder
-        .build_load(bin.context.i64_type(), divisor_alloca, "divisor");
-    let quotient_alloca = bin.build_alloca(function, quotient.get_type(), "quotient_alloca");
-    bin.builder.build_store(quotient_alloca, quotient);
-    let quotient = bin
-        .builder
-        .build_load(
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            quotient_alloca,
-            "quotient",
-        )
-        .into_pointer_value();
-    let remainder_alloca = bin.build_alloca(function, remainder.get_type(), "remainder_alloca");
-    bin.builder.build_store(remainder_alloca, remainder);
-    let remainder = bin
-        .builder
-        .build_load(
-            bin.context.i64_type().ptr_type(AddressSpace::default()),
-            remainder_alloca,
-            "remainder",
-        )
-        .into_pointer_value();
+    let quotient = function.get_nth_param(2).unwrap().into_pointer_value();
+    let remainder = function.get_nth_param(3).unwrap().into_pointer_value();
 
     let remainder_ret = bin
         .builder
@@ -873,24 +800,9 @@ fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
         .position_at_end(bin.context.append_basic_block(function, "entry"));
     let loop_block = bin.context.append_basic_block(function, "loop");
     let exit_block = bin.context.append_basic_block(function, "exit");
-    let base = function.get_nth_param(0).unwrap();
-    let exponent = function.get_nth_param(1).unwrap();
+    let base = function.get_nth_param(0).unwrap().into_int_value();
+    let exponent = function.get_nth_param(1).unwrap().into_int_value();
     let i64_type = bin.context.i64_type();
-
-    let base_alloca = bin.build_alloca(function, base.get_type(), "base_alloca");
-    let exponent_alloca = bin.build_alloca(function, exponent.get_type(), "exponent_alloca");
-
-    bin.builder.build_store(base_alloca, base);
-    let base = bin
-        .builder
-        .build_load(bin.context.i64_type(), base_alloca, "base")
-        .into_int_value();
-
-    bin.builder.build_store(exponent_alloca, exponent);
-    let exponent = bin
-        .builder
-        .build_load(bin.context.i64_type(), exponent_alloca, "exponent")
-        .into_int_value();
 
     bin.builder.build_unconditional_branch(loop_block);
     bin.builder.position_at_end(loop_block);
@@ -947,7 +859,7 @@ fn define_split_field<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     let field_high = bin
         .builder
         .build_call(
-            bin.module.get_function("split_field_high").unwrap(),
+            bin.module.get_function("prophet_split_field_high").unwrap(),
             &[field_input.into()],
             "",
         )
@@ -963,7 +875,7 @@ fn define_split_field<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     let field_low = bin
         .builder
         .build_call(
-            bin.module.get_function("split_field_low").unwrap(),
+            bin.module.get_function("prophet_split_field_low").unwrap(),
             &[field_input.into()],
             "",
         )
@@ -1030,7 +942,11 @@ fn define_check_ecdsa<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     };
 
     let pubkey_data = bin.vector_data(pubkey.as_basic_value_enum());
-    bin.memcpy(pubkey_data, dest, bin.context.i64_type().const_int(8, false));
+    bin.memcpy(
+        pubkey_data,
+        dest,
+        bin.context.i64_type().const_int(8, false),
+    );
 
     dest = unsafe {
         bin.builder.build_gep(
