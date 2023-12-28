@@ -106,6 +106,24 @@ const PRINTF: &'static str = "%{
     }
 %}";
 
+const SPLITHI: &'static str = "%{
+    function split_hi(felt in) -> felt {
+        return in / 4294967296;
+    }
+    entry() {
+        cid.out = split_hi(cid.in);
+    }
+%}";
+
+const SPLITLO: &'static str = "%{
+    function split_lo(felt in) -> felt {
+        return in % 4294967296;
+    }
+    entry() {
+        cid.out = split_lo(cid.in);
+    }
+%}";
+
 pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
     match name {
         "prophet_u32_sqrt" => Prophet {
@@ -276,6 +294,42 @@ pub fn from_prophet(name: &str, fn_idx: usize, pht_idx: usize) -> Prophet {
             .to_vec(),
             outputs: [].to_vec(),
         },
+        "prophet_split_field_high" => Prophet {
+            code: SPLITHI.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [Input {
+                name: "cid.in".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.out".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+        },
+        "prophet_split_field_low" => Prophet {
+            code: SPLITLO.to_string(),
+            label: format!(".PROPHET{}_{}", fn_idx.to_string(), pht_idx.to_string()),
+            inputs: [Input {
+                name: "cid.in".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+            outputs: [Output {
+                name: "cid.out".to_string(),
+                length: 1,
+                is_ref: false,
+                is_input_output: false,
+            }]
+            .to_vec(),
+        },
         e => todo!("{:?}", e),
     }
 }
@@ -411,6 +465,7 @@ impl fmt::Display for Opcode {
                 Self::NEQ => "neq",
                 Self::EQri | Self::EQrr => "eq",
                 Self::RANGECHECK => "range",
+                Self::SIGCHECK => "sigcheck",
                 Self::ASSERTri | Self::ASSERTrr => "assert",
                 Self::TLOADri | Self::TLOADrr => "tload",
                 Self::TSTOREi | Self::TSTOREr => "tstore",

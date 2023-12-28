@@ -45,7 +45,9 @@ pub(crate) fn read_from_buffer<'a>(
             read_from_buffer(buffer, bin, &usr_type, func_value, ns)
         }
 
-        Type::Array(elem_ty, dims) => decode_array(buffer.into(), ty, elem_ty, bin, &dims, func_value, ns),
+        Type::Array(elem_ty, dims) => {
+            decode_array(buffer.into(), ty, elem_ty, bin, &dims, func_value, ns)
+        }
 
         Type::Slice(elem_ty) => {
             let dims = vec![ArrayLength::Dynamic];
@@ -72,17 +74,28 @@ fn decode_array<'a>(
         (buffer.into(), size)
     } else {
         let mut indexes: Vec<IntValue> = Vec::new();
-        let offset_var = bin
-            .build_alloca(func_value, bin.context.i64_type(), "array_offset");
+        let offset_var = bin.build_alloca(func_value, bin.context.i64_type(), "array_offset");
         bin.builder
             .build_store(offset_var, bin.context.i64_type().const_zero());
-        let array_var = bin
-            .build_alloca(func_value, bin.context.i64_type().ptr_type(AddressSpace::default()).ptr_type(AddressSpace::default()), "array_ptr");
-            // The function decode_complex_array assumes that, if the dimension is fixed,
-            // there is no need to allocate an array
-            if matches!(dims.last(), Some(ArrayLength::Fixed(_))) { 
-                bin.builder.build_store(array_var, bin.context.i64_type().ptr_type(AddressSpace::default()).const_null());
-            }
+        let array_var = bin.build_alloca(
+            func_value,
+            bin.context
+                .i64_type()
+                .ptr_type(AddressSpace::default())
+                .ptr_type(AddressSpace::default()),
+            "array_ptr",
+        );
+        // The function decode_complex_array assumes that, if the dimension is fixed,
+        // there is no need to allocate an array
+        if matches!(dims.last(), Some(ArrayLength::Fixed(_))) {
+            bin.builder.build_store(
+                array_var,
+                bin.context
+                    .i64_type()
+                    .ptr_type(AddressSpace::default())
+                    .const_null(),
+            );
+        }
         decode_complex_array(
             bin,
             buffer,
@@ -96,8 +109,13 @@ fn decode_array<'a>(
             ns,
             &mut indexes,
         );
-        (bin.builder.build_load(bin.llvm_var_ty(array_ty, ns), array_var, ""), 
-        bin.builder.build_load(bin.context.i64_type(), offset_var, "").into_int_value())
+        (
+            bin.builder
+                .build_load(bin.llvm_var_ty(array_ty, ns), array_var, ""),
+            bin.builder
+                .build_load(bin.context.i64_type(), offset_var, "")
+                .into_int_value(),
+        )
     }
 }
 
@@ -169,8 +187,8 @@ pub fn struct_literal_copy<'a>(
 
 /// Decodes a complex array from a borsh encoded buffer
 /// Complex arrays are either dynamic arrays or arrays of dynamic types, like
-/// structs. If this is an array of structs, whose representation in memory is padded, 
-/// the array is also complex, because it cannot be memcpy'ed
+/// structs. If this is an array of structs, whose representation in memory is
+/// padded, the array is also complex, because it cannot be memcpy'ed
 fn decode_complex_array<'a>(
     bin: &Binary<'a>,
     buffer: PointerValue<'a>,
@@ -207,14 +225,8 @@ fn decode_complex_array<'a>(
         bin.builder.build_store(offset_var, array_start);
 
         let new_ty = Type::Array(Box::new(elem_ty.clone()), dims[0..(dimension + 1)].to_vec());
-        let allocated_array = bin.alloca_dynamic_array(
-            func_value,
-            &new_ty,
-            length,
-            None,
-            false,
-            ns,
-        );
+        let allocated_array =
+            bin.alloca_dynamic_array(func_value, &new_ty, length, None, false, ns);
 
         if indexes.is_empty() {
             bin.builder.build_store(array_var, allocated_array);
