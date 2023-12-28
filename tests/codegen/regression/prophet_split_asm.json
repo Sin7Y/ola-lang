@@ -1,0 +1,45 @@
+{
+  "program": "test_prophet_split:\n.LBL0_0:\n.PROPHET0_0:\n  mov r0 psp\n  mload r0 [r0]\n  mov r3 r0\n  mov r1 4294967297\n.PROPHET0_1:\n  mov r0 psp\n  mload r0 [r0]\n  mov r1 r0\n  add r2 r3 r1\n  mov r0 r2\n  ret\n",
+  "prophets": [
+    {
+      "label": ".PROPHET0_0",
+      "code": "%{\n    function split_hi(felt in) -> felt {\n        return x / 4294967296;\n    }\n    entry() {\n        cid.out = split_hi(cid.in);\n    }\n%}",
+      "inputs": [
+        {
+          "name": "cid.in",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cid.out",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ]
+    },
+    {
+      "label": ".PROPHET0_1",
+      "code": "%{\n    function split_lo(felt in) -> felt {\n        return x % 4294967296;\n    }\n    entry() {\n        cid.out = split_lo(cid.in);\n    }\n%}",
+      "inputs": [
+        {
+          "name": "cid.in",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cid.out",
+          "length": 1,
+          "is_ref": false,
+          "is_input_output": false
+        }
+      ]
+    }
+  ]
+}

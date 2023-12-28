@@ -402,7 +402,9 @@ pub(crate) fn storage_store<'a>(
                         field.name_as_str(),
                     )
                     .unwrap();
-                let elem = bin.builder.build_load(bin.llvm_var_ty(&field.ty, ns), elem_ptr, "");
+                let elem = bin
+                    .builder
+                    .build_load(bin.llvm_var_ty(&field.ty, ns), elem_ptr, "");
                 storage_store(bin, &field.ty, slot, elem.into(), function, ns);
 
                 if (!field.ty.is_reference_type(ns) || matches!(field.ty, Type::String))

@@ -62,6 +62,18 @@ pub fn lower_call(
                     ctx.block_map[&ctx.cur_block],
                 ));
             }
+            "builtin_check_ecdsa" => {
+                let src = get_operand_for_val(ctx, tys[1], args[1])?;
+                let output = new_empty_inst_output(ctx, tys[0], id);
+
+                ctx.inst_seq.push(MachInstruction::new(
+                    InstructionData {
+                        opcode: Opcode::SIGCHECK,
+                        operands: vec![MO::output(output[0].into()), MO::input(src.into())],
+                    },
+                    ctx.block_map[&ctx.cur_block],
+                ));
+            }
             e => todo!("{:?}", e),
         }
         return Ok(());

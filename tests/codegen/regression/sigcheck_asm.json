@@ -1,0 +1,4 @@
+{
+  "program": "test_builtin_check_ecdsa:\n.LBL0_0:\n  sigcheck r0 r1\n  ret\n",
+  "prophets": []
+}

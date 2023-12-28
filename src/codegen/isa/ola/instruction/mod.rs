@@ -61,6 +61,7 @@ pub enum Opcode {
     MSTOREr,
 
     RANGECHECK,
+    SIGCHECK,
     NOT,
     NEQ,
     GTE,
