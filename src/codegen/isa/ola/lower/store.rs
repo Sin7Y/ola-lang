@@ -43,6 +43,14 @@ pub fn lower_store(
         Value::Constant(ConstantValue::GlobalRef(name, _ty)) => {
             gbl = Some(name);
         }
+        Value::Argument(a) => {
+            let mut vregs = vec![];
+            let ops = ctx.arg_idx_to_vreg.get(&a.nth).unwrap();
+            for idx in 0..ops.len() {
+                vregs.push(ops[idx]);
+            }
+            dst_vreg = Some(vregs);
+        }
         _ => {
             return Err(
                 LoweringError::Todo("Store dest must be an instruction result".into()).into(),
@@ -385,6 +393,24 @@ fn lower_store_gep(
                 MOperand::new(OperandData::None),
                 MOperand::input(base.map_or(OperandData::None, |x| x)),
                 MOperand::input(OperandData::VReg(vregs[0])),
+                MOperand::new(OperandData::None),
+            ]
+        }
+        [Value::Argument(a), Value::Instruction(idx1)] => {
+            let mut vregs = vec![];
+            let ops = ctx.arg_idx_to_vreg.get(&a.nth).unwrap();
+            for idx in 0..ops.len() {
+                vregs.push(ops[idx]);
+            }
+            let idx1_ty = gep.operand.types()[2];
+            let idx1 = get_inst_output(ctx, idx1_ty, *idx1)?;
+            vec![
+                MOperand::new(OperandData::MemStart),
+                MOperand::new(OperandData::None),
+                MOperand::new(OperandData::None),
+                MOperand::new(OperandData::Int32(0 as i32)),
+                MOperand::input(OperandData::VReg(vregs[0])),
+                MOperand::input(OperandData::VReg(idx1[0])),
                 MOperand::new(OperandData::None),
             ]
         }
