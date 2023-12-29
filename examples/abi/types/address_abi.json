@@ -1,5 +1,16 @@
 [
   {
+    "name": "compare_address",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
     "name": "u32_to_address",
     "type": "function",
     "inputs": [],

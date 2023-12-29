@@ -687,6 +687,7 @@ impl<'a> Binary<'a> {
     ) -> IntValue<'a> {
         let func_name = match op {
             IntPredicate::EQ => "memcmp_eq",
+            IntPredicate::NE => "memcmp_ne",
             IntPredicate::UGT => match elem_ty {
                 Type::Uint(32) => "memcmp_ugt",
                 Type::Field => "field_memcmp_ugt",
@@ -695,6 +696,16 @@ impl<'a> Binary<'a> {
             IntPredicate::UGE => match elem_ty {
                 Type::Uint(32) => "memcmp_uge",
                 Type::Field => "field_memcmp_uge",
+                _ => panic!("not implemented"),
+            },
+            IntPredicate::ULT => match elem_ty {
+                Type::Uint(32) => "memcmp_ult",
+                Type::Field => "field_memcmp_ult",
+                _ => panic!("not implemented"),
+            },
+            IntPredicate::ULE => match elem_ty {
+                Type::Uint(32) => "memcmp_ule",
+                Type::Field => "field_memcmp_ule",
                 _ => panic!("not implemented"),
             },
             _ => panic!("not implemented"),

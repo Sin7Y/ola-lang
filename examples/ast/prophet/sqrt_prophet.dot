@@ -1,6 +1,6 @@
 strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola" {
 	contract [label="contract SqrtContract\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:1:1-12:2"]
-	main [label="main\ncontract: SqrtContract\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:3:5-14\nsignature main()"]
+	test [label="test\ncontract: SqrtContract\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:3:5-14\nsignature test()"]
 	expr [label="expression\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:4:8-20"]
 	call_internal_function [label="call internal function\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:4:8-20"]
 	internal_function [label="fn(u32)  returns (void)\nSqrtContract.sqrt_test\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:4:8-20"]
@@ -15,8 +15,8 @@ strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source
 	variable_14 [label="variable: b\nu32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:9:16-17"]
 	diagnostic [label="found SqrtContract \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/prophet/sqrt_prophet.ola:1:1-12:2"]
 	contracts -> contract
-	contract -> main [label="fn"]
-	main -> expr [label="body"]
+	contract -> test [label="fn"]
+	test -> expr [label="body"]
 	expr -> call_internal_function [label="expr"]
 	call_internal_function -> internal_function [label="function"]
 	call_internal_function -> number_literal [label="arg #0"]

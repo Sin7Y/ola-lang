@@ -1,0 +1,22 @@
+[
+  {
+    "name": "initialize",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "rows",
+        "type": "u32"
+      },
+      {
+        "name": "columns",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[3][]"
+      }
+    ]
+  }
+]

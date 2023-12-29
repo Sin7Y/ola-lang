@@ -33,17 +33,22 @@ static BUILTIN_FUNCTIONS: Lazy<[&str; 3]> = Lazy::new(|| {
     ]
 });
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 11]> = Lazy::new(|| {
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 16]> = Lazy::new(|| {
     [
         "heap_malloc",
         "vector_new",
         "split_field",
         "memcpy",
         "memcmp_eq",
+        "memcmp_ne",
         "memcmp_ugt",
         "memcmp_uge",
+        "memcmp_ult",
+        "memcmp_ule",
         "field_memcmp_ugt",
         "field_memcmp_uge",
+        "field_memcmp_ule",
+        "field_memcmp_ult",
         "u32_div_mod",
         "u32_power",
     ]
@@ -267,7 +272,8 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             define_split_field(bin, func);
         }
-        "memcmp_eq" | "memcmp_ugt" | "memcmp_uge" | "field_memcmp_ugt" | "field_memcmp_uge" => {
+        "memcmp_eq" | "memcmp_ne" | "memcmp_ugt" | "memcmp_uge" | "memcmp_ult" | "memcmp_ule"
+        | "field_memcmp_ugt" | "field_memcmp_uge" | "field_memcmp_ult" | "field_memcmp_ule" => {
             let i64_type = bin.context.i64_type();
             let ptr_type = i64_type.ptr_type(AddressSpace::default());
             let ftype =
@@ -275,10 +281,15 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             match *p {
                 "memcmp_eq" => define_mem_compare(bin, func, IntPredicate::EQ),
+                "memcmp_ne" => define_mem_compare(bin, func, IntPredicate::NE),
                 "memcmp_ugt" => define_mem_compare(bin, func, IntPredicate::UGT),
                 "memcmp_uge" => define_mem_compare(bin, func, IntPredicate::UGE),
+                "memcmp_ult" => define_mem_compare(bin, func, IntPredicate::ULT),
+                "memcmp_ule" => define_mem_compare(bin, func, IntPredicate::ULE),
                 "field_memcmp_ugt" => define_field_mem_compare(bin, func, IntPredicate::UGT),
                 "field_memcmp_uge" => define_field_mem_compare(bin, func, IntPredicate::UGE),
+                "field_memcmp_ult" => define_field_mem_compare(bin, func, IntPredicate::ULT),
+                "field_memcmp_ule" => define_field_mem_compare(bin, func, IntPredicate::ULE),
                 _ => unreachable!(),
             };
         }
@@ -508,205 +519,6 @@ fn define_memcpy<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 
     bin.builder.position_at_end(done);
     bin.builder.build_return(None);
-}
-
-fn define_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
-    bin.builder
-        .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let left_ptr = function.get_nth_param(0).unwrap().into_pointer_value();
-    let right_ptr = function.get_nth_param(1).unwrap().into_pointer_value();
-    let len = function.get_nth_param(2).unwrap().into_int_value();
-
-    let loop_ty = bin.context.i64_type();
-    let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
-    bin.builder.build_store(index_alloca, loop_ty.const_zero());
-
-    let cond = bin.context.append_basic_block(function, "cond");
-    bin.builder.build_unconditional_branch(cond);
-    bin.builder.position_at_end(cond);
-
-    let index_value = bin
-        .builder
-        .build_load(loop_ty, index_alloca, "index_value")
-        .into_int_value();
-    let loop_check =
-        bin.builder
-            .build_int_compare(IntPredicate::ULT, index_value, len, "loop_check");
-    let body = bin.context.append_basic_block(function, "body");
-    let done = bin.context.append_basic_block(function, "done");
-    bin.builder.build_conditional_branch(loop_check, body, done);
-
-    bin.builder.position_at_end(body);
-    let left_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            left_ptr,
-            &[index_value],
-            "left_elem_ptr",
-        )
-    };
-    let left_elem = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
-        .into_int_value();
-    let right_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            right_ptr,
-            &[index_value],
-            "right_elem_ptr",
-        )
-    };
-    let right_elem = bin
-        .builder
-        .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
-        .into_int_value();
-    let compare = bin
-        .builder
-        .build_int_compare(op, left_elem, right_elem, "compare");
-
-    let next_index =
-        bin.builder
-            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
-    bin.builder.build_store(index_alloca, next_index);
-
-    bin.builder.build_conditional_branch(compare, cond, done);
-
-    bin.builder.position_at_end(done);
-    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
-    phi_node.add_incoming(&[
-        (&bin.context.i64_type().const_int(1, false), cond),
-        (&bin.context.i64_type().const_zero(), body),
-    ]);
-    bin.builder.build_return(Some(&phi_node.as_basic_value()));
-}
-
-fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
-    bin.builder
-        .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let left_ptr = function.get_nth_param(0).unwrap();
-    let right_ptr = function.get_nth_param(1).unwrap();
-    let len = function.get_nth_param(2).unwrap();
-
-    let loop_ty = bin.context.i64_type();
-    let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
-    bin.builder.build_store(index_alloca, loop_ty.const_zero());
-
-    let cond = bin.context.append_basic_block(function, "cond");
-    bin.builder.build_unconditional_branch(cond);
-    bin.builder.position_at_end(cond);
-
-    let index_value = bin
-        .builder
-        .build_load(loop_ty, index_alloca, "index_value")
-        .into_int_value();
-    let loop_check = bin.builder.build_int_compare(
-        IntPredicate::ULT,
-        index_value,
-        len.into_int_value(),
-        "loop_check",
-    );
-    let body = bin.context.append_basic_block(function, "body");
-    let low_compare_block = bin
-        .context
-        .append_basic_block(function, "low_compare_block");
-    let done = bin.context.append_basic_block(function, "done");
-
-    bin.builder.build_conditional_branch(loop_check, body, done);
-
-    bin.builder.position_at_end(body);
-    let left_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            left_ptr.into_pointer_value(),
-            &[index_value],
-            "left_elem_ptr",
-        )
-    };
-    let left_elem = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
-        .into_int_value();
-
-    let left_high = bin.build_alloca(function, bin.context.i64_type(), "left_high");
-    let left_low = bin.build_alloca(function, bin.context.i64_type(), "left_low");
-
-    bin.builder.build_call(
-        bin.module.get_function("split_field").unwrap(),
-        &[left_elem.into(), left_high.into(), left_low.into()],
-        "",
-    );
-    let left_high = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_high, "")
-        .into_int_value();
-
-    let left_low = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_low, "")
-        .into_int_value();
-
-    let right_elem_ptr = unsafe {
-        bin.builder.build_gep(
-            bin.context.i64_type(),
-            right_ptr.into_pointer_value(),
-            &[index_value],
-            "right_elem_ptr",
-        )
-    };
-    let right_elem = bin
-        .builder
-        .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
-        .into_int_value();
-
-    let right_high = bin.build_alloca(function, bin.context.i64_type(), "right_high");
-    let right_low = bin.build_alloca(function, bin.context.i64_type(), "right_low");
-
-    bin.builder.build_call(
-        bin.module.get_function("split_field").unwrap(),
-        &[right_elem.into(), right_high.into(), right_low.into()],
-        "",
-    );
-
-    let right_high = bin
-        .builder
-        .build_load(bin.context.i64_type(), right_high, "")
-        .into_int_value();
-
-    let right_low = bin
-        .builder
-        .build_load(bin.context.i64_type(), right_low, "")
-        .into_int_value();
-
-    let compare_high = bin
-        .builder
-        .build_int_compare(op, left_high, right_high, "compare_high");
-
-    bin.builder
-        .build_conditional_branch(compare_high, low_compare_block, done);
-
-    bin.builder.position_at_end(low_compare_block);
-
-    let compare_low = bin
-        .builder
-        .build_int_compare(op, left_low, right_low, "compare_low");
-
-    let next_index =
-        bin.builder
-            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
-    bin.builder.build_store(index_alloca, next_index);
-
-    bin.builder
-        .build_conditional_branch(compare_low, cond, done);
-
-    bin.builder.position_at_end(done);
-    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
-    phi_node.add_incoming(&[
-        (&bin.context.i64_type().const_int(1, false), cond),
-        (&bin.context.i64_type().const_zero(), body),
-        (&bin.context.i64_type().const_zero(), low_compare_block),
-    ]);
-    bin.builder.build_return(Some(&phi_node.as_basic_value()));
 }
 
 fn define_u32_div_mod<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
@@ -972,4 +784,299 @@ fn define_check_ecdsa<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
         .expect("Should have a left return value");
 
     bin.builder.build_return(Some(&result));
+}
+
+fn define_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let left_ptr = function.get_nth_param(0).unwrap().into_pointer_value();
+    let right_ptr = function.get_nth_param(1).unwrap().into_pointer_value();
+    let len = function.get_nth_param(2).unwrap().into_int_value();
+
+    let loop_ty = bin.context.i64_type();
+    let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
+    bin.builder.build_store(index_alloca, loop_ty.const_zero());
+
+    let cond = bin.context.append_basic_block(function, "cond");
+    bin.builder.build_unconditional_branch(cond);
+    bin.builder.position_at_end(cond);
+
+    let index_value = bin
+        .builder
+        .build_load(loop_ty, index_alloca, "index_value")
+        .into_int_value();
+    let loop_check =
+        bin.builder
+            .build_int_compare(IntPredicate::ULT, index_value, len, "loop_check");
+    let body = bin.context.append_basic_block(function, "body");
+    let done = bin.context.append_basic_block(function, "done");
+    bin.builder.build_conditional_branch(loop_check, body, done);
+
+    bin.builder.position_at_end(body);
+    let left_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            left_ptr,
+            &[index_value],
+            "left_elem_ptr",
+        )
+    };
+    let left_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
+        .into_int_value();
+    let right_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            right_ptr,
+            &[index_value],
+            "right_elem_ptr",
+        )
+    };
+    let right_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
+        .into_int_value();
+
+    let next_index =
+        bin.builder
+            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+    bin.builder.build_store(index_alloca, next_index);
+    match op {
+        IntPredicate::EQ | IntPredicate::UGE => {
+            let compare = bin
+                .builder
+                .build_int_compare(op, left_elem, right_elem, "compare");
+            bin.builder.build_conditional_branch(compare, cond, done);
+        }
+        IntPredicate::NE => {
+            let compare =
+                bin.builder
+                    .build_int_compare(IntPredicate::EQ, left_elem, right_elem, "compare");
+            bin.builder.build_conditional_branch(compare, done, cond);
+        }
+
+        IntPredicate::UGT => {
+            let compare =
+                bin.builder
+                    .build_int_compare(IntPredicate::UGE, right_elem, left_elem, "compare");
+            bin.builder.build_conditional_branch(compare, done, cond);
+        }
+        IntPredicate::ULT => {
+            let compare =
+                bin.builder
+                    .build_int_compare(IntPredicate::UGE, left_elem, right_elem, "compare");
+            bin.builder.build_conditional_branch(compare, done, cond);
+        }
+        IntPredicate::ULE => {
+            let compare =
+                bin.builder
+                    .build_int_compare(IntPredicate::UGE, right_elem, left_elem, "compare");
+            bin.builder.build_conditional_branch(compare, cond, done);
+        }
+        _ => unreachable!(),
+    }
+    bin.builder.position_at_end(done);
+    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+    phi_node.add_incoming(&[
+        (&bin.context.i64_type().const_int(1, false), cond),
+        (&bin.context.i64_type().const_zero(), body),
+    ]);
+    bin.builder.build_return(Some(&phi_node.as_basic_value()));
+}
+
+fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: IntPredicate) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let left_ptr = function.get_nth_param(0).unwrap();
+    let right_ptr = function.get_nth_param(1).unwrap();
+    let len = function.get_nth_param(2).unwrap();
+
+    let loop_ty = bin.context.i64_type();
+    let index_alloca = bin.build_alloca(function, loop_ty, "index_alloca");
+    bin.builder.build_store(index_alloca, loop_ty.const_zero());
+
+    let cond = bin.context.append_basic_block(function, "cond");
+    bin.builder.build_unconditional_branch(cond);
+    bin.builder.position_at_end(cond);
+
+    let index_value = bin
+        .builder
+        .build_load(loop_ty, index_alloca, "index_value")
+        .into_int_value();
+    let loop_check = bin.builder.build_int_compare(
+        IntPredicate::ULT,
+        index_value,
+        len.into_int_value(),
+        "loop_check",
+    );
+    let body = bin.context.append_basic_block(function, "body");
+    let low_compare_block = bin
+        .context
+        .append_basic_block(function, "low_compare_block");
+    let done = bin.context.append_basic_block(function, "done");
+
+    bin.builder.build_conditional_branch(loop_check, body, done);
+
+    bin.builder.position_at_end(body);
+    let left_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            left_ptr.into_pointer_value(),
+            &[index_value],
+            "left_elem_ptr",
+        )
+    };
+    let left_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_elem_ptr, "left_elem")
+        .into_int_value();
+
+    let right_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            right_ptr.into_pointer_value(),
+            &[index_value],
+            "right_elem_ptr",
+        )
+    };
+    let right_elem = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_elem_ptr, "right_elem")
+        .into_int_value();
+
+    let left_high = bin.build_alloca(function, bin.context.i64_type(), "left_high");
+    let left_low = bin.build_alloca(function, bin.context.i64_type(), "left_low");
+
+    bin.builder.build_call(
+        bin.module.get_function("split_field").unwrap(),
+        &[left_elem.into(), left_high.into(), left_low.into()],
+        "",
+    );
+
+    let right_high = bin.build_alloca(function, bin.context.i64_type(), "right_high");
+    let right_low = bin.build_alloca(function, bin.context.i64_type(), "right_low");
+
+    bin.builder.build_call(
+        bin.module.get_function("split_field").unwrap(),
+        &[right_elem.into(), right_high.into(), right_low.into()],
+        "",
+    );
+    let left_high = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_high, "")
+        .into_int_value();
+
+    let right_high = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_high, "")
+        .into_int_value();
+
+    let left_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_low, "")
+        .into_int_value();
+
+    let right_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), right_low, "")
+        .into_int_value();
+
+    let next_index =
+        bin.builder
+            .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+    bin.builder.build_store(index_alloca, next_index);
+
+    match op {
+        IntPredicate::UGE => {
+            let compare_high =
+                bin.builder
+                    .build_int_compare(op, left_high, right_high, "compare_high");
+            bin.builder
+                .build_conditional_branch(compare_high, low_compare_block, done);
+
+            bin.builder.position_at_end(low_compare_block);
+
+            let compare_low = bin
+                .builder
+                .build_int_compare(op, left_low, right_low, "compare_low");
+            bin.builder
+                .build_conditional_branch(compare_low, cond, done);
+        }
+
+        IntPredicate::UGT => {
+            let compare_high = bin.builder.build_int_compare(
+                IntPredicate::UGE,
+                right_high,
+                left_high,
+                "compare_high",
+            );
+            bin.builder
+                .build_conditional_branch(compare_high, done, low_compare_block);
+
+            bin.builder.position_at_end(low_compare_block);
+
+            let compare_low = bin.builder.build_int_compare(
+                IntPredicate::UGE,
+                right_low,
+                left_low,
+                "compare_low",
+            );
+            bin.builder
+                .build_conditional_branch(compare_low, done, low_compare_block);
+        }
+        IntPredicate::ULT => {
+            let compare_high = bin.builder.build_int_compare(
+                IntPredicate::UGE,
+                left_high,
+                right_high,
+                "compare_high",
+            );
+            bin.builder
+                .build_conditional_branch(compare_high, done, low_compare_block);
+
+            bin.builder.position_at_end(low_compare_block);
+
+            let compare_low = bin.builder.build_int_compare(
+                IntPredicate::UGE,
+                left_low,
+                right_low,
+                "compare_low",
+            );
+            bin.builder
+                .build_conditional_branch(compare_low, done, low_compare_block);
+        }
+
+        IntPredicate::ULE => {
+            let compare_high = bin.builder.build_int_compare(
+                IntPredicate::UGE,
+                right_high,
+                left_high,
+                "compare_high",
+            );
+            bin.builder
+                .build_conditional_branch(compare_high, low_compare_block, done);
+
+            bin.builder.position_at_end(low_compare_block);
+
+            let compare_low = bin.builder.build_int_compare(
+                IntPredicate::UGE,
+                right_low,
+                left_low,
+                "compare_low",
+            );
+            bin.builder
+                .build_conditional_branch(compare_low, low_compare_block, done);
+        }
+        _ => unreachable!(),
+    }
+
+    bin.builder.position_at_end(done);
+    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+    phi_node.add_incoming(&[
+        (&bin.context.i64_type().const_int(1, false), cond),
+        (&bin.context.i64_type().const_zero(), body),
+        (&bin.context.i64_type().const_zero(), low_compare_block),
+    ]);
+    bin.builder.build_return(Some(&phi_node.as_basic_value()));
 }

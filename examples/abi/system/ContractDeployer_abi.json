@@ -24,7 +24,11 @@
         "type": "hash"
       },
       {
-        "name": "_bytecodeHash",
+        "name": "_rawHash",
+        "type": "hash"
+      },
+      {
+        "name": "_codeHash",
         "type": "hash"
       },
       {
@@ -48,7 +52,11 @@
         "type": "hash"
       },
       {
-        "name": "_bytecodeHash",
+        "name": "_rawHash",
+        "type": "hash"
+      },
+      {
+        "name": "_codeHash",
         "type": "hash"
       },
       {
@@ -72,11 +80,11 @@
     "type": "function",
     "inputs": [
       {
-        "name": "_sender",
+        "name": "_from",
         "type": "address"
       },
       {
-        "name": "_bytecodeHash",
+        "name": "_codeHash",
         "type": "hash"
       },
       {
@@ -100,7 +108,11 @@
     "type": "function",
     "inputs": [
       {
-        "name": "_bytecodeHash",
+        "name": "_rawHash",
+        "type": "hash"
+      },
+      {
+        "name": "_codeHash",
         "type": "hash"
       },
       {
@@ -123,7 +135,11 @@
     "type": "function",
     "inputs": [
       {
-        "name": "_bytecodeHash",
+        "name": "_rawHash",
+        "type": "hash"
+      },
+      {
+        "name": "_codeHash",
         "type": "hash"
       },
       {
@@ -146,7 +162,7 @@
     "type": "function",
     "inputs": [
       {
-        "name": "_sender",
+        "name": "_from",
         "type": "address"
       },
       {
@@ -154,16 +170,16 @@
         "type": "address"
       },
       {
-        "name": "_bytecodeHash",
+        "name": "_rawHash",
+        "type": "hash"
+      },
+      {
+        "name": "_codeHash",
         "type": "hash"
       },
       {
         "name": "_input",
         "type": "fields"
-      },
-      {
-        "name": "_isSystem",
-        "type": "bool"
       },
       {
         "name": "_callConstructor",

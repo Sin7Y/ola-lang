@@ -12,6 +12,17 @@
     "outputs": []
   },
   {
+    "name": "setPubkey",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_pk",
+        "type": "fields"
+      }
+    ],
+    "outputs": []
+  },
+  {
     "name": "validateTransaction",
     "type": "function",
     "inputs": [
@@ -28,20 +39,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -50,14 +53,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -65,12 +60,32 @@
     "outputs": [
       {
         "name": "",
-        "type": "field"
+        "type": "u32"
       }
     ]
   },
   {
     "name": "executeTransaction",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "name": "_data",
+        "type": "fields"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "fields"
+      }
+    ]
+  },
+  {
+    "name": "payForTransaction",
     "type": "function",
     "inputs": [
       {
@@ -86,20 +101,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -108,23 +115,47 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
     ],
-    "outputs": [
+    "outputs": []
+  },
+  {
+    "name": "prepareForPaymaster",
+    "type": "function",
+    "inputs": [
       {
-        "name": "",
-        "type": "fields"
+        "name": "_txHash",
+        "type": "hash"
+      },
+      {
+        "name": "_signedHash",
+        "type": "hash"
+      },
+      {
+        "name": "_tx",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "name": "data",
+            "type": "fields"
+          },
+          {
+            "name": "codes",
+            "type": "fields"
+          }
+        ]
       }
-    ]
+    ],
+    "outputs": []
   }
 ]
