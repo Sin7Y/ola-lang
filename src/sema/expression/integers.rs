@@ -101,6 +101,9 @@ pub fn coerce_number(
         (Type::Address, Type::Address) => {
             return Ok(Type::Address);
         }
+        (Type::Hash, Type::Hash) => {
+            return Ok(Type::Hash);
+        }
         (Type::Field, Type::Uint(_)) => {
             return Ok(l.clone());
         }

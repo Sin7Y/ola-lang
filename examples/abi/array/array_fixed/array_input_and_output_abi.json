@@ -1,0 +1,100 @@
+[
+  {
+    "name": "array_input_u32",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "u32[2][3]"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[2]"
+      }
+    ]
+  },
+  {
+    "name": "array_output_u32",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[2][3]"
+      }
+    ]
+  },
+  {
+    "name": "array_input_address",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "address[2][3]"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[2]"
+      }
+    ]
+  },
+  {
+    "name": "array_input_address_1",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "address[2][3]"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "name": "array_input_address_2",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "address[2][3]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[2][3]"
+      }
+    ]
+  },
+  {
+    "name": "array_output_address",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[2][3]"
+      }
+    ]
+  }
+]

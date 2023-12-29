@@ -1,0 +1,13 @@
+[
+  {
+    "name": "get_selector_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  }
+]

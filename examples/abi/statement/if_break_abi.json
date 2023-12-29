@@ -1,0 +1,13 @@
+[
+  {
+    "name": "ifTest",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "u32"
+      }
+    ],
+    "outputs": []
+  }
+]

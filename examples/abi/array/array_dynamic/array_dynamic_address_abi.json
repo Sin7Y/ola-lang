@@ -1,0 +1,34 @@
+[
+  {
+    "name": "address_outer_dynamic",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "address[2][]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[2][]"
+      }
+    ]
+  },
+  {
+    "name": "address_inner_dynamic",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "address[][2]"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[][2]"
+      }
+    ]
+  }
+]

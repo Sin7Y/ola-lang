@@ -1,0 +1,22 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola" {
+	contract [label="contract SqrtContract\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:1:1-8:2"]
+	sqrt_test [label="sqrt_test\ncontract: SqrtContract\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:3:9-37\nsignature sqrt_test(u32)"]
+	parameters [label="parameters\nu32 n"]
+	returns [label="returns\nu32 "]
+	var_decl [label="variable decl u32 b\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:4:9-28"]
+	libfunc [label="libfunc U32Sqrt\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:4:17-25"]
+	variable [label="variable: n\nu32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:4:26-27"]
+	return [label="return\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:5:9-17"]
+	variable_9 [label="variable: b\nu32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:5:16-17"]
+	diagnostic [label="found SqrtContract \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/benchmark/sqrt_prophet.ola:1:1-8:2"]
+	contracts -> contract
+	contract -> sqrt_test [label="fn"]
+	sqrt_test -> parameters [label="parameters"]
+	sqrt_test -> returns [label="returns"]
+	sqrt_test -> var_decl [label="body"]
+	var_decl -> libfunc [label="init"]
+	libfunc -> variable [label="arg #0"]
+	var_decl -> return [label="next"]
+	return -> variable_9 [label="expr"]
+	diagnostics -> diagnostic [label="Debug"]
+}

@@ -19,10 +19,9 @@ use crate::sema::{
     expression::ResolveTo,
 };
 
-use super::address_op::address_compare;
+use super::address_or_hash_op::address_or_hash_compare;
 use super::encoding::{abi_decode, abi_encode, abi_encode_with_selector};
 use super::functions::Vartable;
-use super::hash_op::hash_compare;
 use super::storage::{
     array_offset, slot_offest, storage_array_pop, storage_array_push, storage_load, storage_store,
 };
@@ -78,7 +77,7 @@ pub fn expression<'a>(
             u32_shift_right(left, right, bin, func_value, var_table, ns)
         }
         Expression::Equal { left, right, .. } => match left.ty() {
-            Type::Address | Type::Contract(_) => address_compare(
+            Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
                 left,
                 right,
                 bin,
@@ -88,15 +87,6 @@ pub fn expression<'a>(
                 IntPredicate::EQ,
             ),
             Type::Uint(32) | Type::Bool | Type::Field => u32_compare(
-                left,
-                right,
-                bin,
-                func_value,
-                var_table,
-                ns,
-                IntPredicate::EQ,
-            ),
-            Type::Hash => hash_compare(
                 left,
                 right,
                 bin,
@@ -108,7 +98,7 @@ pub fn expression<'a>(
             _ => unimplemented!("equal for type {:?}", left.ty()),
         },
         Expression::NotEqual { left, right, .. } => match left.ty() {
-            Type::Address | Type::Contract(_) => address_compare(
+            Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
                 left,
                 right,
                 bin,
@@ -126,19 +116,10 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::NE,
             ),
-            Type::Hash => hash_compare(
-                left,
-                right,
-                bin,
-                func_value,
-                var_table,
-                ns,
-                IntPredicate::NE,
-            ),
             _ => unimplemented!("not equal for type {:?}", left.ty()),
         },
         Expression::More { left, right, .. } => match left.ty() {
-            Type::Address | Type::Contract(_) => address_compare(
+            Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
                 left,
                 right,
                 bin,
@@ -148,15 +129,6 @@ pub fn expression<'a>(
                 IntPredicate::UGT,
             ),
             Type::Uint(32) => u32_compare(
-                left,
-                right,
-                bin,
-                func_value,
-                var_table,
-                ns,
-                IntPredicate::UGT,
-            ),
-            Type::Hash => hash_compare(
                 left,
                 right,
                 bin,
@@ -169,7 +141,7 @@ pub fn expression<'a>(
             _ => unimplemented!("more for type {:?}", left.ty()),
         },
         Expression::MoreEqual { left, right, .. } => match left.ty() {
-            Type::Address | Type::Contract(_) => address_compare(
+            Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
                 left,
                 right,
                 bin,
@@ -179,15 +151,6 @@ pub fn expression<'a>(
                 IntPredicate::UGE,
             ),
             Type::Uint(32) => u32_compare(
-                left,
-                right,
-                bin,
-                func_value,
-                var_table,
-                ns,
-                IntPredicate::UGE,
-            ),
-            Type::Hash => hash_compare(
                 left,
                 right,
                 bin,
@@ -199,7 +162,7 @@ pub fn expression<'a>(
             _ => unimplemented!("more equal for type {:?}", left.ty()),
         },
         Expression::Less { left, right, .. } => match left.ty() {
-            Type::Address | Type::Contract(_) => address_compare(
+            Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
                 left,
                 right,
                 bin,
@@ -209,15 +172,6 @@ pub fn expression<'a>(
                 IntPredicate::ULT,
             ),
             Type::Uint(32) => u32_compare(
-                left,
-                right,
-                bin,
-                func_value,
-                var_table,
-                ns,
-                IntPredicate::ULT,
-            ),
-            Type::Hash => hash_compare(
                 left,
                 right,
                 bin,
@@ -229,7 +183,7 @@ pub fn expression<'a>(
             _ => unimplemented!("less for type {:?}", left.ty()),
         },
         Expression::LessEqual { left, right, .. } => match left.ty() {
-            Type::Address | Type::Contract(_) => address_compare(
+            Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
                 left,
                 right,
                 bin,
@@ -239,15 +193,6 @@ pub fn expression<'a>(
                 IntPredicate::ULE,
             ),
             Type::Uint(32) => u32_compare(
-                left,
-                right,
-                bin,
-                func_value,
-                var_table,
-                ns,
-                IntPredicate::ULE,
-            ),
-            Type::Hash => hash_compare(
                 left,
                 right,
                 bin,

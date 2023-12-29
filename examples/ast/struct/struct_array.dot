@@ -36,7 +36,7 @@ strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source
 	load [label="load u32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:9-34"]
 	subscript_36 [label="subscript u32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:16-34"]
 	load_37 [label="load u32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:25-31"]
-	structmember [label="struct member #1 u32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:25-31"]
+	structmember [label="struct_member #1 u32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:25-31"]
 	variable_39 [label="variable: _student\nstruct StructWithArrayExample.Student\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:16-24"]
 	number_literal_40 [label="u32 literal: 0\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:22:32-33"]
 	diagnostic [label="found StructWithArrayExample \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/struct/struct_array.ola:2:1-24:2"]

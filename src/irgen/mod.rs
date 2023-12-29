@@ -1,12 +1,11 @@
 use std::str;
-pub mod address_op;
+pub mod address_or_hash_op;
 pub mod binary;
 mod corelib;
 mod dispatch;
 mod encoding;
 pub mod expression;
 mod functions;
-pub mod hash_op;
 mod statements;
 pub mod storage;
 mod strings;

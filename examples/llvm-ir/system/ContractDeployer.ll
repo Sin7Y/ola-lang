@@ -113,10 +113,36 @@ body:                                             ; preds = %cond
   %left_elem = load i64, ptr %left_elem_ptr, align 4
   %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
   %right_elem = load i64, ptr %right_elem_ptr, align 4
-  %compare = icmp eq i64 %left_elem, %right_elem
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
+  %compare = icmp eq i64 %left_elem, %right_elem
   br i1 %compare, label %cond, label %done
+
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
+
+define i64 @memcmp_ne(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %2
+  br i1 %loop_check, label %body, label %done
+
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  %compare = icmp eq i64 %left_elem, %right_elem
+  br i1 %compare, label %done, label %cond
 
 done:                                             ; preds = %body, %cond
   %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
@@ -139,10 +165,10 @@ body:                                             ; preds = %cond
   %left_elem = load i64, ptr %left_elem_ptr, align 4
   %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
   %right_elem = load i64, ptr %right_elem_ptr, align 4
-  %compare = icmp ugt i64 %left_elem, %right_elem
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
-  br i1 %compare, label %cond, label %done
+  %compare = icmp uge i64 %right_elem, %left_elem
+  br i1 %compare, label %done, label %cond
 
 done:                                             ; preds = %body, %cond
   %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
@@ -165,9 +191,61 @@ body:                                             ; preds = %cond
   %left_elem = load i64, ptr %left_elem_ptr, align 4
   %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
   %right_elem = load i64, ptr %right_elem_ptr, align 4
-  %compare = icmp uge i64 %left_elem, %right_elem
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
+  %compare = icmp uge i64 %left_elem, %right_elem
+  br i1 %compare, label %cond, label %done
+
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
+
+define i64 @memcmp_ult(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %2
+  br i1 %loop_check, label %body, label %done
+
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  %compare = icmp uge i64 %left_elem, %right_elem
+  br i1 %compare, label %done, label %cond
+
+done:                                             ; preds = %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ]
+  ret i64 %result_phi
+}
+
+define i64 @memcmp_ule(ptr %0, ptr %1, i64 %2) {
+entry:
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %2
+  br i1 %loop_check, label %body, label %done
+
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  %compare = icmp uge i64 %right_elem, %left_elem
   br i1 %compare, label %cond, label %done
 
 done:                                             ; preds = %body, %cond
@@ -185,7 +263,7 @@ entry:
   store i64 0, ptr %index_alloca, align 4
   br label %cond
 
-cond:                                             ; preds = %low_compare_block, %entry
+cond:                                             ; preds = %entry
   %index_value = load i64, ptr %index_alloca, align 4
   %loop_check = icmp ult i64 %index_value, %2
   br i1 %loop_check, label %body, label %done
@@ -193,22 +271,22 @@ cond:                                             ; preds = %low_compare_block, 
 body:                                             ; preds = %cond
   %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
   %left_elem = load i64, ptr %left_elem_ptr, align 4
-  call void @split_field(i64 %left_elem, ptr %left_high, ptr %left_low)
-  %3 = load i64, ptr %left_high, align 4
-  %4 = load i64, ptr %left_low, align 4
   %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
   %right_elem = load i64, ptr %right_elem_ptr, align 4
+  call void @split_field(i64 %left_elem, ptr %left_high, ptr %left_low)
   call void @split_field(i64 %right_elem, ptr %right_high, ptr %right_low)
-  %5 = load i64, ptr %right_high, align 4
+  %3 = load i64, ptr %left_high, align 4
+  %4 = load i64, ptr %right_high, align 4
+  %5 = load i64, ptr %left_low, align 4
   %6 = load i64, ptr %right_low, align 4
-  %compare_high = icmp ugt i64 %3, %5
-  br i1 %compare_high, label %low_compare_block, label %done
-
-low_compare_block:                                ; preds = %body
-  %compare_low = icmp ugt i64 %4, %6
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
-  br i1 %compare_low, label %cond, label %done
+  %compare_high = icmp uge i64 %4, %3
+  br i1 %compare_high, label %done, label %low_compare_block
+
+low_compare_block:                                ; preds = %low_compare_block, %body
+  %compare_low = icmp uge i64 %6, %5
+  br i1 %compare_low, label %done, label %low_compare_block
 
 done:                                             ; preds = %low_compare_block, %body, %cond
   %result_phi = phi i64 [ 1, %cond ], [ 0, %body ], [ 0, %low_compare_block ]
@@ -233,22 +311,102 @@ cond:                                             ; preds = %low_compare_block, 
 body:                                             ; preds = %cond
   %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
   %left_elem = load i64, ptr %left_elem_ptr, align 4
-  call void @split_field(i64 %left_elem, ptr %left_high, ptr %left_low)
-  %3 = load i64, ptr %left_high, align 4
-  %4 = load i64, ptr %left_low, align 4
   %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
   %right_elem = load i64, ptr %right_elem_ptr, align 4
+  call void @split_field(i64 %left_elem, ptr %left_high, ptr %left_low)
   call void @split_field(i64 %right_elem, ptr %right_high, ptr %right_low)
-  %5 = load i64, ptr %right_high, align 4
+  %3 = load i64, ptr %left_high, align 4
+  %4 = load i64, ptr %right_high, align 4
+  %5 = load i64, ptr %left_low, align 4
   %6 = load i64, ptr %right_low, align 4
-  %compare_high = icmp uge i64 %3, %5
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  %compare_high = icmp uge i64 %3, %4
   br i1 %compare_high, label %low_compare_block, label %done
 
 low_compare_block:                                ; preds = %body
-  %compare_low = icmp uge i64 %4, %6
+  %compare_low = icmp uge i64 %5, %6
+  br i1 %compare_low, label %cond, label %done
+
+done:                                             ; preds = %low_compare_block, %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ], [ 0, %low_compare_block ]
+  ret i64 %result_phi
+}
+
+define i64 @field_memcmp_ule(ptr %0, ptr %1, i64 %2) {
+entry:
+  %right_low = alloca i64, align 8
+  %right_high = alloca i64, align 8
+  %left_low = alloca i64, align 8
+  %left_high = alloca i64, align 8
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %2
+  br i1 %loop_check, label %body, label %done
+
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  call void @split_field(i64 %left_elem, ptr %left_high, ptr %left_low)
+  call void @split_field(i64 %right_elem, ptr %right_high, ptr %right_low)
+  %3 = load i64, ptr %left_high, align 4
+  %4 = load i64, ptr %right_high, align 4
+  %5 = load i64, ptr %left_low, align 4
+  %6 = load i64, ptr %right_low, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
-  br i1 %compare_low, label %cond, label %done
+  %compare_high = icmp uge i64 %4, %3
+  br i1 %compare_high, label %low_compare_block, label %done
+
+low_compare_block:                                ; preds = %low_compare_block, %body
+  %compare_low = icmp uge i64 %6, %5
+  br i1 %compare_low, label %low_compare_block, label %done
+
+done:                                             ; preds = %low_compare_block, %body, %cond
+  %result_phi = phi i64 [ 1, %cond ], [ 0, %body ], [ 0, %low_compare_block ]
+  ret i64 %result_phi
+}
+
+define i64 @field_memcmp_ult(ptr %0, ptr %1, i64 %2) {
+entry:
+  %right_low = alloca i64, align 8
+  %right_high = alloca i64, align 8
+  %left_low = alloca i64, align 8
+  %left_high = alloca i64, align 8
+  %index_alloca = alloca i64, align 8
+  store i64 0, ptr %index_alloca, align 4
+  br label %cond
+
+cond:                                             ; preds = %entry
+  %index_value = load i64, ptr %index_alloca, align 4
+  %loop_check = icmp ult i64 %index_value, %2
+  br i1 %loop_check, label %body, label %done
+
+body:                                             ; preds = %cond
+  %left_elem_ptr = getelementptr i64, ptr %0, i64 %index_value
+  %left_elem = load i64, ptr %left_elem_ptr, align 4
+  %right_elem_ptr = getelementptr i64, ptr %1, i64 %index_value
+  %right_elem = load i64, ptr %right_elem_ptr, align 4
+  call void @split_field(i64 %left_elem, ptr %left_high, ptr %left_low)
+  call void @split_field(i64 %right_elem, ptr %right_high, ptr %right_low)
+  %3 = load i64, ptr %left_high, align 4
+  %4 = load i64, ptr %right_high, align 4
+  %5 = load i64, ptr %left_low, align 4
+  %6 = load i64, ptr %right_low, align 4
+  %next_index = add i64 %index_value, 1
+  store i64 %next_index, ptr %index_alloca, align 4
+  %compare_high = icmp uge i64 %3, %4
+  br i1 %compare_high, label %done, label %low_compare_block
+
+low_compare_block:                                ; preds = %low_compare_block, %body
+  %compare_low = icmp uge i64 %5, %6
+  br i1 %compare_low, label %done, label %low_compare_block
 
 done:                                             ; preds = %low_compare_block, %body, %cond
   %result_phi = phi i64 [ 1, %cond ], [ 0, %body ], [ 0, %low_compare_block ]
@@ -634,148 +792,146 @@ entry:
   store i64 0, ptr %index_access2, align 4
   %index_access3 = getelementptr i64, ptr %7, i64 3
   store i64 0, ptr %index_access3, align 4
-  %8 = call i64 @memcmp_eq(ptr %6, ptr %7, i64 4)
-  %9 = icmp eq i64 %8, 0
-  %10 = zext i1 %9 to i64
-  call void @builtin_assert(i64 %10)
-  %11 = call ptr @heap_malloc(i64 4)
-  %index_access4 = getelementptr i64, ptr %11, i64 0
+  %8 = call i64 @memcmp_ne(ptr %6, ptr %7, i64 4)
+  call void @builtin_assert(i64 %8)
+  %9 = call ptr @heap_malloc(i64 4)
+  %index_access4 = getelementptr i64, ptr %9, i64 0
   store i64 0, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %11, i64 1
+  %index_access5 = getelementptr i64, ptr %9, i64 1
   store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %11, i64 2
+  %index_access6 = getelementptr i64, ptr %9, i64 2
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %11, i64 3
+  %index_access7 = getelementptr i64, ptr %9, i64 3
   store i64 65535, ptr %index_access7, align 4
-  store ptr %11, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
-  %12 = load ptr, ptr %_newAddress, align 8
-  %13 = load ptr, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
-  %14 = call i64 @field_memcmp_ugt(ptr %12, ptr %13, i64 4)
-  call void @builtin_assert(i64 %14)
-  %15 = call ptr @heap_malloc(i64 4)
-  %index_access8 = getelementptr i64, ptr %15, i64 0
+  store ptr %9, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
+  %10 = load ptr, ptr %_newAddress, align 8
+  %11 = load ptr, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
+  %12 = call i64 @field_memcmp_ugt(ptr %10, ptr %11, i64 4)
+  call void @builtin_assert(i64 %12)
+  %13 = call ptr @heap_malloc(i64 4)
+  %index_access8 = getelementptr i64, ptr %13, i64 0
   store i64 0, ptr %index_access8, align 4
-  %index_access9 = getelementptr i64, ptr %15, i64 1
+  %index_access9 = getelementptr i64, ptr %13, i64 1
   store i64 0, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %15, i64 2
+  %index_access10 = getelementptr i64, ptr %13, i64 2
   store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %15, i64 3
+  %index_access11 = getelementptr i64, ptr %13, i64 3
   store i64 32770, ptr %index_access11, align 4
-  store ptr %15, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
-  %16 = load ptr, ptr %_newAddress, align 8
-  %17 = call ptr @vector_new(i64 6)
-  %vector_data = getelementptr i64, ptr %17, i64 1
-  %18 = getelementptr i64, ptr %16, i64 0
-  %19 = load i64, ptr %18, align 4
-  %20 = getelementptr i64, ptr %vector_data, i64 0
-  store i64 %19, ptr %20, align 4
-  %21 = getelementptr i64, ptr %16, i64 1
-  %22 = load i64, ptr %21, align 4
-  %23 = getelementptr i64, ptr %vector_data, i64 1
-  store i64 %22, ptr %23, align 4
-  %24 = getelementptr i64, ptr %16, i64 2
-  %25 = load i64, ptr %24, align 4
-  %26 = getelementptr i64, ptr %vector_data, i64 2
-  store i64 %25, ptr %26, align 4
-  %27 = getelementptr i64, ptr %16, i64 3
-  %28 = load i64, ptr %27, align 4
-  %29 = getelementptr i64, ptr %vector_data, i64 3
-  store i64 %28, ptr %29, align 4
-  %30 = getelementptr ptr, ptr %vector_data, i64 4
-  store i64 4, ptr %30, align 4
-  %31 = getelementptr ptr, ptr %30, i64 1
-  store i64 2179613704, ptr %31, align 4
-  %32 = load ptr, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
-  %vector_length = load i64, ptr %17, align 4
-  %vector_data12 = getelementptr i64, ptr %17, i64 1
+  store ptr %13, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
+  %14 = load ptr, ptr %_newAddress, align 8
+  %15 = call ptr @vector_new(i64 6)
+  %vector_data = getelementptr i64, ptr %15, i64 1
+  %16 = getelementptr i64, ptr %14, i64 0
+  %17 = load i64, ptr %16, align 4
+  %18 = getelementptr i64, ptr %vector_data, i64 0
+  store i64 %17, ptr %18, align 4
+  %19 = getelementptr i64, ptr %14, i64 1
+  %20 = load i64, ptr %19, align 4
+  %21 = getelementptr i64, ptr %vector_data, i64 1
+  store i64 %20, ptr %21, align 4
+  %22 = getelementptr i64, ptr %14, i64 2
+  %23 = load i64, ptr %22, align 4
+  %24 = getelementptr i64, ptr %vector_data, i64 2
+  store i64 %23, ptr %24, align 4
+  %25 = getelementptr i64, ptr %14, i64 3
+  %26 = load i64, ptr %25, align 4
+  %27 = getelementptr i64, ptr %vector_data, i64 3
+  store i64 %26, ptr %27, align 4
+  %28 = getelementptr ptr, ptr %vector_data, i64 4
+  store i64 4, ptr %28, align 4
+  %29 = getelementptr ptr, ptr %28, i64 1
+  store i64 2179613704, ptr %29, align 4
+  %30 = load ptr, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
+  %vector_length = load i64, ptr %15, align 4
+  %vector_data12 = getelementptr i64, ptr %15, i64 1
   call void @set_tape_data(ptr %vector_data12, i64 %vector_length)
-  call void @contract_call(ptr %32, i64 0)
-  %33 = call ptr @heap_malloc(i64 1)
-  call void @get_tape_data(ptr %33, i64 1)
-  %return_length = load i64, ptr %33, align 4
+  call void @contract_call(ptr %30, i64 0)
+  %31 = call ptr @heap_malloc(i64 1)
+  call void @get_tape_data(ptr %31, i64 1)
+  %return_length = load i64, ptr %31, align 4
   %tape_size = add i64 %return_length, 1
   %heap_size = add i64 %return_length, 2
-  %34 = call ptr @heap_malloc(i64 %heap_size)
-  store i64 %return_length, ptr %34, align 4
-  %return_data_start = getelementptr i64, ptr %34, i64 1
+  %32 = call ptr @heap_malloc(i64 %heap_size)
+  store i64 %return_length, ptr %32, align 4
+  %return_data_start = getelementptr i64, ptr %32, i64 1
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
-  %vector_length13 = load i64, ptr %34, align 4
-  %vector_data14 = getelementptr i64, ptr %34, i64 1
-  %35 = getelementptr ptr, ptr %vector_data14, i64 0
-  store ptr %35, ptr %codeHash, align 8
-  %36 = load ptr, ptr %codeHash, align 8
-  %37 = call ptr @heap_malloc(i64 4)
-  %index_access15 = getelementptr i64, ptr %37, i64 0
+  %vector_length13 = load i64, ptr %32, align 4
+  %vector_data14 = getelementptr i64, ptr %32, i64 1
+  %33 = getelementptr ptr, ptr %vector_data14, i64 0
+  store ptr %33, ptr %codeHash, align 8
+  %34 = load ptr, ptr %codeHash, align 8
+  %35 = call ptr @heap_malloc(i64 4)
+  %index_access15 = getelementptr i64, ptr %35, i64 0
   store i64 0, ptr %index_access15, align 4
-  %index_access16 = getelementptr i64, ptr %37, i64 1
+  %index_access16 = getelementptr i64, ptr %35, i64 1
   store i64 0, ptr %index_access16, align 4
-  %index_access17 = getelementptr i64, ptr %37, i64 2
+  %index_access17 = getelementptr i64, ptr %35, i64 2
   store i64 0, ptr %index_access17, align 4
-  %index_access18 = getelementptr i64, ptr %37, i64 3
+  %index_access18 = getelementptr i64, ptr %35, i64 3
   store i64 0, ptr %index_access18, align 4
-  %38 = call i64 @memcmp_eq(ptr %36, ptr %37, i64 4)
-  call void @builtin_assert(i64 %38)
-  %39 = call ptr @heap_malloc(i64 4)
-  %index_access19 = getelementptr i64, ptr %39, i64 0
+  %36 = call i64 @memcmp_eq(ptr %34, ptr %35, i64 4)
+  call void @builtin_assert(i64 %36)
+  %37 = call ptr @heap_malloc(i64 4)
+  %index_access19 = getelementptr i64, ptr %37, i64 0
   store i64 0, ptr %index_access19, align 4
-  %index_access20 = getelementptr i64, ptr %39, i64 1
+  %index_access20 = getelementptr i64, ptr %37, i64 1
   store i64 0, ptr %index_access20, align 4
-  %index_access21 = getelementptr i64, ptr %39, i64 2
+  %index_access21 = getelementptr i64, ptr %37, i64 2
   store i64 0, ptr %index_access21, align 4
-  %index_access22 = getelementptr i64, ptr %39, i64 3
+  %index_access22 = getelementptr i64, ptr %37, i64 3
   store i64 32771, ptr %index_access22, align 4
-  store ptr %39, ptr %NONCE_HOLDER_ADDRESS, align 8
-  %40 = load ptr, ptr %_newAddress, align 8
-  %41 = call ptr @vector_new(i64 6)
-  %vector_data23 = getelementptr i64, ptr %41, i64 1
-  %42 = getelementptr i64, ptr %40, i64 0
-  %43 = load i64, ptr %42, align 4
-  %44 = getelementptr i64, ptr %vector_data23, i64 0
-  store i64 %43, ptr %44, align 4
-  %45 = getelementptr i64, ptr %40, i64 1
-  %46 = load i64, ptr %45, align 4
-  %47 = getelementptr i64, ptr %vector_data23, i64 1
-  store i64 %46, ptr %47, align 4
-  %48 = getelementptr i64, ptr %40, i64 2
-  %49 = load i64, ptr %48, align 4
-  %50 = getelementptr i64, ptr %vector_data23, i64 2
-  store i64 %49, ptr %50, align 4
-  %51 = getelementptr i64, ptr %40, i64 3
-  %52 = load i64, ptr %51, align 4
-  %53 = getelementptr i64, ptr %vector_data23, i64 3
-  store i64 %52, ptr %53, align 4
-  %54 = getelementptr ptr, ptr %vector_data23, i64 4
-  store i64 4, ptr %54, align 4
-  %55 = getelementptr ptr, ptr %54, i64 1
-  store i64 3868785611, ptr %55, align 4
-  %56 = load ptr, ptr %NONCE_HOLDER_ADDRESS, align 8
-  %vector_length24 = load i64, ptr %41, align 4
-  %vector_data25 = getelementptr i64, ptr %41, i64 1
+  store ptr %37, ptr %NONCE_HOLDER_ADDRESS, align 8
+  %38 = load ptr, ptr %_newAddress, align 8
+  %39 = call ptr @vector_new(i64 6)
+  %vector_data23 = getelementptr i64, ptr %39, i64 1
+  %40 = getelementptr i64, ptr %38, i64 0
+  %41 = load i64, ptr %40, align 4
+  %42 = getelementptr i64, ptr %vector_data23, i64 0
+  store i64 %41, ptr %42, align 4
+  %43 = getelementptr i64, ptr %38, i64 1
+  %44 = load i64, ptr %43, align 4
+  %45 = getelementptr i64, ptr %vector_data23, i64 1
+  store i64 %44, ptr %45, align 4
+  %46 = getelementptr i64, ptr %38, i64 2
+  %47 = load i64, ptr %46, align 4
+  %48 = getelementptr i64, ptr %vector_data23, i64 2
+  store i64 %47, ptr %48, align 4
+  %49 = getelementptr i64, ptr %38, i64 3
+  %50 = load i64, ptr %49, align 4
+  %51 = getelementptr i64, ptr %vector_data23, i64 3
+  store i64 %50, ptr %51, align 4
+  %52 = getelementptr ptr, ptr %vector_data23, i64 4
+  store i64 4, ptr %52, align 4
+  %53 = getelementptr ptr, ptr %52, i64 1
+  store i64 3868785611, ptr %53, align 4
+  %54 = load ptr, ptr %NONCE_HOLDER_ADDRESS, align 8
+  %vector_length24 = load i64, ptr %39, align 4
+  %vector_data25 = getelementptr i64, ptr %39, i64 1
   call void @set_tape_data(ptr %vector_data25, i64 %vector_length24)
-  call void @contract_call(ptr %56, i64 0)
-  %57 = call ptr @heap_malloc(i64 1)
-  call void @get_tape_data(ptr %57, i64 1)
-  %return_length26 = load i64, ptr %57, align 4
+  call void @contract_call(ptr %54, i64 0)
+  %55 = call ptr @heap_malloc(i64 1)
+  call void @get_tape_data(ptr %55, i64 1)
+  %return_length26 = load i64, ptr %55, align 4
   %tape_size27 = add i64 %return_length26, 1
   %heap_size28 = add i64 %return_length26, 2
-  %58 = call ptr @heap_malloc(i64 %heap_size28)
-  store i64 %return_length26, ptr %58, align 4
-  %return_data_start29 = getelementptr i64, ptr %58, i64 1
+  %56 = call ptr @heap_malloc(i64 %heap_size28)
+  store i64 %return_length26, ptr %56, align 4
+  %return_data_start29 = getelementptr i64, ptr %56, i64 1
   call void @get_tape_data(ptr %return_data_start29, i64 %tape_size27)
-  %vector_length30 = load i64, ptr %58, align 4
-  %vector_data31 = getelementptr i64, ptr %58, i64 1
-  %59 = getelementptr ptr, ptr %vector_data31, i64 0
-  %60 = load i64, ptr %59, align 4
-  store i64 %60, ptr %deploy_nonce, align 4
-  %61 = load i64, ptr %deploy_nonce, align 4
-  %62 = icmp eq i64 %61, 0
-  %63 = zext i1 %62 to i64
-  call void @builtin_assert(i64 %63)
-  %64 = load ptr, ptr %_rawHash, align 8
-  %65 = load ptr, ptr %_codeHash, align 8
-  %66 = load ptr, ptr %_newAddress, align 8
-  %67 = load i64, ptr %_aaVersion, align 4
-  call void @_performDeployOnAddress(ptr %64, ptr %65, ptr %66, i64 %67, ptr %5)
+  %vector_length30 = load i64, ptr %56, align 4
+  %vector_data31 = getelementptr i64, ptr %56, i64 1
+  %57 = getelementptr ptr, ptr %vector_data31, i64 0
+  %58 = load i64, ptr %57, align 4
+  store i64 %58, ptr %deploy_nonce, align 4
+  %59 = load i64, ptr %deploy_nonce, align 4
+  %60 = icmp eq i64 %59, 0
+  %61 = zext i1 %60 to i64
+  call void @builtin_assert(i64 %61)
+  %62 = load ptr, ptr %_rawHash, align 8
+  %63 = load ptr, ptr %_codeHash, align 8
+  %64 = load ptr, ptr %_newAddress, align 8
+  %65 = load i64, ptr %_aaVersion, align 4
+  call void @_performDeployOnAddress(ptr %62, ptr %63, ptr %64, i64 %65, ptr %5)
   ret void
 }
 

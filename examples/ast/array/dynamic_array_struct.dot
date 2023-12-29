@@ -30,7 +30,7 @@ strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source
 	return_29 [label="return\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:9-39"]
 	load [label="load u32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:9-39"]
 	subscript [label="subscript u32[5]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:16-39"]
-	structmember [label="struct member #2 u32[5]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:26-36"]
+	structmember [label="struct_member #2 u32[5]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:26-36"]
 	subscript_33 [label="subscript struct StructArrayExample.Book[2]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:16-25"]
 	variable_34 [label="variable: _books\nstruct StructArrayExample.Book[2]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:16-22"]
 	number_literal_35 [label="u32 literal: 0\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/array/dynamic_array_struct.ola:17:23-24"]

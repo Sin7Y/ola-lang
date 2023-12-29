@@ -6,6 +6,22 @@
     "outputs": []
   },
   {
+    "name": "getRawHash",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "hash"
+      }
+    ]
+  },
+  {
     "name": "getCodeHash",
     "type": "function",
     "inputs": [
@@ -22,7 +38,7 @@
     ]
   },
   {
-    "name": "storeCodeHash",
+    "name": "storeBytesHash",
     "type": "function",
     "inputs": [
       {
@@ -30,7 +46,11 @@
         "type": "address"
       },
       {
-        "name": "_hash",
+        "name": "_rawHash",
+        "type": "hash"
+      },
+      {
+        "name": "_codeHash",
         "type": "hash"
       }
     ],
