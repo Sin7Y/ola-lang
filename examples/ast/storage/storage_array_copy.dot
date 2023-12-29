@@ -1,0 +1,22 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola" {
+	contract [label="contract StorageToStorage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:3:1-17:2"]
+	var [label="variable storageArray1\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:5:5-24"]
+	var_3 [label="variable storageArray2\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:6:5-24"]
+	setArray1 [label="setArray1\ncontract: StorageToStorage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:8:5-30\nsignature setArray1(u32[])"]
+	parameters [label="parameters\nu32[] array"]
+	expr [label="expression\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:10:9-30"]
+	assign [label="assign\nu32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:10:9-22"]
+	storage_var [label="storage variable\nStorageToStorage.storageArray1\nu32[] storage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:10:9-22"]
+	variable [label="variable: array\nu32[]\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:10:25-30"]
+	diagnostic [label="found StorageToStorage \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_copy.ola:3:1-17:2"]
+	contracts -> contract
+	contract -> var [label="variable"]
+	contract -> var_3 [label="variable"]
+	contract -> setArray1 [label="fn"]
+	setArray1 -> parameters [label="parameters"]
+	setArray1 -> expr [label="body"]
+	expr -> assign [label="expr"]
+	assign -> storage_var [label="left"]
+	assign -> variable [label="right"]
+	diagnostics -> diagnostic [label="Debug"]
+}

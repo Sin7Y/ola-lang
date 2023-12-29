@@ -1,0 +1,13 @@
+[
+  {
+    "name": "address_array",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  }
+]

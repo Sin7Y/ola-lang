@@ -8,20 +8,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -30,14 +22,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       },
@@ -57,20 +41,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -79,14 +55,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -102,20 +70,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -124,14 +84,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -152,20 +104,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -174,14 +118,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -197,20 +133,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -219,14 +147,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -242,20 +162,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -264,14 +176,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -287,20 +191,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -309,14 +205,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }
@@ -349,7 +237,7 @@
     ]
   },
   {
-    "name": "validate_sender",
+    "name": "validate_from",
     "type": "function",
     "inputs": [
       {
@@ -391,20 +279,12 @@
         "type": "tuple",
         "components": [
           {
-            "name": "sender",
+            "name": "from",
             "type": "address"
           },
           {
-            "name": "nonce",
-            "type": "u32"
-          },
-          {
-            "name": "version",
-            "type": "u32"
-          },
-          {
-            "name": "chainid",
-            "type": "u32"
+            "name": "to",
+            "type": "address"
           },
           {
             "name": "data",
@@ -413,14 +293,6 @@
           {
             "name": "codes",
             "type": "fields"
-          },
-          {
-            "name": "signature",
-            "type": "fields"
-          },
-          {
-            "name": "codeHash",
-            "type": "hash"
           }
         ]
       }

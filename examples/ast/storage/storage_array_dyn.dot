@@ -1,0 +1,20 @@
+strict digraph "/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola" {
+	contract [label="contract DynamicArrayExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:3:1-18:2"]
+	var [label="variable dynamicArray\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:5:5-23"]
+	addElement [label="addElement\ncontract: DynamicArrayExample\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:7:5-31\nsignature addElement(u32)"]
+	parameters [label="parameters\nu32 element"]
+	expr [label="expression\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:8:9-35"]
+	libfunc [label="libfunc ArrayPush\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:8:22-26"]
+	storage_var [label="storage variable\nDynamicArrayExample.dynamicArray\nu32[] storage\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:8:9-21"]
+	variable [label="variable: element\nu32\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:8:27-34"]
+	diagnostic [label="found DynamicArrayExample \nlevel Debug\n/Users/yangpan/workspace/rust-workspace/ola-lang/examples/source/storage/storage_array_dyn.ola:3:1-18:2"]
+	contracts -> contract
+	contract -> var [label="variable"]
+	contract -> addElement [label="fn"]
+	addElement -> parameters [label="parameters"]
+	addElement -> expr [label="body"]
+	expr -> libfunc [label="expr"]
+	libfunc -> storage_var [label="arg #0"]
+	libfunc -> variable [label="arg #1"]
+	diagnostics -> diagnostic [label="Debug"]
+}

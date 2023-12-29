@@ -1,9 +1,18 @@
 contract HashContract {
 
-    fn hash_test() {
+    fn hash_compare() {
        string a = "helloworld";
-       hash h = poseidon_hash(a);
-       assert(h == 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash);
+       hash h1 = poseidon_hash(a);
+       hash h2 = poseidon_hash(a);
+       hash h3 = 0x000000EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash;
+       assert(h1 == h2);
+       assert(h1 != h3);
+       assert(h1 >= h3);
+       assert(h1 <= h2);
+       assert(h1 > h3);
+       assert(h1 >= h3);
+       assert(h3 < h1);
+       assert(h3 <= h1);
     }
 
 }

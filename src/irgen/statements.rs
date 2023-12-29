@@ -33,7 +33,6 @@ pub(crate) fn statement<'a>(
                     break;
                 }
             }
-
         }
         Statement::VariableDecl(_, pos, param, init) => {
             let var_value = match init {
@@ -338,7 +337,7 @@ fn if_then_else<'a>(
     let then = bin.context.append_basic_block(func_value, "then");
     let else_ = bin.context.append_basic_block(func_value, "else");
 
-    let mut endif: Option::<BasicBlock> = None;
+    let mut endif: Option<BasicBlock> = None;
 
     bin.builder.build_conditional_branch(cond, then, else_);
     bin.builder.position_at_end(then);

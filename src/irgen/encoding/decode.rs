@@ -89,10 +89,7 @@ fn decode_array<'a>(
         // there is no need to allocate an array
         if matches!(dims.last(), Some(ArrayLength::Fixed(_))) {
             let array_literal = bin.heap_malloc(bin.context.i64_type().const_zero());
-            bin.builder.build_store(
-                array_var,
-                array_literal
-            );
+            bin.builder.build_store(array_var, array_literal);
         }
         decode_complex_array(
             bin,

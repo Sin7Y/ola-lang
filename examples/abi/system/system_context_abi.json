@@ -1,5 +1,11 @@
 [
   {
+    "name": "all_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
     "name": "caller_address_test",
     "type": "function",
     "inputs": [],
@@ -55,9 +61,80 @@
     ]
   },
   {
-    "name": "all_test",
+    "name": "block_number_test",
     "type": "function",
     "inputs": [],
-    "outputs": []
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  },
+  {
+    "name": "block_timestamp_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  },
+  {
+    "name": "sequence_address_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  },
+  {
+    "name": "nonce_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  },
+  {
+    "name": "signautre_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "fields"
+      }
+    ]
+  },
+  {
+    "name": "transaction_version_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  },
+  {
+    "name": "transaction_hash_test",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "hash"
+      }
+    ]
   }
 ]
