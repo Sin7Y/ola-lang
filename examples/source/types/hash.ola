@@ -7,8 +7,8 @@ contract HashContract {
        hash h3 = 0x000000EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash;
        assert(h1 == h2);
        assert(h1 != h3);
-       assert(h1 >= h3);
        assert(h1 <= h2);
+       assert(h1 >= h3);
        assert(h1 > h3);
        assert(h1 >= h3);
        assert(h3 < h1);
