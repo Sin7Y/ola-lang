@@ -842,46 +842,76 @@ fn define_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, op: Int
         bin.builder
             .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
     bin.builder.build_store(index_alloca, next_index);
-    match op {
+    let phi_node = match op {
         IntPredicate::EQ | IntPredicate::UGE => {
             let compare = bin
                 .builder
                 .build_int_compare(op, left_elem, right_elem, "compare");
             bin.builder.build_conditional_branch(compare, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), cond),
+                (&bin.context.i64_type().const_zero(), body),
+            ]);
+            phi_node
         }
         IntPredicate::NE => {
             let compare =
                 bin.builder
                     .build_int_compare(IntPredicate::EQ, left_elem, right_elem, "compare");
-            bin.builder.build_conditional_branch(compare, done, cond);
+            bin.builder.build_conditional_branch(compare, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), body),
+                (&bin.context.i64_type().const_zero(), cond),
+            ]);
+            phi_node
         }
 
         IntPredicate::UGT => {
             let compare =
                 bin.builder
                     .build_int_compare(IntPredicate::UGE, right_elem, left_elem, "compare");
-            bin.builder.build_conditional_branch(compare, done, cond);
+            bin.builder.build_conditional_branch(compare, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), body),
+                (&bin.context.i64_type().const_zero(), cond),
+            ]);
+            phi_node
         }
         IntPredicate::ULT => {
             let compare =
                 bin.builder
                     .build_int_compare(IntPredicate::UGE, left_elem, right_elem, "compare");
-            bin.builder.build_conditional_branch(compare, done, cond);
+            bin.builder.build_conditional_branch(compare, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), body),
+                (&bin.context.i64_type().const_zero(), cond),
+            ]);
+            phi_node
         }
         IntPredicate::ULE => {
             let compare =
                 bin.builder
                     .build_int_compare(IntPredicate::UGE, right_elem, left_elem, "compare");
             bin.builder.build_conditional_branch(compare, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), cond),
+                (&bin.context.i64_type().const_zero(), body),
+            ]);
+            phi_node
         }
         _ => unreachable!(),
-    }
-    bin.builder.position_at_end(done);
-    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
-    phi_node.add_incoming(&[
-        (&bin.context.i64_type().const_int(1, false), cond),
-        (&bin.context.i64_type().const_zero(), body),
-    ]);
+    };
+
     bin.builder.build_return(Some(&phi_node.as_basic_value()));
 }
 
@@ -954,6 +984,16 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
         "",
     );
 
+    let left_high = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_high, "")
+        .into_int_value();
+
+    let left_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), left_low, "")
+        .into_int_value();
+
     let right_high = bin.build_alloca(function, bin.context.i64_type(), "right_high");
     let right_low = bin.build_alloca(function, bin.context.i64_type(), "right_low");
 
@@ -962,19 +1002,10 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
         &[right_elem.into(), right_high.into(), right_low.into()],
         "",
     );
-    let left_high = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_high, "")
-        .into_int_value();
 
     let right_high = bin
         .builder
         .build_load(bin.context.i64_type(), right_high, "")
-        .into_int_value();
-
-    let left_low = bin
-        .builder
-        .build_load(bin.context.i64_type(), left_low, "")
         .into_int_value();
 
     let right_low = bin
@@ -987,7 +1018,7 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
             .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
     bin.builder.build_store(index_alloca, next_index);
 
-    match op {
+    let phi_node = match op {
         IntPredicate::UGE => {
             let compare_high =
                 bin.builder
@@ -1002,6 +1033,14 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
                 .build_int_compare(op, left_low, right_low, "compare_low");
             bin.builder
                 .build_conditional_branch(compare_low, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), cond),
+                (&bin.context.i64_type().const_zero(), body),
+                (&bin.context.i64_type().const_zero(), low_compare_block),
+            ]);
+            phi_node
         }
 
         IntPredicate::UGT => {
@@ -1012,7 +1051,7 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
                 "compare_high",
             );
             bin.builder
-                .build_conditional_branch(compare_high, done, low_compare_block);
+                .build_conditional_branch(compare_high, low_compare_block, done);
 
             bin.builder.position_at_end(low_compare_block);
 
@@ -1023,7 +1062,18 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
                 "compare_low",
             );
             bin.builder
-                .build_conditional_branch(compare_low, done, low_compare_block);
+                .build_conditional_branch(compare_low, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), body),
+                (
+                    &bin.context.i64_type().const_int(1, false),
+                    low_compare_block,
+                ),
+                (&bin.context.i64_type().const_zero(), cond),
+            ]);
+            phi_node
         }
         IntPredicate::ULT => {
             let compare_high = bin.builder.build_int_compare(
@@ -1033,7 +1083,7 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
                 "compare_high",
             );
             bin.builder
-                .build_conditional_branch(compare_high, done, low_compare_block);
+                .build_conditional_branch(compare_high, low_compare_block, done);
 
             bin.builder.position_at_end(low_compare_block);
 
@@ -1044,7 +1094,18 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
                 "compare_low",
             );
             bin.builder
-                .build_conditional_branch(compare_low, done, low_compare_block);
+                .build_conditional_branch(compare_low, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), body),
+                (
+                    &bin.context.i64_type().const_int(1, false),
+                    low_compare_block,
+                ),
+                (&bin.context.i64_type().const_zero(), cond),
+            ]);
+            phi_node
         }
 
         IntPredicate::ULE => {
@@ -1066,17 +1127,17 @@ fn define_field_mem_compare<'a>(bin: &Binary<'a>, function: FunctionValue<'a>, o
                 "compare_low",
             );
             bin.builder
-                .build_conditional_branch(compare_low, low_compare_block, done);
+                .build_conditional_branch(compare_low, cond, done);
+            bin.builder.position_at_end(done);
+            let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
+            phi_node.add_incoming(&[
+                (&bin.context.i64_type().const_int(1, false), cond),
+                (&bin.context.i64_type().const_zero(), body),
+                (&bin.context.i64_type().const_zero(), low_compare_block),
+            ]);
+            phi_node
         }
         _ => unreachable!(),
-    }
-
-    bin.builder.position_at_end(done);
-    let phi_node = bin.builder.build_phi(bin.context.i64_type(), "result_phi");
-    phi_node.add_incoming(&[
-        (&bin.context.i64_type().const_int(1, false), cond),
-        (&bin.context.i64_type().const_zero(), body),
-        (&bin.context.i64_type().const_zero(), low_compare_block),
-    ]);
+    };
     bin.builder.build_return(Some(&phi_node.as_basic_value()));
 }
