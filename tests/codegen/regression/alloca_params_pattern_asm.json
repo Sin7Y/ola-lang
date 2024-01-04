@@ -1,0 +1,4 @@
+{
+  "program": "alloca_params_pattern:\n.LBL0_0:\n  add r9 r9 4\n  mstore [r9,-2] r9\n  jmp .LBL0_1\n.LBL0_1:\n  add r2 r9 -4\n  add r1 r9 -3\n  call stack_args_func\n  add r9 r9 -4\n  ret\n",
+  "prophets": []
+}

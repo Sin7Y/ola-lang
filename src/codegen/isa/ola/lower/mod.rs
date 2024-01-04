@@ -172,7 +172,9 @@ fn get_inst_output(
         return Ok(vreg.to_vec());
     }
 
-    if ctx.ir_data.inst_ref(id).parent != ctx.cur_block {
+    if ctx.ir_data.inst_ref(id).parent != ctx.cur_block
+        && ctx.ir_data.inst_ref(id).opcode != IrOpcode::Alloca
+    {
         // The instruction indexed as `id` must be placed in another basic block
         debug_println!("inst output ref not current block");
         let vreg = new_empty_inst_output(ctx, ty, id);
