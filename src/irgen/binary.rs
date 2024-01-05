@@ -316,7 +316,7 @@ impl<'a> Binary<'a> {
         function: FunctionValue<'a>,
         ty: &Type,
         size: IntValue<'a>,
-        init: Option<&Vec<u32>>,
+        init: Option<&Vec<u64>>,
         zero_init: bool,
         ns: &Namespace,
     ) -> PointerValue<'a> {
@@ -343,7 +343,7 @@ impl<'a> Binary<'a> {
             Some(init) => {
                 let data = self.vector_data(heap_start_ptr.as_basic_value_enum());
                 for (item_no, item) in init.iter().enumerate() {
-                    let item = self.context.i64_type().const_int(*item as u64, false);
+                    let item = self.context.i64_type().const_int(*item, false);
                     let index = self.context.i64_type().const_int(item_no as u64, false);
                     let index_access = unsafe {
                         self.builder.build_gep(

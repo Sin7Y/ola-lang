@@ -165,6 +165,46 @@ pub(super) fn hex_number_literal(
     )
 }
 
+pub(super) fn fields_literal(
+    loc: &Loc,
+    n: &str,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    // from_str_radix does not like the 0x prefix
+
+    let fields_str = n.trim_end_matches("fields");
+    let mut field_vec: Vec<_> = Vec::new();
+        for (_, chunk) in fields_str.as_bytes().chunks(16).enumerate() {
+            let field_check =
+                u64::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
+            // We need to check if each chunk exceeds the FIELD_ORDER.
+            if field_check > FIELD_ORDER {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    format!("fields literal {} out of range", field_check),
+                ));
+                return Err(());
+            } else {
+                field_vec.push(field_check);
+            }
+        }
+
+        let length = field_vec.len();
+
+        Ok(Expression::AllocDynamicBytes {
+            loc: *loc,
+            ty: Type::DynamicBytes,
+            length: Box::new(Expression::NumberLiteral {
+                loc: *loc,
+                ty: Type::Uint(32),
+                value: BigInt::from(length),
+            }),
+            init: Some(field_vec),
+        })
+
+    } 
+
+
 /// Resolve a function call with positional arguments
 pub(super) fn struct_literal(
     loc: &Loc,
