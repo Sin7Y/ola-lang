@@ -10,27 +10,27 @@ pub(crate) fn unescape(
     start: usize,
     file_no: usize,
     diagnostics: &mut Diagnostics,
-) -> Vec<u32> {
-    let mut s: Vec<u32> = Vec::new();
+) -> Vec<u64> {
+    let mut s: Vec<u64> = Vec::new();
     let mut indeces = literal.char_indices();
 
     while let Some((_, ch)) = indeces.next() {
         if ch != '\\' {
-            s.push(ch as u32);
+            s.push(ch as u64);
             continue;
         }
 
         match indeces.next() {
             Some((_, '\n')) => (),
-            Some((_, '\\')) => s.push(b'\\' as u32),
-            Some((_, '\'')) => s.push(b'\'' as u32),
-            Some((_, '"')) => s.push(b'"' as u32),
-            Some((_, 'b')) => s.push(b'\x08' as u32),
-            Some((_, 'f')) => s.push(b'\x0c' as u32),
-            Some((_, 'n')) => s.push(b'\n' as u32),
-            Some((_, 'r')) => s.push(b'\r' as u32),
-            Some((_, 't')) => s.push(b'\t' as u32),
-            Some((_, 'v')) => s.push(b'\x0b' as u32),
+            Some((_, '\\')) => s.push(b'\\' as u64),
+            Some((_, '\'')) => s.push(b'\'' as u64),
+            Some((_, '"')) => s.push(b'"' as u64),
+            Some((_, 'b')) => s.push(b'\x08' as u64),
+            Some((_, 'f')) => s.push(b'\x0c' as u64),
+            Some((_, 'n')) => s.push(b'\n' as u64),
+            Some((_, 'r')) => s.push(b'\r' as u64),
+            Some((_, 't')) => s.push(b'\t' as u64),
+            Some((_, 'v')) => s.push(b'\x0b' as u64),
             Some((i, 'x')) => match get_digits(&mut indeces, 2) {
                 Ok(ch) => s.push(ch),
                 Err(offset) => {
@@ -45,9 +45,9 @@ pub(crate) fn unescape(
                 }
             },
             Some((i, 'u')) => match get_digits(&mut indeces, 4) {
-                Ok(codepoint) => match char::from_u32(codepoint) {
+                Ok(codepoint) => match char::from_u32(codepoint as u32) {
                     Some(ch) => {
-                        s.push(ch as u32);
+                        s.push(ch as u64);
                     }
                     None => {
                         diagnostics.push(Diagnostic::error(
@@ -81,14 +81,14 @@ pub(crate) fn unescape(
 
 /// Get the hex digits for an escaped \x or \u. Returns either the value or
 /// or the offset of the last character
-pub(super) fn get_digits(input: &mut std::str::CharIndices, len: usize) -> Result<u32, usize> {
-    let mut n: u32 = 0;
+pub(super) fn get_digits(input: &mut std::str::CharIndices, len: usize) -> Result<u64, usize> {
+    let mut n: u64 = 0;
     let offset;
 
     for _ in 0..len {
         if let Some((_, ch)) = input.next() {
-            if let Some(v) = ch.to_digit(16) {
-                n = (n << 4) + v;
+            if let Some(v) = ch.to_digit(16)  {
+                n = (n << 4) + v as u64;
                 continue;
             }
             offset = match input.next() {
