@@ -30,7 +30,7 @@ use crate::sema::{
 };
 use ola_parser::{diagnostics::Diagnostic, program, program::CodeLocation};
 
-use super::slice::array_slice;
+use super::{slice::array_slice, literals::fields_literal};
 /// Resolve a parsed expression into an AST expression. The resolve_to argument
 /// is a hint to what type the result should be.
 pub fn expression(
@@ -69,6 +69,9 @@ pub fn expression(
             hex_number_literal(loc, n, ns, diagnostics, resolve_to)
         }
 
+        program::Expression::FieldsLiteral(loc, n) => {
+            fields_literal(loc, n, diagnostics)
+        }
         program::Expression::AddressLiteral(loc, address) => {
             address_literal(loc, address, diagnostics)
         }

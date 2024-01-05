@@ -351,6 +351,7 @@ pub enum Expression {
     BoolLiteral(Loc, bool),
     NumberLiteral(Loc, String),
     HexNumberLiteral(Loc, String),
+    FieldsLiteral(Loc, String),
     StringLiteral(Vec<StringLiteral>),
     AddressLiteral(Loc, String),
     HashLiteral(Loc, String),
@@ -410,6 +411,7 @@ impl CodeLocation for Expression {
             | Expression::BoolLiteral(loc, _)
             | Expression::NumberLiteral(loc, ..)
             | Expression::HexNumberLiteral(loc, _)
+            | Expression::FieldsLiteral(loc, _)
             | Expression::ArrayLiteral(loc, _)
             | Expression::List(loc, _)
             | Expression::Type(loc, _)

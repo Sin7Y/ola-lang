@@ -682,7 +682,7 @@ pub enum Expression {
         loc: program::Loc,
         ty: Type,
         length: Box<Expression>,
-        init: Option<Vec<u32>>,
+        init: Option<Vec<u64>>,
     },
 
     StorageArrayLength {
