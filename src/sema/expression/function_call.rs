@@ -26,12 +26,13 @@ pub fn available_functions(name: &str, contract_no: Option<usize>, ns: &Namespac
             ns.contracts[contract_no]
                 .all_functions
                 .keys()
+                .filter(|func_no| ns.functions[**func_no].name == name)
                 .filter_map(|func_no| {
-                    if ns.functions[*func_no].name == name && ns.functions[*func_no].has_body {
-                        Some(*func_no)
-                    } else {
-                        None
+                    let func = &ns.functions[*func_no];
+                    if func.has_body {
+                        return Some(*func_no);
                     }
+                    None
                 }),
         );
     }
@@ -61,6 +62,14 @@ pub fn function_call_pos_args(
         ));
         return Err(());
     }
+
+    // try to resolve the arguments, give up if there are any errors
+    if args.iter().fold(false, |acc, arg| {
+        acc | expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown).is_err()
+    }) {
+        return Err(());
+    }
+    
 
     // Try to resolve as a function call
     for function_no in &function_nos {
@@ -289,6 +298,7 @@ fn try_namespace(
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
+    resolve_to: ResolveTo,
 ) -> Result<Option<Expression>, ()> {
     if let program::Expression::Variable(namespace) = var {
         if corelib::is_lib_func_call(Some(&namespace.name), &func.name) {
@@ -311,6 +321,37 @@ fn try_namespace(
                 diagnostics,
             )?));
         }
+
+          // library or base contract call
+          if let Some(call_contract_no) = ns.resolve_contract(context.file_no, namespace) {
+            if ns.contracts[call_contract_no].is_library() {
+                if let Some(loc) = call_args_loc {
+                    diagnostics.push(Diagnostic::error(
+                        loc,
+                        "call arguments not allowed on library calls".to_string(),
+                    ));
+                    return Err(());
+                }
+
+                return Ok(Some(function_call_pos_args(
+                    loc,
+                    &func,
+                    args,
+                    available_functions(
+                        &func.name,
+                        Some(call_contract_no),
+                        ns,
+                    ),
+                    context,
+                    ns,
+                    resolve_to,
+                    symtable,
+                    diagnostics,
+                )?));
+            }
+        }
+
+
     }
 
     Ok(None)
@@ -784,6 +825,7 @@ pub(super) fn method_call_pos_args(
         ns,
         symtable,
         diagnostics,
+        resolve_to,
     )? {
         return Ok(resolved_call);
     }

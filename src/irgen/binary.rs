@@ -1,4 +1,4 @@
-use crate::sema::ast::{ArrayLength, Contract, Namespace, Type};
+use crate::sema::ast::{ArrayLength, Namespace, Type};
 use crate::sema::expression::FIELD_ORDER;
 use std::path::Path;
 use std::str;
@@ -33,16 +33,16 @@ pub struct Binary<'a> {
 
 impl<'a> Binary<'a> {
     /// Build the LLVM IR for a single contract
-    pub fn build(
+    pub fn gen_ir(
         context: &'a Context,
-        contract: &'a Contract,
+        contract_no: usize,
         ns: &'a Namespace,
         filename: &'a str,
     ) -> Self {
-        let mut binary = Binary::new(context, &contract.name, filename);
+        let mut binary = Binary::new(&context, ns.contracts[contract_no].name.as_str(), filename);
         gen_lib_functions(&mut binary, ns);
-        gen_functions(&mut binary, ns);
-        gen_func_dispatch(&mut binary, ns);
+        gen_functions(&mut binary, contract_no, ns);
+        gen_func_dispatch(&mut binary, contract_no, ns);
         gen_contract_entrance(None, &mut binary);
         binary
     }

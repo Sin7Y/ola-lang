@@ -8,6 +8,7 @@ use ola_lang::abi;
 use ola_lang::codegen::isa::ola::Ola;
 use ola_lang::codegen::lower::compile_module;
 use ola_lang::file_resolver::FileResolver;
+use ola_lang::irgen::binary;
 use ola_lang::sema::ast::Namespace;
 use ola_lang::{codegen::core::ir::module::Module, sema::ast::Layout};
 use std::env;
@@ -155,6 +156,20 @@ fn process_file(filename: &OsStr, resolver: &mut FileResolver, matches: &ArgMatc
 
     // gen llvm ir、asm、abi、ast phase
     for contract_no in 0..ns.contracts.len() {
+        let resolved_contract = &ns.contracts[contract_no];
+
+        if !resolved_contract.instantiable {
+            continue;
+        }
+
+        if ns.top_file_no() != resolved_contract.loc.file_no() {
+            // contracts that were imported should not be considered. For example, if we
+            // have a file a.sol which imports b.ola, and b.ola defines contract
+            // B, then: olac compile a.ola
+            // should not write the results for contract B
+            continue;
+        }
+
         let filename_lossy = filename.to_string_lossy().clone();
         let filename_string = String::from(filename_lossy);
         let filename_stem = Path::new(&filename_string).file_prefix().unwrap();
@@ -234,17 +249,15 @@ fn generate_abi(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut
 }
 
 fn generate_llvm_ir(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut Namespace) {
-    let resolved_contract = &ns.contracts[contract_no];
     let context = inkwell::context::Context::create();
-    let binary = resolved_contract.binary(&ns, &context, &name);
+    let binary = binary::Binary::gen_ir(&context, contract_no, &ns, &name);
     let llvm_filename = output_file(matches, &name, "ll");
     binary.dump_llvm(&llvm_filename).unwrap();
 }
 
 fn generate_asm(contract_no: usize, matches: &ArgMatches, name: String, ns: &mut Namespace) {
-    let resolved_contract = &ns.contracts[contract_no];
     let context = inkwell::context::Context::create();
-    let binary = resolved_contract.binary(&ns, &context, &name);
+    let binary = binary::Binary::gen_ir(&context, contract_no, &ns, &name);
     // Parse the assembly and get a module
     let module =
         Module::try_from(binary.module.to_string().as_str()).expect("failed to parse LLVM IR");

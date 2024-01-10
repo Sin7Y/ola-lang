@@ -13,6 +13,7 @@ pub mod diagnostics;
 mod dotgraphviz;
 pub(crate) mod eval;
 pub(crate) mod expression;
+mod external_functions;
 mod file;
 mod functions;
 mod namespace;
@@ -90,6 +91,12 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
 
     // now resolve the contracts
     contracts::resolve(&contracts_to_resolve, file_no, ns);
+
+    if !ns.diagnostics.any_errors() {
+        for contract_no in 0..ns.contracts.len() {
+            external_functions::add_external_functions(contract_no, ns);
+        }
+    }
 }
 
 /// Find import file, resolve it by calling sema and add it to the namespace
@@ -104,6 +111,14 @@ fn resolve_import(
         program::Import::Plain(f, _) => f,
         program::Import::GlobalSymbol(f, _, _) => f,
     };
+
+    if filename.string.is_empty() {
+        ns.diagnostics.push(ast::Diagnostic::error(
+            filename.loc,
+            "import path empty".into(),
+        ));
+        return;
+    }
 
     let os_filename = OsStr::new(&filename.string);
 
