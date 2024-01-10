@@ -6,7 +6,7 @@ use inkwell::{
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
 
-use crate::sema::ast::{Namespace, Type};
+use crate::sema::ast::{Function, Namespace, Type};
 
 use super::{
     binary::Binary,
@@ -54,7 +54,11 @@ pub fn gen_contract_entrance(init: Option<FunctionValue>, bin: &mut Binary) {
 /// - input: a pointer to the input data
 /// It returns the following values:
 
-pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
+pub fn gen_func_dispatch(bin: &mut Binary, contract_no: usize, ns: &Namespace) {
+    let mut funcs = Vec::new();
+    for func_no in ns.contracts[contract_no].all_functions.keys() {
+        funcs.push(&ns.functions[*func_no]);
+    }
     let ty = bin.context.void_type().fn_type(
         &[
             bin.context.i64_type().into(),
@@ -78,8 +82,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
         .context
         .append_basic_block(func_value, "missing_function");
 
-    let selector_cases = ns
-        .functions
+    let selector_cases = funcs
         .iter()
         .enumerate()
         .filter_map(|(func_no, func)| {
@@ -90,7 +93,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, ns: &Namespace) {
                 .const_int(selector.to_u64().unwrap(), false);
             Some((
                 case,
-                dispatch_case(input_length, input, func_no, bin, func_value, ns),
+                dispatch_case(input_length, input, func_no, func, bin, func_value, ns),
             ))
         })
         .collect::<Vec<(IntValue, inkwell::basic_block::BasicBlock)>>();
@@ -111,6 +114,7 @@ fn dispatch_case<'a>(
     input_length: IntValue<'a>,
     input: PointerValue<'a>,
     func_no: usize,
+    func: &Function,
     bin: &mut Binary<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
@@ -121,7 +125,6 @@ fn dispatch_case<'a>(
     bin.builder.position_at_end(case_bb);
     let mut args = vec![];
     // Decode input data if necessary
-    let func = &ns.functions[func_no];
     if !func.params.is_empty() {
         args = abi_decode(
             bin,
@@ -140,9 +143,7 @@ fn dispatch_case<'a>(
         return_tys.push(item.ty.clone());
     }
 
-    // build call function
-    let callee = &ns.functions[func_no];
-    let callee_value = bin.module.get_function(&callee.name).unwrap();
+    let callee_value = bin.module.get_function(&func.name).unwrap();
     let ret = bin
         .builder
         .build_call(

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::irgen;
 use num_bigint::BigInt;
 use num_traits::Zero;
-use ola_parser::program::{self};
+use ola_parser::program::{self, ContractDefinition};
 use std::collections::BTreeMap;
 
 use super::{ast, functions, statements, variables};
@@ -12,9 +11,11 @@ use crate::sema::unused_variable::emit_warning_local_variable;
 
 impl ast::Contract {
     /// Create a new contract, abstract contract, interface or library
-    pub fn new(name: &str, loc: program::Loc) -> Self {
+    pub fn new(name: &str, ty: program::ContractTy, loc: program::Loc) -> Self {
+        let instantiable = matches!(ty, program::ContractTy::Contract(_));
         ast::Contract {
             loc,
+            ty,
             name: name.to_owned(),
             functions: Vec::new(),
             all_functions: BTreeMap::new(),
@@ -24,17 +25,8 @@ impl ast::Contract {
             dispatch_no: 0,
             layout: Vec::new(),
             fixed_layout_size: BigInt::zero(),
+            instantiable,
         }
-    }
-
-    /// Generate contract code for this contract
-    pub fn emit<'a>(
-        &'a self,
-        ns: &'a ast::Namespace,
-        context: &'a inkwell::context::Context,
-        filename: &'a str,
-    ) -> irgen::binary::Binary {
-        irgen::binary::Binary::build(context, self, ns, filename)
     }
 }
 
@@ -88,7 +80,7 @@ struct ResolveLater<'a> {
 /// Resolve functions declarations, constructor declarations, and contract
 /// variables This returns a list of function bodies to resolve
 fn resolve_declarations<'a>(
-    def: &'a program::ContractDefinition,
+    def: &'a ContractDefinition,
     file_no: usize,
     contract_no: usize,
     ns: &mut ast::Namespace,
@@ -96,7 +88,7 @@ fn resolve_declarations<'a>(
 ) {
     ns.diagnostics.push(ast::Diagnostic::debug(
         def.loc,
-        format!("found {} ", def.name.as_ref().unwrap().name),
+        format!("found {} '{}'", def.ty, def.clone().name.unwrap().name),
     ));
 
     let mut function_no_bodies = Vec::new();
@@ -122,27 +114,28 @@ fn resolve_declarations<'a>(
             }
         }
     }
+    if let program::ContractTy::Contract(loc) = &def.ty {
+        if !function_no_bodies.is_empty() {
+            let notes = function_no_bodies
+                .into_iter()
+                .map(|function_no| ast::Note {
+                    loc: ns.functions[function_no].loc,
+                    message: format!(
+                        "location of function '{}' with no body",
+                        ns.functions[function_no].name
+                    ),
+                })
+                .collect::<Vec<ast::Note>>();
 
-    if !function_no_bodies.is_empty() {
-        let notes = function_no_bodies
-            .into_iter()
-            .map(|function_no| ast::Note {
-                loc: ns.functions[function_no].loc,
-                message: format!(
-                    "location of function '{}' with no body",
-                    ns.functions[function_no].name
-                ),
-            })
-            .collect::<Vec<ast::Note>>();
-
-        ns.diagnostics.push(ast::Diagnostic::error_with_notes(
-                    def.loc,
+            ns.diagnostics.push(ast::Diagnostic::error_with_notes(
+                    *loc,
                     format!(
                         "contract should be marked 'abstract contract' since it has {} functions with no body",
                         notes.len()
                     ),
                     notes,
                 ));
+        }
     }
 }
 

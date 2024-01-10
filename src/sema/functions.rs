@@ -14,6 +14,7 @@ pub fn contract_function(
     contract_no: usize,
     ns: &mut Namespace,
 ) -> Option<usize> {
+    let mut success = true;
     // Function name cannot be the same as the contract name
     if let Some(n) = &func.name {
         if n.name == ns.contracts[contract_no].name {
@@ -51,7 +52,48 @@ pub fn contract_function(
 
     ns.diagnostics.extend(diagnostics);
 
-    if !returns_success || !params_success {
+    if ns.contracts[contract_no].is_interface() {
+        if func.body.is_some() {
+            ns.diagnostics.push(Diagnostic::error(
+                func.loc,
+                "function in an interface cannot have a body".to_string(),
+            ));
+            success = false;
+        }
+    } else if ns.contracts[contract_no].is_library() {
+        if func.body.is_none() {
+            ns.diagnostics.push(Diagnostic::error(
+                func.loc,
+                format!("function in a library must have a body"),
+            ));
+            success = false;
+        }
+    }
+
+    // // all functions in an interface are implicitly virtual
+    // let is_virtual = if ns.contracts[contract_no].is_interface() {
+    //     if let Some(loc) = is_virtual {
+    //         ns.diagnostics.push(Diagnostic::warning(
+    //             loc,
+    //             "functions in an interface are implicitly virtual".to_string(),
+    //         ));
+    //     }
+
+    //     true
+    // } else if ns.contracts[contract_no].is_library() {
+    //     if let Some(loc) = is_virtual {
+    //         ns.diagnostics.push(Diagnostic::error(
+    //             loc,
+    //             "functions in a library cannot be virtual".to_string(),
+    //         ));
+    //     }
+
+    //     false
+    // } else {
+    //     is_virtual.is_some()
+    // };
+
+    if !success || !returns_success || !params_success {
         return None;
     }
 
@@ -198,8 +240,11 @@ fn signatures() {
 
     let mut ns = Namespace::default();
 
-    ns.contracts
-        .push(ast::Contract::new("bar", program::Loc::Implicit));
+    ns.contracts.push(ast::Contract::new(
+        "bar",
+        program::ContractTy::Contract(program::Loc::Implicit),
+        program::Loc::Implicit,
+    ));
 
     let fdecl = Function::new(
         program::Loc::Implicit,

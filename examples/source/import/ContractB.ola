@@ -1,0 +1,14 @@
+
+
+// import "./ContractA.ola";
+
+import "./MathLib.ola";
+
+contract ContractB {
+    // ContractA.MyStruct myStruct;
+
+    fn setStructB(u32 _value)  {
+        // myStruct.value = _value;
+        u32 result = MathLib.add(1, 2);
+    }
+}

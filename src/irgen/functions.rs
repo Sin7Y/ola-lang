@@ -9,9 +9,18 @@ use inkwell::values::{BasicValueEnum, FunctionValue};
 pub type Vartable<'a> = IndexMap<usize, BasicValueEnum<'a>>;
 
 /// Emit all functions
-pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &'a sema::ast::Namespace) {
+pub(super) fn gen_functions<'a>(
+    bin: &mut Binary<'a>,
+    contract_no: usize,
+    ns: &'a sema::ast::Namespace,
+) {
+    let mut funcs = Vec::new();
+    for func_no in ns.contracts[contract_no].all_functions.keys() {
+        funcs.push(&ns.functions[*func_no]);
+    }
+
     // gen function prototype
-    for (_, func) in ns.functions.iter().enumerate() {
+    for func in funcs.clone() {
         let ftype = bin.function_type(
             &func
                 .params
@@ -36,13 +45,9 @@ pub(super) fn gen_functions<'a>(bin: &mut Binary<'a>, ns: &'a sema::ast::Namespa
     }
 
     // gen function definition
-    for (_, func) in ns.functions.iter().enumerate() {
+    for func in funcs.clone() {
         if let Some(func_value) = bin.module.get_function(&func.name) {
-            let mut var_table: Vartable = IndexMap::new();
-            gen_function(bin, func_value, func, &mut var_table, ns);
-        }
-        if func.returns.is_empty() {
-            bin.builder.build_return(None);
+            gen_function(bin, func_value, func, ns);
         }
     }
 }
@@ -51,21 +56,22 @@ pub(super) fn gen_function<'a>(
     bin: &mut Binary<'a>,
     func_value: FunctionValue<'a>,
     func: &Function,
-    var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) {
+    let mut var_table: Vartable = IndexMap::new();
+
     let bb: inkwell::basic_block::BasicBlock = bin.context.append_basic_block(func_value, "entry");
 
     bin.builder.position_at_end(bb);
 
     // populate the argument variables
-    populate_arguments(bin, func_value, func, var_table, ns);
+    populate_arguments(bin, func_value, func, &mut var_table, ns);
 
     // named returns should be populated
-    populate_named_returns(bin, func_value, func, var_table, ns);
+    populate_named_returns(bin, func_value, func, &mut var_table, ns);
 
     for stmt in &func.body {
-        statement(stmt, bin, func_value, func, var_table, ns);
+        statement(stmt, bin, func_value, func, &mut var_table, ns);
 
         if !stmt.reachable() {
             break;
@@ -83,6 +89,10 @@ pub(super) fn gen_function<'a>(
                     .build_load(bin.llvm_var_ty(&ty, ns), ret.into_pointer_value(), "");
             bin.builder.build_return(Some(&ret));
         });
+    }
+
+    if func.returns.is_empty() {
+        bin.builder.build_return(None);
     }
 }
 

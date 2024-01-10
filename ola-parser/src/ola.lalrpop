@@ -64,6 +64,12 @@ StructDefinition: Box<StructDefinition> = {
     }
 }
 
+ContractTy: ContractTy = {
+    <l:@L> "contract" <r:@R> => ContractTy::Contract(Loc::File(file_no, l, r)),
+    <l:@L> "interface" <r:@R> => ContractTy::Interface(Loc::File(file_no, l, r)),
+    <l:@L> "library" <r:@R> => ContractTy::Library(Loc::File(file_no, l, r)),
+}
+
 ContractPart: ContractPart = {
     StructDefinition => ContractPart::StructDefinition(<>),
     EnumDefinition => ContractPart::EnumDefinition(<>),
@@ -74,9 +80,9 @@ ContractPart: ContractPart = {
 }
 
 ContractDefinition: Box<ContractDefinition> = {
-    <l:@L> "contract" <name:IdentifierOrError>
+    <l:@L> <ty:ContractTy> <name:IdentifierOrError>
     "{" <parts:(<ContractPart>)*> "}" <r:@R> => {
-        Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), name,  parts})
+        Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), ty, name,  parts})
     }
 }
 

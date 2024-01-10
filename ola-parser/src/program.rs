@@ -4,7 +4,6 @@ use std::fmt::{self, Display, Formatter, Result};
 
 /// file no, start offset, end offset (in bytes)
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-
 pub enum Loc {
     Builtin,
     CommandLine,
@@ -89,7 +88,6 @@ impl Loc {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-
 pub struct Identifier {
     pub loc: Loc,
     pub name: String,
@@ -248,9 +246,33 @@ impl ContractPart {
     }
 }
 
+/// The contract type.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum ContractTy {
+    /// `contract`
+    Contract(Loc),
+
+    /// `interface`
+    Interface(Loc),
+
+    /// `library`
+    Library(Loc),
+}
+
+impl fmt::Display for ContractTy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ContractTy::Contract(_) => write!(f, "contract"),
+            ContractTy::Interface(_) => write!(f, "interface"),
+            ContractTy::Library(_) => write!(f, "library"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ContractDefinition {
     pub loc: Loc,
+    pub ty: ContractTy,
     pub name: Option<Identifier>,
     pub parts: Vec<ContractPart>,
 }

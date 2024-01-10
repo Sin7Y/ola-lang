@@ -87,7 +87,7 @@ pub(super) fn get_digits(input: &mut std::str::CharIndices, len: usize) -> Resul
 
     for _ in 0..len {
         if let Some((_, ch)) = input.next() {
-            if let Some(v) = ch.to_digit(16)  {
+            if let Some(v) = ch.to_digit(16) {
                 n = (n << 4) + v as u64;
                 continue;
             }
