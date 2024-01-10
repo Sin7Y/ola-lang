@@ -1,6 +1,10 @@
 [
   {
+<<<<<<< HEAD:examples/abi/types/u256_abi.json
     "name": "testU256DeclareUninitialized",
+=======
+    "name": "hash_compare",
+>>>>>>> 81f6615 (regerate examples source files result.):examples/abi/types/hash_abi.json
     "type": "function",
     "inputs": [],
     "outputs": []
