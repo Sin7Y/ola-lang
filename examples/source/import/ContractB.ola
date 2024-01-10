@@ -9,6 +9,6 @@ contract ContractB {
 
     fn setStructB(u32 _value)  {
         // myStruct.value = _value;
-        u32 result = MathLib.add(1, 2);
+        // u32 result = MathLib.add(1, 2);
     }
 }
