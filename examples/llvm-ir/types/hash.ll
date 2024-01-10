@@ -493,6 +493,7 @@ entry:
   call void @poseidon_hash(ptr %vector_data12, ptr %2, i64 %vector_length11)
   store ptr %2, ptr %h2, align 8
   %3 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access13 = getelementptr i64, ptr %3, i64 3
   store i64 1885151562297713155, ptr %index_access13, align 4
   %index_access14 = getelementptr i64, ptr %3, i64 2
@@ -501,6 +502,16 @@ entry:
   store i64 107395124437206779, ptr %index_access15, align 4
   %index_access16 = getelementptr i64, ptr %3, i64 0
   store i64 1006966343754, ptr %index_access16, align 4
+=======
+  %index_access13 = getelementptr i64, ptr %3, i64 0
+  store i64 1006966343754, ptr %index_access13, align 4
+  %index_access14 = getelementptr i64, ptr %3, i64 1
+  store i64 107395124437206779, ptr %index_access14, align 4
+  %index_access15 = getelementptr i64, ptr %3, i64 2
+  store i64 -7568657024057810014, ptr %index_access15, align 4
+  %index_access16 = getelementptr i64, ptr %3, i64 3
+  store i64 1885151562297713155, ptr %index_access16, align 4
+>>>>>>> 81f6615 (regerate examples source files result.)
   store ptr %3, ptr %h3, align 8
   %4 = load ptr, ptr %h1, align 8
   %5 = load ptr, ptr %h2, align 8

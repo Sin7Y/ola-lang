@@ -434,6 +434,7 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+<<<<<<< HEAD
   %counter = alloca i64, align 8
   %result = alloca i64, align 8
   store i64 0, ptr %counter, align 4
@@ -466,10 +467,26 @@ entry:
   %4 = add i64 %2, %3
   call void @builtin_range_check(i64 %4)
   ret i64 %4
+=======
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %0
+  %loopcond = icmp ule i64 %inc, %1
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+>>>>>>> 81f6615 (regerate examples source files result.)
 }
 
 define void @setStructB(i64 %0) {
 entry:
+<<<<<<< HEAD
   %result = alloca i64, align 8
   %_value = alloca i64, align 8
   store i64 %0, ptr %_value, align 4
@@ -497,14 +514,22 @@ entry:
   store i64 %12, ptr %result, align 4
   %13 = load i64, ptr %result, align 4
   call void @prophet_printf(i64 %13, i64 3)
+=======
+  %_value = alloca i64, align 8
+  store i64 %0, ptr %_value, align 4
+>>>>>>> 81f6615 (regerate examples source files result.)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
+<<<<<<< HEAD
     i64 1715662714, label %func_0_dispatch
     i64 1321414294, label %func_1_dispatch
+=======
+    i64 1321414294, label %func_0_dispatch
+>>>>>>> 81f6615 (regerate examples source files result.)
   ]
 
 missing_function:                                 ; preds = %entry
@@ -513,6 +538,7 @@ missing_function:                                 ; preds = %entry
 func_0_dispatch:                                  ; preds = %entry
   %3 = getelementptr ptr, ptr %2, i64 0
   %4 = load i64, ptr %3, align 4
+<<<<<<< HEAD
   %5 = getelementptr ptr, ptr %3, i64 1
   %6 = load i64, ptr %5, align 4
   %7 = call i64 @add(i64 %4, i64 %6)
@@ -530,6 +556,12 @@ func_1_dispatch:                                  ; preds = %entry
   %12 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %12, align 4
   call void @set_tape_data(ptr %12, i64 1)
+=======
+  call void @setStructB(i64 %4)
+  %5 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %5, align 4
+  call void @set_tape_data(ptr %5, i64 1)
+>>>>>>> 81f6615 (regerate examples source files result.)
   ret void
 }
 
