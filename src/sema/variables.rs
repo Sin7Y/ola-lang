@@ -28,7 +28,9 @@ pub fn contract_variables<'a>(
 
     for part in &def.parts {
         if let program::ContractPart::VariableDefinition(ref s) = &part {
-            if let Some(delay) = variable_decl(s, file_no, Some(contract_no), ns, &mut symtable) {
+            if let Some(delay) =
+                variable_decl(Some(def), s, file_no, Some(contract_no), ns, &mut symtable)
+            {
                 delayed.push(delay);
             }
         }
@@ -38,6 +40,7 @@ pub fn contract_variables<'a>(
 }
 
 pub fn variable_decl<'a>(
+    contract: Option<&program::ContractDefinition>,
     def: &'a program::VariableDefinition,
     file_no: usize,
     contract_no: Option<usize>,
@@ -69,6 +72,34 @@ pub fn variable_decl<'a>(
                 ));
             }
             constant = true;
+        }
+    }
+
+    if let Some(contract) = contract {
+        if matches!(contract.ty, program::ContractTy::Interface(_))
+            || (matches!(contract.ty, program::ContractTy::Library(_)) && !constant)
+        {
+            if contract.name.is_none() || def.name.is_none() {
+                return None;
+            }
+            ns.diagnostics.push(Diagnostic::error(
+                def.loc,
+                format!(
+                    "{} '{}' is not allowed to have contract variable '{}'",
+                    contract.ty,
+                    contract.name.as_ref().unwrap().name,
+                    def.name.as_ref().unwrap().name
+                ),
+            ));
+            return None;
+        }
+    } else {
+        if !constant {
+            ns.diagnostics.push(Diagnostic::error(
+                def.ty.loc(),
+                "global variable must be constant".to_string(),
+            ));
+            return None;
         }
     }
 

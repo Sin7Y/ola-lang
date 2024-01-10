@@ -5,8 +5,8 @@ contract ECDSACheck {
 
     fn check_ecdsa_test() {
         hash message = 0x706955c537687b11177b1058f987ecea245a2c0e5d6c0d1ccd3e91db7cbab73ehash;
-        fields sig = 0x2b87c212f85fc86ec0005cceb9927585e71c3644bb431989713d403cd23800a77cf405c7941c0d53dcb5ae30de730f39759a7fb0f9d7adcfc480f3d3467e31c2fields;
         fields pubkey = 0xdf31ce59e3db2b1afcfe2618e0bc5907476f6d22971d7cc462da578f3496c623fbd51392f2773b44c5ffcc80acf9b98ae9d809e36d8963eda4765bb77fa716a3fields;
+        fields sig = 0x2b87c212f85fc86ec0005cceb9927585e71c3644bb431989713d403cd23800a77cf405c7941c0d53dcb5ae30de730f39759a7fb0f9d7adcfc480f3d3467e31c2fields;
         bool result = check_ecdsa(message, pubkey, sig);
         assert(result);
     }

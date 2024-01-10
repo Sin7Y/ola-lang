@@ -218,7 +218,8 @@ fn resolve_contract<'a>(
     let contract_no = ns.contracts.len();
 
     let name = def.name.as_ref().unwrap();
-    ns.contracts.push(Contract::new(&name.name, def.loc));
+    ns.contracts
+        .push(Contract::new(&name.name, def.ty.clone(), def.loc));
 
     let mut broken = !ns.add_symbol(
         file_no,
