@@ -1,0 +1,11 @@
+contract ContractA {
+    struct MyStruct {
+        u32 value;
+    }
+
+    MyStruct myStruct;
+   
+    fn setStructA(u32 _value) {
+        myStruct.value = _value;
+    }
+}

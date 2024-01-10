@@ -93,7 +93,6 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                         ptr_type.into(),
                         ptr_type.into(),
                         ptr_type.into(),
-                        ptr_type.into(),
                     ],
                     false,
                 );
@@ -742,6 +741,8 @@ fn define_check_ecdsa<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 
     let mut dest = bin.heap_malloc(bin.context.i64_type().const_int(20, false));
 
+    let dest_origin = dest.clone();
+
     bin.memcpy(msg, dest, bin.context.i64_type().const_int(4, false));
 
     dest = unsafe {
@@ -776,7 +777,7 @@ fn define_check_ecdsa<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
         .builder
         .build_call(
             bin.module.get_function("builtin_check_ecdsa").unwrap(),
-            &[dest.into()],
+            &[dest_origin.into()],
             "",
         )
         .try_as_basic_value()

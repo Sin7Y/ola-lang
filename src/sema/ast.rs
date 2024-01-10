@@ -411,6 +411,7 @@ pub struct Layout {
 pub struct Contract {
     pub loc: program::Loc,
     pub name: String,
+    pub ty: program::ContractTy,
     pub layout: Vec<Layout>,
     pub fixed_layout_size: BigInt,
     pub functions: Vec<usize>,
@@ -419,8 +420,21 @@ pub struct Contract {
 
     pub initializer: Option<usize>,
     pub code: Vec<u8>,
+    pub instantiable: bool,
     /// CFG number of this contract's dispatch function
     pub dispatch_no: usize,
+}
+
+impl Contract {
+    // Is this an interface
+    pub fn is_interface(&self) -> bool {
+        matches!(self.ty, program::ContractTy::Interface(_))
+    }
+
+    // Is this an library
+    pub fn is_library(&self) -> bool {
+        matches!(self.ty, program::ContractTy::Library(_))
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
