@@ -24,7 +24,6 @@ pub fn add_external_functions(contract_no: usize, ns: &mut Namespace) {
 
     for function_no in ns.contracts[contract_no].all_functions.keys() {
         let func = &ns.functions[*function_no];
-
         for stmt in &func.body {
             stmt.recurse(&mut call_list, check_statement);
         }
@@ -50,11 +49,24 @@ pub fn add_external_functions(contract_no: usize, ns: &mut Namespace) {
                     .insert(*function_no, usize::MAX);
             }
         }
+        call_list.items.clear();
+
+        for function_no in &new_call_list.items {
+            if !ns.contracts[contract_no]
+                .all_functions
+                .contains_key(function_no)
+            {
+                call_list.items.insert(*function_no);
+            }
+        }
     }
 }
 
-fn check_expression(expr: &Expression, _: &mut CallList) -> bool {
+fn check_expression(expr: &Expression, call_list: &mut CallList) -> bool {
     match expr {
+        Expression::Function { function_no, .. } => {
+            call_list.items.insert(*function_no);
+        }
         Expression::LibFunction {
             kind: LibFunc::GetSelector,
             ..
@@ -84,6 +96,9 @@ fn check_statement(stmt: &Statement, call_list: &mut CallList) -> bool {
             cond.recurse(call_list, check_expression);
         }
         Statement::Expression(_, _, expr) => {
+            if !matches!(expr, Expression::Function { .. }) {
+                expr.recurse(call_list, check_expression);
+            }
             expr.recurse(call_list, check_expression);
         }
         Statement::Delete(_, _, expr) => {
