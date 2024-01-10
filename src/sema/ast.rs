@@ -1105,6 +1105,16 @@ impl Recurse for Statement {
                         stmt.recurse(cx, f);
                     }
                 }
+                Statement::While(_, _, _, body) => {
+                    for stmt in body {
+                        stmt.recurse(cx, f);
+                    }
+                }
+                Statement::DoWhile(_, _, body, _) => {
+                    for stmt in body {
+                        stmt.recurse(cx, f);
+                    }
+                }
                 _ => (),
             }
         }
