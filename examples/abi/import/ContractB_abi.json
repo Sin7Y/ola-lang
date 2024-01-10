@@ -1,0 +1,13 @@
+[
+  {
+    "name": "setStructB",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_value",
+        "type": "u32"
+      }
+    ],
+    "outputs": []
+  }
+]
