@@ -43,6 +43,11 @@ pub enum Type {
         returns: Vec<Type>,
     },
 
+    ExternalFunction {
+        params: Vec<Type>,
+        returns: Vec<Type>,
+    },
+
     /// User type definitions, e.g. `type Foo is int128;`. The usize
     /// is an index into user_types in the namespace.
     UserType(usize),
@@ -735,11 +740,26 @@ pub enum Expression {
         signature: Option<String>,
     },
 
+    ExternalFunction {
+        loc: program::Loc,
+        ty: Type,
+        address: Box<Expression>,
+        function_no: usize,
+    },
+
     FunctionCall {
         loc: program::Loc,
         returns: Vec<Type>,
         function: Box<Expression>,
         args: Vec<Expression>,
+    },
+
+    ExternalFunctionCall {
+        loc: program::Loc,
+        returns: Vec<Type>,
+        function: Box<Expression>,
+        args: Vec<Expression>,
+        call_args: CallArgs,
     },
 
     ExternalFunctionCallRaw {
@@ -941,7 +961,9 @@ impl CodeLocation for Expression {
             | Expression::StringCompare { loc, .. }
             | Expression::StringConcat { loc, .. }
             | Expression::Function { loc, .. }
+            | Expression::ExternalFunction { loc, .. }
             | Expression::FunctionCall { loc, .. }
+            | Expression::ExternalFunctionCall { loc, .. }
             | Expression::ExternalFunctionCallRaw { loc, .. }
             | Expression::Increment { loc, .. }
             | Expression::Decrement { loc, .. }

@@ -16,7 +16,7 @@ pub(super) fn array_slice(
     array: &program::Expression,
     from: &Option<Box<program::Expression>>,
     to: &Option<Box<program::Expression>>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,

@@ -12,7 +12,7 @@ use crate::sema::expression::resolve_expression::expression;
 use crate::sema::expression::{ExprContext, ResolveTo};
 use crate::sema::symtable::Symtable;
 use crate::sema::unused_variable::check_function_call;
-use ola_parser::diagnostics::Diagnostic;
+use ola_parser::diagnostics::{Diagnostic, Note};
 use ola_parser::program;
 use ola_parser::program::{CodeLocation, Loc};
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ pub fn function_call_pos_args(
     id: &program::Identifier,
     args: &[program::Expression],
     function_nos: Vec<usize>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     resolve_to: ResolveTo,
     symtable: &mut Symtable,
@@ -113,7 +113,7 @@ pub fn function_call_pos_args(
         let func = &ns.functions[*function_no];
 
         let returns = function_returns(func, resolve_to);
-        let ty = function_type(func, resolve_to);
+        let ty = function_type(func, false, resolve_to);
 
         return Ok(Expression::FunctionCall {
             loc: *loc,
@@ -153,7 +153,7 @@ fn function_call_named_args(
     id: &program::Identifier,
     args: &[program::NamedArgument],
     function_nos: Vec<usize>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     resolve_to: ResolveTo,
     ns: &mut Namespace,
     symtable: &mut Symtable,
@@ -254,7 +254,7 @@ fn function_call_named_args(
         let func = &ns.functions[*function_no];
 
         let returns = function_returns(func, resolve_to);
-        let ty = function_type(func, resolve_to);
+        let ty = function_type(func, false, resolve_to);
 
         return Ok(Expression::FunctionCall {
             loc: *loc,
@@ -294,7 +294,7 @@ fn try_namespace(
     func: &program::Identifier,
     args: &[program::Expression],
     call_args_loc: Option<program::Loc>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -367,7 +367,7 @@ fn try_storage_reference(
     var_expr: &Expression,
     func: &program::Identifier,
     args: &[program::Expression],
-    context: &ExprContext,
+    context: &mut ExprContext,
     diagnostics: &mut Diagnostics,
     ns: &mut Namespace,
     symtable: &mut Symtable,
@@ -544,11 +544,12 @@ fn try_type_method(
     func: &program::Identifier,
     args: &[program::Expression],
     call_args: &[&program::NamedArgument],
-    context: &ExprContext,
+    context: &mut ExprContext,
     var_expr: &Expression,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
+    resolve_to: ResolveTo,
 ) -> Result<Option<Expression>, ()> {
     let var_ty = var_expr.ty();
 
@@ -635,6 +636,21 @@ fn try_type_method(
                 ),
             ));
             return Err(());
+        }
+        Type::Contract(ext_contract_no) => {
+            return contract_call_pos_args(
+                loc,
+                *ext_contract_no,
+                func,
+                Some(var_expr),
+                args,
+                call_args,
+                context,
+                ns,
+                symtable,
+                diagnostics,
+                resolve_to,
+            );
         }
         Type::Address => {
             let ty = match func.name.as_str() {
@@ -726,7 +742,7 @@ fn try_type_method(
 /// Parse call arguments for external calls
 pub(super) fn parse_call_args(
     call_args: &[&program::NamedArgument],
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -809,7 +825,7 @@ pub(super) fn method_call_pos_args(
     args: &[program::Expression],
     call_args: &[&program::NamedArgument],
     call_args_loc: Option<program::Loc>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -864,6 +880,7 @@ pub(super) fn method_call_pos_args(
         ns,
         symtable,
         diagnostics,
+        resolve_to,
     ) {
         Ok(Some(resolved_call)) => {
             diagnostics.extend(type_method_diagnostics);
@@ -944,7 +961,7 @@ pub fn named_call_expr(
     ty: &program::Expression,
     args: &[program::NamedArgument],
     is_destructible: bool,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -1004,7 +1021,7 @@ pub fn call_expr(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::Expression],
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -1075,7 +1092,7 @@ pub fn function_call_expr(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::Expression],
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -1170,7 +1187,7 @@ pub fn named_function_call_expr(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::NamedArgument],
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -1225,18 +1242,28 @@ pub(crate) fn function_returns(ftype: &Function, resolve_to: ResolveTo) -> Vec<T
 }
 
 /// Get the function type for an internal.external function call
-pub(crate) fn function_type(func: &Function, resolve_to: ResolveTo) -> Type {
+pub(crate) fn function_type(func: &Function, external: bool,  resolve_to: ResolveTo) -> Type {
     let params = func.params.iter().map(|p| p.ty.clone()).collect();
     let returns = function_returns(func, resolve_to);
 
-    Type::Function { params, returns }
+    if external {
+        Type::ExternalFunction {
+            params,
+            returns,
+        }
+    } else {
+        Type::Function {
+            params,
+            returns,
+        }
+    }
 }
 
 /// This function evaluates the arguments of a function call with either
 /// positional arguments or named arguments.
 fn evaluate_argument(
     arg: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     arg_ty: &Type,
@@ -1247,4 +1274,239 @@ fn evaluate_argument(
         .and_then(|arg| arg.cast(&arg.loc(), arg_ty, ns, errors))
         .map(|expr| cast_args.push(expr))
         .is_ok()
+}
+
+
+/// Resolve call to contract with positional arguments
+fn contract_call_pos_args(
+    loc: &program::Loc,
+    external_contract_no: usize,
+    func: &program::Identifier,
+    var_expr: Option<&Expression>,
+    args: &[program::Expression],
+    call_args: &[&program::NamedArgument],
+    context: &mut ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+    resolve_to: ResolveTo,
+) -> Result<Option<Expression>, ()> {
+    let (call_args, name_matches) = match preprocess_contract_call(
+        call_args,
+        external_contract_no,
+        func,
+        context,
+        ns,
+        symtable,
+        diagnostics,
+    ) {
+        PreProcessedCall::Success {
+            call_args,
+            name_matches,
+        } => (call_args, name_matches),
+        PreProcessedCall::Error => return Err(()),
+    };
+
+    let mut call_diagnostics = Diagnostics::default();
+    let mut resolved_calls = Vec::new();
+
+    // try to resolve the arguments, give up if there are any errors
+    if args.iter().fold(false, |acc, arg| {
+        acc | expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown).is_err()
+    }) {
+        return Err(());
+    }
+
+    for function_no in &name_matches {
+        let mut candidate_diagnostics = Diagnostics::default();
+        let mut cast_args = Vec::new();
+
+        let params_len = ns.functions[*function_no].params.len();
+
+        if params_len != args.len() {
+            candidate_diagnostics.push(Diagnostic::error(
+                *loc,
+                format!(
+                    "function expects {} arguments, {} provided",
+                    params_len,
+                    args.len()
+                ),
+            ));
+        } else {
+            // check if arguments can be implicitly casted
+            for (i, arg) in args.iter().enumerate() {
+                let ty = ns.functions[*function_no].params[i].ty.clone();
+
+                evaluate_argument(
+                    arg,
+                    context,
+                    ns,
+                    symtable,
+                    &ty,
+                    &mut candidate_diagnostics,
+                    &mut cast_args,
+                );
+            }
+        }
+
+        if candidate_diagnostics.any_errors() {
+            if name_matches.len() != 1 {
+                candidate_diagnostics.iter_mut().for_each(|diagnostic| {
+                    diagnostic.notes.push(Note {
+                        loc: ns.functions[*function_no].loc,
+                        message: "candidate function".into(),
+                    })
+                });
+
+                // will be de-duped
+                candidate_diagnostics.push(Diagnostic::error(
+                    *loc,
+                    "cannot find overloaded function which matches signature".into(),
+                ));
+            }
+        } else if let Ok(resolved_call) = contract_call_match(
+            loc,
+            *function_no,
+            call_args.clone(),
+            cast_args,
+            var_expr,
+            ns,
+            &mut candidate_diagnostics,
+            resolve_to,
+        ) {
+            resolved_calls.push((*function_no, resolved_call));
+            continue;
+        }
+
+        call_diagnostics.extend(candidate_diagnostics);
+    }
+
+    match resolved_calls.len() {
+        0 => {
+            diagnostics.extend(call_diagnostics);
+
+            if name_matches.is_empty() {
+                diagnostics.push(Diagnostic::error(
+                    func.loc,
+                    format!("unknown function '{}'", func.name),
+                ));
+            }
+
+            Err(())
+        }
+        1 => Ok(Some(resolved_calls[0].1.clone())),
+        _ => {
+            diagnostics.extend(call_diagnostics);
+
+            diagnostics.push(Diagnostic::error_with_notes(
+                *loc,
+                "function call can be resolved to multiple functions".into(),
+                resolved_calls
+                    .iter()
+                    .map(|(func_no, _)| {
+                        let func = &ns.functions[*func_no];
+
+                        Note {
+                            loc: func.loc,
+                            message: "candidate function".into(),
+                        }
+                    })
+                    .collect(),
+            ));
+
+            Err(())
+        }
+    }
+}
+
+/// Data structure to manage the returns of 'preprocess_contract_call'
+enum PreProcessedCall {
+    Success {
+        call_args: CallArgs,
+        name_matches: Vec<usize>,
+    },
+    Error,
+}
+
+/// This functions preprocesses calls to contracts, i.e. it parses the call arguments,
+/// find function name matches and identifies if we are calling a constructor on Solana.
+fn preprocess_contract_call(
+    call_args: &[&program::NamedArgument],
+    external_contract_no: usize,
+    func: &program::Identifier,
+    context: &mut ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> PreProcessedCall {
+    let call_args = if let Ok(call_args) = parse_call_args(
+        call_args,
+        context,
+        ns,
+        symtable,
+        diagnostics,
+    ) {
+        call_args
+    } else {
+        return PreProcessedCall::Error;
+    };
+
+    let mut name_matches: Vec<usize> = Vec::new();
+
+    for function_no in ns.contracts[external_contract_no].all_functions.keys() {
+        if func.name != ns.functions[*function_no].name{
+            continue;
+        }
+
+        name_matches.push(*function_no);
+    }
+    PreProcessedCall::Success {
+        call_args,
+        name_matches,
+    }
+}
+
+/// This function generates the final expression when a contract's function is matched with both
+/// the provided name and arguments
+fn contract_call_match(
+    loc: &program::Loc,
+    function_no: usize,
+    call_args: CallArgs,
+    cast_args: Vec<Expression>,
+    var_expr: Option<&Expression>,
+    ns: &Namespace,
+    diagnostics: &mut Diagnostics,
+    resolve_to: ResolveTo,
+) -> Result<Expression, ()> {
+
+
+    let func = &ns.functions[function_no];
+    let returns = function_returns(func, resolve_to);
+    let ty = function_type(func, true, resolve_to);
+
+   let address = if let Some(var) = var_expr {
+        var.clone()
+    } else {
+        unreachable!("address not found")
+    };
+
+    Ok({
+        Expression::ExternalFunctionCall {
+            loc: *loc,
+            returns,
+            function: Box::new(Expression::ExternalFunction {
+                loc: *loc,
+                ty,
+                function_no,
+                address: Box::new(address.cast(
+                    &address.loc(),
+                    &Type::Contract(func.contract_no.unwrap()),
+                    ns,
+                    diagnostics,
+                )?),
+            }),
+            args: cast_args,
+            call_args,
+        }
+    })
 }

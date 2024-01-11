@@ -106,7 +106,7 @@ pub fn variable_decl<'a>(
     let initializer = if constant {
         if let Some(initializer) = &def.initializer {
             let mut diagnostics = Diagnostics::default();
-            let context = ExprContext {
+            let mut context = ExprContext {
                 file_no,
                 contract_no,
                 function_no: None,
@@ -115,7 +115,7 @@ pub fn variable_decl<'a>(
             };
             match expression(
                 initializer,
-                &context,
+                &mut context,
                 ns,
                 symtable,
                 &mut diagnostics,
@@ -212,7 +212,7 @@ pub fn resolve_initializers(
         let var = &ns.contracts[*contract_no].variables[*var_no];
         let ty = var.ty.clone();
 
-        let context = ExprContext {
+        let mut context = ExprContext {
             file_no,
             contract_no: Some(*contract_no),
             function_no: None,
@@ -222,7 +222,7 @@ pub fn resolve_initializers(
 
         if let Ok(res) = expression(
             initializer,
-            &context,
+            &mut context,
             ns,
             &mut symtable,
             &mut diagnostics,

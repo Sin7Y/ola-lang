@@ -41,7 +41,7 @@ log = "0.4.14"
 thiserror = "1.0.30"
 petgraph = "0.6.3"
 debug_print = "1.0.0" 
-
+scopeguard = "1.2.0"
 
 [dev-dependencies]
 color-backtrace = "0.5.1"

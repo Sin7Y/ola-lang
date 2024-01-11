@@ -18,7 +18,7 @@ pub(super) fn member_access(
     loc: &program::Loc,
     e: &program::Expression,
     id: &program::Identifier,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
