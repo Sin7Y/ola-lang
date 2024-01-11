@@ -32,6 +32,10 @@ impl Diagnostics {
     pub fn iter(&self) -> Iter<Diagnostic> {
         self.contents.iter()
     }
+    
+    pub fn iter_mut(&mut self) -> IterMut<Diagnostic> {
+        self.contents.iter_mut()
+    }
 
     pub fn iter_mut(&mut self) -> IterMut<Diagnostic> {
         self.contents.iter_mut()
