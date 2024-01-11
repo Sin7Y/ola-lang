@@ -55,7 +55,8 @@ impl RetrieveType for Expression {
             Expression::StorageArrayLength { ty, .. } => ty.clone(),
             Expression::ExternalFunctionCallRaw { .. } => Type::DynamicBytes,
             Expression::LibFunction { tys: returns, .. }
-            | Expression::FunctionCall { returns, .. } => {
+            | Expression::FunctionCall { returns, .. } 
+            | Expression::ExternalFunctionCall {returns, .. } => {
                 assert_eq!(returns.len(), 1);
                 returns[0].clone()
             }
@@ -64,7 +65,7 @@ impl RetrieveType for Expression {
 
                 list[0].ty()
             }
-            Expression::Function { ty, .. } => ty.clone(),
+            Expression::Function { ty, .. }  | Expression::ExternalFunction {ty, .. }=> ty.clone(),
         }
     }
 }

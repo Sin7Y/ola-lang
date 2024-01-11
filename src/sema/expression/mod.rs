@@ -341,6 +341,14 @@ impl Expression {
                 })
             }
 
+            (Type::Address, Type::Contract(_)) | (Type::Contract(_), Type::Address) => {
+                Ok(Expression::Cast {
+                    loc: *loc,
+                    to: to.clone(),
+                    expr: Box::new(self.clone()),
+                })
+            }
+
             _ => {
                 diagnostics.push(Diagnostic::cast_error(
                     *loc,

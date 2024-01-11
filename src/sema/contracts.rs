@@ -86,10 +86,10 @@ fn resolve_declarations<'a>(
     ns: &mut ast::Namespace,
     delayed: &mut ResolveLater<'a>,
 ) {
-    ns.diagnostics.push(ast::Diagnostic::debug(
-        def.loc,
-        format!("found {} '{}'", def.ty, def.clone().name.unwrap().name),
-    ));
+    // ns.diagnostics.push(ast::Diagnostic::debug(
+    //     def.loc,
+    //     format!("found {} '{}'", def.ty, def.clone().name.unwrap().name),
+    // ));
 
     let mut function_no_bodies = Vec::new();
 

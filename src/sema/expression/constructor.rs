@@ -15,7 +15,7 @@ pub fn new(
     loc: &program::Loc,
     ty: &program::Expression,
     args: &[program::Expression],
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,

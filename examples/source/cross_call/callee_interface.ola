@@ -1,0 +1,7 @@
+
+interface CalleeInterface {
+
+    fn setVars(u32 data);
+
+    fn add(u32 a, u32 b) -> (u32);
+}

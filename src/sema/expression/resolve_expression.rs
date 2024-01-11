@@ -35,7 +35,7 @@ use super::{literals::fields_literal, slice::array_slice};
 /// is a hint to what type the result should be.
 pub fn expression(
     expr: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
