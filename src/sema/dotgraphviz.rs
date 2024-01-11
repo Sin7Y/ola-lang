@@ -997,6 +997,32 @@ impl Dot {
                     Some(parent_rel),
                 );
             }
+
+            Expression::ExternalFunction {
+                loc,
+                ty,
+                function_no,
+                address,
+            } => {
+                let mut labels = vec![
+                    ty.to_string(ns),
+                    ns.loc_to_string(loc),
+                ];
+
+                let f = &ns.functions[*function_no];
+
+                if let Some(contract_no) = f.contract_no {
+                    labels.insert(1, format!("{}.{}", ns.contracts[contract_no].name, f.name))
+                }
+
+                let node = self.add_node(
+                    Node::new("external_function", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(address, func, ns, node, String::from("address"));
+            }
             Expression::FunctionCall {
                 loc,
                 function,
@@ -1019,6 +1045,33 @@ impl Dot {
                 for (no, arg) in args.iter().enumerate() {
                     self.add_expression(arg, func, ns, node, format!("arg #{}", no));
                 }
+            }
+
+            Expression::ExternalFunctionCall {
+                loc,
+                function,
+                args,
+                call_args,
+                ..
+            } => {
+                let labels = vec![
+                    String::from("call external function"),
+                    ns.loc_to_string(loc),
+                ];
+
+                let node = self.add_node(
+                    Node::new("call_external_function", labels),
+                    Some(parent),
+                    Some(parent_rel),
+                );
+
+                self.add_expression(function, func, ns, node, String::from("function"));
+
+                for (no, arg) in args.iter().enumerate() {
+                    self.add_expression(arg, func, ns, node, format!("arg #{no}"));
+                }
+
+                self.add_call_args(call_args, func, ns, node);
             }
 
             Expression::ExternalFunctionCallRaw {

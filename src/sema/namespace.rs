@@ -822,7 +822,7 @@ impl Namespace {
         diagnostics: &mut Diagnostics,
     ) -> Result<ArrayDimension, ()> {
         let mut symtable = Symtable::new();
-        let context = ExprContext {
+        let mut context = ExprContext {
             file_no,
             contract_no,
             function_no,
@@ -832,7 +832,7 @@ impl Namespace {
 
         let size_expr = expression(
             expr,
-            &context,
+            &mut context,
             self,
             &mut symtable,
             diagnostics,

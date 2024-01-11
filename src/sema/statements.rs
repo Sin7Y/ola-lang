@@ -27,7 +27,7 @@ pub fn resolve_function_body(
     let mut symtable = Symtable::new();
     let mut loops = LoopScopes::new();
     let mut res = Vec::new();
-    let context = ExprContext {
+    let mut context = ExprContext {
         file_no,
         contract_no,
         function_no: Some(function_no),
@@ -114,7 +114,7 @@ pub fn resolve_function_body(
     let reachable = statement(
         body,
         &mut res,
-        &context,
+        &mut context,
         &mut symtable,
         &mut loops,
         ns,
@@ -142,11 +142,10 @@ pub fn resolve_function_body(
 }
 
 /// Resolve a statement
-#[allow(clippy::ptr_arg)]
 fn statement(
     stmt: &program::Statement,
     res: &mut Vec<Statement>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     symtable: &mut Symtable,
     loops: &mut LoopScopes,
     ns: &mut Namespace,
@@ -210,22 +209,30 @@ fn statement(
 
             Ok(true)
         }
-        program::Statement::Block { statements, .. } => {
+        program::Statement::Block { statements, loc } => {
             symtable.new_scope();
             let mut reachable = true;
+            let mut already_unreachable = false;
 
-            let context = context.clone();
+            let mut context = context.clone();
+
+            let mut resolved_stmts = Vec::new();
 
             for stmt in statements {
-                if !reachable {
+                if !reachable && !already_unreachable  {
                     ns.diagnostics.push(Diagnostic::error(
                         stmt.loc(),
                         "unreachable statement".to_string(),
                     ));
-                    return Err(());
+                    already_unreachable = true;
                 }
-                reachable = statement(stmt, res, &context, symtable, loops, ns, diagnostics)?;
+                reachable = statement(stmt, &mut resolved_stmts, &mut context, symtable, loops, ns, diagnostics)?;
             }
+
+            res.push(Statement::Block {
+                loc: *loc,
+                statements: resolved_stmts,
+            });
 
             symtable.leave_scope();
 
@@ -643,7 +650,7 @@ fn destructure(
     loc: &program::Loc,
     vars: &[(program::Loc, Option<program::Parameter>)],
     expr: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     symtable: &mut Symtable,
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
@@ -652,8 +659,13 @@ fn destructure(
     let mut fields = Vec::new();
     let mut left_tys = Vec::new();
 
-    let mut lcontext = context.clone();
-    lcontext.lvalue = true;
+    let prev_lvalue = context.lvalue;
+    context.lvalue = true;
+
+    let mut context = scopeguard::guard(context, |context| {
+        context.lvalue = prev_lvalue;
+    });
+
 
     for (_, param) in vars {
         match param {
@@ -667,7 +679,7 @@ fn destructure(
                 name: None,
             }) => {
                 // ty will just be a normal expression, not a type
-                let e = expression(ty, &lcontext, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+                let e = expression(ty,  &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
 
                 match &e {
                     Expression::ConstantVariable {
@@ -718,7 +730,7 @@ fn destructure(
                 ty,
                 name: Some(name),
             }) => {
-                let (ty, ty_loc) = resolve_var_decl_ty(ty, &None, context, ns, diagnostics)?;
+                let (ty, ty_loc) = resolve_var_decl_ty(ty, &None, &mut context, ns, diagnostics)?;
 
                 if let Some(pos) = symtable.add(
                     name,
@@ -753,7 +765,7 @@ fn destructure(
         expr,
         &left_tys,
         &fields,
-        context,
+        &mut context,
         symtable,
         ns,
         diagnostics,
@@ -767,7 +779,7 @@ fn destructure_values(
     expr: &program::Expression,
     left_tys: &[Option<Type>],
     fields: &[DestructureField],
-    context: &ExprContext,
+    context: &mut ExprContext,
     symtable: &mut Symtable,
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
@@ -931,7 +943,7 @@ fn destructure_values(
 fn resolve_var_decl_ty(
     ty: &program::Expression,
     storage: &Option<program::StorageLocation>,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,
 ) -> Result<(Type, program::Loc), ()> {
@@ -977,7 +989,7 @@ fn resolve_var_decl_ty(
 fn return_with_values(
     returns: &program::Expression,
     loc: &program::Loc,
-    context: &ExprContext,
+    context: &mut ExprContext,
     symtable: &mut Symtable,
     ns: &mut Namespace,
     diagnostics: &mut Diagnostics,

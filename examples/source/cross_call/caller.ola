@@ -1,21 +1,33 @@
+import "./callee_interface.ola";
 
+import "./callee.ola";
 contract Caller {
-    u32 num;
+    
+    // fn call_by_contract_1(address addr) {
+    //     u32 a = 100;
+    //     u32 b = 200;
+    //     u32 result = Callee(addr).add(a, b);
+    //     assert(result == 300);
+    // }
 
+    // fn call_by_contract_2(Callee addr) {
+    //     u32 a = 100;
+    //     u32 b = 200;
+    //     u32 result = addr.add(a, b);
+    //     assert(result == 300);
+    // }
 
-    fn delegatecall_test(address _contract) {
-        u32 set_data = 66;
-        fields call_data = abi.encodeWithSignature("setVars(u32)", set_data);
-        _contract.delegatecall(call_data);
-        assert(num == 66);
-    }
+    // fn call_by_interface_1(CalleeInterface callee) {
+    //     u32 a = 100;
+    //     u32 b = 200;
+    //     u32 result = callee.add(a, b);
+    //     assert(result == 300);
+    // }
 
-    fn call_test(address _contract) {
+    fn call_by_interface_2(address addr) {
         u32 a = 100;
         u32 b = 200;
-        fields call_data = abi.encodeWithSignature("add(u32,u32)", a, b);
-        fields memory data = _contract.call(call_data);
-        u32 result = abi.decode(data, (u32));
+        u32 result = CalleeInterface(addr).add(a, b);
         assert(result == 300);
     }
 }
