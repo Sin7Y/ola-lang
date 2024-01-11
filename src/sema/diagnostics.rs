@@ -7,6 +7,7 @@ use codespan_reporting::{diagnostic, files, term};
 use debug_print::debug_println;
 use itertools::Itertools;
 use ola_parser::program::Loc;
+use std::slice::IterMut;
 use std::{
     collections::HashMap,
     slice::Iter,
@@ -30,6 +31,10 @@ impl Diagnostics {
 
     pub fn iter(&self) -> Iter<Diagnostic> {
         self.contents.iter()
+    }
+    
+    pub fn iter_mut(&mut self) -> IterMut<Diagnostic> {
+        self.contents.iter_mut()
     }
 
     pub fn is_empty(&self) -> bool {

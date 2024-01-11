@@ -8,7 +8,7 @@ use ola_parser::program;
 
 pub(super) fn variable(
     id: &program::Identifier,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,

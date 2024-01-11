@@ -16,7 +16,7 @@ pub(super) fn subtract(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -41,7 +41,7 @@ pub(super) fn bitwise_or(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -73,7 +73,7 @@ pub(super) fn bitwise_and(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -106,7 +106,7 @@ pub(super) fn bitwise_xor(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -139,7 +139,7 @@ pub(super) fn shift_left(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -176,7 +176,7 @@ pub(super) fn shift_right(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -213,7 +213,7 @@ pub(super) fn multiply(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -254,7 +254,7 @@ pub(super) fn divide(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -298,7 +298,7 @@ pub(super) fn modulo(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -342,7 +342,7 @@ pub(super) fn power(
     loc: &program::Loc,
     b: &program::Expression,
     e: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -393,7 +393,7 @@ pub(super) fn equal(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -429,7 +429,7 @@ pub(super) fn not_equal(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -533,7 +533,7 @@ pub(super) fn addition(
     loc: &program::Loc,
     l: &program::Expression,
     r: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -583,7 +583,7 @@ pub(super) fn addition(
 pub(super) fn incr_decr(
     v: &program::Expression,
     expr: &program::Expression,
-    context: &ExprContext,
+    context: &mut ExprContext,
     ns: &mut Namespace,
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
@@ -604,11 +604,14 @@ pub(super) fn incr_decr(
         }
     };
 
-    let mut context = context.clone();
-
+    let prev_lvalue = context.lvalue;
     context.lvalue = true;
 
-    let var = expression(v, &context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+    let mut context = scopeguard::guard(context, |context| {
+        context.lvalue = prev_lvalue;
+    });
+
+    let var = expression(v, &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
     used_variable(ns, &var, symtable);
     let var_ty = var.ty();
 

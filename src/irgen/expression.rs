@@ -788,6 +788,12 @@ pub fn expression<'a>(
         }
 
         Expression::Cast { to, expr, .. }
+            if matches!(to, Type::Contract(_) | Type::Address) && matches!(expr.ty(), Type::Address | Type::Contract(_)) =>
+        {
+            expression(expr, bin, func_value, var_table, ns)
+        }
+
+        Expression::Cast { to, expr, .. }
             if matches!(to, Type::Hash | Type::Address) && matches!(expr.ty(), Type::Uint(32)) =>
         {
             let expr = expression(expr, bin, func_value, var_table, ns);
@@ -1690,7 +1696,7 @@ pub(crate) fn debug_print<'a>(
             let value = storage_load(bin, ty, &mut arg.into(), func_value, ns);
             debug_print(bin, value, ty, func_value, ns);
         }
-        Type::Function { .. } => todo!(),
+        Type::Function { .. } | Type::ExternalFunction { .. }=> todo!(),
         Type::UserType(_) => todo!(),
         Type::Void => todo!(),
         Type::Unreachable => todo!(),
