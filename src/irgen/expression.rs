@@ -8,7 +8,7 @@ use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::{AddressSpace, IntPredicate};
-use num_bigint::BigInt;
+use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
 use ola_parser::program;
 
@@ -327,6 +327,7 @@ pub fn expression<'a>(
             assign_single(left, right, bin, func_value, var_table, ns)
         }
         Expression::FunctionCall { .. }
+        | Expression::ExternalFunctionCall { .. }
         | Expression::ExternalFunctionCallRaw { .. }
         | Expression::LibFunction {
             kind: LibFunc::AbiDecode,
@@ -1085,6 +1086,51 @@ pub fn emit_function_call<'a>(
                 unimplemented!()
             }
         }
+
+        Expression::ExternalFunctionCall { returns, function, args,  ..} => {
+
+            if let Expression::ExternalFunction {
+                function_no,
+                address,
+                ..
+            } = function.as_ref() {
+                let dest_func = &ns.functions[*function_no];
+                let tys: Vec<Type> = args.iter().map(|a| a.ty()).collect();
+                let args: Vec<BasicValueEnum> = args
+                    .iter()
+                    .map(|a| expression(a, bin,  func_value, var_table, ns))
+                    .collect();
+                let address = expression(address, bin, func_value, var_table, ns);
+                let selector = bin
+                    .context
+                    .i64_type()
+                    .const_int(BigInt::from_bytes_be(Sign::Plus,  &dest_func.selector()).to_u64().unwrap(), false);
+                let payload = abi_encode_with_selector(bin, selector.as_basic_value_enum(), args, &tys, func_value, ns);
+                let return_data = external_call(bin, payload.as_basic_value_enum(), address, CallTy::Regular);
+                // If the first element of returns is Void, we can discard the returns
+                if !dest_func.returns.is_empty() && returns[0] != Type::Void {
+                    let tys = dest_func
+                        .returns
+                        .iter()
+                        .map(|e| e.ty.clone())
+                        .collect::<Vec<Type>>();
+                    abi_decode(
+                        bin,
+                        return_data.into_pointer_value(),
+                        &tys,
+                        func_value,
+                        ns
+                      
+                    )
+                } else {
+                    vec![]
+                }
+
+            } else {
+                unimplemented!()
+            }
+        }
+
         Expression::ExternalFunctionCallRaw {
             address, args, ty, ..
         } => {
@@ -1101,9 +1147,8 @@ pub fn emit_function_call<'a>(
             ..
         } => {
             let data = expression(&args[0], bin, func_value, var_table, ns);
-            let input_length = bin.vector_len(data);
             let input = bin.vector_data(data);
-            abi_decode(bin, input_length, input, tys, func_value, ns)
+            abi_decode(bin, input, tys, func_value, ns)
         }
         _ => unreachable!(),
     }

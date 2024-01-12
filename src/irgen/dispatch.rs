@@ -111,7 +111,7 @@ pub fn gen_func_dispatch(bin: &mut Binary, contract_no: usize, ns: &Namespace) {
 /// constructor. Returns the basic block number in which the dispatch logic
 /// inserted.
 fn dispatch_case<'a>(
-    input_length: IntValue<'a>,
+    _: IntValue<'a>,
     input: PointerValue<'a>,
     func_no: usize,
     func: &Function,
@@ -128,7 +128,6 @@ fn dispatch_case<'a>(
     if !func.params.is_empty() {
         args = abi_decode(
             bin,
-            input_length,
             input,
             &func.params.iter().map(|p| p.ty.clone()).collect::<Vec<_>>(),
             func_value,
