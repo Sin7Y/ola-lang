@@ -484,14 +484,31 @@ exit:                                             ; preds = %loop
 >>>>>>> 81f6615 (regerate examples source files result.)
 }
 
+define i64 @add(i64 %0, i64 %1) {
+entry:
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  store i64 %0, ptr %a, align 4
+  store i64 %1, ptr %b, align 4
+  %2 = load i64, ptr %a, align 4
+  %3 = load i64, ptr %b, align 4
+  %4 = add i64 %2, %3
+  call void @builtin_range_check(i64 %4)
+  ret i64 %4
+}
+
 define void @setStructB(i64 %0) {
 entry:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 83491ee (update examples out files.)
   %result = alloca i64, align 8
   %_value = alloca i64, align 8
   store i64 %0, ptr %_value, align 4
   %1 = load i64, ptr %_value, align 4
   %2 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %3 = getelementptr i64, ptr %2, i64 0
   store i64 0, ptr %3, align 4
   %4 = getelementptr i64, ptr %2, i64 1
@@ -518,6 +535,28 @@ entry:
   %_value = alloca i64, align 8
   store i64 %0, ptr %_value, align 4
 >>>>>>> 81f6615 (regerate examples source files result.)
+=======
+  store i64 0, ptr %2, align 4
+  %3 = getelementptr i64, ptr %2, i64 1
+  store i64 0, ptr %3, align 4
+  %4 = getelementptr i64, ptr %2, i64 2
+  store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %2, i64 3
+  store i64 0, ptr %5, align 4
+  %6 = call ptr @heap_malloc(i64 4)
+  store i64 %1, ptr %6, align 4
+  %7 = getelementptr i64, ptr %6, i64 1
+  store i64 0, ptr %7, align 4
+  %8 = getelementptr i64, ptr %6, i64 2
+  store i64 0, ptr %8, align 4
+  %9 = getelementptr i64, ptr %6, i64 3
+  store i64 0, ptr %9, align 4
+  call void @set_storage(ptr %2, ptr %6)
+  %10 = call i64 @add(i64 1, i64 2)
+  store i64 %10, ptr %result, align 4
+  %11 = load i64, ptr %result, align 4
+  call void @prophet_printf(i64 %11, i64 3)
+>>>>>>> 83491ee (update examples out files.)
   ret void
 }
 
@@ -525,11 +564,16 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
 <<<<<<< HEAD
+<<<<<<< HEAD
     i64 1715662714, label %func_0_dispatch
     i64 1321414294, label %func_1_dispatch
 =======
     i64 1321414294, label %func_0_dispatch
 >>>>>>> 81f6615 (regerate examples source files result.)
+=======
+    i64 1715662714, label %func_0_dispatch
+    i64 1321414294, label %func_1_dispatch
+>>>>>>> 83491ee (update examples out files.)
   ]
 
 missing_function:                                 ; preds = %entry
@@ -539,6 +583,9 @@ func_0_dispatch:                                  ; preds = %entry
   %3 = getelementptr ptr, ptr %2, i64 0
   %4 = load i64, ptr %3, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 83491ee (update examples out files.)
   %5 = getelementptr ptr, ptr %3, i64 1
   %6 = load i64, ptr %5, align 4
   %7 = call i64 @add(i64 %4, i64 %6)
@@ -556,12 +603,15 @@ func_1_dispatch:                                  ; preds = %entry
   %12 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %12, align 4
   call void @set_tape_data(ptr %12, i64 1)
+<<<<<<< HEAD
 =======
   call void @setStructB(i64 %4)
   %5 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %5, align 4
   call void @set_tape_data(ptr %5, i64 1)
 >>>>>>> 81f6615 (regerate examples source files result.)
+=======
+>>>>>>> 83491ee (update examples out files.)
   ret void
 }
 

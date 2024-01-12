@@ -787,6 +787,7 @@ then:                                             ; preds = %entry
   %14 = call i64 @memcmp_eq(ptr %12, ptr %13, i64 4)
   call void @builtin_assert(i64 %14)
   %15 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %15, i64 3
   store i64 32772, ptr %index_access, align 4
   %index_access6 = getelementptr i64, ptr %15, i64 2
@@ -795,6 +796,16 @@ then:                                             ; preds = %entry
   store i64 0, ptr %index_access7, align 4
   %index_access8 = getelementptr i64, ptr %15, i64 0
   store i64 0, ptr %index_access8, align 4
+=======
+  %index_access = getelementptr i64, ptr %15, i64 0
+  store i64 0, ptr %index_access, align 4
+  %index_access6 = getelementptr i64, ptr %15, i64 1
+  store i64 0, ptr %index_access6, align 4
+  %index_access7 = getelementptr i64, ptr %15, i64 2
+  store i64 0, ptr %index_access7, align 4
+  %index_access8 = getelementptr i64, ptr %15, i64 3
+  store i64 32772, ptr %index_access8, align 4
+>>>>>>> 83491ee (update examples out files.)
   store ptr %15, ptr %KNOWN_CODES_STORAGE, align 8
   %16 = load ptr, ptr %bytecodeHash, align 8
   %17 = call ptr @vector_new(i64 6)
@@ -886,6 +897,7 @@ then13:                                           ; preds = %then
 
 endif14:                                          ; preds = %then13, %then
   %58 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access22 = getelementptr i64, ptr %58, i64 3
   store i64 32773, ptr %index_access22, align 4
   %index_access23 = getelementptr i64, ptr %58, i64 2
@@ -894,6 +906,16 @@ endif14:                                          ; preds = %then13, %then
   store i64 0, ptr %index_access24, align 4
   %index_access25 = getelementptr i64, ptr %58, i64 0
   store i64 0, ptr %index_access25, align 4
+=======
+  %index_access22 = getelementptr i64, ptr %58, i64 0
+  store i64 0, ptr %index_access22, align 4
+  %index_access23 = getelementptr i64, ptr %58, i64 1
+  store i64 0, ptr %index_access23, align 4
+  %index_access24 = getelementptr i64, ptr %58, i64 2
+  store i64 0, ptr %index_access24, align 4
+  %index_access25 = getelementptr i64, ptr %58, i64 3
+  store i64 32773, ptr %index_access25, align 4
+>>>>>>> 83491ee (update examples out files.)
   store ptr %58, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
   %struct_member26 = getelementptr inbounds { ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 1
   %59 = load ptr, ptr %struct_member26, align 8

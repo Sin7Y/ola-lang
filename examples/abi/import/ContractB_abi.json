@@ -1,5 +1,25 @@
 [
   {
+    "name": "add",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "a",
+        "type": "u32"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32"
+      }
+    ]
+  },
+  {
     "name": "setStructB",
     "type": "function",
     "inputs": [

@@ -595,6 +595,7 @@ next13:                                           ; preds = %end_for19
   store i64 %17, ptr %index_ptr10, align 4
   br label %cond11
 
+<<<<<<< HEAD
 end_for14:                                        ; preds = %cond11
   %18 = load i64, ptr %buffer_offset, align 4
   %vector_data = getelementptr i64, ptr %6, i64 1
@@ -604,6 +605,19 @@ end_for14:                                        ; preds = %cond11
   %21 = load ptr, ptr %array_ptr, align 8
   store i64 0, ptr %index_ptr28, align 4
   br label %cond29
+=======
+end_for15:                                        ; preds = %cond12
+  %15 = load i64, ptr %buffer_offset, align 4
+  %vector_data = getelementptr i64, ptr %5, i64 1
+  %16 = getelementptr ptr, ptr %vector_data, i64 0
+  store i64 0, ptr %array_offset, align 4
+  %17 = call ptr @heap_malloc(i64 0)
+  store ptr %17, ptr %array_ptr, align 8
+  %18 = load i64, ptr %array_offset, align 4
+  store i64 0, ptr %index_ptr26, align 4
+  %index27 = load i64, ptr %index_ptr26, align 4
+  br label %cond28
+>>>>>>> 83491ee (update examples out files.)
 
 cond16:                                           ; preds = %next18, %body12
   %22 = load i64, ptr %index_ptr15, align 4
