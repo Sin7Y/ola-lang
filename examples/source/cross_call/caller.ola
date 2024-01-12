@@ -3,26 +3,26 @@ import "./callee_interface.ola";
 import "./callee.ola";
 contract Caller {
     
-    // fn call_by_contract_1(address addr) {
-    //     u32 a = 100;
-    //     u32 b = 200;
-    //     u32 result = Callee(addr).add(a, b);
-    //     assert(result == 300);
-    // }
+    fn call_by_contract_1(address addr) {
+        u32 a = 100;
+        u32 b = 200;
+        u32 result = Callee(addr).add(a, b);
+        assert(result == 300);
+    }
 
-    // fn call_by_contract_2(Callee addr) {
-    //     u32 a = 100;
-    //     u32 b = 200;
-    //     u32 result = addr.add(a, b);
-    //     assert(result == 300);
-    // }
+    fn call_by_contract_2(Callee addr) {
+        u32 a = 100;
+        u32 b = 200;
+        u32 result = addr.add(a, b);
+        assert(result == 300);
+    }
 
-    // fn call_by_interface_1(CalleeInterface callee) {
-    //     u32 a = 100;
-    //     u32 b = 200;
-    //     u32 result = callee.add(a, b);
-    //     assert(result == 300);
-    // }
+    fn call_by_interface_1(CalleeInterface callee) {
+        u32 a = 100;
+        u32 b = 200;
+        u32 result = callee.add(a, b);
+        assert(result == 300);
+    }
 
     fn call_by_interface_2(address addr) {
         u32 a = 100;

@@ -588,7 +588,6 @@ body14:                                           ; preds = %cond12
 
 end_for15:                                        ; preds = %cond12
   %15 = load i64, ptr %buffer_offset, align 4
-  %vector_length = load i64, ptr %5, align 4
   %vector_data = getelementptr i64, ptr %5, i64 1
   %16 = getelementptr ptr, ptr %vector_data, i64 0
   store i64 0, ptr %array_offset, align 4
