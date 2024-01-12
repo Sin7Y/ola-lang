@@ -148,7 +148,6 @@ pub(super) fn abi_encode_with_selector<'a>(
 /// Returns a vector containing the encoded data.
 pub(super) fn abi_decode<'a>(
     bin: &Binary<'a>,
-    _: IntValue<'a>,
     input: PointerValue<'a>,
     types: &Vec<Type>,
     func_value: FunctionValue<'a>,

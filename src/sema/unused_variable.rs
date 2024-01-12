@@ -81,7 +81,7 @@ fn subscript_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symta
             subscript_variable(ns, index, symtable);
         }
 
-        Expression::FunctionCall { .. } => {
+        Expression::FunctionCall { .. } |  Expression::ExternalFunctionCall { .. } => {
             check_function_call(ns, exp, symtable);
         }
 
@@ -203,6 +203,20 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
             }
             check_function_call(ns, function, symtable);
         }
+
+        Expression::ExternalFunctionCall {
+            function,
+            args,
+            call_args,
+            ..
+        } => {
+            for arg in args {
+                used_variable(ns, arg, symtable);
+            }
+            check_call_args(ns, call_args, symtable);
+            check_function_call(ns, function, symtable);
+        }
+
         Expression::ExternalFunctionCallRaw {
             address,
             args,
@@ -231,6 +245,10 @@ pub fn check_function_call(ns: &mut Namespace, exp: &Expression, symtable: &mut 
                 }
             }
         },
+
+        Expression::ExternalFunction { address, .. } => {
+            used_variable(ns, address, symtable);
+        }
 
         _ => {}
     }
