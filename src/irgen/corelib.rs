@@ -88,14 +88,8 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
             "check_ecdsa" => {
                 let i64_type = bin.context.i64_type();
                 let ptr_type = i64_type.ptr_type(AddressSpace::default());
-                let ftype = i64_type.fn_type(
-                    &[
-                        ptr_type.into(),
-                        ptr_type.into(),
-                        ptr_type.into(),
-                    ],
-                    false,
-                );
+                let ftype =
+                    i64_type.fn_type(&[ptr_type.into(), ptr_type.into(), ptr_type.into()], false);
                 let func = bin.module.add_function("check_ecdsa", ftype, None);
                 define_check_ecdsa(bin, func);
             }
