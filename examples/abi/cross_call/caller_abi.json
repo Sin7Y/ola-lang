@@ -1,21 +1,43 @@
 [
   {
-    "name": "delegatecall_test",
+    "name": "call_by_contract_1",
     "type": "function",
     "inputs": [
       {
-        "name": "_contract",
+        "name": "addr",
         "type": "address"
       }
     ],
     "outputs": []
   },
   {
-    "name": "call_test",
+    "name": "call_by_contract_2",
     "type": "function",
     "inputs": [
       {
-        "name": "_contract",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "call_by_interface_1",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "callee",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "call_by_interface_2",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "addr",
         "type": "address"
       }
     ],

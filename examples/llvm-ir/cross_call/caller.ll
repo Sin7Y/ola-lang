@@ -449,76 +449,31 @@ exit:                                             ; preds = %loop
   ret i64 %3
 }
 
-define void @delegatecall_test(ptr %0) {
-entry:
-  %set_data = alloca i64, align 8
-  %_contract = alloca ptr, align 8
-  store ptr %0, ptr %_contract, align 8
-  store i64 66, ptr %set_data, align 4
-  %1 = load i64, ptr %set_data, align 4
-  %2 = call ptr @vector_new(i64 3)
-  %vector_data = getelementptr i64, ptr %2, i64 1
-  store i64 %1, ptr %vector_data, align 4
-  %3 = getelementptr ptr, ptr %vector_data, i64 1
-  store i64 1, ptr %3, align 4
-  %4 = getelementptr ptr, ptr %3, i64 1
-  store i64 2653574029, ptr %4, align 4
-  %5 = load ptr, ptr %_contract, align 8
-  %vector_length = load i64, ptr %2, align 4
-  %vector_data1 = getelementptr i64, ptr %2, i64 1
-  call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
-  call void @contract_call(ptr %5, i64 1)
-  %6 = call ptr @heap_malloc(i64 1)
-  call void @get_tape_data(ptr %6, i64 1)
-  %return_length = load i64, ptr %6, align 4
-  %tape_size = add i64 %return_length, 1
-  %heap_size = add i64 %return_length, 2
-  %7 = call ptr @heap_malloc(i64 %heap_size)
-  store i64 %return_length, ptr %7, align 4
-  %return_data_start = getelementptr i64, ptr %7, i64 1
-  call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
-  %8 = call ptr @heap_malloc(i64 4)
-  %9 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %9, align 4
-  %10 = getelementptr i64, ptr %9, i64 1
-  store i64 0, ptr %10, align 4
-  %11 = getelementptr i64, ptr %9, i64 2
-  store i64 0, ptr %11, align 4
-  %12 = getelementptr i64, ptr %9, i64 3
-  store i64 0, ptr %12, align 4
-  call void @get_storage(ptr %9, ptr %8)
-  %storage_value = load i64, ptr %8, align 4
-  %13 = icmp eq i64 %storage_value, 66
-  %14 = zext i1 %13 to i64
-  call void @builtin_assert(i64 %14)
-  ret void
-}
-
-define void @call_test(ptr %0) {
+define void @call_by_contract_1(ptr %0) {
 entry:
   %result = alloca i64, align 8
   %b = alloca i64, align 8
   %a = alloca i64, align 8
-  %_contract = alloca ptr, align 8
-  store ptr %0, ptr %_contract, align 8
+  %addr = alloca ptr, align 8
+  store ptr %0, ptr %addr, align 8
   store i64 100, ptr %a, align 4
   store i64 200, ptr %b, align 4
   %1 = load i64, ptr %a, align 4
   %2 = load i64, ptr %b, align 4
-  %3 = call ptr @vector_new(i64 4)
-  %vector_data = getelementptr i64, ptr %3, i64 1
+  %3 = load ptr, ptr %addr, align 8
+  %4 = call ptr @vector_new(i64 4)
+  %vector_data = getelementptr i64, ptr %4, i64 1
   store i64 %1, ptr %vector_data, align 4
-  %4 = getelementptr ptr, ptr %vector_data, i64 1
-  store i64 %2, ptr %4, align 4
-  %5 = getelementptr ptr, ptr %4, i64 1
-  store i64 2, ptr %5, align 4
+  %5 = getelementptr ptr, ptr %vector_data, i64 1
+  store i64 %2, ptr %5, align 4
   %6 = getelementptr ptr, ptr %5, i64 1
-  store i64 1715662714, ptr %6, align 4
-  %7 = load ptr, ptr %_contract, align 8
-  %vector_length = load i64, ptr %3, align 4
-  %vector_data1 = getelementptr i64, ptr %3, i64 1
+  store i64 2, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 1715662714, ptr %7, align 4
+  %vector_length = load i64, ptr %4, align 4
+  %vector_data1 = getelementptr i64, ptr %4, i64 1
   call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
-  call void @contract_call(ptr %7, i64 0)
+  call void @contract_call(ptr %3, i64 0)
   %8 = call ptr @heap_malloc(i64 1)
   call void @get_tape_data(ptr %8, i64 1)
   %return_length = load i64, ptr %8, align 4
@@ -528,9 +483,139 @@ entry:
   store i64 %return_length, ptr %9, align 4
   %return_data_start = getelementptr i64, ptr %9, i64 1
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
-  %vector_length2 = load i64, ptr %9, align 4
-  %vector_data3 = getelementptr i64, ptr %9, i64 1
-  %10 = getelementptr ptr, ptr %vector_data3, i64 0
+  %10 = getelementptr ptr, ptr %9, i64 0
+  %11 = load i64, ptr %10, align 4
+  store i64 %11, ptr %result, align 4
+  %12 = load i64, ptr %result, align 4
+  %13 = icmp eq i64 %12, 300
+  %14 = zext i1 %13 to i64
+  call void @builtin_assert(i64 %14)
+  ret void
+}
+
+define void @call_by_contract_2(ptr %0) {
+entry:
+  %result = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  %addr = alloca ptr, align 8
+  store ptr %0, ptr %addr, align 8
+  store i64 100, ptr %a, align 4
+  store i64 200, ptr %b, align 4
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = load ptr, ptr %addr, align 8
+  %4 = call ptr @vector_new(i64 4)
+  %vector_data = getelementptr i64, ptr %4, i64 1
+  store i64 %1, ptr %vector_data, align 4
+  %5 = getelementptr ptr, ptr %vector_data, i64 1
+  store i64 %2, ptr %5, align 4
+  %6 = getelementptr ptr, ptr %5, i64 1
+  store i64 2, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 1715662714, ptr %7, align 4
+  %vector_length = load i64, ptr %4, align 4
+  %vector_data1 = getelementptr i64, ptr %4, i64 1
+  call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
+  call void @contract_call(ptr %3, i64 0)
+  %8 = call ptr @heap_malloc(i64 1)
+  call void @get_tape_data(ptr %8, i64 1)
+  %return_length = load i64, ptr %8, align 4
+  %tape_size = add i64 %return_length, 1
+  %heap_size = add i64 %return_length, 2
+  %9 = call ptr @heap_malloc(i64 %heap_size)
+  store i64 %return_length, ptr %9, align 4
+  %return_data_start = getelementptr i64, ptr %9, i64 1
+  call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
+  %10 = getelementptr ptr, ptr %9, i64 0
+  %11 = load i64, ptr %10, align 4
+  store i64 %11, ptr %result, align 4
+  %12 = load i64, ptr %result, align 4
+  %13 = icmp eq i64 %12, 300
+  %14 = zext i1 %13 to i64
+  call void @builtin_assert(i64 %14)
+  ret void
+}
+
+define void @call_by_interface_1(ptr %0) {
+entry:
+  %result = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  %callee = alloca ptr, align 8
+  store ptr %0, ptr %callee, align 8
+  store i64 100, ptr %a, align 4
+  store i64 200, ptr %b, align 4
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = load ptr, ptr %callee, align 8
+  %4 = call ptr @vector_new(i64 4)
+  %vector_data = getelementptr i64, ptr %4, i64 1
+  store i64 %1, ptr %vector_data, align 4
+  %5 = getelementptr ptr, ptr %vector_data, i64 1
+  store i64 %2, ptr %5, align 4
+  %6 = getelementptr ptr, ptr %5, i64 1
+  store i64 2, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 1715662714, ptr %7, align 4
+  %vector_length = load i64, ptr %4, align 4
+  %vector_data1 = getelementptr i64, ptr %4, i64 1
+  call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
+  call void @contract_call(ptr %3, i64 0)
+  %8 = call ptr @heap_malloc(i64 1)
+  call void @get_tape_data(ptr %8, i64 1)
+  %return_length = load i64, ptr %8, align 4
+  %tape_size = add i64 %return_length, 1
+  %heap_size = add i64 %return_length, 2
+  %9 = call ptr @heap_malloc(i64 %heap_size)
+  store i64 %return_length, ptr %9, align 4
+  %return_data_start = getelementptr i64, ptr %9, i64 1
+  call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
+  %10 = getelementptr ptr, ptr %9, i64 0
+  %11 = load i64, ptr %10, align 4
+  store i64 %11, ptr %result, align 4
+  %12 = load i64, ptr %result, align 4
+  %13 = icmp eq i64 %12, 300
+  %14 = zext i1 %13 to i64
+  call void @builtin_assert(i64 %14)
+  ret void
+}
+
+define void @call_by_interface_2(ptr %0) {
+entry:
+  %result = alloca i64, align 8
+  %b = alloca i64, align 8
+  %a = alloca i64, align 8
+  %addr = alloca ptr, align 8
+  store ptr %0, ptr %addr, align 8
+  store i64 100, ptr %a, align 4
+  store i64 200, ptr %b, align 4
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = load ptr, ptr %addr, align 8
+  %4 = call ptr @vector_new(i64 4)
+  %vector_data = getelementptr i64, ptr %4, i64 1
+  store i64 %1, ptr %vector_data, align 4
+  %5 = getelementptr ptr, ptr %vector_data, i64 1
+  store i64 %2, ptr %5, align 4
+  %6 = getelementptr ptr, ptr %5, i64 1
+  store i64 2, ptr %6, align 4
+  %7 = getelementptr ptr, ptr %6, i64 1
+  store i64 1715662714, ptr %7, align 4
+  %vector_length = load i64, ptr %4, align 4
+  %vector_data1 = getelementptr i64, ptr %4, i64 1
+  call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
+  call void @contract_call(ptr %3, i64 0)
+  %8 = call ptr @heap_malloc(i64 1)
+  call void @get_tape_data(ptr %8, i64 1)
+  %return_length = load i64, ptr %8, align 4
+  %tape_size = add i64 %return_length, 1
+  %heap_size = add i64 %return_length, 2
+  %9 = call ptr @heap_malloc(i64 %heap_size)
+  store i64 %return_length, ptr %9, align 4
+  %return_data_start = getelementptr i64, ptr %9, i64 1
+  call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
+  %10 = getelementptr ptr, ptr %9, i64 0
   %11 = load i64, ptr %10, align 4
   store i64 %11, ptr %result, align 4
   %12 = load i64, ptr %result, align 4
@@ -543,8 +628,10 @@ entry:
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 645225708, label %func_0_dispatch
-    i64 3761623135, label %func_1_dispatch
+    i64 401660231, label %func_0_dispatch
+    i64 2495086936, label %func_1_dispatch
+    i64 479910104, label %func_2_dispatch
+    i64 321852033, label %func_3_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -552,7 +639,7 @@ missing_function:                                 ; preds = %entry
 
 func_0_dispatch:                                  ; preds = %entry
   %3 = getelementptr ptr, ptr %2, i64 0
-  call void @delegatecall_test(ptr %3)
+  call void @call_by_contract_1(ptr %3)
   %4 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %4, align 4
   call void @set_tape_data(ptr %4, i64 1)
@@ -560,10 +647,26 @@ func_0_dispatch:                                  ; preds = %entry
 
 func_1_dispatch:                                  ; preds = %entry
   %5 = getelementptr ptr, ptr %2, i64 0
-  call void @call_test(ptr %5)
+  call void @call_by_contract_2(ptr %5)
   %6 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %6, align 4
   call void @set_tape_data(ptr %6, i64 1)
+  ret void
+
+func_2_dispatch:                                  ; preds = %entry
+  %7 = getelementptr ptr, ptr %2, i64 0
+  call void @call_by_interface_1(ptr %7)
+  %8 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %8, align 4
+  call void @set_tape_data(ptr %8, i64 1)
+  ret void
+
+func_3_dispatch:                                  ; preds = %entry
+  %9 = getelementptr ptr, ptr %2, i64 0
+  call void @call_by_interface_2(ptr %9)
+  %10 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %10, align 4
+  call void @set_tape_data(ptr %10, i64 1)
   ret void
 }
 

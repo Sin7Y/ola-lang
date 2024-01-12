@@ -155,8 +155,6 @@ pub(super) fn assign_expr(
     assigned_variable(ns, &var, symtable);
     let var_ty = var.ty();
 
-    println!("var_ty: {:?}", var_ty);
-
     // Check if the variable is a field, and if so, only allow += and -=
     if !matches!(
         expr,
