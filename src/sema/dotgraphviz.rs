@@ -1004,10 +1004,7 @@ impl Dot {
                 function_no,
                 address,
             } => {
-                let mut labels = vec![
-                    ty.to_string(ns),
-                    ns.loc_to_string(loc),
-                ];
+                let mut labels = vec![ty.to_string(ns), ns.loc_to_string(loc)];
 
                 let f = &ns.functions[*function_no];
 

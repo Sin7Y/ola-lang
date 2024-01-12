@@ -219,14 +219,22 @@ fn statement(
             let mut resolved_stmts = Vec::new();
 
             for stmt in statements {
-                if !reachable && !already_unreachable  {
+                if !reachable && !already_unreachable {
                     ns.diagnostics.push(Diagnostic::error(
                         stmt.loc(),
                         "unreachable statement".to_string(),
                     ));
                     already_unreachable = true;
                 }
-                reachable = statement(stmt, &mut resolved_stmts, &mut context, symtable, loops, ns, diagnostics)?;
+                reachable = statement(
+                    stmt,
+                    &mut resolved_stmts,
+                    &mut context,
+                    symtable,
+                    loops,
+                    ns,
+                    diagnostics,
+                )?;
             }
 
             res.push(Statement::Block {
@@ -666,7 +674,6 @@ fn destructure(
         context.lvalue = prev_lvalue;
     });
 
-
     for (_, param) in vars {
         match param {
             None => {
@@ -679,7 +686,14 @@ fn destructure(
                 name: None,
             }) => {
                 // ty will just be a normal expression, not a type
-                let e = expression(ty,  &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+                let e = expression(
+                    ty,
+                    &mut context,
+                    ns,
+                    symtable,
+                    diagnostics,
+                    ResolveTo::Unknown,
+                )?;
 
                 match &e {
                     Expression::ConstantVariable {

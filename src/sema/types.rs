@@ -592,7 +592,7 @@ impl Type {
                     value_name.as_ref().map(|id| id.name.as_str()).unwrap_or(""),
                 )
             }
-            Type::ExternalFunction{params, returns } | Type::Function { params, returns } => {
+            Type::ExternalFunction { params, returns } | Type::Function { params, returns } => {
                 let mut s = format!(
                     "fn({}) ",
                     params

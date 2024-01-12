@@ -69,7 +69,6 @@ pub fn function_call_pos_args(
     }) {
         return Err(());
     }
-    
 
     // Try to resolve as a function call
     for function_no in &function_nos {
@@ -322,8 +321,8 @@ fn try_namespace(
             )?));
         }
 
-          // library or base contract call
-          if let Some(call_contract_no) = ns.resolve_contract(context.file_no, namespace) {
+        // library or base contract call
+        if let Some(call_contract_no) = ns.resolve_contract(context.file_no, namespace) {
             if ns.contracts[call_contract_no].is_library() {
                 if let Some(loc) = call_args_loc {
                     diagnostics.push(Diagnostic::error(
@@ -337,11 +336,7 @@ fn try_namespace(
                     loc,
                     &func,
                     args,
-                    available_functions(
-                        &func.name,
-                        Some(call_contract_no),
-                        ns,
-                    ),
+                    available_functions(&func.name, Some(call_contract_no), ns),
                     context,
                     ns,
                     resolve_to,
@@ -350,8 +345,6 @@ fn try_namespace(
                 )?));
             }
         }
-
-
     }
 
     Ok(None)
@@ -1242,20 +1235,14 @@ pub(crate) fn function_returns(ftype: &Function, resolve_to: ResolveTo) -> Vec<T
 }
 
 /// Get the function type for an internal.external function call
-pub(crate) fn function_type(func: &Function, external: bool,  resolve_to: ResolveTo) -> Type {
+pub(crate) fn function_type(func: &Function, external: bool, resolve_to: ResolveTo) -> Type {
     let params = func.params.iter().map(|p| p.ty.clone()).collect();
     let returns = function_returns(func, resolve_to);
 
     if external {
-        Type::ExternalFunction {
-            params,
-            returns,
-        }
+        Type::ExternalFunction { params, returns }
     } else {
-        Type::Function {
-            params,
-            returns,
-        }
+        Type::Function { params, returns }
     }
 }
 
@@ -1275,7 +1262,6 @@ fn evaluate_argument(
         .map(|expr| cast_args.push(expr))
         .is_ok()
 }
-
 
 /// Resolve call to contract with positional arguments
 fn contract_call_pos_args(
@@ -1428,8 +1414,9 @@ enum PreProcessedCall {
     Error,
 }
 
-/// This functions preprocesses calls to contracts, i.e. it parses the call arguments,
-/// find function name matches and identifies if we are calling a constructor on Solana.
+/// This functions preprocesses calls to contracts, i.e. it parses the call
+/// arguments, find function name matches and identifies if we are calling a
+/// constructor on Solana.
 fn preprocess_contract_call(
     call_args: &[&program::NamedArgument],
     external_contract_no: usize,
@@ -1439,22 +1426,17 @@ fn preprocess_contract_call(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> PreProcessedCall {
-    let call_args = if let Ok(call_args) = parse_call_args(
-        call_args,
-        context,
-        ns,
-        symtable,
-        diagnostics,
-    ) {
-        call_args
-    } else {
-        return PreProcessedCall::Error;
-    };
+    let call_args =
+        if let Ok(call_args) = parse_call_args(call_args, context, ns, symtable, diagnostics) {
+            call_args
+        } else {
+            return PreProcessedCall::Error;
+        };
 
     let mut name_matches: Vec<usize> = Vec::new();
 
     for function_no in ns.contracts[external_contract_no].all_functions.keys() {
-        if func.name != ns.functions[*function_no].name{
+        if func.name != ns.functions[*function_no].name {
             continue;
         }
 
@@ -1466,8 +1448,8 @@ fn preprocess_contract_call(
     }
 }
 
-/// This function generates the final expression when a contract's function is matched with both
-/// the provided name and arguments
+/// This function generates the final expression when a contract's function is
+/// matched with both the provided name and arguments
 fn contract_call_match(
     loc: &program::Loc,
     function_no: usize,
@@ -1478,13 +1460,11 @@ fn contract_call_match(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Result<Expression, ()> {
-
-
     let func = &ns.functions[function_no];
     let returns = function_returns(func, resolve_to);
     let ty = function_type(func, true, resolve_to);
 
-   let address = if let Some(var) = var_expr {
+    let address = if let Some(var) = var_expr {
         var.clone()
     } else {
         unreachable!("address not found")

@@ -611,7 +611,14 @@ pub(super) fn incr_decr(
         context.lvalue = prev_lvalue;
     });
 
-    let var = expression(v, &mut context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+    let var = expression(
+        v,
+        &mut context,
+        ns,
+        symtable,
+        diagnostics,
+        ResolveTo::Unknown,
+    )?;
     used_variable(ns, &var, symtable);
     let var_ty = var.ty();
 
