@@ -561,6 +561,7 @@ endif:                                            ; preds = %entry
   store i64 %return_length, ptr %42, align 4
   %return_data_start = getelementptr i64, ptr %42, i64 1
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
+<<<<<<< HEAD
   %vector_data9 = getelementptr i64, ptr %42, i64 1
   %43 = getelementptr ptr, ptr %vector_data9, i64 0
   store ptr %43, ptr %codeHash, align 8
@@ -577,6 +578,24 @@ endif:                                            ; preds = %entry
   %46 = call i64 @memcmp_eq(ptr %44, ptr %45, i64 4)
   %47 = trunc i64 %46 to i1
   br i1 %47, label %then14, label %endif15
+=======
+  %vector_data9 = getelementptr i64, ptr %35, i64 1
+  %36 = getelementptr ptr, ptr %vector_data9, i64 0
+  store ptr %36, ptr %codeHash, align 8
+  %37 = load ptr, ptr %codeHash, align 8
+  %38 = call ptr @heap_malloc(i64 4)
+  %index_access10 = getelementptr i64, ptr %38, i64 0
+  store i64 0, ptr %index_access10, align 4
+  %index_access11 = getelementptr i64, ptr %38, i64 1
+  store i64 0, ptr %index_access11, align 4
+  %index_access12 = getelementptr i64, ptr %38, i64 2
+  store i64 0, ptr %index_access12, align 4
+  %index_access13 = getelementptr i64, ptr %38, i64 3
+  store i64 0, ptr %index_access13, align 4
+  %39 = call i64 @memcmp_eq(ptr %37, ptr %38, i64 4)
+  %40 = trunc i64 %39 to i1
+  br i1 %40, label %then14, label %endif15
+>>>>>>> 83491ee (update examples out files.)
 
 then14:                                           ; preds = %endif
   ret i64 1
@@ -874,25 +893,46 @@ entry:
   store ptr %33, ptr %codeHash, align 8
   %34 = load ptr, ptr %codeHash, align 8
   %35 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access14 = getelementptr i64, ptr %35, i64 3
   store i64 0, ptr %index_access14, align 4
   %index_access15 = getelementptr i64, ptr %35, i64 2
+=======
+  %index_access14 = getelementptr i64, ptr %35, i64 0
+  store i64 0, ptr %index_access14, align 4
+  %index_access15 = getelementptr i64, ptr %35, i64 1
+>>>>>>> 83491ee (update examples out files.)
   store i64 0, ptr %index_access15, align 4
-  %index_access16 = getelementptr i64, ptr %35, i64 1
+  %index_access16 = getelementptr i64, ptr %35, i64 2
   store i64 0, ptr %index_access16, align 4
+<<<<<<< HEAD
   %index_access17 = getelementptr i64, ptr %35, i64 0
+=======
+  %index_access17 = getelementptr i64, ptr %35, i64 3
+>>>>>>> 83491ee (update examples out files.)
   store i64 0, ptr %index_access17, align 4
   %36 = call i64 @memcmp_eq(ptr %34, ptr %35, i64 4)
   call void @builtin_assert(i64 %36)
   %37 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access18 = getelementptr i64, ptr %37, i64 3
   store i64 32771, ptr %index_access18, align 4
   %index_access19 = getelementptr i64, ptr %37, i64 2
+=======
+  %index_access18 = getelementptr i64, ptr %37, i64 0
+  store i64 0, ptr %index_access18, align 4
+  %index_access19 = getelementptr i64, ptr %37, i64 1
+>>>>>>> 83491ee (update examples out files.)
   store i64 0, ptr %index_access19, align 4
-  %index_access20 = getelementptr i64, ptr %37, i64 1
+  %index_access20 = getelementptr i64, ptr %37, i64 2
   store i64 0, ptr %index_access20, align 4
+<<<<<<< HEAD
   %index_access21 = getelementptr i64, ptr %37, i64 0
   store i64 0, ptr %index_access21, align 4
+=======
+  %index_access21 = getelementptr i64, ptr %37, i64 3
+  store i64 32771, ptr %index_access21, align 4
+>>>>>>> 83491ee (update examples out files.)
   store ptr %37, ptr %NONCE_HOLDER_ADDRESS, align 8
   %38 = load ptr, ptr %_newAddress, align 8
   %39 = call ptr @vector_new(i64 6)

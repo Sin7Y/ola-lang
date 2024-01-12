@@ -434,6 +434,7 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+<<<<<<< HEAD
   %counter = alloca i64, align 8
   %result = alloca i64, align 8
   store i64 0, ptr %counter, align 4
@@ -453,6 +454,21 @@ loop:                                             ; preds = %loop, %entry
 exit:                                             ; preds = %loop
   %finalResult = load i64, ptr %result, align 4
   ret i64 %finalResult
+=======
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %0
+  %loopcond = icmp ule i64 %inc, %1
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+>>>>>>> 83491ee (update examples out files.)
 }
 
 define void @delegatecall_test(ptr %0) {
@@ -485,6 +501,7 @@ entry:
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
   %8 = call ptr @heap_malloc(i64 4)
   %9 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %10 = getelementptr i64, ptr %9, i64 0
   store i64 0, ptr %10, align 4
   %11 = getelementptr i64, ptr %9, i64 1
@@ -499,6 +516,20 @@ entry:
   %15 = icmp eq i64 %storage_value, 66
   %16 = zext i1 %15 to i64
   call void @builtin_assert(i64 %16)
+=======
+  store i64 0, ptr %9, align 4
+  %10 = getelementptr i64, ptr %9, i64 1
+  store i64 0, ptr %10, align 4
+  %11 = getelementptr i64, ptr %9, i64 2
+  store i64 0, ptr %11, align 4
+  %12 = getelementptr i64, ptr %9, i64 3
+  store i64 0, ptr %12, align 4
+  call void @get_storage(ptr %9, ptr %8)
+  %storage_value = load i64, ptr %8, align 4
+  %13 = icmp eq i64 %storage_value, 66
+  %14 = zext i1 %13 to i64
+  call void @builtin_assert(i64 %14)
+>>>>>>> 83491ee (update examples out files.)
   ret void
 }
 

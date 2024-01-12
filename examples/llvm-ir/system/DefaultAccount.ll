@@ -715,6 +715,7 @@ then:                                             ; preds = %entry
   %vector_data3 = getelementptr i64, ptr %14, i64 1
   %src_data_start = getelementptr i64, ptr %vector_data3, i64 %16
   call void @memcpy(ptr %src_data_start, ptr %vector_data, i64 %slice_len)
+<<<<<<< HEAD
   %vector_data4 = getelementptr i64, ptr %20, i64 1
   %21 = getelementptr ptr, ptr %vector_data4, i64 0
   %22 = load i64, ptr %21, align 4
@@ -756,6 +757,55 @@ else:                                             ; preds = %entry
   %41 = getelementptr i64, ptr %39, i64 1
   store i64 0, ptr %41, align 4
   %42 = getelementptr i64, ptr %39, i64 2
+=======
+  %vector_data4 = getelementptr i64, ptr %18, i64 1
+  %19 = getelementptr ptr, ptr %vector_data4, i64 0
+  %20 = load i64, ptr %19, align 4
+  store i64 %20, ptr %selector, align 4
+  store i64 3925046215, ptr %expected, align 4
+  %21 = load i64, ptr %selector, align 4
+  %22 = load i64, ptr %expected, align 4
+  %23 = icmp eq i64 %21, %22
+  br i1 %23, label %then5, label %endif
+
+else:                                             ; preds = %entry
+  %24 = call ptr @vector_new(i64 8)
+  %vector_data7 = getelementptr i64, ptr %24, i64 1
+  %25 = getelementptr i64, ptr %vector_data7, i64 0
+  call void @get_context_data(ptr %25, i64 13)
+  %26 = getelementptr i64, ptr %vector_data7, i64 1
+  call void @get_context_data(ptr %26, i64 14)
+  %27 = getelementptr i64, ptr %vector_data7, i64 2
+  call void @get_context_data(ptr %27, i64 15)
+  %28 = getelementptr i64, ptr %vector_data7, i64 3
+  call void @get_context_data(ptr %28, i64 16)
+  %29 = getelementptr i64, ptr %vector_data7, i64 4
+  call void @get_context_data(ptr %29, i64 17)
+  %30 = getelementptr i64, ptr %vector_data7, i64 5
+  call void @get_context_data(ptr %30, i64 18)
+  %31 = getelementptr i64, ptr %vector_data7, i64 6
+  call void @get_context_data(ptr %31, i64 19)
+  %32 = getelementptr i64, ptr %vector_data7, i64 7
+  call void @get_context_data(ptr %32, i64 20)
+  %vector_length8 = load i64, ptr %24, align 4
+  %33 = icmp eq i64 %vector_length8, 8
+  %34 = zext i1 %33 to i64
+  call void @builtin_assert(i64 %34)
+  %35 = load ptr, ptr %_signedHash, align 8
+  %36 = call ptr @heap_malloc(i64 4)
+  %37 = call ptr @heap_malloc(i64 4)
+  store i64 0, ptr %37, align 4
+  %38 = getelementptr i64, ptr %37, i64 1
+  store i64 0, ptr %38, align 4
+  %39 = getelementptr i64, ptr %37, i64 2
+  store i64 0, ptr %39, align 4
+  %40 = getelementptr i64, ptr %37, i64 3
+  store i64 0, ptr %40, align 4
+  call void @get_storage(ptr %37, ptr %36)
+  %storage_value9 = load i64, ptr %36, align 4
+  %41 = call ptr @vector_new(i64 %storage_value9)
+  %42 = call ptr @heap_malloc(i64 4)
+>>>>>>> 83491ee (update examples out files.)
   store i64 0, ptr %42, align 4
   %43 = getelementptr i64, ptr %39, i64 3
   store i64 0, ptr %43, align 4
@@ -779,17 +829,27 @@ else:                                             ; preds = %entry
   br label %cond
 
 then5:                                            ; preds = %then
+<<<<<<< HEAD
   %52 = load i64, ptr %magic, align 4
   ret i64 %52
+=======
+  %47 = load i64, ptr %magic, align 4
+  ret i64 %47
+>>>>>>> 83491ee (update examples out files.)
 
 endif:                                            ; preds = %then
   br label %endif6
 
+<<<<<<< HEAD
 endif6:                                           ; preds = %endif13, %endif
+=======
+endif6:                                           ; preds = %endif14, %endif
+>>>>>>> 83491ee (update examples out files.)
   ret i64 0
 
 cond:                                             ; preds = %body, %else
   %index_value = load i64, ptr %index_alloca, align 4
+<<<<<<< HEAD
   %loop_cond = icmp ult i64 %index_value, %44
   br i1 %loop_cond, label %body, label %done
 
@@ -809,11 +869,29 @@ body:                                             ; preds = %cond
   store i64 %last_elem, ptr %last_elem_ptr, align 4
   store i64 %storage_value10, ptr %index_access, align 4
   store ptr %56, ptr %3, align 8
+=======
+  %loop_cond = icmp ult i64 %index_value, %storage_value9
+  br i1 %loop_cond, label %body, label %done
+
+body:                                             ; preds = %cond
+  %48 = load ptr, ptr %3, align 8
+  %vector_data10 = getelementptr i64, ptr %41, i64 1
+  %index_access = getelementptr i64, ptr %vector_data10, i64 %index_value
+  %49 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %48, ptr %49)
+  %storage_value11 = load i64, ptr %49, align 4
+  %slot_value = load i64, ptr %48, align 4
+  %slot_offset = add i64 %slot_value, 1
+  store i64 %slot_offset, ptr %48, align 4
+  store i64 %storage_value11, ptr %index_access, align 4
+  store ptr %48, ptr %3, align 8
+>>>>>>> 83491ee (update examples out files.)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
 
 done:                                             ; preds = %cond
+<<<<<<< HEAD
   %58 = call ptr @vector_new(i64 8)
   %vector_data11 = getelementptr i64, ptr %58, i64 1
   %59 = getelementptr i64, ptr %vector_data11, i64 0
@@ -841,6 +919,35 @@ then12:                                           ; preds = %done
   ret i64 %69
 
 endif13:                                          ; preds = %done
+=======
+  %50 = call ptr @vector_new(i64 8)
+  %vector_data12 = getelementptr i64, ptr %50, i64 1
+  %51 = getelementptr i64, ptr %vector_data12, i64 0
+  call void @get_context_data(ptr %51, i64 13)
+  %52 = getelementptr i64, ptr %vector_data12, i64 1
+  call void @get_context_data(ptr %52, i64 14)
+  %53 = getelementptr i64, ptr %vector_data12, i64 2
+  call void @get_context_data(ptr %53, i64 15)
+  %54 = getelementptr i64, ptr %vector_data12, i64 3
+  call void @get_context_data(ptr %54, i64 16)
+  %55 = getelementptr i64, ptr %vector_data12, i64 4
+  call void @get_context_data(ptr %55, i64 17)
+  %56 = getelementptr i64, ptr %vector_data12, i64 5
+  call void @get_context_data(ptr %56, i64 18)
+  %57 = getelementptr i64, ptr %vector_data12, i64 6
+  call void @get_context_data(ptr %57, i64 19)
+  %58 = getelementptr i64, ptr %vector_data12, i64 7
+  call void @get_context_data(ptr %58, i64 20)
+  %59 = call i64 @check_ecdsa(ptr %35, ptr %41, ptr %50)
+  %60 = trunc i64 %59 to i1
+  br i1 %60, label %then13, label %endif14
+
+then13:                                           ; preds = %done
+  %61 = load i64, ptr %magic, align 4
+  ret i64 %61
+
+endif14:                                          ; preds = %done
+>>>>>>> 83491ee (update examples out files.)
   br label %endif6
 }
 
