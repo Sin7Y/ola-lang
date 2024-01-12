@@ -81,7 +81,7 @@ fn subscript_variable(ns: &mut Namespace, exp: &Expression, symtable: &mut Symta
             subscript_variable(ns, index, symtable);
         }
 
-        Expression::FunctionCall { .. } |  Expression::ExternalFunctionCall { .. } => {
+        Expression::FunctionCall { .. } | Expression::ExternalFunctionCall { .. } => {
             check_function_call(ns, exp, symtable);
         }
 

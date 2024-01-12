@@ -789,7 +789,8 @@ pub fn expression<'a>(
         }
 
         Expression::Cast { to, expr, .. }
-            if matches!(to, Type::Contract(_) | Type::Address) && matches!(expr.ty(), Type::Address | Type::Contract(_)) =>
+            if matches!(to, Type::Contract(_) | Type::Address)
+                && matches!(expr.ty(), Type::Address | Type::Contract(_)) =>
         {
             expression(expr, bin, func_value, var_table, ns)
         }
@@ -1087,26 +1088,41 @@ pub fn emit_function_call<'a>(
             }
         }
 
-        Expression::ExternalFunctionCall { returns, function, args,  ..} => {
-
+        Expression::ExternalFunctionCall {
+            returns,
+            function,
+            args,
+            ..
+        } => {
             if let Expression::ExternalFunction {
                 function_no,
                 address,
                 ..
-            } = function.as_ref() {
+            } = function.as_ref()
+            {
                 let dest_func = &ns.functions[*function_no];
                 let tys: Vec<Type> = args.iter().map(|a| a.ty()).collect();
                 let args: Vec<BasicValueEnum> = args
                     .iter()
-                    .map(|a| expression(a, bin,  func_value, var_table, ns))
+                    .map(|a| expression(a, bin, func_value, var_table, ns))
                     .collect();
                 let address = expression(address, bin, func_value, var_table, ns);
-                let selector = bin
-                    .context
-                    .i64_type()
-                    .const_int(BigInt::from_bytes_be(Sign::Plus,  &dest_func.selector()).to_u64().unwrap(), false);
-                let payload = abi_encode_with_selector(bin, selector.as_basic_value_enum(), args, &tys, func_value, ns);
-                let return_data = external_call(bin, payload.as_basic_value_enum(), address, CallTy::Regular);
+                let selector = bin.context.i64_type().const_int(
+                    BigInt::from_bytes_be(Sign::Plus, &dest_func.selector())
+                        .to_u64()
+                        .unwrap(),
+                    false,
+                );
+                let payload = abi_encode_with_selector(
+                    bin,
+                    selector.as_basic_value_enum(),
+                    args,
+                    &tys,
+                    func_value,
+                    ns,
+                );
+                let return_data =
+                    external_call(bin, payload.as_basic_value_enum(), address, CallTy::Regular);
                 // If the first element of returns is Void, we can discard the returns
                 if !dest_func.returns.is_empty() && returns[0] != Type::Void {
                     let tys = dest_func
@@ -1114,18 +1130,10 @@ pub fn emit_function_call<'a>(
                         .iter()
                         .map(|e| e.ty.clone())
                         .collect::<Vec<Type>>();
-                    abi_decode(
-                        bin,
-                        return_data.into_pointer_value(),
-                        &tys,
-                        func_value,
-                        ns
-                      
-                    )
+                    abi_decode(bin, return_data.into_pointer_value(), &tys, func_value, ns)
                 } else {
                     vec![]
                 }
-
             } else {
                 unimplemented!()
             }
@@ -1741,7 +1749,7 @@ pub(crate) fn debug_print<'a>(
             let value = storage_load(bin, ty, &mut arg.into(), func_value, ns);
             debug_print(bin, value, ty, func_value, ns);
         }
-        Type::Function { .. } | Type::ExternalFunction { .. }=> todo!(),
+        Type::Function { .. } | Type::ExternalFunction { .. } => todo!(),
         Type::UserType(_) => todo!(),
         Type::Void => todo!(),
         Type::Unreachable => todo!(),
