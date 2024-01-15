@@ -6,7 +6,7 @@ use super::expression::{ExprContext, ResolveTo};
 use super::symtable::Symtable;
 use crate::sema::ast::RetrieveType;
 use crate::sema::expression::resolve_expression::expression;
-use num_bigint::BigInt;
+use num_bigint::{BigInt, Sign};
 use ola_parser::program::{self, CodeLocation};
 use once_cell::sync::Lazy;
 use tiny_keccak::{Hasher, Keccak};
@@ -658,11 +658,11 @@ pub fn function_selector(
             hasher.update(signature.as_bytes());
             hasher.finalize(&mut hash);
 
-            let selector = u32::from_be_bytes(hash[0..4].try_into().unwrap());
+            let selector = BigInt::from_bytes_be(Sign::Plus, &hash[0..4]);
             Ok(Expression::NumberLiteral {
                 loc: *loc,
                 ty: Type::Uint(32),
-                value: BigInt::from(selector),
+                value: selector,
             })
         }
         _ => {
