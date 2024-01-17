@@ -240,7 +240,7 @@ fn decode_complex_array<'a>(
                 func_value,
                 ns,
             );
-            bin.builder.build_store(array_var, sub_arr);
+            bin.builder.build_store(sub_arr.into_pointer_value(), allocated_array);
         }
     }
 

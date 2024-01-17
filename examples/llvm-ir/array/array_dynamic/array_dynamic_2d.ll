@@ -736,11 +736,11 @@ end_for24:                                        ; preds = %cond21
   ret void
 
 cond33:                                           ; preds = %next34, %body23
-  %vector_length37 = load i64, ptr %arr29, align 4
+  %vector_length37 = load i64, ptr %7, align 4
   %38 = sub i64 %vector_length37, 1
   %39 = sub i64 %38, %index20
   call void @builtin_range_check(i64 %39)
-  %vector_data38 = getelementptr i64, ptr %arr29, i64 1
+  %vector_data38 = getelementptr i64, ptr %7, i64 1
   %index_access39 = getelementptr i64, ptr %vector_data38, i64 %index20
   %arr40 = load ptr, ptr %index_access39, align 8
   %vector_length41 = load i64, ptr %arr40, align 4
@@ -754,11 +754,11 @@ next34:                                           ; preds = %body35
   br label %cond33
 
 body35:                                           ; preds = %cond33
-  %vector_length42 = load i64, ptr %arr29, align 4
+  %vector_length42 = load i64, ptr %7, align 4
   %42 = sub i64 %vector_length42, 1
   %43 = sub i64 %42, %index20
   call void @builtin_range_check(i64 %43)
-  %vector_data43 = getelementptr i64, ptr %arr29, i64 1
+  %vector_data43 = getelementptr i64, ptr %7, i64 1
   %index_access44 = getelementptr i64, ptr %vector_data43, i64 %index20
   %arr45 = load ptr, ptr %index_access44, align 8
   %vector_length46 = load i64, ptr %arr45, align 4
@@ -816,7 +816,7 @@ body55:                                           ; preds = %cond53
   %vector_data60 = getelementptr i64, ptr %59, i64 1
   %index_access61 = getelementptr ptr, ptr %vector_data60, i64 %index52
   %arr62 = load ptr, ptr %index_access61, align 8
-  store ptr %arr62, ptr %array_ptr, align 8
+  store ptr %58, ptr %arr62, align 8
   store i64 0, ptr %index_ptr63, align 4
   %index64 = load i64, ptr %index_ptr63, align 4
   br label %cond65
@@ -916,7 +916,7 @@ body90:                                           ; preds = %cond88
   %vector_data95 = getelementptr i64, ptr %91, i64 1
   %index_access96 = getelementptr ptr, ptr %vector_data95, i64 %index87
   %arr97 = load ptr, ptr %index_access96, align 8
-  store ptr %arr97, ptr %array_ptr84, align 8
+  store ptr %90, ptr %arr97, align 8
   store i64 0, ptr %index_ptr98, align 4
   %index99 = load i64, ptr %index_ptr98, align 4
   br label %cond100
