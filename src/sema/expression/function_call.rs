@@ -545,7 +545,6 @@ fn try_type_method(
     resolve_to: ResolveTo,
 ) -> Result<Option<Expression>, ()> {
     let var_ty = var_expr.ty();
-
     match var_ty.deref_any() {
         Type::Array(..) | Type::DynamicBytes if var_ty.is_dynamic(ns) => {
             if func.name == "push" {

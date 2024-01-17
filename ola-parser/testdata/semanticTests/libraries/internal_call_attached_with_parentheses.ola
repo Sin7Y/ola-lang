@@ -1,0 +1,12 @@
+library L {
+    struct S {
+        u256[] data;
+    }
+
+    fn f(S _s) {
+        _s.data[3] += 2;
+    }
+}
+
+
+

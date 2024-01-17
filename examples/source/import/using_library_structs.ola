@@ -1,0 +1,14 @@
+library Lib {
+    struct Data { 
+        u32 a; 
+        u32[] b; 
+    }
+    fn set(Data  _s) {
+        _s.a = 7;
+        while (_s.b.length < 20)
+            _s.b[_s.b.length] = 0;
+        _s.b[19] = 8;
+    }
+}
+
+
