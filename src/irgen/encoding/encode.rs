@@ -237,7 +237,7 @@ fn encode_complex_array<'a>(
     if dims[dimension] == ArrayLength::Dynamic {
         let sub_array = index_array(
             bin,
-            &mut array,
+            &mut array.clone(),
             &mut array_ty,
             dims,
             indexes,
