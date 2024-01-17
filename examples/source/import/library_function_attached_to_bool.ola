@@ -1,0 +1,6 @@
+library L {
+    fn xor(bool a, bool b) -> (bool) {
+        return a != b;
+    }
+}
+
