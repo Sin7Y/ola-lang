@@ -724,24 +724,6 @@ impl<'a> Binary<'a> {
             .into_int_value()
     }
 
-    pub fn convert_uint_storage(&self, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
-        let heap_ptr = self.heap_malloc(self.context.i64_type().const_int(4, false));
-        self.builder.build_store(heap_ptr, value);
-        for i in 1..4 {
-            let elem_ptr = unsafe {
-                self.builder.build_gep(
-                    self.context.i64_type(),
-                    heap_ptr,
-                    &[self.context.i64_type().const_int(i, false)],
-                    "",
-                )
-            };
-            self.builder
-                .build_store(elem_ptr, self.context.i64_type().const_zero());
-        }
-        heap_ptr.into()
-    }
-
     pub fn range_check(&self, value: IntValue<'a>) {
         if !value.is_const() {
             // check if value is out of bounds

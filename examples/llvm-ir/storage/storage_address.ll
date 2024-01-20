@@ -461,13 +461,14 @@ entry:
   %index_access3 = getelementptr i64, ptr %0, i64 3
   store i64 -6711892513312253938, ptr %index_access3, align 4
   %1 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %1, align 4
-  %2 = getelementptr i64, ptr %1, i64 1
+  %2 = getelementptr i64, ptr %1, i64 0
   store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %1, i64 2
+  %3 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %1, i64 3
+  %4 = getelementptr i64, ptr %1, i64 2
   store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %1, i64 3
+  store i64 0, ptr %5, align 4
   call void @set_storage(ptr %1, ptr %0)
   ret void
 }
@@ -478,13 +479,14 @@ entry:
   store ptr %0, ptr %_address, align 8
   %1 = load ptr, ptr %_address, align 8
   %2 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %2, i64 1
+  %3 = getelementptr i64, ptr %2, i64 0
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %2, i64 2
+  %4 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %2, i64 3
+  %5 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %2, i64 3
+  store i64 0, ptr %6, align 4
   call void @set_storage(ptr %2, ptr %1)
   ret void
 }
@@ -493,13 +495,14 @@ define ptr @getAddress() {
 entry:
   %0 = call ptr @heap_malloc(i64 4)
   %1 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %1, align 4
-  %2 = getelementptr i64, ptr %1, i64 1
+  %2 = getelementptr i64, ptr %1, i64 0
   store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %1, i64 2
+  %3 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %1, i64 3
+  %4 = getelementptr i64, ptr %1, i64 2
   store i64 0, ptr %4, align 4
+  %5 = getelementptr i64, ptr %1, i64 3
+  store i64 0, ptr %5, align 4
   call void @get_storage(ptr %1, ptr %0)
   ret ptr %0
 }
