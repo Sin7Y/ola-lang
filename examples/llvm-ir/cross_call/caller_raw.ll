@@ -479,18 +479,20 @@ entry:
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
   %8 = call ptr @heap_malloc(i64 4)
   %9 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %9, align 4
-  %10 = getelementptr i64, ptr %9, i64 1
+  %10 = getelementptr i64, ptr %9, i64 0
   store i64 0, ptr %10, align 4
-  %11 = getelementptr i64, ptr %9, i64 2
+  %11 = getelementptr i64, ptr %9, i64 1
   store i64 0, ptr %11, align 4
-  %12 = getelementptr i64, ptr %9, i64 3
+  %12 = getelementptr i64, ptr %9, i64 2
   store i64 0, ptr %12, align 4
+  %13 = getelementptr i64, ptr %9, i64 3
+  store i64 0, ptr %13, align 4
   call void @get_storage(ptr %9, ptr %8)
-  %storage_value = load i64, ptr %8, align 4
-  %13 = icmp eq i64 %storage_value, 66
-  %14 = zext i1 %13 to i64
-  call void @builtin_assert(i64 %14)
+  %14 = getelementptr i64, ptr %8, i64 3
+  %storage_value = load i64, ptr %14, align 4
+  %15 = icmp eq i64 %storage_value, 66
+  %16 = zext i1 %15 to i64
+  call void @builtin_assert(i64 %16)
   ret void
 }
 

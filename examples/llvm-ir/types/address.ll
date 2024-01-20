@@ -464,17 +464,18 @@ entry:
   store ptr %0, ptr %_address, align 8
   %1 = call ptr @heap_malloc(i64 4)
   %2 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %2, i64 1
+  %3 = getelementptr i64, ptr %2, i64 0
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %2, i64 2
+  %4 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %2, i64 3
+  %5 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %5, align 4
+  %6 = getelementptr i64, ptr %2, i64 3
+  store i64 0, ptr %6, align 4
   call void @get_storage(ptr %2, ptr %1)
-  %6 = load ptr, ptr %_address, align 8
-  %7 = call i64 @memcmp_eq(ptr %1, ptr %6, i64 4)
-  ret i64 %7
+  %7 = load ptr, ptr %_address, align 8
+  %8 = call i64 @memcmp_eq(ptr %1, ptr %7, i64 4)
+  ret i64 %8
 }
 
 define ptr @u32_to_address() {
