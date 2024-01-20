@@ -455,57 +455,64 @@ entry:
   store i64 %0, ptr %element, align 4
   %1 = call ptr @heap_malloc(i64 4)
   %2 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %2, i64 1
+  %3 = getelementptr i64, ptr %2, i64 0
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %2, i64 2
+  %4 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %2, i64 3
+  %5 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %5, align 4
-  call void @get_storage(ptr %2, ptr %1)
-  %storage_value = load i64, ptr %1, align 4
-  %6 = call ptr @heap_malloc(i64 4)
+  %6 = getelementptr i64, ptr %2, i64 3
   store i64 0, ptr %6, align 4
-  %7 = getelementptr i64, ptr %6, i64 1
-  store i64 0, ptr %7, align 4
-  %8 = getelementptr i64, ptr %6, i64 2
-  store i64 0, ptr %8, align 4
-  %9 = getelementptr i64, ptr %6, i64 3
+  call void @get_storage(ptr %2, ptr %1)
+  %7 = getelementptr i64, ptr %1, i64 3
+  %storage_value = load i64, ptr %7, align 4
+  %8 = call ptr @heap_malloc(i64 4)
+  %9 = getelementptr i64, ptr %8, i64 0
   store i64 0, ptr %9, align 4
-  %10 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %6, ptr %10, i64 4)
-  %hash_value_low = load i64, ptr %10, align 4
-  %11 = mul i64 %storage_value, 1
-  %storage_array_offset = add i64 %hash_value_low, %11
-  store i64 %storage_array_offset, ptr %10, align 4
-  %12 = load i64, ptr %element, align 4
+  %10 = getelementptr i64, ptr %8, i64 1
+  store i64 0, ptr %10, align 4
+  %11 = getelementptr i64, ptr %8, i64 2
+  store i64 0, ptr %11, align 4
+  %12 = getelementptr i64, ptr %8, i64 3
+  store i64 0, ptr %12, align 4
   %13 = call ptr @heap_malloc(i64 4)
-  store i64 %12, ptr %13, align 4
-  %14 = getelementptr i64, ptr %13, i64 1
-  store i64 0, ptr %14, align 4
-  %15 = getelementptr i64, ptr %13, i64 2
-  store i64 0, ptr %15, align 4
-  %16 = getelementptr i64, ptr %13, i64 3
-  store i64 0, ptr %16, align 4
-  call void @set_storage(ptr %10, ptr %13)
-  %new_length = add i64 %storage_value, 1
+  call void @poseidon_hash(ptr %8, ptr %13, i64 4)
+  %hash_value_low = getelementptr i64, ptr %13, i64 3
+  %14 = load i64, ptr %hash_value_low, align 4
+  %15 = mul i64 %storage_value, 1
+  %storage_array_offset = add i64 %14, %15
+  store i64 %storage_array_offset, ptr %hash_value_low, align 4
+  %16 = load i64, ptr %element, align 4
   %17 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %17, align 4
-  %18 = getelementptr i64, ptr %17, i64 1
+  %18 = getelementptr i64, ptr %17, i64 0
   store i64 0, ptr %18, align 4
-  %19 = getelementptr i64, ptr %17, i64 2
+  %19 = getelementptr i64, ptr %17, i64 1
   store i64 0, ptr %19, align 4
-  %20 = getelementptr i64, ptr %17, i64 3
+  %20 = getelementptr i64, ptr %17, i64 2
   store i64 0, ptr %20, align 4
-  %21 = call ptr @heap_malloc(i64 4)
-  store i64 %new_length, ptr %21, align 4
-  %22 = getelementptr i64, ptr %21, i64 1
-  store i64 0, ptr %22, align 4
-  %23 = getelementptr i64, ptr %21, i64 2
+  %21 = getelementptr i64, ptr %17, i64 3
+  store i64 %16, ptr %21, align 4
+  call void @set_storage(ptr %13, ptr %17)
+  %new_length = add i64 %storage_value, 1
+  %22 = call ptr @heap_malloc(i64 4)
+  %23 = getelementptr i64, ptr %22, i64 0
   store i64 0, ptr %23, align 4
-  %24 = getelementptr i64, ptr %21, i64 3
+  %24 = getelementptr i64, ptr %22, i64 1
   store i64 0, ptr %24, align 4
-  call void @set_storage(ptr %17, ptr %21)
+  %25 = getelementptr i64, ptr %22, i64 2
+  store i64 0, ptr %25, align 4
+  %26 = getelementptr i64, ptr %22, i64 3
+  store i64 0, ptr %26, align 4
+  %27 = call ptr @heap_malloc(i64 4)
+  %28 = getelementptr i64, ptr %27, i64 0
+  store i64 0, ptr %28, align 4
+  %29 = getelementptr i64, ptr %27, i64 1
+  store i64 0, ptr %29, align 4
+  %30 = getelementptr i64, ptr %27, i64 2
+  store i64 0, ptr %30, align 4
+  %31 = getelementptr i64, ptr %27, i64 3
+  store i64 %new_length, ptr %31, align 4
+  call void @set_storage(ptr %22, ptr %27)
   ret void
 }
 

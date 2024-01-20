@@ -455,22 +455,24 @@ entry:
   store i64 %0, ptr %_value, align 4
   %1 = load i64, ptr %_value, align 4
   %2 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %2, i64 1
+  %3 = getelementptr i64, ptr %2, i64 0
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %2, i64 2
+  %4 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %2, i64 3
+  %5 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %5, align 4
-  %6 = call ptr @heap_malloc(i64 4)
-  store i64 %1, ptr %6, align 4
-  %7 = getelementptr i64, ptr %6, i64 1
-  store i64 0, ptr %7, align 4
-  %8 = getelementptr i64, ptr %6, i64 2
+  %6 = getelementptr i64, ptr %2, i64 3
+  store i64 0, ptr %6, align 4
+  %7 = call ptr @heap_malloc(i64 4)
+  %8 = getelementptr i64, ptr %7, i64 0
   store i64 0, ptr %8, align 4
-  %9 = getelementptr i64, ptr %6, i64 3
+  %9 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %9, align 4
-  call void @set_storage(ptr %2, ptr %6)
+  %10 = getelementptr i64, ptr %7, i64 2
+  store i64 0, ptr %10, align 4
+  %11 = getelementptr i64, ptr %7, i64 3
+  store i64 %1, ptr %11, align 4
+  call void @set_storage(ptr %2, ptr %7)
   ret void
 }
 
