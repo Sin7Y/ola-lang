@@ -253,9 +253,17 @@ pub(crate) fn storage_load<'a>(
         }
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let storage_loaded = storage_load_internal(bin, *slot);
+            let storage_value_ptr = unsafe {
+                bin.builder.build_gep(
+                    bin.context.i64_type(),
+                    storage_loaded,
+                    &[bin.context.i64_type().const_int(3, false)],
+                    "",
+                )
+            };
             let ret =
                 bin.builder
-                    .build_load(bin.context.i64_type(), storage_loaded, "storage_value");
+                    .build_load(bin.context.i64_type(), storage_value_ptr, "storage_value");
             *slot = slot_offest(
                 bin,
                 *slot,
@@ -629,7 +637,7 @@ pub(crate) fn storage_load_internal<'a>(
     emit_context!(bin);
     let storage_value_ptr = bin.heap_malloc(i64_const!(4));
     let storage_key = match key.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(key),
+        BasicTypeEnum::IntType(..) => uint_to_slot(bin, key),
         _ => key,
     };
     call!(
@@ -642,7 +650,7 @@ pub(crate) fn storage_load_internal<'a>(
 pub(crate) fn storage_clear_internal<'a>(bin: &Binary<'a>, key: BasicValueEnum<'a>) {
     emit_context!(bin);
     let storage_key = match key.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(key),
+        BasicTypeEnum::IntType(..) => uint_to_slot(bin, key),
         _ => key,
     };
 
@@ -673,11 +681,11 @@ pub(crate) fn storage_store_internal<'a>(
 ) {
     emit_context!(bin);
     let storage_key = match key.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(key),
+        BasicTypeEnum::IntType(..) => uint_to_slot(bin, key),
         _ => key,
     };
     let storage_value: BasicValueEnum<'_> = match value.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(value),
+        BasicTypeEnum::IntType(..) => uint_to_slot(bin, value),
         _ => value,
     };
     call!("set_storage", &[storage_key.into(), storage_value.into()]);
@@ -688,7 +696,7 @@ pub(crate) fn slot_hash<'a>(bin: &Binary<'a>, slot: BasicValueEnum<'a>) -> Basic
 
     let mut inputs = Vec::with_capacity(1);
     let slot_value = match slot.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(slot),
+        BasicTypeEnum::IntType(..) => uint_to_slot(bin, slot),
         _ => slot,
     };
     inputs.push((slot_value.into(), i64_const!(4)));
@@ -705,11 +713,18 @@ pub(crate) fn array_offset<'a>(
     emit_context!(bin);
     let elem_size = elem_ty.storage_slots(ns);
     let hash_ret = slot_hash(bin, start);
-    let hash_value_low = bin.builder.build_load(
-        bin.context.i64_type(),
-        hash_ret.into_pointer_value(),
-        "hash_value_low",
-    );
+    let last_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            hash_ret.into_pointer_value(),
+            &[bin.context.i64_type().const_int(3, false)],
+            "hash_value_low",
+        )
+    };
+
+    let hash_value_low = bin
+        .builder
+        .build_load(bin.context.i64_type(), last_elem_ptr, "");
 
     let index_with_size = bin.builder.build_int_mul(
         index.into_int_value(),
@@ -724,8 +739,7 @@ pub(crate) fn array_offset<'a>(
         index_with_size,
         "storage_array_offset",
     );
-    bin.builder
-        .build_store(hash_ret.into_pointer_value(), new_hash_low);
+    bin.builder.build_store(last_elem_ptr, new_hash_low);
     hash_ret
 }
 
@@ -737,18 +751,23 @@ pub(crate) fn slot_offest<'a>(
     emit_context!(bin);
     match slot.get_type() {
         BasicTypeEnum::PointerType(..) => {
-            let slot_value = bin.builder.build_load(
-                bin.context.i64_type(),
-                slot.into_pointer_value(),
-                "slot_value",
-            );
+            let last_elem_ptr = unsafe {
+                bin.builder.build_gep(
+                    bin.context.i64_type(),
+                    slot.into_pointer_value(),
+                    &[bin.context.i64_type().const_int(3, false)],
+                    "",
+                )
+            };
+            let slot_value = bin
+                .builder
+                .build_load(bin.context.i64_type(), last_elem_ptr, "");
             let slot_offset = bin.builder.build_int_add(
                 slot_value.into_int_value(),
                 offset.into_int_value(),
                 "slot_offset",
             );
-            bin.builder
-                .build_store(slot.into_pointer_value(), slot_offset);
+            bin.builder.build_store(last_elem_ptr, slot_offset);
             slot.into()
         }
         _ => bin
@@ -761,3 +780,31 @@ pub(crate) fn slot_offest<'a>(
             .into(),
     }
 }
+
+pub fn uint_to_slot<'a>(bin: &Binary<'a>, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
+    let heap_ptr = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+    for i in 0..3 {
+        let elem_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                heap_ptr,
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        bin.builder
+            .build_store(elem_ptr, bin.context.i64_type().const_zero());
+    }
+    let last_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            heap_ptr,
+            &[bin.context.i64_type().const_int(3, false)],
+            "",
+        )
+    };
+    bin.builder
+        .build_store(last_elem_ptr, value.into_int_value());
+    heap_ptr.into()
+}
+

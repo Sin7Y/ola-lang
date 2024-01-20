@@ -452,36 +452,40 @@ exit:                                             ; preds = %loop
 define void @inc_simple() {
 entry:
   %0 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %0, align 4
-  %1 = getelementptr i64, ptr %0, i64 1
+  %1 = getelementptr i64, ptr %0, i64 0
   store i64 0, ptr %1, align 4
-  %2 = getelementptr i64, ptr %0, i64 2
+  %2 = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %2, align 4
-  %3 = getelementptr i64, ptr %0, i64 3
+  %3 = getelementptr i64, ptr %0, i64 2
   store i64 0, ptr %3, align 4
-  %4 = call ptr @heap_malloc(i64 4)
-  store i64 100, ptr %4, align 4
-  %5 = getelementptr i64, ptr %4, i64 1
-  store i64 0, ptr %5, align 4
-  %6 = getelementptr i64, ptr %4, i64 2
+  %4 = getelementptr i64, ptr %0, i64 3
+  store i64 0, ptr %4, align 4
+  %5 = call ptr @heap_malloc(i64 4)
+  %6 = getelementptr i64, ptr %5, i64 0
   store i64 0, ptr %6, align 4
-  %7 = getelementptr i64, ptr %4, i64 3
+  %7 = getelementptr i64, ptr %5, i64 1
   store i64 0, ptr %7, align 4
-  call void @set_storage(ptr %0, ptr %4)
-  %8 = call ptr @heap_malloc(i64 4)
-  %9 = call ptr @heap_malloc(i64 4)
-  store i64 0, ptr %9, align 4
-  %10 = getelementptr i64, ptr %9, i64 1
-  store i64 0, ptr %10, align 4
-  %11 = getelementptr i64, ptr %9, i64 2
-  store i64 0, ptr %11, align 4
-  %12 = getelementptr i64, ptr %9, i64 3
+  %8 = getelementptr i64, ptr %5, i64 2
+  store i64 0, ptr %8, align 4
+  %9 = getelementptr i64, ptr %5, i64 3
+  store i64 100, ptr %9, align 4
+  call void @set_storage(ptr %0, ptr %5)
+  %10 = call ptr @heap_malloc(i64 4)
+  %11 = call ptr @heap_malloc(i64 4)
+  %12 = getelementptr i64, ptr %11, i64 0
   store i64 0, ptr %12, align 4
-  call void @get_storage(ptr %9, ptr %8)
-  %storage_value = load i64, ptr %8, align 4
-  %13 = icmp eq i64 %storage_value, 100
-  %14 = zext i1 %13 to i64
-  call void @builtin_assert(i64 %14)
+  %13 = getelementptr i64, ptr %11, i64 1
+  store i64 0, ptr %13, align 4
+  %14 = getelementptr i64, ptr %11, i64 2
+  store i64 0, ptr %14, align 4
+  %15 = getelementptr i64, ptr %11, i64 3
+  store i64 0, ptr %15, align 4
+  call void @get_storage(ptr %11, ptr %10)
+  %16 = getelementptr i64, ptr %10, i64 3
+  %storage_value = load i64, ptr %16, align 4
+  %17 = icmp eq i64 %storage_value, 100
+  %18 = zext i1 %17 to i64
+  call void @builtin_assert(i64 %18)
   ret void
 }
 

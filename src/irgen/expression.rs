@@ -24,6 +24,7 @@ use super::encoding::{abi_decode, abi_encode, abi_encode_with_selector};
 use super::functions::Vartable;
 use super::storage::{
     array_offset, slot_offest, storage_array_pop, storage_array_push, storage_load, storage_store,
+    uint_to_slot,
 };
 use super::strings::string_location;
 
@@ -1380,14 +1381,14 @@ pub fn mapping_subscript<'a>(
 ) -> BasicValueEnum<'a> {
     let mut inputs = Vec::with_capacity(2);
     let slot_value = match array.get_type() {
-        BasicTypeEnum::IntType(..) => bin.convert_uint_storage(array),
+        BasicTypeEnum::IntType(..) => uint_to_slot(bin, array),
         _ => array,
     };
     inputs.push((slot_value, bin.context.i64_type().const_int(4, false)));
     match index_ty {
         Type::Uint(32) | Type::Field | Type::Bool | Type::Hash | Type::Address => {
             let index_value = match index.get_type() {
-                BasicTypeEnum::IntType(..) => bin.convert_uint_storage(index),
+                BasicTypeEnum::IntType(..) => uint_to_slot(bin, index),
                 _ => index,
             };
             inputs.push((index_value, bin.context.i64_type().const_int(4, false)));
