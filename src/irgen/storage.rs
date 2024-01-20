@@ -954,3 +954,68 @@ pub fn merge_u256<'a>(
     );
     value
 }
+
+pub fn uint_to_slot<'a>(bin: &Binary<'a>, value: BasicValueEnum<'a>) -> BasicValueEnum<'a> {
+    let heap_ptr = bin.heap_malloc(bin.context.i64_type().const_int(4, false));
+    for i in 0..3 {
+        let elem_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                heap_ptr,
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        bin.builder
+            .build_store(elem_ptr, bin.context.i64_type().const_zero());
+    }
+    let last_elem_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            heap_ptr,
+            &[bin.context.i64_type().const_int(3, false)],
+            "",
+        )
+    };
+    bin.builder
+        .build_store(last_elem_ptr, value.into_int_value());
+    heap_ptr.into()
+}
+
+pub fn split_u256<'a>(
+    bin: &Binary<'a>,
+    value: PointerValue<'a>,
+) -> (PointerValue<'a>, PointerValue<'a>) {
+    emit_context!(bin);
+    let high = bin.heap_malloc(i64_const!(4));
+    bin.memcpy(value, high, i64_const!(4));
+    let low = bin.heap_malloc(i64_const!(4));
+    bin.memcpy(
+        unsafe {
+            bin.builder
+                .build_gep(bin.context.i64_type(), value, &[i64_const!(4)], "")
+        },
+        low,
+        i64_const!(4),
+    );
+    (high.into(), low.into())
+}
+
+pub fn merge_u256<'a>(
+    bin: &Binary<'a>,
+    high: PointerValue<'a>,
+    low: PointerValue<'a>,
+) -> PointerValue<'a> {
+    emit_context!(bin);
+    let value = bin.heap_malloc(i64_const!(8));
+    bin.memcpy(high, value, i64_const!(4));
+    bin.memcpy(
+        low,
+        unsafe {
+            bin.builder
+                .build_gep(bin.context.i64_type(), value, &[i64_const!(4)], "")
+        },
+        i64_const!(4),
+    );
+    value
+}

@@ -497,6 +497,7 @@ entry:
   %9 = getelementptr i64, ptr %8, i64 4
   %10 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %7, ptr %10, i64 8)
+<<<<<<< HEAD
   %11 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %10, ptr %11, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %11, i64 3
@@ -511,6 +512,18 @@ entry:
   %15 = load i64, ptr %last_elem_ptr1, align 4
   %last_elem2 = add i64 %15, 1
   store i64 %last_elem2, ptr %last_elem_ptr1, align 4
+=======
+  %11 = getelementptr i64, ptr %10, i64 3
+  %12 = load i64, ptr %11, align 4
+  %slot_offset = add i64 %12, 0
+  store i64 %slot_offset, ptr %11, align 4
+  %13 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %10, ptr %13)
+  %14 = getelementptr i64, ptr %10, i64 3
+  %15 = load i64, ptr %14, align 4
+  %slot_offset1 = add i64 %15, 1
+  store i64 %slot_offset1, ptr %14, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   ret ptr %13
 }
 
@@ -535,6 +548,7 @@ entry:
   %9 = getelementptr i64, ptr %8, i64 4
   %10 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %7, ptr %10, i64 8)
+<<<<<<< HEAD
   %11 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %10, ptr %11, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %11, i64 3
@@ -549,6 +563,18 @@ entry:
   %15 = load i64, ptr %last_elem_ptr1, align 4
   %last_elem2 = add i64 %15, 1
   store i64 %last_elem2, ptr %last_elem_ptr1, align 4
+=======
+  %11 = getelementptr i64, ptr %10, i64 3
+  %12 = load i64, ptr %11, align 4
+  %slot_offset = add i64 %12, 1
+  store i64 %slot_offset, ptr %11, align 4
+  %13 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %10, ptr %13)
+  %14 = getelementptr i64, ptr %10, i64 3
+  %15 = load i64, ptr %14, align 4
+  %slot_offset1 = add i64 %15, 1
+  store i64 %slot_offset1, ptr %14, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   ret ptr %13
 }
 
@@ -588,6 +614,7 @@ entry:
   %rawHash = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 0
   %16 = load ptr, ptr %rawHash, align 8
   call void @set_storage(ptr %15, ptr %16)
+<<<<<<< HEAD
   %17 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %15, ptr %17, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %17, i64 3
@@ -597,6 +624,15 @@ entry:
   %codeHash = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 1
   %19 = load ptr, ptr %codeHash, align 8
   call void @set_storage(ptr %17, ptr %19)
+=======
+  %17 = getelementptr i64, ptr %15, i64 3
+  %18 = load i64, ptr %17, align 4
+  %slot_offset = add i64 %18, 1
+  store i64 %slot_offset, ptr %17, align 4
+  %codeHash = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 1
+  %19 = load ptr, ptr %codeHash, align 8
+  call void @set_storage(ptr %15, ptr %19)
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   ret void
 }
 
