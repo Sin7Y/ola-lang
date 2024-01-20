@@ -511,12 +511,19 @@ entry:
   call void @get_storage(ptr %27, ptr %28)
   %29 = getelementptr i64, ptr %28, i64 3
   %storage_value = load i64, ptr %29, align 4
+<<<<<<< HEAD
   %30 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %27, ptr %30, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %30, i64 3
   %31 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %31, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+=======
+  %30 = getelementptr i64, ptr %27, i64 3
+  %31 = load i64, ptr %30, align 4
+  %slot_offset = add i64 %31, 1
+  store i64 %slot_offset, ptr %30, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   store i64 %storage_value, ptr %_nonceSet, align 4
   %32 = load i64, ptr %_nonceSet, align 4
   call void @prophet_printf(i64 %32, i64 3)

@@ -483,6 +483,7 @@ entry:
   call void @get_storage(ptr %10, ptr %12)
   %13 = getelementptr i64, ptr %12, i64 3
   %storage_value = load i64, ptr %13, align 4
+<<<<<<< HEAD
   %14 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %10, ptr %14, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %14, i64 3
@@ -501,6 +502,22 @@ entry:
   %19 = load i64, ptr %last_elem_ptr2, align 4
   %last_elem3 = add i64 %19, 1
   store i64 %last_elem3, ptr %last_elem_ptr2, align 4
+=======
+  %14 = getelementptr i64, ptr %10, i64 3
+  %15 = load i64, ptr %14, align 4
+  %slot_offset = add i64 %15, 1
+  store i64 %slot_offset, ptr %14, align 4
+  %supportedAAVersion = getelementptr inbounds { i64, i64 }, ptr %11, i32 0, i32 0
+  store i64 %storage_value, ptr %supportedAAVersion, align 4
+  %16 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %10, ptr %16)
+  %17 = getelementptr i64, ptr %16, i64 3
+  %storage_value1 = load i64, ptr %17, align 4
+  %18 = getelementptr i64, ptr %10, i64 3
+  %19 = load i64, ptr %18, align 4
+  %slot_offset2 = add i64 %19, 1
+  store i64 %slot_offset2, ptr %18, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   %nonceOrdering = getelementptr inbounds { i64, i64 }, ptr %11, i32 0, i32 1
   store i64 %storage_value1, ptr %nonceOrdering, align 4
   %struct_member = getelementptr inbounds { i64, i64 }, ptr %11, i32 0, i32 0
@@ -509,12 +526,18 @@ entry:
   br i1 %21, label %then, label %endif
 
 then:                                             ; preds = %entry
+<<<<<<< HEAD
   %struct_member4 = getelementptr inbounds { i64, i64 }, ptr %11, i32 0, i32 0
   %22 = load i64, ptr %struct_member4, align 4
+=======
+  %struct_member3 = getelementptr inbounds { i64, i64 }, ptr %11, i32 0, i32 0
+  %22 = load i64, ptr %struct_member3, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   ret i64 %22
 
 endif:                                            ; preds = %entry
   %23 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %23, i64 3
   store i64 32770, ptr %index_access, align 4
   %index_access5 = getelementptr i64, ptr %23, i64 2
@@ -523,6 +546,16 @@ endif:                                            ; preds = %entry
   store i64 0, ptr %index_access6, align 4
   %index_access7 = getelementptr i64, ptr %23, i64 0
   store i64 0, ptr %index_access7, align 4
+=======
+  %index_access = getelementptr i64, ptr %23, i64 0
+  store i64 0, ptr %index_access, align 4
+  %index_access4 = getelementptr i64, ptr %23, i64 1
+  store i64 0, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %23, i64 2
+  store i64 0, ptr %index_access5, align 4
+  %index_access6 = getelementptr i64, ptr %23, i64 3
+  store i64 32770, ptr %index_access6, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   store ptr %23, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %24 = load ptr, ptr %_address, align 8
   %25 = call ptr @vector_new(i64 6)
@@ -549,8 +582,13 @@ endif:                                            ; preds = %entry
   store i64 2179613704, ptr %39, align 4
   %40 = load ptr, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %vector_length = load i64, ptr %25, align 4
+<<<<<<< HEAD
   %vector_data8 = getelementptr i64, ptr %25, i64 1
   call void @set_tape_data(ptr %vector_data8, i64 %vector_length)
+=======
+  %vector_data7 = getelementptr i64, ptr %25, i64 1
+  call void @set_tape_data(ptr %vector_data7, i64 %vector_length)
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   call void @contract_call(ptr %40, i64 0)
   %41 = call ptr @heap_malloc(i64 1)
   call void @get_tape_data(ptr %41, i64 1)
@@ -561,6 +599,7 @@ endif:                                            ; preds = %entry
   store i64 %return_length, ptr %42, align 4
   %return_data_start = getelementptr i64, ptr %42, i64 1
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
+<<<<<<< HEAD
 <<<<<<< HEAD
   %vector_data9 = getelementptr i64, ptr %42, i64 1
   %43 = getelementptr ptr, ptr %vector_data9, i64 0
@@ -585,22 +624,38 @@ endif:                                            ; preds = %entry
   %37 = load ptr, ptr %codeHash, align 8
   %38 = call ptr @heap_malloc(i64 4)
   %index_access10 = getelementptr i64, ptr %38, i64 0
+=======
+  %vector_data8 = getelementptr i64, ptr %42, i64 1
+  %43 = getelementptr ptr, ptr %vector_data8, i64 0
+  store ptr %43, ptr %codeHash, align 8
+  %44 = load ptr, ptr %codeHash, align 8
+  %45 = call ptr @heap_malloc(i64 4)
+  %index_access9 = getelementptr i64, ptr %45, i64 0
+  store i64 0, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %45, i64 1
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %38, i64 1
+  %index_access11 = getelementptr i64, ptr %45, i64 2
   store i64 0, ptr %index_access11, align 4
-  %index_access12 = getelementptr i64, ptr %38, i64 2
+  %index_access12 = getelementptr i64, ptr %45, i64 3
   store i64 0, ptr %index_access12, align 4
+<<<<<<< HEAD
   %index_access13 = getelementptr i64, ptr %38, i64 3
   store i64 0, ptr %index_access13, align 4
   %39 = call i64 @memcmp_eq(ptr %37, ptr %38, i64 4)
   %40 = trunc i64 %39 to i1
   br i1 %40, label %then14, label %endif15
 >>>>>>> 83491ee (update examples out files.)
+=======
+  %46 = call i64 @memcmp_eq(ptr %44, ptr %45, i64 4)
+  %47 = trunc i64 %46 to i1
+  br i1 %47, label %then13, label %endif14
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
 
-then14:                                           ; preds = %endif
+then13:                                           ; preds = %endif
   ret i64 1
 
-endif15:                                          ; preds = %endif
+endif14:                                          ; preds = %endif
   ret i64 0
 }
 
@@ -1090,12 +1145,19 @@ entry:
   %46 = getelementptr i64, ptr %42, i64 3
   store i64 %41, ptr %46, align 4
   call void @set_storage(ptr %40, ptr %42)
+<<<<<<< HEAD
   %47 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %40, ptr %47, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %47, i64 3
   %48 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %48, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+=======
+  %47 = getelementptr i64, ptr %40, i64 3
+  %48 = load i64, ptr %47, align 4
+  %slot_offset = add i64 %48, 1
+  store i64 %slot_offset, ptr %47, align 4
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   %nonceOrdering = getelementptr inbounds { i64, i64 }, ptr %29, i32 0, i32 1
   %49 = load i64, ptr %nonceOrdering, align 4
   %50 = call ptr @heap_malloc(i64 4)
@@ -1107,7 +1169,11 @@ entry:
   store i64 0, ptr %53, align 4
   %54 = getelementptr i64, ptr %50, i64 3
   store i64 %49, ptr %54, align 4
+<<<<<<< HEAD
   call void @set_storage(ptr %47, ptr %50)
+=======
+  call void @set_storage(ptr %40, ptr %50)
+>>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   %55 = call ptr @heap_malloc(i64 12)
   call void @get_tape_data(ptr %55, i64 12)
   %56 = load ptr, ptr %_newAddress, align 8
