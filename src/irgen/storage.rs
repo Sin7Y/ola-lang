@@ -42,13 +42,21 @@ pub(crate) fn storage_array_push<'a>(
     emit_context!(bin);
     let mut array_slot = expression(&args[0], bin, func_value, var_table, ns);
 
-    let array_length = storage_load(
-        bin,
-        &Type::Uint(32),
-        &mut array_slot.clone(),
-        func_value,
-        ns,
-    );
+    let array_length = storage_load_internal(bin, array_slot);
+
+    let array_length_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            array_length,
+            &[bin.context.i64_type().const_int(3, false)],
+            "length",
+        )
+    };
+
+    let array_length = bin
+        .builder
+        .build_load(bin.context.i64_type(), array_length_ptr, "")
+        .into_int_value();
 
     let elem_ty = args[0].ty().storage_array_elem();
 
@@ -61,9 +69,9 @@ pub(crate) fn storage_array_push<'a>(
     }
 
     // increase length
-    let new_length =
-        bin.builder
-            .build_int_add(array_length.into_int_value(), i64_const!(1), "new_length");
+    let new_length = bin
+        .builder
+        .build_int_add(array_length, i64_const!(1), "new_length");
     storage_store(
         bin,
         &Type::Uint(32),
@@ -88,13 +96,21 @@ pub(crate) fn storage_array_pop<'a>(
     emit_context!(bin);
     let mut array_slot = expression(&args[0], bin, func_value, var_table, ns);
 
-    let array_length = storage_load(
-        bin,
-        &Type::Uint(32),
-        &mut array_slot.clone(),
-        func_value,
-        ns,
-    );
+    let array_length = storage_load_internal(bin, array_slot);
+    let array_length_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            array_length,
+            &[bin.context.i64_type().const_int(3, false)],
+            "length",
+        )
+    };
+
+    let array_length = bin
+        .builder
+        .build_load(bin.context.i64_type(), array_length_ptr, "")
+        .into_int_value();
+
     let elem_ty = args[0].ty().storage_array_elem();
 
     let mut pop_pos = array_offset(bin, array_slot, array_length, elem_ty, ns);
@@ -107,9 +123,9 @@ pub(crate) fn storage_array_pop<'a>(
     storage_delete(bin, &elem_ty, &mut pop_pos, func_value, ns);
 
     // set decrease length
-    let new_length =
-        bin.builder
-            .build_int_sub(array_length.into_int_value(), i64_const!(1), "new_length");
+    let new_length = bin
+        .builder
+        .build_int_sub(array_length, i64_const!(1), "new_length");
     storage_store(
         bin,
         &Type::Uint(32),
@@ -177,17 +193,30 @@ pub(crate) fn storage_load<'a>(
 
                 new_array.into()
             } else {
-                let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
+                let length = storage_load_internal(bin, *slot);
 
-                let dest =
-                    bin.alloca_dynamic_array(function, ty, size.into_int_value(), None, false, ns);
+                let length_ptr = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        length,
+                        &[bin.context.i64_type().const_int(3, false)],
+                        "length",
+                    )
+                };
+
+                let length = bin
+                    .builder
+                    .build_load(bin.context.i64_type(), length_ptr, "")
+                    .into_int_value();
+
+                let dest = bin.alloca_dynamic_array(function, ty, length, None, false, ns);
 
                 let mut elem_slot = slot_hash(bin, *slot);
 
                 bin.emit_loop_cond_first_with_int(
                     function,
                     i64_zero!(),
-                    size.into_int_value(),
+                    length,
                     &mut elem_slot,
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
                         let elem = bin.array_subscript(ty, dest.into(), elem_no, ns);
@@ -331,12 +360,26 @@ pub(crate) fn storage_store<'a>(
                 );
             } else {
                 // get the length of the our in-memory array
-                let len = bin.vector_len(dest);
-                let previous_size =
-                    storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns)
-                        .into_int_value();
+
+                let previous_length = storage_load_internal(bin, *slot);
+
+                let previous_length_ptr = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        previous_length,
+                        &[bin.context.i64_type().const_int(3, false)],
+                        "length",
+                    )
+                };
+
+                let previous_length = bin
+                    .builder
+                    .build_load(bin.context.i64_type(), previous_length_ptr, "")
+                    .into_int_value();
 
                 let llvm_elem_ty = bin.llvm_var_ty(elem_ty, ns);
+
+                let len = bin.vector_len(dest);
 
                 // store new length
                 storage_store_internal(bin, *slot, len.into());
@@ -380,7 +423,7 @@ pub(crate) fn storage_store<'a>(
                 bin.emit_loop_cond_first_with_int(
                     function,
                     len,
-                    previous_size,
+                    previous_length,
                     &mut elem_slot,
                     |_: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
                         storage_delete(bin, elem_ty, slot, function, ns);
@@ -484,9 +527,21 @@ pub(crate) fn storage_delete<'a>(
                     },
                 );
             } else {
-                // dynamic length array.
-                // load length
-                let length = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns)
+                // dynamic length array load length
+                let length_load = storage_load_internal(bin, *slot);
+
+                let length_ptr = unsafe {
+                    bin.builder.build_gep(
+                        bin.context.i64_type(),
+                        length_load,
+                        &[bin.context.i64_type().const_int(3, false)],
+                        "length",
+                    )
+                };
+
+                let length = bin
+                    .builder
+                    .build_load(bin.context.i64_type(), length_ptr, "")
                     .into_int_value();
 
                 let mut elem_slot = slot_hash(bin, *slot);
@@ -551,15 +606,29 @@ pub(crate) fn get_storage_dynamic_bytes<'a>(
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
     emit_context!(bin);
-    let size = storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns);
+    let length_load = storage_load_internal(bin, *slot);
 
-    let dest = bin.alloca_dynamic_array(function, ty, size.into_int_value(), None, false, ns);
+    let length_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            length_load,
+            &[bin.context.i64_type().const_int(3, false)],
+            "length",
+        )
+    };
+
+    let length = bin
+        .builder
+        .build_load(bin.context.i64_type(), length_ptr, "")
+        .into_int_value();
+
+    let dest = bin.alloca_dynamic_array(function, ty, length, None, false, ns);
     let mut elem_slot = slot_hash(bin, *slot);
 
     bin.emit_loop_cond_first_with_int(
         function,
         i64_zero!(),
-        size.into_int_value(),
+        length,
         &mut elem_slot,
         |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
             let elem = bin.array_subscript(ty, dest.into(), elem_no, ns);
@@ -583,12 +652,24 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
     ns: &Namespace,
 ) {
     emit_context!(bin);
+
+    let previous_length = storage_load_internal(bin, *slot);
+
+    let length_ptr = unsafe {
+        bin.builder.build_gep(
+            bin.context.i64_type(),
+            previous_length,
+            &[bin.context.i64_type().const_int(3, false)],
+            "length",
+        )
+    };
+
+    let previous_length = bin
+        .builder
+        .build_load(bin.context.i64_type(), length_ptr, "")
+        .into_int_value();
     // get the length of the our in-memory array
     let len = bin.vector_len(dest);
-
-    let previous_size =
-        storage_load(bin, &Type::Uint(32), &mut slot.clone(), function, ns).into_int_value();
-
     // store new length
     storage_store_internal(bin, *slot, len.into());
 
@@ -616,7 +697,7 @@ pub(crate) fn set_storage_dynamic_bytes<'a>(
     bin.emit_loop_cond_first_with_int(
         function,
         len,
-        previous_size,
+        previous_length,
         &mut elem_slot,
         |_: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
             storage_delete(bin, &Type::Uint(32), slot, function, ns);
@@ -706,7 +787,7 @@ pub(crate) fn slot_hash<'a>(bin: &Binary<'a>, slot: BasicValueEnum<'a>) -> Basic
 pub(crate) fn array_offset<'a>(
     bin: &Binary<'a>,
     start: BasicValueEnum<'a>,
-    index: BasicValueEnum<'a>,
+    index: IntValue<'a>,
     elem_ty: Type,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
@@ -727,7 +808,7 @@ pub(crate) fn array_offset<'a>(
         .build_load(bin.context.i64_type(), last_elem_ptr, "");
 
     let index_with_size = bin.builder.build_int_mul(
-        index.into_int_value(),
+        index,
         bin.context
             .i64_type()
             .const_int(elem_size.to_u64().unwrap(), false),
@@ -807,4 +888,3 @@ pub fn uint_to_slot<'a>(bin: &Binary<'a>, value: BasicValueEnum<'a>) -> BasicVal
         .build_store(last_elem_ptr, value.into_int_value());
     heap_ptr.into()
 }
-

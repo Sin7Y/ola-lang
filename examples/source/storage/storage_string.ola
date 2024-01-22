@@ -1,12 +1,14 @@
 contract StringExample {
     string str;
 
-    fn set(string s) {
-        str = s;
-    }
 
     fn setStringLiteral() {
-        str = "hello";
+        str = "123";
+        print(str);
+    }
+
+    fn set(string s) {
+        str = s;
     }
 
     fn get() -> (string) {
