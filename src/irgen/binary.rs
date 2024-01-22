@@ -627,6 +627,60 @@ impl<'a> Binary<'a> {
         self.builder.position_at_end(done);
     }
 
+    // /// Emit a loop from `from` to `to`, checking the condition _before_ the
+    // /// body.
+    // pub fn emit_loop_cond_first_with_int<F>(
+    //     &self,
+    //     function: FunctionValue<'a>,
+    //     from: IntValue<'a>,
+    //     to: IntValue<'a>,
+    //     data_ref: &mut BasicValueEnum<'a>,
+    //     mut insert_body: F,
+    // ) where F: FnMut(IntValue<'a>, &mut BasicValueEnum<'a>),
+    // {
+    //     let cond = self.context.append_basic_block(function, "cond");
+    //     let body = self.context.append_basic_block(function, "body");
+    //     let done = self.context.append_basic_block(function, "done");
+    //     let entry = self.builder.get_insert_block().unwrap();
+
+    //     self.builder.build_unconditional_branch(cond);
+    //     self.builder.position_at_end(cond);
+
+    //     let loop_ty = from.get_type();
+    //     // create an alloca for the loop variable
+
+    //     let loop_phi = self.builder.build_phi(loop_ty, "index");
+    //     let data_phi = self.builder.build_phi(data_ref.get_type(), "data");
+
+    //     let mut data = data_phi.as_basic_value();
+
+    //     let loop_var = loop_phi.as_basic_value().into_int_value();
+
+    //     let next = self
+    //         .builder
+    //         .build_int_add(loop_var, loop_ty.const_int(1, false), "next_index");
+
+    //     let comp = self
+    //         .builder
+    //         .build_int_compare(IntPredicate::ULT, loop_var, to, "loop_cond");
+    //     self.builder.build_conditional_branch(comp, body, done);
+
+    //     self.builder.position_at_end(body);
+    //     // add loop body
+    //     insert_body(loop_var, &mut data);
+
+    //     let body = self.builder.get_insert_block().unwrap();
+
+    //     loop_phi.add_incoming(&[(&from, entry), (&next, body)]);
+    //     data_phi.add_incoming(&[(&*data_ref, entry), (&data, body)]);
+
+    //     self.builder.build_unconditional_branch(cond);
+
+    //     self.builder.position_at_end(done);
+
+    //     *data_ref = data_phi.as_basic_value();
+    // }
+
     /// Dereference an array
     pub(crate) fn array_subscript(
         &self,
