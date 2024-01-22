@@ -1271,7 +1271,7 @@ pub fn array_subscript<'a>(
                 .build_int_add(offset, array.into_int_value(), "index_slot")
                 .into()
         } else {
-            array_offset(bin, array, index, elem_ty, ns)
+            array_offset(bin, array, index.into_int_value(), elem_ty, ns)
         }
     } else if array_ty.is_dynamic_memory() {
         let elem_ty = array_ty.array_deref();
