@@ -1,0 +1,12 @@
+contract StringContract {
+
+    string bb;
+    fn string_test() {
+       string a = "";
+       print(a);
+       print(a.length);
+       print(bb);
+       print(bb.length);
+    }
+
+}
