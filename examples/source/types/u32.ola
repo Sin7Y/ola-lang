@@ -1,0 +1,11 @@
+
+contract U32BasicTest {
+
+    fn testU32PowerOperation() {
+        u32 a = 2;
+        u32 b = 10;
+        u32 c = a ** b;
+        print(c);
+    }
+
+}
