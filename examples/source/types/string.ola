@@ -1,12 +1,25 @@
 contract StringContract {
 
     string bb;
-    fn string_test() {
-       string a = "";
-       print(a);
-       print(a.length);
-       print(bb);
-       print(bb.length);
+    // fn string_test() {
+    //    string a = "";
+    //    print(a);
+    //    print(a.length);
+    //    print(bb);
+    //    print(bb.length);
+    // }
+
+    fn set_string_test() {
+       bb = "hello";
+    }
+
+    fn string_test_return() -> (string) {
+       string a = "hello";
+       return a;
+    }
+
+    fn string_test_return2() -> (string) {
+       return bb;
     }
 
 }
