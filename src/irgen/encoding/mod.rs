@@ -604,6 +604,7 @@ pub(crate) fn index_array<'a>(
             arr.into_pointer_value(),
             "array_element",
         );
+
         *ty = local_ty;
     }
 
