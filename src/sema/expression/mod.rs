@@ -128,8 +128,7 @@ impl Expression {
 
         // Special case: when converting literal sign can change if it fits
         match (self, &from, to) {
-            (Expression::NumberLiteral { value, .. }, p, &Type::Uint(to_len))
-                if p.is_primitive() =>
+            (Expression::NumberLiteral { value, .. }, .., &Type::Uint(to_len)) =>
             {
                 return if value.bits() >= to_len as u64 {
                     diagnostics.push(Diagnostic::cast_error(
@@ -150,7 +149,7 @@ impl Expression {
                 };
             }
 
-            (Expression::NumberLiteral { value, .. }, p, &Type::Field) if p.is_primitive() => {
+            (Expression::NumberLiteral { value, .. }, .., &Type::Field) => {
                 return if from != Type::Uint(32) {
                     diagnostics.push(Diagnostic::cast_error(
                         *loc,
