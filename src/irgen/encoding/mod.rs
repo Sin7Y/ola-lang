@@ -29,6 +29,9 @@ pub(super) fn abi_encode<'a>(
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> PointerValue<'a> {
+    if args.is_empty() {
+        return bin.vector_new(bin.context.i64_type().const_int(0, false));
+    }
     let size = calculate_size_args(bin, &args, types, func_value, ns);
 
     let heap_start_ptr = bin.vector_new(size);
@@ -101,8 +104,12 @@ pub(super) fn abi_encode_with_selector<'a>(
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> PointerValue<'a> {
-    let size = calculate_size_args(bin, &args, types, func_value, ns);
-
+    let size = if args.is_empty() {
+       bin.context.i64_type().const_int(0, false)
+    }  else {
+        calculate_size_args(bin, &args, types, func_value, ns)
+    };
+    
     let heap_size = bin.builder.build_int_add(
         size,
         bin.context.i64_type().const_int(2, false),
@@ -589,6 +596,14 @@ pub(crate) fn index_array<'a>(
         }
 
         *ty = local_ty;
+    }
+
+    if !matches!(ty, Type::Ref(_)) {
+        return bin.builder.build_load(
+            bin.llvm_var_ty(&ty.clone(), ns),
+            arr.into_pointer_value(),
+            "arr",
+        );
     }
 
     *arr

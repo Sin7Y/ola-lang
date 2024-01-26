@@ -1,0 +1,84 @@
+contract ProposalContract {
+    struct Proposal {
+        address proposer;
+        u32 deadline;
+        u32 totalSupport;
+        u32 totalAgainst;
+        VotingType votingType;
+        ProposalType proposalType;
+    }
+
+    enum VotingType { Equal, Weighted }
+
+    enum ProposalType { Community, Development, Grants, Marketing, Partnership, Token, Others }
+
+    mapping(hash => Proposal) proposalByHash;
+    mapping(address => hash[]) proposalsByOwner;
+    mapping(address => hash[]) proposalsByVoter;
+
+    fn createProposal(hash _contentHash, u32 _deadline, VotingType _votingType, ProposalType _proposalType) {
+        // check if deadline is in the future
+        assert(_deadline > block_timestamp());
+        // check if proposal already exists
+        Proposal oldProposal = proposalByHash[_contentHash];
+        assert(oldProposal.proposer == address(0));
+        Proposal newProposal = Proposal({
+            proposer:  origin_address(),
+            deadline: _deadline,
+            totalSupport: 0,
+            totalAgainst: 0,
+            votingType: _votingType,
+            proposalType: _proposalType
+        });
+        proposalByHash[_contentHash] = newProposal;
+        proposalsByOwner[origin_address()].push(_contentHash);
+    }
+
+    fn vote(hash _contentHash, bool _support, u32 _weight) {
+        // check if proposal exists 
+        Proposal oldProposal = proposalByHash[_contentHash];
+        assert(oldProposal.proposer != address(0));
+        print("proposal exists");
+
+        // check if voter has already voted
+        hash[] proposals = proposalsByVoter[origin_address()];
+        for (u32 i = 0; i < proposals.length; i++) {
+            assert(proposals[i] != _contentHash);
+        }
+
+        print("voter has not voted");
+
+        // check if deadline is in the future
+        Proposal proposal = proposalByHash[_contentHash];
+        print("proposal.deadline");
+        print(proposal.deadline);
+        print("block_timestamp()");
+        print(block_timestamp());
+        assert(block_timestamp() < proposal.deadline, "Voting period has ended");
+        print("voting period has not ended");
+        if (_support) {
+            proposal.totalSupport += _weight;
+        } else {
+            proposal.totalAgainst += _weight;
+        }
+        proposalsByVoter[origin_address()].push(_contentHash);
+    }
+
+
+    fn getProposal(hash _contentHash) -> (Proposal) {
+        return proposalByHash[_contentHash];
+    }
+
+    fn getProposalsByOwner(address _owner) -> (hash[]) {
+        print("getProposalsByOwner");
+        print(proposalsByOwner[_owner]);
+        return proposalsByOwner[_owner];
+    }
+
+    fn getProposalsByVoter(address _voter) -> (hash[]) {
+        print("getProposalsByVoter");
+        print(proposalsByVoter[_voter]);
+        return proposalsByVoter[_voter];
+    }
+
+}
