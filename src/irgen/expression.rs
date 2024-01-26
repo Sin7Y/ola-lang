@@ -6,7 +6,9 @@ use crate::irgen::u32_op::{
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
 use inkwell::types::{BasicType, BasicTypeEnum};
-use inkwell::values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue};
+use inkwell::values::{
+    BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
+};
 use inkwell::{AddressSpace, IntPredicate};
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
@@ -87,7 +89,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::EQ,
             ),
-            Type::Uint(32) | Type::Bool | Type::Field => u32_compare(
+            Type::Uint(32) | Type::Bool | Type::Field | Type::Enum(..) => u32_compare(
                 left,
                 right,
                 bin,
@@ -108,7 +110,7 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::NE,
             ),
-            Type::Uint(32) | Type::Bool | Type::Field => u32_compare(
+            Type::Uint(32) | Type::Bool | Type::Field | Type::Enum(..) => u32_compare(
                 left,
                 right,
                 bin,
@@ -1700,19 +1702,45 @@ pub(crate) fn debug_print<'a>(
                 "",
             );
         }
-        Type::Array(..) => {
-            let array_start = bin.builder.build_ptr_to_int(
-                arg.into_pointer_value(),
-                bin.context.i64_type(),
-                "array_start",
-            );
-            bin.builder.build_call(
-                print_func,
-                &[
-                    array_start.into(),
-                    bin.context.i64_type().const_zero().into(),
-                ],
-                "",
+        Type::Array(elem_ty, dim) => {
+            let mut elem_offset = bin.context.i64_type().const_zero().as_basic_value_enum();
+            let (arg, length) = if let Some(ArrayLength::Fixed(d)) = dim.last() {
+                (arg.into_pointer_value(), bin.context.i64_type().const_int(d.to_u64().unwrap(), false))
+            } else {
+                (bin.vector_data(arg), bin.vector_len(arg))
+            };
+            bin.emit_static_loop_with_int(
+                func_value,
+                bin.context.i64_type().const_zero(),
+                length,
+                &mut elem_offset,
+                |index: IntValue<'a>, offset: &mut BasicValueEnum<'a>| {
+                    let elem_ptr = unsafe {
+                        bin.builder.build_gep(
+                            bin.llvm_type(ty.deref_any(), ns),
+                            arg,
+                            &[index],
+                            "index_access",
+                        )
+                    };
+
+                    let load_ty = bin.llvm_var_ty(&elem_ty, ns);
+                    let elem = bin
+                        .builder
+                        .build_load(load_ty, elem_ptr, "")
+                        .into_pointer_value();
+
+                    debug_print(bin, elem.into(), elem_ty, func_value, ns);
+
+                    *offset = bin
+                        .builder
+                        .build_int_add(
+                            offset.into_int_value(),
+                            bin.context.i64_type().const_int(1, false),
+                            "",
+                        )
+                        .as_basic_value_enum();
+                },
             );
         }
         Type::Struct(no) => {

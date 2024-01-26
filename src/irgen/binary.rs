@@ -90,7 +90,7 @@ impl<'a> Binary<'a> {
         match ty {
             // Map all i32 data to a field-based data type,
             // with the maximum value of field between u63 and u64.
-            Type::Uint(32) | Type::Field => {
+            Type::Uint(32) | Type::Field | Type::Enum(..) => {
                 let ty = self.context.i64_type();
                 let s = n.to_string();
                 ty.const_int_from_string(&s, StringRadix::Decimal)
