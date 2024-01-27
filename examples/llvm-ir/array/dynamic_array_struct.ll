@@ -452,46 +452,48 @@ exit:                                             ; preds = %loop
 define ptr @createBooks() {
 entry:
   %0 = call ptr @heap_malloc(i64 2)
-  %elemptr0 = getelementptr [2 x ptr], ptr %0, i64 0
+  %elemptr0 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %0, i64 0, i64 0
   %1 = call ptr @heap_malloc(i64 3)
-  %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 0
+  %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 0
   store i64 0, ptr %struct_member, align 4
-  %struct_member1 = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 1
+  %struct_member1 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 1
   store i64 111, ptr %struct_member1, align 4
-  %struct_member2 = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 2
+  %struct_member2 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 2
   %2 = call ptr @heap_malloc(i64 5)
-  %elemptr03 = getelementptr [5 x i64], ptr %2, i64 0
+  %elemptr03 = getelementptr [5 x i64], ptr %2, i64 0, i64 0
   store i64 1, ptr %elemptr03, align 4
-  %elemptr1 = getelementptr [5 x i64], ptr %2, i64 1
+  %elemptr1 = getelementptr [5 x i64], ptr %2, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [5 x i64], ptr %2, i64 2
+  %elemptr2 = getelementptr [5 x i64], ptr %2, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %elemptr3 = getelementptr [5 x i64], ptr %2, i64 3
+  %elemptr3 = getelementptr [5 x i64], ptr %2, i64 0, i64 3
   store i64 4, ptr %elemptr3, align 4
-  %elemptr4 = getelementptr [5 x i64], ptr %2, i64 4
+  %elemptr4 = getelementptr [5 x i64], ptr %2, i64 0, i64 4
   store i64 5, ptr %elemptr4, align 4
   store ptr %2, ptr %struct_member2, align 8
-  store ptr %1, ptr %elemptr0, align 8
-  %elemptr14 = getelementptr [2 x ptr], ptr %0, i64 1
+  %elem = load { i64, i64, [5 x i64] }, ptr %1, align 4
+  store { i64, i64, [5 x i64] } %elem, ptr %elemptr0, align 4
+  %elemptr14 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %0, i64 0, i64 1
   %3 = call ptr @heap_malloc(i64 3)
-  %struct_member5 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 0
+  %struct_member5 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 0
   store i64 0, ptr %struct_member5, align 4
-  %struct_member6 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 1
+  %struct_member6 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 1
   store i64 0, ptr %struct_member6, align 4
-  %struct_member7 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 2
+  %struct_member7 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 2
   %4 = call ptr @heap_malloc(i64 5)
-  %elemptr08 = getelementptr [5 x i64], ptr %4, i64 0
+  %elemptr08 = getelementptr [5 x i64], ptr %4, i64 0, i64 0
   store i64 0, ptr %elemptr08, align 4
-  %elemptr19 = getelementptr [5 x i64], ptr %4, i64 1
+  %elemptr19 = getelementptr [5 x i64], ptr %4, i64 0, i64 1
   store i64 0, ptr %elemptr19, align 4
-  %elemptr210 = getelementptr [5 x i64], ptr %4, i64 2
+  %elemptr210 = getelementptr [5 x i64], ptr %4, i64 0, i64 2
   store i64 0, ptr %elemptr210, align 4
-  %elemptr311 = getelementptr [5 x i64], ptr %4, i64 3
+  %elemptr311 = getelementptr [5 x i64], ptr %4, i64 0, i64 3
   store i64 0, ptr %elemptr311, align 4
-  %elemptr412 = getelementptr [5 x i64], ptr %4, i64 4
+  %elemptr412 = getelementptr [5 x i64], ptr %4, i64 0, i64 4
   store i64 0, ptr %elemptr412, align 4
   store ptr %4, ptr %struct_member7, align 8
-  store ptr %3, ptr %elemptr14, align 8
+  %elem13 = load { i64, i64, [5 x i64] }, ptr %3, align 4
+  store { i64, i64, [5 x i64] } %elem13, ptr %elemptr14, align 4
   ret ptr %0
 }
 
@@ -500,9 +502,9 @@ entry:
   %_books = alloca ptr, align 8
   store ptr %0, ptr %_books, align 8
   %1 = load ptr, ptr %_books, align 8
-  %index_access = getelementptr [2 x ptr], ptr %1, i64 0
-  %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %index_access, i32 0, i32 2
-  %index_access1 = getelementptr [5 x i64], ptr %struct_member, i64 1
+  %index_access = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %1, i64 0, i64 0
+  %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access, i32 0, i32 2
+  %index_access1 = getelementptr [5 x i64], ptr %struct_member, i64 0, i64 1
   %2 = load i64, ptr %index_access1, align 4
   ret i64 %2
 }
@@ -544,8 +546,8 @@ next:                                             ; preds = %body
 body:                                             ; preds = %cond
   %6 = sub i64 1, %index
   call void @builtin_range_check(i64 %6)
-  %index_access = getelementptr [2 x ptr], ptr %3, i64 %index
-  %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %index_access, i32 0, i32 2
+  %index_access = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %3, i64 0, i64 %index
+  %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access, i32 0, i32 2
   %7 = load ptr, ptr %struct_member, align 8
   %8 = load i64, ptr %array_size, align 4
   %9 = add i64 %8, 7
@@ -574,18 +576,18 @@ next5:                                            ; preds = %body6
 body6:                                            ; preds = %cond4
   %14 = sub i64 1, %index3
   call void @builtin_range_check(i64 %14)
-  %index_access8 = getelementptr [2 x ptr], ptr %3, i64 %index3
+  %index_access8 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %3, i64 0, i64 %index3
   %15 = load i64, ptr %buffer_offset, align 4
   %16 = getelementptr ptr, ptr %11, i64 %15
-  %struct_member9 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access8, i32 0, i32 0
+  %struct_member9 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 0
   %strcut_member = load i64, ptr %struct_member9, align 4
   %struct_offset = getelementptr ptr, ptr %16, i64 0
   store i64 %strcut_member, ptr %struct_offset, align 4
-  %struct_member10 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access8, i32 0, i32 1
+  %struct_member10 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 1
   %strcut_member11 = load i64, ptr %struct_member10, align 4
   %struct_offset12 = getelementptr ptr, ptr %struct_offset, i64 1
   store i64 %strcut_member11, ptr %struct_offset12, align 4
-  %struct_member13 = getelementptr inbounds { i64, i64, ptr }, ptr %index_access8, i32 0, i32 2
+  %struct_member13 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 2
   %strcut_member14 = load ptr, ptr %struct_member13, align 8
   %struct_offset15 = getelementptr ptr, ptr %struct_offset12, i64 1
   call void @memcpy(ptr %strcut_member14, ptr %struct_offset15, i64 5)
@@ -628,16 +630,16 @@ body21:                                           ; preds = %cond19
   %27 = load i64, ptr %decode_struct_field23, align 4
   %decode_struct_field24 = getelementptr ptr, ptr %21, i64 2
   %28 = call ptr @heap_malloc(i64 3)
-  %struct_member25 = getelementptr inbounds { i64, i64, ptr }, ptr %28, i32 0, i32 0
+  %struct_member25 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %28, i32 0, i32 0
   store i64 %26, ptr %struct_member25, align 4
-  %struct_member26 = getelementptr inbounds { i64, i64, ptr }, ptr %28, i32 0, i32 1
+  %struct_member26 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %28, i32 0, i32 1
   store i64 %27, ptr %struct_member26, align 4
-  %struct_member27 = getelementptr inbounds { i64, i64, ptr }, ptr %28, i32 0, i32 2
+  %struct_member27 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %28, i32 0, i32 2
   store ptr %decode_struct_field24, ptr %struct_member27, align 8
   %29 = load ptr, ptr %array_ptr, align 8
   %30 = sub i64 1, %index18
   call void @builtin_range_check(i64 %30)
-  %index_access28 = getelementptr [2 x ptr], ptr %29, i64 %index18
+  %index_access28 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %29, i64 0, i64 %index18
   store ptr %28, ptr %index_access28, align 8
   %31 = add i64 7, %23
   store i64 %31, ptr %array_offset, align 4

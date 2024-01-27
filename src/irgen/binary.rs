@@ -179,6 +179,20 @@ impl<'a> Binary<'a> {
         }
     }
 
+    /// Return the llvm type for field in struct or array
+    pub(crate) fn llvm_field_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
+        let llvm_ty = self.llvm_type(ty, ns);
+        match ty.deref_memory() {
+            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => llvm_ty
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
+            Type::DynamicBytes | Type::String => llvm_ty
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
+            _ => llvm_ty,
+        }
+    }
+
     /// Return the llvm type for the resolved type.
     pub(crate) fn llvm_type(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         match ty {
@@ -199,41 +213,16 @@ impl<'a> Binary<'a> {
                 .as_basic_type_enum(),
             Type::Enum(n) => self.llvm_type(&ns.enums[*n].ty, ns),
             Type::Array(base_ty, dims) => {
-                let ty = self.llvm_var_ty(base_ty, ns);
-
-                let mut dims = dims.iter();
-
-                let mut aty = match dims.next().unwrap() {
-                    ArrayLength::Fixed(d) => ty.array_type(d.to_u32().unwrap()),
-                    ArrayLength::Dynamic => {
-                        return self
+                dims.iter()
+                    .fold(self.llvm_field_ty(base_ty, ns), |aty, dim| match dim {
+                        ArrayLength::Fixed(d) => aty.array_type(d.to_u32().unwrap()).into(),
+                        ArrayLength::Dynamic => self
                             .context
                             .i64_type()
                             .ptr_type(AddressSpace::default())
-                            .as_basic_type_enum()
-                    }
-                    ArrayLength::AnyFixed => {
-                        unreachable!()
-                    }
-                };
-
-                for dim in dims {
-                    match dim {
-                        ArrayLength::Fixed(d) => aty = aty.array_type(d.to_u32().unwrap()),
-                        ArrayLength::Dynamic => {
-                            return self
-                                .context
-                                .i64_type()
-                                .ptr_type(AddressSpace::default())
-                                .as_basic_type_enum()
-                        }
-                        ArrayLength::AnyFixed => {
-                            unreachable!()
-                        }
-                    }
-                }
-
-                BasicTypeEnum::ArrayType(aty)
+                            .as_basic_type_enum(),
+                        ArrayLength::AnyFixed => unreachable!(),
+                    })
             }
             Type::String | Type::DynamicBytes => self
                 .context
@@ -247,7 +236,7 @@ impl<'a> Binary<'a> {
                     &ns.structs[*n]
                         .fields
                         .iter()
-                        .map(|f| self.llvm_var_ty(&f.ty, ns))
+                        .map(|f| self.llvm_field_ty(&f.ty, ns))
                         .collect::<Vec<BasicTypeEnum>>(),
                     false,
                 )
@@ -278,7 +267,7 @@ impl<'a> Binary<'a> {
             Type::UserType(no) => self.llvm_type(&ns.user_types[*no].ty, ns),
             Type::BufferPointer => self
                 .context
-                .i8_type()
+                .i64_type()
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             _ => unreachable!(),
@@ -320,8 +309,6 @@ impl<'a> Binary<'a> {
         zero_init: bool,
         ns: &Namespace,
     ) -> PointerValue<'a> {
-        let elem_ty = ty.array_elem();
-
         let heap_start_ptr = self.vector_new(size);
 
         match init {
@@ -330,7 +317,7 @@ impl<'a> Binary<'a> {
                     let data = self.vector_data(heap_start_ptr.as_basic_value_enum());
                     self.vector_zero_init(
                         function,
-                        &elem_ty,
+                        &ty,
                         self.context.i64_type().const_zero(),
                         size,
                         data,
@@ -627,6 +614,58 @@ impl<'a> Binary<'a> {
         self.builder.position_at_end(done);
     }
 
+    /// Emit a loop from `from` to `to`, checking the condition _before_ the
+    /// body.
+    pub fn emit_loop_cond_first<F>(
+        &self,
+        function: FunctionValue<'a>,
+        from: IntValue<'a>,
+        to: IntValue<'a>,
+        mut insert_body: F,
+    ) where
+        F: FnMut(IntValue<'a>),
+    {
+        let cond = self.context.append_basic_block(function, "cond");
+        let body = self.context.append_basic_block(function, "body");
+        let done = self.context.append_basic_block(function, "done");
+
+        let loop_ty = from.get_type();
+        // create an alloca for the loop variable
+        let index_alloca = self.build_alloca(function, loop_ty, "index_alloca");
+        // initialize the loop variable with the starting value
+        self.builder.build_store(index_alloca, from);
+
+        self.builder.build_unconditional_branch(cond);
+        self.builder.position_at_end(cond);
+
+        // load current value of the loop variable
+        let index_value = self
+            .builder
+            .build_load(loop_ty, index_alloca, "index_value")
+            .into_int_value();
+
+        let comp = self
+            .builder
+            .build_int_compare(IntPredicate::ULT, index_value, to, "loop_cond");
+        self.builder.build_conditional_branch(comp, body, done);
+
+        // build the loop body
+        self.builder.position_at_end(body);
+
+        insert_body(index_value);
+
+        let next_index =
+            self.builder
+                .build_int_add(index_value, loop_ty.const_int(1, false), "next_index");
+
+        // store the incremented value back
+        self.builder.build_store(index_alloca, next_index);
+
+        self.builder.build_unconditional_branch(cond);
+
+        self.builder.position_at_end(done);
+    }
+
     // /// Emit a loop from `from` to `to`, checking the condition _before_ the
     // /// body.
     // pub fn emit_loop_cond_first_with_int<F>(
@@ -698,27 +737,25 @@ impl<'a> Binary<'a> {
                         self.builder.build_gep(
                             llvm_ty,
                             array.into_pointer_value(),
-                            &[index],
+                            &[self.context.i64_type().const_zero(), index],
                             "index_access",
                         )
                     }
                 } else {
-                    let elem_ty = array_ty.array_deref();
-                    let llvm_elem_ty = self.llvm_type(elem_ty.deref_memory(), ns);
+                    let llvm_ty = self.llvm_var_ty(array_ty, ns);
                     let vector_ptr = self.vector_data(array);
                     unsafe {
                         self.builder
-                            .build_gep(llvm_elem_ty, vector_ptr, &[index], "index_access")
+                            .build_gep(llvm_ty, vector_ptr, &[index], "index_access")
                     }
                 }
             }
             Type::String | Type::DynamicBytes => {
-                let elem_ty = array_ty.array_deref();
-                let llvm_elem_ty = self.llvm_type(elem_ty.deref_memory(), ns);
+                let llvm_ty = self.llvm_var_ty(array_ty, ns);
                 let vector_ptr = self.vector_data(array.into());
                 unsafe {
                     self.builder
-                        .build_gep(llvm_elem_ty, vector_ptr, &[index], "index_access")
+                        .build_gep(llvm_ty, vector_ptr, &[index], "index_access")
                 }
             }
             _ => unreachable!(),
@@ -835,7 +872,7 @@ impl<'a> Binary<'a> {
         };
 
         self.builder
-            .build_store(index_access, ty.default(&self, function, ns).unwrap());
+            .build_store(index_access, ty.elem_ty().default(&self, function, ns).unwrap());
 
         let next_index =
             self.builder

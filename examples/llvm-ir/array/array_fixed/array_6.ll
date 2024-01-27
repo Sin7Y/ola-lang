@@ -452,16 +452,16 @@ exit:                                             ; preds = %loop
 define void @array_call() {
 entry:
   %0 = call ptr @heap_malloc(i64 2)
-  %elemptr0 = getelementptr [2 x i64], ptr %0, i64 0
+  %elemptr0 = getelementptr [2 x i64], ptr %0, i64 0, i64 0
   store i64 88, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [2 x i64], ptr %0, i64 1
+  %elemptr1 = getelementptr [2 x i64], ptr %0, i64 0, i64 1
   store i64 99, ptr %elemptr1, align 4
   %1 = call ptr @heap_malloc(i64 2)
-  %elemptr01 = getelementptr [2 x i64], ptr %1, i64 0
+  %elemptr01 = getelementptr [2 x i64], ptr %1, i64 0, i64 0
   store i64 1000, ptr %elemptr01, align 4
-  %elemptr12 = getelementptr [2 x i64], ptr %1, i64 1
+  %elemptr12 = getelementptr [2 x i64], ptr %1, i64 0, i64 1
   store i64 1001, ptr %elemptr12, align 4
-  %index_access = getelementptr [2 x i64], ptr %1, i64 0
+  %index_access = getelementptr [2 x i64], ptr %1, i64 0, i64 0
   %2 = load i64, ptr %index_access, align 4
   %3 = icmp eq i64 %2, 1000
   %4 = zext i1 %3 to i64

@@ -105,11 +105,11 @@ pub(super) fn abi_encode_with_selector<'a>(
     ns: &Namespace,
 ) -> PointerValue<'a> {
     let size = if args.is_empty() {
-       bin.context.i64_type().const_int(0, false)
-    }  else {
+        bin.context.i64_type().const_int(0, false)
+    } else {
         calculate_size_args(bin, &args, types, func_value, ns)
     };
-    
+
     let heap_size = bin.builder.build_int_add(
         size,
         bin.context.i64_type().const_int(2, false),
@@ -387,21 +387,21 @@ fn calculate_complex_array_size<'a>(
 ) {
     // If this dimension is dynamic, account for the encoded vector length variable.
     if dims[dimension] == ArrayLength::Dynamic {
-        // let arr = index_array(
-        //     bin,
-        //     &mut array.clone(),
-        //     &mut array_ty.clone(),
-        //     dims,
-        //     indexes,
-        //     func_value,
-        //     ns,
-        // );
-        // let size = bin.vector_len(arr);
+        let arr = index_array(
+            bin,
+            &mut array.clone(),
+            &mut array_ty.clone(),
+            dims,
+            indexes,
+            func_value,
+            ns
+        );
+        let array_length = bin.vector_len(arr);
         let size = bin.builder.build_int_add(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
-            bin.context.i64_type().const_int(1, false),
+                array_length,
             "",
         );
         bin.builder.build_store(size_var, size);
@@ -596,14 +596,6 @@ pub(crate) fn index_array<'a>(
         }
 
         *ty = local_ty;
-    }
-
-    if !matches!(ty, Type::Ref(_)) {
-        return bin.builder.build_load(
-            bin.llvm_var_ty(&ty.clone(), ns),
-            arr.into_pointer_value(),
-            "arr",
-        );
     }
 
     *arr
