@@ -454,7 +454,7 @@ entry:
   %source = alloca ptr, align 8
   store ptr %0, ptr %source, align 8
   %1 = load ptr, ptr %source, align 8
-  %index_access = getelementptr [3 x i64], ptr %1, i64 2
+  %index_access = getelementptr [3 x i64], ptr %1, i64 0, i64 2
   store i64 100, ptr %index_access, align 4
   ret ptr %1
 }

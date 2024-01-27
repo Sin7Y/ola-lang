@@ -454,15 +454,15 @@ entry:
   %0 = alloca i64, align 8
   %index_alloca = alloca i64, align 8
   %1 = call ptr @heap_malloc(i64 5)
-  %elemptr0 = getelementptr [5 x i64], ptr %1, i64 0
+  %elemptr0 = getelementptr [5 x i64], ptr %1, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [5 x i64], ptr %1, i64 1
+  %elemptr1 = getelementptr [5 x i64], ptr %1, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [5 x i64], ptr %1, i64 2
+  %elemptr2 = getelementptr [5 x i64], ptr %1, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %elemptr3 = getelementptr [5 x i64], ptr %1, i64 3
+  %elemptr3 = getelementptr [5 x i64], ptr %1, i64 0, i64 3
   store i64 4, ptr %elemptr3, align 4
-  %elemptr4 = getelementptr [5 x i64], ptr %1, i64 4
+  %elemptr4 = getelementptr [5 x i64], ptr %1, i64 0, i64 4
   store i64 5, ptr %elemptr4, align 4
   store i64 0, ptr %index_alloca, align 4
   store i64 0, ptr %0, align 4

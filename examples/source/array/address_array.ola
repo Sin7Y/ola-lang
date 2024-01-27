@@ -1,35 +1,29 @@
 
 contract AddressArrayTest {
 
-    // fn address_array_fiexed() -> (u32) {
+    fn address_array_fiexed() -> (u32) {
         
-    //     address[3] array_0 = [address(0x12), address(0x34), address(0x56)];
-    //     print(array_0);
-    //     return array_0.length;
-    // }
-
-    // fn address_array_dynamic() -> (u32) {
-        
-    //     address[] array_0 = [address(0x12), address(0x34), address(0x56)];
-    //     print(array_0);
-    //     return array_0.length;
-    // }
-
-    // fn address_array_fiexed_return() -> (address[3]) {
-    //     address[3] array_0 = [address(0x12), address(0x34), address(0x56)];
-    //     return array_0;
-    // }
-
-    // fn address_array_dynamic_return() -> (address[]) {  
-    //     address[] array_0 = [address(0x12), address(0x34), address(0x56)];
-    //     return array_0;
-    // }
-
-    fn validate_chainid() {
-        address SYSTEM_CONTEXT_ADDRESS = address(0x800b);
-        fields get_chainid_calldata = abi.encodeWithSignature("getChainID()");
-        fields chainid_bytes = SYSTEM_CONTEXT_ADDRESS.call(get_chainid_calldata);
-        u32 chainid = abi.decode(chainid_bytes, (u32));
-        assert(chainid == chain_id(), "Wrong transaction chainid");
+        address[3] array_0 = [address(0x12), address(0x34), address(0x56)];
+        print(array_0);
+        return array_0.length;
     }
+
+
+    fn address_array_dynamic() -> (u32) {
+        
+        address[] array_0 = [address(0x12), address(0x34), address(0x56)];
+        print(array_0);
+        return array_0.length;
+    }
+
+    fn address_array_fiexed_return() -> (address[3]) {
+        address[3] array_0 = [address(0x12), address(0x34), address(0x56)];
+        return array_0;
+    }
+
+    fn address_array_dynamic_return() -> (address[]) {  
+        address[] array_0 = [address(0x12), address(0x34), address(0x56)];
+        return array_0;
+    }
+
 }

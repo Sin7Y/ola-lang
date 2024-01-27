@@ -463,7 +463,7 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
