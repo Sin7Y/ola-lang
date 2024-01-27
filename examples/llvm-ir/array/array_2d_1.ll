@@ -601,6 +601,7 @@ body5:                                            ; preds = %cond4
   %18 = sub i64 %vector_length8, 1
   %19 = sub i64 %18, %array_index
   call void @builtin_range_check(i64 %19)
+<<<<<<< HEAD
   %vector_data = getelementptr i64, ptr %3, i64 1
   %index_access = getelementptr ptr, ptr %vector_data, i64 %array_index
   %array_element = load ptr, ptr %index_access, align 8
@@ -615,6 +616,15 @@ body5:                                            ; preds = %cond4
   %23 = load i64, ptr %buffer_offset, align 4
   %24 = add i64 %23, 1
   store i64 %24, ptr %buffer_offset, align 4
+=======
+  %index_access10 = getelementptr [3 x i64], ptr %index_access, i64 0, i64 %index4
+  %20 = load i64, ptr %buffer_offset, align 4
+  %21 = getelementptr ptr, ptr %7, i64 %20
+  store ptr %index_access10, ptr %21, align 8
+  %22 = load i64, ptr %buffer_offset, align 4
+  %23 = add i64 %22, 1
+  store i64 %23, ptr %buffer_offset, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %next6
 
 next6:                                            ; preds = %body5
@@ -694,11 +704,31 @@ body25:                                           ; preds = %cond24
   store i64 %47, ptr %buffer_offset15, align 4
   br label %next26
 
+<<<<<<< HEAD
 next26:                                           ; preds = %body25
   %index36 = load i64, ptr %index_ptr23, align 4
   %48 = add i64 %index36, 1
   store i64 %48, ptr %index_ptr23, align 4
   br label %cond24
+=======
+body28:                                           ; preds = %cond26
+  %vector_length30 = load i64, ptr %24, align 4
+  %38 = sub i64 %vector_length30, 1
+  %39 = sub i64 %38, %index18
+  call void @builtin_range_check(i64 %39)
+  %vector_data31 = getelementptr i64, ptr %24, i64 1
+  %index_access32 = getelementptr ptr, ptr %vector_data31, i64 %index18
+  %40 = sub i64 2, %index25
+  call void @builtin_range_check(i64 %40)
+  %index_access33 = getelementptr [3 x i64], ptr %index_access32, i64 0, i64 %index25
+  %41 = load i64, ptr %buffer_offset15, align 4
+  %42 = getelementptr ptr, ptr %28, i64 %41
+  store ptr %index_access33, ptr %42, align 8
+  %43 = load i64, ptr %buffer_offset15, align 4
+  %44 = add i64 %43, 1
+  store i64 %44, ptr %buffer_offset15, align 4
+  br label %next27
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 
 end_for27:                                        ; preds = %cond24
   br label %next20

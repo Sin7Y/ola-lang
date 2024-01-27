@@ -488,7 +488,6 @@ entry:
 define void @check_ecdsa_test() {
 entry:
   %result = alloca i64, align 8
-  %message = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
   %index_access = getelementptr i64, ptr %0, i64 3
@@ -508,8 +507,11 @@ entry:
   store i64 2619454573477891356, ptr %index_access2, align 4
   %index_access3 = getelementptr i64, ptr %0, i64 3
   store i64 -3657325475501787330, ptr %index_access3, align 4
+<<<<<<< HEAD
 >>>>>>> 81f6615 (regerate examples source files result.)
   store ptr %0, ptr %message, align 8
+=======
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %1 = call ptr @vector_new(i64 8)
   %vector_data = getelementptr i64, ptr %1, i64 1
   %index_access4 = getelementptr i64, ptr %vector_data, i64 0
@@ -546,11 +548,10 @@ entry:
   store i64 8474226046933642703, ptr %index_access19, align 4
   %index_access20 = getelementptr i64, ptr %vector_data12, i64 7
   store i64 -4287158756510387774, ptr %index_access20, align 4
-  %3 = load ptr, ptr %message, align 8
-  %4 = call i64 @check_ecdsa(ptr %3, ptr %1, ptr %2)
-  store i64 %4, ptr %result, align 4
-  %5 = load i64, ptr %result, align 4
-  call void @builtin_assert(i64 %5)
+  %3 = call i64 @check_ecdsa(ptr %0, ptr %1, ptr %2)
+  store i64 %3, ptr %result, align 4
+  %4 = load i64, ptr %result, align 4
+  call void @builtin_assert(i64 %4)
   ret void
 }
 

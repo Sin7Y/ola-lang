@@ -457,7 +457,6 @@ exit:                                             ; preds = %loop
 
 define void @onlyEntrypointCall() {
 entry:
-  %ENTRY_POINT_ADDRESS = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
   %index_access = getelementptr i64, ptr %0, i64 3
   store i64 32769, ptr %index_access, align 4
@@ -465,14 +464,18 @@ entry:
   store i64 0, ptr %index_access1, align 4
   %index_access2 = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %index_access2, align 4
+<<<<<<< HEAD
   %index_access3 = getelementptr i64, ptr %0, i64 0
   store i64 0, ptr %index_access3, align 4
   store ptr %0, ptr %ENTRY_POINT_ADDRESS, align 8
+=======
+  %index_access3 = getelementptr i64, ptr %0, i64 3
+  store i64 32769, ptr %index_access3, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %1 = call ptr @heap_malloc(i64 12)
   call void @get_tape_data(ptr %1, i64 12)
-  %2 = load ptr, ptr %ENTRY_POINT_ADDRESS, align 8
-  %3 = call i64 @memcmp_eq(ptr %1, ptr %2, i64 4)
-  call void @builtin_assert(i64 %3)
+  %2 = call i64 @memcmp_eq(ptr %1, ptr %0, i64 4)
+  call void @builtin_assert(i64 %2)
   ret void
 }
 
@@ -521,8 +524,8 @@ define void @markCodehashKnown(ptr %0) {
 entry:
   %_hash = alloca ptr, align 8
   store ptr %0, ptr %_hash, align 8
-  call void @onlyEntrypointCall()
   %1 = load ptr, ptr %_hash, align 8
+  call void @onlyEntrypointCall()
   %2 = call ptr @heap_malloc(i64 4)
   %3 = getelementptr i64, ptr %2, i64 0
   store i64 0, ptr %3, align 4

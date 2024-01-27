@@ -434,6 +434,7 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+<<<<<<< HEAD
   %counter = alloca i64, align 8
   %result = alloca i64, align 8
   store i64 0, ptr %counter, align 4
@@ -453,6 +454,21 @@ loop:                                             ; preds = %loop, %entry
 exit:                                             ; preds = %loop
   %finalResult = load i64, ptr %result, align 4
   ret i64 %finalResult
+=======
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %0
+  %loopcond = icmp ule i64 %inc, %1
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 }
 
 define void @set_string_test() {
@@ -541,6 +557,7 @@ body:                                             ; preds = %cond
   %32 = getelementptr i64, ptr %28, i64 3
   store i64 %27, ptr %32, align 4
   call void @set_storage(ptr %26, ptr %28)
+<<<<<<< HEAD
   %33 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %26, ptr %33, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %33, i64 3
@@ -548,6 +565,13 @@ body:                                             ; preds = %cond
   %last_elem = add i64 %34, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
   store ptr %33, ptr %1, align 8
+=======
+  %33 = getelementptr i64, ptr %26, i64 3
+  %34 = load i64, ptr %33, align 4
+  %slot_offset = add i64 %34, 1
+  store i64 %slot_offset, ptr %33, align 4
+  store ptr %26, ptr %1, align 8
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -565,6 +589,7 @@ cond7:                                            ; preds = %body8, %done
 body8:                                            ; preds = %cond7
   %35 = load ptr, ptr %0, align 8
   %36 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %storage_zero_ptr = getelementptr i64, ptr %36, i64 0
   store i64 0, ptr %storage_zero_ptr, align 4
   %storage_zero_ptr13 = getelementptr i64, ptr %36, i64 1
@@ -583,6 +608,24 @@ body8:                                            ; preds = %cond7
   store ptr %37, ptr %0, align 8
   %next_index18 = add i64 %index_value11, 1
   store i64 %next_index18, ptr %index_alloca10, align 4
+=======
+  %storage_key_ptr = getelementptr i64, ptr %36, i64 0
+  store i64 0, ptr %storage_key_ptr, align 4
+  %storage_key_ptr13 = getelementptr i64, ptr %36, i64 1
+  store i64 0, ptr %storage_key_ptr13, align 4
+  %storage_key_ptr14 = getelementptr i64, ptr %36, i64 2
+  store i64 0, ptr %storage_key_ptr14, align 4
+  %storage_key_ptr15 = getelementptr i64, ptr %36, i64 3
+  store i64 0, ptr %storage_key_ptr15, align 4
+  call void @set_storage(ptr %35, ptr %36)
+  %37 = getelementptr i64, ptr %35, i64 3
+  %38 = load i64, ptr %37, align 4
+  %slot_offset16 = add i64 %38, 1
+  store i64 %slot_offset16, ptr %37, align 4
+  store ptr %35, ptr %0, align 8
+  %next_index17 = add i64 %index_value11, 1
+  store i64 %next_index17, ptr %index_alloca10, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %cond7
 
 done9:                                            ; preds = %cond7
@@ -652,6 +695,7 @@ body:                                             ; preds = %cond
   call void @get_storage(ptr %15, ptr %16)
   %17 = getelementptr i64, ptr %16, i64 3
   %storage_value = load i64, ptr %17, align 4
+<<<<<<< HEAD
   %18 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %15, ptr %18, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %18, i64 3
@@ -660,6 +704,14 @@ body:                                             ; preds = %cond
   store i64 %last_elem, ptr %last_elem_ptr, align 4
   store i64 %storage_value, ptr %index_access, align 4
   store ptr %18, ptr %0, align 8
+=======
+  %18 = getelementptr i64, ptr %15, i64 3
+  %19 = load i64, ptr %18, align 4
+  %slot_offset = add i64 %19, 1
+  store i64 %slot_offset, ptr %18, align 4
+  store i64 %storage_value, ptr %index_access, align 4
+  store ptr %15, ptr %0, align 8
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond

@@ -491,7 +491,6 @@ entry:
 
 define ptr @array_input_address_1(ptr %0, i64 %1) {
 entry:
-  %a = alloca ptr, align 8
   %b = alloca i64, align 8
   %array = alloca ptr, align 8
   store ptr %0, ptr %array, align 8
@@ -503,9 +502,7 @@ entry:
   %index_access = getelementptr [3 x [2 x ptr]], ptr %2, i64 0, i64 %3
   %index_access1 = getelementptr [2 x ptr], ptr %index_access, i64 0, i64 1
   %5 = load ptr, ptr %index_access1, align 8
-  store ptr %5, ptr %a, align 8
-  %6 = load ptr, ptr %a, align 8
-  ret ptr %6
+  ret ptr %5
 }
 
 define ptr @array_input_address_2(ptr %0) {
@@ -555,6 +552,7 @@ cond2:                                            ; preds = %next4, %body
   %9 = icmp ult i64 %8, 2
   br i1 %9, label %body3, label %end_for5
 
+<<<<<<< HEAD
 body3:                                            ; preds = %cond2
   %array_index = load i64, ptr %index_ptr, align 4
   %10 = sub i64 2, %array_index
@@ -569,6 +567,24 @@ body3:                                            ; preds = %cond2
   %12 = load i64, ptr %array_size, align 4
   %13 = add i64 %12, 4
   store i64 %13, ptr %array_size, align 4
+=======
+next4:                                            ; preds = %body5
+  %index8 = load i64, ptr %index_ptr1, align 4
+  %8 = add i64 %index8, 1
+  store i64 %8, ptr %index_ptr1, align 4
+  br label %cond3
+
+body5:                                            ; preds = %cond3
+  %9 = sub i64 2, %index
+  call void @builtin_range_check(i64 %9)
+  %index_access = getelementptr [3 x [2 x ptr]], ptr %1, i64 0, i64 %index
+  %10 = sub i64 1, %index2
+  call void @builtin_range_check(i64 %10)
+  %index_access7 = getelementptr [2 x ptr], ptr %index_access, i64 0, i64 %index2
+  %11 = load i64, ptr %array_size, align 4
+  %12 = add i64 %11, 4
+  store i64 %12, ptr %array_size, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %next4
 
 next4:                                            ; preds = %body3
@@ -624,6 +640,7 @@ cond16:                                           ; preds = %next18, %body12
   %23 = icmp ult i64 %22, 2
   br i1 %23, label %body17, label %end_for19
 
+<<<<<<< HEAD
 body17:                                           ; preds = %cond16
   %array_index20 = load i64, ptr %index_ptr10, align 4
   %24 = sub i64 2, %array_index20
@@ -638,6 +655,28 @@ body17:                                           ; preds = %cond16
   %26 = load i64, ptr %buffer_offset, align 4
   %27 = getelementptr ptr, ptr %7, i64 %26
   %28 = getelementptr i64, ptr %array_element25, i64 0
+=======
+next19:                                           ; preds = %body20
+  %index24 = load i64, ptr %index_ptr16, align 4
+  %20 = add i64 %index24, 1
+  store i64 %20, ptr %index_ptr16, align 4
+  br label %cond18
+
+body20:                                           ; preds = %cond18
+  %21 = sub i64 2, %index11
+  call void @builtin_range_check(i64 %21)
+  %index_access22 = getelementptr [3 x [2 x ptr]], ptr %1, i64 0, i64 %index11
+  %22 = sub i64 1, %index17
+  call void @builtin_range_check(i64 %22)
+  %index_access23 = getelementptr [2 x ptr], ptr %index_access22, i64 0, i64 %index17
+  %23 = load i64, ptr %buffer_offset, align 4
+  %24 = getelementptr ptr, ptr %6, i64 %23
+  %25 = getelementptr i64, ptr %index_access23, i64 0
+  %26 = load i64, ptr %25, align 4
+  %27 = getelementptr i64, ptr %24, i64 0
+  store i64 %26, ptr %27, align 4
+  %28 = getelementptr i64, ptr %index_access23, i64 1
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %29 = load i64, ptr %28, align 4
   %30 = getelementptr i64, ptr %27, i64 0
   store i64 %29, ptr %30, align 4
@@ -721,6 +760,22 @@ next36:                                           ; preds = %body35
   store i64 %60, ptr %index_ptr33, align 4
   br label %cond34
 
+<<<<<<< HEAD
+=======
+body36:                                           ; preds = %cond34
+  %46 = load ptr, ptr %array_ptr, align 8
+  %47 = sub i64 2, %index27
+  call void @builtin_range_check(i64 %47)
+  %index_access38 = getelementptr [3 x [2 x ptr]], ptr %46, i64 0, i64 %index27
+  %48 = sub i64 1, %index33
+  call void @builtin_range_check(i64 %48)
+  %index_access39 = getelementptr [2 x ptr], ptr %index_access38, i64 0, i64 %index33
+  store ptr %16, ptr %index_access39, align 8
+  %49 = add i64 4, %41
+  store i64 %49, ptr %array_offset, align 4
+  br label %next35
+
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 end_for37:                                        ; preds = %cond34
   br label %next31
 }
@@ -845,6 +900,7 @@ cond2:                                            ; preds = %next4, %body
   %28 = icmp ult i64 %27, 2
   br i1 %28, label %body3, label %end_for5
 
+<<<<<<< HEAD
 body3:                                            ; preds = %cond2
   %29 = load i64, ptr %offset_var, align 4
   %30 = getelementptr ptr, ptr %18, i64 %29
@@ -862,6 +918,25 @@ body3:                                            ; preds = %cond2
   store ptr %30, ptr %index_access7, align 8
   %34 = add i64 4, %29
   store i64 %34, ptr %offset_var, align 4
+=======
+next4:                                            ; preds = %body5
+  %index8 = load i64, ptr %index_ptr1, align 4
+  %24 = add i64 %index8, 1
+  store i64 %24, ptr %index_ptr1, align 4
+  br label %cond3
+
+body5:                                            ; preds = %cond3
+  %25 = load ptr, ptr %array_ptr, align 8
+  %26 = sub i64 2, %index
+  call void @builtin_range_check(i64 %26)
+  %index_access = getelementptr [3 x [2 x ptr]], ptr %25, i64 0, i64 %index
+  %27 = sub i64 1, %index2
+  call void @builtin_range_check(i64 %27)
+  %index_access7 = getelementptr [2 x ptr], ptr %index_access, i64 0, i64 %index2
+  store ptr %12, ptr %index_access7, align 8
+  %28 = add i64 4, %17
+  store i64 %28, ptr %array_offset, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %next4
 
 next4:                                            ; preds = %body3
@@ -878,6 +953,7 @@ cond11:                                           ; preds = %next13, %end_for
   %37 = icmp ult i64 %36, 2
   br i1 %37, label %body12, label %end_for14
 
+<<<<<<< HEAD
 body12:                                           ; preds = %cond11
   %array_index15 = load i64, ptr %index_ptr10, align 4
   %38 = sub i64 1, %array_index15
@@ -887,6 +963,21 @@ body12:                                           ; preds = %cond11
   %39 = load i64, ptr %array_size, align 4
   %40 = add i64 %39, 4
   store i64 %40, ptr %array_size, align 4
+=======
+next13:                                           ; preds = %body14
+  %index17 = load i64, ptr %index_ptr10, align 4
+  %30 = add i64 %index17, 1
+  store i64 %30, ptr %index_ptr10, align 4
+  br label %cond12
+
+body14:                                           ; preds = %cond12
+  %31 = sub i64 1, %index11
+  call void @builtin_range_check(i64 %31)
+  %index_access16 = getelementptr [2 x ptr], ptr %22, i64 0, i64 %index11
+  %32 = load i64, ptr %array_size, align 4
+  %33 = add i64 %32, 4
+  store i64 %33, ptr %array_size, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %next13
 
 next13:                                           ; preds = %body12
@@ -943,6 +1034,36 @@ next22:                                           ; preds = %body21
   store i64 %63, ptr %index_ptr19, align 4
   br label %cond20
 
+<<<<<<< HEAD
+=======
+body22:                                           ; preds = %cond20
+  %38 = sub i64 1, %index19
+  call void @builtin_range_check(i64 %38)
+  %index_access24 = getelementptr [2 x ptr], ptr %22, i64 0, i64 %index19
+  %39 = load i64, ptr %buffer_offset, align 4
+  %40 = getelementptr ptr, ptr %35, i64 %39
+  %41 = getelementptr i64, ptr %index_access24, i64 0
+  %42 = load i64, ptr %41, align 4
+  %43 = getelementptr i64, ptr %40, i64 0
+  store i64 %42, ptr %43, align 4
+  %44 = getelementptr i64, ptr %index_access24, i64 1
+  %45 = load i64, ptr %44, align 4
+  %46 = getelementptr i64, ptr %40, i64 1
+  store i64 %45, ptr %46, align 4
+  %47 = getelementptr i64, ptr %index_access24, i64 2
+  %48 = load i64, ptr %47, align 4
+  %49 = getelementptr i64, ptr %40, i64 2
+  store i64 %48, ptr %49, align 4
+  %50 = getelementptr i64, ptr %index_access24, i64 3
+  %51 = load i64, ptr %50, align 4
+  %52 = getelementptr i64, ptr %40, i64 3
+  store i64 %51, ptr %52, align 4
+  %53 = load i64, ptr %buffer_offset, align 4
+  %54 = add i64 %53, 4
+  store i64 %54, ptr %buffer_offset, align 4
+  br label %next21
+
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 end_for23:                                        ; preds = %cond20
   %64 = load i64, ptr %buffer_offset, align 4
   %65 = getelementptr ptr, ptr %43, i64 %64
@@ -1035,6 +1156,22 @@ next38:                                           ; preds = %body37
   store i64 %103, ptr %index_ptr35, align 4
   br label %cond36
 
+<<<<<<< HEAD
+=======
+body38:                                           ; preds = %cond36
+  %84 = load ptr, ptr %array_ptr27, align 8
+  %85 = sub i64 2, %index29
+  call void @builtin_range_check(i64 %85)
+  %index_access40 = getelementptr [3 x [2 x ptr]], ptr %84, i64 0, i64 %index29
+  %86 = sub i64 1, %index35
+  call void @builtin_range_check(i64 %86)
+  %index_access41 = getelementptr [2 x ptr], ptr %index_access40, i64 0, i64 %index35
+  store ptr %57, ptr %index_access41, align 8
+  %87 = add i64 4, %62
+  store i64 %87, ptr %array_offset26, align 4
+  br label %next37
+
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 end_for39:                                        ; preds = %cond36
   br label %next33
 
@@ -1065,11 +1202,60 @@ next53:                                           ; preds = %end_for59
   store i64 %113, ptr %index_ptr50, align 4
   br label %cond51
 
+<<<<<<< HEAD
 end_for54:                                        ; preds = %cond51
   %114 = load ptr, ptr %array_ptr49, align 8
   %115 = load i64, ptr %offset_var48, align 4
   %116 = call ptr @array_input_address_2(ptr %114)
   store i64 0, ptr %array_size68, align 4
+=======
+end_for51:                                        ; preds = %cond48
+  %94 = load ptr, ptr %array_ptr45, align 8
+  %95 = load i64, ptr %array_offset44, align 4
+  %96 = call ptr @array_input_address_2(ptr %94)
+  store i64 0, ptr %array_size62, align 4
+  store i64 0, ptr %index_ptr63, align 4
+  %index64 = load i64, ptr %index_ptr63, align 4
+  br label %cond65
+
+cond54:                                           ; preds = %next55, %body50
+  %97 = icmp ult i64 %index53, 2
+  br i1 %97, label %body56, label %end_for57
+
+next55:                                           ; preds = %body56
+  %index60 = load i64, ptr %index_ptr52, align 4
+  %98 = add i64 %index60, 1
+  store i64 %98, ptr %index_ptr52, align 4
+  br label %cond54
+
+body56:                                           ; preds = %cond54
+  %99 = load ptr, ptr %array_ptr45, align 8
+  %100 = sub i64 2, %index47
+  call void @builtin_range_check(i64 %100)
+  %index_access58 = getelementptr [3 x [2 x ptr]], ptr %99, i64 0, i64 %index47
+  %101 = sub i64 1, %index53
+  call void @builtin_range_check(i64 %101)
+  %index_access59 = getelementptr [2 x ptr], ptr %index_access58, i64 0, i64 %index53
+  store ptr %88, ptr %index_access59, align 8
+  %102 = add i64 4, %93
+  store i64 %102, ptr %array_offset44, align 4
+  br label %next55
+
+end_for57:                                        ; preds = %cond54
+  br label %next49
+
+cond65:                                           ; preds = %next66, %end_for51
+  %103 = icmp ult i64 %index64, 3
+  br i1 %103, label %body67, label %end_for68
+
+next66:                                           ; preds = %end_for74
+  %index78 = load i64, ptr %index_ptr63, align 4
+  %104 = add i64 %index78, 1
+  store i64 %104, ptr %index_ptr63, align 4
+  br label %cond65
+
+body67:                                           ; preds = %cond65
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   store i64 0, ptr %index_ptr69, align 4
   br label %cond70
 
@@ -1103,6 +1289,7 @@ next58:                                           ; preds = %body57
   store i64 %125, ptr %index_ptr55, align 4
   br label %cond56
 
+<<<<<<< HEAD
 end_for59:                                        ; preds = %cond56
   br label %next53
 
@@ -1157,6 +1344,18 @@ next77:                                           ; preds = %body76
   br label %cond75
 
 end_for78:                                        ; preds = %cond75
+=======
+body73:                                           ; preds = %cond71
+  %109 = sub i64 2, %index64
+  call void @builtin_range_check(i64 %109)
+  %index_access75 = getelementptr [3 x [2 x ptr]], ptr %96, i64 0, i64 %index64
+  %110 = sub i64 1, %index70
+  call void @builtin_range_check(i64 %110)
+  %index_access76 = getelementptr [2 x ptr], ptr %index_access75, i64 0, i64 %index70
+  %111 = load i64, ptr %array_size62, align 4
+  %112 = add i64 %111, 4
+  store i64 %112, ptr %array_size62, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %next72
 
 cond90:                                           ; preds = %next92, %end_for73
@@ -1220,11 +1419,43 @@ body96:                                           ; preds = %cond95
   store i64 %162, ptr %buffer_offset88, align 4
   br label %next97
 
+<<<<<<< HEAD
 next97:                                           ; preds = %body96
   %index105 = load i64, ptr %index_ptr94, align 4
   %163 = add i64 %index105, 1
   store i64 %163, ptr %index_ptr94, align 4
   br label %cond95
+=======
+body91:                                           ; preds = %cond89
+  %119 = sub i64 2, %index82
+  call void @builtin_range_check(i64 %119)
+  %index_access93 = getelementptr [3 x [2 x ptr]], ptr %96, i64 0, i64 %index82
+  %120 = sub i64 1, %index88
+  call void @builtin_range_check(i64 %120)
+  %index_access94 = getelementptr [2 x ptr], ptr %index_access93, i64 0, i64 %index88
+  %121 = load i64, ptr %buffer_offset80, align 4
+  %122 = getelementptr ptr, ptr %106, i64 %121
+  %123 = getelementptr i64, ptr %index_access94, i64 0
+  %124 = load i64, ptr %123, align 4
+  %125 = getelementptr i64, ptr %122, i64 0
+  store i64 %124, ptr %125, align 4
+  %126 = getelementptr i64, ptr %index_access94, i64 1
+  %127 = load i64, ptr %126, align 4
+  %128 = getelementptr i64, ptr %122, i64 1
+  store i64 %127, ptr %128, align 4
+  %129 = getelementptr i64, ptr %index_access94, i64 2
+  %130 = load i64, ptr %129, align 4
+  %131 = getelementptr i64, ptr %122, i64 2
+  store i64 %130, ptr %131, align 4
+  %132 = getelementptr i64, ptr %index_access94, i64 3
+  %133 = load i64, ptr %132, align 4
+  %134 = getelementptr i64, ptr %122, i64 3
+  store i64 %133, ptr %134, align 4
+  %135 = load i64, ptr %buffer_offset80, align 4
+  %136 = add i64 %135, 4
+  store i64 %136, ptr %buffer_offset80, align 4
+  br label %next90
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 
 end_for98:                                        ; preds = %cond95
   br label %next92
@@ -1279,11 +1510,25 @@ body115:                                          ; preds = %cond114
   store i64 %175, ptr %array_size107, align 4
   br label %next116
 
+<<<<<<< HEAD
 next116:                                          ; preds = %body115
   %index124 = load i64, ptr %index_ptr113, align 4
   %176 = add i64 %index124, 1
   store i64 %176, ptr %index_ptr113, align 4
   br label %cond114
+=======
+body108:                                          ; preds = %cond106
+  %144 = sub i64 2, %index99
+  call void @builtin_range_check(i64 %144)
+  %index_access110 = getelementptr [3 x [2 x ptr]], ptr %137, i64 0, i64 %index99
+  %145 = sub i64 1, %index105
+  call void @builtin_range_check(i64 %145)
+  %index_access111 = getelementptr [2 x ptr], ptr %index_access110, i64 0, i64 %index105
+  %146 = load i64, ptr %array_size97, align 4
+  %147 = add i64 %146, 4
+  store i64 %147, ptr %array_size97, align 4
+  br label %next107
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 
 end_for117:                                       ; preds = %cond114
   br label %next111
@@ -1349,11 +1594,43 @@ body135:                                          ; preds = %cond134
   store i64 %201, ptr %buffer_offset127, align 4
   br label %next136
 
+<<<<<<< HEAD
 next136:                                          ; preds = %body135
   %index144 = load i64, ptr %index_ptr133, align 4
   %202 = add i64 %index144, 1
   store i64 %202, ptr %index_ptr133, align 4
   br label %cond134
+=======
+body126:                                          ; preds = %cond124
+  %154 = sub i64 2, %index117
+  call void @builtin_range_check(i64 %154)
+  %index_access128 = getelementptr [3 x [2 x ptr]], ptr %137, i64 0, i64 %index117
+  %155 = sub i64 1, %index123
+  call void @builtin_range_check(i64 %155)
+  %index_access129 = getelementptr [2 x ptr], ptr %index_access128, i64 0, i64 %index123
+  %156 = load i64, ptr %buffer_offset115, align 4
+  %157 = getelementptr ptr, ptr %141, i64 %156
+  %158 = getelementptr i64, ptr %index_access129, i64 0
+  %159 = load i64, ptr %158, align 4
+  %160 = getelementptr i64, ptr %157, i64 0
+  store i64 %159, ptr %160, align 4
+  %161 = getelementptr i64, ptr %index_access129, i64 1
+  %162 = load i64, ptr %161, align 4
+  %163 = getelementptr i64, ptr %157, i64 1
+  store i64 %162, ptr %163, align 4
+  %164 = getelementptr i64, ptr %index_access129, i64 2
+  %165 = load i64, ptr %164, align 4
+  %166 = getelementptr i64, ptr %157, i64 2
+  store i64 %165, ptr %166, align 4
+  %167 = getelementptr i64, ptr %index_access129, i64 3
+  %168 = load i64, ptr %167, align 4
+  %169 = getelementptr i64, ptr %157, i64 3
+  store i64 %168, ptr %169, align 4
+  %170 = load i64, ptr %buffer_offset115, align 4
+  %171 = add i64 %170, 4
+  store i64 %171, ptr %buffer_offset115, align 4
+  br label %next125
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 
 end_for137:                                       ; preds = %cond134
   br label %next131

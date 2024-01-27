@@ -458,7 +458,11 @@ exit:                                             ; preds = %loop
 define void @setStringLiteral() {
 entry:
   %0 = alloca ptr, align 8
+<<<<<<< HEAD
   %index_alloca21 = alloca i64, align 8
+=======
+  %index_alloca20 = alloca i64, align 8
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %1 = alloca ptr, align 8
   %index_alloca8 = alloca i64, align 8
   %2 = alloca ptr, align 8
@@ -539,6 +543,7 @@ body:                                             ; preds = %cond
   %33 = getelementptr i64, ptr %29, i64 3
   store i64 %28, ptr %33, align 4
   call void @set_storage(ptr %27, ptr %29)
+<<<<<<< HEAD
   %34 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %27, ptr %34, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %34, i64 3
@@ -546,6 +551,13 @@ body:                                             ; preds = %cond
   %last_elem = add i64 %35, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
   store ptr %34, ptr %2, align 8
+=======
+  %34 = getelementptr i64, ptr %27, i64 3
+  %35 = load i64, ptr %34, align 4
+  %slot_offset = add i64 %35, 1
+  store i64 %slot_offset, ptr %34, align 4
+  store ptr %27, ptr %2, align 8
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -563,6 +575,7 @@ cond5:                                            ; preds = %body6, %done
 body6:                                            ; preds = %cond5
   %36 = load ptr, ptr %1, align 8
   %37 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %storage_zero_ptr = getelementptr i64, ptr %37, i64 0
   store i64 0, ptr %storage_zero_ptr, align 4
   %storage_zero_ptr11 = getelementptr i64, ptr %37, i64 1
@@ -581,6 +594,24 @@ body6:                                            ; preds = %cond5
   store ptr %38, ptr %1, align 8
   %next_index16 = add i64 %index_value9, 1
   store i64 %next_index16, ptr %index_alloca8, align 4
+=======
+  %storage_key_ptr = getelementptr i64, ptr %37, i64 0
+  store i64 0, ptr %storage_key_ptr, align 4
+  %storage_key_ptr11 = getelementptr i64, ptr %37, i64 1
+  store i64 0, ptr %storage_key_ptr11, align 4
+  %storage_key_ptr12 = getelementptr i64, ptr %37, i64 2
+  store i64 0, ptr %storage_key_ptr12, align 4
+  %storage_key_ptr13 = getelementptr i64, ptr %37, i64 3
+  store i64 0, ptr %storage_key_ptr13, align 4
+  call void @set_storage(ptr %36, ptr %37)
+  %38 = getelementptr i64, ptr %36, i64 3
+  %39 = load i64, ptr %38, align 4
+  %slot_offset14 = add i64 %39, 1
+  store i64 %slot_offset14, ptr %38, align 4
+  store ptr %36, ptr %1, align 8
+  %next_index15 = add i64 %index_value9, 1
+  store i64 %next_index15, ptr %index_alloca8, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   br label %cond5
 
 done7:                                            ; preds = %cond5
@@ -595,8 +626,13 @@ done7:                                            ; preds = %cond5
   %45 = getelementptr i64, ptr %41, i64 3
   store i64 0, ptr %45, align 4
   call void @get_storage(ptr %41, ptr %40)
+<<<<<<< HEAD
   %length17 = getelementptr i64, ptr %40, i64 3
   %46 = load i64, ptr %length17, align 4
+=======
+  %length16 = getelementptr i64, ptr %40, i64 3
+  %46 = load i64, ptr %length16, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %47 = call ptr @vector_new(i64 %46)
   %48 = call ptr @heap_malloc(i64 4)
   %49 = getelementptr i64, ptr %48, i64 0
@@ -609,6 +645,7 @@ done7:                                            ; preds = %cond5
   store i64 0, ptr %52, align 4
   %53 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %48, ptr %53, i64 4)
+<<<<<<< HEAD
   store i64 0, ptr %index_alloca21, align 4
   store ptr %53, ptr %0, align 8
   br label %cond18
@@ -622,10 +659,26 @@ body19:                                           ; preds = %cond18
   %54 = load ptr, ptr %0, align 8
   %vector_data24 = getelementptr i64, ptr %47, i64 1
   %index_access25 = getelementptr ptr, ptr %vector_data24, i64 %index_value22
+=======
+  store i64 0, ptr %index_alloca20, align 4
+  store ptr %53, ptr %0, align 8
+  br label %cond17
+
+cond17:                                           ; preds = %body18, %done7
+  %index_value21 = load i64, ptr %index_alloca20, align 4
+  %loop_cond22 = icmp ult i64 %index_value21, %46
+  br i1 %loop_cond22, label %body18, label %done19
+
+body18:                                           ; preds = %cond17
+  %54 = load ptr, ptr %0, align 8
+  %vector_data23 = getelementptr i64, ptr %47, i64 1
+  %index_access24 = getelementptr ptr, ptr %vector_data23, i64 %index_value21
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %55 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %54, ptr %55)
   %56 = getelementptr i64, ptr %55, i64 3
   %storage_value = load i64, ptr %56, align 4
+<<<<<<< HEAD
   %57 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %54, ptr %57, i64 4)
   %last_elem_ptr26 = getelementptr i64, ptr %57, i64 3
@@ -639,6 +692,19 @@ body19:                                           ; preds = %cond18
   br label %cond18
 
 done20:                                           ; preds = %cond18
+=======
+  %57 = getelementptr i64, ptr %54, i64 3
+  %58 = load i64, ptr %57, align 4
+  %slot_offset25 = add i64 %58, 1
+  store i64 %slot_offset25, ptr %57, align 4
+  store i64 %storage_value, ptr %index_access24, align 4
+  store ptr %54, ptr %0, align 8
+  %next_index26 = add i64 %index_value21, 1
+  store i64 %next_index26, ptr %index_alloca20, align 4
+  br label %cond17
+
+done19:                                           ; preds = %cond17
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %string_start = ptrtoint ptr %47 to i64
   call void @prophet_printf(i64 %string_start, i64 1)
   ret void
@@ -665,6 +731,7 @@ entry:
   store i64 0, ptr %9, align 4
   call void @get_storage(ptr %5, ptr %4)
 <<<<<<< HEAD
+<<<<<<< HEAD
   %length = getelementptr i64, ptr %4, i64 3
   %10 = load i64, ptr %length, align 4
   %vector_length = load i64, ptr %3, align 4
@@ -672,6 +739,11 @@ entry:
   %10 = getelementptr i64, ptr %4, i64 3
   %storage_value = load i64, ptr %10, align 4
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+  %length = getelementptr i64, ptr %4, i64 3
+  %10 = load i64, ptr %length, align 4
+  %vector_length = load i64, ptr %3, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %11 = call ptr @heap_malloc(i64 4)
   %12 = getelementptr i64, ptr %11, i64 0
   store i64 0, ptr %12, align 4
@@ -715,10 +787,14 @@ body:                                             ; preds = %cond
   %27 = load ptr, ptr %2, align 8
   %vector_data = getelementptr i64, ptr %3, i64 1
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
 =======
   %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %28 = load i64, ptr %index_access, align 4
   %29 = call ptr @heap_malloc(i64 4)
   %30 = getelementptr i64, ptr %29, i64 0
@@ -805,6 +881,7 @@ done3:                                            ; preds = %cond1
   ret void
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 define void @setStringLiteral() {
@@ -938,6 +1015,8 @@ done9:                                            ; preds = %cond7
 }
 
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 define ptr @get() {
 entry:
   %0 = alloca ptr, align 8
@@ -954,6 +1033,7 @@ entry:
   store i64 0, ptr %6, align 4
   call void @get_storage(ptr %2, ptr %1)
 <<<<<<< HEAD
+<<<<<<< HEAD
   %length = getelementptr i64, ptr %1, i64 3
   %7 = load i64, ptr %length, align 4
   %8 = call ptr @vector_new(i64 %7)
@@ -962,6 +1042,11 @@ entry:
   %storage_value = load i64, ptr %7, align 4
   %8 = call ptr @vector_new(i64 %storage_value)
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+  %length = getelementptr i64, ptr %1, i64 3
+  %7 = load i64, ptr %length, align 4
+  %8 = call ptr @vector_new(i64 %7)
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %9 = call ptr @heap_malloc(i64 4)
   %10 = getelementptr i64, ptr %9, i64 0
   store i64 0, ptr %10, align 4
@@ -986,6 +1071,7 @@ body:                                             ; preds = %cond
   %15 = load ptr, ptr %0, align 8
   %vector_data = getelementptr i64, ptr %8, i64 1
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
   %16 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %15, ptr %16)
@@ -1001,15 +1087,18 @@ body:                                             ; preds = %cond
   store ptr %18, ptr %0, align 8
 =======
   %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+=======
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %16 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %15, ptr %16)
   %17 = getelementptr i64, ptr %16, i64 3
-  %storage_value1 = load i64, ptr %17, align 4
+  %storage_value = load i64, ptr %17, align 4
   %18 = getelementptr i64, ptr %15, i64 3
   %19 = load i64, ptr %18, align 4
   %slot_offset = add i64 %19, 1
   store i64 %slot_offset, ptr %18, align 4
-  store i64 %storage_value1, ptr %index_access, align 4
+  store i64 %storage_value, ptr %index_access, align 4
   store ptr %15, ptr %0, align 8
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
   %next_index = add i64 %index_value, 1
