@@ -453,11 +453,11 @@ define void @fixed_array_test() {
 entry:
   %i = alloca i64, align 8
   %0 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
   store i64 0, ptr %i, align 4
   br label %cond
@@ -471,7 +471,7 @@ body:                                             ; preds = %cond
   %3 = load i64, ptr %i, align 4
   %4 = sub i64 2, %3
   call void @builtin_range_check(i64 %4)
-  %index_access = getelementptr [3 x i64], ptr %0, i64 %3
+  %index_access = getelementptr [3 x i64], ptr %0, i64 0, i64 %3
   %5 = load i64, ptr %index_access, align 4
   %6 = load i64, ptr %i, align 4
   %7 = icmp eq i64 %5, %6

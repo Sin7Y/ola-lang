@@ -468,7 +468,7 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
@@ -495,7 +495,7 @@ body2:                                            ; preds = %cond1
   %8 = load i64, ptr %i, align 4
   %9 = sub i64 9, %8
   call void @builtin_range_check(i64 %9)
-  %index_access5 = getelementptr [10 x i64], ptr %1, i64 %8
+  %index_access5 = getelementptr [10 x i64], ptr %1, i64 0, i64 %8
   %10 = load i64, ptr %index_access5, align 4
   store i64 %10, ptr %index_access4, align 4
   %11 = load i64, ptr %totalSum, align 4

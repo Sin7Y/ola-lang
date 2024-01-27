@@ -470,8 +470,7 @@ cond:                                             ; preds = %body, %entry
 
 body:                                             ; preds = %cond
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
-  %4 = call ptr @heap_malloc(i64 3)
-  store ptr %4, ptr %index_access, align 8
+  store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -481,35 +480,35 @@ done:                                             ; preds = %cond
   br label %cond1
 
 cond1:                                            ; preds = %next, %done
-  %5 = load i64, ptr %i, align 4
-  %6 = load i64, ptr %rows, align 4
-  %7 = icmp ult i64 %5, %6
-  br i1 %7, label %body2, label %endfor
+  %4 = load i64, ptr %i, align 4
+  %5 = load i64, ptr %rows, align 4
+  %6 = icmp ult i64 %4, %5
+  br i1 %6, label %body2, label %endfor
 
 body2:                                            ; preds = %cond1
-  %8 = load i64, ptr %i, align 4
+  %7 = load i64, ptr %i, align 4
   %vector_length = load i64, ptr %3, align 4
-  %9 = sub i64 %vector_length, 1
-  %10 = sub i64 %9, %8
-  call void @builtin_range_check(i64 %10)
+  %8 = sub i64 %vector_length, 1
+  %9 = sub i64 %8, %7
+  call void @builtin_range_check(i64 %9)
   %vector_data3 = getelementptr i64, ptr %3, i64 1
-  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %8
-  %11 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %11, i64 0
+  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %7
+  %10 = call ptr @heap_malloc(i64 3)
+  %elemptr0 = getelementptr [3 x i64], ptr %10, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %11, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %10, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %11, i64 2
-  %12 = load i64, ptr %i, align 4
-  store i64 %12, ptr %elemptr2, align 4
-  %13 = load ptr, ptr %11, align 8
-  store ptr %13, ptr %index_access4, align 8
+  %elemptr2 = getelementptr [3 x i64], ptr %10, i64 0, i64 2
+  %11 = load i64, ptr %i, align 4
+  store i64 %11, ptr %elemptr2, align 4
+  %12 = load ptr, ptr %10, align 8
+  store ptr %12, ptr %index_access4, align 8
   br label %next
 
 next:                                             ; preds = %body2
-  %14 = load i64, ptr %i, align 4
-  %15 = add i64 %14, 1
-  store i64 %15, ptr %i, align 4
+  %13 = load i64, ptr %i, align 4
+  %14 = add i64 %13, 1
+  store i64 %14, ptr %i, align 4
   br label %cond1
 
 endfor:                                           ; preds = %cond1
@@ -593,7 +592,7 @@ body7:                                            ; preds = %cond5
   %index_access = getelementptr ptr, ptr %vector_data, i64 %index
   %23 = sub i64 2, %index4
   call void @builtin_range_check(i64 %23)
-  %index_access10 = getelementptr [3 x i64], ptr %index_access, i64 %index4
+  %index_access10 = getelementptr [3 x i64], ptr %index_access, i64 0, i64 %index4
   %24 = load i64, ptr %buffer_offset, align 4
   %25 = getelementptr ptr, ptr %11, i64 %24
   store ptr %index_access10, ptr %25, align 8

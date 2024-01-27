@@ -458,7 +458,6 @@ entry:
   %array = alloca ptr, align 8
   store ptr %0, ptr %array, align 8
   %3 = load ptr, ptr %array, align 8
-  %vector_length = load i64, ptr %3, align 4
   %4 = call ptr @heap_malloc(i64 4)
   %5 = call ptr @heap_malloc(i64 4)
   %6 = getelementptr i64, ptr %5, i64 0
@@ -470,8 +469,9 @@ entry:
   %9 = getelementptr i64, ptr %5, i64 3
   store i64 0, ptr %9, align 4
   call void @get_storage(ptr %5, ptr %4)
-  %10 = getelementptr i64, ptr %4, i64 3
-  %storage_value = load i64, ptr %10, align 4
+  %length = getelementptr i64, ptr %4, i64 3
+  %10 = load i64, ptr %length, align 4
+  %vector_length = load i64, ptr %3, align 4
   %11 = call ptr @heap_malloc(i64 4)
   %12 = getelementptr i64, ptr %11, i64 0
   store i64 0, ptr %12, align 4
@@ -514,7 +514,7 @@ cond:                                             ; preds = %body, %entry
 body:                                             ; preds = %cond
   %27 = load ptr, ptr %2, align 8
   %vector_data = getelementptr i64, ptr %3, i64 1
-  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
   %28 = load i64, ptr %index_access, align 4
   %29 = call ptr @heap_malloc(i64 4)
   %30 = getelementptr i64, ptr %29, i64 0
@@ -542,7 +542,7 @@ done:                                             ; preds = %cond
 
 cond1:                                            ; preds = %body2, %done
   %index_value5 = load i64, ptr %index_alloca4, align 4
-  %loop_cond6 = icmp ult i64 %index_value5, %storage_value
+  %loop_cond6 = icmp ult i64 %index_value5, %10
   br i1 %loop_cond6, label %body2, label %done3
 
 body2:                                            ; preds = %cond1

@@ -452,13 +452,13 @@ exit:                                             ; preds = %loop
 define i64 @array_literal() {
 entry:
   %0 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %0, i64 1
+  %index_access = getelementptr [3 x i64], ptr %0, i64 0, i64 1
   %1 = load i64, ptr %index_access, align 4
   ret i64 %1
 }
@@ -491,7 +491,7 @@ cond:                                             ; preds = %body, %entry
   br i1 %loop_cond, label %body, label %done
 
 body:                                             ; preds = %cond
-  %index_access = getelementptr i64, ptr %vector_data, i64 %index_value
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %index_value
   store i64 0, ptr %index_access, align 4
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
