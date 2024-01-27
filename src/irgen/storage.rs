@@ -169,7 +169,7 @@ pub(crate) fn storage_load<'a>(
                     |index: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
                         let elem = unsafe {
                             bin.builder
-                                .build_gep(llvm_ty, new_array, &[index], "index_access")
+                                .build_gep(llvm_ty, new_array, &[i64_zero!(), index], "index_access")
                         };
 
                         let val = storage_load(bin, &ty, slot, function, ns);
@@ -333,7 +333,7 @@ pub(crate) fn storage_store<'a>(
                             bin.builder.build_gep(
                                 bin.llvm_type(ty.deref_any(), ns),
                                 dest.into_pointer_value(),
-                                &[index],
+                                &[i64_zero!(), index],
                                 "index_access",
                             )
                         };
@@ -396,10 +396,16 @@ pub(crate) fn storage_store<'a>(
                     &mut elem_slot,
                     |elem_no: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
                         let mut elem = bin.array_subscript(ty, dest, elem_no, ns);
+
+                        if elem_ty.is_reference_type(ns)
+                        && !elem_ty.deref_memory().is_fixed_reference_type()
+                    {
                         elem = bin
                             .builder
                             .build_load(llvm_elem_ty, elem, "")
                             .into_pointer_value();
+                    }
+
                         storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 
                         if !elem_ty.is_reference_type(ns) {

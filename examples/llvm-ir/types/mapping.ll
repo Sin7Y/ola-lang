@@ -461,8 +461,8 @@ entry:
   %_nonce = alloca i64, align 8
   %_address = alloca ptr, align 8
   store ptr %0, ptr %_address, align 8
-  store i64 %1, ptr %_nonce, align 4
   %2 = load ptr, ptr %_address, align 8
+  store i64 %1, ptr %_nonce, align 4
   %3 = call ptr @heap_malloc(i64 4)
   %4 = getelementptr i64, ptr %3, i64 0
   store i64 0, ptr %4, align 4
@@ -506,39 +506,41 @@ entry:
   %26 = getelementptr i64, ptr %22, i64 3
   store i64 55, ptr %26, align 4
   call void @set_storage(ptr %21, ptr %22)
-  %27 = load ptr, ptr %_address, align 8
-  %28 = call ptr @heap_malloc(i64 4)
-  %29 = getelementptr i64, ptr %28, i64 0
+  %27 = call ptr @heap_malloc(i64 4)
+  %28 = getelementptr i64, ptr %27, i64 0
+  store i64 0, ptr %28, align 4
+  %29 = getelementptr i64, ptr %27, i64 1
   store i64 0, ptr %29, align 4
-  %30 = getelementptr i64, ptr %28, i64 1
+  %30 = getelementptr i64, ptr %27, i64 2
   store i64 0, ptr %30, align 4
-  %31 = getelementptr i64, ptr %28, i64 2
+  %31 = getelementptr i64, ptr %27, i64 3
   store i64 0, ptr %31, align 4
-  %32 = getelementptr i64, ptr %28, i64 3
-  store i64 0, ptr %32, align 4
-  %33 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %28, ptr %33, i64 4)
+  %32 = call ptr @heap_malloc(i64 8)
+  call void @memcpy(ptr %27, ptr %32, i64 4)
+  %33 = getelementptr i64, ptr %32, i64 4
+  call void @memcpy(ptr %2, ptr %33, i64 4)
   %34 = getelementptr i64, ptr %33, i64 4
-  call void @memcpy(ptr %27, ptr %34, i64 4)
-  %35 = getelementptr i64, ptr %34, i64 4
-  %36 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %33, ptr %36, i64 8)
-  %37 = load i64, ptr %_nonce, align 4
-  %38 = call ptr @heap_malloc(i64 4)
-  %39 = getelementptr i64, ptr %38, i64 0
+  %35 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %32, ptr %35, i64 8)
+  %36 = load i64, ptr %_nonce, align 4
+  %37 = call ptr @heap_malloc(i64 4)
+  %38 = getelementptr i64, ptr %37, i64 0
+  store i64 0, ptr %38, align 4
+  %39 = getelementptr i64, ptr %37, i64 1
   store i64 0, ptr %39, align 4
-  %40 = getelementptr i64, ptr %38, i64 1
+  %40 = getelementptr i64, ptr %37, i64 2
   store i64 0, ptr %40, align 4
-  %41 = getelementptr i64, ptr %38, i64 2
-  store i64 0, ptr %41, align 4
-  %42 = getelementptr i64, ptr %38, i64 3
-  store i64 %37, ptr %42, align 4
-  %43 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %36, ptr %43, i64 4)
+  %41 = getelementptr i64, ptr %37, i64 3
+  store i64 %36, ptr %41, align 4
+  %42 = call ptr @heap_malloc(i64 8)
+  call void @memcpy(ptr %35, ptr %42, i64 4)
+  %43 = getelementptr i64, ptr %42, i64 4
+  call void @memcpy(ptr %37, ptr %43, i64 4)
   %44 = getelementptr i64, ptr %43, i64 4
-  call void @memcpy(ptr %38, ptr %44, i64 4)
-  %45 = getelementptr i64, ptr %44, i64 4
+  %45 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %42, ptr %45, i64 8)
   %46 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   call void @poseidon_hash(ptr %43, ptr %46, i64 8)
   %47 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %46, ptr %47)
@@ -557,9 +559,18 @@ entry:
   %slot_offset = add i64 %50, 1
   store i64 %slot_offset, ptr %49, align 4
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+  call void @get_storage(ptr %45, ptr %46)
+  %47 = getelementptr i64, ptr %46, i64 3
+  %storage_value = load i64, ptr %47, align 4
+  %48 = getelementptr i64, ptr %45, i64 3
+  %49 = load i64, ptr %48, align 4
+  %slot_offset = add i64 %49, 1
+  store i64 %slot_offset, ptr %48, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   store i64 %storage_value, ptr %_nonceSet, align 4
-  %51 = load i64, ptr %_nonceSet, align 4
-  call void @prophet_printf(i64 %51, i64 3)
+  %50 = load i64, ptr %_nonceSet, align 4
+  call void @prophet_printf(i64 %50, i64 3)
   ret void
 }
 

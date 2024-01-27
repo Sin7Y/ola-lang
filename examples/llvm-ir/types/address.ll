@@ -457,7 +457,6 @@ exit:                                             ; preds = %loop
 
 define i64 @compare_address() {
 entry:
-  %_address = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
   %index_access = getelementptr i64, ptr %0, i64 3
   store i64 1, ptr %index_access, align 4
@@ -465,9 +464,14 @@ entry:
   store i64 0, ptr %index_access1, align 4
   %index_access2 = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %index_access2, align 4
+<<<<<<< HEAD
   %index_access3 = getelementptr i64, ptr %0, i64 0
   store i64 0, ptr %index_access3, align 4
   store ptr %0, ptr %_address, align 8
+=======
+  %index_access3 = getelementptr i64, ptr %0, i64 3
+  store i64 1, ptr %index_access3, align 4
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   %1 = call ptr @heap_malloc(i64 4)
   %2 = call ptr @heap_malloc(i64 4)
   %3 = getelementptr i64, ptr %2, i64 0
@@ -479,9 +483,8 @@ entry:
   %6 = getelementptr i64, ptr %2, i64 3
   store i64 0, ptr %6, align 4
   call void @get_storage(ptr %2, ptr %1)
-  %7 = load ptr, ptr %_address, align 8
-  %8 = call i64 @memcmp_eq(ptr %1, ptr %7, i64 4)
-  ret i64 %8
+  %7 = call i64 @memcmp_eq(ptr %1, ptr %0, i64 4)
+  ret i64 %7
 }
 
 define ptr @u32_to_address() {

@@ -460,8 +460,8 @@ entry:
   %number = alloca i64, align 8
   %name = alloca ptr, align 8
   store ptr %0, ptr %name, align 8
-  store i64 %1, ptr %number, align 4
   %2 = load ptr, ptr %name, align 8
+  store i64 %1, ptr %number, align 4
   %3 = call ptr @heap_malloc(i64 4)
   %4 = getelementptr i64, ptr %3, i64 0
   store i64 0, ptr %4, align 4
@@ -535,8 +535,8 @@ entry:
 
 define void @mapping_test() {
 entry:
-  %myaddress = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %0, i64 3
   store i64 -6711892513312253938, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %0, i64 2
@@ -550,6 +550,18 @@ entry:
   call void @add_mapping(ptr %1, i64 1)
   %2 = load ptr, ptr %myaddress, align 8
   %3 = call i64 @get_mapping(ptr %2)
+=======
+  %index_access = getelementptr i64, ptr %0, i64 0
+  store i64 402443140940559753, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %0, i64 1
+  store i64 -5438528055523826848, ptr %index_access1, align 4
+  %index_access2 = getelementptr i64, ptr %0, i64 2
+  store i64 6500940582073311439, ptr %index_access2, align 4
+  %index_access3 = getelementptr i64, ptr %0, i64 3
+  store i64 -6711892513312253938, ptr %index_access3, align 4
+  call void @add_mapping(ptr %0, i64 1)
+  %1 = call i64 @get_mapping(ptr %0)
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   ret void
 }
 

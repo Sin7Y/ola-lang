@@ -405,7 +405,7 @@ fn calculate_complex_array_size<'a>(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
-            bin.context.i64_type().const_int(1, false),
+                array_length,
             "",
         );
         bin.builder.build_store(size_var, size);

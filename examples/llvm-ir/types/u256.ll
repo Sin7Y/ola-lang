@@ -434,6 +434,7 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+<<<<<<< HEAD
   %counter = alloca i64, align 8
   %result = alloca i64, align 8
   store i64 0, ptr %counter, align 4
@@ -466,16 +467,35 @@ entry:
   store i64 %0, ptr %2, align 4
   store ptr %1, ptr %a, align 8
   ret void
+=======
+  br label %loop
+
+loop:                                             ; preds = %loop, %entry
+  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
+  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
+  %inc = add i64 %2, 1
+  %multmp = mul i64 %3, %0
+  %loopcond = icmp ule i64 %inc, %1
+  br i1 %loopcond, label %loop, label %exit
+
+exit:                                             ; preds = %loop
+  call void @builtin_range_check(i64 %3)
+  ret i64 %3
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
+<<<<<<< HEAD
     i64 858749044, label %func_0_dispatch
+=======
+>>>>>>> 7998cf0 (fixed llvm type bug.)
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
+<<<<<<< HEAD
 
 func_0_dispatch:                                  ; preds = %entry
   call void @testU256DeclareUninitialized()
@@ -483,6 +503,8 @@ func_0_dispatch:                                  ; preds = %entry
   store i64 0, ptr %3, align 4
   call void @set_tape_data(ptr %3, i64 1)
   ret void
+=======
+>>>>>>> 7998cf0 (fixed llvm type bug.)
 }
 
 define void @main() {
