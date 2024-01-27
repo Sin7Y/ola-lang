@@ -452,13 +452,13 @@ exit:                                             ; preds = %loop
 define void @test() {
 entry:
   %0 = call ptr @heap_malloc(i64 3)
-  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0
+  %elemptr0 = getelementptr [3 x i64], ptr %0, i64 0, i64 0
   store i64 1, ptr %elemptr0, align 4
-  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 1
+  %elemptr1 = getelementptr [3 x i64], ptr %0, i64 0, i64 1
   store i64 2, ptr %elemptr1, align 4
-  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 2
+  %elemptr2 = getelementptr [3 x i64], ptr %0, i64 0, i64 2
   store i64 3, ptr %elemptr2, align 4
-  %index_access = getelementptr [3 x i64], ptr %0, i64 0
+  %index_access = getelementptr [3 x i64], ptr %0, i64 0, i64 0
   %1 = load i64, ptr %index_access, align 4
   %2 = icmp eq i64 %1, 1
   %3 = zext i1 %2 to i64

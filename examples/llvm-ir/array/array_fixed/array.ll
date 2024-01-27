@@ -452,10 +452,10 @@ exit:                                             ; preds = %loop
 define void @fixed_array_test() {
 entry:
   %0 = call ptr @heap_malloc(i64 3)
-  %index_access = getelementptr [3 x i64], ptr %0, i64 2
+  %index_access = getelementptr [3 x i64], ptr %0, i64 0, i64 2
   store i64 99, ptr %index_access, align 4
   %1 = call ptr @array_call(ptr %0)
-  %index_access1 = getelementptr [3 x i64], ptr %1, i64 2
+  %index_access1 = getelementptr [3 x i64], ptr %1, i64 0, i64 2
   %2 = load i64, ptr %index_access1, align 4
   %3 = icmp eq i64 %2, 100
   %4 = zext i1 %3 to i64
@@ -468,7 +468,7 @@ entry:
   %source = alloca ptr, align 8
   store ptr %0, ptr %source, align 8
   %1 = load ptr, ptr %source, align 8
-  %index_access = getelementptr [3 x i64], ptr %1, i64 2
+  %index_access = getelementptr [3 x i64], ptr %1, i64 0, i64 2
   store i64 100, ptr %index_access, align 4
   ret ptr %1
 }

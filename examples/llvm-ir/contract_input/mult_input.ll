@@ -462,17 +462,17 @@ entry:
   store ptr %1, ptr %s, align 8
   %7 = load ptr, ptr %s, align 8
   store ptr %2, ptr %addr, align 8
+  %8 = load ptr, ptr %addr, align 8
   store ptr %3, ptr %h, align 8
+  %9 = load ptr, ptr %h, align 8
   store i64 %4, ptr %a, align 4
   store i64 %5, ptr %b, align 4
   %fields_start = ptrtoint ptr %6 to i64
   call void @prophet_printf(i64 %fields_start, i64 0)
   %string_start = ptrtoint ptr %7 to i64
   call void @prophet_printf(i64 %string_start, i64 1)
-  %8 = load ptr, ptr %addr, align 8
   %address_start = ptrtoint ptr %8 to i64
   call void @prophet_printf(i64 %address_start, i64 2)
-  %9 = load ptr, ptr %h, align 8
   %hash_start = ptrtoint ptr %9 to i64
   call void @prophet_printf(i64 %hash_start, i64 2)
   %10 = load i64, ptr %a, align 4

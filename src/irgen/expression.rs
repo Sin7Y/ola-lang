@@ -614,13 +614,13 @@ pub fn expression<'a>(
             let array_alloca = bin.heap_malloc(array_size);
 
             for (i, expr) in values.iter().enumerate() {
-                let mut ind = vec![];
+                let mut ind = vec![bin.context.i64_type().const_zero()];
 
                 let mut e = i as u32;
 
                 // Mapping one-dimensional array indices to multi-dimensional array indices.
                 for d in dimensions {
-                    ind.insert(0, bin.context.i64_type().const_int((e % *d).into(), false));
+                    ind.insert(1, bin.context.i64_type().const_int((e % *d).into(), false));
 
                     e /= *d;
                 }
@@ -631,6 +631,14 @@ pub fn expression<'a>(
                 };
 
                 let elem = expression(expr, bin, func_value, var_table, ns);
+
+                let elem = if expr.ty().is_fixed_reference_type() {
+                    let load_type = bin.llvm_type(&expr.ty(), ns);
+                    bin.builder
+                        .build_load(load_type, elem.into_pointer_value(), "elem")
+                } else {
+                    elem
+                };
 
                 bin.builder.build_store(elemptr, elem);
             }
@@ -1026,7 +1034,7 @@ pub fn array_literal_to_memory_array<'a>(
         let item = expression(item, bin, func_value, var_table, ns);
 
         let index = bin.context.i64_type().const_int(item_no as u64, false);
-        let array_type: BasicTypeEnum = bin.llvm_type(ty, ns);
+        let array_type: BasicTypeEnum = bin.llvm_var_ty(ty, ns);
         let index_access = unsafe {
             bin.builder
                 .build_gep(array_type, vector_data, &[index], "index_access")
@@ -1296,7 +1304,7 @@ pub fn array_subscript<'a>(
             bin.builder.build_gep(
                 array_type,
                 array.into_pointer_value(),
-                &[index.into_int_value()],
+                &[bin.context.i64_type().const_zero(), index.into_int_value()],
                 "index_access",
             )
         };
@@ -1703,43 +1711,30 @@ pub(crate) fn debug_print<'a>(
             );
         }
         Type::Array(elem_ty, dim) => {
-            let mut elem_offset = bin.context.i64_type().const_zero().as_basic_value_enum();
-            let (arg, length) = if let Some(ArrayLength::Fixed(d)) = dim.last() {
-                (arg.into_pointer_value(), bin.context.i64_type().const_int(d.to_u64().unwrap(), false))
+            let length = if let Some(ArrayLength::Fixed(d)) = dim.last() {
+                bin.context.i64_type().const_int(d.to_u64().unwrap(), false)
             } else {
-                (bin.vector_data(arg), bin.vector_len(arg))
+                bin.vector_len(arg)
             };
-            bin.emit_static_loop_with_int(
+            bin.emit_loop_cond_first(
                 func_value,
                 bin.context.i64_type().const_zero(),
                 length,
-                &mut elem_offset,
-                |index: IntValue<'a>, offset: &mut BasicValueEnum<'a>| {
-                    let elem_ptr = unsafe {
-                        bin.builder.build_gep(
-                            bin.llvm_type(ty.deref_any(), ns),
-                            arg,
-                            &[index],
-                            "index_access",
-                        )
-                    };
+                |index: IntValue<'a>| {
+                    let mut elem = bin.array_subscript(ty, arg, index, ns);
 
-                    let load_ty = bin.llvm_var_ty(&elem_ty, ns);
-                    let elem = bin
+                    if elem_ty.is_reference_type(ns)
+                    && !elem_ty.deref_memory().is_fixed_reference_type()
+                {
+                    let load_ty =
+                        bin.llvm_type(elem_ty, ns);
+                    elem = bin
                         .builder
-                        .build_load(load_ty, elem_ptr, "")
+                        .build_load(load_ty, elem, "")
                         .into_pointer_value();
+                }
 
                     debug_print(bin, elem.into(), elem_ty, func_value, ns);
-
-                    *offset = bin
-                        .builder
-                        .build_int_add(
-                            offset.into_int_value(),
-                            bin.context.i64_type().const_int(1, false),
-                            "",
-                        )
-                        .as_basic_value_enum();
                 },
             );
         }
