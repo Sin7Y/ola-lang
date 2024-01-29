@@ -38,7 +38,6 @@ contract ProposalContract {
         // check if proposal exists 
         Proposal oldProposal = proposalByHash[_contentHash];
         assert(oldProposal.proposer != address(0));
-        print("proposal exists");
 
         // check if voter has already voted
         hash[] proposals = proposalsByVoter[origin_address()];
@@ -46,21 +45,15 @@ contract ProposalContract {
             assert(proposals[i] != _contentHash);
         }
 
-        print("voter has not voted");
-
         // check if deadline is in the future
         Proposal proposal = proposalByHash[_contentHash];
-        print("proposal.deadline");
-        print(proposal.deadline);
-        print("block_timestamp()");
-        print(block_timestamp());
         assert(block_timestamp() < proposal.deadline, "Voting period has ended");
-        print("voting period has not ended");
         if (_support) {
             proposal.totalSupport += _weight;
         } else {
             proposal.totalAgainst += _weight;
         }
+        proposalByHash[_contentHash] = proposal;
         proposalsByVoter[origin_address()].push(_contentHash);
     }
 
@@ -70,14 +63,10 @@ contract ProposalContract {
     }
 
     fn getProposalsByOwner(address _owner) -> (hash[]) {
-        print("getProposalsByOwner");
-        print(proposalsByOwner[_owner]);
         return proposalsByOwner[_owner];
     }
 
     fn getProposalsByVoter(address _voter) -> (hash[]) {
-        print("getProposalsByVoter");
-        print(proposalsByVoter[_voter]);
         return proposalsByVoter[_voter];
     }
 

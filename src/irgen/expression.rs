@@ -243,7 +243,6 @@ pub fn expression<'a>(
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_value, var_table, ns);
-                    let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -295,7 +294,6 @@ pub fn expression<'a>(
                 }
                 _ => {
                     let mut dest = expression(expr, bin, func_value, var_table, ns);
-                    let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                     match expr.ty() {
                         Type::StorageRef(..) => {
                             storage_store(
@@ -309,7 +307,6 @@ pub fn expression<'a>(
                             dest
                         }
                         Type::Ref(_) => {
-                            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
                             bin.builder.build_store(
                                 dest.into_pointer_value(),
                                 after.as_basic_value_enum(),
@@ -1034,7 +1031,7 @@ pub fn array_literal_to_memory_array<'a>(
         let item = expression(item, bin, func_value, var_table, ns);
 
         let index = bin.context.i64_type().const_int(item_no as u64, false);
-        let array_type: BasicTypeEnum = bin.llvm_var_ty(ty, ns);
+        let array_type: BasicTypeEnum = bin.llvm_type(ty, ns);
         let index_access = unsafe {
             bin.builder
                 .build_gep(array_type, vector_data, &[index], "index_access")
@@ -1721,18 +1718,18 @@ pub(crate) fn debug_print<'a>(
                 bin.context.i64_type().const_zero(),
                 length,
                 |index: IntValue<'a>| {
-                    let mut elem = bin.array_subscript(ty, arg, index, ns);
+                    let mut elem = bin
+                        .array_subscript(ty, arg, index, ns)
+                        .as_basic_value_enum();
 
                     if elem_ty.is_reference_type(ns)
-                    && !elem_ty.deref_memory().is_fixed_reference_type()
-                {
-                    let load_ty =
-                        bin.llvm_type(elem_ty, ns);
-                    elem = bin
-                        .builder
-                        .build_load(load_ty, elem, "")
-                        .into_pointer_value();
-                }
+                        && !elem_ty.deref_memory().is_fixed_reference_type()
+                    {
+                        let load_ty = bin.llvm_type(elem_ty, ns);
+                        elem = bin
+                            .builder
+                            .build_load(load_ty, elem.into_pointer_value(), "");
+                    }
 
                     debug_print(bin, elem.into(), elem_ty, func_value, ns);
                 },
