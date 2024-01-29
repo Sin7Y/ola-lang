@@ -45,11 +45,14 @@ contract ProposalContract {
             assert(proposals[i] != _contentHash);
         }
 
+<<<<<<< HEAD
         u32 weight = 1;
         if (oldProposal.votingType == VotingType.Weighted) {
             weight = _weight;
         }
 
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
         // check if deadline is in the future
         Proposal proposal = proposalByHash[_contentHash];
         assert(block_timestamp() < proposal.deadline, "Voting period has ended");

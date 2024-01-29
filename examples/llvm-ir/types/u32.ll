@@ -488,6 +488,9 @@ entry:
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 define void @testU32Increment() {
 entry:
   %a = alloca i64, align 8
@@ -498,16 +501,23 @@ entry:
   ret void
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
     i64 1866329094, label %func_0_dispatch
 <<<<<<< HEAD
+<<<<<<< HEAD
     i64 66285729, label %func_1_dispatch
 =======
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+    i64 66285729, label %func_1_dispatch
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   ]
 
 missing_function:                                 ; preds = %entry
@@ -520,6 +530,9 @@ func_0_dispatch:                                  ; preds = %entry
   call void @set_tape_data(ptr %3, i64 1)
   ret void
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 
 func_1_dispatch:                                  ; preds = %entry
   call void @testU32Increment()
@@ -527,8 +540,11 @@ func_1_dispatch:                                  ; preds = %entry
   store i64 0, ptr %4, align 4
   call void @set_tape_data(ptr %4, i64 1)
   ret void
+<<<<<<< HEAD
 =======
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 }
 
 define void @main() {

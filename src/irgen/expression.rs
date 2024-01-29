@@ -1190,7 +1190,7 @@ pub fn array_literal_to_memory_array<'a>(
         let item = expression(item, bin, func_value, var_table, ns);
 
         let index = bin.context.i64_type().const_int(item_no as u64, false);
-        let array_type: BasicTypeEnum = bin.llvm_var_ty(ty, ns);
+        let array_type: BasicTypeEnum = bin.llvm_type(ty, ns);
         let index_access = unsafe {
             bin.builder
                 .build_gep(array_type, vector_data, &[index], "index_access")

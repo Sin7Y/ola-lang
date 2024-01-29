@@ -459,16 +459,20 @@ define ptr @createBooks() {
 entry:
   %0 = call ptr @heap_malloc(i64 2)
 <<<<<<< HEAD
+<<<<<<< HEAD
   %elemptr0 = getelementptr [2 x { i64, i64, ptr }], ptr %0, i64 0, i64 0
 =======
   %elemptr0 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %0, i64 0, i64 0
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %elemptr0 = getelementptr [2 x { i64, i64, ptr }], ptr %0, i64 0, i64 0
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %1 = call ptr @heap_malloc(i64 3)
-  %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 0
+  %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 0
   store i64 0, ptr %struct_member, align 4
-  %struct_member1 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 1
+  %struct_member1 = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 1
   store i64 111, ptr %struct_member1, align 4
-  %struct_member2 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %1, i32 0, i32 2
+  %struct_member2 = getelementptr inbounds { i64, i64, ptr }, ptr %1, i32 0, i32 2
   %2 = call ptr @heap_malloc(i64 5)
   %elemptr03 = getelementptr [5 x i64], ptr %2, i64 0, i64 0
   store i64 1, ptr %elemptr03, align 4
@@ -482,6 +486,7 @@ entry:
   store i64 5, ptr %elemptr4, align 4
   store ptr %2, ptr %struct_member2, align 8
 <<<<<<< HEAD
+<<<<<<< HEAD
   %elem = load { i64, i64, ptr }, ptr %1, align 8
   store { i64, i64, ptr } %elem, ptr %elemptr0, align 8
   %elemptr14 = getelementptr [2 x { i64, i64, ptr }], ptr %0, i64 0, i64 1
@@ -490,12 +495,17 @@ entry:
   store { i64, i64, [5 x i64] } %elem, ptr %elemptr0, align 4
   %elemptr14 = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %0, i64 0, i64 1
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %elem = load { i64, i64, ptr }, ptr %1, align 8
+  store { i64, i64, ptr } %elem, ptr %elemptr0, align 8
+  %elemptr14 = getelementptr [2 x { i64, i64, ptr }], ptr %0, i64 0, i64 1
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %3 = call ptr @heap_malloc(i64 3)
-  %struct_member5 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 0
+  %struct_member5 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 0
   store i64 0, ptr %struct_member5, align 4
-  %struct_member6 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 1
+  %struct_member6 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 1
   store i64 0, ptr %struct_member6, align 4
-  %struct_member7 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %3, i32 0, i32 2
+  %struct_member7 = getelementptr inbounds { i64, i64, ptr }, ptr %3, i32 0, i32 2
   %4 = call ptr @heap_malloc(i64 5)
   %elemptr08 = getelementptr [5 x i64], ptr %4, i64 0, i64 0
   store i64 0, ptr %elemptr08, align 4
@@ -509,12 +519,17 @@ entry:
   store i64 0, ptr %elemptr412, align 4
   store ptr %4, ptr %struct_member7, align 8
 <<<<<<< HEAD
+<<<<<<< HEAD
   %elem13 = load { i64, i64, ptr }, ptr %3, align 8
   store { i64, i64, ptr } %elem13, ptr %elemptr14, align 8
 =======
   %elem13 = load { i64, i64, [5 x i64] }, ptr %3, align 4
   store { i64, i64, [5 x i64] } %elem13, ptr %elemptr14, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %elem13 = load { i64, i64, ptr }, ptr %3, align 8
+  store { i64, i64, ptr } %elem13, ptr %elemptr14, align 8
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   ret ptr %0
 }
 
@@ -524,12 +539,17 @@ entry:
   store ptr %0, ptr %_books, align 8
   %1 = load ptr, ptr %_books, align 8
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access = getelementptr [2 x { i64, i64, ptr }], ptr %1, i64 0, i64 0
   %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %index_access, i32 0, i32 2
 =======
   %index_access = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %1, i64 0, i64 0
   %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access, i32 0, i32 2
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %index_access = getelementptr [2 x { i64, i64, ptr }], ptr %1, i64 0, i64 0
+  %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %index_access, i32 0, i32 2
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %index_access1 = getelementptr [5 x i64], ptr %struct_member, i64 0, i64 1
   %2 = load i64, ptr %index_access1, align 4
   ret i64 %2
@@ -568,6 +588,7 @@ body:                                             ; preds = %cond
   %6 = sub i64 1, %array_index
   call void @builtin_range_check(i64 %6)
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access = getelementptr [2 x { i64, i64, ptr }], ptr %3, i64 0, i64 %array_index
   %array_element = load ptr, ptr %index_access, align 8
   %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %array_element, i32 0, i32 2
@@ -575,6 +596,11 @@ body:                                             ; preds = %cond
   %index_access = getelementptr [2 x { i64, i64, [5 x i64] }], ptr %3, i64 0, i64 %index
   %struct_member = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access, i32 0, i32 2
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %index_access = getelementptr [2 x { i64, i64, ptr }], ptr %3, i64 0, i64 %array_index
+  %array_element = load ptr, ptr %index_access, align 8
+  %struct_member = getelementptr inbounds { i64, i64, ptr }, ptr %array_element, i32 0, i32 2
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %7 = load ptr, ptr %struct_member, align 8
   %8 = load i64, ptr %array_size, align 4
   %9 = add i64 %8, 7
@@ -601,6 +627,9 @@ cond2:                                            ; preds = %next4, %end_for
   br i1 %14, label %body3, label %end_for5
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 body3:                                            ; preds = %cond2
   %array_index6 = load i64, ptr %index_ptr1, align 4
   %15 = sub i64 1, %array_index6
@@ -610,6 +639,7 @@ body3:                                            ; preds = %cond2
   %16 = load i64, ptr %buffer_offset, align 4
   %17 = getelementptr ptr, ptr %12, i64 %16
   %struct_member9 = getelementptr inbounds { i64, i64, ptr }, ptr %array_element8, i32 0, i32 0
+<<<<<<< HEAD
 =======
 next5:                                            ; preds = %body6
   %index16 = load i64, ptr %index_ptr2, align 4
@@ -641,6 +671,16 @@ body6:                                            ; preds = %cond4
   store i64 %strcut_member11, ptr %struct_offset12, align 4
   %struct_member13 = getelementptr inbounds { i64, i64, [5 x i64] }, ptr %index_access8, i32 0, i32 2
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %strcut_member = load i64, ptr %struct_member9, align 4
+  %struct_offset = getelementptr ptr, ptr %17, i64 0
+  store i64 %strcut_member, ptr %struct_offset, align 4
+  %struct_member10 = getelementptr inbounds { i64, i64, ptr }, ptr %array_element8, i32 0, i32 1
+  %strcut_member11 = load i64, ptr %struct_member10, align 4
+  %struct_offset12 = getelementptr ptr, ptr %struct_offset, i64 1
+  store i64 %strcut_member11, ptr %struct_offset12, align 4
+  %struct_member13 = getelementptr inbounds { i64, i64, ptr }, ptr %array_element8, i32 0, i32 2
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %strcut_member14 = load ptr, ptr %struct_member13, align 8
   %struct_offset15 = getelementptr ptr, ptr %struct_offset12, i64 1
   call void @memcpy(ptr %strcut_member14, ptr %struct_offset15, i64 5)
@@ -676,6 +716,9 @@ cond18:                                           ; preds = %next20, %func_1_dis
   br i1 %27, label %body19, label %end_for21
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 body19:                                           ; preds = %cond18
   %28 = load i64, ptr %offset_var, align 4
   %29 = getelementptr ptr, ptr %23, i64 %28
@@ -700,6 +743,7 @@ body19:                                           ; preds = %cond18
   store ptr %32, ptr %index_access28, align 8
   %35 = add i64 7, %28
   store i64 %35, ptr %offset_var, align 4
+<<<<<<< HEAD
 =======
 next20:                                           ; preds = %body21
   %index29 = load i64, ptr %index_ptr17, align 4
@@ -728,6 +772,8 @@ body21:                                           ; preds = %cond19
   %31 = add i64 7, %23
   store i64 %31, ptr %array_offset, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next20
 
 next20:                                           ; preds = %body19

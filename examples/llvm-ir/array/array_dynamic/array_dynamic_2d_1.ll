@@ -590,6 +590,9 @@ body5:                                            ; preds = %cond4
   %23 = sub i64 %22, %array_index
   call void @builtin_range_check(i64 %23)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %vector_data = getelementptr i64, ptr %7, i64 1
   %index_access = getelementptr ptr, ptr %vector_data, i64 %array_index
   %array_element = load ptr, ptr %index_access, align 8
@@ -604,6 +607,7 @@ body5:                                            ; preds = %cond4
   %27 = load i64, ptr %buffer_offset, align 4
   %28 = add i64 %27, 1
   store i64 %28, ptr %buffer_offset, align 4
+<<<<<<< HEAD
 =======
   %index_access10 = getelementptr [3 x i64], ptr %index_access, i64 0, i64 %index4
   %24 = load i64, ptr %buffer_offset, align 4
@@ -613,6 +617,8 @@ body5:                                            ; preds = %cond4
   %27 = add i64 %26, 1
   store i64 %27, ptr %buffer_offset, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next6
 
 next6:                                            ; preds = %body5

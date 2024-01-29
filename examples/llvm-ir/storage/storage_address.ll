@@ -548,8 +548,14 @@ entry:
   store i64 6500940582073311439, ptr %index_access6, align 4
   %index_access7 = getelementptr i64, ptr %1, i64 3
   store i64 -6711892513312253938, ptr %index_access7, align 4
+<<<<<<< HEAD
   ret ptr %1
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  store ptr %1, ptr %caller_, align 8
+  %2 = load ptr, ptr %caller_, align 8
+  ret ptr %2
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
