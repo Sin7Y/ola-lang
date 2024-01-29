@@ -461,8 +461,8 @@ entry:
   %_nonce = alloca i64, align 8
   %_address = alloca ptr, align 8
   store ptr %0, ptr %_address, align 8
-  %2 = load ptr, ptr %_address, align 8
   store i64 %1, ptr %_nonce, align 4
+  %2 = load ptr, ptr %_address, align 8
   %3 = call ptr @heap_malloc(i64 4)
   %4 = getelementptr i64, ptr %3, i64 0
   store i64 0, ptr %4, align 4
@@ -490,29 +490,32 @@ entry:
   %17 = getelementptr i64, ptr %13, i64 3
   store i64 %12, ptr %17, align 4
   call void @set_storage(ptr %11, ptr %13)
-  %18 = call ptr @heap_malloc(i64 4)
-  %19 = getelementptr i64, ptr %18, i64 0
-  store i64 0, ptr %19, align 4
-  %20 = getelementptr i64, ptr %18, i64 1
+  %18 = load ptr, ptr %_address, align 8
+  %19 = call ptr @heap_malloc(i64 4)
+  %20 = getelementptr i64, ptr %19, i64 0
   store i64 0, ptr %20, align 4
-  %21 = getelementptr i64, ptr %18, i64 2
+  %21 = getelementptr i64, ptr %19, i64 1
   store i64 0, ptr %21, align 4
-  %22 = getelementptr i64, ptr %18, i64 3
+  %22 = getelementptr i64, ptr %19, i64 2
   store i64 0, ptr %22, align 4
-  %23 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %18, ptr %23, i64 4)
-  %24 = getelementptr i64, ptr %23, i64 4
-  call void @memcpy(ptr %2, ptr %24, i64 4)
+  %23 = getelementptr i64, ptr %19, i64 3
+  store i64 0, ptr %23, align 4
+  %24 = call ptr @heap_malloc(i64 8)
+  call void @memcpy(ptr %19, ptr %24, i64 4)
   %25 = getelementptr i64, ptr %24, i64 4
-  %26 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %23, ptr %26, i64 8)
+  call void @memcpy(ptr %18, ptr %25, i64 4)
+  %26 = getelementptr i64, ptr %25, i64 4
   %27 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   call void @poseidon_hash(ptr %24, ptr %27, i64 8)
   %28 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %27, ptr %28)
   %29 = getelementptr i64, ptr %28, i64 3
   %storage_value = load i64, ptr %29, align 4
+<<<<<<< HEAD
 <<<<<<< HEAD
   %30 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %27, ptr %30, i64 4)
@@ -521,10 +524,13 @@ entry:
   %last_elem = add i64 %31, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
 =======
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %30 = getelementptr i64, ptr %27, i64 3
   %31 = load i64, ptr %30, align 4
   %slot_offset = add i64 %31, 1
   store i64 %slot_offset, ptr %30, align 4
+<<<<<<< HEAD
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
 =======
   call void @get_storage(ptr %26, ptr %27)
@@ -535,9 +541,11 @@ entry:
   %slot_offset = add i64 %30, 1
   store i64 %slot_offset, ptr %29, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   store i64 %storage_value, ptr %_nonceSet, align 4
-  %31 = load i64, ptr %_nonceSet, align 4
-  call void @prophet_printf(i64 %31, i64 3)
+  %32 = load i64, ptr %_nonceSet, align 4
+  call void @prophet_printf(i64 %32, i64 3)
   ret void
 }
 

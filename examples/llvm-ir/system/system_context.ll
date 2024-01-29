@@ -457,9 +457,15 @@ exit:                                             ; preds = %loop
 
 define void @all_test() {
 entry:
+  %current = alloca ptr, align 8
+  %code = alloca ptr, align 8
+  %origin = alloca ptr, align 8
+  %caller = alloca ptr, align 8
+  %tx_hash = alloca ptr, align 8
   %nonce = alloca i64, align 8
   %chain_id = alloca i64, align 8
   %tx_version = alloca i64, align 8
+  %sequence = alloca ptr, align 8
   %block_timestamp = alloca i64, align 8
   %block_number = alloca i64, align 8
   %0 = call i64 @block_number_test()
@@ -471,37 +477,49 @@ entry:
   %3 = load i64, ptr %block_timestamp, align 4
   call void @prophet_printf(i64 %3, i64 3)
   %4 = call ptr @sequence_address_test()
-  %address_start = ptrtoint ptr %4 to i64
+  store ptr %4, ptr %sequence, align 8
+  %5 = load ptr, ptr %sequence, align 8
+  %address_start = ptrtoint ptr %5 to i64
   call void @prophet_printf(i64 %address_start, i64 2)
-  %5 = call i64 @transaction_version_test()
-  store i64 %5, ptr %tx_version, align 4
-  %6 = load i64, ptr %tx_version, align 4
-  call void @prophet_printf(i64 %6, i64 3)
-  %7 = call i64 @chain_id_test()
-  store i64 %7, ptr %chain_id, align 4
-  %8 = load i64, ptr %chain_id, align 4
-  call void @prophet_printf(i64 %8, i64 3)
-  %9 = call i64 @nonce_test()
-  store i64 %9, ptr %nonce, align 4
-  %10 = load i64, ptr %nonce, align 4
-  call void @prophet_printf(i64 %10, i64 3)
-  %11 = call ptr @signautre_test()
-  %fields_start = ptrtoint ptr %11 to i64
+  %6 = call i64 @transaction_version_test()
+  store i64 %6, ptr %tx_version, align 4
+  %7 = load i64, ptr %tx_version, align 4
+  call void @prophet_printf(i64 %7, i64 3)
+  %8 = call i64 @chain_id_test()
+  store i64 %8, ptr %chain_id, align 4
+  %9 = load i64, ptr %chain_id, align 4
+  call void @prophet_printf(i64 %9, i64 3)
+  %10 = call i64 @nonce_test()
+  store i64 %10, ptr %nonce, align 4
+  %11 = load i64, ptr %nonce, align 4
+  call void @prophet_printf(i64 %11, i64 3)
+  %12 = call ptr @signautre_test()
+  %fields_start = ptrtoint ptr %12 to i64
   call void @prophet_printf(i64 %fields_start, i64 0)
-  %12 = call ptr @transaction_hash_test()
-  %hash_start = ptrtoint ptr %12 to i64
+  %13 = call ptr @transaction_hash_test()
+  store ptr %13, ptr %tx_hash, align 8
+  %14 = load ptr, ptr %tx_hash, align 8
+  %hash_start = ptrtoint ptr %14 to i64
   call void @prophet_printf(i64 %hash_start, i64 2)
-  %13 = call ptr @caller_address_test()
-  %address_start1 = ptrtoint ptr %13 to i64
+  %15 = call ptr @caller_address_test()
+  store ptr %15, ptr %caller, align 8
+  %16 = load ptr, ptr %caller, align 8
+  %address_start1 = ptrtoint ptr %16 to i64
   call void @prophet_printf(i64 %address_start1, i64 2)
-  %14 = call ptr @origin_address_test()
-  %address_start2 = ptrtoint ptr %14 to i64
+  %17 = call ptr @origin_address_test()
+  store ptr %17, ptr %origin, align 8
+  %18 = load ptr, ptr %origin, align 8
+  %address_start2 = ptrtoint ptr %18 to i64
   call void @prophet_printf(i64 %address_start2, i64 2)
-  %15 = call ptr @code_address_test()
-  %address_start3 = ptrtoint ptr %15 to i64
+  %19 = call ptr @code_address_test()
+  store ptr %19, ptr %code, align 8
+  %20 = load ptr, ptr %code, align 8
+  %address_start3 = ptrtoint ptr %20 to i64
   call void @prophet_printf(i64 %address_start3, i64 2)
-  %16 = call ptr @current_address_test()
-  %address_start4 = ptrtoint ptr %16 to i64
+  %21 = call ptr @current_address_test()
+  store ptr %21, ptr %current, align 8
+  %22 = load ptr, ptr %current, align 8
+  %address_start4 = ptrtoint ptr %22 to i64
   call void @prophet_printf(i64 %address_start4, i64 2)
   ret void
 }

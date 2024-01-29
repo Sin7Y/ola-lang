@@ -1006,8 +1006,8 @@ impl Type {
     pub fn is_reference_type(&self, ns: &Namespace) -> bool {
         match self {
             Type::Bool => false,
-            Type::Address => true,
-            Type::Hash => true,
+            Type::Address => false,
+            Type::Hash => false,
             Type::Field => false,
             Type::Uint(_) => false,
             Type::Enum(_) => false,

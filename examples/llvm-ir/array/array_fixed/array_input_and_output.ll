@@ -491,6 +491,7 @@ entry:
 
 define ptr @array_input_address_1(ptr %0, i64 %1) {
 entry:
+  %a = alloca ptr, align 8
   %b = alloca i64, align 8
   %array = alloca ptr, align 8
   store ptr %0, ptr %array, align 8
@@ -502,7 +503,9 @@ entry:
   %index_access = getelementptr [3 x [2 x ptr]], ptr %2, i64 0, i64 %3
   %index_access1 = getelementptr [2 x ptr], ptr %index_access, i64 0, i64 1
   %5 = load ptr, ptr %index_access1, align 8
-  ret ptr %5
+  store ptr %5, ptr %a, align 8
+  %6 = load ptr, ptr %a, align 8
+  ret ptr %6
 }
 
 define ptr @array_input_address_2(ptr %0) {
@@ -553,6 +556,7 @@ cond2:                                            ; preds = %next4, %body
   br i1 %9, label %body3, label %end_for5
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 body3:                                            ; preds = %cond2
   %array_index = load i64, ptr %index_ptr, align 4
   %10 = sub i64 2, %array_index
@@ -585,6 +589,22 @@ body5:                                            ; preds = %cond3
   %12 = add i64 %11, 4
   store i64 %12, ptr %array_size, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+body3:                                            ; preds = %cond2
+  %array_index = load i64, ptr %index_ptr, align 4
+  %10 = sub i64 2, %array_index
+  call void @builtin_range_check(i64 %10)
+  %index_access = getelementptr [3 x [2 x ptr]], ptr %1, i64 0, i64 %array_index
+  %array_element = load ptr, ptr %index_access, align 8
+  %array_index6 = load i64, ptr %index_ptr1, align 4
+  %11 = sub i64 1, %array_index6
+  call void @builtin_range_check(i64 %11)
+  %index_access7 = getelementptr [2 x ptr], ptr %array_element, i64 0, i64 %array_index6
+  %array_element8 = load ptr, ptr %index_access7, align 8
+  %12 = load i64, ptr %array_size, align 4
+  %13 = add i64 %12, 4
+  store i64 %13, ptr %array_size, align 4
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next4
 
 next4:                                            ; preds = %body3
@@ -612,6 +632,9 @@ next13:                                           ; preds = %end_for19
   br label %cond11
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 end_for14:                                        ; preds = %cond11
   %18 = load i64, ptr %buffer_offset, align 4
   %vector_data = getelementptr i64, ptr %6, i64 1
@@ -621,6 +644,7 @@ end_for14:                                        ; preds = %cond11
   %21 = load ptr, ptr %array_ptr, align 8
   store i64 0, ptr %index_ptr28, align 4
   br label %cond29
+<<<<<<< HEAD
 =======
 end_for15:                                        ; preds = %cond12
   %15 = load i64, ptr %buffer_offset, align 4
@@ -634,6 +658,8 @@ end_for15:                                        ; preds = %cond12
   %index27 = load i64, ptr %index_ptr26, align 4
   br label %cond28
 >>>>>>> 83491ee (update examples out files.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 
 cond16:                                           ; preds = %next18, %body12
   %22 = load i64, ptr %index_ptr15, align 4
@@ -641,6 +667,9 @@ cond16:                                           ; preds = %next18, %body12
   br i1 %23, label %body17, label %end_for19
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 body17:                                           ; preds = %cond16
   %array_index20 = load i64, ptr %index_ptr10, align 4
   %24 = sub i64 2, %array_index20
@@ -655,6 +684,7 @@ body17:                                           ; preds = %cond16
   %26 = load i64, ptr %buffer_offset, align 4
   %27 = getelementptr ptr, ptr %7, i64 %26
   %28 = getelementptr i64, ptr %array_element25, i64 0
+<<<<<<< HEAD
 =======
 next19:                                           ; preds = %body20
   %index24 = load i64, ptr %index_ptr16, align 4
@@ -677,6 +707,8 @@ body20:                                           ; preds = %cond18
   store i64 %26, ptr %27, align 4
   %28 = getelementptr i64, ptr %index_access23, i64 1
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %29 = load i64, ptr %28, align 4
   %30 = getelementptr i64, ptr %27, i64 0
   store i64 %29, ptr %30, align 4
@@ -761,6 +793,7 @@ next36:                                           ; preds = %body35
   br label %cond34
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 body36:                                           ; preds = %cond34
   %46 = load ptr, ptr %array_ptr, align 8
@@ -776,6 +809,8 @@ body36:                                           ; preds = %cond34
   br label %next35
 
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 end_for37:                                        ; preds = %cond34
   br label %next31
 }
@@ -901,6 +936,9 @@ cond2:                                            ; preds = %next4, %body
   br i1 %28, label %body3, label %end_for5
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 body3:                                            ; preds = %cond2
   %29 = load i64, ptr %offset_var, align 4
   %30 = getelementptr ptr, ptr %18, i64 %29
@@ -918,6 +956,7 @@ body3:                                            ; preds = %cond2
   store ptr %30, ptr %index_access7, align 8
   %34 = add i64 4, %29
   store i64 %34, ptr %offset_var, align 4
+<<<<<<< HEAD
 =======
 next4:                                            ; preds = %body5
   %index8 = load i64, ptr %index_ptr1, align 4
@@ -937,6 +976,8 @@ body5:                                            ; preds = %cond3
   %28 = add i64 4, %17
   store i64 %28, ptr %array_offset, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next4
 
 next4:                                            ; preds = %body3
@@ -954,6 +995,9 @@ cond11:                                           ; preds = %next13, %end_for
   br i1 %37, label %body12, label %end_for14
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 body12:                                           ; preds = %cond11
   %array_index15 = load i64, ptr %index_ptr10, align 4
   %38 = sub i64 1, %array_index15
@@ -963,6 +1007,7 @@ body12:                                           ; preds = %cond11
   %39 = load i64, ptr %array_size, align 4
   %40 = add i64 %39, 4
   store i64 %40, ptr %array_size, align 4
+<<<<<<< HEAD
 =======
 next13:                                           ; preds = %body14
   %index17 = load i64, ptr %index_ptr10, align 4
@@ -978,6 +1023,8 @@ body14:                                           ; preds = %cond12
   %33 = add i64 %32, 4
   store i64 %33, ptr %array_size, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next13
 
 next13:                                           ; preds = %body12
@@ -1035,6 +1082,7 @@ next22:                                           ; preds = %body21
   br label %cond20
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 body22:                                           ; preds = %cond20
   %38 = sub i64 1, %index19
@@ -1064,6 +1112,8 @@ body22:                                           ; preds = %cond20
   br label %next21
 
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 end_for23:                                        ; preds = %cond20
   %64 = load i64, ptr %buffer_offset, align 4
   %65 = getelementptr ptr, ptr %43, i64 %64
@@ -1157,6 +1207,7 @@ next38:                                           ; preds = %body37
   br label %cond36
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 body38:                                           ; preds = %cond36
   %84 = load ptr, ptr %array_ptr27, align 8
@@ -1172,6 +1223,8 @@ body38:                                           ; preds = %cond36
   br label %next37
 
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 end_for39:                                        ; preds = %cond36
   br label %next33
 
@@ -1203,11 +1256,15 @@ next53:                                           ; preds = %end_for59
   br label %cond51
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 end_for54:                                        ; preds = %cond51
   %114 = load ptr, ptr %array_ptr49, align 8
   %115 = load i64, ptr %offset_var48, align 4
   %116 = call ptr @array_input_address_2(ptr %114)
   store i64 0, ptr %array_size68, align 4
+<<<<<<< HEAD
 =======
 end_for51:                                        ; preds = %cond48
   %94 = load ptr, ptr %array_ptr45, align 8
@@ -1256,6 +1313,8 @@ next66:                                           ; preds = %end_for74
 
 body67:                                           ; preds = %cond65
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   store i64 0, ptr %index_ptr69, align 4
   br label %cond70
 
@@ -1290,6 +1349,9 @@ next58:                                           ; preds = %body57
   br label %cond56
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 end_for59:                                        ; preds = %cond56
   br label %next53
 
@@ -1344,6 +1406,7 @@ next77:                                           ; preds = %body76
   br label %cond75
 
 end_for78:                                        ; preds = %cond75
+<<<<<<< HEAD
 =======
 body73:                                           ; preds = %cond71
   %109 = sub i64 2, %index64
@@ -1356,6 +1419,8 @@ body73:                                           ; preds = %cond71
   %112 = add i64 %111, 4
   store i64 %112, ptr %array_size62, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next72
 
 cond90:                                           ; preds = %next92, %end_for73
@@ -1420,11 +1485,15 @@ body96:                                           ; preds = %cond95
   br label %next97
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 next97:                                           ; preds = %body96
   %index105 = load i64, ptr %index_ptr94, align 4
   %163 = add i64 %index105, 1
   store i64 %163, ptr %index_ptr94, align 4
   br label %cond95
+<<<<<<< HEAD
 =======
 body91:                                           ; preds = %cond89
   %119 = sub i64 2, %index82
@@ -1456,6 +1525,8 @@ body91:                                           ; preds = %cond89
   store i64 %136, ptr %buffer_offset80, align 4
   br label %next90
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 
 end_for98:                                        ; preds = %cond95
   br label %next92
@@ -1511,11 +1582,15 @@ body115:                                          ; preds = %cond114
   br label %next116
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 next116:                                          ; preds = %body115
   %index124 = load i64, ptr %index_ptr113, align 4
   %176 = add i64 %index124, 1
   store i64 %176, ptr %index_ptr113, align 4
   br label %cond114
+<<<<<<< HEAD
 =======
 body108:                                          ; preds = %cond106
   %144 = sub i64 2, %index99
@@ -1529,6 +1604,8 @@ body108:                                          ; preds = %cond106
   store i64 %147, ptr %array_size97, align 4
   br label %next107
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 
 end_for117:                                       ; preds = %cond114
   br label %next111
@@ -1595,11 +1672,15 @@ body135:                                          ; preds = %cond134
   br label %next136
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 next136:                                          ; preds = %body135
   %index144 = load i64, ptr %index_ptr133, align 4
   %202 = add i64 %index144, 1
   store i64 %202, ptr %index_ptr133, align 4
   br label %cond134
+<<<<<<< HEAD
 =======
 body126:                                          ; preds = %cond124
   %154 = sub i64 2, %index117
@@ -1631,6 +1712,8 @@ body126:                                          ; preds = %cond124
   store i64 %171, ptr %buffer_offset115, align 4
   br label %next125
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 
 end_for137:                                       ; preds = %cond134
   br label %next131

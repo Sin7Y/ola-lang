@@ -602,6 +602,9 @@ body5:                                            ; preds = %cond4
   %19 = sub i64 %18, %array_index
   call void @builtin_range_check(i64 %19)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %vector_data = getelementptr i64, ptr %3, i64 1
   %index_access = getelementptr ptr, ptr %vector_data, i64 %array_index
   %array_element = load ptr, ptr %index_access, align 8
@@ -616,6 +619,7 @@ body5:                                            ; preds = %cond4
   %23 = load i64, ptr %buffer_offset, align 4
   %24 = add i64 %23, 1
   store i64 %24, ptr %buffer_offset, align 4
+<<<<<<< HEAD
 =======
   %index_access10 = getelementptr [3 x i64], ptr %index_access, i64 0, i64 %index4
   %20 = load i64, ptr %buffer_offset, align 4
@@ -625,6 +629,8 @@ body5:                                            ; preds = %cond4
   %23 = add i64 %22, 1
   store i64 %23, ptr %buffer_offset, align 4
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   br label %next6
 
 next6:                                            ; preds = %body5
@@ -705,11 +711,15 @@ body25:                                           ; preds = %cond24
   br label %next26
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 next26:                                           ; preds = %body25
   %index36 = load i64, ptr %index_ptr23, align 4
   %48 = add i64 %index36, 1
   store i64 %48, ptr %index_ptr23, align 4
   br label %cond24
+<<<<<<< HEAD
 =======
 body28:                                           ; preds = %cond26
   %vector_length30 = load i64, ptr %24, align 4
@@ -729,6 +739,8 @@ body28:                                           ; preds = %cond26
   store i64 %44, ptr %buffer_offset15, align 4
   br label %next27
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 
 end_for27:                                        ; preds = %cond24
   br label %next20

@@ -457,6 +457,9 @@ exit:                                             ; preds = %loop
 
 define void @hash_compare() {
 entry:
+  %h3 = alloca ptr, align 8
+  %h2 = alloca ptr, align 8
+  %h1 = alloca ptr, align 8
   %0 = call ptr @vector_new(i64 10)
   %vector_data = getelementptr i64, ptr %0, i64 1
   %index_access = getelementptr i64, ptr %vector_data, i64 0
@@ -483,10 +486,12 @@ entry:
   %vector_data10 = getelementptr i64, ptr %0, i64 1
   %1 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %vector_data10, ptr %1, i64 %vector_length)
+  store ptr %1, ptr %h1, align 8
   %vector_length11 = load i64, ptr %0, align 4
   %vector_data12 = getelementptr i64, ptr %0, i64 1
   %2 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %vector_data12, ptr %2, i64 %vector_length11)
+  store ptr %2, ptr %h2, align 8
   %3 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
   %index_access13 = getelementptr i64, ptr %3, i64 3
@@ -507,11 +512,15 @@ entry:
   %index_access16 = getelementptr i64, ptr %3, i64 3
   store i64 1885151562297713155, ptr %index_access16, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 81f6615 (regerate examples source files result.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   store ptr %3, ptr %h3, align 8
   %4 = load ptr, ptr %h1, align 8
   %5 = load ptr, ptr %h2, align 8
   %6 = call i64 @memcmp_eq(ptr %4, ptr %5, i64 4)
+<<<<<<< HEAD
 =======
   %4 = call i64 @memcmp_eq(ptr %1, ptr %2, i64 4)
   call void @builtin_assert(i64 %4)
@@ -519,17 +528,37 @@ entry:
   call void @builtin_assert(i64 %5)
   %6 = call i64 @field_memcmp_ule(ptr %1, ptr %2, i64 4)
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+>>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   call void @builtin_assert(i64 %6)
-  %7 = call i64 @field_memcmp_uge(ptr %1, ptr %3, i64 4)
-  call void @builtin_assert(i64 %7)
-  %8 = call i64 @field_memcmp_ugt(ptr %1, ptr %3, i64 4)
-  call void @builtin_assert(i64 %8)
-  %9 = call i64 @field_memcmp_uge(ptr %1, ptr %3, i64 4)
+  %7 = load ptr, ptr %h1, align 8
+  %8 = load ptr, ptr %h3, align 8
+  %9 = call i64 @memcmp_ne(ptr %7, ptr %8, i64 4)
   call void @builtin_assert(i64 %9)
-  %10 = call i64 @field_memcmp_ult(ptr %3, ptr %1, i64 4)
-  call void @builtin_assert(i64 %10)
-  %11 = call i64 @field_memcmp_ule(ptr %3, ptr %1, i64 4)
-  call void @builtin_assert(i64 %11)
+  %10 = load ptr, ptr %h1, align 8
+  %11 = load ptr, ptr %h2, align 8
+  %12 = call i64 @field_memcmp_ule(ptr %10, ptr %11, i64 4)
+  call void @builtin_assert(i64 %12)
+  %13 = load ptr, ptr %h1, align 8
+  %14 = load ptr, ptr %h3, align 8
+  %15 = call i64 @field_memcmp_uge(ptr %13, ptr %14, i64 4)
+  call void @builtin_assert(i64 %15)
+  %16 = load ptr, ptr %h1, align 8
+  %17 = load ptr, ptr %h3, align 8
+  %18 = call i64 @field_memcmp_ugt(ptr %16, ptr %17, i64 4)
+  call void @builtin_assert(i64 %18)
+  %19 = load ptr, ptr %h1, align 8
+  %20 = load ptr, ptr %h3, align 8
+  %21 = call i64 @field_memcmp_uge(ptr %19, ptr %20, i64 4)
+  call void @builtin_assert(i64 %21)
+  %22 = load ptr, ptr %h3, align 8
+  %23 = load ptr, ptr %h1, align 8
+  %24 = call i64 @field_memcmp_ult(ptr %22, ptr %23, i64 4)
+  call void @builtin_assert(i64 %24)
+  %25 = load ptr, ptr %h3, align 8
+  %26 = load ptr, ptr %h1, align 8
+  %27 = call i64 @field_memcmp_ule(ptr %25, ptr %26, i64 4)
+  call void @builtin_assert(i64 %27)
   ret void
 }
 
