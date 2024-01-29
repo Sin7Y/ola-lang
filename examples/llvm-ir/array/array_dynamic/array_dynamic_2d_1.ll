@@ -547,61 +547,65 @@ func_0_dispatch:                                  ; preds = %entry
   %vector_length1 = load i64, ptr %7, align 4
   store i64 %vector_length1, ptr %14, align 4
   store i64 0, ptr %index_ptr, align 4
-  %index = load i64, ptr %index_ptr, align 4
   br label %cond
 
 cond:                                             ; preds = %next, %func_0_dispatch
   %vector_length2 = load i64, ptr %7, align 4
-  %15 = icmp ult i64 %index, %vector_length2
-  br i1 %15, label %body, label %end_for
-
-next:                                             ; preds = %end_for8
-  %index12 = load i64, ptr %index_ptr, align 4
-  %16 = add i64 %index12, 1
-  store i64 %16, ptr %index_ptr, align 4
-  br label %cond
+  %15 = load i64, ptr %index_ptr, align 4
+  %16 = icmp ult i64 %15, %vector_length2
+  br i1 %16, label %body, label %end_for
 
 body:                                             ; preds = %cond
   store i64 0, ptr %index_ptr3, align 4
-  %index4 = load i64, ptr %index_ptr3, align 4
-  br label %cond5
+  br label %cond4
+
+next:                                             ; preds = %end_for7
+  %index12 = load i64, ptr %index_ptr, align 4
+  %17 = add i64 %index12, 1
+  store i64 %17, ptr %index_ptr, align 4
+  br label %cond
 
 end_for:                                          ; preds = %cond
-  %17 = load i64, ptr %buffer_offset, align 4
-  %18 = getelementptr ptr, ptr %11, i64 %17
-  store i64 %10, ptr %18, align 4
+  %18 = load i64, ptr %buffer_offset, align 4
+  %19 = getelementptr ptr, ptr %11, i64 %18
+  store i64 %10, ptr %19, align 4
   call void @set_tape_data(ptr %11, i64 %heap_size)
   ret void
 
-cond5:                                            ; preds = %next6, %body
-  %19 = icmp ult i64 %index4, 3
-  br i1 %19, label %body7, label %end_for8
+cond4:                                            ; preds = %next6, %body
+  %20 = load i64, ptr %index_ptr3, align 4
+  %21 = icmp ult i64 %20, 3
+  br i1 %21, label %body5, label %end_for7
 
-next6:                                            ; preds = %body7
-  %index11 = load i64, ptr %index_ptr3, align 4
-  %20 = add i64 %index11, 1
-  store i64 %20, ptr %index_ptr3, align 4
-  br label %cond5
-
-body7:                                            ; preds = %cond5
-  %vector_length9 = load i64, ptr %7, align 4
-  %21 = sub i64 %vector_length9, 1
-  %22 = sub i64 %21, %index
-  call void @builtin_range_check(i64 %22)
-  %vector_data = getelementptr i64, ptr %7, i64 1
-  %index_access = getelementptr ptr, ptr %vector_data, i64 %index
-  %23 = sub i64 2, %index4
+body5:                                            ; preds = %cond4
+  %array_index = load i64, ptr %index_ptr, align 4
+  %vector_length8 = load i64, ptr %7, align 4
+  %22 = sub i64 %vector_length8, 1
+  %23 = sub i64 %22, %array_index
   call void @builtin_range_check(i64 %23)
-  %index_access10 = getelementptr [3 x i64], ptr %index_access, i64 0, i64 %index4
-  %24 = load i64, ptr %buffer_offset, align 4
-  %25 = getelementptr ptr, ptr %11, i64 %24
-  store ptr %index_access10, ptr %25, align 8
-  %26 = load i64, ptr %buffer_offset, align 4
-  %27 = add i64 %26, 1
-  store i64 %27, ptr %buffer_offset, align 4
+  %vector_data = getelementptr i64, ptr %7, i64 1
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %array_index
+  %array_element = load ptr, ptr %index_access, align 8
+  %array_index9 = load i64, ptr %index_ptr3, align 4
+  %24 = sub i64 2, %array_index9
+  call void @builtin_range_check(i64 %24)
+  %index_access10 = getelementptr [3 x i64], ptr %array_element, i64 0, i64 %array_index9
+  %array_element11 = load i64, ptr %index_access10, align 4
+  %25 = load i64, ptr %buffer_offset, align 4
+  %26 = getelementptr ptr, ptr %11, i64 %25
+  store i64 %array_element11, ptr %26, align 4
+  %27 = load i64, ptr %buffer_offset, align 4
+  %28 = add i64 %27, 1
+  store i64 %28, ptr %buffer_offset, align 4
   br label %next6
 
-end_for8:                                         ; preds = %cond5
+next6:                                            ; preds = %body5
+  %index = load i64, ptr %index_ptr3, align 4
+  %29 = add i64 %index, 1
+  store i64 %29, ptr %index_ptr3, align 4
+  br label %cond4
+
+end_for7:                                         ; preds = %cond4
   br label %next
 }
 

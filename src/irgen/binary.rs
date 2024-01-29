@@ -183,7 +183,7 @@ impl<'a> Binary<'a> {
     pub(crate) fn llvm_field_ty(&self, ty: &Type, ns: &Namespace) -> BasicTypeEnum<'a> {
         let llvm_ty = self.llvm_type(ty, ns);
         match ty.deref_memory() {
-            Type::Array(_, dim) if dim.last() == Some(&ArrayLength::Dynamic) => llvm_ty
+            Type::Array(..) => llvm_ty
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             Type::DynamicBytes | Type::String => llvm_ty
@@ -742,7 +742,7 @@ impl<'a> Binary<'a> {
                         )
                     }
                 } else {
-                    let llvm_ty = self.llvm_var_ty(array_ty, ns);
+                    let llvm_ty = self.llvm_var_ty(&array_ty.array_deref(), ns);
                     let vector_ptr = self.vector_data(array);
                     unsafe {
                         self.builder
@@ -751,7 +751,7 @@ impl<'a> Binary<'a> {
                 }
             }
             Type::String | Type::DynamicBytes => {
-                let llvm_ty = self.llvm_var_ty(array_ty, ns);
+                let llvm_ty = self.llvm_var_ty(&array_ty.array_deref(), ns);
                 let vector_ptr = self.vector_data(array.into());
                 unsafe {
                     self.builder
@@ -871,8 +871,10 @@ impl<'a> Binary<'a> {
             )
         };
 
-        self.builder
-            .build_store(index_access, ty.elem_ty().default(&self, function, ns).unwrap());
+        self.builder.build_store(
+            index_access,
+            ty.elem_ty().default(&self, function, ns).unwrap(),
+        );
 
         let next_index =
             self.builder

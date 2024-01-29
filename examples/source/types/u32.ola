@@ -8,4 +8,9 @@ contract U32BasicTest {
         print(c);
     }
 
+    fn testU32Increment() {
+        u32 a = 2;
+        a++;
+    }
+
 }

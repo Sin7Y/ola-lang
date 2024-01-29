@@ -5,6 +5,11 @@ contract ArrayInputExample {
         return a;
     }
 
+    fn array_input(u32[][3] array) {
+        u32[] a = array[0];
+        // return a;
+    }
+
 
     fn array_output_u32() -> (u32[][3]) {
         u32[] array_field1 = new u32[](2);

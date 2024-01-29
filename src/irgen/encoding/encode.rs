@@ -188,7 +188,7 @@ fn encode_array<'a>(
     }
 
     // In all other cases, we must loop through the array
-    let mut indexes: Vec<IntValue<'a>> = Vec::new();
+    let mut indexes: Vec<PointerValue<'a>> = Vec::new();
     let offset_var = bin.build_alloca(func_value, bin.context.i64_type(), "buffer_offset");
     bin.builder
         .build_store(offset_var, bin.context.i64_type().const_zero());
@@ -229,7 +229,7 @@ fn encode_complex_array<'a>(
     dimension: usize,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-    indexes: &mut Vec<IntValue<'a>>,
+    indexes: &mut Vec<PointerValue<'a>>,
 ) {
     let mut array_ty = array_ty.clone();
     let mut array = array.clone();
@@ -243,6 +243,7 @@ fn encode_complex_array<'a>(
             indexes,
             func_value,
             ns,
+            false,
         );
 
         let offset = bin
@@ -283,6 +284,7 @@ fn encode_complex_array<'a>(
             indexes,
             func_value,
             ns,
+            false,
         );
 
         let offset = bin
