@@ -513,34 +513,30 @@ func_0_dispatch:                                  ; preds = %entry
   %vector_length1 = load i64, ptr %3, align 4
   store i64 %vector_length1, ptr %9, align 4
   store i64 0, ptr %index_ptr, align 4
-  %index = load i64, ptr %index_ptr, align 4
   br label %cond
 
 cond:                                             ; preds = %next, %func_0_dispatch
   %vector_length2 = load i64, ptr %3, align 4
-  %10 = icmp ult i64 %index, %vector_length2
-  br i1 %10, label %body, label %end_for
-
-next:                                             ; preds = %body
-  %index7 = load i64, ptr %index_ptr, align 4
-  %11 = add i64 %index7, 1
-  store i64 %11, ptr %index_ptr, align 4
-  br label %cond
+  %10 = load i64, ptr %index_ptr, align 4
+  %11 = icmp ult i64 %10, %vector_length2
+  br i1 %11, label %body, label %end_for
 
 body:                                             ; preds = %cond
+  %array_index = load i64, ptr %index_ptr, align 4
   %vector_length3 = load i64, ptr %3, align 4
   %12 = sub i64 %vector_length3, 1
-  %13 = sub i64 %12, %index
+  %13 = sub i64 %12, %array_index
   call void @builtin_range_check(i64 %13)
   %vector_data = getelementptr i64, ptr %3, i64 1
-  %index_access = getelementptr ptr, ptr %vector_data, i64 %index
+  %index_access = getelementptr ptr, ptr %vector_data, i64 %array_index
+  %array_element = load ptr, ptr %index_access, align 8
   %14 = load i64, ptr %buffer_offset, align 4
   %15 = getelementptr ptr, ptr %6, i64 %14
-  %struct_member = getelementptr inbounds { i64, i64 }, ptr %index_access, i32 0, i32 0
+  %struct_member = getelementptr inbounds { i64, i64 }, ptr %array_element, i32 0, i32 0
   %strcut_member = load i64, ptr %struct_member, align 4
   %struct_offset = getelementptr ptr, ptr %15, i64 0
   store i64 %strcut_member, ptr %struct_offset, align 4
-  %struct_member4 = getelementptr inbounds { i64, i64 }, ptr %index_access, i32 0, i32 1
+  %struct_member4 = getelementptr inbounds { i64, i64 }, ptr %array_element, i32 0, i32 1
   %strcut_member5 = load i64, ptr %struct_member4, align 4
   %struct_offset6 = getelementptr ptr, ptr %struct_offset, i64 1
   store i64 %strcut_member5, ptr %struct_offset6, align 4
@@ -549,10 +545,16 @@ body:                                             ; preds = %cond
   store i64 %17, ptr %buffer_offset, align 4
   br label %next
 
+next:                                             ; preds = %body
+  %index = load i64, ptr %index_ptr, align 4
+  %18 = add i64 %index, 1
+  store i64 %18, ptr %index_ptr, align 4
+  br label %cond
+
 end_for:                                          ; preds = %cond
-  %18 = load i64, ptr %buffer_offset, align 4
-  %19 = getelementptr ptr, ptr %6, i64 %18
-  store i64 %5, ptr %19, align 4
+  %19 = load i64, ptr %buffer_offset, align 4
+  %20 = getelementptr ptr, ptr %6, i64 %19
+  store i64 %5, ptr %20, align 4
   call void @set_tape_data(ptr %6, i64 %heap_size)
   ret void
 }

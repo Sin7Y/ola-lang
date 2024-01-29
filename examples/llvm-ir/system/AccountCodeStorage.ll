@@ -451,6 +451,7 @@ exit:                                             ; preds = %loop
 
 define void @onlyDeployer() {
 entry:
+  %DEPLOYER_SYSTEM_CONTRACT = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
   %index_access = getelementptr i64, ptr %0, i64 0
   store i64 0, ptr %index_access, align 4
@@ -460,10 +461,12 @@ entry:
   store i64 0, ptr %index_access2, align 4
   %index_access3 = getelementptr i64, ptr %0, i64 3
   store i64 32773, ptr %index_access3, align 4
+  store ptr %0, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
   %1 = call ptr @heap_malloc(i64 12)
   call void @get_tape_data(ptr %1, i64 12)
-  %2 = call i64 @memcmp_eq(ptr %1, ptr %0, i64 4)
-  call void @builtin_assert(i64 %2)
+  %2 = load ptr, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
+  %3 = call i64 @memcmp_eq(ptr %1, ptr %2, i64 4)
+  call void @builtin_assert(i64 %3)
   ret void
 }
 
@@ -541,17 +544,17 @@ entry:
   %_rawHash = alloca ptr, align 8
   %_address = alloca ptr, align 8
   store ptr %0, ptr %_address, align 8
-  %3 = load ptr, ptr %_address, align 8
   store ptr %1, ptr %_rawHash, align 8
-  %4 = load ptr, ptr %_rawHash, align 8
   store ptr %2, ptr %_codeHash, align 8
-  %5 = load ptr, ptr %_codeHash, align 8
   call void @onlyDeployer()
-  %6 = call ptr @heap_malloc(i64 2)
-  %struct_member = getelementptr inbounds { ptr, ptr }, ptr %6, i32 0, i32 0
+  %3 = call ptr @heap_malloc(i64 2)
+  %struct_member = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 0
+  %4 = load ptr, ptr %_rawHash, align 8
   store ptr %4, ptr %struct_member, align 8
-  %struct_member1 = getelementptr inbounds { ptr, ptr }, ptr %6, i32 0, i32 1
+  %struct_member1 = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 1
+  %5 = load ptr, ptr %_codeHash, align 8
   store ptr %5, ptr %struct_member1, align 8
+  %6 = load ptr, ptr %_address, align 8
   %7 = call ptr @heap_malloc(i64 4)
   %8 = getelementptr i64, ptr %7, i64 0
   store i64 0, ptr %8, align 4
@@ -564,16 +567,20 @@ entry:
   %12 = call ptr @heap_malloc(i64 8)
   call void @memcpy(ptr %7, ptr %12, i64 4)
   %13 = getelementptr i64, ptr %12, i64 4
-  call void @memcpy(ptr %3, ptr %13, i64 4)
+  call void @memcpy(ptr %6, ptr %13, i64 4)
   %14 = getelementptr i64, ptr %13, i64 4
   %15 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %12, ptr %15, i64 8)
-  %rawHash = getelementptr inbounds { ptr, ptr }, ptr %6, i32 0, i32 0
+  %rawHash = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 0
   %16 = load ptr, ptr %rawHash, align 8
   call void @set_storage(ptr %15, ptr %16)
-  %codeHash = getelementptr inbounds { ptr, ptr }, ptr %6, i32 0, i32 1
-  %17 = load ptr, ptr %codeHash, align 8
-  call void @set_storage(ptr %15, ptr %17)
+  %17 = getelementptr i64, ptr %15, i64 3
+  %18 = load i64, ptr %17, align 4
+  %slot_offset = add i64 %18, 1
+  store i64 %slot_offset, ptr %17, align 4
+  %codeHash = getelementptr inbounds { ptr, ptr }, ptr %3, i32 0, i32 1
+  %19 = load ptr, ptr %codeHash, align 8
+  call void @set_storage(ptr %15, ptr %19)
   ret void
 }
 

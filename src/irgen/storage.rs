@@ -168,8 +168,12 @@ pub(crate) fn storage_load<'a>(
                     slot,
                     |index: IntValue<'a>, slot: &mut BasicValueEnum<'a>| {
                         let elem = unsafe {
-                            bin.builder
-                                .build_gep(llvm_ty, new_array, &[i64_zero!(), index], "index_access")
+                            bin.builder.build_gep(
+                                llvm_ty,
+                                new_array,
+                                &[i64_zero!(), index],
+                                "index_access",
+                            )
                         };
 
                         let val = storage_load(bin, &ty, slot, function, ns);
@@ -329,15 +333,14 @@ pub(crate) fn storage_store<'a>(
                         };
 
                         if elem_ty.is_reference_type(ns)
-                        && !elem_ty.deref_memory().is_fixed_reference_type()
-                    {
-                        let load_ty =
-                            bin.llvm_type(elem_ty, ns);
-                        elem = bin
-                            .builder
-                            .build_load(load_ty, elem, "")
-                            .into_pointer_value();
-                    }
+                            && !elem_ty.deref_memory().is_fixed_reference_type()
+                        {
+                            let load_ty = bin.llvm_type(elem_ty, ns);
+                            elem = bin
+                                .builder
+                                .build_load(load_ty, elem, "")
+                                .into_pointer_value();
+                        }
                         storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 
                         if !elem_ty.is_reference_type(ns) {
@@ -389,13 +392,13 @@ pub(crate) fn storage_store<'a>(
                         let mut elem = bin.array_subscript(ty, dest, elem_no, ns);
 
                         if elem_ty.is_reference_type(ns)
-                        && !elem_ty.deref_memory().is_fixed_reference_type()
-                    {
-                        elem = bin
-                            .builder
-                            .build_load(llvm_elem_ty, elem, "")
-                            .into_pointer_value();
-                    }
+                            && !elem_ty.deref_memory().is_fixed_reference_type()
+                        {
+                            elem = bin
+                                .builder
+                                .build_load(llvm_elem_ty, elem, "")
+                                .into_pointer_value();
+                        }
 
                         storage_store(bin, elem_ty, slot, elem.into(), function, ns);
 

@@ -348,7 +348,7 @@ fn calculate_array_size<'a>(
         bin.builder
             .build_int_add(size, bin.context.i64_type().const_int(1, false), "")
     } else {
-        let mut index_vec: Vec<IntValue<'a>> = Vec::new();
+        let mut index_vec: Vec<PointerValue<'a>> = Vec::new();
         let size_var = bin.build_alloca(func_value, bin.context.i64_type(), "array_size");
         bin.builder
             .build_store(size_var, bin.context.i64_type().const_zero());
@@ -383,25 +383,28 @@ fn calculate_complex_array_size<'a>(
     size_var: PointerValue<'a>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
-    indexes: &mut Vec<IntValue<'a>>,
+    indexes: &mut Vec<PointerValue<'a>>,
 ) {
     // If this dimension is dynamic, account for the encoded vector length variable.
     if dims[dimension] == ArrayLength::Dynamic {
-        let arr = index_array(
-            bin,
-            &mut array.clone(),
-            &mut array_ty.clone(),
-            dims,
-            indexes,
-            func_value,
-            ns
-        );
-        let array_length = bin.vector_len(arr);
+        // let arr = index_array(
+        //     bin,
+        //     &mut array.clone(),
+        //     &mut array_ty.clone(),
+        //     dims,
+        //     indexes,
+        //     func_value,
+        //     ns
+        // );
+        // let array_length = bin.vector_len(arr);
+        // If the array is a dynamic array,
+        // we need to allocate an extra space at the beginning to store the length of
+        // the array.
         let size = bin.builder.build_int_add(
             bin.builder
                 .build_load(bin.context.i64_type(), size_var, "")
                 .into_int_value(),
-                array_length,
+            bin.context.i64_type().const_int(1, false),
             "",
         );
         bin.builder.build_store(size_var, size);
@@ -421,6 +424,7 @@ fn calculate_complex_array_size<'a>(
             indexes,
             func_value,
             ns,
+            false,
         );
         let elem_size = get_args_type_size(bin, Some(deref), elem_ty, func_value, ns);
 
@@ -560,13 +564,14 @@ pub(crate) fn index_array<'a>(
     arr: &mut BasicValueEnum<'a>,
     ty: &mut Type,
     dims: &[ArrayLength],
-    indexes: &[IntValue<'a>],
+    indexes: &[PointerValue<'a>],
     func_value: FunctionValue<'a>,
     ns: &Namespace,
+    coerce_pointer_return: bool,
 ) -> BasicValueEnum<'a> {
     let elem_ty = ty.elem_ty();
     let begin = dims.len() - indexes.len();
-
+    let mut pre_load = Vec::new();
     for i in (begin..dims.len()).rev() {
         // If we are indexing the last dimension, the type should be that of the array
         // element.
@@ -576,28 +581,34 @@ pub(crate) fn index_array<'a>(
             Type::Array(Box::new(elem_ty.clone()), dims[0..i].to_vec())
         };
 
+        let array_index = bin.builder.build_load(
+            bin.context.i64_type(),
+            indexes[dims.len() - i - 1],
+            "array_index",
+        );
         *arr = array_subscript(
             ty,
             arr.clone(),
-            indexes[dims.len() - i - 1].into(),
+            array_index,
             &Type::Uint(32),
             bin,
             func_value,
             ns,
         );
+        pre_load.push(arr.clone());
 
         // We should only load if the dimension is dynamic.
-        if i > 0 && dims[i - 1] == ArrayLength::Dynamic {
-            *arr = bin.builder.build_load(
-                bin.llvm_var_ty(&local_ty.clone(), ns),
-                arr.into_pointer_value(),
-                "arr",
-            );
-        }
-
+        *arr = bin.builder.build_load(
+            bin.llvm_var_ty(&local_ty.clone(), ns),
+            arr.into_pointer_value(),
+            "array_element",
+        );
         *ty = local_ty;
     }
 
+    if coerce_pointer_return && !matches!(ty, Type::Ref(_)) {
+        *arr = pre_load.pop().unwrap();
+    }
     *arr
 }
 
@@ -617,7 +628,7 @@ fn set_array_loop<'a>(
     ty: &Type,
     dims: &[ArrayLength],
     dimension: usize,
-    indexes: &mut Vec<IntValue<'a>>,
+    indexes: &mut Vec<PointerValue<'a>>,
     func_value: FunctionValue<'a>,
     ns: &Namespace,
 ) -> ForLoop<'a> {
@@ -626,15 +637,10 @@ fn set_array_loop<'a>(
     bin.builder
         .build_store(index_ptr, bin.context.i64_type().const_zero());
 
-    let index_temp = bin
-        .builder
-        .build_load(bin.context.i64_type(), index_ptr, "index")
-        .into_int_value();
-
-    indexes.push(index_temp);
+    indexes.push(index_ptr);
     let cond_block = bin.context.append_basic_block(func_value, "cond");
-    let next_block = bin.context.append_basic_block(func_value, "next");
     let body_block = bin.context.append_basic_block(func_value, "body");
+    let next_block = bin.context.append_basic_block(func_value, "next");
     let end_block = bin.context.append_basic_block(func_value, "end_for");
 
     bin.builder.build_unconditional_branch(cond_block);
@@ -654,14 +660,19 @@ fn set_array_loop<'a>(
             &indexes[..indexes.len() - 1],
             func_value,
             ns,
+            false,
         );
 
         bin.vector_len(sub_array)
     };
 
+    let index = bin
+        .builder
+        .build_load(bin.context.i64_type(), index_ptr, "")
+        .into_int_value();
     let cond = bin
         .builder
-        .build_int_compare(IntPredicate::ULT, index_temp, bound, "");
+        .build_int_compare(IntPredicate::ULT, index, bound, "");
 
     bin.builder
         .build_conditional_branch(cond, body_block, end_block);

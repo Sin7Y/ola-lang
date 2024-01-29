@@ -157,8 +157,9 @@ pub fn lower_call(
         let dest = get_vreg_for_val(ctx, tys[1], args[1])?;
         let idx = get_operand_for_val(ctx, tys[2], args[2])?;
 
-        // NOTE: According to the meaning of instruction tload mem flag index, all three of its operands are defined.
-        // The first operand is a memory operand that has been allocated on the heap.
+        // NOTE: According to the meaning of instruction tload mem flag index, all three
+        // of its operands are defined. The first operand is a memory operand
+        // that has been allocated on the heap.
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::TLOADri,

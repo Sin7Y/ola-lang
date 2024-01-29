@@ -454,20 +454,20 @@ entry:
   %set_data = alloca i64, align 8
   %_contract = alloca ptr, align 8
   store ptr %0, ptr %_contract, align 8
-  %1 = load ptr, ptr %_contract, align 8
   store i64 66, ptr %set_data, align 4
-  %2 = load i64, ptr %set_data, align 4
-  %3 = call ptr @vector_new(i64 3)
-  %vector_data = getelementptr i64, ptr %3, i64 1
-  store i64 %2, ptr %vector_data, align 4
-  %4 = getelementptr ptr, ptr %vector_data, i64 1
-  store i64 1, ptr %4, align 4
-  %5 = getelementptr ptr, ptr %4, i64 1
-  store i64 2653574029, ptr %5, align 4
-  %vector_length = load i64, ptr %3, align 4
-  %vector_data1 = getelementptr i64, ptr %3, i64 1
+  %1 = load i64, ptr %set_data, align 4
+  %2 = call ptr @vector_new(i64 3)
+  %vector_data = getelementptr i64, ptr %2, i64 1
+  store i64 %1, ptr %vector_data, align 4
+  %3 = getelementptr ptr, ptr %vector_data, i64 1
+  store i64 1, ptr %3, align 4
+  %4 = getelementptr ptr, ptr %3, i64 1
+  store i64 2653574029, ptr %4, align 4
+  %5 = load ptr, ptr %_contract, align 8
+  %vector_length = load i64, ptr %2, align 4
+  %vector_data1 = getelementptr i64, ptr %2, i64 1
   call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
-  call void @contract_call(ptr %1, i64 1)
+  call void @contract_call(ptr %5, i64 1)
   %6 = call ptr @heap_malloc(i64 1)
   call void @get_tape_data(ptr %6, i64 1)
   %return_length = load i64, ptr %6, align 4
@@ -503,24 +503,24 @@ entry:
   %a = alloca i64, align 8
   %_contract = alloca ptr, align 8
   store ptr %0, ptr %_contract, align 8
-  %1 = load ptr, ptr %_contract, align 8
   store i64 100, ptr %a, align 4
   store i64 200, ptr %b, align 4
-  %2 = load i64, ptr %a, align 4
-  %3 = load i64, ptr %b, align 4
-  %4 = call ptr @vector_new(i64 4)
-  %vector_data = getelementptr i64, ptr %4, i64 1
-  store i64 %2, ptr %vector_data, align 4
-  %5 = getelementptr ptr, ptr %vector_data, i64 1
-  store i64 %3, ptr %5, align 4
+  %1 = load i64, ptr %a, align 4
+  %2 = load i64, ptr %b, align 4
+  %3 = call ptr @vector_new(i64 4)
+  %vector_data = getelementptr i64, ptr %3, i64 1
+  store i64 %1, ptr %vector_data, align 4
+  %4 = getelementptr ptr, ptr %vector_data, i64 1
+  store i64 %2, ptr %4, align 4
+  %5 = getelementptr ptr, ptr %4, i64 1
+  store i64 2, ptr %5, align 4
   %6 = getelementptr ptr, ptr %5, i64 1
-  store i64 2, ptr %6, align 4
-  %7 = getelementptr ptr, ptr %6, i64 1
-  store i64 1715662714, ptr %7, align 4
-  %vector_length = load i64, ptr %4, align 4
-  %vector_data1 = getelementptr i64, ptr %4, i64 1
+  store i64 1715662714, ptr %6, align 4
+  %7 = load ptr, ptr %_contract, align 8
+  %vector_length = load i64, ptr %3, align 4
+  %vector_data1 = getelementptr i64, ptr %3, i64 1
   call void @set_tape_data(ptr %vector_data1, i64 %vector_length)
-  call void @contract_call(ptr %1, i64 0)
+  call void @contract_call(ptr %7, i64 0)
   %8 = call ptr @heap_malloc(i64 1)
   call void @get_tape_data(ptr %8, i64 1)
   %return_length = load i64, ptr %8, align 4
