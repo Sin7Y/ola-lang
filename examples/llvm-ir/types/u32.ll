@@ -465,10 +465,21 @@ entry:
   ret void
 }
 
+define void @testU32Increment() {
+entry:
+  %a = alloca i64, align 8
+  store i64 2, ptr %a, align 4
+  %0 = load i64, ptr %a, align 4
+  %1 = add i64 %0, 1
+  store i64 %1, ptr %a, align 4
+  ret void
+}
+
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
     i64 1866329094, label %func_0_dispatch
+    i64 66285729, label %func_1_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -479,6 +490,13 @@ func_0_dispatch:                                  ; preds = %entry
   %3 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %3, align 4
   call void @set_tape_data(ptr %3, i64 1)
+  ret void
+
+func_1_dispatch:                                  ; preds = %entry
+  call void @testU32Increment()
+  %4 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %4, align 4
+  call void @set_tape_data(ptr %4, i64 1)
   ret void
 }
 
