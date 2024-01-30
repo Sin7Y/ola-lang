@@ -62,8 +62,6 @@ pub fn lower_gep(
     let mut mem_slot = OperandData::None;
     let mut mem_imm = 0.into();
     let mut mem_rbase = OperandData::None;
-    let mem_ridx = OperandData::None;
-    let mem_mul = OperandData::None;
 
     if matches!(base, OperandData::Slot(_)) {
         mem_slot = base
@@ -85,8 +83,7 @@ pub fn lower_gep(
         }
         [(m, x)] if matches!(m, 1 | 2 | 4 | 8) => {
             mem_imm = x.to_owned();
-            // mem_mul = (*m as i64).into();
-            debug_println!("gep size {:?},idx {:?},imm {:?}", m, mem_ridx, mem_imm);
+            debug_println!("gep size {:?},imm {:?}", m, mem_imm);
         }
         _ => simple_case = false,
     }
@@ -96,12 +93,10 @@ pub fn lower_gep(
 
     if simple_case {
         debug_println!(
-            "gep simple case: mem_slot {:?},mem_imm {:?},mem_rbase {:?},mem_ridx {:?},mem_mul {:?}",
+            "gep simple case: mem_slot {:?},mem_imm {:?},mem_rbase {:?}",
             mem_slot,
             mem_imm,
-            mem_rbase,
-            mem_ridx,
-            mem_mul
+            mem_rbase
         );
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
