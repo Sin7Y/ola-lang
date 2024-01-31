@@ -164,6 +164,8 @@ pub fn lower_gep(
 
 #[cfg(test)]
 mod test {
+    use debug_print::debug_println;
+
     use crate::codegen::{
         core::ir::module::Module,
         isa::ola::{asm::AsmProgram, Ola},
