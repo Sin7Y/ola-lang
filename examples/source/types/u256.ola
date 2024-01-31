@@ -1,10 +1,10 @@
 
 contract U256BasicTest {
  
-    // fn testU256DeclareUninitialized() {
-    //      u256 a; 
-    //      print(a);
-    // }
+    fn testU256DeclareUninitialized() {
+         u256 a; 
+         print(a);
+    }
 
     // // BEGIN-CHECK: define void @testU256DeclareInitialized()
     // fn testU256DeclareInitialized() { 

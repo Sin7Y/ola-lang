@@ -2,7 +2,7 @@
 
 use indexmap::IndexMap;
 use ola_parser::diagnostics::{ErrorType, Level, Note};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::str;
 use std::sync::Arc;
 
@@ -71,7 +71,7 @@ pub enum VariableUsage {
 }
 
 #[derive(Debug, Clone)]
-struct VarScope(HashMap<String, usize>, Option<HashSet<usize>>);
+struct VarScope(HashMap<String, usize>);
 
 #[derive(Default, Debug, Clone)]
 pub struct Symtable {
@@ -85,7 +85,7 @@ impl Symtable {
     pub fn new() -> Self {
         Symtable {
             vars: IndexMap::new(),
-            names: vec![VarScope(HashMap::new(), None)],
+            names: vec![VarScope(HashMap::new())],
             arguments: Vec::new(),
             returns: Vec::new(),
         }
@@ -177,7 +177,7 @@ impl Symtable {
     }
 
     pub fn new_scope(&mut self) {
-        self.names.push(VarScope(HashMap::new(), None));
+        self.names.push(VarScope(HashMap::new()));
     }
 
     pub fn leave_scope(&mut self) {
