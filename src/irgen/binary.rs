@@ -97,7 +97,35 @@ impl<'a> Binary<'a> {
                     .unwrap()
                     .into()
             }
-            _ => panic!("not implemented"),
+            // For u256 integers, we need to split them in big-endian order 
+            // and convert them into an array of 8 elements.
+            Type::Uint(256) => {
+                let mut num = n.clone();
+                let u256_heap_ptr = self.heap_malloc(self.context.i64_type().const_int(8, false));
+
+                    // Extract 8 chunks of 32 bits each.
+                for i in 0..8 {
+                    // Extract the lowest 32 bits.
+                    let low_bits = (&num & BigInt::from(0xFFFF_FFFF_u64)).to_u32().unwrap();
+                    // Add the value to the array.
+                    let index = self.context.i64_type().const_int(7 - i as u64, false);
+                    let index_access = unsafe {
+                        self.builder.build_gep(
+                            self.context.i64_type(),
+                            u256_heap_ptr,
+                            &[index],
+                            "index_access",
+                        )
+                    };
+                    self.builder
+                        .build_store(index_access, self.context.i64_type().const_int(low_bits as u64, false));
+                    // Shift the number to get the next 32 bits in the next iteration.
+                    num >>= 32;
+                }
+                u256_heap_ptr.into()
+
+            }
+            _ => panic!("number_literal: unhandled type {:?}", ty),
         }
     }
 
@@ -199,14 +227,8 @@ impl<'a> Binary<'a> {
             Type::Bool => self.context.i64_type().into(),
             // Map all i32 data to a field-based data type, with the maximum value of field between
             // u63 and u64
-            Type::Uint(32) => self.context.i64_type().into(),
-            Type::Field => self.context.i64_type().into(),
-            Type::Hash => self
-                .context
-                .i64_type()
-                .ptr_type(AddressSpace::default())
-                .as_basic_type_enum(),
-            Type::Contract(_) | Type::Address => self
+            Type::Uint(32) | Type::Field => self.context.i64_type().into(),
+            Type::Contract(_) | Type::Address | Type::Hash | Type::Uint(256) => self
                 .context
                 .i64_type()
                 .ptr_type(AddressSpace::default())
