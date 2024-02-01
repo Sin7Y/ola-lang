@@ -1,6 +1,5 @@
 use crate::irgen::binary::Binary;
-use crate::irgen::u32_op::{
-    logic_and, logic_not, logic_or, u32_add, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or,
+use crate::irgen::u32_op::{u32_add, u32_bitwise_and, u32_bitwise_not, u32_bitwise_or,
     u32_bitwise_xor, u32_compare, u32_div, u32_mod, u32_mul, u32_power, u32_shift_left,
     u32_shift_right, u32_sub,
 };
@@ -22,6 +21,7 @@ use crate::sema::{
 };
 
 use super::address_or_hash_op::address_or_hash_compare;
+use super::bool_op::{logic_and, logic_not, logic_or};
 use super::encoding::{abi_decode, abi_encode, abi_encode_with_selector};
 use super::functions::Vartable;
 use super::storage::{
@@ -29,6 +29,10 @@ use super::storage::{
     uint_to_slot,
 };
 use super::strings::string_location;
+use crate::irgen::u256_op::{u256_add, u256_sub, u256_bitwise_and, u256_bitwise_not, u256_bitwise_or,
+    u256_bitwise_xor, u256_compare, u256_div, u256_mod, u256_mul, u256_power, u256_shift_left,
+    u256_shift_right, 
+};
 
 pub fn expression<'a>(
     expr: &Expression,
@@ -50,34 +54,104 @@ pub fn expression<'a>(
             let mut slot = expression(expr, bin, func_value, var_table, ns);
             storage_load(bin, ty, &mut slot, func_value, ns)
         }
-        Expression::Add { left, right, .. } => u32_add(left, right, bin, func_value, var_table, ns),
-        Expression::Subtract { left, right, .. } => {
-            u32_sub(left, right, bin, func_value, var_table, ns)
+        Expression::Add { left, right, .. } => match left.ty() { 
+            Type::Uint(32) => {
+                u32_add(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {    
+                u256_add(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("add for type {:?}", left.ty()), 
         }
-        Expression::Multiply { left, right, .. } => {
-            u32_mul(left, right, bin, func_value, var_table, ns)
+        Expression::Subtract { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_sub(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_sub(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("subtract for type {:?}", left.ty()),
         }
-        Expression::Divide { left, right, .. } => {
-            u32_div(left, right, bin, func_value, var_table, ns)
+        Expression::Multiply { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_mul(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_mul(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("multiply for type {:?}", left.ty()),
         }
-        Expression::Modulo { left, right, .. } => {
-            u32_mod(left, right, bin, func_value, var_table, ns)
+        Expression::Divide { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_div(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_div(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("divide for type {:?}", left.ty()),
         }
-        Expression::Power { base, exp, .. } => u32_power(base, exp, bin, func_value, var_table, ns),
-        Expression::BitwiseOr { left, right, .. } => {
-            u32_bitwise_or(left, right, bin, func_value, var_table, ns)
+        Expression::Modulo { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_mod(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_mod(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("modulo for type {:?}", left.ty()),
         }
-        Expression::BitwiseAnd { left, right, .. } => {
-            u32_bitwise_and(left, right, bin, func_value, var_table, ns)
+        Expression::Power { base, exp, .. } => match base.ty() {
+            Type::Uint(32) => {
+                u32_power(base, exp, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_power(base, exp, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("power for type {:?}", base.ty()),
         }
-        Expression::BitwiseXor { left, right, .. } => {
-            u32_bitwise_xor(left, right, bin, func_value, var_table, ns)
+        Expression::BitwiseOr { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_bitwise_or(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_bitwise_or(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("bitwise or for type {:?}", left.ty()),
+        } 
+        Expression::BitwiseAnd { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_bitwise_and(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_bitwise_and(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("bitwise and for type {:?}", left.ty()),
         }
-        Expression::ShiftLeft { left, right, .. } => {
-            u32_shift_left(left, right, bin, func_value, var_table, ns)
+        Expression::BitwiseXor { left, right, .. } => match left.ty() {
+            Type::Uint(32) => {
+                u32_bitwise_xor(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_bitwise_xor(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("bitwise xor for type {:?}", left.ty()),
         }
-        Expression::ShiftRight { left, right, .. } => {
-            u32_shift_right(left, right, bin, func_value, var_table, ns)
+        Expression::ShiftLeft { left, right, .. } => match left.ty()  {
+            Type::Uint(32) => {
+                u32_shift_left(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_shift_left(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("shift left for type {:?}", left.ty()),
+        }
+        Expression::ShiftRight { left, right, .. } => match left.ty()  {
+            Type::Uint(32) => {
+                u32_shift_right(left, right, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_shift_right(left, right, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("shift right for type {:?}", left.ty()),
         }
         Expression::Equal { left, right, .. } => match left.ty() {
             Type::Address | Type::Contract(_) | Type::Hash => address_or_hash_compare(
@@ -98,6 +172,9 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::EQ,
             ),
+            Type::Uint(256) => {
+                u256_compare(left, right, bin, func_value, var_table, ns, IntPredicate::EQ)
+            }
             _ => unimplemented!("equal for type {:?}", left.ty()),
         },
         Expression::NotEqual { left, right, .. } => match left.ty() {
@@ -119,6 +196,9 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::NE,
             ),
+            Type::Uint(256) => {
+                u256_compare(left, right, bin, func_value, var_table, ns, IntPredicate::NE)
+            }
             _ => unimplemented!("not equal for type {:?}", left.ty()),
         },
         Expression::More { left, right, .. } => match left.ty() {
@@ -141,6 +221,9 @@ pub fn expression<'a>(
                 IntPredicate::UGT,
             ),
 
+            Type::Uint(256) => {
+                u256_compare(left, right, bin, func_value, var_table, ns, IntPredicate::UGT)
+            }
             _ => unimplemented!("more for type {:?}", left.ty()),
         },
         Expression::MoreEqual { left, right, .. } => match left.ty() {
@@ -162,6 +245,9 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::UGE,
             ),
+            Type::Uint(256) => {
+                u256_compare(left, right, bin, func_value, var_table, ns, IntPredicate::UGE)
+            }
             _ => unimplemented!("more equal for type {:?}", left.ty()),
         },
         Expression::Less { left, right, .. } => match left.ty() {
@@ -183,6 +269,9 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::ULT,
             ),
+            Type::Uint(256) => {
+                u256_compare(left, right, bin, func_value, var_table, ns, IntPredicate::ULT)
+            }
             _ => unimplemented!("less for type {:?}", left.ty()),
         },
         Expression::LessEqual { left, right, .. } => match left.ty() {
@@ -204,12 +293,22 @@ pub fn expression<'a>(
                 ns,
                 IntPredicate::ULE,
             ),
+            Type::Uint(256) => {
+                u256_compare(left, right, bin, func_value, var_table, ns, IntPredicate::ULE)
+            }
             _ => unimplemented!("less equal for type {:?}", left.ty()),
         },
 
         Expression::Not { expr, .. } => logic_not(expr, bin, func_value, var_table, ns),
-        Expression::BitwiseNot { expr, .. } => {
-            u32_bitwise_not(expr, bin, func_value, var_table, ns)
+        Expression::BitwiseNot { expr, .. } => match expr.ty() {
+            Type::Uint(32) => {
+                u32_bitwise_not(expr, bin, func_value, var_table, ns)
+            }
+            Type::Uint(256) => {
+                u256_bitwise_not(expr, bin, func_value, var_table, ns)
+            }
+            _ => unimplemented!("bitwise not for type {:?}", expr.ty()),
+            
         }
         Expression::Or { left, right, .. } => logic_or(left, right, bin, func_value, var_table, ns),
         Expression::And { left, right, .. } => {
