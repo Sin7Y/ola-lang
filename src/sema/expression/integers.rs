@@ -104,10 +104,10 @@ pub fn coerce_number(
         (Type::Hash, Type::Hash) => {
             return Ok(Type::Hash);
         }
-        (Type::Field, Type::Uint(_)) => {
+        (Type::Field, Type::Uint(32)) => {
             return Ok(l.clone());
         }
-        (Type::Uint(_), Type::Field) => {
+        (Type::Uint(32), Type::Field) => {
             return Ok(r.clone());
         }
         (Type::Field, Type::Field) => {
@@ -141,13 +141,12 @@ pub fn bigint_to_expression(
                     format!("expected '{}', found integer", resolve_to.to_string(ns)),
                 ));
                 return Err(());
-            } else {
-                return Ok(Expression::NumberLiteral {
-                    loc: *loc,
-                    ty: resolve_to.clone(),
-                    value: n.clone(),
-                });
-            }
+            } 
+            return Ok(Expression::NumberLiteral {
+                loc: *loc,
+                ty: resolve_to.clone(),
+                value: n.clone(),
+            });
         }
     }
 
