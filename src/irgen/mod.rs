@@ -9,6 +9,8 @@ mod statements;
 pub mod storage;
 mod strings;
 pub mod u32_op;
+pub mod u256_op;
+pub mod bool_op;
 mod unused_variable;
 
 #[macro_export]
@@ -46,15 +48,3 @@ macro_rules! emit_context {
         }
     };
 }
-
-// impl ast::Contract {
-//     /// Generate the binary. This can be used to generate llvm text, object
-// file     /// or final linked binary.
-//     pub fn generate_llvm_ir<'a>(
-//         &'a self,
-//         ns: &'a ast::Namespace,
-//         context: &'a inkwell::context::Context,
-//         filename: &'a str,
-//     ) -> binary::Binary { binary::Binary::build(context, self, ns, filename)
-//     }
-// }

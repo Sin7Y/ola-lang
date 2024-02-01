@@ -634,7 +634,8 @@ impl Type {
         match self {
             Type::Bool => true,
             Type::Address | Type::Contract(_) | Type::Hash => false,
-            Type::Uint(_) => true,
+            Type::Uint(32) => true,
+            Type::Uint(256) => false,
             Type::Field => true,
             Type::Ref(r) => r.is_primitive(),
             Type::StorageRef(r) => r.is_primitive(),
@@ -776,6 +777,7 @@ impl Type {
             Type::Enum(_) => BigInt::one(),
             Type::Bool => BigInt::one(),
             Type::Field => BigInt::one(),
+            Type::Uint(256) => BigInt::one(),
             Type::Contract(_) | Type::Address | Type::Hash => BigInt::one(),
             Type::Uint(32) => BigInt::one(),
             Type::Array(_, dims) => {
@@ -818,6 +820,7 @@ impl Type {
             Type::Field => BigInt::one(),
             Type::Contract(_) | Type::Address | Type::Hash => BigInt::from(4),
             Type::Uint(32) => BigInt::one(),
+            Type::Uint(256) => BigInt::from(8),
             Type::Array(ty, dims) => {
                 let pointer_size = BigInt::one();
                 ty.memory_size_of_internal(ns, structs_visited).mul(
@@ -857,6 +860,7 @@ impl Type {
             | Type::Enum(_) | Type::Field => BigInt::one(),
 
             Type::Uint(32) => BigInt::one(),
+            Type::Uint(256) => BigInt::one(),
             Type::Array(ty, dims) => {
                 if dims.iter().any(|d| *d == ArrayLength::Dynamic) {
                     BigInt::one()
@@ -976,6 +980,9 @@ impl Type {
                         })
                         .product::<BigInt>()
             }
+            // Currently, only 4 fields are allowed for the key and value of storage. 
+            // However, uint256 has 8 (u32)fields, so two slots are needed to store them.
+            Type::Uint(256) => 2.into(),
             _ => BigInt::one(),
         }
     }
