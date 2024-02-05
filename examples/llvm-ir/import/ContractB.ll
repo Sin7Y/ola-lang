@@ -435,10 +435,14 @@ entry:
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   %counter = alloca i64, align 8
   %result = alloca i64, align 8
   store i64 0, ptr %counter, align 4
   store i64 1, ptr %result, align 4
+<<<<<<< HEAD
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
@@ -468,20 +472,29 @@ entry:
   call void @builtin_range_check(i64 %4)
   ret i64 %4
 =======
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
+<<<<<<< HEAD
   call void @builtin_range_check(i64 %3)
   ret i64 %3
 >>>>>>> 81f6615 (regerate examples source files result.)
+=======
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
+>>>>>>> 3a67966 (refactor address and hash literal.)
 }
 
 define i64 @add(i64 %0, i64 %1) {

@@ -2428,8 +2428,8 @@ done78:                                           ; preds = %cond76
   %107 = load i64, ptr %106, align 4
   %slot_offset87 = add i64 %107, 1
   store i64 %slot_offset87, ptr %106, align 4
-  %vector_data88 = getelementptr i64, ptr %68, i64 1
-  %vector_length89 = load i64, ptr %68, align 4
+  %vector_length88 = load i64, ptr %68, align 4
+  %vector_data89 = getelementptr i64, ptr %68, i64 1
   %108 = call ptr @vector_new(i64 10)
   %vector_data90 = getelementptr i64, ptr %108, i64 1
   %index_access91 = getelementptr i64, ptr %vector_data90, i64 0
@@ -2452,12 +2452,12 @@ done78:                                           ; preds = %cond76
   store i64 95, ptr %index_access99, align 4
   %index_access100 = getelementptr i64, ptr %vector_data90, i64 9
   store i64 49, ptr %index_access100, align 4
-  %vector_data101 = getelementptr i64, ptr %108, i64 1
-  %vector_length102 = load i64, ptr %108, align 4
-  %109 = icmp eq i64 %vector_length89, %vector_length102
+  %vector_length101 = load i64, ptr %108, align 4
+  %vector_data102 = getelementptr i64, ptr %108, i64 1
+  %109 = icmp eq i64 %vector_length88, %vector_length101
   %110 = zext i1 %109 to i64
   call void @builtin_assert(i64 %110)
-  %111 = call i64 @memcmp_eq(ptr %vector_data88, ptr %vector_data101, i64 %vector_length89)
+  %111 = call i64 @memcmp_eq(ptr %vector_data89, ptr %vector_data102, i64 %vector_length88)
   call void @builtin_assert(i64 %111)
 >>>>>>> 7998cf0 (fixed llvm type bug.)
   ret void

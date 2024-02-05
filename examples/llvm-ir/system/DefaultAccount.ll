@@ -480,6 +480,7 @@ entry:
   %index_access2 = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %index_access2, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access3 = getelementptr i64, ptr %0, i64 0
   store i64 0, ptr %index_access3, align 4
   store ptr %0, ptr %ENTRY_POINT_ADDRESS, align 8
@@ -489,6 +490,10 @@ entry:
 <<<<<<< HEAD
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
+=======
+  %index_access3 = getelementptr i64, ptr %0, i64 0
+  store i64 0, ptr %index_access3, align 4
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %0, ptr %ENTRY_POINT_ADDRESS, align 8
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %1 = call ptr @heap_malloc(i64 12)

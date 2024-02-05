@@ -528,6 +528,9 @@ entry:
   store ptr %0, ptr %caller_, align 8
   %1 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   %index_access4 = getelementptr i64, ptr %1, i64 3
   store i64 -6711892513312253938, ptr %index_access4, align 4
   %index_access5 = getelementptr i64, ptr %1, i64 2
@@ -536,6 +539,7 @@ entry:
   store i64 -5438528055523826848, ptr %index_access6, align 4
   %index_access7 = getelementptr i64, ptr %1, i64 0
   store i64 402443140940559753, ptr %index_access7, align 4
+<<<<<<< HEAD
   store ptr %1, ptr %caller_, align 8
   %2 = load ptr, ptr %caller_, align 8
   ret ptr %2
@@ -552,6 +556,8 @@ entry:
   ret ptr %1
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %1, ptr %caller_, align 8
   %2 = load ptr, ptr %caller_, align 8
   ret ptr %2
