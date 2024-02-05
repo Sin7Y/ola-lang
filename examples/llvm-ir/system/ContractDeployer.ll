@@ -538,6 +538,7 @@ then:                                             ; preds = %entry
 endif:                                            ; preds = %entry
   %23 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %23, i64 3
   store i64 32770, ptr %index_access, align 4
   %index_access5 = getelementptr i64, ptr %23, i64 2
@@ -550,9 +551,15 @@ endif:                                            ; preds = %entry
   %index_access = getelementptr i64, ptr %23, i64 0
   store i64 0, ptr %index_access, align 4
   %index_access4 = getelementptr i64, ptr %23, i64 1
+=======
+  %index_access = getelementptr i64, ptr %23, i64 3
+  store i64 32770, ptr %index_access, align 4
+  %index_access4 = getelementptr i64, ptr %23, i64 2
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %23, i64 2
+  %index_access5 = getelementptr i64, ptr %23, i64 1
   store i64 0, ptr %index_access5, align 4
+<<<<<<< HEAD
   %index_access6 = getelementptr i64, ptr %23, i64 3
   store i64 32770, ptr %index_access6, align 4
 <<<<<<< HEAD
@@ -560,6 +567,10 @@ endif:                                            ; preds = %entry
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  %index_access6 = getelementptr i64, ptr %23, i64 0
+  store i64 0, ptr %index_access6, align 4
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %23, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %24 = load ptr, ptr %_address, align 8
   %25 = call ptr @vector_new(i64 6)
@@ -678,6 +689,7 @@ endif:                                            ; preds = %entry
   store ptr %43, ptr %codeHash, align 8
   %44 = load ptr, ptr %codeHash, align 8
   %45 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access9 = getelementptr i64, ptr %45, i64 0
 <<<<<<< HEAD
   store i64 0, ptr %index_access9, align 4
@@ -695,10 +707,15 @@ endif:                                            ; preds = %entry
   store i64 0, ptr %index_access9, align 4
   %index_access10 = getelementptr i64, ptr %45, i64 1
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  %index_access9 = getelementptr i64, ptr %45, i64 3
+  store i64 0, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %45, i64 2
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %45, i64 2
+  %index_access11 = getelementptr i64, ptr %45, i64 1
   store i64 0, ptr %index_access11, align 4
-  %index_access12 = getelementptr i64, ptr %45, i64 3
+  %index_access12 = getelementptr i64, ptr %45, i64 0
   store i64 0, ptr %index_access12, align 4
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -978,30 +995,39 @@ entry:
   %5 = load ptr, ptr %_input, align 8
   %6 = load ptr, ptr %_codeHash, align 8
   %7 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %7, i64 0
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  %index_access = getelementptr i64, ptr %7, i64 3
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %7, i64 1
+  %index_access1 = getelementptr i64, ptr %7, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %7, i64 2
+  %index_access2 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %7, i64 3
+  %index_access3 = getelementptr i64, ptr %7, i64 0
   store i64 0, ptr %index_access3, align 4
   %8 = call i64 @memcmp_ne(ptr %6, ptr %7, i64 4)
   call void @builtin_assert(i64 %8)
   %9 = call ptr @heap_malloc(i64 4)
-  %index_access4 = getelementptr i64, ptr %9, i64 0
-  store i64 0, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %9, i64 1
+  %index_access4 = getelementptr i64, ptr %9, i64 3
+  store i64 65535, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %9, i64 2
   store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %9, i64 2
+  %index_access6 = getelementptr i64, ptr %9, i64 1
   store i64 0, ptr %index_access6, align 4
+<<<<<<< HEAD
   %index_access7 = getelementptr i64, ptr %9, i64 3
   store i64 65535, ptr %index_access7, align 4
 <<<<<<< HEAD
   %12 = call i64 @field_memcmp_ugt(ptr %7, ptr %11, i64 4)
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
+=======
+  %index_access7 = getelementptr i64, ptr %9, i64 0
+  store i64 0, ptr %index_access7, align 4
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %9, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
   %10 = load ptr, ptr %_newAddress, align 8
   %11 = load ptr, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
@@ -1016,6 +1042,9 @@ entry:
   %index_access10 = getelementptr i64, ptr %13, i64 1
   store i64 0, ptr %index_access10, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   %index_access11 = getelementptr i64, ptr %13, i64 0
   store i64 0, ptr %index_access11, align 4
   store ptr %13, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
@@ -1125,6 +1154,7 @@ entry:
   %35 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access14 = getelementptr i64, ptr %35, i64 3
   store i64 0, ptr %index_access14, align 4
   %index_access15 = getelementptr i64, ptr %35, i64 2
@@ -1146,9 +1176,15 @@ entry:
   store i64 0, ptr %index_access14, align 4
   %index_access15 = getelementptr i64, ptr %35, i64 1
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  %index_access14 = getelementptr i64, ptr %35, i64 3
+  store i64 0, ptr %index_access14, align 4
+  %index_access15 = getelementptr i64, ptr %35, i64 2
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access15, align 4
-  %index_access16 = getelementptr i64, ptr %35, i64 2
+  %index_access16 = getelementptr i64, ptr %35, i64 1
   store i64 0, ptr %index_access16, align 4
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1174,10 +1210,14 @@ entry:
 =======
   %index_access17 = getelementptr i64, ptr %35, i64 3
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  %index_access17 = getelementptr i64, ptr %35, i64 0
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access17, align 4
   %36 = call i64 @memcmp_eq(ptr %34, ptr %35, i64 4)
   call void @builtin_assert(i64 %36)
   %37 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access18 = getelementptr i64, ptr %37, i64 0
   store i64 0, ptr %index_access18, align 4
 <<<<<<< HEAD
@@ -1186,9 +1226,15 @@ entry:
 =======
   %index_access19 = getelementptr i64, ptr %37, i64 1
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  %index_access18 = getelementptr i64, ptr %37, i64 3
+  store i64 32771, ptr %index_access18, align 4
+  %index_access19 = getelementptr i64, ptr %37, i64 2
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access19, align 4
-  %index_access20 = getelementptr i64, ptr %37, i64 2
+  %index_access20 = getelementptr i64, ptr %37, i64 1
   store i64 0, ptr %index_access20, align 4
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1256,6 +1302,10 @@ entry:
 =======
   %index_access21 = getelementptr i64, ptr %37, i64 3
   store i64 32771, ptr %index_access21, align 4
+=======
+  %index_access21 = getelementptr i64, ptr %37, i64 0
+  store i64 0, ptr %index_access21, align 4
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %37, ptr %NONCE_HOLDER_ADDRESS, align 8
   %38 = load ptr, ptr %_newAddress, align 8
   %39 = call ptr @vector_new(i64 6)
@@ -1569,13 +1619,20 @@ entry:
   %index_access = getelementptr i64, ptr %11, i64 0
 =======
   %7 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %7, i64 0
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   store i64 0, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %7, i64 1
+=======
+  %index_access = getelementptr i64, ptr %7, i64 3
+  store i64 32770, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %7, i64 2
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %7, i64 2
+  %index_access2 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %index_access2, align 4
+<<<<<<< HEAD
   %index_access3 = getelementptr i64, ptr %7, i64 3
   store i64 32770, ptr %index_access3, align 4
 <<<<<<< HEAD
@@ -1584,6 +1641,10 @@ entry:
   br i1 %13, label %then, label %else
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
+=======
+  %index_access3 = getelementptr i64, ptr %7, i64 0
+  store i64 0, ptr %index_access3, align 4
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %7, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %8 = load i64, ptr %_callConstructor, align 4
   %9 = trunc i64 %8 to i1

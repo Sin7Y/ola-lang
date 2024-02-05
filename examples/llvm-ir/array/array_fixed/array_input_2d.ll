@@ -453,6 +453,7 @@ loop:                                             ; preds = %loop, %entry
 exit:                                             ; preds = %loop
   %finalResult = load i64, ptr %result, align 4
   ret i64 %finalResult
+<<<<<<< HEAD
 }
 
 define ptr @array_input_u32(ptr %0, i64 %1) {
@@ -478,6 +479,8 @@ entry:
   %index_access = getelementptr [3 x ptr], ptr %1, i64 0, i64 0
   %2 = load ptr, ptr %index_access, align 8
   ret void
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
 }
 
 define ptr @array_input_u32(ptr %0, i64 %1) {
@@ -601,6 +604,7 @@ define ptr @array_output_address() {
 entry:
   %0 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_access = getelementptr i64, ptr %0, i64 3
   store i64 0, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %0, i64 2
@@ -610,13 +614,20 @@ entry:
   %index_access3 = getelementptr i64, ptr %0, i64 0
 =======
   %index_access = getelementptr i64, ptr %0, i64 0
+=======
+  %index_access = getelementptr i64, ptr %0, i64 3
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %0, i64 1
+  %index_access1 = getelementptr i64, ptr %0, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %0, i64 2
+  %index_access2 = getelementptr i64, ptr %0, i64 1
   store i64 0, ptr %index_access2, align 4
+<<<<<<< HEAD
   %index_access3 = getelementptr i64, ptr %0, i64 3
 >>>>>>> b61ab64 (fixed array decode and encode bugs.)
+=======
+  %index_access3 = getelementptr i64, ptr %0, i64 0
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access3, align 4
   %1 = call ptr @heap_malloc(i64 3)
   ret ptr %1

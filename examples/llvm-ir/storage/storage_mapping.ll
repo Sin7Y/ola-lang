@@ -538,6 +538,9 @@ entry:
   %myaddress = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   %index_access = getelementptr i64, ptr %0, i64 3
   store i64 -6711892513312253938, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %0, i64 2
@@ -546,6 +549,7 @@ entry:
   store i64 -5438528055523826848, ptr %index_access2, align 4
   %index_access3 = getelementptr i64, ptr %0, i64 0
   store i64 402443140940559753, ptr %index_access3, align 4
+<<<<<<< HEAD
   store ptr %0, ptr %myaddress, align 8
   %1 = load ptr, ptr %myaddress, align 8
   call void @add_mapping(ptr %1, i64 1)
@@ -565,6 +569,8 @@ entry:
   %1 = call i64 @get_mapping(ptr %0)
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store ptr %0, ptr %myaddress, align 8
   %1 = load ptr, ptr %myaddress, align 8
   call void @add_mapping(ptr %1, i64 1)

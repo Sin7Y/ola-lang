@@ -521,6 +521,7 @@ entry:
   %index_access = getelementptr i64, ptr %1, i64 3
   store i64 18, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %1, i64 2
+<<<<<<< HEAD
   store i64 0, ptr %index_access1, align 4
   %index_access2 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %index_access2, align 4
@@ -691,33 +692,35 @@ entry:
   %index_access = getelementptr i64, ptr %1, i64 0
   store i64 0, ptr %index_access, align 4
   %index_access1 = getelementptr i64, ptr %1, i64 1
+=======
+>>>>>>> 3a67966 (refactor address and hash literal.)
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %1, i64 2
+  %index_access2 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %1, i64 3
-  store i64 18, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %index_access3, align 4
   %index_access4 = getelementptr ptr, ptr %vector_data, i64 0
   store ptr %1, ptr %index_access4, align 8
   %2 = call ptr @heap_malloc(i64 4)
-  %index_access5 = getelementptr i64, ptr %2, i64 0
-  store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %2, i64 1
+  %index_access5 = getelementptr i64, ptr %2, i64 3
+  store i64 52, ptr %index_access5, align 4
+  %index_access6 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %2, i64 2
+  %index_access7 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %index_access7, align 4
-  %index_access8 = getelementptr i64, ptr %2, i64 3
-  store i64 52, ptr %index_access8, align 4
+  %index_access8 = getelementptr i64, ptr %2, i64 0
+  store i64 0, ptr %index_access8, align 4
   %index_access9 = getelementptr ptr, ptr %vector_data, i64 1
   store ptr %2, ptr %index_access9, align 8
   %3 = call ptr @heap_malloc(i64 4)
-  %index_access10 = getelementptr i64, ptr %3, i64 0
-  store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %3, i64 1
+  %index_access10 = getelementptr i64, ptr %3, i64 3
+  store i64 86, ptr %index_access10, align 4
+  %index_access11 = getelementptr i64, ptr %3, i64 2
   store i64 0, ptr %index_access11, align 4
-  %index_access12 = getelementptr i64, ptr %3, i64 2
+  %index_access12 = getelementptr i64, ptr %3, i64 1
   store i64 0, ptr %index_access12, align 4
-  %index_access13 = getelementptr i64, ptr %3, i64 3
-  store i64 86, ptr %index_access13, align 4
+  %index_access13 = getelementptr i64, ptr %3, i64 0
+  store i64 0, ptr %index_access13, align 4
   %index_access14 = getelementptr ptr, ptr %vector_data, i64 2
   store ptr %3, ptr %index_access14, align 8
   %vector_length = load i64, ptr %0, align 4
@@ -748,36 +751,36 @@ entry:
   %0 = call ptr @heap_malloc(i64 3)
   %elemptr0 = getelementptr [3 x ptr], ptr %0, i64 0, i64 0
   %1 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %1, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %1, i64 1
+  %index_access = getelementptr i64, ptr %1, i64 3
+  store i64 18, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %1, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %1, i64 2
+  %index_access2 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %1, i64 3
-  store i64 18, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %index_access3, align 4
   store ptr %1, ptr %elemptr0, align 8
   %elemptr1 = getelementptr [3 x ptr], ptr %0, i64 0, i64 1
   %2 = call ptr @heap_malloc(i64 4)
-  %index_access4 = getelementptr i64, ptr %2, i64 0
-  store i64 0, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %2, i64 1
+  %index_access4 = getelementptr i64, ptr %2, i64 3
+  store i64 52, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %2, i64 2
+  %index_access6 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %2, i64 3
-  store i64 52, ptr %index_access7, align 4
+  %index_access7 = getelementptr i64, ptr %2, i64 0
+  store i64 0, ptr %index_access7, align 4
   store ptr %2, ptr %elemptr1, align 8
   %elemptr2 = getelementptr [3 x ptr], ptr %0, i64 0, i64 2
   %3 = call ptr @heap_malloc(i64 4)
-  %index_access8 = getelementptr i64, ptr %3, i64 0
-  store i64 0, ptr %index_access8, align 4
-  %index_access9 = getelementptr i64, ptr %3, i64 1
+  %index_access8 = getelementptr i64, ptr %3, i64 3
+  store i64 86, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %3, i64 2
   store i64 0, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %3, i64 2
+  %index_access10 = getelementptr i64, ptr %3, i64 1
   store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %3, i64 3
-  store i64 86, ptr %index_access11, align 4
+  %index_access11 = getelementptr i64, ptr %3, i64 0
+  store i64 0, ptr %index_access11, align 4
   store ptr %3, ptr %elemptr2, align 8
   ret ptr %0
 }
@@ -787,36 +790,36 @@ entry:
   %0 = call ptr @vector_new(i64 3)
   %vector_data = getelementptr i64, ptr %0, i64 1
   %1 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %1, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %1, i64 1
+  %index_access = getelementptr i64, ptr %1, i64 3
+  store i64 18, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %1, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %1, i64 2
+  %index_access2 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %1, i64 3
-  store i64 18, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %index_access3, align 4
   %index_access4 = getelementptr ptr, ptr %vector_data, i64 0
   store ptr %1, ptr %index_access4, align 8
   %2 = call ptr @heap_malloc(i64 4)
-  %index_access5 = getelementptr i64, ptr %2, i64 0
-  store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %2, i64 1
+  %index_access5 = getelementptr i64, ptr %2, i64 3
+  store i64 52, ptr %index_access5, align 4
+  %index_access6 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %2, i64 2
+  %index_access7 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %index_access7, align 4
-  %index_access8 = getelementptr i64, ptr %2, i64 3
-  store i64 52, ptr %index_access8, align 4
+  %index_access8 = getelementptr i64, ptr %2, i64 0
+  store i64 0, ptr %index_access8, align 4
   %index_access9 = getelementptr ptr, ptr %vector_data, i64 1
   store ptr %2, ptr %index_access9, align 8
   %3 = call ptr @heap_malloc(i64 4)
-  %index_access10 = getelementptr i64, ptr %3, i64 0
-  store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %3, i64 1
+  %index_access10 = getelementptr i64, ptr %3, i64 3
+  store i64 86, ptr %index_access10, align 4
+  %index_access11 = getelementptr i64, ptr %3, i64 2
   store i64 0, ptr %index_access11, align 4
-  %index_access12 = getelementptr i64, ptr %3, i64 2
+  %index_access12 = getelementptr i64, ptr %3, i64 1
   store i64 0, ptr %index_access12, align 4
-  %index_access13 = getelementptr i64, ptr %3, i64 3
-  store i64 86, ptr %index_access13, align 4
+  %index_access13 = getelementptr i64, ptr %3, i64 0
+  store i64 0, ptr %index_access13, align 4
   %index_access14 = getelementptr ptr, ptr %vector_data, i64 2
   store ptr %3, ptr %index_access14, align 8
   ret ptr %0
