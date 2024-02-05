@@ -1,0 +1,14 @@
+[
+  {
+    "name": "testU32PowerOperation",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "testU32Increment",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  }
+]

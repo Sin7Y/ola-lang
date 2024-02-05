@@ -1,5 +1,6 @@
 pub mod address_or_hash_op;
 pub mod binary;
+pub mod bool_op;
 mod corelib;
 mod dispatch;
 mod encoding;
@@ -8,9 +9,8 @@ mod functions;
 mod statements;
 pub mod storage;
 mod strings;
-pub mod u32_op;
 pub mod u256_op;
-pub mod bool_op;
+pub mod u32_op;
 mod unused_variable;
 
 #[macro_export]

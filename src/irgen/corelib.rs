@@ -600,59 +600,49 @@ fn define_u32_div_mod<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder.build_return(None);
 }
 
+
 fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
-    bin.builder
-        .position_at_end(bin.context.append_basic_block(function, "entry"));
-    let loop_block = bin.context.append_basic_block(function, "loop");
-    let exit_block = bin.context.append_basic_block(function, "exit");
+    let context = &bin.context;
+    let builder = &bin.builder;
+    let i64_type = context.i64_type();
+
+    let entry_block = context.append_basic_block(function, "entry");
+    let loop_block = context.append_basic_block(function, "loop");
+    let exit_block = context.append_basic_block(function, "exit");
+
+    builder.position_at_end(entry_block);
+
     let base = function.get_nth_param(0).unwrap().into_int_value();
     let exponent = function.get_nth_param(1).unwrap().into_int_value();
-    let i64_type = bin.context.i64_type();
 
-    bin.builder.build_unconditional_branch(loop_block);
-    bin.builder.position_at_end(loop_block);
+    let counter_ptr = builder.build_alloca(i64_type, "counter");
+    let result_ptr = builder.build_alloca(i64_type, "result");
 
-    let counter_phi = bin.builder.build_phi(i64_type, "");
-    counter_phi.add_incoming(&[(
-        &i64_type.const_zero(),
-        function.get_first_basic_block().unwrap(),
-    )]);
+    builder.build_store(counter_ptr, i64_type.const_zero());
+    builder.build_store(result_ptr, i64_type.const_int(1, false));
 
-    let result_phi = bin.builder.build_phi(i64_type, "");
-    result_phi.add_incoming(&[(
-        &i64_type.const_int(1, false),
-        function.get_first_basic_block().unwrap(),
-    )]);
+    builder.build_unconditional_branch(loop_block);
 
-    let counter_val = counter_phi.as_basic_value().into_int_value();
-    let result_val = result_phi.as_basic_value().into_int_value();
+    builder.position_at_end(loop_block);
 
-    let new_counter = bin
-        .builder
-        .build_int_add(counter_val, i64_type.const_int(1, false), "inc");
-    let new_result = bin.builder.build_int_mul(result_val, base, "multmp");
+    let counter = builder.build_load(context.i64_type(), counter_ptr, "").into_int_value();
+    let result = builder.build_load(context.i64_type(), result_ptr, "").into_int_value();
 
-    let cond = bin.builder.build_int_compare(
-        inkwell::IntPredicate::ULE,
-        new_counter,
-        exponent,
-        "loopcond",
-    );
-    bin.builder
-        .build_conditional_branch(cond, loop_block, exit_block);
+    let new_counter = builder.build_int_add(counter, i64_type.const_int(1, false), "newCounter");
+    let new_result = builder.build_int_mul(result, base, "newResult");
 
-    counter_phi.add_incoming(&[(&new_counter, loop_block)]);
-    result_phi.add_incoming(&[(&new_result, loop_block)]);
+    builder.build_store(counter_ptr, new_counter);
+    builder.build_store(result_ptr, new_result);
 
-    bin.builder.position_at_end(exit_block);
-    bin.builder.build_call(
-        bin.module.get_function("builtin_range_check").unwrap(),
-        &[result_phi.as_basic_value().into()],
-        "",
-    );
+    let condition = builder.build_int_compare(inkwell::IntPredicate::ULT, new_counter, exponent, "condition");
+    builder.build_conditional_branch(condition, loop_block, exit_block);
 
-    bin.builder.build_return(Some(&result_phi.as_basic_value()));
+    builder.position_at_end(exit_block);
+
+    let final_result = builder.build_load(context.i64_type(), result_ptr, "finalResult").into_int_value();
+    builder.build_return(Some(&final_result));
 }
+
 
 fn define_split_field<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder
