@@ -1,0 +1,75 @@
+[
+  {
+    "name": "array_input_u32",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "u32[][3]"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[]"
+      }
+    ]
+  },
+  {
+    "name": "array_input",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "u32[][3]"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "array_output_u32",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "u32[][3]"
+      }
+    ]
+  },
+  {
+    "name": "array_input_address",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "array",
+        "type": "address[][3]"
+      },
+      {
+        "name": "b",
+        "type": "u32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]"
+      }
+    ]
+  },
+  {
+    "name": "array_output_address",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[][3]"
+      }
+    ]
+  }
+]
