@@ -434,19 +434,25 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+  %counter = alloca i64, align 8
+  %result = alloca i64, align 8
+  store i64 0, ptr %counter, align 4
+  store i64 1, ptr %result, align 4
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
-  call void @builtin_range_check(i64 %3)
-  ret i64 %3
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
 }
 
 define void @hash_compare() {
@@ -487,14 +493,14 @@ entry:
   call void @poseidon_hash(ptr %vector_data12, ptr %2, i64 %vector_length11)
   store ptr %2, ptr %h2, align 8
   %3 = call ptr @heap_malloc(i64 4)
-  %index_access13 = getelementptr i64, ptr %3, i64 0
-  store i64 1006966343754, ptr %index_access13, align 4
-  %index_access14 = getelementptr i64, ptr %3, i64 1
-  store i64 107395124437206779, ptr %index_access14, align 4
-  %index_access15 = getelementptr i64, ptr %3, i64 2
-  store i64 -7568657024057810014, ptr %index_access15, align 4
-  %index_access16 = getelementptr i64, ptr %3, i64 3
-  store i64 1885151562297713155, ptr %index_access16, align 4
+  %index_access13 = getelementptr i64, ptr %3, i64 3
+  store i64 1885151562297713155, ptr %index_access13, align 4
+  %index_access14 = getelementptr i64, ptr %3, i64 2
+  store i64 -7568657024057810014, ptr %index_access14, align 4
+  %index_access15 = getelementptr i64, ptr %3, i64 1
+  store i64 107395124437206779, ptr %index_access15, align 4
+  %index_access16 = getelementptr i64, ptr %3, i64 0
+  store i64 1006966343754, ptr %index_access16, align 4
   store ptr %3, ptr %h3, align 8
   %4 = load ptr, ptr %h1, align 8
   %5 = load ptr, ptr %h2, align 8

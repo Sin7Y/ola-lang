@@ -434,19 +434,25 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+  %counter = alloca i64, align 8
+  %result = alloca i64, align 8
+  store i64 0, ptr %counter, align 4
+  store i64 1, ptr %result, align 4
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
-  call void @builtin_range_check(i64 %3)
-  ret i64 %3
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
 }
 
 define ptr @fields_concat(ptr %0, ptr %1) {
@@ -495,14 +501,14 @@ entry:
   store ptr %0, ptr %_tx, align 8
   %1 = load ptr, ptr %_tx, align 8
   %2 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %2, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %2, i64 1
+  %index_access = getelementptr i64, ptr %2, i64 3
+  store i64 65535, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %2, i64 2
+  %index_access2 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %2, i64 3
-  store i64 65535, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %2, i64 0
+  store i64 0, ptr %index_access3, align 4
   store ptr %2, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
   %struct_member = getelementptr inbounds { ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 0
   %3 = load ptr, ptr %struct_member, align 8
@@ -512,13 +518,13 @@ entry:
   %struct_member4 = getelementptr inbounds { ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 1
   %6 = load ptr, ptr %struct_member4, align 8
   %7 = call ptr @heap_malloc(i64 4)
-  %index_access5 = getelementptr i64, ptr %7, i64 0
+  %index_access5 = getelementptr i64, ptr %7, i64 3
   store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %7, i64 1
+  %index_access6 = getelementptr i64, ptr %7, i64 2
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %7, i64 2
+  %index_access7 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %index_access7, align 4
-  %index_access8 = getelementptr i64, ptr %7, i64 3
+  %index_access8 = getelementptr i64, ptr %7, i64 0
   store i64 0, ptr %index_access8, align 4
   %8 = call i64 @memcmp_ne(ptr %6, ptr %7, i64 4)
   call void @builtin_assert(i64 %8)
@@ -636,14 +642,14 @@ entry:
   %return_data_start = getelementptr i64, ptr %9, i64 1
   call void @get_tape_data(ptr %return_data_start, i64 %tape_size)
   %10 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %10, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access8 = getelementptr i64, ptr %10, i64 1
+  %index_access = getelementptr i64, ptr %10, i64 3
+  store i64 32771, ptr %index_access, align 4
+  %index_access8 = getelementptr i64, ptr %10, i64 2
   store i64 0, ptr %index_access8, align 4
-  %index_access9 = getelementptr i64, ptr %10, i64 2
+  %index_access9 = getelementptr i64, ptr %10, i64 1
   store i64 0, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %10, i64 3
-  store i64 32771, ptr %index_access10, align 4
+  %index_access10 = getelementptr i64, ptr %10, i64 0
+  store i64 0, ptr %index_access10, align 4
   store ptr %10, ptr %NONCE_HOLDER_ADDRESS, align 8
   %struct_member11 = getelementptr inbounds { ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 0
   %11 = load ptr, ptr %struct_member11, align 8
@@ -781,14 +787,14 @@ then:                                             ; preds = %entry
   %14 = call i64 @memcmp_eq(ptr %12, ptr %13, i64 4)
   call void @builtin_assert(i64 %14)
   %15 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %15, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access6 = getelementptr i64, ptr %15, i64 1
+  %index_access = getelementptr i64, ptr %15, i64 3
+  store i64 32772, ptr %index_access, align 4
+  %index_access6 = getelementptr i64, ptr %15, i64 2
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %15, i64 2
+  %index_access7 = getelementptr i64, ptr %15, i64 1
   store i64 0, ptr %index_access7, align 4
-  %index_access8 = getelementptr i64, ptr %15, i64 3
-  store i64 32772, ptr %index_access8, align 4
+  %index_access8 = getelementptr i64, ptr %15, i64 0
+  store i64 0, ptr %index_access8, align 4
   store ptr %15, ptr %KNOWN_CODES_STORAGE, align 8
   %16 = load ptr, ptr %bytecodeHash, align 8
   %17 = call ptr @vector_new(i64 6)
@@ -880,14 +886,14 @@ then13:                                           ; preds = %then
 
 endif14:                                          ; preds = %then13, %then
   %58 = call ptr @heap_malloc(i64 4)
-  %index_access22 = getelementptr i64, ptr %58, i64 0
-  store i64 0, ptr %index_access22, align 4
-  %index_access23 = getelementptr i64, ptr %58, i64 1
+  %index_access22 = getelementptr i64, ptr %58, i64 3
+  store i64 32773, ptr %index_access22, align 4
+  %index_access23 = getelementptr i64, ptr %58, i64 2
   store i64 0, ptr %index_access23, align 4
-  %index_access24 = getelementptr i64, ptr %58, i64 2
+  %index_access24 = getelementptr i64, ptr %58, i64 1
   store i64 0, ptr %index_access24, align 4
-  %index_access25 = getelementptr i64, ptr %58, i64 3
-  store i64 32773, ptr %index_access25, align 4
+  %index_access25 = getelementptr i64, ptr %58, i64 0
+  store i64 0, ptr %index_access25, align 4
   store ptr %58, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
   %struct_member26 = getelementptr inbounds { ptr, ptr, ptr, ptr }, ptr %1, i32 0, i32 1
   %59 = load ptr, ptr %struct_member26, align 8
@@ -1041,14 +1047,14 @@ entry:
   %_address = alloca ptr, align 8
   store ptr %0, ptr %_address, align 8
   %1 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %1, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %1, i64 1
+  %index_access = getelementptr i64, ptr %1, i64 3
+  store i64 32773, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %1, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %1, i64 2
+  %index_access2 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %1, i64 3
-  store i64 32773, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %index_access3, align 4
   store ptr %1, ptr %DEPLOYER_SYSTEM_CONTRACT, align 8
   %2 = load ptr, ptr %_address, align 8
   %3 = call ptr @vector_new(i64 6)
@@ -1107,14 +1113,14 @@ entry:
   store ptr %0, ptr %_address, align 8
   store i64 %1, ptr %_nonce, align 4
   %2 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %2, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %2, i64 1
+  %index_access = getelementptr i64, ptr %2, i64 3
+  store i64 32771, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %2, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %2, i64 2
+  %index_access2 = getelementptr i64, ptr %2, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %2, i64 3
-  store i64 32771, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %2, i64 0
+  store i64 0, ptr %index_access3, align 4
   store ptr %2, ptr %NONCE_HOLDER_ADDRESS, align 8
   %3 = load ptr, ptr %_address, align 8
   %4 = call ptr @vector_new(i64 6)
