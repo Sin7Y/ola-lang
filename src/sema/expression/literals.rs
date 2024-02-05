@@ -67,7 +67,6 @@ pub(super) fn address_literal(
 ) -> Result<Expression, ()> {
     let address = address.trim_end_matches("address");
     if !address.chars().any(|c| c == '_') && address.len() == 64 {
-        let mut address_vec = Vec::new();
         for (_, chunk) in address.as_bytes().chunks(16).enumerate() {
             let address_chunk =
                 u64::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
@@ -78,14 +77,12 @@ pub(super) fn address_literal(
                     format!("address literal {} out of range", address),
                 ));
                 return Err(());
-            } else {
-                address_vec.push(BigInt::from_u64(address_chunk).unwrap());
-            }
+            } 
         }
-        Ok(Expression::AddressLiteral {
+        Ok(Expression::NumberLiteral {
             loc: *loc,
             ty: Type::Address,
-            value: address_vec,
+            value: BigInt::from_str_radix(address, 16).unwrap(),
         })
     } else {
         diagnostics.push(Diagnostic::error(
@@ -107,7 +104,6 @@ pub(super) fn hash_literal(
 ) -> Result<Expression, ()> {
     let hash = hash.trim_end_matches("hash");
     if !hash.chars().any(|c| c == '_') && hash.len() == 64 {
-        let mut hash_vec = Vec::new();
         for (_, chunk) in hash.as_bytes().chunks(16).enumerate() {
             let hash_chunk = u64::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
             // We need to check if each chunk exceeds the FIELD_ORDER.
@@ -117,14 +113,12 @@ pub(super) fn hash_literal(
                     format!("hash literal {} out of range", hash),
                 ));
                 return Err(());
-            } else {
-                hash_vec.push(BigInt::from_u64(hash_chunk).unwrap());
-            }
+            } 
         }
-        Ok(Expression::HashLiteral {
+        Ok(Expression::NumberLiteral { 
             loc: *loc,
             ty: Type::Hash,
-            value: hash_vec,
+            value: BigInt::from_str_radix(hash, 16).unwrap()
         })
     } else {
         diagnostics.push(Diagnostic::error(

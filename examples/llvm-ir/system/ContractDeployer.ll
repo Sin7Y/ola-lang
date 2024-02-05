@@ -434,19 +434,25 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+  %counter = alloca i64, align 8
+  %result = alloca i64, align 8
+  store i64 0, ptr %counter, align 4
+  store i64 1, ptr %result, align 4
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
-  call void @builtin_range_check(i64 %3)
-  ret i64 %3
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
 }
 
 define i64 @extendedAccountVersion(ptr %0) {
@@ -505,14 +511,14 @@ then:                                             ; preds = %entry
 
 endif:                                            ; preds = %entry
   %23 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %23, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access4 = getelementptr i64, ptr %23, i64 1
+  %index_access = getelementptr i64, ptr %23, i64 3
+  store i64 32770, ptr %index_access, align 4
+  %index_access4 = getelementptr i64, ptr %23, i64 2
   store i64 0, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %23, i64 2
+  %index_access5 = getelementptr i64, ptr %23, i64 1
   store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %23, i64 3
-  store i64 32770, ptr %index_access6, align 4
+  %index_access6 = getelementptr i64, ptr %23, i64 0
+  store i64 0, ptr %index_access6, align 4
   store ptr %23, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %24 = load ptr, ptr %_address, align 8
   %25 = call ptr @vector_new(i64 6)
@@ -556,13 +562,13 @@ endif:                                            ; preds = %entry
   store ptr %43, ptr %codeHash, align 8
   %44 = load ptr, ptr %codeHash, align 8
   %45 = call ptr @heap_malloc(i64 4)
-  %index_access9 = getelementptr i64, ptr %45, i64 0
+  %index_access9 = getelementptr i64, ptr %45, i64 3
   store i64 0, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %45, i64 1
+  %index_access10 = getelementptr i64, ptr %45, i64 2
   store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %45, i64 2
+  %index_access11 = getelementptr i64, ptr %45, i64 1
   store i64 0, ptr %index_access11, align 4
-  %index_access12 = getelementptr i64, ptr %45, i64 3
+  %index_access12 = getelementptr i64, ptr %45, i64 0
   store i64 0, ptr %index_access12, align 4
   %46 = call i64 @memcmp_eq(ptr %44, ptr %45, i64 4)
   %47 = trunc i64 %46 to i1
@@ -788,39 +794,39 @@ entry:
   %5 = load ptr, ptr %_input, align 8
   %6 = load ptr, ptr %_codeHash, align 8
   %7 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %7, i64 0
+  %index_access = getelementptr i64, ptr %7, i64 3
   store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %7, i64 1
+  %index_access1 = getelementptr i64, ptr %7, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %7, i64 2
+  %index_access2 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %7, i64 3
+  %index_access3 = getelementptr i64, ptr %7, i64 0
   store i64 0, ptr %index_access3, align 4
   %8 = call i64 @memcmp_ne(ptr %6, ptr %7, i64 4)
   call void @builtin_assert(i64 %8)
   %9 = call ptr @heap_malloc(i64 4)
-  %index_access4 = getelementptr i64, ptr %9, i64 0
-  store i64 0, ptr %index_access4, align 4
-  %index_access5 = getelementptr i64, ptr %9, i64 1
+  %index_access4 = getelementptr i64, ptr %9, i64 3
+  store i64 65535, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %9, i64 2
   store i64 0, ptr %index_access5, align 4
-  %index_access6 = getelementptr i64, ptr %9, i64 2
+  %index_access6 = getelementptr i64, ptr %9, i64 1
   store i64 0, ptr %index_access6, align 4
-  %index_access7 = getelementptr i64, ptr %9, i64 3
-  store i64 65535, ptr %index_access7, align 4
+  %index_access7 = getelementptr i64, ptr %9, i64 0
+  store i64 0, ptr %index_access7, align 4
   store ptr %9, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
   %10 = load ptr, ptr %_newAddress, align 8
   %11 = load ptr, ptr %MAX_SYSTEM_CONTRACT_ADDRESS, align 8
   %12 = call i64 @field_memcmp_ugt(ptr %10, ptr %11, i64 4)
   call void @builtin_assert(i64 %12)
   %13 = call ptr @heap_malloc(i64 4)
-  %index_access8 = getelementptr i64, ptr %13, i64 0
-  store i64 0, ptr %index_access8, align 4
-  %index_access9 = getelementptr i64, ptr %13, i64 1
+  %index_access8 = getelementptr i64, ptr %13, i64 3
+  store i64 32770, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %13, i64 2
   store i64 0, ptr %index_access9, align 4
-  %index_access10 = getelementptr i64, ptr %13, i64 2
+  %index_access10 = getelementptr i64, ptr %13, i64 1
   store i64 0, ptr %index_access10, align 4
-  %index_access11 = getelementptr i64, ptr %13, i64 3
-  store i64 32770, ptr %index_access11, align 4
+  %index_access11 = getelementptr i64, ptr %13, i64 0
+  store i64 0, ptr %index_access11, align 4
   store ptr %13, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %14 = load ptr, ptr %_newAddress, align 8
   %15 = call ptr @vector_new(i64 6)
@@ -864,25 +870,25 @@ entry:
   store ptr %33, ptr %codeHash, align 8
   %34 = load ptr, ptr %codeHash, align 8
   %35 = call ptr @heap_malloc(i64 4)
-  %index_access14 = getelementptr i64, ptr %35, i64 0
+  %index_access14 = getelementptr i64, ptr %35, i64 3
   store i64 0, ptr %index_access14, align 4
-  %index_access15 = getelementptr i64, ptr %35, i64 1
+  %index_access15 = getelementptr i64, ptr %35, i64 2
   store i64 0, ptr %index_access15, align 4
-  %index_access16 = getelementptr i64, ptr %35, i64 2
+  %index_access16 = getelementptr i64, ptr %35, i64 1
   store i64 0, ptr %index_access16, align 4
-  %index_access17 = getelementptr i64, ptr %35, i64 3
+  %index_access17 = getelementptr i64, ptr %35, i64 0
   store i64 0, ptr %index_access17, align 4
   %36 = call i64 @memcmp_eq(ptr %34, ptr %35, i64 4)
   call void @builtin_assert(i64 %36)
   %37 = call ptr @heap_malloc(i64 4)
-  %index_access18 = getelementptr i64, ptr %37, i64 0
-  store i64 0, ptr %index_access18, align 4
-  %index_access19 = getelementptr i64, ptr %37, i64 1
+  %index_access18 = getelementptr i64, ptr %37, i64 3
+  store i64 32771, ptr %index_access18, align 4
+  %index_access19 = getelementptr i64, ptr %37, i64 2
   store i64 0, ptr %index_access19, align 4
-  %index_access20 = getelementptr i64, ptr %37, i64 2
+  %index_access20 = getelementptr i64, ptr %37, i64 1
   store i64 0, ptr %index_access20, align 4
-  %index_access21 = getelementptr i64, ptr %37, i64 3
-  store i64 32771, ptr %index_access21, align 4
+  %index_access21 = getelementptr i64, ptr %37, i64 0
+  store i64 0, ptr %index_access21, align 4
   store ptr %37, ptr %NONCE_HOLDER_ADDRESS, align 8
   %38 = load ptr, ptr %_newAddress, align 8
   %39 = call ptr @vector_new(i64 6)
@@ -953,14 +959,14 @@ entry:
   store ptr %4, ptr %_input, align 8
   %5 = load ptr, ptr %_input, align 8
   %6 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %6, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %6, i64 1
+  %index_access = getelementptr i64, ptr %6, i64 3
+  store i64 32772, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %6, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %6, i64 2
+  %index_access2 = getelementptr i64, ptr %6, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %6, i64 3
-  store i64 32772, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %6, i64 0
+  store i64 0, ptr %index_access3, align 4
   store ptr %6, ptr %KNOWN_CODES_STORAGE_CONTRACT, align 8
   %7 = load ptr, ptr %_codeHash, align 8
   %8 = call ptr @vector_new(i64 6)
@@ -1082,14 +1088,14 @@ entry:
   %6 = load ptr, ptr %_input, align 8
   store i64 %5, ptr %_callConstructor, align 4
   %7 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %7, i64 0
-  store i64 0, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %7, i64 1
+  %index_access = getelementptr i64, ptr %7, i64 3
+  store i64 32770, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %7, i64 2
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %7, i64 2
+  %index_access2 = getelementptr i64, ptr %7, i64 1
   store i64 0, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %7, i64 3
-  store i64 32770, ptr %index_access3, align 4
+  %index_access3 = getelementptr i64, ptr %7, i64 0
+  store i64 0, ptr %index_access3, align 4
   store ptr %7, ptr %ACCOUNT_CODE_STORAGE_SYSTEM_CONTRACT, align 8
   %8 = load i64, ptr %_callConstructor, align 4
   %9 = trunc i64 %8 to i1

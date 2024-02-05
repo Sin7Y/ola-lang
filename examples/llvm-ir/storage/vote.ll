@@ -434,19 +434,25 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+  %counter = alloca i64, align 8
+  %result = alloca i64, align 8
+  store i64 0, ptr %counter, align 4
+  store i64 1, ptr %result, align 4
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
-  call void @builtin_range_check(i64 %3)
-  ret i64 %3
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
 }
 
 define void @contract_init(ptr %0) {
@@ -1420,8 +1426,8 @@ done78:                                           ; preds = %cond76
   %107 = load i64, ptr %106, align 4
   %slot_offset87 = add i64 %107, 1
   store i64 %slot_offset87, ptr %106, align 4
-  %vector_data88 = getelementptr i64, ptr %68, i64 1
-  %vector_length89 = load i64, ptr %68, align 4
+  %vector_length88 = load i64, ptr %68, align 4
+  %vector_data89 = getelementptr i64, ptr %68, i64 1
   %108 = call ptr @vector_new(i64 10)
   %vector_data90 = getelementptr i64, ptr %108, i64 1
   %index_access91 = getelementptr i64, ptr %vector_data90, i64 0
@@ -1444,12 +1450,12 @@ done78:                                           ; preds = %cond76
   store i64 95, ptr %index_access99, align 4
   %index_access100 = getelementptr i64, ptr %vector_data90, i64 9
   store i64 49, ptr %index_access100, align 4
-  %vector_data101 = getelementptr i64, ptr %108, i64 1
-  %vector_length102 = load i64, ptr %108, align 4
-  %109 = icmp eq i64 %vector_length89, %vector_length102
+  %vector_length101 = load i64, ptr %108, align 4
+  %vector_data102 = getelementptr i64, ptr %108, i64 1
+  %109 = icmp eq i64 %vector_length88, %vector_length101
   %110 = zext i1 %109 to i64
   call void @builtin_assert(i64 %110)
-  %111 = call i64 @memcmp_eq(ptr %vector_data88, ptr %vector_data101, i64 %vector_length89)
+  %111 = call i64 @memcmp_eq(ptr %vector_data89, ptr %vector_data102, i64 %vector_length88)
   call void @builtin_assert(i64 %111)
   ret void
 }

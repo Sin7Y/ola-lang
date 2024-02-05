@@ -434,28 +434,55 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+  %counter = alloca i64, align 8
+  %result = alloca i64, align 8
+  store i64 0, ptr %counter, align 4
+  store i64 1, ptr %result, align 4
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
-  call void @builtin_range_check(i64 %3)
-  ret i64 %3
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
+}
+
+define void @testU256DeclareUninitialized() {
+entry:
+  %a = alloca ptr, align 8
+  %cc = alloca i64, align 8
+  store i64 1, ptr %cc, align 4
+  %0 = load i64, ptr %cc, align 4
+  %1 = call ptr @heap_malloc(i64 8)
+  %2 = getelementptr i64, ptr %1, i64 7
+  store i64 %0, ptr %2, align 4
+  store ptr %1, ptr %a, align 8
+  ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
+    i64 858749044, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
+
+func_0_dispatch:                                  ; preds = %entry
+  call void @testU256DeclareUninitialized()
+  %3 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %3, align 4
+  call void @set_tape_data(ptr %3, i64 1)
+  ret void
 }
 
 define void @main() {

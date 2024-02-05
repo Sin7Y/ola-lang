@@ -424,10 +424,6 @@ pub fn expression<'a>(
         }
         Expression::NumberLiteral { ty, value, .. } => bin.number_literal(ty, value, ns),
 
-        Expression::AddressLiteral { value, .. } => bin.address_literal(value),
-
-        Expression::HashLiteral { value, .. } => bin.hash_literal(value),
-
         Expression::Variable { ty, var_no, .. } => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
             if ty.is_reference_type(ns) && !ty.is_contract_storage() {

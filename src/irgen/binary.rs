@@ -126,49 +126,76 @@ impl<'a> Binary<'a> {
                 }
                 u256_heap_ptr.into()
             }
+            Type::Contract(_) | Type::Address | Type::Hash => {
+                let mut num = n.clone();
+                let heap_ptr = self.heap_malloc(self.context.i64_type().const_int(4, false));
+
+                // Extract 4 chunks of 32 bits each.
+                for i in 0..4 {
+                    // Extract the lowest 32 bits.
+                    let low_bits = (&num & BigInt::from(0xFFFF_FFFF_FFFF_FFFF as u64)).to_u64().unwrap();
+                    // Add the value to the array.
+                    let index = self.context.i64_type().const_int(3 - i as u64, false);
+                    let index_access = unsafe {
+                        self.builder.build_gep(
+                            self.context.i64_type(),
+                            heap_ptr,
+                            &[index],
+                            "index_access",
+                        )
+                    };
+                    self.builder.build_store(
+                        index_access,
+                        self.context.i64_type().const_int(low_bits as u64, false),
+                    );
+                    // Shift the number to get the next 32 bits in the next iteration.
+                    num >>= 64;
+                }
+                heap_ptr.into()
+            }
             _ => panic!("number_literal: unhandled type {:?}", ty),
         }
     }
 
-    pub(crate) fn address_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
-        let address_heap_ptr =
-            self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
-        let ty = self.context.i64_type();
-        for (i, v) in value.iter().enumerate() {
-            let index = self.context.i64_type().const_int(i as u64, false);
-            let index_access = unsafe {
-                self.builder.build_gep(
-                    self.context.i64_type(),
-                    address_heap_ptr,
-                    &[index],
-                    "index_access",
-                )
-            };
-            self.builder
-                .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
-        }
-        address_heap_ptr.into()
-    }
+    // pub(crate) fn address_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
+    //     let address_heap_ptr =
+    //         self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
+    //     let ty = self.context.i64_type();
+    //     for (i, v) in value.iter().enumerate() {
+    //         let index = self.context.i64_type().const_int(i as u64, false);
+    //         let index_access = unsafe {
+    //             self.builder.build_gep(
+    //                 self.context.i64_type(),
+    //                 address_heap_ptr,
+    //                 &[index],
+    //                 "index_access",
+    //             )
+    //         };
+    //         self.builder
+    //             .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
+    //     }
+    //     address_heap_ptr.into()
+    // }
 
-    pub(crate) fn hash_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
-        let hash_heap_ptr =
-            self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
-        let ty = self.context.i64_type();
-        for (i, v) in value.iter().enumerate() {
-            let index = self.context.i64_type().const_int(i as u64, false);
-            let index_access = unsafe {
-                self.builder.build_gep(
-                    self.context.i64_type(),
-                    hash_heap_ptr,
-                    &[index],
-                    "index_access",
-                )
-            };
-            self.builder
-                .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
-        }
-        hash_heap_ptr.into()
-    }
+    // pub(crate) fn hash_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
+    //     let hash_heap_ptr =
+    //         self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
+    //     let ty = self.context.i64_type();
+    //     for (i, v) in value.iter().enumerate() {
+    //         let index = self.context.i64_type().const_int(i as u64, false);
+    //         let index_access = unsafe {
+    //             self.builder.build_gep(
+    //                 self.context.i64_type(),
+    //                 hash_heap_ptr,
+    //                 &[index],
+    //                 "index_access",
+    //             )
+    //         };
+    //         self.builder
+    //             .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
+    //     }
+    //     hash_heap_ptr.into()
+    // }
 
     /// Emit function prototype
     pub(crate) fn function_type(
