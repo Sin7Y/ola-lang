@@ -8,5 +8,5 @@
 * [Ola Compiler](ola-compiler/compiler-introduction.md)
   * [Compiler Frontend](ola-compiler/compiler-frontend.md)
   * [Compiler Backend](ola-compiler/compiler-backend.md)
-* [Ola Langugae Grammar](grammar/full.md)
+* [Ola Language Grammar](grammar/full.md)
 * [Appendix](appendix.md)

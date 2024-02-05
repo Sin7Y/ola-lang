@@ -18,12 +18,7 @@ brew install sin7y/ola/olac
 
 ### Option 2: Download binaries
 
-There are binaries available on github releases:
-
-* [Linux x86-64](https://github.com/Sin7Y/ola-lang/releases/download/v0.1.0/olac-linux-x86-64)
-* [Windows x64](https://github.com/Sin7Y/ola-lang/releases/download/v0.1.0/olac-windows.exe)
-* [MacOS intel](https://github.com/Sin7Y/ola-lang/releases/download/v0.1.0/olac-mac-intel)
-* [MacOS arm](https://github.com/Sin7Y/ola-lang/releases/download/v0.1.0/olac-mac-arm)
+There are binaries available on[ github releases](https://github.com/Sin7Y/ola-lang/releases)
 
 Download the file and save it somewhere in your `$PATH`, for example the bin directory in your home directory. If the path you use is not already in `$PATH`, then you need to add it yourself.
 
