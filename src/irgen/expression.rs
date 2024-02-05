@@ -1087,7 +1087,11 @@ pub fn expression<'a>(
             result
         }
 
-        Expression::StringConcat { left, right, .. } => {
+        Expression::StringConcat {
+            left,
+            right,
+            ..
+        } => {
             let left = string_location(bin, left, var_table, func_value, ns);
             let right = string_location(bin, right, var_table, func_value, ns);
 
