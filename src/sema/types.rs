@@ -980,7 +980,7 @@ impl Type {
                         })
                         .product::<BigInt>()
             }
-            // Currently, only 4 fields are allowed for the key and value of storage. 
+            // Currently, only 4 fields are allowed for the key and value of storage.
             // However, uint256 has 8 (u32)fields, so two slots are needed to store them.
             Type::Uint(256) => 2.into(),
             _ => BigInt::one(),

@@ -131,7 +131,6 @@ pub fn u256_compare<'a>(
     unimplemented!()
 }
 
-
 pub fn u256_bitwise_not<'a>(
     expr: &Expression,
     bin: &Binary<'a>,
