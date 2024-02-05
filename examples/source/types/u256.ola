@@ -4,48 +4,41 @@ contract U256BasicTest {
     fn testU256DeclareUninitialized() {
         u32 cc = 1;
         u256 a = u256(cc); 
+        print(a);
     }
 
-    // // BEGIN-CHECK: define void @testU256DeclareInitialized()
-    // fn testU256DeclareInitialized() { 
-    //     // CHECK: %a = alloca i64, align 8
-	//     // CHECK: store i64 5, ptr %a, align 4
-    //     u256 a = 5;
-    //     print(a);
-    // }
+    // BEGIN-CHECK: define void @testU256DeclareInitialized()
+    fn testU256DeclareInitialized() { 
+        u256 a = 5;
+        print(a);
+    }
 
-    // // BEGIN-CHECK: define void @testU256DeclareThenInitialized()
-    // fn testU256DeclareThenInitialized() {
-    //     // CHECK: %a = alloca i64, align 8
-    //     // CHECK: store i64 0, ptr %a, align 4
-    //     u256 a;
-    //     // CHECK: store i64 5, ptr %a, align 4
-    //     a = 5;
-    //     print(a);
-    // }
+    // BEGIN-CHECK: define void @testU256DeclareThenInitialized()
+    fn testU256DeclareThenInitialized() {
+        u256 a;
 
-    // // BEGIN-CHECK: define void @testU256InitializedByOther()
-    // fn testU256InitializedByOther() {
-    //     // CHECK: %b = alloca i64, align 8
-    //     // CHECK: %a = alloca i64, align 8
-    //     // CHECK: store i64 5, ptr %a, align 4
-    //     u256 a = 5;
-    //     // CHECK: %0 = load i64, ptr %a, align 4
-    //     // CHECK: store i64 %0, ptr %b, align 4
-    //     u256 b = a;
-    //     print(b);
-    // }
+        a = 5;
+        print(a);
+    }
 
-    // // BEGIN-CHECK: define void @testU256LeftValueExpression()
-    // fn testU256LeftValueExpression() {
-    //     // CHECK: %a = alloca i64, align 8
-    //     // CHECK: store i64 5, ptr %a, align 4
-    //     u256 a = 5;
-    //     // CHECK: %0 = load i64, ptr %a, align 4
-    //     // CHECK: store i64 %0, ptr %a, align 4
-    //     a = a;
-    //     print(a);
-    // }   
+    // BEGIN-CHECK: define void @testU256InitializedByOther()
+    fn testU256InitializedByOther() {
+        // CHECK: %b = alloca i64, align 8
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 5, ptr %a, align 4
+        u256 a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: store i64 %0, ptr %b, align 4
+        u256 b = a;
+        print(b);
+    }
+
+    // BEGIN-CHECK: define void @testU256LeftValueExpression()
+    fn testU256LeftValueExpression() {
+        u256 a = 5;
+        a = a;
+        print(a);
+    }   
 
     // // BEGIN-CHECK: define void @testU256RightValueExpression()
     // fn testU256RightValueExpression() {
@@ -61,38 +54,32 @@ contract U256BasicTest {
     //     print(b);
     // }
 
-    // // BEGIN-CHECK: define void @testU256AsParameter(i64 %0)
-    // fn testU256AsParameter(u256 x) {
-    //     // CHECK: %x = alloca i64, align 8
-    //     // CHECK: store i64 %0, ptr %x, align 4
-    //     print(x);
-    // }
+    // BEGIN-CHECK: define void @testU256AsParameter(i64 %0)
+    fn testU256AsParameter(u256 x) {
+        print(x);
+    }
 
-    // // BEGIN-CHECK: define void @testU256CallByValue()
-    // fn testU256CallByValue() {
-    //     // CHECK: %a = alloca i64, align 8
-    //     // CHECK: store i64 5, ptr %a, align 4
-    //     u256 a = 5;
-    //     // CHECK: %0 = load i64, ptr %a, align 4
-    //     // CHECK: call void @testU256AsParameter(i64 %0)
-    //     testU256AsParameter(a);
-    // }
+    // BEGIN-CHECK: define void @testU256CallByValue()
+    fn testU256CallByValue() {
+        u256 a = 5;
+        testU256AsParameter(a);
+    }
 
-    // // BEGIN-CHECK: define i64 @testU256AsReturnValue()
-    // fn testU256AsReturnValue() -> (u256) {
-    //     // CHECK: %a = alloca i64, align 8
-    //     // CHECK: store i64 10, ptr %a, align 4
-    //     u256 a = 10;
-    //     // CHECK: %0 = load i64, ptr %a, align 4
-    //     // CHECK: ret i64 %0
-    //     return a;
-    // }
+    // BEGIN-CHECK: define i64 @testU256AsReturnValue()
+    fn testU256AsReturnValue() -> (u256) {
+        // CHECK: %a = alloca i64, align 8
+        // CHECK: store i64 10, ptr %a, align 4
+        u256 a = 10;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: ret i64 %0
+        return a;
+    }
 
-    // // BEGIN-CHECK: define i64 @testU256AsReturnConstValue()
-    // fn testU256AsReturnConstValue() -> (u256) {
-    //     // CHECK: ret i64 5
-    //     return 5;
-    // }
+    // BEGIN-CHECK: define i64 @testU256AsReturnConstValue()
+    fn testU256AsReturnConstValue() -> (u256) {
+        // CHECK: ret i64 5
+        return 5;
+    }
 
     // // BEGIN-CHECK: define void @testU256AddOperation()
     // fn testU256AddOperation() {
@@ -421,12 +408,9 @@ contract U256BasicTest {
     //     print(c);
     // }
 
-    // // BEGIN-CHECK: define void @testU256IncrementOperation()
+    // BEGIN-CHECK: define void @testU256IncrementOperation()
     // fn testU256IncrementOperation() {
     //     u256 a = 5;
-    //     // CHECK: %0 = load i64, ptr %a, align 4
-    //     // CHECK: %1 = add i64 %0, 1
-    //     // CHECK: store i64 %1, ptr %a, align 4
     //     a++;
     //     print(a);
     // }
@@ -465,14 +449,14 @@ contract U256BasicTest {
     //     print(c);
     // }
 
-    // // BEGIN-CHECK: define void @testU256ConvertToField()
-    // fn testU256ConvertToField() {
-    //     u256 a = 5;
-    //     // CHECK: %0 = load i64, ptr %a, align 4
-    //     // CHECK: store i64 %0, ptr %f, align 4
-    //     field f = field(a);
-    //     print(f);
-    // }
+    // BEGIN-CHECK: define void @testU256ConvertToField()
+    fn testConvertU32ToU256() {
+        u32 a = 5;
+        // CHECK: %0 = load i64, ptr %a, align 4
+        // CHECK: store i64 %0, ptr %f, align 4
+        u256 b = u256(a);
+        print(b);
+    }
 
     // // BEGIN-CHECK: define void @testU256LocalScope()
     // fn testU256LocalScope() {
@@ -509,7 +493,7 @@ contract U256BasicTest {
     //     // CHECK: ret void
     // }
 
-    // // BEGIN-CHECK: define void @testU256InLoopStatement()
+    // BEGIN-CHECK: define void @testU256InLoopStatement()
     // fn testU256InLoopStatement() {
     //     // CHECK: %0 = load i64, ptr %i, align 4
     //     // CHECK:%1 = icmp ult i64 %0, 10
@@ -519,7 +503,7 @@ contract U256BasicTest {
     //         // CHECK: %2 = load i64, ptr %i, align 4
     //         // CHECK: store i64 %2, ptr %a, align 4
     //         u256 a = i;
-    //         print(a);
+    //         // print(a);
     //         // CHECK: br label %next
     //     }
     //     // CHECK: endfor:

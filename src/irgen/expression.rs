@@ -29,9 +29,9 @@ use super::storage::{
     uint_to_slot,
 };
 use super::strings::string_location;
+use super::u256_op::u256_sub_internal;
 use crate::irgen::u256_op::{
-    u256_add, u256_bitwise_and, u256_bitwise_not, u256_bitwise_or, u256_bitwise_xor, u256_compare,
-    u256_div, u256_mod, u256_mul, u256_power, u256_shift_left, u256_shift_right, u256_sub,
+    u256_add, u256_add_internal, u256_bitwise_and, u256_bitwise_not, u256_bitwise_or, u256_bitwise_xor, u256_compare, u256_div, u256_mod, u256_mul, u256_power, u256_shift_left, u256_shift_right, u256_sub
 };
 
 pub fn expression<'a>(
@@ -318,8 +318,23 @@ pub fn expression<'a>(
                 }
                 _ => expression(expr, bin, func_value, var_table, ns),
             };
-            let one = bin.context.i64_type().const_int(1, false);
-            let after = bin.builder.build_int_sub(v.into_int_value(), one, "");
+            let after = match expr.ty().deref_any() {
+                Type::Uint(32) => bin.builder.build_int_sub(
+                    v.into_int_value(),
+                    bin.context.i64_type().const_int(1, false),
+                    "",
+                ).as_basic_value_enum(),
+                Type::Uint(256) => {
+                    let u256_one = Expression::NumberLiteral {
+                        loc: *loc,
+                        ty: Type::Uint(256),
+                        value: BigInt::from(1u32),
+                    };
+                    let one = expression(&u256_one, bin, func_value, var_table, ns);
+                    u256_sub_internal(v, one, bin, func_value, var_table, ns)
+                }
+                _ => unimplemented!("increment for type {:?}", expr.ty()),
+            };
             match expr.as_ref() {
                 Expression::Variable { var_no, .. } => {
                     let before_ptr = var_table.get(var_no).unwrap();
@@ -369,8 +384,25 @@ pub fn expression<'a>(
                 }
                 _ => expression(expr, bin, func_value, var_table, ns),
             };
-            let one = bin.context.i64_type().const_int(1, false);
-            let after = bin.builder.build_int_add(v.into_int_value(), one, "");
+
+            let after = match expr.ty().deref_any() {
+                Type::Uint(32) => bin.builder.build_int_add(
+                    v.into_int_value(),
+                    bin.context.i64_type().const_int(1, false),
+                    "",
+                ).as_basic_value_enum(),
+                Type::Uint(256) => {
+                    let u256_one = Expression::NumberLiteral {
+                        loc: *loc,
+                        ty: Type::Uint(256),
+                        value: BigInt::from(1u32),
+                    };
+                    let one = expression(&u256_one, bin, func_value, var_table, ns);
+                    u256_add_internal(v, one, bin, func_value, var_table, ns)
+                }
+                _ => unimplemented!("increment for type {:?}", expr.ty()),
+            };
+            
             match expr.as_ref() {
                 Expression::Variable { var_no, .. } => {
                     let before_ptr = var_table.get(var_no).unwrap();
@@ -1047,7 +1079,11 @@ pub fn expression<'a>(
             result
         }
 
-        Expression::StringConcat { left, right, .. } => {
+        Expression::StringConcat {
+            left,
+            right,
+            ..
+        } => {
             let left = string_location(bin, left, var_table, func_value, ns);
             let right = string_location(bin, right, var_table, func_value, ns);
 
