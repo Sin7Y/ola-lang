@@ -1,11 +1,8 @@
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::expression;
-use crate::sema::ast::Expression::NumberLiteral;
-use crate::sema::ast::{Expression, Namespace, Type};
+use crate::sema::ast::{Expression, Namespace};
 use inkwell::values::{BasicValueEnum, FunctionValue};
-use inkwell::{AddressSpace, IntPredicate};
-use num_bigint::BigInt;
-use ola_parser::program::Loc;
+use inkwell::IntPredicate;
 
 use super::functions::Vartable;
 
