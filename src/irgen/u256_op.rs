@@ -17,12 +17,41 @@ pub fn u256_add<'a>(
     var_table: &mut Vartable<'a>,
     ns: &Namespace,
 ) -> BasicValueEnum<'a> {
+    let left = expression(l, bin, func_value, var_table, ns);
+    let right = expression(r, bin, func_value, var_table, ns);
+    let result: BasicValueEnum = u256_add_internal(left, right, bin, func_value, var_table, ns);
+    result
+}
+
+pub fn u256_add_internal<'a>(
+    l: BasicValueEnum<'a>,
+    r: BasicValueEnum<'a>,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
     unimplemented!()
 }
 
 pub fn u256_sub<'a>(
     l: &Expression,
     r: &Expression,
+    bin: &Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) -> BasicValueEnum<'a> {
+    let left = expression(l, bin, func_value, var_table, ns);
+    let right = expression(r, bin, func_value, var_table, ns);
+    let result: BasicValueEnum = u256_sub_internal(left, right, bin, func_value, var_table, ns);
+    result
+}
+
+
+pub fn u256_sub_internal<'a>(
+    l: BasicValueEnum<'a>,
+    r: BasicValueEnum<'a>,
     bin: &Binary<'a>,
     func_value: FunctionValue<'a>,
     var_table: &mut Vartable<'a>,
