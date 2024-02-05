@@ -17,8 +17,6 @@ impl RetrieveType for Expression {
             Expression::StringConcat { ty, .. }
             | Expression::BytesLiteral { ty, .. }
             | Expression::NumberLiteral { ty, .. }
-            | Expression::AddressLiteral { ty, .. }
-            | Expression::HashLiteral { ty, .. }
             | Expression::StructLiteral { ty, .. }
             | Expression::ArrayLiteral { ty, .. }
             | Expression::ConstArrayLiteral { ty, .. }

@@ -434,19 +434,25 @@ entry:
 
 define i64 @u32_power(i64 %0, i64 %1) {
 entry:
+  %counter = alloca i64, align 8
+  %result = alloca i64, align 8
+  store i64 0, ptr %counter, align 4
+  store i64 1, ptr %result, align 4
   br label %loop
 
 loop:                                             ; preds = %loop, %entry
-  %2 = phi i64 [ 0, %entry ], [ %inc, %loop ]
-  %3 = phi i64 [ 1, %entry ], [ %multmp, %loop ]
-  %inc = add i64 %2, 1
-  %multmp = mul i64 %3, %0
-  %loopcond = icmp ule i64 %inc, %1
-  br i1 %loopcond, label %loop, label %exit
+  %2 = load i64, ptr %counter, align 4
+  %3 = load i64, ptr %result, align 4
+  %newCounter = add i64 %2, 1
+  %newResult = mul i64 %3, %0
+  store i64 %newCounter, ptr %counter, align 4
+  store i64 %newResult, ptr %result, align 4
+  %condition = icmp ult i64 %newCounter, %1
+  br i1 %condition, label %loop, label %exit
 
 exit:                                             ; preds = %loop
-  call void @builtin_range_check(i64 %3)
-  ret i64 %3
+  %finalResult = load i64, ptr %result, align 4
+  ret i64 %finalResult
 }
 
 define void @add_mapping(ptr %0, i64 %1) {
@@ -522,14 +528,14 @@ define void @mapping_test() {
 entry:
   %myaddress = alloca ptr, align 8
   %0 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %0, i64 0
-  store i64 402443140940559753, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %0, i64 1
-  store i64 -5438528055523826848, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %0, i64 2
-  store i64 6500940582073311439, ptr %index_access2, align 4
-  %index_access3 = getelementptr i64, ptr %0, i64 3
-  store i64 -6711892513312253938, ptr %index_access3, align 4
+  %index_access = getelementptr i64, ptr %0, i64 3
+  store i64 -6711892513312253938, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %0, i64 2
+  store i64 6500940582073311439, ptr %index_access1, align 4
+  %index_access2 = getelementptr i64, ptr %0, i64 1
+  store i64 -5438528055523826848, ptr %index_access2, align 4
+  %index_access3 = getelementptr i64, ptr %0, i64 0
+  store i64 402443140940559753, ptr %index_access3, align 4
   store ptr %0, ptr %myaddress, align 8
   %1 = load ptr, ptr %myaddress, align 8
   call void @add_mapping(ptr %1, i64 1)
