@@ -217,6 +217,7 @@ fn get_args_type_size<'a>(
         Type::Contract(_) | Type::Address | Type::Hash => {
             bin.context.i64_type().const_int(4, false)
         }
+        Type::Uint(256) => bin.context.i64_type().const_int(8, false),
 
         Type::Struct(struct_no) => calculate_struct_size(
             bin,

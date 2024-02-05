@@ -29,6 +29,10 @@ pub(crate) fn encode_into_buffer<'a>(
             encode_address_or_hash(buffer, arg, bin);
             bin.context.i64_type().const_int(4, false)
         }
+        Type::Uint(256) => {
+            encode_u256(buffer, arg, bin);
+            bin.context.i64_type().const_int(8, false)
+        }
         Type::Bool | Type::Uint(32) | Type::Enum(_) | Type::Field => {
             bin.builder.build_store(buffer, arg);
             bin.context.i64_type().const_int(1, false)
@@ -78,6 +82,36 @@ fn encode_address_or_hash<'a>(
     bin: &Binary<'a>,
 ) {
     for i in 0..4 {
+        let source_value_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                address.into_pointer_value(),
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        let source_value = bin
+            .builder
+            .build_load(bin.context.i64_type(), source_value_ptr, "");
+        let dest_value_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                buffer,
+                &[bin.context.i64_type().const_int(i, false)],
+                "",
+            )
+        };
+        bin.builder.build_store(dest_value_ptr, source_value);
+    }
+}
+
+/// Encode `address` into `buffer` as an [4 * i64] array.
+fn encode_u256<'a>(
+    buffer: PointerValue<'a>,
+    address: BasicValueEnum<'a>,
+    bin: &Binary<'a>,
+) {
+    for i in 0..8 {
         let source_value_ptr = unsafe {
             bin.builder.build_gep(
                 bin.context.i64_type(),
