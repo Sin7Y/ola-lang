@@ -2,8 +2,8 @@
 contract U256BasicTest {
  
     fn testU256DeclareUninitialized() {
-         u256 a = 0x12FFFFFFFF; 
-         a += 1;
+        u32 cc = 1;
+        u256 a = u256(cc); 
     }
 
     // // BEGIN-CHECK: define void @testU256DeclareInitialized()
