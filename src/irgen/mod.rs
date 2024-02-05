@@ -13,7 +13,7 @@ mod strings;
 pub mod u256_op;
 pub mod u32_op;
 pub mod u256_op;
-pub mod bool_op;
+pub mod u32_op;
 mod unused_variable;
 
 #[macro_export]
