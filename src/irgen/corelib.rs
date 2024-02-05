@@ -600,7 +600,6 @@ fn define_u32_div_mod<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder.build_return(None);
 }
 
-
 fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     let context = &bin.context;
     let builder = &bin.builder;
@@ -625,8 +624,12 @@ fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
 
     builder.position_at_end(loop_block);
 
-    let counter = builder.build_load(context.i64_type(), counter_ptr, "").into_int_value();
-    let result = builder.build_load(context.i64_type(), result_ptr, "").into_int_value();
+    let counter = builder
+        .build_load(context.i64_type(), counter_ptr, "")
+        .into_int_value();
+    let result = builder
+        .build_load(context.i64_type(), result_ptr, "")
+        .into_int_value();
 
     let new_counter = builder.build_int_add(counter, i64_type.const_int(1, false), "newCounter");
     let new_result = builder.build_int_mul(result, base, "newResult");
@@ -634,15 +637,21 @@ fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     builder.build_store(counter_ptr, new_counter);
     builder.build_store(result_ptr, new_result);
 
-    let condition = builder.build_int_compare(inkwell::IntPredicate::ULT, new_counter, exponent, "condition");
+    let condition = builder.build_int_compare(
+        inkwell::IntPredicate::ULT,
+        new_counter,
+        exponent,
+        "condition",
+    );
     builder.build_conditional_branch(condition, loop_block, exit_block);
 
     builder.position_at_end(exit_block);
 
-    let final_result = builder.build_load(context.i64_type(), result_ptr, "finalResult").into_int_value();
+    let final_result = builder
+        .build_load(context.i64_type(), result_ptr, "finalResult")
+        .into_int_value();
     builder.build_return(Some(&final_result));
 }
-
 
 fn define_split_field<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
     bin.builder
