@@ -1,0 +1,19 @@
+[
+  {
+    "name": "add_mapping",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "get_mapping",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "fields"
+      }
+    ]
+  }
+]

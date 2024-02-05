@@ -1,23 +1,23 @@
 [
   {
-    "name": "setStringLiteral",
+    "name": "set_string_test",
     "type": "function",
     "inputs": [],
     "outputs": []
   },
   {
-    "name": "set",
+    "name": "string_test_return",
     "type": "function",
-    "inputs": [
+    "inputs": [],
+    "outputs": [
       {
-        "name": "s",
+        "name": "",
         "type": "string"
       }
-    ],
-    "outputs": []
+    ]
   },
   {
-    "name": "get",
+    "name": "string_test_return2",
     "type": "function",
     "inputs": [],
     "outputs": [
