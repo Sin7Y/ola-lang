@@ -551,7 +551,12 @@ impl Type {
     ) -> Option<BasicValueEnum<'a>> {
         let mut var_table: Vartable = IndexMap::new();
         match self {
-            Type::Uint(32) | Type::Field | Type::Uint(256) | Type::Address | Type::Contract(_) | Type::Hash => {
+            Type::Uint(32)
+            | Type::Field
+            | Type::Uint(256)
+            | Type::Address
+            | Type::Contract(_)
+            | Type::Hash => {
                 let num_expr = Expression::NumberLiteral {
                     loc: IRgen,
                     ty: self.clone(),
