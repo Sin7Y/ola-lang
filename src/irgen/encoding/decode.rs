@@ -33,6 +33,11 @@ pub(crate) fn read_from_buffer<'a>(
             (buffer.into(), size)
         }
 
+        Type::Uint(256) => {
+            let size = get_args_type_size(bin, None, ty, func_value, ns);
+            (buffer.into(), size)
+        }
+
         Type::String | Type::DynamicBytes => {
             // String and Dynamic bytes are encoded as size + elements.length
             let total_size = get_args_type_size(bin, Some(buffer.into()), ty, func_value, ns);
