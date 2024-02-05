@@ -61,6 +61,3 @@ pub fn logic_not<'a>(
         .build_int_compare(IntPredicate::EQ, e, e.get_type().const_zero(), "")
         .into()
 }
-
-
-

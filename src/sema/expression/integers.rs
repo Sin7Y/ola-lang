@@ -141,7 +141,7 @@ pub fn bigint_to_expression(
                     format!("expected '{}', found integer", resolve_to.to_string(ns)),
                 ));
                 return Err(());
-            } 
+            }
             return Ok(Expression::NumberLiteral {
                 loc: *loc,
                 ty: resolve_to.clone(),

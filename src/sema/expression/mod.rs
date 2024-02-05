@@ -238,7 +238,7 @@ impl Expression {
                     expr: Box::new(self.clone()),
                 })
             }
-            (Type::Uint(_), Type::Enum(_)) => {
+            (Type::Uint(32), Type::Enum(_)) => {
                 diagnostics.push(Diagnostic::cast_error(
                     *loc,
                     format!(
@@ -249,7 +249,7 @@ impl Expression {
                 ));
                 Err(())
             }
-            (Type::Enum(_), Type::Uint(_)) => {
+            (Type::Enum(_), Type::Uint(32)) => {
                 diagnostics.push(Diagnostic::cast_error(
                     *loc,
                     format!(
