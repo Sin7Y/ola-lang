@@ -1,0 +1,30 @@
+[
+  {
+    "name": "setStringLiteral",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "set",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "get",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ]
+  }
+]
