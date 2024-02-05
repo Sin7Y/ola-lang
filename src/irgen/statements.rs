@@ -551,35 +551,13 @@ impl Type {
     ) -> Option<BasicValueEnum<'a>> {
         let mut var_table: Vartable = IndexMap::new();
         match self {
-            Type::Uint(32) | Type::Field | Type::Uint(256) => {
+            Type::Uint(32) | Type::Field | Type::Uint(256) | Type::Address | Type::Contract(_) | Type::Hash => {
                 let num_expr = Expression::NumberLiteral {
                     loc: IRgen,
                     ty: self.clone(),
                     value: BigInt::from(0),
                 };
                 Some(expression(&num_expr, bin, func_value, &mut var_table, ns))
-            }
-            Type::Address => {
-                let address_expr = Expression::AddressLiteral {
-                    loc: IRgen,
-                    ty: self.clone(),
-                    value: vec![BigInt::from(0); 4],
-                };
-                Some(expression(
-                    &address_expr,
-                    bin,
-                    func_value,
-                    &mut var_table,
-                    ns,
-                ))
-            }
-            Type::Hash => {
-                let hash_expr = Expression::HashLiteral {
-                    loc: IRgen,
-                    ty: self.clone(),
-                    value: vec![BigInt::from(0); 4],
-                };
-                Some(expression(&hash_expr, bin, func_value, &mut var_table, ns))
             }
             Type::Bool => {
                 let bool_expr = Expression::BoolLiteral {

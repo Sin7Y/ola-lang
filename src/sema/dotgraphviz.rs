@@ -212,41 +212,6 @@ impl Dot {
                     Some(parent_rel),
                 );
             }
-
-            Expression::AddressLiteral { loc, ty, value } => {
-                let value = value
-                    .iter()
-                    .map(|v| format!("{:016x}", v))
-                    .collect::<String>();
-                let labels = vec![
-                    format!("{} literal: {}", ty.to_string(ns), value),
-                    ns.loc_to_string(loc),
-                ];
-
-                self.add_node(
-                    Node::new("address_literal", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-            }
-
-            Expression::HashLiteral { loc, ty, value } => {
-                let value = value
-                    .iter()
-                    .map(|v| format!("{:016x}", v))
-                    .collect::<String>();
-                let labels = vec![
-                    format!("{} literal: {}", ty.to_string(ns), value),
-                    ns.loc_to_string(loc),
-                ];
-
-                self.add_node(
-                    Node::new("hash_literal", labels),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-            }
-
             Expression::StructLiteral { loc, ty, values } => {
                 let labels = vec![
                     format!("struct literal: {}", ty.to_string(ns)),

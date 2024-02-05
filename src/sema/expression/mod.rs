@@ -171,29 +171,17 @@ impl Expression {
             (Expression::NumberLiteral { value, .. }, p, &Type::Address)
                 if *p == Type::Uint(32) =>
             {
-                let address = vec![
-                    BigInt::zero(),
-                    BigInt::zero(),
-                    BigInt::zero(),
-                    value.clone(),
-                ];
-                return Ok(Expression::AddressLiteral {
+                return Ok(Expression::NumberLiteral {
                     loc: *loc,
                     ty: Type::Address,
-                    value: address,
+                    value: value.clone(),
                 });
             }
             (Expression::NumberLiteral { value, .. }, p, &Type::Hash) if *p == Type::Uint(32) => {
-                let hash = vec![
-                    BigInt::zero(),
-                    BigInt::zero(),
-                    BigInt::zero(),
-                    value.clone(),
-                ];
-                return Ok(Expression::HashLiteral {
+                return Ok(Expression::NumberLiteral {
                     loc: *loc,
                     ty: Type::Hash,
-                    value: hash,
+                    value: value.clone(),
                 });
             }
 
