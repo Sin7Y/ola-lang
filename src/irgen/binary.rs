@@ -133,7 +133,9 @@ impl<'a> Binary<'a> {
                 // Extract 4 chunks of 32 bits each.
                 for i in 0..4 {
                     // Extract the lowest 32 bits.
-                    let low_bits = (&num & BigInt::from(0xFFFF_FFFF_FFFF_FFFF as u64)).to_u64().unwrap();
+                    let low_bits = (&num & BigInt::from(0xFFFF_FFFF_FFFF_FFFF as u64))
+                        .to_u64()
+                        .unwrap();
                     // Add the value to the array.
                     let index = self.context.i64_type().const_int(3 - i as u64, false);
                     let index_access = unsafe {
@@ -157,10 +159,10 @@ impl<'a> Binary<'a> {
         }
     }
 
-    // pub(crate) fn address_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
-    //     let address_heap_ptr =
-    //         self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
-    //     let ty = self.context.i64_type();
+    // pub(crate) fn address_literal(&self, value: &Vec<BigInt>) ->
+    // BasicValueEnum<'a> {     let address_heap_ptr =
+    //         self.heap_malloc(self.context.i64_type().const_int(value.len() as
+    // u64, false));     let ty = self.context.i64_type();
     //     for (i, v) in value.iter().enumerate() {
     //         let index = self.context.i64_type().const_int(i as u64, false);
     //         let index_access = unsafe {
@@ -172,15 +174,15 @@ impl<'a> Binary<'a> {
     //             )
     //         };
     //         self.builder
-    //             .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
-    //     }
+    //             .build_store(index_access, ty.const_int(v.to_u64().unwrap(),
+    // false));     }
     //     address_heap_ptr.into()
     // }
 
-    // pub(crate) fn hash_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a> {
-    //     let hash_heap_ptr =
-    //         self.heap_malloc(self.context.i64_type().const_int(value.len() as u64, false));
-    //     let ty = self.context.i64_type();
+    // pub(crate) fn hash_literal(&self, value: &Vec<BigInt>) -> BasicValueEnum<'a>
+    // {     let hash_heap_ptr =
+    //         self.heap_malloc(self.context.i64_type().const_int(value.len() as
+    // u64, false));     let ty = self.context.i64_type();
     //     for (i, v) in value.iter().enumerate() {
     //         let index = self.context.i64_type().const_int(i as u64, false);
     //         let index_access = unsafe {
@@ -192,8 +194,8 @@ impl<'a> Binary<'a> {
     //             )
     //         };
     //         self.builder
-    //             .build_store(index_access, ty.const_int(v.to_u64().unwrap(), false));
-    //     }
+    //             .build_store(index_access, ty.const_int(v.to_u64().unwrap(),
+    // false));     }
     //     hash_heap_ptr.into()
     // }
 

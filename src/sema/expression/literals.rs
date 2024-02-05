@@ -77,7 +77,7 @@ pub(super) fn address_literal(
                     format!("address literal {} out of range", address),
                 ));
                 return Err(());
-            } 
+            }
         }
         Ok(Expression::NumberLiteral {
             loc: *loc,
@@ -113,12 +113,12 @@ pub(super) fn hash_literal(
                     format!("hash literal {} out of range", hash),
                 ));
                 return Err(());
-            } 
+            }
         }
-        Ok(Expression::NumberLiteral { 
+        Ok(Expression::NumberLiteral {
             loc: *loc,
             ty: Type::Hash,
-            value: BigInt::from_str_radix(hash, 16).unwrap()
+            value: BigInt::from_str_radix(hash, 16).unwrap(),
         })
     } else {
         diagnostics.push(Diagnostic::error(
