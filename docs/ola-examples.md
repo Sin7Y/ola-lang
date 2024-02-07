@@ -53,16 +53,16 @@ contract Person {
     struct Person {
         Sex s;
         u32 age;
-        u256 id;
+        u32 id;
     }
 
     Person p;
 
-    fn newPerson(Sex s, u32 age, u256 id) {
+    fn newPerson(Sex s, u32 age, u32 id) {
         p = Person(s, age, id);
     }
 
-    fn getPersonId() -> (u256) {
+    fn getPersonId() -> (u32) {
         return p.id;
     }
 
