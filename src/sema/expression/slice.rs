@@ -52,12 +52,12 @@ pub(super) fn array_slice(
             let from_ty = from_expr.ty();
 
             match from_ty.deref_any() {
-                Type::Uint(_) => (),
+                Type::Uint(32) => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         *loc,
                         format!(
-                            "array slice must be an unsigned integer, not '{}'",
+                            "array slice must be an u32 integer type, not '{}'",
                             from_expr.ty().to_string(ns)
                         ),
                     ));
@@ -87,12 +87,12 @@ pub(super) fn array_slice(
             let to_ty = to_expr.ty();
 
             match to_ty.deref_any() {
-                Type::Uint(_) => (),
+                Type::Uint(32) => (),
                 _ => {
                     diagnostics.push(Diagnostic::error(
                         *loc,
                         format!(
-                            "array slice must be an unsigned integer, not '{}'",
+                            "array slice must be an u32 integer type, not '{}'",
                             to_expr.ty().to_string(ns)
                         ),
                     ));
