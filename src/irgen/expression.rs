@@ -1558,7 +1558,10 @@ pub fn mapping_subscript<'a>(
         Type::DynamicBytes | Type::String => {
             inputs.push((bin.vector_data(index).into(), bin.vector_len(index)));
         }
-        _ => unreachable!(),
+        Type::Uint(256) => {
+            inputs.push((index, bin.context.i64_type().const_int(8, false)));
+        }
+        _ => unimplemented!("mapping index type {:?}", index_ty),
     }
 
     bin.poseidon_hash(inputs)

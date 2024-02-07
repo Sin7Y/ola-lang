@@ -3,7 +3,7 @@ use crate::emit_context;
 use crate::irgen::binary::Binary;
 use crate::sema::ast::{ArrayLength, Contract, Expression, Namespace, RetrieveType, Type};
 use inkwell::types::BasicTypeEnum;
-use inkwell::values::{BasicValueEnum, FunctionValue, IntValue, PointerValue};
+use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue};
 use num_traits::ToPrimitive;
 
 use super::expression::expression;
@@ -279,6 +279,16 @@ pub(crate) fn storage_load<'a>(
             );
             ret
         }
+        Type::Uint(256) => {
+            let high = storage_load_internal(bin, *slot);
+            let low = storage_load_internal(bin, slot_offest(bin, *slot, i64_const!(1).into()));
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(2, false).into(),
+            );
+            merge_u256(bin, high, low).into()
+        }
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let storage_loaded = storage_load_internal(bin, *slot);
             let storage_value_ptr = unsafe {
@@ -472,6 +482,16 @@ pub(crate) fn storage_store<'a>(
         Type::String | Type::DynamicBytes => {
             set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
+        Type::Uint(256) => {
+            let (high_value, low_value) =  split_u256(bin, dest.into_pointer_value());
+            storage_store_internal(bin, *slot, high_value.as_basic_value_enum());
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
+            storage_store_internal(bin, *slot, low_value.as_basic_value_enum());
+        }
         Type::Address | Type::Contract(_) | Type::Hash => storage_store_internal(bin, *slot, dest),
         Type::Uint(32) | Type::Bool | Type::Enum(_) | Type::Field => {
             let dest = if dest.is_pointer_value() {
@@ -587,6 +607,15 @@ pub(crate) fn storage_delete<'a>(
         }
         Type::Mapping(..) => {
             // nothing to do, step over it
+        }
+        Type::Uint(256) => {
+            storage_delete(bin, &Type::Uint(32), slot, function, ns);
+            *slot = slot_offest(
+                bin,
+                *slot,
+                bin.context.i64_type().const_int(1, false).into(),
+            );
+            storage_delete(bin, &Type::Uint(32), slot, function, ns);
         }
         _ => {
             storage_clear_internal(bin, *slot);
@@ -740,7 +769,7 @@ pub(crate) fn storage_clear_internal<'a>(bin: &Binary<'a>, key: BasicValueEnum<'
                 bin.context.i64_type(),
                 storage_value_ptr,
                 &[i64_const!(i)],
-                "storage_key_ptr",
+                "storage_zero_ptr",
             )
         };
         bin.builder.build_store(elem_ptr, i64_zero!());
@@ -884,4 +913,58 @@ pub fn uint_to_slot<'a>(bin: &Binary<'a>, value: BasicValueEnum<'a>) -> BasicVal
     bin.builder
         .build_store(last_elem_ptr, value.into_int_value());
     heap_ptr.into()
+}
+
+pub fn split_u256<'a>(
+    bin: &Binary<'a>,
+    value: PointerValue<'a>,
+) -> (PointerValue<'a>, PointerValue<'a>) {
+    emit_context!(bin);
+    let high = bin.heap_malloc(i64_const!(4)); 
+    bin.memcpy(
+        value,
+        high,
+        i64_const!(4),
+    );
+    let low = bin.heap_malloc(i64_const!(4));
+    bin.memcpy(
+        unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                value,
+                &[i64_const!(4)],
+                "",
+            )
+        },
+        low,
+        i64_const!(4),
+    );
+    (high.into(), low.into())
+}
+
+pub fn merge_u256<'a>(
+    bin: &Binary<'a>,
+    high: PointerValue<'a>,
+    low: PointerValue<'a>,
+) -> PointerValue<'a> {
+    emit_context!(bin);
+    let value = bin.heap_malloc(i64_const!(8));
+    bin.memcpy(
+        high,
+        value,
+        i64_const!(4),
+    );
+    bin.memcpy(
+        low,
+        unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type(),
+                value,
+                &[i64_const!(4)],
+                "",
+            )
+        },
+        i64_const!(4),
+    );
+    value
 }
