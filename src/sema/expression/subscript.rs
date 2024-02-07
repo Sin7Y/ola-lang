@@ -48,12 +48,12 @@ pub(super) fn array_subscript(
     index.recurse(ns, check_term_for_constant_overflow);
 
     match index_ty.deref_any() {
-        Type::Uint(_) => (),
+        Type::Uint(32) => (),
         _ => {
             diagnostics.push(Diagnostic::error(
                 *loc,
                 format!(
-                    "array subscript must be an unsigned integer, not '{}'",
+                    "array subscript index must be an u32 integer type, not '{}'",
                     index.ty().to_string(ns)
                 ),
             ));

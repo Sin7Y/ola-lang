@@ -1,0 +1,61 @@
+contract U256StorageContract {
+    u256 value;
+    u256 age;
+
+    u256[] keys;
+
+    struct Person {
+        u256 age;
+        u256 height;
+    }
+
+    Person person;
+
+    mapping(u256 => u256) map;
+
+    fn set_value() {
+        value = 100;
+    }
+
+    fn get_value() -> (u256) {
+        return value;
+    }
+
+    fn set_age(u256 _age) {
+        age = _age;
+    }
+
+    fn get_age() -> (u256) {
+        return age;
+    }
+
+    fn set_key(u256 _key) {
+        keys.push(_key);
+    }
+
+    fn get_key(u32 _index) -> (u256) {
+        return keys[_index];
+    }
+
+    fn remove_key() -> () {
+        keys.pop();
+    }
+
+    fn set_person(u256 _age, u256 _height) {
+        person.age = _age;
+        person.height = _height;
+    }
+
+    fn get_person() -> (Person) {
+        return person;
+    }
+
+    fn set_map(u256 _key, u256 _value) {
+        map[_key] = _value;
+    }
+
+    fn get_map(u256 _key) -> (u256) {
+        return map[_key];
+    }
+}
+
