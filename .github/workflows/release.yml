@@ -34,7 +34,8 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/olac
         asset_name: olac-linux-x86-64
-        tag: ${{ github.ref }}    
+        tag: ${{ github.ref }} 
+        overwrite: true    
   mac-intel:
     name: Mac Intel
     runs-on: macos-latest
@@ -59,7 +60,8 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/olac
         asset_name: olac-mac-intel
-        tag: ${{ github.ref }}     
+        tag: ${{ github.ref }}
+        overwrite: true      
   macos-arm:
     name: Mac ARM
     runs-on: macos-latest-xlarge
@@ -86,7 +88,8 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/olac
         asset_name: olac-mac-arm
-        tag: ${{ github.ref }}    
+        tag: ${{ github.ref }}
+        overwrite: true     
   windows:
     name: Windows
     runs-on: windows-latest
@@ -113,4 +116,5 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/olac.exe
         asset_name: olac-windows.exe
-        tag: ${{ github.ref }}  
+        tag: ${{ github.ref }}
+        overwrite: true  
