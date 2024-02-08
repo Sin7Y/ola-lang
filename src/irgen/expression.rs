@@ -5,7 +5,7 @@ use crate::irgen::u32_op::{
     u32_shift_right, u32_sub,
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
-use inkwell::types::{BasicType, BasicTypeEnum};
+use inkwell::types::{self, BasicType, BasicTypeEnum};
 use inkwell::values::{
     BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
 };
@@ -344,7 +344,7 @@ pub fn expression<'a>(
 
         Expression::Variable { ty, var_no, .. } => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
-            if ty.is_reference_type(ns) && !ty.is_contract_storage() {
+            if ty.is_reference_type(ns)  {
                 return ptr;
             }
 
@@ -1431,8 +1431,7 @@ pub fn assign_single<'a>(
         }
         _ => {
             let left_ty = left.ty();
-            let ty = left_ty.deref_memory();
-
+            let ty = right.ty();
             let mut dest = expression(left, bin, func_value, var_table, ns);
 
             let expr_right =
