@@ -5,7 +5,7 @@ use crate::irgen::u32_op::{
     u32_shift_right, u32_sub,
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
-use inkwell::types::{self, BasicType, BasicTypeEnum};
+use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{
     BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
 };
@@ -344,7 +344,7 @@ pub fn expression<'a>(
 
         Expression::Variable { ty, var_no, .. } => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
-            if ty.is_reference_type(ns)  {
+            if ty.is_reference_type(ns) {
                 return ptr;
             }
 
