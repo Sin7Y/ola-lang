@@ -499,10 +499,12 @@ entry:
   call void @get_storage(ptr %21, ptr %22)
   %23 = getelementptr i64, ptr %22, i64 3
   %storage_value = load i64, ptr %23, align 4
-  %24 = getelementptr i64, ptr %21, i64 3
-  %25 = load i64, ptr %24, align 4
-  %slot_offset = add i64 %25, 1
-  store i64 %slot_offset, ptr %24, align 4
+  %24 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %21, ptr %24, i64 4)
+  %last_elem_ptr = getelementptr i64, ptr %24, i64 3
+  %25 = load i64, ptr %last_elem_ptr, align 4
+  %last_elem = add i64 %25, 1
+  store i64 %last_elem, ptr %last_elem_ptr, align 4
   %26 = icmp eq i64 %storage_value, 0
   %27 = zext i1 %26 to i64
   call void @builtin_assert(i64 %27)
@@ -588,10 +590,12 @@ entry:
   call void @get_storage(ptr %72, ptr %73)
   %74 = getelementptr i64, ptr %73, i64 3
   %storage_value1 = load i64, ptr %74, align 4
-  %75 = getelementptr i64, ptr %72, i64 3
-  %76 = load i64, ptr %75, align 4
-  %slot_offset2 = add i64 %76, 1
-  store i64 %slot_offset2, ptr %75, align 4
+  %75 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %72, ptr %75, i64 4)
+  %last_elem_ptr2 = getelementptr i64, ptr %75, i64 3
+  %76 = load i64, ptr %last_elem_ptr2, align 4
+  %last_elem3 = add i64 %76, 1
+  store i64 %last_elem3, ptr %last_elem_ptr2, align 4
   call void @builtin_assert(i64 %storage_value1)
   ret void
 }
@@ -680,10 +684,12 @@ entry:
   call void @get_storage(ptr %42, ptr %43)
   %44 = getelementptr i64, ptr %43, i64 3
   %storage_value = load i64, ptr %44, align 4
-  %45 = getelementptr i64, ptr %42, i64 3
-  %46 = load i64, ptr %45, align 4
-  %slot_offset = add i64 %46, 1
-  store i64 %slot_offset, ptr %45, align 4
+  %45 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %42, ptr %45, i64 4)
+  %last_elem_ptr = getelementptr i64, ptr %45, i64 3
+  %46 = load i64, ptr %last_elem_ptr, align 4
+  %last_elem = add i64 %46, 1
+  store i64 %last_elem, ptr %last_elem_ptr, align 4
   call void @prophet_printf(i64 %storage_value, i64 3)
   ret void
 }

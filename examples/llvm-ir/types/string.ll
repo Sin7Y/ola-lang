@@ -541,11 +541,13 @@ body:                                             ; preds = %cond
   %32 = getelementptr i64, ptr %28, i64 3
   store i64 %27, ptr %32, align 4
   call void @set_storage(ptr %26, ptr %28)
-  %33 = getelementptr i64, ptr %26, i64 3
-  %34 = load i64, ptr %33, align 4
-  %slot_offset = add i64 %34, 1
-  store i64 %slot_offset, ptr %33, align 4
-  store ptr %26, ptr %1, align 8
+  %33 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %26, ptr %33, i64 4)
+  %last_elem_ptr = getelementptr i64, ptr %33, i64 3
+  %34 = load i64, ptr %last_elem_ptr, align 4
+  %last_elem = add i64 %34, 1
+  store i64 %last_elem, ptr %last_elem_ptr, align 4
+  store ptr %33, ptr %1, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -563,22 +565,24 @@ cond7:                                            ; preds = %body8, %done
 body8:                                            ; preds = %cond7
   %35 = load ptr, ptr %0, align 8
   %36 = call ptr @heap_malloc(i64 4)
-  %storage_key_ptr = getelementptr i64, ptr %36, i64 0
-  store i64 0, ptr %storage_key_ptr, align 4
-  %storage_key_ptr13 = getelementptr i64, ptr %36, i64 1
-  store i64 0, ptr %storage_key_ptr13, align 4
-  %storage_key_ptr14 = getelementptr i64, ptr %36, i64 2
-  store i64 0, ptr %storage_key_ptr14, align 4
-  %storage_key_ptr15 = getelementptr i64, ptr %36, i64 3
-  store i64 0, ptr %storage_key_ptr15, align 4
+  %storage_zero_ptr = getelementptr i64, ptr %36, i64 0
+  store i64 0, ptr %storage_zero_ptr, align 4
+  %storage_zero_ptr13 = getelementptr i64, ptr %36, i64 1
+  store i64 0, ptr %storage_zero_ptr13, align 4
+  %storage_zero_ptr14 = getelementptr i64, ptr %36, i64 2
+  store i64 0, ptr %storage_zero_ptr14, align 4
+  %storage_zero_ptr15 = getelementptr i64, ptr %36, i64 3
+  store i64 0, ptr %storage_zero_ptr15, align 4
   call void @set_storage(ptr %35, ptr %36)
-  %37 = getelementptr i64, ptr %35, i64 3
-  %38 = load i64, ptr %37, align 4
-  %slot_offset16 = add i64 %38, 1
-  store i64 %slot_offset16, ptr %37, align 4
-  store ptr %35, ptr %0, align 8
-  %next_index17 = add i64 %index_value11, 1
-  store i64 %next_index17, ptr %index_alloca10, align 4
+  %37 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %35, ptr %37, i64 4)
+  %last_elem_ptr16 = getelementptr i64, ptr %37, i64 3
+  %38 = load i64, ptr %last_elem_ptr16, align 4
+  %last_elem17 = add i64 %38, 1
+  store i64 %last_elem17, ptr %last_elem_ptr16, align 4
+  store ptr %37, ptr %0, align 8
+  %next_index18 = add i64 %index_value11, 1
+  store i64 %next_index18, ptr %index_alloca10, align 4
   br label %cond7
 
 done9:                                            ; preds = %cond7
@@ -648,12 +652,14 @@ body:                                             ; preds = %cond
   call void @get_storage(ptr %15, ptr %16)
   %17 = getelementptr i64, ptr %16, i64 3
   %storage_value = load i64, ptr %17, align 4
-  %18 = getelementptr i64, ptr %15, i64 3
-  %19 = load i64, ptr %18, align 4
-  %slot_offset = add i64 %19, 1
-  store i64 %slot_offset, ptr %18, align 4
+  %18 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %15, ptr %18, i64 4)
+  %last_elem_ptr = getelementptr i64, ptr %18, i64 3
+  %19 = load i64, ptr %last_elem_ptr, align 4
+  %last_elem = add i64 %19, 1
+  store i64 %last_elem, ptr %last_elem_ptr, align 4
   store i64 %storage_value, ptr %index_access, align 4
-  store ptr %15, ptr %0, align 8
+  store ptr %18, ptr %0, align 8
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
