@@ -4,7 +4,7 @@ use crate::irgen::u32_op::{
     u32_div, u32_mod, u32_mul, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
-use inkwell::types::{BasicType, BasicTypeEnum};
+use inkwell::types::{self, BasicType, BasicTypeEnum};
 use inkwell::values::{
     BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
 };
