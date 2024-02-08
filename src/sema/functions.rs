@@ -70,29 +70,6 @@ pub fn contract_function(
         }
     }
 
-    // // all functions in an interface are implicitly virtual
-    // let is_virtual = if ns.contracts[contract_no].is_interface() {
-    //     if let Some(loc) = is_virtual {
-    //         ns.diagnostics.push(Diagnostic::warning(
-    //             loc,
-    //             "functions in an interface are implicitly virtual".to_string(),
-    //         ));
-    //     }
-
-    //     true
-    // } else if ns.contracts[contract_no].is_library() {
-    //     if let Some(loc) = is_virtual {
-    //         ns.diagnostics.push(Diagnostic::error(
-    //             loc,
-    //             "functions in a library cannot be virtual".to_string(),
-    //         ));
-    //     }
-
-    //     false
-    // } else {
-    //     is_virtual.is_some()
-    // };
-
     if !success || !returns_success || !params_success {
         return None;
     }

@@ -227,7 +227,7 @@ pub fn lib_namespace(namespace: &str) -> bool {
 
 /// Is name reserved for lib function
 pub fn is_reserved(fname: &str) -> bool {
-    if fname == "type" || fname == "super" {
+    if fname == "type" || fname == "super" || fname == "main"{
         return true;
     }
 
