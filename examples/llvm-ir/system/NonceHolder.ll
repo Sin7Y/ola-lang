@@ -535,18 +535,24 @@ entry:
   %23 = getelementptr i64, ptr %22, i64 3
   %storage_value = load i64, ptr %23, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %24 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %21, ptr %24, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %24, i64 3
   %25 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %25, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
 =======
   %24 = getelementptr i64, ptr %21, i64 3
   %25 = load i64, ptr %24, align 4
   %slot_offset = add i64 %25, 1
   store i64 %slot_offset, ptr %24, align 4
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   ret i64 %storage_value
 }
 
@@ -596,18 +602,24 @@ entry:
   %23 = getelementptr i64, ptr %22, i64 3
   %storage_value = load i64, ptr %23, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %24 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %21, ptr %24, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %24, i64 3
   %25 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %25, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
 =======
   %24 = getelementptr i64, ptr %21, i64 3
   %25 = load i64, ptr %24, align 4
   %slot_offset = add i64 %25, 1
   store i64 %slot_offset, ptr %24, align 4
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %26 = icmp eq i64 %storage_value, 0
   %27 = zext i1 %26 to i64
   call void @builtin_assert(i64 %27)
@@ -699,12 +711,16 @@ entry:
   %storage_value1 = load i64, ptr %74, align 4
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %75 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %72, ptr %75, i64 4)
   %last_elem_ptr2 = getelementptr i64, ptr %75, i64 3
   %76 = load i64, ptr %last_elem_ptr2, align 4
   %last_elem3 = add i64 %76, 1
   store i64 %last_elem3, ptr %last_elem_ptr2, align 4
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
@@ -716,6 +732,8 @@ entry:
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %77 = add i64 %storage_value1, 1
   call void @builtin_range_check(i64 %77)
   %78 = call ptr @heap_malloc(i64 4)
@@ -807,18 +825,24 @@ entry:
   %12 = getelementptr i64, ptr %11, i64 3
   %storage_value = load i64, ptr %12, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %13 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %10, ptr %13, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %13, i64 3
   %14 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %14, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
 =======
   %13 = getelementptr i64, ptr %10, i64 3
   %14 = load i64, ptr %13, align 4
   %slot_offset = add i64 %14, 1
   store i64 %slot_offset, ptr %13, align 4
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   ret i64 %storage_value
 }
 

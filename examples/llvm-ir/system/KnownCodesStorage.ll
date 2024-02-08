@@ -516,18 +516,24 @@ entry:
   %12 = getelementptr i64, ptr %11, i64 3
   %storage_value = load i64, ptr %12, align 4
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %13 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %10, ptr %13, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %13, i64 3
   %14 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %14, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
 =======
   %13 = getelementptr i64, ptr %10, i64 3
   %14 = load i64, ptr %13, align 4
   %slot_offset = add i64 %14, 1
   store i64 %slot_offset, ptr %13, align 4
 >>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   ret i64 %storage_value
 }
 

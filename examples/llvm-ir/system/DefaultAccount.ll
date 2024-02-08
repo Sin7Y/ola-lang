@@ -697,6 +697,9 @@ body:                                             ; preds = %cond
   call void @set_storage(ptr %42, ptr %44)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %49 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %42, ptr %49, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %49, i64 3
@@ -704,6 +707,7 @@ body:                                             ; preds = %cond
   %last_elem = add i64 %50, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
   store ptr %49, ptr %2, align 8
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
@@ -726,6 +730,8 @@ body:                                             ; preds = %cond
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -754,6 +760,7 @@ cond4:                                            ; preds = %body5, %done
 body5:                                            ; preds = %cond4
   %51 = load ptr, ptr %1, align 8
   %52 = call ptr @heap_malloc(i64 4)
+<<<<<<< HEAD
   %storage_key_ptr = getelementptr i64, ptr %52, i64 0
   store i64 0, ptr %storage_key_ptr, align 4
   %storage_key_ptr10 = getelementptr i64, ptr %52, i64 1
@@ -785,6 +792,8 @@ cond4:                                            ; preds = %body5, %done
 body5:                                            ; preds = %cond4
   %51 = load ptr, ptr %1, align 8
   %52 = call ptr @heap_malloc(i64 4)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %storage_zero_ptr = getelementptr i64, ptr %52, i64 0
   store i64 0, ptr %storage_zero_ptr, align 4
   %storage_zero_ptr10 = getelementptr i64, ptr %52, i64 1
@@ -793,6 +802,7 @@ body5:                                            ; preds = %cond4
   store i64 0, ptr %storage_zero_ptr11, align 4
   %storage_zero_ptr12 = getelementptr i64, ptr %52, i64 3
   store i64 0, ptr %storage_zero_ptr12, align 4
+<<<<<<< HEAD
   call void @set_storage(ptr %51, ptr %52)
   %53 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %51, ptr %53, i64 4)
@@ -822,6 +832,18 @@ body5:                                            ; preds = %cond4
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   %next_index14 = add i64 %index_value8, 1
   store i64 %next_index14, ptr %index_alloca7, align 4
+=======
+  call void @set_storage(ptr %51, ptr %52)
+  %53 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %51, ptr %53, i64 4)
+  %last_elem_ptr13 = getelementptr i64, ptr %53, i64 3
+  %54 = load i64, ptr %last_elem_ptr13, align 4
+  %last_elem14 = add i64 %54, 1
+  store i64 %last_elem14, ptr %last_elem_ptr13, align 4
+  store ptr %53, ptr %1, align 8
+  %next_index15 = add i64 %index_value8, 1
+  store i64 %next_index15, ptr %index_alloca7, align 4
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   br label %cond4
 
 >>>>>>> 7998cf0 (fixed llvm type bug.)
@@ -1115,6 +1137,7 @@ body:                                             ; preds = %cond
   %57 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %57, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
   store i64 %storage_value10, ptr %index_access, align 4
   store ptr %56, ptr %3, align 8
 =======
@@ -1166,6 +1189,10 @@ body:                                             ; preds = %cond
 =======
   store ptr %53, ptr %3, align 8
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  store i64 %storage_value10, ptr %index_access, align 4
+  store ptr %56, ptr %3, align 8
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond

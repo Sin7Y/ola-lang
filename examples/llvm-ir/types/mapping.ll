@@ -550,12 +550,16 @@ entry:
   %storage_value = load i64, ptr %48, align 4
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %49 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %46, ptr %49, i64 4)
   %last_elem_ptr = getelementptr i64, ptr %49, i64 3
   %50 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %50, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
@@ -576,6 +580,8 @@ entry:
 >>>>>>> 7998cf0 (fixed llvm type bug.)
 =======
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   store i64 %storage_value, ptr %_nonceSet, align 4
   %51 = load i64, ptr %_nonceSet, align 4
   call void @prophet_printf(i64 %51, i64 3)

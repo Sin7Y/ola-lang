@@ -488,10 +488,14 @@ define void @add_mapping() {
 entry:
   %0 = alloca ptr, align 8
 <<<<<<< HEAD
+<<<<<<< HEAD
   %index_alloca27 = alloca i64, align 8
 =======
   %index_alloca26 = alloca i64, align 8
 >>>>>>> 7998cf0 (fixed llvm type bug.)
+=======
+  %index_alloca27 = alloca i64, align 8
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %1 = alloca ptr, align 8
   %index_alloca14 = alloca i64, align 8
   %2 = alloca ptr, align 8
@@ -659,6 +663,7 @@ body:                                             ; preds = %cond
   %last_elem = add i64 %31, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
   store ptr %30, ptr %2, align 8
+<<<<<<< HEAD
 =======
   %22 = load ptr, ptr %2, align 8
 =======
@@ -694,6 +699,8 @@ body:                                             ; preds = %cond
   store i64 %slot_offset, ptr %30, align 4
   store ptr %23, ptr %2, align 8
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -729,6 +736,7 @@ body12:                                           ; preds = %cond11
   store i64 0, ptr %storage_zero_ptr18, align 4
   %storage_zero_ptr19 = getelementptr i64, ptr %33, i64 3
   store i64 0, ptr %storage_zero_ptr19, align 4
+<<<<<<< HEAD
   call void @set_storage(ptr %32, ptr %33)
   %34 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %32, ptr %34, i64 4)
@@ -821,14 +829,18 @@ body12:                                           ; preds = %cond11
   store i64 0, ptr %storage_key_ptr18, align 4
   %storage_key_ptr19 = getelementptr i64, ptr %33, i64 3
   store i64 0, ptr %storage_key_ptr19, align 4
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   call void @set_storage(ptr %32, ptr %33)
-  %34 = getelementptr i64, ptr %32, i64 3
-  %35 = load i64, ptr %34, align 4
-  %slot_offset20 = add i64 %35, 1
-  store i64 %slot_offset20, ptr %34, align 4
-  store ptr %32, ptr %1, align 8
-  %next_index21 = add i64 %index_value15, 1
-  store i64 %next_index21, ptr %index_alloca14, align 4
+  %34 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %32, ptr %34, i64 4)
+  %last_elem_ptr20 = getelementptr i64, ptr %34, i64 3
+  %35 = load i64, ptr %last_elem_ptr20, align 4
+  %last_elem21 = add i64 %35, 1
+  store i64 %last_elem21, ptr %last_elem_ptr20, align 4
+  store ptr %34, ptr %1, align 8
+  %next_index22 = add i64 %index_value15, 1
+  store i64 %next_index22, ptr %index_alloca14, align 4
   br label %cond11
 
 done13:                                           ; preds = %cond11
@@ -851,38 +863,41 @@ done13:                                           ; preds = %cond11
   call void @poseidon_hash(ptr %42, ptr %45, i64 8)
   %46 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %45, ptr %46)
-  %length22 = getelementptr i64, ptr %46, i64 3
-  %47 = load i64, ptr %length22, align 4
+  %length23 = getelementptr i64, ptr %46, i64 3
+  %47 = load i64, ptr %length23, align 4
   %48 = call ptr @vector_new(i64 %47)
   %49 = call ptr @heap_malloc(i64 4)
   call void @poseidon_hash(ptr %45, ptr %49, i64 4)
-  store i64 0, ptr %index_alloca26, align 4
+  store i64 0, ptr %index_alloca27, align 4
   store ptr %49, ptr %0, align 8
-  br label %cond23
+  br label %cond24
 
-cond23:                                           ; preds = %body24, %done13
-  %index_value27 = load i64, ptr %index_alloca26, align 4
-  %loop_cond28 = icmp ult i64 %index_value27, %47
-  br i1 %loop_cond28, label %body24, label %done25
+cond24:                                           ; preds = %body25, %done13
+  %index_value28 = load i64, ptr %index_alloca27, align 4
+  %loop_cond29 = icmp ult i64 %index_value28, %47
+  br i1 %loop_cond29, label %body25, label %done26
 
-body24:                                           ; preds = %cond23
+body25:                                           ; preds = %cond24
   %50 = load ptr, ptr %0, align 8
-  %vector_data29 = getelementptr i64, ptr %48, i64 1
-  %index_access30 = getelementptr ptr, ptr %vector_data29, i64 %index_value27
+  %vector_data30 = getelementptr i64, ptr %48, i64 1
+  %index_access31 = getelementptr ptr, ptr %vector_data30, i64 %index_value28
   %51 = call ptr @heap_malloc(i64 4)
   call void @get_storage(ptr %50, ptr %51)
   %52 = getelementptr i64, ptr %51, i64 3
   %storage_value = load i64, ptr %52, align 4
-  %53 = getelementptr i64, ptr %50, i64 3
-  %54 = load i64, ptr %53, align 4
-  %slot_offset31 = add i64 %54, 1
-  store i64 %slot_offset31, ptr %53, align 4
-  store i64 %storage_value, ptr %index_access30, align 4
-  store ptr %50, ptr %0, align 8
-  %next_index32 = add i64 %index_value27, 1
-  store i64 %next_index32, ptr %index_alloca26, align 4
-  br label %cond23
+  %53 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %50, ptr %53, i64 4)
+  %last_elem_ptr32 = getelementptr i64, ptr %53, i64 3
+  %54 = load i64, ptr %last_elem_ptr32, align 4
+  %last_elem33 = add i64 %54, 1
+  store i64 %last_elem33, ptr %last_elem_ptr32, align 4
+  store i64 %storage_value, ptr %index_access31, align 4
+  store ptr %53, ptr %0, align 8
+  %next_index34 = add i64 %index_value28, 1
+  store i64 %next_index34, ptr %index_alloca27, align 4
+  br label %cond24
 
+<<<<<<< HEAD
 done25:                                           ; preds = %cond23
 <<<<<<< HEAD
   %53 = getelementptr i64, ptr %43, i64 3
@@ -896,6 +911,15 @@ done25:                                           ; preds = %cond23
   %56 = load i64, ptr %55, align 4
   %slot_offset33 = add i64 %56, 1
   store i64 %slot_offset33, ptr %55, align 4
+=======
+done26:                                           ; preds = %cond24
+  %55 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %45, ptr %55, i64 4)
+  %last_elem_ptr35 = getelementptr i64, ptr %55, i64 3
+  %56 = load i64, ptr %last_elem_ptr35, align 4
+  %last_elem36 = add i64 %56, 1
+  store i64 %last_elem36, ptr %last_elem_ptr35, align 4
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %fields_start = ptrtoint ptr %48 to i64
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
   call void @prophet_printf(i64 %fields_start, i64 0)
@@ -1016,6 +1040,7 @@ body:                                             ; preds = %cond
   %20 = load i64, ptr %last_elem_ptr, align 4
   %last_elem = add i64 %20, 1
   store i64 %last_elem, ptr %last_elem_ptr, align 4
+<<<<<<< HEAD
   store i64 %storage_value, ptr %index_access4, align 4
   store ptr %19, ptr %0, align 8
 =======
@@ -1044,6 +1069,10 @@ body:                                             ; preds = %cond
 =======
   store ptr %16, ptr %0, align 8
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
+=======
+  store i64 %storage_value, ptr %index_access4, align 4
+  store ptr %19, ptr %0, align 8
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %next_index = add i64 %index_value, 1
   store i64 %next_index, ptr %index_alloca, align 4
   br label %cond
@@ -1051,12 +1080,16 @@ body:                                             ; preds = %cond
 done:                                             ; preds = %cond
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   %21 = call ptr @heap_malloc(i64 4)
   call void @memcpy(ptr %11, ptr %21, i64 4)
   %last_elem_ptr5 = getelementptr i64, ptr %21, i64 3
   %22 = load i64, ptr %last_elem_ptr5, align 4
   %last_elem6 = add i64 %22, 1
   store i64 %last_elem6, ptr %last_elem_ptr5, align 4
+<<<<<<< HEAD
   ret ptr %14
 =======
   %20 = getelementptr i64, ptr %10, i64 3
@@ -1070,6 +1103,8 @@ done:                                             ; preds = %cond
   %22 = load i64, ptr %21, align 4
   %slot_offset5 = add i64 %22, 1
   store i64 %slot_offset5, ptr %21, align 4
+=======
+>>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
   ret ptr %14
 >>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
 }
