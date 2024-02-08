@@ -27,7 +27,7 @@ contract Voting {
     }
 
     fn vote_proposal(u32 proposal_)  {
-        address msgSender = caller_address();
+        address msgSender = origin_address();
         Voter storage sender = voters[msgSender];
         assert(!sender.voted, "Already voted.");
         sender.voted = true;
