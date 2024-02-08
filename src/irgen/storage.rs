@@ -483,7 +483,7 @@ pub(crate) fn storage_store<'a>(
             set_storage_dynamic_bytes(bin, ty, slot, dest, function, ns);
         }
         Type::Uint(256) => {
-            let (high_value, low_value) =  split_u256(bin, dest.into_pointer_value());
+            let (high_value, low_value) = split_u256(bin, dest.into_pointer_value());
             storage_store_internal(bin, *slot, high_value.as_basic_value_enum());
             *slot = slot_offest(
                 bin,
@@ -858,24 +858,57 @@ pub(crate) fn slot_offest<'a>(
     emit_context!(bin);
     match slot.get_type() {
         BasicTypeEnum::PointerType(..) => {
+            let new_slot = bin.heap_malloc(i64_const!(4));
+            bin.memcpy(slot.into_pointer_value(), new_slot, i64_const!(4));
             let last_elem_ptr = unsafe {
                 bin.builder.build_gep(
                     bin.context.i64_type(),
-                    slot.into_pointer_value(),
+                    new_slot,
                     &[bin.context.i64_type().const_int(3, false)],
-                    "",
+                    "last_elem_ptr",
                 )
             };
-            let slot_value = bin
+            let last_elem = bin
                 .builder
                 .build_load(bin.context.i64_type(), last_elem_ptr, "");
-            let slot_offset = bin.builder.build_int_add(
-                slot_value.into_int_value(),
+            let new_elem = bin.builder.build_int_add(
+                last_elem.into_int_value(),
                 offset.into_int_value(),
-                "slot_offset",
+                "last_elem",
             );
-            bin.builder.build_store(last_elem_ptr, slot_offset);
-            slot.into()
+            bin.builder.build_store(last_elem_ptr, new_elem);
+            // for i in 0..4 {
+            //     let elem_ptr = unsafe {
+            //         bin.builder.build_gep(
+            //             bin.context.i64_type(),
+            //             new_slot,
+            //             &[bin.context.i64_type().const_int(i, false)],
+            //             "new_slot_ptr",
+            //         )
+            //     };
+            //     let old_elem_ptr = unsafe {
+            //         bin.builder.build_gep(
+            //             bin.context.i64_type(),
+            //             slot.into_pointer_value(),
+            //             &[bin.context.i64_type().const_int(i, false)],
+            //             "old_slot_ptr",
+            //         )
+            //     };
+            //     let old_elem =
+            //         bin.builder
+            //             .build_load(bin.context.i64_type(), old_elem_ptr, "");
+            //     if i == 3 {
+            //         let new_elem = bin.builder.build_int_add(
+            //             old_elem.into_int_value(),
+            //             offset.into_int_value(),
+            //             "",
+            //         );
+            //         bin.builder.build_store(elem_ptr, new_elem);
+            //     } else {
+            //         bin.builder.build_store(elem_ptr, old_elem);
+            //     }
+            // }
+            new_slot.into()
         }
         _ => bin
             .builder
@@ -920,21 +953,13 @@ pub fn split_u256<'a>(
     value: PointerValue<'a>,
 ) -> (PointerValue<'a>, PointerValue<'a>) {
     emit_context!(bin);
-    let high = bin.heap_malloc(i64_const!(4)); 
-    bin.memcpy(
-        value,
-        high,
-        i64_const!(4),
-    );
+    let high = bin.heap_malloc(i64_const!(4));
+    bin.memcpy(value, high, i64_const!(4));
     let low = bin.heap_malloc(i64_const!(4));
     bin.memcpy(
         unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                value,
-                &[i64_const!(4)],
-                "",
-            )
+            bin.builder
+                .build_gep(bin.context.i64_type(), value, &[i64_const!(4)], "")
         },
         low,
         i64_const!(4),
@@ -949,20 +974,12 @@ pub fn merge_u256<'a>(
 ) -> PointerValue<'a> {
     emit_context!(bin);
     let value = bin.heap_malloc(i64_const!(8));
-    bin.memcpy(
-        high,
-        value,
-        i64_const!(4),
-    );
+    bin.memcpy(high, value, i64_const!(4));
     bin.memcpy(
         low,
         unsafe {
-            bin.builder.build_gep(
-                bin.context.i64_type(),
-                value,
-                &[i64_const!(4)],
-                "",
-            )
+            bin.builder
+                .build_gep(bin.context.i64_type(), value, &[i64_const!(4)], "")
         },
         i64_const!(4),
     );
