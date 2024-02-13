@@ -106,11 +106,7 @@ fn encode_address_or_hash<'a>(
 }
 
 /// Encode `address` into `buffer` as an [4 * i64] array.
-fn encode_u256<'a>(
-    buffer: PointerValue<'a>,
-    address: BasicValueEnum<'a>,
-    bin: &Binary<'a>,
-) {
+fn encode_u256<'a>(buffer: PointerValue<'a>, address: BasicValueEnum<'a>, bin: &Binary<'a>) {
     for i in 0..8 {
         let source_value_ptr = unsafe {
             bin.builder.build_gep(
