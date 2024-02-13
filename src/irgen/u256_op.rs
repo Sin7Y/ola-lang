@@ -48,7 +48,6 @@ pub fn u256_sub<'a>(
     result
 }
 
-
 pub fn u256_sub_internal<'a>(
     l: BasicValueEnum<'a>,
     r: BasicValueEnum<'a>,

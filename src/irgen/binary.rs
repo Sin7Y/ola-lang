@@ -298,9 +298,9 @@ impl<'a> Binary<'a> {
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
             Type::StorageRef(r) => self
-            .llvm_type(r, ns)
-            .ptr_type(AddressSpace::default())
-            .as_basic_type_enum(),
+                .llvm_type(r, ns)
+                .ptr_type(AddressSpace::default())
+                .as_basic_type_enum(),
             Type::Function {
                 params, returns, ..
             } => {

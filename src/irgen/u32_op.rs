@@ -284,3 +284,179 @@ pub fn u32_power<'a>(
         .left()
         .unwrap()
 }
+
+pub fn define_u32_power<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    let context = &bin.context;
+    let builder = &bin.builder;
+    let i64_type = context.i64_type();
+
+    let entry_block = context.append_basic_block(function, "entry");
+    let loop_block = context.append_basic_block(function, "loop");
+    let exit_block = context.append_basic_block(function, "exit");
+
+    builder.position_at_end(entry_block);
+
+    let base = function.get_nth_param(0).unwrap().into_int_value();
+    let exponent = function.get_nth_param(1).unwrap().into_int_value();
+
+    let counter_ptr = builder.build_alloca(i64_type, "counter");
+    let result_ptr = builder.build_alloca(i64_type, "result");
+
+    builder.build_store(counter_ptr, i64_type.const_zero());
+    builder.build_store(result_ptr, i64_type.const_int(1, false));
+
+    builder.build_unconditional_branch(loop_block);
+
+    builder.position_at_end(loop_block);
+
+    let counter = builder
+        .build_load(context.i64_type(), counter_ptr, "")
+        .into_int_value();
+    let result = builder
+        .build_load(context.i64_type(), result_ptr, "")
+        .into_int_value();
+
+    let new_counter = builder.build_int_add(counter, i64_type.const_int(1, false), "newCounter");
+    let new_result = builder.build_int_mul(result, base, "newResult");
+
+    builder.build_store(counter_ptr, new_counter);
+    builder.build_store(result_ptr, new_result);
+
+    let condition = builder.build_int_compare(
+        inkwell::IntPredicate::ULT,
+        new_counter,
+        exponent,
+        "condition",
+    );
+    builder.build_conditional_branch(condition, loop_block, exit_block);
+
+    builder.position_at_end(exit_block);
+
+    let final_result = builder
+        .build_load(context.i64_type(), result_ptr, "finalResult")
+        .into_int_value();
+    builder.build_return(Some(&final_result));
+}
+
+pub fn define_u32_div_mod<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let dividend = function.get_nth_param(0).unwrap();
+    let divisor = function.get_nth_param(1).unwrap();
+    let quotient = function.get_nth_param(2).unwrap().into_pointer_value();
+    let remainder = function.get_nth_param(3).unwrap().into_pointer_value();
+
+    let remainder_ret = bin
+        .builder
+        .build_call(
+            bin.module.get_function("prophet_u32_mod").unwrap(),
+            &[dividend.into(), divisor.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // remainder should be in the u32 range
+    bin.builder.build_call(
+        bin.module.get_function("builtin_range_check").unwrap(),
+        &[remainder_ret.into()],
+        "",
+    );
+
+    // 0 <= right - (remainder + 1)
+    let one = bin.context.i64_type().const_int(1, false);
+    let right_minus_remainder_minus_one = bin.builder.build_int_sub(
+        divisor.into_int_value(),
+        bin.builder
+            .build_int_add(remainder_ret.into_int_value(), one, ""),
+        "",
+    );
+    bin.builder.build_call(
+        bin.module.get_function("builtin_range_check").unwrap(),
+        &[right_minus_remainder_minus_one.into()],
+        "",
+    );
+
+    let quotient_ret = bin
+        .builder
+        .build_call(
+            bin.module.get_function("prophet_u32_div").unwrap(),
+            &[dividend.into(), divisor.into()],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+
+    // quotient should be in the u32 range
+    bin.builder.build_call(
+        bin.module.get_function("builtin_range_check").unwrap(),
+        &[quotient.into()],
+        "",
+    );
+
+    // assert that quotient * right + remainder == left
+    let quotient_mul_right_plus_remainder = bin.builder.build_int_add(
+        bin.builder
+            .build_int_mul(quotient_ret.into_int_value(), divisor.into_int_value(), ""),
+        remainder_ret.into_int_value(),
+        "",
+    );
+
+    let equal = bin.builder.build_int_compare(
+        IntPredicate::EQ,
+        quotient_mul_right_plus_remainder,
+        dividend.into_int_value(),
+        "",
+    );
+
+    bin.builder.build_call(
+        bin.module.get_function("builtin_assert").unwrap(),
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
+        "",
+    );
+    bin.builder.build_store(quotient, quotient_ret);
+    bin.builder.build_store(remainder, remainder_ret);
+    bin.builder.build_return(None);
+}
+
+pub fn define_u32_sqrt<'a>(bin: &Binary<'a>, function: FunctionValue<'a>) {
+    bin.builder
+        .position_at_end(bin.context.append_basic_block(function, "entry"));
+    let value = function.get_first_param().unwrap().into();
+    let root = bin
+        .builder
+        .build_call(
+            bin.module
+                .get_function("prophet_u32_sqrt")
+                .expect("prophet_u32_sqrt should have been defined before"),
+            &[value],
+            "",
+        )
+        .try_as_basic_value()
+        .left()
+        .expect("Should have a left return value");
+    bin.range_check(root.into_int_value());
+    let root_squared = bin
+        .builder
+        .build_int_mul(root.into_int_value(), root.into_int_value(), "");
+    let equal = bin.builder.build_int_compare(
+        inkwell::IntPredicate::EQ,
+        root_squared,
+        value.into_int_value(),
+        "",
+    );
+    bin.builder.build_call(
+        bin.module.get_function("builtin_assert").unwrap(),
+        &[bin
+            .builder
+            .build_int_z_extend(equal, bin.context.i64_type(), "")
+            .into()],
+        "",
+    );
+    bin.builder.build_return(Some(&root));
+}

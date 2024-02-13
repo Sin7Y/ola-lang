@@ -4,7 +4,7 @@ use crate::irgen::u32_op::{
     u32_div, u32_mod, u32_mul, u32_power, u32_shift_left, u32_shift_right, u32_sub,
 };
 use crate::sema::ast::{ArrayLength, CallTy, StringLocation};
-use inkwell::types::{self, BasicType, BasicTypeEnum};
+use inkwell::types::{BasicType, BasicTypeEnum};
 use inkwell::values::{
     BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
 };
@@ -31,7 +31,9 @@ use super::storage::{
 use super::strings::string_location;
 use super::u256_op::u256_sub_internal;
 use crate::irgen::u256_op::{
-    u256_add, u256_add_internal, u256_bitwise_and, u256_bitwise_not, u256_bitwise_or, u256_bitwise_xor, u256_compare, u256_div, u256_mod, u256_mul, u256_power, u256_shift_left, u256_shift_right, u256_sub
+    u256_add, u256_add_internal, u256_bitwise_and, u256_bitwise_not, u256_bitwise_or,
+    u256_bitwise_xor, u256_compare, u256_div, u256_mod, u256_mul, u256_power, u256_shift_left,
+    u256_shift_right, u256_sub,
 };
 
 pub fn expression<'a>(
@@ -319,11 +321,14 @@ pub fn expression<'a>(
                 _ => expression(expr, bin, func_value, var_table, ns),
             };
             let after = match expr.ty().deref_any() {
-                Type::Uint(32) => bin.builder.build_int_sub(
-                    v.into_int_value(),
-                    bin.context.i64_type().const_int(1, false),
-                    "",
-                ).as_basic_value_enum(),
+                Type::Uint(32) => bin
+                    .builder
+                    .build_int_sub(
+                        v.into_int_value(),
+                        bin.context.i64_type().const_int(1, false),
+                        "",
+                    )
+                    .as_basic_value_enum(),
                 Type::Uint(256) => {
                     let u256_one = Expression::NumberLiteral {
                         loc: *loc,
@@ -386,11 +391,14 @@ pub fn expression<'a>(
             };
 
             let after = match expr.ty().deref_any() {
-                Type::Uint(32) => bin.builder.build_int_add(
-                    v.into_int_value(),
-                    bin.context.i64_type().const_int(1, false),
-                    "",
-                ).as_basic_value_enum(),
+                Type::Uint(32) => bin
+                    .builder
+                    .build_int_add(
+                        v.into_int_value(),
+                        bin.context.i64_type().const_int(1, false),
+                        "",
+                    )
+                    .as_basic_value_enum(),
                 Type::Uint(256) => {
                     let u256_one = Expression::NumberLiteral {
                         loc: *loc,
@@ -402,7 +410,7 @@ pub fn expression<'a>(
                 }
                 _ => unimplemented!("increment for type {:?}", expr.ty()),
             };
-            
+
             match expr.as_ref() {
                 Expression::Variable { var_no, .. } => {
                     let before_ptr = var_table.get(var_no).unwrap();
@@ -458,7 +466,7 @@ pub fn expression<'a>(
 
         Expression::Variable { ty, var_no, .. } => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
-            if ty.is_reference_type(ns)  {
+            if ty.is_reference_type(ns) {
                 return ptr;
             }
 
@@ -1079,11 +1087,7 @@ pub fn expression<'a>(
             result
         }
 
-        Expression::StringConcat {
-            left,
-            right,
-            ..
-        } => {
+        Expression::StringConcat { left, right, .. } => {
             let left = string_location(bin, left, var_table, func_value, ns);
             let right = string_location(bin, right, var_table, func_value, ns);
 
