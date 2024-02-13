@@ -6,6 +6,7 @@ mod dispatch;
 mod encoding;
 pub mod expression;
 mod functions;
+pub mod memory;
 mod statements;
 pub mod storage;
 mod strings;
