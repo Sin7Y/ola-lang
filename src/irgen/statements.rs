@@ -281,6 +281,14 @@ pub(crate) fn statement<'a>(
         Statement::Destructure(_, fields, expr) => {
             destructure(bin, fields, expr, func_value, var_table, ns)
         }
+        Statement::Emit {
+            loc,
+            event_no,
+            args,
+            ..
+        } => {
+            unimplemented!("emit statement")
+        }
     }
 }
 
