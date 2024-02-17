@@ -2,8 +2,8 @@
 
 use super::{
     ast::{
-        ArrayLength, Contract, Diagnostic, EnumDecl, Mapping, Namespace, Parameter, StructDecl,
-        Symbol, Type, UserTypeDecl,
+        ArrayLength, Contract, Diagnostic, EnumDecl, EventDecl, Mapping, Namespace, Parameter,
+        StructDecl, Symbol, Type, UserTypeDecl,
     },
     diagnostics::Diagnostics,
 };
@@ -24,6 +24,12 @@ type Graph = petgraph::Graph<(), usize, Directed, usize>;
 /// List the types which should be resolved later
 pub struct ResolveFields<'a> {
     structs: Vec<ResolveStructFields<'a>>,
+    events: Vec<ResolveEventFields<'a>>,
+}
+
+struct ResolveEventFields<'a> {
+    event_no: usize,
+    pt: &'a program::EventDefinition,
 }
 
 struct ResolveStructFields<'a> {
@@ -42,6 +48,7 @@ pub fn resolve_typenames<'a>(
 ) -> ResolveFields<'a> {
     let mut delay = ResolveFields {
         structs: Vec::new(),
+        events: Vec::new(),
     };
 
     for part in &s.0 {
@@ -206,6 +213,17 @@ pub fn resolve_fields(delay: ResolveFields, file_no: usize, ns: &mut Namespace) 
 
     // Calculate the offset of each field in all the struct types
     struct_offsets(ns);
+
+    // now we can resolve the fields for the events
+    for event in delay.events {
+        let contract_no = ns.events[event.event_no].contract;
+
+        let fields = event_decl(event.pt, file_no, contract_no, ns);
+
+        ns.events[event.event_no].signature =
+            ns.signature(&ns.events[event.event_no].id.name, &fields);
+        ns.events[event.event_no].fields = fields;
+    }
 }
 
 /// Resolve all the types in a contract
@@ -271,6 +289,37 @@ fn resolve_contract<'a>(
                 } else {
                     broken = true;
                 }
+            }
+            program::ContractPart::EventDefinition(pt) => {
+                let event_no = ns.events.len();
+
+                if let Some(Symbol::Event(events)) = ns.variable_symbols.get_mut(&(
+                    file_no,
+                    Some(contract_no),
+                    pt.name.as_ref().unwrap().name.to_owned(),
+                )) {
+                    events.push((pt.name.as_ref().unwrap().loc, event_no));
+                } else if !ns.add_symbol(
+                    file_no,
+                    Some(contract_no),
+                    pt.name.as_ref().unwrap(),
+                    Symbol::Event(vec![(pt.name.as_ref().unwrap().loc, event_no)]),
+                ) {
+                    broken = true;
+                    continue;
+                }
+
+                ns.events.push(EventDecl {
+                    id: pt.name.as_ref().unwrap().to_owned(),
+                    loc: pt.loc,
+                    contract: Some(contract_no),
+                    fields: Vec::new(),
+                    anonymous: pt.anonymous,
+                    signature: String::new(),
+                    used: false,
+                });
+
+                delay.events.push(ResolveEventFields { event_no, pt });
             }
             program::ContractPart::TypeDefinition(ty) => {
                 type_decl(ty, file_no, Some(contract_no), ns);
@@ -340,6 +389,7 @@ pub fn struct_decl(
             }),
             ty,
             ty_loc: Some(field.ty.loc()),
+            indexed: false,
             infinite_size: false,
             recursive: false,
         });
@@ -357,6 +407,116 @@ pub fn struct_decl(
 
     fields
 }
+
+/// Resolve a parsed event definition. The return value will be true if the entire
+/// definition is valid; however, whatever could be parsed will be added to the resolved
+/// contract, so that we can continue producing compiler messages for the remainder
+/// of the contract, even if the struct contains an invalid definition.
+fn event_decl(
+    def: &program::EventDefinition,
+    file_no: usize,
+    contract_no: Option<usize>,
+    ns: &mut Namespace,
+) -> Vec<Parameter> {
+    let mut fields: Vec<Parameter> = Vec::new();
+    let mut indexed_fields = 0;
+
+    for field in &def.fields {
+        let mut diagnostics = Diagnostics::default();
+
+        let mut ty = match ns.resolve_type(
+            file_no,
+            contract_no,
+            &field.ty,
+            &mut diagnostics,
+        ) {
+            Ok(s) => s,
+            Err(()) => {
+                ns.diagnostics.extend(diagnostics);
+                Type::Unresolved
+            }
+        };
+
+        if ty.contains_mapping(ns) {
+            ns.diagnostics.push(Diagnostic::error(
+                field.loc,
+                "mapping type is not permitted as event field".to_string(),
+            ));
+            ty = Type::Unresolved;
+        }
+
+        let name = if let Some(name) = &field.name {
+            if let Some(other) = fields
+                .iter()
+                .find(|f| f.id.as_ref().map(|id| id.name.as_str()) == Some(name.name.as_str()))
+            {
+                ns.diagnostics.push(Diagnostic::error_with_note(
+                    name.loc,
+                    format!(
+                        "event '{}' has duplicate field name '{}'",
+                        def.name.as_ref().unwrap().name,
+                        name.name
+                    ),
+                    other.loc,
+                    format!(
+                        "location of previous declaration of '{}'",
+                        other.name_as_str()
+                    ),
+                ));
+                continue;
+            }
+            Some(program::Identifier {
+                name: name.name.to_owned(),
+                loc: name.loc,
+            })
+        } else {
+            if field.indexed {
+                ns.diagnostics.push(Diagnostic::error(
+                    field.loc,
+                    "indexed event fields must have a name".into(),
+                ));
+            }
+            None
+        };
+
+        if field.indexed {
+            indexed_fields += 1;
+        }
+
+        fields.push(Parameter {
+            loc: field.loc,
+            id: name,
+            ty,
+            ty_loc: Some(field.ty.loc()),
+            indexed: field.indexed,
+            infinite_size: false,
+            recursive: false,
+        });
+    }
+
+    if def.anonymous && indexed_fields > 4 {
+        ns.diagnostics.push(Diagnostic::error(
+            def.name.as_ref().unwrap().loc,
+            format!(
+                "anonymous event definition for '{}' has {} indexed fields where 4 permitted",
+                def.name.as_ref().unwrap().name,
+                indexed_fields
+            ),
+        ));
+    } else if !def.anonymous && indexed_fields > 3 {
+        ns.diagnostics.push(Diagnostic::error(
+            def.name.as_ref().unwrap().loc,
+            format!(
+                "event definition for '{}' has {} indexed fields where 3 permitted",
+                def.name.as_ref().unwrap().name,
+                indexed_fields
+            ),
+        ));
+    }
+
+    fields
+}
+
 
 /// Find all other structs a given user struct may reach.
 ///

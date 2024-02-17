@@ -60,6 +60,21 @@ pub fn add_external_functions(contract_no: usize, ns: &mut Namespace) {
             }
         }
     }
+
+    // now that we have the final list of functions, we can populate the list
+    // of events this contract emits
+    let mut emits_events = Vec::new();
+
+    for function_no in ns.contracts[contract_no].all_functions.keys() {
+        let func = &ns.functions[*function_no];
+
+        for event_no in &func.emits_events {
+            if !emits_events.contains(event_no) {
+                emits_events.push(*event_no);
+            }
+        }
+    }
+    ns.contracts[contract_no].emits_events = emits_events;
 }
 
 fn check_expression(expr: &Expression, call_list: &mut CallList) -> bool {
@@ -116,6 +131,12 @@ fn check_statement(stmt: &Statement, call_list: &mut CallList) -> bool {
         }
         Statement::Return(_, exprs) => {
             for e in exprs {
+                e.recurse(call_list, check_expression);
+            }
+        }
+
+        Statement::Emit { args, .. } => {
+            for e in args {
                 e.recurse(call_list, check_expression);
             }
         }
