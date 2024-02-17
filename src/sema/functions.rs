@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    ast::{Diagnostic, Function, Namespace, Parameter, Symbol},
+    ast::{Diagnostic, Function, Namespace, Parameter, Symbol, Type},
     diagnostics::Diagnostics,
 };
 
@@ -149,16 +149,57 @@ pub fn resolve_params(
             }
         };
 
-        let ty_loc = p.ty.loc();
+        let mut ty_loc = p.ty.loc();
 
         match ns.resolve_type(file_no, contract_no, &p.ty, diagnostics) {
             // TODO check for recursive types such as Mapping
             Ok(ty) => {
+                let ty = if !ty.can_have_data_location() {
+                    if let Some(storage) = &p.storage {
+                        diagnostics.push(Diagnostic::error(
+                            storage.loc(),
+                                format!("data location '{storage}' can only be specified for array, struct or mapping"
+                                )
+                            ));
+                        success = false;
+                    }
+
+                    ty
+                } else if let Some(program::StorageLocation::Storage(loc)) = p.storage {
+                    diagnostics.push(Diagnostic::error(
+                        loc,
+                        "parameter of type 'storage' not allowed public or external functions"
+                            .to_string(),
+                    ));
+                    success = false;
+
+                    ty_loc.use_end_from(&loc);
+
+                    Type::StorageRef(Box::new(ty))
+                } else {
+                    if ty.contains_mapping(ns) {
+                        diagnostics.push(Diagnostic::error(
+                            p.ty.loc(),
+                            "parameter with mapping type must be of type 'storage'".to_string(),
+                        ));
+                        success = false;
+                    }
+
+                    if !ty.fits_in_memory(ns) {
+                        diagnostics.push(Diagnostic::error(
+                            p.ty.loc(),
+                            String::from("type is too large to fit into memory"),
+                        ));
+                        success = false;
+                    }
+                    ty
+                };
                 params.push(Parameter {
                     loc: *loc,
                     id: p.name.clone(),
                     ty,
                     ty_loc: Some(ty_loc),
+                    indexed: false,
                     infinite_size: false,
                     recursive: false,
                 });
@@ -191,15 +232,64 @@ pub fn resolve_returns(
             }
         };
 
-        let ty_loc = r.ty.loc();
+        let mut ty_loc = r.ty.loc();
 
         match ns.resolve_type(file_no, contract_no, &r.ty, diagnostics) {
             Ok(ty) => {
+                let ty = if !ty.can_have_data_location() {
+                    if let Some(storage) = &r.storage {
+                        diagnostics.push(Diagnostic::error(
+                            storage.loc(),
+                                format!("data location '{storage}' can only be specified for array, struct or mapping"
+                                )
+                            ));
+                        success = false;
+                    }
+
+                    ty
+                } else {
+                    match r.storage {
+                        Some(program::StorageLocation::Storage(loc)) => {
+                            diagnostics.push(Diagnostic::error(
+                                    loc,
+                                    "return type of type 'storage' not allowed public or external functions"
+                                        .to_string(),
+                                ));
+                            success = false;
+                            
+
+                            ty_loc.use_end_from(&loc);
+
+                            Type::StorageRef(Box::new(ty))
+                        }
+                        _ => {
+                            if ty.contains_mapping(ns) {
+                                diagnostics.push(Diagnostic::error(
+                                    r.ty.loc(),
+                                    "return type containing mapping must be of type 'storage'"
+                                        .to_string(),
+                                ));
+                                success = false;
+                            }
+
+                            if !ty.fits_in_memory(ns) {
+                                diagnostics.push(Diagnostic::error(
+                                    r.ty.loc(),
+                                    String::from("type is too large to fit into memory"),
+                                ));
+                                success = false;
+                            }
+
+                            ty
+                        }
+                    }
+                };
                 resolved_returns.push(Parameter {
                     loc: *loc,
                     id: r.name.clone(),
                     ty,
                     ty_loc: Some(ty_loc),
+                    indexed: false,
                     infinite_size: false,
                     recursive: false,
                 });
@@ -233,6 +323,7 @@ fn signatures() {
                 id: None,
                 ty: ast::Type::Uint(32),
                 ty_loc: None,
+                indexed: false,
                 infinite_size: false,
                 recursive: false,
             },
@@ -241,6 +332,7 @@ fn signatures() {
                 id: None,
                 ty: ast::Type::Uint(64),
                 ty_loc: None,
+                indexed: false,
                 infinite_size: false,
                 recursive: false,
             },

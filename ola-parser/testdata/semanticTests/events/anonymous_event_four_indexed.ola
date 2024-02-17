@@ -1,0 +1,4 @@
+contract c {
+    event e(u32 indexed a, fields indexed b, bool indexed c, u32 indexed d) anonymous;
+}
+

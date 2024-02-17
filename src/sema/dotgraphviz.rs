@@ -1305,6 +1305,25 @@ impl Dot {
                         self.add_expression(expr, Some(func), ns, parent, String::from("expr"));
                     }
                 }
+                Statement::Emit {
+                    loc,
+                    event_no,
+                    args,
+                    ..
+                } => {
+                    let mut labels = vec![String::from("emit"), ns.loc_to_string(loc)];
+
+                    let event = &ns.events[*event_no];
+
+                    labels.insert(1, format!("event {}", event.symbol_name(ns)));
+
+                    parent =
+                        self.add_node(Node::new("emit", labels), Some(parent), Some(parent_rel));
+
+                    for (no, arg) in args.iter().enumerate() {
+                        self.add_expression(arg, Some(func), ns, parent, format!("arg #{no}"));
+                    }
+                }
             }
             parent_rel = String::from("next");
         }

@@ -224,6 +224,7 @@ pub struct StructDefinition {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ContractPart {
     StructDefinition(Box<StructDefinition>),
+    EventDefinition(Box<EventDefinition>),
     EnumDefinition(Box<EnumDefinition>),
     VariableDefinition(Box<VariableDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
@@ -237,6 +238,7 @@ impl ContractPart {
     pub fn loc(&self) -> &Loc {
         match self {
             ContractPart::StructDefinition(def) => &def.loc,
+            ContractPart::EventDefinition(def) => &def.loc,
             ContractPart::EnumDefinition(def) => &def.loc,
             ContractPart::VariableDefinition(def) => &def.loc,
             ContractPart::FunctionDefinition(def) => &def.loc,
@@ -275,6 +277,38 @@ pub struct ContractDefinition {
     pub ty: ContractTy,
     pub name: Option<Identifier>,
     pub parts: Vec<ContractPart>,
+}
+
+/// An event parameter.
+///
+/// `<ty> [indexed] [name]`
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct EventParameter {
+    /// The code location.
+    pub loc: Loc,
+    /// The type.
+    pub ty: Expression,
+    /// Whether this parameter is indexed.
+    pub indexed: bool,
+    /// The optional identifier.
+    pub name: Option<Identifier>,
+}
+
+/// An event definition.
+///
+/// `event <name>(<fields>,*) [anonymous];`
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct EventDefinition {
+    /// The code location.
+    pub loc: Loc,
+    /// The identifier.
+    ///
+    /// This field is `None` only if an error occurred during parsing.
+    pub name: Option<Identifier>,
+    /// The list of event parameters.
+    pub fields: Vec<EventParameter>,
+    /// Whether this event is anonymous.
+    pub anonymous: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -470,6 +504,8 @@ impl Expression {
 pub struct Parameter {
     pub loc: Loc,
     pub ty: Expression,
+    /// The optional memory location.
+    pub storage: Option<StorageLocation>,
     pub name: Option<Identifier>,
 }
 
@@ -508,6 +544,7 @@ pub enum Statement {
     Break(Loc),
     Error(Loc),
     Return(Loc, Option<Expression>),
+    Emit(Loc, Expression),
 }
 
 impl CodeLocation for Statement {
@@ -524,7 +561,8 @@ impl CodeLocation for Statement {
             | Statement::DoWhile(loc, ..)
             | Statement::Break(loc)
             | Statement::Error(loc)
-            | Statement::Return(loc, ..) => *loc,
+            | Statement::Return(loc, ..)
+            | Statement::Emit(loc, ..) => *loc,
         }
     }
 }

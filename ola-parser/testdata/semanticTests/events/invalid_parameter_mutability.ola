@@ -1,0 +1,5 @@
+contract test {
+    event e1(u256 a);
+    event e2(u256 a);
+}
+
