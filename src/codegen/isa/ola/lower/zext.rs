@@ -117,8 +117,8 @@ pub fn lower_zext(
                     ));
                 }
                 ICmpCond::Slt | ICmpCond::Ult | ICmpCond::Sgt | ICmpCond::Ugt => {
-                    let mut op0 = MO::new(lhs.into());
-                    let mut op1 = MO::new(rhs.into());
+                    let mut op0 = MO::input(lhs.into());
+                    let mut op1 = MO::input(rhs.into());
                     if *cond == ICmpCond::Slt || *cond == ICmpCond::Ult {
                         op0 = MO::new(rhs.into());
                         op1 = MO::new(lhs.into());
