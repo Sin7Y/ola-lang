@@ -8,6 +8,7 @@ use super::memory::{
     define_field_mem_compare, define_fields_concat, define_heap_malloc, define_mem_compare,
     define_memcpy, define_split_field, define_vector_new,
 };
+use super::u256_op::{define_u256_add, define_u256_sub};
 use super::u32_op::{define_u32_div_mod, define_u32_power, define_u32_sqrt};
 
 static PROPHET_FUNCTIONS: Lazy<[&str; 15]> = Lazy::new(|| {
@@ -38,7 +39,7 @@ static BUILTIN_FUNCTIONS: Lazy<[&str; 3]> = Lazy::new(|| {
     ]
 });
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 16]> = Lazy::new(|| {
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 18]> = Lazy::new(|| {
     [
         "heap_malloc",
         "vector_new",
@@ -56,6 +57,8 @@ static CORE_LIB_FUNCTIONS: Lazy<[&str; 16]> = Lazy::new(|| {
         "field_memcmp_ult",
         "u32_div_mod",
         "u32_power",
+        "u256_add",
+        "u256_sub",
     ]
 });
 
@@ -314,6 +317,16 @@ fn define_core_lib(bin: &mut Binary) {
             let ftype = i64_type.fn_type(&[i64_type.into(), i64_type.into()], false);
             let func = bin.module.add_function(p, ftype, None);
             define_u32_power(bin, func);
+        }
+        "u256_add" | "u256_sub" => {
+            let u256_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = u256_type.fn_type(&[u256_type.into(), u256_type.into()], false);
+            let func = bin.module.add_function(p, ftype, None);
+            match *p {
+                "u256_add" => define_u256_add(bin, func),
+                "u256_sub" => define_u256_sub(bin, func),
+                _ => unreachable!(),
+            };
         }
 
         _ => {}
