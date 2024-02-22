@@ -336,7 +336,7 @@ pub fn expression<'a>(
                         value: BigInt::from(1u32),
                     };
                     let one = expression(&u256_one, bin, func_value, var_table, ns);
-                    u256_sub_internal(v, one, bin, func_value, var_table, ns)
+                    u256_sub_internal(v, one, bin)
                 }
                 _ => unimplemented!("increment for type {:?}", expr.ty()),
             };
@@ -406,7 +406,7 @@ pub fn expression<'a>(
                         value: BigInt::from(1u32),
                     };
                     let one = expression(&u256_one, bin, func_value, var_table, ns);
-                    u256_add_internal(v, one, bin, func_value, var_table, ns)
+                    u256_add_internal(v, one, bin)
                 }
                 _ => unimplemented!("increment for type {:?}", expr.ty()),
             };
@@ -1792,7 +1792,7 @@ pub(crate) fn debug_print<'a>(
     // print the value
     let print_func = bin.module.get_function("prophet_printf").unwrap();
     match ty {
-        Type::Bool | Type::Uint(_) | Type::Field | Type::Enum(_) => {
+        Type::Bool | Type::Uint(32) | Type::Field | Type::Enum(_) => {
             let arg_value = match arg.get_type() {
                 BasicTypeEnum::IntType(_) => arg,
                 BasicTypeEnum::PointerType(_) => {
@@ -1806,6 +1806,21 @@ pub(crate) fn debug_print<'a>(
                 &[
                     arg_value.into(),
                     bin.context.i64_type().const_int(3, false).into(),
+                ],
+                "",
+            );
+        }
+        Type::Uint(256) => {
+            let u256_start = bin.builder.build_ptr_to_int(
+                arg.into_pointer_value(),
+                bin.context.i64_type(),
+                "u256_start",
+            );
+            bin.builder.build_call(
+                print_func,
+                &[
+                    u256_start.into(),
+                    bin.context.i64_type().const_int(4, false).into(),
                 ],
                 "",
             );
