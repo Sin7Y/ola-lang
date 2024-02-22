@@ -877,37 +877,6 @@ pub(crate) fn slot_offest<'a>(
                 "last_elem",
             );
             bin.builder.build_store(last_elem_ptr, new_elem);
-            // for i in 0..4 {
-            //     let elem_ptr = unsafe {
-            //         bin.builder.build_gep(
-            //             bin.context.i64_type(),
-            //             new_slot,
-            //             &[bin.context.i64_type().const_int(i, false)],
-            //             "new_slot_ptr",
-            //         )
-            //     };
-            //     let old_elem_ptr = unsafe {
-            //         bin.builder.build_gep(
-            //             bin.context.i64_type(),
-            //             slot.into_pointer_value(),
-            //             &[bin.context.i64_type().const_int(i, false)],
-            //             "old_slot_ptr",
-            //         )
-            //     };
-            //     let old_elem =
-            //         bin.builder
-            //             .build_load(bin.context.i64_type(), old_elem_ptr, "");
-            //     if i == 3 {
-            //         let new_elem = bin.builder.build_int_add(
-            //             old_elem.into_int_value(),
-            //             offset.into_int_value(),
-            //             "",
-            //         );
-            //         bin.builder.build_store(elem_ptr, new_elem);
-            //     } else {
-            //         bin.builder.build_store(elem_ptr, old_elem);
-            //     }
-            // }
             new_slot.into()
         }
         _ => bin
