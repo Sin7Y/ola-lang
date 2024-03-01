@@ -1,5 +1,5 @@
-; ModuleID = 'NonceHolder'
-source_filename = "mapping"
+; ModuleID = 'U256BasicTest'
+source_filename = "u256_basic"
 
 @heap_address = internal global i64 -12884901885
 
@@ -554,124 +554,71 @@ entry:
 
 declare ptr @u256_sub(ptr, ptr)
 
-define void @setNonce(ptr %0, i64 %1) {
+define void @testU256AddOperation() {
 entry:
-  %_nonceSet = alloca i64, align 8
-  %_nonce = alloca i64, align 8
-  %_address = alloca ptr, align 8
-  store ptr %0, ptr %_address, align 8
-  store i64 %1, ptr %_nonce, align 4
-  %2 = load ptr, ptr %_address, align 8
-  %3 = call ptr @heap_malloc(i64 4)
-  %4 = getelementptr i64, ptr %3, i64 0
-  store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %3, i64 1
-  store i64 0, ptr %5, align 4
-  %6 = getelementptr i64, ptr %3, i64 2
-  store i64 0, ptr %6, align 4
-  %7 = getelementptr i64, ptr %3, i64 3
-  store i64 0, ptr %7, align 4
-  %8 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %3, ptr %8, i64 4)
-  %9 = getelementptr i64, ptr %8, i64 4
-  call void @memcpy(ptr %2, ptr %9, i64 4)
-  %10 = getelementptr i64, ptr %9, i64 4
-  %11 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %8, ptr %11, i64 8)
-  %12 = load i64, ptr %_nonce, align 4
-  %13 = call ptr @heap_malloc(i64 4)
-  %14 = getelementptr i64, ptr %13, i64 0
-  store i64 0, ptr %14, align 4
-  %15 = getelementptr i64, ptr %13, i64 1
-  store i64 0, ptr %15, align 4
-  %16 = getelementptr i64, ptr %13, i64 2
-  store i64 0, ptr %16, align 4
-  %17 = getelementptr i64, ptr %13, i64 3
-  store i64 %12, ptr %17, align 4
-  %18 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %11, ptr %18, i64 4)
-  %19 = getelementptr i64, ptr %18, i64 4
-  call void @memcpy(ptr %13, ptr %19, i64 4)
-  %20 = getelementptr i64, ptr %19, i64 4
-  %21 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %18, ptr %21, i64 8)
-  %22 = call ptr @heap_malloc(i64 4)
-  %23 = getelementptr i64, ptr %22, i64 0
-  store i64 0, ptr %23, align 4
-  %24 = getelementptr i64, ptr %22, i64 1
-  store i64 0, ptr %24, align 4
-  %25 = getelementptr i64, ptr %22, i64 2
-  store i64 0, ptr %25, align 4
-  %26 = getelementptr i64, ptr %22, i64 3
-  store i64 55, ptr %26, align 4
-  call void @set_storage(ptr %21, ptr %22)
-  %27 = load ptr, ptr %_address, align 8
-  %28 = call ptr @heap_malloc(i64 4)
-  %29 = getelementptr i64, ptr %28, i64 0
-  store i64 0, ptr %29, align 4
-  %30 = getelementptr i64, ptr %28, i64 1
-  store i64 0, ptr %30, align 4
-  %31 = getelementptr i64, ptr %28, i64 2
-  store i64 0, ptr %31, align 4
-  %32 = getelementptr i64, ptr %28, i64 3
-  store i64 0, ptr %32, align 4
-  %33 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %28, ptr %33, i64 4)
-  %34 = getelementptr i64, ptr %33, i64 4
-  call void @memcpy(ptr %27, ptr %34, i64 4)
-  %35 = getelementptr i64, ptr %34, i64 4
-  %36 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %33, ptr %36, i64 8)
-  %37 = load i64, ptr %_nonce, align 4
-  %38 = call ptr @heap_malloc(i64 4)
-  %39 = getelementptr i64, ptr %38, i64 0
-  store i64 0, ptr %39, align 4
-  %40 = getelementptr i64, ptr %38, i64 1
-  store i64 0, ptr %40, align 4
-  %41 = getelementptr i64, ptr %38, i64 2
-  store i64 0, ptr %41, align 4
-  %42 = getelementptr i64, ptr %38, i64 3
-  store i64 %37, ptr %42, align 4
-  %43 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %36, ptr %43, i64 4)
-  %44 = getelementptr i64, ptr %43, i64 4
-  call void @memcpy(ptr %38, ptr %44, i64 4)
-  %45 = getelementptr i64, ptr %44, i64 4
-  %46 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %43, ptr %46, i64 8)
-  %47 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %46, ptr %47)
-  %48 = getelementptr i64, ptr %47, i64 3
-  %storage_value = load i64, ptr %48, align 4
-  %49 = call ptr @heap_malloc(i64 4)
-  call void @memcpy(ptr %46, ptr %49, i64 4)
-  %last_elem_ptr = getelementptr i64, ptr %49, i64 3
-  %50 = load i64, ptr %last_elem_ptr, align 4
-  %last_elem = add i64 %50, 1
-  store i64 %last_elem, ptr %last_elem_ptr, align 4
-  store i64 %storage_value, ptr %_nonceSet, align 4
-  %51 = load i64, ptr %_nonceSet, align 4
-  call void @prophet_printf(i64 %51, i64 3)
+  %c = alloca ptr, align 8
+  %b = alloca ptr, align 8
+  %a = alloca ptr, align 8
+  %0 = call ptr @heap_malloc(i64 8)
+  %index_access = getelementptr i64, ptr %0, i64 7
+  store i64 5, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %0, i64 6
+  store i64 0, ptr %index_access1, align 4
+  %index_access2 = getelementptr i64, ptr %0, i64 5
+  store i64 0, ptr %index_access2, align 4
+  %index_access3 = getelementptr i64, ptr %0, i64 4
+  store i64 0, ptr %index_access3, align 4
+  %index_access4 = getelementptr i64, ptr %0, i64 3
+  store i64 0, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %0, i64 2
+  store i64 0, ptr %index_access5, align 4
+  %index_access6 = getelementptr i64, ptr %0, i64 1
+  store i64 0, ptr %index_access6, align 4
+  %index_access7 = getelementptr i64, ptr %0, i64 0
+  store i64 0, ptr %index_access7, align 4
+  store ptr %0, ptr %a, align 8
+  %1 = call ptr @heap_malloc(i64 8)
+  %index_access8 = getelementptr i64, ptr %1, i64 7
+  store i64 10, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %1, i64 6
+  store i64 0, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %1, i64 5
+  store i64 0, ptr %index_access10, align 4
+  %index_access11 = getelementptr i64, ptr %1, i64 4
+  store i64 0, ptr %index_access11, align 4
+  %index_access12 = getelementptr i64, ptr %1, i64 3
+  store i64 0, ptr %index_access12, align 4
+  %index_access13 = getelementptr i64, ptr %1, i64 2
+  store i64 0, ptr %index_access13, align 4
+  %index_access14 = getelementptr i64, ptr %1, i64 1
+  store i64 0, ptr %index_access14, align 4
+  %index_access15 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %index_access15, align 4
+  store ptr %1, ptr %b, align 8
+  %2 = load ptr, ptr %a, align 8
+  %3 = load ptr, ptr %b, align 8
+  %4 = call ptr @u256_add(ptr %2, ptr %3)
+  store ptr %4, ptr %c, align 8
+  %5 = load ptr, ptr %c, align 8
+  %u256_start = ptrtoint ptr %5 to i64
+  call void @prophet_printf(i64 %u256_start, i64 4)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 1093482716, label %func_0_dispatch
+    i64 2590488802, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = getelementptr ptr, ptr %2, i64 0
-  %4 = getelementptr ptr, ptr %3, i64 4
-  %5 = load i64, ptr %4, align 4
-  call void @setNonce(ptr %3, i64 %5)
-  %6 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %6, align 4
-  call void @set_tape_data(ptr %6, i64 1)
+  call void @testU256AddOperation()
+  %3 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %3, align 4
+  call void @set_tape_data(ptr %3, i64 1)
   ret void
 }
 

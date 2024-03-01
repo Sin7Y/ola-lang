@@ -37,6 +37,8 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
+declare void @emit_event(ptr, ptr)
+
 define ptr @heap_malloc(i64 %0) {
 entry:
   %current_address = load i64, ptr @heap_address, align 4
@@ -454,6 +456,103 @@ exit:                                             ; preds = %loop
   %finalResult = load i64, ptr %result, align 4
   ret i64 %finalResult
 }
+
+define ptr @u256_add(ptr %0, ptr %1) {
+entry:
+  %2 = call ptr @heap_malloc(i64 8)
+  %3 = getelementptr i64, ptr %0, i64 7
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr i64, ptr %1, i64 7
+  %6 = load i64, ptr %5, align 4
+  %7 = add i64 %4, %6
+  %sum_with_carry = add i64 %7, 0
+  %result = and i64 %sum_with_carry, 4294967295
+  %carry = icmp ugt i64 %sum_with_carry, 4294967295
+  %8 = zext i1 %carry to i64
+  %9 = getelementptr i64, ptr %2, i64 7
+  store i64 %result, ptr %9, align 4
+  %10 = getelementptr i64, ptr %0, i64 6
+  %11 = load i64, ptr %10, align 4
+  %12 = getelementptr i64, ptr %1, i64 6
+  %13 = load i64, ptr %12, align 4
+  %14 = add i64 %11, %13
+  %sum_with_carry1 = add i64 %14, %8
+  %result2 = and i64 %sum_with_carry1, 4294967295
+  %carry3 = icmp ugt i64 %sum_with_carry1, 4294967295
+  %15 = zext i1 %carry3 to i64
+  %16 = getelementptr i64, ptr %2, i64 6
+  store i64 %result2, ptr %16, align 4
+  %17 = getelementptr i64, ptr %0, i64 5
+  %18 = load i64, ptr %17, align 4
+  %19 = getelementptr i64, ptr %1, i64 5
+  %20 = load i64, ptr %19, align 4
+  %21 = add i64 %18, %20
+  %sum_with_carry4 = add i64 %21, %15
+  %result5 = and i64 %sum_with_carry4, 4294967295
+  %carry6 = icmp ugt i64 %sum_with_carry4, 4294967295
+  %22 = zext i1 %carry6 to i64
+  %23 = getelementptr i64, ptr %2, i64 5
+  store i64 %result5, ptr %23, align 4
+  %24 = getelementptr i64, ptr %0, i64 4
+  %25 = load i64, ptr %24, align 4
+  %26 = getelementptr i64, ptr %1, i64 4
+  %27 = load i64, ptr %26, align 4
+  %28 = add i64 %25, %27
+  %sum_with_carry7 = add i64 %28, %22
+  %result8 = and i64 %sum_with_carry7, 4294967295
+  %carry9 = icmp ugt i64 %sum_with_carry7, 4294967295
+  %29 = zext i1 %carry9 to i64
+  %30 = getelementptr i64, ptr %2, i64 4
+  store i64 %result8, ptr %30, align 4
+  %31 = getelementptr i64, ptr %0, i64 3
+  %32 = load i64, ptr %31, align 4
+  %33 = getelementptr i64, ptr %1, i64 3
+  %34 = load i64, ptr %33, align 4
+  %35 = add i64 %32, %34
+  %sum_with_carry10 = add i64 %35, %29
+  %result11 = and i64 %sum_with_carry10, 4294967295
+  %carry12 = icmp ugt i64 %sum_with_carry10, 4294967295
+  %36 = zext i1 %carry12 to i64
+  %37 = getelementptr i64, ptr %2, i64 3
+  store i64 %result11, ptr %37, align 4
+  %38 = getelementptr i64, ptr %0, i64 2
+  %39 = load i64, ptr %38, align 4
+  %40 = getelementptr i64, ptr %1, i64 2
+  %41 = load i64, ptr %40, align 4
+  %42 = add i64 %39, %41
+  %sum_with_carry13 = add i64 %42, %36
+  %result14 = and i64 %sum_with_carry13, 4294967295
+  %carry15 = icmp ugt i64 %sum_with_carry13, 4294967295
+  %43 = zext i1 %carry15 to i64
+  %44 = getelementptr i64, ptr %2, i64 2
+  store i64 %result14, ptr %44, align 4
+  %45 = getelementptr i64, ptr %0, i64 1
+  %46 = load i64, ptr %45, align 4
+  %47 = getelementptr i64, ptr %1, i64 1
+  %48 = load i64, ptr %47, align 4
+  %49 = add i64 %46, %48
+  %sum_with_carry16 = add i64 %49, %43
+  %result17 = and i64 %sum_with_carry16, 4294967295
+  %carry18 = icmp ugt i64 %sum_with_carry16, 4294967295
+  %50 = zext i1 %carry18 to i64
+  %51 = getelementptr i64, ptr %2, i64 1
+  store i64 %result17, ptr %51, align 4
+  %52 = getelementptr i64, ptr %0, i64 0
+  %53 = load i64, ptr %52, align 4
+  %54 = getelementptr i64, ptr %1, i64 0
+  %55 = load i64, ptr %54, align 4
+  %56 = add i64 %53, %55
+  %sum_with_carry19 = add i64 %56, %50
+  call void @builtin_range_check(i64 %sum_with_carry19)
+  %result20 = and i64 %sum_with_carry19, 4294967295
+  %carry21 = icmp ugt i64 %sum_with_carry19, 4294967295
+  %57 = zext i1 %carry21 to i64
+  %58 = getelementptr i64, ptr %2, i64 0
+  store i64 %result20, ptr %58, align 4
+  ret ptr %2
+}
+
+declare ptr @u256_sub(ptr, ptr)
 
 define void @add_mapping() {
 entry:
