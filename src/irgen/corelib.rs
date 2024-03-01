@@ -10,7 +10,7 @@ use super::memory::{
 };
 use super::u32_op::{define_u32_div_mod, define_u32_power, define_u32_sqrt};
 
-static PROPHET_FUNCTIONS: Lazy<[&str; 14]> = Lazy::new(|| {
+static PROPHET_FUNCTIONS: Lazy<[&str; 15]> = Lazy::new(|| {
     [
         "prophet_u32_sqrt",
         "prophet_u32_div",
@@ -26,6 +26,7 @@ static PROPHET_FUNCTIONS: Lazy<[&str; 14]> = Lazy::new(|| {
         "poseidon_hash",
         "contract_call",
         "prophet_printf",
+        "emit_event",
     ]
 });
 
@@ -197,6 +198,12 @@ fn declare_prophets(bin: &mut Binary) {
             let void_type = bin.context.void_type();
             let i64_type = bin.context.i64_type();
             let ftype = void_type.fn_type(&[i64_type.into(), i64_type.into()], false);
+            bin.module.add_function(p, ftype, None);
+        }
+        "emit_event" => {
+            let void_type = bin.context.void_type();
+            let ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
+            let ftype = void_type.fn_type(&[ptr_type.into(), ptr_type.into()], false);
             bin.module.add_function(p, ftype, None);
         }
 

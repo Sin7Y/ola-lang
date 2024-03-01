@@ -1,9 +1,11 @@
+use ola_parser::program::{ContractTy, Loc};
+
 // SPDX-License-Identifier: Apache-2.0
 use crate::sema::ast::{Diagnostic, Expression, LibFunc, Namespace, RetrieveType};
 use crate::sema::symtable::{Symtable, VariableUsage};
 use crate::sema::{ast, symtable};
 
-use super::ast::CallArgs;
+use super::ast::{CallArgs, EventDecl};
 
 /// Mark variables as assigned, either in the symbol table (for local variables)
 /// or in the Namespace (for storage variables)
@@ -390,6 +392,85 @@ pub fn check_unused_namespace_variables(ns: &mut Namespace) {
             ns.diagnostics.push(Diagnostic::warning(
                 constant.loc,
                 format!("global constant '{}' has never been used", constant.name),
+            ));
+        }
+    }
+}
+
+/// Find shadowing events
+fn shadowing_events(
+    event_no: usize,
+    event: &EventDecl,
+    shadows: &mut Vec<usize>,
+    events: &[(Loc, usize)],
+    ns: &Namespace,
+) {
+    for e in events {
+        let other_no = e.1;
+        if event_no != other_no && ns.events[other_no].signature == event.signature {
+            shadows.push(other_no);
+        }
+    }
+}
+
+
+/// Check for unused events
+pub fn check_unused_events(ns: &mut Namespace) {
+    // first we need to calculate which event shadows which
+    // an event can be declare on the global scope and re-declared in a contract,
+    // and then again redeclared in as base contract. In this case all of the events
+    // should be marked as used
+    for event_no in 0..ns.events.len() {
+        let event = &ns.events[event_no];
+
+        if !event.used {
+            continue;
+        }
+
+        let mut shadows = Vec::new();
+
+        if let Some(contract_no) = event.contract {
+            // is there a global event with the same name
+            if let Some(ast::Symbol::Event(events)) =
+                ns.variable_symbols
+                    .get(&(event.loc.file_no(), None, event.id.name.to_owned()))
+            {
+                shadowing_events(event_no, event, &mut shadows, events, ns);
+            }
+
+
+            let file_no = ns.contracts[contract_no].loc.file_no();
+
+            if let Some(ast::Symbol::Event(events)) = ns.variable_symbols.get(&(
+                file_no,
+                Some(contract_no),
+                event.id.name.to_owned(),
+            )) {
+                shadowing_events(event_no, event, &mut shadows, events, ns);
+            }
+            
+        }
+
+        for shadow in shadows {
+            ns.events[shadow].used = true;
+        }
+    }
+
+    for event in &ns.events {
+        if !event.used {
+            if let Some(contract_no) = event.contract {
+                // don't complain about events in interfaces or abstract contracts
+                if matches!(
+                    ns.contracts[contract_no].ty,
+                    ContractTy::Interface(_)
+                ) {
+                    continue;
+                }
+            }
+
+            ns.diagnostics.push(Diagnostic::warning(
+                event.id.loc,
+                format!("event '{}' has never been emitted", event.id),
             ));
         }
     }

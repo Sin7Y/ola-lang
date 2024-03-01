@@ -317,6 +317,39 @@ impl Namespace {
         if namespace.is_empty() {
             let mut events = Vec::new();
 
+            if let Some(contract_no) = contract_no {
+                let file_no = self.contracts[contract_no].loc.file_no();
+                match self
+                    .variable_symbols
+                    .get(&(file_no, Some(contract_no), id.name.to_owned()))
+                {
+                    None => (),
+                    Some(Symbol::Event(ev)) => {
+                        for (_, event_no) in ev {
+                            events.push(*event_no);
+                        }
+                    }
+                    sym => {
+                        let error = Namespace::wrong_symbol(sym, &id);
+
+                        diagnostics.push(error);
+
+                        return Err(());
+                    }
+                }
+
+                if let Some(sym) =
+                    self.function_symbols
+                        .get(&(file_no, Some(contract_no), id.name.to_owned()))
+                {
+                    let error = Namespace::wrong_symbol(Some(sym), &id);
+
+                    diagnostics.push(error);
+
+                    return Err(());
+                }
+            }
+
             if let Some(sym) = self
                 .function_symbols
                 .get(&(file_no, None, id.name.to_owned()))

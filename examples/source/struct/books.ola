@@ -3,13 +3,18 @@ contract BookExample {
     struct Book {
         u32 book_id;
         string book_name;
+        string author;
     }
+
+    event BookCreated(u32 indexed id, string indexed name, string author);
 
     fn createBook(u32 id, string name) -> (Book) {
         Book myBook = Book({
             book_name: name,
-            book_id: id
+            book_id: id,
+            author: "peter"
         });
+        emit BookCreated(id, name, "peter");
         return myBook;
     }
 
