@@ -1,5 +1,5 @@
-; ModuleID = 'NonceHolder'
-source_filename = "NonceHolder"
+; ModuleID = 'U256BasicTest'
+source_filename = "u256_basic"
 
 @heap_address = internal global i64 -12884901885
 
@@ -554,446 +554,71 @@ entry:
 
 declare ptr @u256_sub(ptr, ptr)
 
-define void @onlyEntrypointCall() {
+define void @testU256AddOperation() {
 entry:
-  %ENTRY_POINT_ADDRESS = alloca ptr, align 8
-  %0 = call ptr @heap_malloc(i64 4)
-  %index_access = getelementptr i64, ptr %0, i64 3
-  store i64 32769, ptr %index_access, align 4
-  %index_access1 = getelementptr i64, ptr %0, i64 2
+  %c = alloca ptr, align 8
+  %b = alloca ptr, align 8
+  %a = alloca ptr, align 8
+  %0 = call ptr @heap_malloc(i64 8)
+  %index_access = getelementptr i64, ptr %0, i64 7
+  store i64 5, ptr %index_access, align 4
+  %index_access1 = getelementptr i64, ptr %0, i64 6
   store i64 0, ptr %index_access1, align 4
-  %index_access2 = getelementptr i64, ptr %0, i64 1
+  %index_access2 = getelementptr i64, ptr %0, i64 5
   store i64 0, ptr %index_access2, align 4
-<<<<<<< HEAD
-<<<<<<< HEAD
-  %index_access3 = getelementptr i64, ptr %0, i64 0
+  %index_access3 = getelementptr i64, ptr %0, i64 4
   store i64 0, ptr %index_access3, align 4
-  store ptr %0, ptr %ENTRY_POINT_ADDRESS, align 8
-=======
-  %index_access3 = getelementptr i64, ptr %0, i64 3
-  store i64 32769, ptr %index_access3, align 4
-<<<<<<< HEAD
->>>>>>> 7998cf0 (fixed llvm type bug.)
-=======
-=======
-  %index_access3 = getelementptr i64, ptr %0, i64 0
-  store i64 0, ptr %index_access3, align 4
->>>>>>> 3a67966 (refactor address and hash literal.)
-  store ptr %0, ptr %ENTRY_POINT_ADDRESS, align 8
->>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
-  %1 = call ptr @heap_malloc(i64 12)
-  call void @get_tape_data(ptr %1, i64 12)
-  %2 = load ptr, ptr %ENTRY_POINT_ADDRESS, align 8
-  %3 = call i64 @memcmp_eq(ptr %1, ptr %2, i64 4)
-  call void @builtin_assert(i64 %3)
+  %index_access4 = getelementptr i64, ptr %0, i64 3
+  store i64 0, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %0, i64 2
+  store i64 0, ptr %index_access5, align 4
+  %index_access6 = getelementptr i64, ptr %0, i64 1
+  store i64 0, ptr %index_access6, align 4
+  %index_access7 = getelementptr i64, ptr %0, i64 0
+  store i64 0, ptr %index_access7, align 4
+  store ptr %0, ptr %a, align 8
+  %1 = call ptr @heap_malloc(i64 8)
+  %index_access8 = getelementptr i64, ptr %1, i64 7
+  store i64 10, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %1, i64 6
+  store i64 0, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %1, i64 5
+  store i64 0, ptr %index_access10, align 4
+  %index_access11 = getelementptr i64, ptr %1, i64 4
+  store i64 0, ptr %index_access11, align 4
+  %index_access12 = getelementptr i64, ptr %1, i64 3
+  store i64 0, ptr %index_access12, align 4
+  %index_access13 = getelementptr i64, ptr %1, i64 2
+  store i64 0, ptr %index_access13, align 4
+  %index_access14 = getelementptr i64, ptr %1, i64 1
+  store i64 0, ptr %index_access14, align 4
+  %index_access15 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %index_access15, align 4
+  store ptr %1, ptr %b, align 8
+  %2 = load ptr, ptr %a, align 8
+  %3 = load ptr, ptr %b, align 8
+  %4 = call ptr @u256_add(ptr %2, ptr %3)
+  store ptr %4, ptr %c, align 8
+  %5 = load ptr, ptr %c, align 8
+  %u256_start = ptrtoint ptr %5 to i64
+  call void @prophet_printf(i64 %u256_start, i64 4)
   ret void
-}
-
-define i64 @isNonceUsed(ptr %0, i64 %1) {
-entry:
-  %_nonce = alloca i64, align 8
-  %_address = alloca ptr, align 8
-  store ptr %0, ptr %_address, align 8
-  store i64 %1, ptr %_nonce, align 4
-  %2 = load ptr, ptr %_address, align 8
-  %3 = call ptr @heap_malloc(i64 4)
-  %4 = getelementptr i64, ptr %3, i64 0
-  store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %3, i64 1
-  store i64 0, ptr %5, align 4
-  %6 = getelementptr i64, ptr %3, i64 2
-  store i64 0, ptr %6, align 4
-  %7 = getelementptr i64, ptr %3, i64 3
-  store i64 0, ptr %7, align 4
-  %8 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %3, ptr %8, i64 4)
-  %9 = getelementptr i64, ptr %8, i64 4
-  call void @memcpy(ptr %2, ptr %9, i64 4)
-  %10 = getelementptr i64, ptr %9, i64 4
-  %11 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %8, ptr %11, i64 8)
-  %12 = load i64, ptr %_nonce, align 4
-  %13 = call ptr @heap_malloc(i64 4)
-  %14 = getelementptr i64, ptr %13, i64 0
-  store i64 0, ptr %14, align 4
-  %15 = getelementptr i64, ptr %13, i64 1
-  store i64 0, ptr %15, align 4
-  %16 = getelementptr i64, ptr %13, i64 2
-  store i64 0, ptr %16, align 4
-  %17 = getelementptr i64, ptr %13, i64 3
-  store i64 %12, ptr %17, align 4
-  %18 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %11, ptr %18, i64 4)
-  %19 = getelementptr i64, ptr %18, i64 4
-  call void @memcpy(ptr %13, ptr %19, i64 4)
-  %20 = getelementptr i64, ptr %19, i64 4
-  %21 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %18, ptr %21, i64 8)
-  %22 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %21, ptr %22)
-  %23 = getelementptr i64, ptr %22, i64 3
-  %storage_value = load i64, ptr %23, align 4
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  %24 = call ptr @heap_malloc(i64 4)
-  call void @memcpy(ptr %21, ptr %24, i64 4)
-  %last_elem_ptr = getelementptr i64, ptr %24, i64 3
-  %25 = load i64, ptr %last_elem_ptr, align 4
-  %last_elem = add i64 %25, 1
-  store i64 %last_elem, ptr %last_elem_ptr, align 4
-<<<<<<< HEAD
-=======
-  %24 = getelementptr i64, ptr %21, i64 3
-  %25 = load i64, ptr %24, align 4
-  %slot_offset = add i64 %25, 1
-  store i64 %slot_offset, ptr %24, align 4
->>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  ret i64 %storage_value
-}
-
-define void @setNonce(ptr %0, i64 %1) {
-entry:
-  %_nonce = alloca i64, align 8
-  %_address = alloca ptr, align 8
-  store ptr %0, ptr %_address, align 8
-  store i64 %1, ptr %_nonce, align 4
-  call void @onlyEntrypointCall()
-  %2 = load ptr, ptr %_address, align 8
-  %3 = call ptr @heap_malloc(i64 4)
-  %4 = getelementptr i64, ptr %3, i64 0
-  store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %3, i64 1
-  store i64 0, ptr %5, align 4
-  %6 = getelementptr i64, ptr %3, i64 2
-  store i64 0, ptr %6, align 4
-  %7 = getelementptr i64, ptr %3, i64 3
-  store i64 0, ptr %7, align 4
-  %8 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %3, ptr %8, i64 4)
-  %9 = getelementptr i64, ptr %8, i64 4
-  call void @memcpy(ptr %2, ptr %9, i64 4)
-  %10 = getelementptr i64, ptr %9, i64 4
-  %11 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %8, ptr %11, i64 8)
-  %12 = load i64, ptr %_nonce, align 4
-  %13 = call ptr @heap_malloc(i64 4)
-  %14 = getelementptr i64, ptr %13, i64 0
-  store i64 0, ptr %14, align 4
-  %15 = getelementptr i64, ptr %13, i64 1
-  store i64 0, ptr %15, align 4
-  %16 = getelementptr i64, ptr %13, i64 2
-  store i64 0, ptr %16, align 4
-  %17 = getelementptr i64, ptr %13, i64 3
-  store i64 %12, ptr %17, align 4
-  %18 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %11, ptr %18, i64 4)
-  %19 = getelementptr i64, ptr %18, i64 4
-  call void @memcpy(ptr %13, ptr %19, i64 4)
-  %20 = getelementptr i64, ptr %19, i64 4
-  %21 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %18, ptr %21, i64 8)
-  %22 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %21, ptr %22)
-  %23 = getelementptr i64, ptr %22, i64 3
-  %storage_value = load i64, ptr %23, align 4
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  %24 = call ptr @heap_malloc(i64 4)
-  call void @memcpy(ptr %21, ptr %24, i64 4)
-  %last_elem_ptr = getelementptr i64, ptr %24, i64 3
-  %25 = load i64, ptr %last_elem_ptr, align 4
-  %last_elem = add i64 %25, 1
-  store i64 %last_elem, ptr %last_elem_ptr, align 4
-<<<<<<< HEAD
-=======
-  %24 = getelementptr i64, ptr %21, i64 3
-  %25 = load i64, ptr %24, align 4
-  %slot_offset = add i64 %25, 1
-  store i64 %slot_offset, ptr %24, align 4
->>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  %26 = icmp eq i64 %storage_value, 0
-  %27 = zext i1 %26 to i64
-  call void @builtin_assert(i64 %27)
-  %28 = load ptr, ptr %_address, align 8
-  %29 = call ptr @heap_malloc(i64 4)
-  %30 = getelementptr i64, ptr %29, i64 0
-  store i64 0, ptr %30, align 4
-  %31 = getelementptr i64, ptr %29, i64 1
-  store i64 0, ptr %31, align 4
-  %32 = getelementptr i64, ptr %29, i64 2
-  store i64 0, ptr %32, align 4
-  %33 = getelementptr i64, ptr %29, i64 3
-  store i64 0, ptr %33, align 4
-  %34 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %29, ptr %34, i64 4)
-  %35 = getelementptr i64, ptr %34, i64 4
-  call void @memcpy(ptr %28, ptr %35, i64 4)
-  %36 = getelementptr i64, ptr %35, i64 4
-  %37 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %34, ptr %37, i64 8)
-  %38 = load i64, ptr %_nonce, align 4
-  %39 = call ptr @heap_malloc(i64 4)
-  %40 = getelementptr i64, ptr %39, i64 0
-  store i64 0, ptr %40, align 4
-  %41 = getelementptr i64, ptr %39, i64 1
-  store i64 0, ptr %41, align 4
-  %42 = getelementptr i64, ptr %39, i64 2
-  store i64 0, ptr %42, align 4
-  %43 = getelementptr i64, ptr %39, i64 3
-  store i64 %38, ptr %43, align 4
-  %44 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %37, ptr %44, i64 4)
-  %45 = getelementptr i64, ptr %44, i64 4
-  call void @memcpy(ptr %39, ptr %45, i64 4)
-  %46 = getelementptr i64, ptr %45, i64 4
-  %47 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %44, ptr %47, i64 8)
-  %48 = call ptr @heap_malloc(i64 4)
-  %49 = getelementptr i64, ptr %48, i64 0
-  store i64 0, ptr %49, align 4
-  %50 = getelementptr i64, ptr %48, i64 1
-  store i64 0, ptr %50, align 4
-  %51 = getelementptr i64, ptr %48, i64 2
-  store i64 0, ptr %51, align 4
-  %52 = getelementptr i64, ptr %48, i64 3
-  store i64 1, ptr %52, align 4
-  call void @set_storage(ptr %47, ptr %48)
-  %53 = load ptr, ptr %_address, align 8
-  %54 = call ptr @heap_malloc(i64 4)
-  %55 = getelementptr i64, ptr %54, i64 0
-  store i64 0, ptr %55, align 4
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
-  %56 = getelementptr i64, ptr %54, i64 1
-  store i64 0, ptr %56, align 4
-  %57 = getelementptr i64, ptr %54, i64 2
-  store i64 0, ptr %57, align 4
-  %58 = getelementptr i64, ptr %54, i64 3
-  store i64 1, ptr %58, align 4
-  %59 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %54, ptr %59, i64 4)
-  %60 = getelementptr i64, ptr %59, i64 4
-  call void @memcpy(ptr %53, ptr %60, i64 4)
-  %61 = getelementptr i64, ptr %60, i64 4
-  %62 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %59, ptr %62, i64 8)
-  %63 = load ptr, ptr %_address, align 8
-  %64 = call ptr @heap_malloc(i64 4)
-  %65 = getelementptr i64, ptr %64, i64 0
-  store i64 0, ptr %65, align 4
-  %66 = getelementptr i64, ptr %64, i64 1
-  store i64 0, ptr %66, align 4
-  %67 = getelementptr i64, ptr %64, i64 2
-  store i64 0, ptr %67, align 4
-  %68 = getelementptr i64, ptr %64, i64 3
-  store i64 1, ptr %68, align 4
-  %69 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %64, ptr %69, i64 4)
-  %70 = getelementptr i64, ptr %69, i64 4
-  call void @memcpy(ptr %63, ptr %70, i64 4)
-  %71 = getelementptr i64, ptr %70, i64 4
-  %72 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %69, ptr %72, i64 8)
-  %73 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %72, ptr %73)
-  %74 = getelementptr i64, ptr %73, i64 3
-  %storage_value1 = load i64, ptr %74, align 4
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  %75 = call ptr @heap_malloc(i64 4)
-  call void @memcpy(ptr %72, ptr %75, i64 4)
-  %last_elem_ptr2 = getelementptr i64, ptr %75, i64 3
-  %76 = load i64, ptr %last_elem_ptr2, align 4
-  %last_elem3 = add i64 %76, 1
-  store i64 %last_elem3, ptr %last_elem_ptr2, align 4
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
-  %75 = getelementptr i64, ptr %72, i64 3
-  %76 = load i64, ptr %75, align 4
-  %slot_offset2 = add i64 %76, 1
-  store i64 %slot_offset2, ptr %75, align 4
-<<<<<<< HEAD
->>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
-=======
->>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  %77 = add i64 %storage_value1, 1
-  call void @builtin_range_check(i64 %77)
-  %78 = call ptr @heap_malloc(i64 4)
-  %79 = getelementptr i64, ptr %78, i64 0
-  store i64 0, ptr %79, align 4
-  %80 = getelementptr i64, ptr %78, i64 1
-  store i64 0, ptr %80, align 4
-  %81 = getelementptr i64, ptr %78, i64 2
-  store i64 0, ptr %81, align 4
-  %82 = getelementptr i64, ptr %78, i64 3
-  store i64 %77, ptr %82, align 4
-  call void @set_storage(ptr %62, ptr %78)
-<<<<<<< HEAD
-=======
-  %56 = getelementptr i64, ptr %52, i64 3
-  store i64 1, ptr %56, align 4
-  %57 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %52, ptr %57, i64 4)
-  %58 = getelementptr i64, ptr %57, i64 4
-  call void @memcpy(ptr %2, ptr %58, i64 4)
-  %59 = getelementptr i64, ptr %58, i64 4
-  %60 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %57, ptr %60, i64 8)
-  %61 = call ptr @heap_malloc(i64 4)
-  %62 = getelementptr i64, ptr %61, i64 0
-  store i64 0, ptr %62, align 4
-  %63 = getelementptr i64, ptr %61, i64 1
-  store i64 0, ptr %63, align 4
-  %64 = getelementptr i64, ptr %61, i64 2
-  store i64 0, ptr %64, align 4
-  %65 = getelementptr i64, ptr %61, i64 3
-  store i64 1, ptr %65, align 4
-  %66 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %61, ptr %66, i64 4)
-  %67 = getelementptr i64, ptr %66, i64 4
-  call void @memcpy(ptr %2, ptr %67, i64 4)
-  %68 = getelementptr i64, ptr %67, i64 4
-  %69 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %66, ptr %69, i64 8)
-  %70 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %69, ptr %70)
-  %71 = getelementptr i64, ptr %70, i64 3
-  %storage_value1 = load i64, ptr %71, align 4
-  %72 = getelementptr i64, ptr %69, i64 3
-  %73 = load i64, ptr %72, align 4
-  %slot_offset2 = add i64 %73, 1
-  store i64 %slot_offset2, ptr %72, align 4
-  %74 = add i64 %storage_value1, 1
-  call void @builtin_range_check(i64 %74)
-  %75 = call ptr @heap_malloc(i64 4)
-  %76 = getelementptr i64, ptr %75, i64 0
-  store i64 0, ptr %76, align 4
-  %77 = getelementptr i64, ptr %75, i64 1
-  store i64 0, ptr %77, align 4
-  %78 = getelementptr i64, ptr %75, i64 2
-  store i64 0, ptr %78, align 4
-  %79 = getelementptr i64, ptr %75, i64 3
-  store i64 %74, ptr %79, align 4
-  call void @set_storage(ptr %60, ptr %75)
->>>>>>> 7998cf0 (fixed llvm type bug.)
-=======
->>>>>>> 5d414ab (fixed mult dims array decode and encode bug)
-  ret void
-}
-
-define i64 @usedNonces(ptr %0) {
-entry:
-  %_address = alloca ptr, align 8
-  store ptr %0, ptr %_address, align 8
-  %1 = load ptr, ptr %_address, align 8
-  %2 = call ptr @heap_malloc(i64 4)
-  %3 = getelementptr i64, ptr %2, i64 0
-  store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %2, i64 1
-  store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %2, i64 2
-  store i64 0, ptr %5, align 4
-  %6 = getelementptr i64, ptr %2, i64 3
-  store i64 1, ptr %6, align 4
-  %7 = call ptr @heap_malloc(i64 8)
-  call void @memcpy(ptr %2, ptr %7, i64 4)
-  %8 = getelementptr i64, ptr %7, i64 4
-  call void @memcpy(ptr %1, ptr %8, i64 4)
-  %9 = getelementptr i64, ptr %8, i64 4
-  %10 = call ptr @heap_malloc(i64 4)
-  call void @poseidon_hash(ptr %7, ptr %10, i64 8)
-  %11 = call ptr @heap_malloc(i64 4)
-  call void @get_storage(ptr %10, ptr %11)
-  %12 = getelementptr i64, ptr %11, i64 3
-  %storage_value = load i64, ptr %12, align 4
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  %13 = call ptr @heap_malloc(i64 4)
-  call void @memcpy(ptr %10, ptr %13, i64 4)
-  %last_elem_ptr = getelementptr i64, ptr %13, i64 3
-  %14 = load i64, ptr %last_elem_ptr, align 4
-  %last_elem = add i64 %14, 1
-  store i64 %last_elem, ptr %last_elem_ptr, align 4
-<<<<<<< HEAD
-=======
-  %13 = getelementptr i64, ptr %10, i64 3
-  %14 = load i64, ptr %13, align 4
-  %slot_offset = add i64 %14, 1
-  store i64 %slot_offset, ptr %13, align 4
->>>>>>> c951d67 ((bugfix) fixed storage slot and value arrangement.)
-=======
->>>>>>> 67fc4e1 (test: 💍 regenerate exmaple ir files)
-  ret i64 %storage_value
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 3726813225, label %func_0_dispatch
-    i64 3775522898, label %func_1_dispatch
-    i64 1093482716, label %func_2_dispatch
-    i64 3868785611, label %func_3_dispatch
+    i64 2590488802, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  call void @onlyEntrypointCall()
+  call void @testU256AddOperation()
   %3 = call ptr @heap_malloc(i64 1)
   store i64 0, ptr %3, align 4
   call void @set_tape_data(ptr %3, i64 1)
-  ret void
-
-func_1_dispatch:                                  ; preds = %entry
-  %4 = getelementptr ptr, ptr %2, i64 0
-  %5 = getelementptr ptr, ptr %4, i64 4
-  %6 = load i64, ptr %5, align 4
-  %7 = call i64 @isNonceUsed(ptr %4, i64 %6)
-  %8 = call ptr @heap_malloc(i64 2)
-  store i64 %7, ptr %8, align 4
-  %9 = getelementptr ptr, ptr %8, i64 1
-  store i64 1, ptr %9, align 4
-  call void @set_tape_data(ptr %8, i64 2)
-  ret void
-
-func_2_dispatch:                                  ; preds = %entry
-  %10 = getelementptr ptr, ptr %2, i64 0
-  %11 = getelementptr ptr, ptr %10, i64 4
-  %12 = load i64, ptr %11, align 4
-  call void @setNonce(ptr %10, i64 %12)
-  %13 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %13, align 4
-  call void @set_tape_data(ptr %13, i64 1)
-  ret void
-
-func_3_dispatch:                                  ; preds = %entry
-  %14 = getelementptr ptr, ptr %2, i64 0
-  %15 = call i64 @usedNonces(ptr %14)
-  %16 = call ptr @heap_malloc(i64 2)
-  store i64 %15, ptr %16, align 4
-  %17 = getelementptr ptr, ptr %16, i64 1
-  store i64 1, ptr %17, align 4
-  call void @set_tape_data(ptr %16, i64 2)
   ret void
 }
 
