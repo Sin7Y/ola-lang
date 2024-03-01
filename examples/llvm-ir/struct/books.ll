@@ -37,6 +37,8 @@ declare void @contract_call(ptr, i64)
 
 declare void @prophet_printf(i64, i64)
 
+declare void @emit_event(ptr, ptr)
+
 define ptr @heap_malloc(i64 %0) {
 entry:
   %current_address = load i64, ptr @heap_address, align 4
@@ -455,6 +457,103 @@ exit:                                             ; preds = %loop
   ret i64 %finalResult
 }
 
+define ptr @u256_add(ptr %0, ptr %1) {
+entry:
+  %2 = call ptr @heap_malloc(i64 8)
+  %3 = getelementptr i64, ptr %0, i64 7
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr i64, ptr %1, i64 7
+  %6 = load i64, ptr %5, align 4
+  %7 = add i64 %4, %6
+  %sum_with_carry = add i64 %7, 0
+  %result = and i64 %sum_with_carry, 4294967295
+  %carry = icmp ugt i64 %sum_with_carry, 4294967295
+  %8 = zext i1 %carry to i64
+  %9 = getelementptr i64, ptr %2, i64 7
+  store i64 %result, ptr %9, align 4
+  %10 = getelementptr i64, ptr %0, i64 6
+  %11 = load i64, ptr %10, align 4
+  %12 = getelementptr i64, ptr %1, i64 6
+  %13 = load i64, ptr %12, align 4
+  %14 = add i64 %11, %13
+  %sum_with_carry1 = add i64 %14, %8
+  %result2 = and i64 %sum_with_carry1, 4294967295
+  %carry3 = icmp ugt i64 %sum_with_carry1, 4294967295
+  %15 = zext i1 %carry3 to i64
+  %16 = getelementptr i64, ptr %2, i64 6
+  store i64 %result2, ptr %16, align 4
+  %17 = getelementptr i64, ptr %0, i64 5
+  %18 = load i64, ptr %17, align 4
+  %19 = getelementptr i64, ptr %1, i64 5
+  %20 = load i64, ptr %19, align 4
+  %21 = add i64 %18, %20
+  %sum_with_carry4 = add i64 %21, %15
+  %result5 = and i64 %sum_with_carry4, 4294967295
+  %carry6 = icmp ugt i64 %sum_with_carry4, 4294967295
+  %22 = zext i1 %carry6 to i64
+  %23 = getelementptr i64, ptr %2, i64 5
+  store i64 %result5, ptr %23, align 4
+  %24 = getelementptr i64, ptr %0, i64 4
+  %25 = load i64, ptr %24, align 4
+  %26 = getelementptr i64, ptr %1, i64 4
+  %27 = load i64, ptr %26, align 4
+  %28 = add i64 %25, %27
+  %sum_with_carry7 = add i64 %28, %22
+  %result8 = and i64 %sum_with_carry7, 4294967295
+  %carry9 = icmp ugt i64 %sum_with_carry7, 4294967295
+  %29 = zext i1 %carry9 to i64
+  %30 = getelementptr i64, ptr %2, i64 4
+  store i64 %result8, ptr %30, align 4
+  %31 = getelementptr i64, ptr %0, i64 3
+  %32 = load i64, ptr %31, align 4
+  %33 = getelementptr i64, ptr %1, i64 3
+  %34 = load i64, ptr %33, align 4
+  %35 = add i64 %32, %34
+  %sum_with_carry10 = add i64 %35, %29
+  %result11 = and i64 %sum_with_carry10, 4294967295
+  %carry12 = icmp ugt i64 %sum_with_carry10, 4294967295
+  %36 = zext i1 %carry12 to i64
+  %37 = getelementptr i64, ptr %2, i64 3
+  store i64 %result11, ptr %37, align 4
+  %38 = getelementptr i64, ptr %0, i64 2
+  %39 = load i64, ptr %38, align 4
+  %40 = getelementptr i64, ptr %1, i64 2
+  %41 = load i64, ptr %40, align 4
+  %42 = add i64 %39, %41
+  %sum_with_carry13 = add i64 %42, %36
+  %result14 = and i64 %sum_with_carry13, 4294967295
+  %carry15 = icmp ugt i64 %sum_with_carry13, 4294967295
+  %43 = zext i1 %carry15 to i64
+  %44 = getelementptr i64, ptr %2, i64 2
+  store i64 %result14, ptr %44, align 4
+  %45 = getelementptr i64, ptr %0, i64 1
+  %46 = load i64, ptr %45, align 4
+  %47 = getelementptr i64, ptr %1, i64 1
+  %48 = load i64, ptr %47, align 4
+  %49 = add i64 %46, %48
+  %sum_with_carry16 = add i64 %49, %43
+  %result17 = and i64 %sum_with_carry16, 4294967295
+  %carry18 = icmp ugt i64 %sum_with_carry16, 4294967295
+  %50 = zext i1 %carry18 to i64
+  %51 = getelementptr i64, ptr %2, i64 1
+  store i64 %result17, ptr %51, align 4
+  %52 = getelementptr i64, ptr %0, i64 0
+  %53 = load i64, ptr %52, align 4
+  %54 = getelementptr i64, ptr %1, i64 0
+  %55 = load i64, ptr %54, align 4
+  %56 = add i64 %53, %55
+  %sum_with_carry19 = add i64 %56, %50
+  call void @builtin_range_check(i64 %sum_with_carry19)
+  %result20 = and i64 %sum_with_carry19, 4294967295
+  %carry21 = icmp ugt i64 %sum_with_carry19, 4294967295
+  %57 = zext i1 %carry21 to i64
+  %58 = getelementptr i64, ptr %2, i64 0
+  store i64 %result20, ptr %58, align 4
+  ret ptr %2
+}
+
+declare ptr @u256_sub(ptr, ptr)
+
 define ptr @createBook(i64 %0, ptr %1) {
 entry:
   %name = alloca ptr, align 8
@@ -462,12 +561,84 @@ entry:
   store i64 %0, ptr %id, align 4
   store ptr %1, ptr %name, align 8
   %2 = load ptr, ptr %name, align 8
-  %3 = call ptr @heap_malloc(i64 2)
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 0
+  %3 = call ptr @heap_malloc(i64 3)
+  %struct_member = getelementptr inbounds { i64, ptr, ptr }, ptr %3, i32 0, i32 0
   %4 = load i64, ptr %id, align 4
   store i64 %4, ptr %struct_member, align 4
-  %struct_member1 = getelementptr inbounds { i64, ptr }, ptr %3, i32 0, i32 1
+  %struct_member1 = getelementptr inbounds { i64, ptr, ptr }, ptr %3, i32 0, i32 1
   store ptr %2, ptr %struct_member1, align 8
+  %struct_member2 = getelementptr inbounds { i64, ptr, ptr }, ptr %3, i32 0, i32 2
+  %5 = call ptr @vector_new(i64 5)
+  %vector_data = getelementptr i64, ptr %5, i64 1
+  %index_access = getelementptr i64, ptr %vector_data, i64 0
+  store i64 112, ptr %index_access, align 4
+  %index_access3 = getelementptr i64, ptr %vector_data, i64 1
+  store i64 101, ptr %index_access3, align 4
+  %index_access4 = getelementptr i64, ptr %vector_data, i64 2
+  store i64 116, ptr %index_access4, align 4
+  %index_access5 = getelementptr i64, ptr %vector_data, i64 3
+  store i64 101, ptr %index_access5, align 4
+  %index_access6 = getelementptr i64, ptr %vector_data, i64 4
+  store i64 114, ptr %index_access6, align 4
+  store ptr %5, ptr %struct_member2, align 8
+  %6 = call ptr @heap_malloc(i64 4)
+  %index_access7 = getelementptr i64, ptr %6, i64 3
+  store i64 -1670511077848758898, ptr %index_access7, align 4
+  %index_access8 = getelementptr i64, ptr %6, i64 2
+  store i64 68930750687700470, ptr %index_access8, align 4
+  %index_access9 = getelementptr i64, ptr %6, i64 1
+  store i64 -9023208100383950340, ptr %index_access9, align 4
+  %index_access10 = getelementptr i64, ptr %6, i64 0
+  store i64 876009939773297099, ptr %index_access10, align 4
+  %7 = load i64, ptr %id, align 4
+  %8 = call ptr @heap_malloc(i64 4)
+  %9 = getelementptr i64, ptr %8, i64 0
+  store i64 0, ptr %9, align 4
+  %10 = getelementptr i64, ptr %8, i64 1
+  store i64 0, ptr %10, align 4
+  %11 = getelementptr i64, ptr %8, i64 2
+  store i64 0, ptr %11, align 4
+  %12 = getelementptr i64, ptr %8, i64 3
+  store i64 %7, ptr %12, align 4
+  %vector_length = load i64, ptr %2, align 4
+  %13 = add i64 %vector_length, 1
+  %14 = call ptr @vector_new(i64 %13)
+  %15 = getelementptr ptr, ptr %14, i64 1
+  %vector_length11 = load i64, ptr %2, align 4
+  %16 = add i64 %vector_length11, 1
+  call void @memcpy(ptr %2, ptr %15, i64 %16)
+  %vector_length12 = load i64, ptr %14, align 4
+  %vector_data13 = getelementptr i64, ptr %14, i64 1
+  %17 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %vector_data13, ptr %17, i64 %vector_length12)
+  %18 = call ptr @vector_new(i64 5)
+  %vector_data14 = getelementptr i64, ptr %18, i64 1
+  %index_access15 = getelementptr i64, ptr %vector_data14, i64 0
+  store i64 112, ptr %index_access15, align 4
+  %index_access16 = getelementptr i64, ptr %vector_data14, i64 1
+  store i64 101, ptr %index_access16, align 4
+  %index_access17 = getelementptr i64, ptr %vector_data14, i64 2
+  store i64 116, ptr %index_access17, align 4
+  %index_access18 = getelementptr i64, ptr %vector_data14, i64 3
+  store i64 101, ptr %index_access18, align 4
+  %index_access19 = getelementptr i64, ptr %vector_data14, i64 4
+  store i64 114, ptr %index_access19, align 4
+  %19 = call ptr @vector_new(i64 3)
+  %vector_data20 = getelementptr i64, ptr %19, i64 1
+  %topic_ptr = getelementptr ptr, ptr %vector_data20, i64 0
+  store ptr %6, ptr %topic_ptr, align 8
+  %topic_ptr21 = getelementptr ptr, ptr %vector_data20, i64 1
+  store ptr %8, ptr %topic_ptr21, align 8
+  %topic_ptr22 = getelementptr ptr, ptr %vector_data20, i64 2
+  store ptr %17, ptr %topic_ptr22, align 8
+  %vector_length23 = load i64, ptr %18, align 4
+  %20 = add i64 %vector_length23, 1
+  %21 = call ptr @vector_new(i64 %20)
+  %22 = getelementptr ptr, ptr %21, i64 1
+  %vector_length24 = load i64, ptr %18, align 4
+  %23 = add i64 %vector_length24, 1
+  call void @memcpy(ptr %18, ptr %22, i64 %23)
+  call void @emit_event(ptr %19, ptr %21)
   ret ptr %3
 }
 
@@ -476,7 +647,7 @@ entry:
   %_book = alloca ptr, align 8
   store ptr %0, ptr %_book, align 8
   %1 = load ptr, ptr %_book, align 8
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 1
+  %struct_member = getelementptr inbounds { i64, ptr, ptr }, ptr %1, i32 0, i32 1
   %2 = load ptr, ptr %struct_member, align 8
   ret ptr %2
 }
@@ -487,7 +658,7 @@ entry:
   %_book = alloca ptr, align 8
   store ptr %0, ptr %_book, align 8
   %1 = load ptr, ptr %_book, align 8
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %1, i32 0, i32 0
+  %struct_member = getelementptr inbounds { i64, ptr, ptr }, ptr %1, i32 0, i32 0
   %2 = load i64, ptr %struct_member, align 4
   %3 = add i64 %2, 1
   call void @builtin_range_check(i64 %3)
@@ -500,8 +671,8 @@ define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
     i64 120553111, label %func_0_dispatch
-    i64 1109322942, label %func_1_dispatch
-    i64 2390167610, label %func_2_dispatch
+    i64 621839196, label %func_1_dispatch
+    i64 1272517693, label %func_2_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
@@ -514,74 +685,98 @@ func_0_dispatch:                                  ; preds = %entry
   %vector_length = load i64, ptr %5, align 4
   %6 = add i64 %vector_length, 1
   %7 = call ptr @createBook(i64 %4, ptr %5)
-  %struct_member = getelementptr inbounds { i64, ptr }, ptr %7, i32 0, i32 1
+  %struct_member = getelementptr inbounds { i64, ptr, ptr }, ptr %7, i32 0, i32 1
   %8 = load ptr, ptr %struct_member, align 8
   %vector_length1 = load i64, ptr %8, align 4
   %9 = add i64 %vector_length1, 1
   %10 = add i64 1, %9
-  %heap_size = add i64 %10, 1
-  %11 = call ptr @heap_malloc(i64 %heap_size)
-  %struct_member2 = getelementptr inbounds { i64, ptr }, ptr %7, i32 0, i32 0
-  %strcut_member = load i64, ptr %struct_member2, align 4
-  %struct_offset = getelementptr ptr, ptr %11, i64 0
+  %struct_member2 = getelementptr inbounds { i64, ptr, ptr }, ptr %7, i32 0, i32 2
+  %11 = load ptr, ptr %struct_member2, align 8
+  %vector_length3 = load i64, ptr %11, align 4
+  %12 = add i64 %vector_length3, 1
+  %13 = add i64 %10, %12
+  %heap_size = add i64 %13, 1
+  %14 = call ptr @heap_malloc(i64 %heap_size)
+  %struct_member4 = getelementptr inbounds { i64, ptr, ptr }, ptr %7, i32 0, i32 0
+  %strcut_member = load i64, ptr %struct_member4, align 4
+  %struct_offset = getelementptr ptr, ptr %14, i64 0
   store i64 %strcut_member, ptr %struct_offset, align 4
-  %struct_member3 = getelementptr inbounds { i64, ptr }, ptr %7, i32 0, i32 1
-  %strcut_member4 = load ptr, ptr %struct_member3, align 8
-  %struct_offset5 = getelementptr ptr, ptr %struct_offset, i64 1
-  %vector_length6 = load i64, ptr %strcut_member4, align 4
-  %12 = add i64 %vector_length6, 1
-  call void @memcpy(ptr %strcut_member4, ptr %struct_offset5, i64 %12)
-  %struct_size = add i64 %12, 1
-  %13 = getelementptr ptr, ptr %11, i64 %struct_size
-  store i64 %10, ptr %13, align 4
-  call void @set_tape_data(ptr %11, i64 %heap_size)
+  %struct_member5 = getelementptr inbounds { i64, ptr, ptr }, ptr %7, i32 0, i32 1
+  %strcut_member6 = load ptr, ptr %struct_member5, align 8
+  %struct_offset7 = getelementptr ptr, ptr %struct_offset, i64 1
+  %vector_length8 = load i64, ptr %strcut_member6, align 4
+  %15 = add i64 %vector_length8, 1
+  call void @memcpy(ptr %strcut_member6, ptr %struct_offset7, i64 %15)
+  %struct_size = add i64 %15, 1
+  %struct_member9 = getelementptr inbounds { i64, ptr, ptr }, ptr %7, i32 0, i32 2
+  %strcut_member10 = load ptr, ptr %struct_member9, align 8
+  %struct_offset11 = getelementptr ptr, ptr %struct_offset7, i64 %15
+  %vector_length12 = load i64, ptr %strcut_member10, align 4
+  %16 = add i64 %vector_length12, 1
+  call void @memcpy(ptr %strcut_member10, ptr %struct_offset11, i64 %16)
+  %struct_size13 = add i64 %16, %struct_size
+  %17 = getelementptr ptr, ptr %14, i64 %struct_size13
+  store i64 %13, ptr %17, align 4
+  call void @set_tape_data(ptr %14, i64 %heap_size)
   ret void
 
 func_1_dispatch:                                  ; preds = %entry
-  %14 = getelementptr ptr, ptr %2, i64 0
-  %decode_struct_field = getelementptr ptr, ptr %14, i64 0
-  %15 = load i64, ptr %decode_struct_field, align 4
-  %decode_struct_field7 = getelementptr ptr, ptr %14, i64 1
-  %vector_length8 = load i64, ptr %decode_struct_field7, align 4
-  %16 = add i64 %vector_length8, 1
-  %decode_struct_offset = add i64 1, %16
-  %17 = call ptr @heap_malloc(i64 2)
-  %struct_member9 = getelementptr inbounds { i64, ptr }, ptr %17, i32 0, i32 0
-  store i64 %15, ptr %struct_member9, align 4
-  %struct_member10 = getelementptr inbounds { i64, ptr }, ptr %17, i32 0, i32 1
-  store ptr %decode_struct_field7, ptr %struct_member10, align 8
-  %18 = call ptr @getBookName(ptr %17)
-  %vector_length11 = load i64, ptr %18, align 4
-  %19 = add i64 %vector_length11, 1
-  %heap_size12 = add i64 %19, 1
-  %20 = call ptr @heap_malloc(i64 %heap_size12)
-  %vector_length13 = load i64, ptr %18, align 4
-  %21 = add i64 %vector_length13, 1
-  call void @memcpy(ptr %18, ptr %20, i64 %21)
-  %22 = getelementptr ptr, ptr %20, i64 %21
-  store i64 %19, ptr %22, align 4
-  call void @set_tape_data(ptr %20, i64 %heap_size12)
+  %18 = getelementptr ptr, ptr %2, i64 0
+  %decode_struct_field = getelementptr ptr, ptr %18, i64 0
+  %19 = load i64, ptr %decode_struct_field, align 4
+  %decode_struct_field14 = getelementptr ptr, ptr %18, i64 1
+  %vector_length15 = load i64, ptr %decode_struct_field14, align 4
+  %20 = add i64 %vector_length15, 1
+  %decode_struct_offset = add i64 1, %20
+  %decode_struct_field16 = getelementptr ptr, ptr %18, i64 %decode_struct_offset
+  %vector_length17 = load i64, ptr %decode_struct_field16, align 4
+  %21 = add i64 %vector_length17, 1
+  %decode_struct_offset18 = add i64 %decode_struct_offset, %21
+  %22 = call ptr @heap_malloc(i64 3)
+  %struct_member19 = getelementptr inbounds { i64, ptr, ptr }, ptr %22, i32 0, i32 0
+  store i64 %19, ptr %struct_member19, align 4
+  %struct_member20 = getelementptr inbounds { i64, ptr, ptr }, ptr %22, i32 0, i32 1
+  store ptr %decode_struct_field14, ptr %struct_member20, align 8
+  %struct_member21 = getelementptr inbounds { i64, ptr, ptr }, ptr %22, i32 0, i32 2
+  store ptr %decode_struct_field16, ptr %struct_member21, align 8
+  %23 = call ptr @getBookName(ptr %22)
+  %vector_length22 = load i64, ptr %23, align 4
+  %24 = add i64 %vector_length22, 1
+  %heap_size23 = add i64 %24, 1
+  %25 = call ptr @heap_malloc(i64 %heap_size23)
+  %vector_length24 = load i64, ptr %23, align 4
+  %26 = add i64 %vector_length24, 1
+  call void @memcpy(ptr %23, ptr %25, i64 %26)
+  %27 = getelementptr ptr, ptr %25, i64 %26
+  store i64 %24, ptr %27, align 4
+  call void @set_tape_data(ptr %25, i64 %heap_size23)
   ret void
 
 func_2_dispatch:                                  ; preds = %entry
-  %23 = getelementptr ptr, ptr %2, i64 0
-  %decode_struct_field14 = getelementptr ptr, ptr %23, i64 0
-  %24 = load i64, ptr %decode_struct_field14, align 4
-  %decode_struct_field15 = getelementptr ptr, ptr %23, i64 1
-  %vector_length16 = load i64, ptr %decode_struct_field15, align 4
-  %25 = add i64 %vector_length16, 1
-  %decode_struct_offset17 = add i64 1, %25
-  %26 = call ptr @heap_malloc(i64 2)
-  %struct_member18 = getelementptr inbounds { i64, ptr }, ptr %26, i32 0, i32 0
-  store i64 %24, ptr %struct_member18, align 4
-  %struct_member19 = getelementptr inbounds { i64, ptr }, ptr %26, i32 0, i32 1
-  store ptr %decode_struct_field15, ptr %struct_member19, align 8
-  %27 = call i64 @getBookId(ptr %26)
-  %28 = call ptr @heap_malloc(i64 2)
-  store i64 %27, ptr %28, align 4
-  %29 = getelementptr ptr, ptr %28, i64 1
-  store i64 1, ptr %29, align 4
-  call void @set_tape_data(ptr %28, i64 2)
+  %28 = getelementptr ptr, ptr %2, i64 0
+  %decode_struct_field25 = getelementptr ptr, ptr %28, i64 0
+  %29 = load i64, ptr %decode_struct_field25, align 4
+  %decode_struct_field26 = getelementptr ptr, ptr %28, i64 1
+  %vector_length27 = load i64, ptr %decode_struct_field26, align 4
+  %30 = add i64 %vector_length27, 1
+  %decode_struct_offset28 = add i64 1, %30
+  %decode_struct_field29 = getelementptr ptr, ptr %28, i64 %decode_struct_offset28
+  %vector_length30 = load i64, ptr %decode_struct_field29, align 4
+  %31 = add i64 %vector_length30, 1
+  %decode_struct_offset31 = add i64 %decode_struct_offset28, %31
+  %32 = call ptr @heap_malloc(i64 3)
+  %struct_member32 = getelementptr inbounds { i64, ptr, ptr }, ptr %32, i32 0, i32 0
+  store i64 %29, ptr %struct_member32, align 4
+  %struct_member33 = getelementptr inbounds { i64, ptr, ptr }, ptr %32, i32 0, i32 1
+  store ptr %decode_struct_field26, ptr %struct_member33, align 8
+  %struct_member34 = getelementptr inbounds { i64, ptr, ptr }, ptr %32, i32 0, i32 2
+  store ptr %decode_struct_field29, ptr %struct_member34, align 8
+  %33 = call i64 @getBookId(ptr %32)
+  %34 = call ptr @heap_malloc(i64 2)
+  store i64 %33, ptr %34, align 4
+  %35 = getelementptr ptr, ptr %34, i64 1
+  store i64 1, ptr %35, align 4
+  call void @set_tape_data(ptr %34, i64 2)
   ret void
 }
 
