@@ -1,12 +1,15 @@
 use indexmap::IndexMap;
 use inkwell::basic_block::BasicBlock;
 use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
+use inkwell::AddressSpace;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
+use ola_parser::program;
 
+use super::encoding::abi_encode;
 use super::expression::expression;
 use super::functions::Vartable;
-use super::storage::{storage_delete, storage_store};
+use super::storage::{storage_delete, storage_store, uint_to_slot};
 use crate::irgen::binary::Binary;
 use crate::irgen::expression::emit_function_call;
 use crate::sema::ast::{
@@ -287,7 +290,7 @@ pub(crate) fn statement<'a>(
             args,
             ..
         } => {
-            unimplemented!("emit statement")
+            emit_event(loc, event_no, args, bin, func_value, var_table, ns);
         }
     }
 }
@@ -544,6 +547,91 @@ fn destructure<'a>(
             },
         }
     }
+}
+
+fn emit_event<'a>(
+    loc: &program::Loc,
+    event_no: &usize,
+    args: &[Expression],
+    bin: &mut Binary<'a>,
+    func_value: FunctionValue<'a>,
+    var_table: &mut Vartable<'a>,
+    ns: &Namespace,
+) {
+    let event = &ns.events[*event_no];
+    // For freestanding events the name of the emitting contract is used
+    let mut data = vec![];
+    let mut data_type = vec![];
+    let mut topics = vec![];
+
+    // Events that are not anonymous always have themselves as a topic.
+    // This is static and can be calculated at compile time.
+    if !event.anonymous {
+        let topic_hash = event.selector();
+
+        let topic = Expression::NumberLiteral {
+            loc: *loc,
+            ty: Type::Hash,
+            value: topic_hash,
+        };
+
+        // First byte is 0 because there is no prefix for the event topic
+        topics.push(expression(&topic, bin, func_value, var_table, ns));
+    };
+
+    for (ast_exp, field) in args.iter().zip(event.fields.iter()) {
+        let data_value = expression(ast_exp, bin, func_value, var_table, ns);
+        if !field.indexed {
+            data.push(data_value);
+            data_type.push(field.ty.clone());
+        } else {
+            if field.ty.is_encoded_to_hash() {
+                let filed_encode = abi_encode(
+                    bin,
+                    vec![data_value],
+                    &vec![field.ty.clone()],
+                    func_value,
+                    ns,
+                )
+                .as_basic_value_enum();
+                let hash_input_length = bin.vector_len(filed_encode);
+                let hash_input_data = bin.vector_data(filed_encode);
+                let topic_hash =
+                    bin.poseidon_hash(vec![(hash_input_data.into(), hash_input_length)]);
+                topics.push(topic_hash);
+            } else if field.ty == Type::Address || Type::Hash == field.ty {
+                topics.push(data_value);
+            } else {
+                topics.push(uint_to_slot(bin, data_value));
+            }
+        }
+    }
+
+    let topic_heap = bin.vector_new(bin.context.i64_type().const_int(topics.len() as u64, false));
+    let topic_data = bin.vector_data(topic_heap.as_basic_value_enum());
+    for (i, topic) in topics.iter().enumerate() {
+        let topic_ptr = unsafe {
+            bin.builder.build_gep(
+                bin.context.i64_type().ptr_type(AddressSpace::default()),
+                topic_data,
+                &[
+                    bin.context.i64_type().const_int(i as u64, false),
+                ],
+                "topic_ptr",
+            )
+        };
+
+        bin.builder.build_store(topic_ptr, *topic);
+    }
+    let data = abi_encode(bin, data, &data_type, func_value, ns);
+
+    // call emit_event
+    bin.builder.build_call(
+        bin.module.get_function("emit_event").unwrap(),
+        &[topic_heap.into(), data.into()],
+        "",
+    );
+
 }
 
 impl Type {

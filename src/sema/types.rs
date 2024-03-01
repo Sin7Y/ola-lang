@@ -1313,6 +1313,18 @@ impl Type {
         }
     }
 
+    pub fn is_encoded_to_hash(&self) -> bool {
+        matches!(
+            self,
+            Type::Array(..)
+                | Type::Uint(256)
+                | Type::Array(..)
+                | Type::DynamicBytes
+                | Type::String
+                | Type::Struct(..)
+        )
+    }
+
     pub fn is_recursive(&self, ns: &Namespace) -> bool {
         match self {
             Type::Struct(n) => ns.structs[*n].fields.iter().any(|f| f.recursive),

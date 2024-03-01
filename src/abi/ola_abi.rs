@@ -12,6 +12,8 @@ pub struct ABIParam {
     pub ty: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub components: Vec<ABIParam>,
+    #[serde(skip_serializing_if = "is_false")]
+    pub indexed: bool,
 }
 
 #[derive(Serialize)]
@@ -25,6 +27,14 @@ pub struct ABI {
     pub inputs: Option<Vec<ABIParam>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outputs: Option<Vec<ABIParam>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub anonymous: Option<bool>,
+}
+
+
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn is_false(boolean: &bool) -> bool {
+    !(*boolean)
 }
 
 impl Type {
@@ -54,6 +64,7 @@ pub fn gen_abi(contract_no: usize, ns: &Namespace) -> Vec<ABI> {
             name: param.name_as_str().to_owned(),
             ty: param.ty.to_signature_string(true, ns),
             components,
+            indexed: param.indexed,
         }
     }
 
@@ -63,8 +74,7 @@ pub fn gen_abi(contract_no: usize, ns: &Namespace) -> Vec<ABI> {
         .filter_map(|function_no| {
             let func = &ns.functions[*function_no];
             return Some(func);
-        })
-        .map(|func| ABI {
+        }).map(|func| ABI {
             name: func.name.to_owned(),
             ty: "function".to_string(),
             inputs: Some(
@@ -79,6 +89,28 @@ pub fn gen_abi(contract_no: usize, ns: &Namespace) -> Vec<ABI> {
                     .map(|p| parameter_to_abi(p, ns))
                     .collect(),
             ),
-        })
+            anonymous: None,
+        }).chain(
+            ns.contracts[contract_no]
+                .emits_events
+                .iter()
+                .map(|event_no| {
+                    let event = &ns.events[*event_no];
+
+                    ABI {
+                        name: event.id.name.to_owned(),
+                        inputs: Some(
+                            event
+                                .fields
+                                .iter()
+                                .map(|p| parameter_to_abi(p, ns))
+                                .collect(),
+                        ),
+                        outputs: None,
+                        ty: "event".to_owned(),
+                        anonymous: Some(event.anonymous),
+                    }
+                }),
+        )
         .collect()
 }

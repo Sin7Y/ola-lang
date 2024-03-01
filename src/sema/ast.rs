@@ -16,6 +16,7 @@ use std::{
     path::PathBuf,
 };
 use tiny_keccak::{Hasher, Keccak};
+use mini_goldilocks::poseidon::unsafe_poseidon_bytes_auto_padded;
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Type {
@@ -193,6 +194,13 @@ impl EventDecl {
             None => self.id.to_string(),
         }
     }
+
+    pub fn selector(&self) -> BigInt {
+        let hash_result = unsafe_poseidon_bytes_auto_padded(self.signature.as_bytes());
+        let hash_bytes: Vec<u8> = hash_result.iter().flat_map(|w| w.to_be_bytes()).collect();
+        BigInt::from_bytes_be(num_bigint::Sign::Plus, &hash_bytes)
+    }
+
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
