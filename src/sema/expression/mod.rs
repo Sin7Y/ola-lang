@@ -15,8 +15,6 @@ mod subscript;
 mod variable;
 use std::cmp::Ordering;
 
-use num_bigint::BigInt;
-use num_traits::Zero;
 use ola_parser::program;
 
 use super::ast::{ArrayLength, Diagnostic, Expression, Namespace, RetrieveType, Type};
