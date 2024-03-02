@@ -1,0 +1,54 @@
+import "IERC20.ola";
+
+contract ERC20 {
+
+    string name = "OlaToken";
+    string symbol = "OVP";
+    u32 decimals = 18;
+    u32 totalSupply;
+    mapping(address => u32) balanceOf;
+    mapping(address => mapping(address => u32)) allowance;
+
+
+    fn _mint(address to, u32 value) {
+        totalSupply += value;
+        balanceOf[to] += value;
+        emit IERC20.Transfer(address(0), to, value);
+    }
+
+    fn _burn(address from, u32 value) {
+        balanceOf[from] -= value;
+        totalSupply -= value;
+        emit IERC20.Transfer(from, address(0), value);
+    }
+
+    fn _approve(address owner, address spender, u32 value) {
+        allowance[owner][spender] = value;
+        emit IERC20.Approval(owner, spender, value);
+    }
+
+    fn _transfer(address from, address to, u32 value) {
+        balanceOf[from] = balanceOf[from] - value;
+        balanceOf[to] = balanceOf[to] + value;
+        emit IERC20.Transfer(from, to, value);
+    }
+
+    fn approve(address spender, u32 value) -> (bool) {
+        _approve(origin_address(), spender, value);
+        return true;
+    }
+
+    fn transfer(address to, u32 value) -> (bool) {
+        _transfer(origin_address(), to, value);
+        return true;
+    }
+
+    fn transferFrom(address from, address to, u32 value) -> (bool) {
+        assert(balanceOf[from] >= value);
+        assert(allowance[from][origin_address()] >= value);
+        _transfer(from, to, value);
+        allowance[from][origin_address()] -= value;
+        emit IERC20.Transfer(from, to, value);
+        return true;
+    }
+}

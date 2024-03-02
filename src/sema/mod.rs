@@ -6,6 +6,8 @@ use num_bigint::BigInt;
 use ola_parser::{parse, program};
 use std::ffi::OsStr;
 
+use self::unused_variable::check_unused_events;
+
 pub mod ast;
 pub(crate) mod contracts;
 pub mod corelib;
@@ -34,6 +36,7 @@ pub fn sema(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Name
     if !ns.diagnostics.any_errors() {
         // Checks for unused variables
         check_unused_namespace_variables(ns);
+        check_unused_events(ns);
     }
 }
 

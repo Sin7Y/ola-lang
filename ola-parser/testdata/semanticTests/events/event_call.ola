@@ -1,0 +1,5 @@
+contract c {
+    event e(u32 a, string indexed s, bool indexed b);
+    fn f() { emit e(2, "abc", true); }
+}
+

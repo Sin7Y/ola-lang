@@ -24,6 +24,10 @@
           {
             "name": "book_name",
             "type": "string"
+          },
+          {
+            "name": "author",
+            "type": "string"
           }
         ]
       }
@@ -43,6 +47,10 @@
           },
           {
             "name": "book_name",
+            "type": "string"
+          },
+          {
+            "name": "author",
             "type": "string"
           }
         ]
@@ -70,6 +78,10 @@
           {
             "name": "book_name",
             "type": "string"
+          },
+          {
+            "name": "author",
+            "type": "string"
           }
         ]
       }
@@ -80,5 +92,26 @@
         "type": "u32"
       }
     ]
+  },
+  {
+    "name": "BookCreated",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "u32",
+        "indexed": true
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "indexed": true
+      },
+      {
+        "name": "author",
+        "type": "string"
+      }
+    ],
+    "anonymous": false
   }
 ]

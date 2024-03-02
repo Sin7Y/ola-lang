@@ -16,6 +16,7 @@ use std::{
     path::PathBuf,
 };
 use tiny_keccak::{Hasher, Keccak};
+use mini_goldilocks::poseidon::unsafe_poseidon_bytes_auto_padded;
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Type {
@@ -176,6 +177,33 @@ impl fmt::Display for StructDecl {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
+pub struct EventDecl {
+    pub id: program::Identifier,
+    pub loc: program::Loc,
+    pub contract: Option<usize>,
+    pub fields: Vec<Parameter>,
+    pub signature: String,
+    pub anonymous: bool,
+    pub used: bool,
+}
+
+impl EventDecl {
+    pub fn symbol_name(&self, ns: &Namespace) -> String {
+        match &self.contract {
+            Some(c) => format!("{}.{}", ns.contracts[*c].name, self.id),
+            None => self.id.to_string(),
+        }
+    }
+
+    pub fn selector(&self) -> BigInt {
+        let hash_result = unsafe_poseidon_bytes_auto_padded(self.signature.as_bytes());
+        let hash_bytes: Vec<u8> = hash_result.iter().flat_map(|w| w.to_be_bytes()).collect();
+        BigInt::from_bytes_be(num_bigint::Sign::Plus, &hash_bytes)
+    }
+
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Parameter {
     pub loc: program::Loc,
     /// The name can empty (e.g. in an event field or unnamed parameter/return)
@@ -184,6 +212,8 @@ pub struct Parameter {
     pub ty_loc: Option<program::Loc>,
     /// A recursive struct may contain itself which make the struct infinite
     /// size in memory.
+    /// Event fields may indexed, which means they are sent to the log
+    pub indexed: bool,
     pub infinite_size: bool,
     /// A struct may contain itself which make the struct infinite size in
     /// memory. This boolean specifies which field introduces the recursion.
@@ -216,6 +246,8 @@ pub struct Function {
     /// The resolved body (if any)
     pub body: Vec<Statement>,
     pub symtable: Symtable,
+
+    pub emits_events: Vec<usize>,
     // For overloaded functions this is the mangled (unique) name.
     pub mangled_name: String,
 }
@@ -272,6 +304,7 @@ impl Function {
             has_body: false,
             body: Vec::new(),
             symtable: Symtable::new(),
+            emits_events: Vec::new(),
             mangled_name,
         }
     }
@@ -351,6 +384,7 @@ pub enum Symbol {
     Function(Vec<(program::Loc, usize)>),
     Variable(program::Loc, Option<usize>, usize),
     Struct(program::Loc, usize),
+    Event(Vec<(program::Loc, usize)>),
     Contract(program::Loc, usize),
     Import(program::Loc, usize),
     UserType(program::Loc, usize),
@@ -365,8 +399,15 @@ impl CodeLocation for Symbol {
             | Symbol::Contract(loc, _)
             | Symbol::Import(loc, _)
             | Symbol::UserType(loc, _) => *loc,
-            Symbol::Function(items) => items[0].0,
+            Symbol::Event(items) | Symbol::Function(items) => items[0].0,
         }
+    }
+}
+
+impl Symbol {
+    /// Is this symbol for an event
+    pub fn is_event(&self) -> bool {
+        matches!(self, Symbol::Event(_))
     }
 }
 
@@ -386,6 +427,7 @@ pub struct Namespace {
     pub files: Vec<File>,
     pub enums: Vec<EnumDecl>,
     pub structs: Vec<StructDecl>,
+    pub events: Vec<EventDecl>,
     pub contracts: Vec<Contract>,
     /// All type declarations
     pub user_types: Vec<UserTypeDecl>,
@@ -425,6 +467,9 @@ pub struct Contract {
 
     pub initializer: Option<usize>,
     pub code: Vec<u8>,
+
+    /// List of events this contract may emit
+    pub emits_events: Vec<usize>,
     pub instantiable: bool,
     /// CFG number of this contract's dispatch function
     pub dispatch_no: usize,
@@ -971,7 +1016,8 @@ impl CodeLocation for Statement {
             | Statement::Expression(loc, ..)
             | Statement::Continue(loc, ..)
             | Statement::Break(loc, ..)
-            | Statement::Return(loc, ..) => *loc,
+            | Statement::Return(loc, ..)
+            | Statement::Emit { loc, .. } => *loc,
         }
     }
 }
@@ -1061,6 +1107,12 @@ pub enum Statement {
     Continue(program::Loc),
     Break(program::Loc),
     Return(program::Loc, Option<Expression>),
+    Emit {
+        loc: program::Loc,
+        event_no: usize,
+        event_loc: program::Loc,
+        args: Vec<Expression>,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -1129,9 +1181,10 @@ impl Statement {
     pub fn reachable(&self) -> bool {
         match self {
             Statement::Block { statements, .. } => statements.iter().all(|s| s.reachable()),
-            Statement::VariableDecl(..) | Statement::Delete(..) | Statement::Destructure(..) => {
-                true
-            }
+            Statement::VariableDecl(..)
+            | Statement::Delete(..)
+            | Statement::Destructure(..)
+            | Statement::Emit { .. } => true,
 
             Statement::Continue(_) | Statement::Break(_) | Statement::Return(..) => false,
 

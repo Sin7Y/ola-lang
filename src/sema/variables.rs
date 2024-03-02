@@ -109,9 +109,8 @@ pub fn variable_decl<'a>(
             let mut context = ExprContext {
                 file_no,
                 contract_no,
-                function_no: None,
                 constant,
-                lvalue: false,
+                ..Default::default()
             };
             match expression(
                 initializer,
@@ -215,9 +214,7 @@ pub fn resolve_initializers(
         let mut context = ExprContext {
             file_no,
             contract_no: Some(*contract_no),
-            function_no: None,
-            constant: false,
-            lvalue: false,
+            ..Default::default()
         };
 
         if let Ok(res) = expression(

@@ -25,6 +25,7 @@ impl ast::Contract {
             dispatch_no: 0,
             layout: Vec::new(),
             fixed_layout_size: BigInt::zero(),
+            emits_events: Vec::new(),
             instantiable,
         }
     }

@@ -72,6 +72,7 @@ ContractTy: ContractTy = {
 
 ContractPart: ContractPart = {
     StructDefinition => ContractPart::StructDefinition(<>),
+    EventDefinition => ContractPart::EventDefinition(<>),
     EnumDefinition => ContractPart::EnumDefinition(<>),
     VariableDefinition => ContractPart::VariableDefinition(<>),
     FunctionDefinition => ContractPart::FunctionDefinition(<>),
@@ -84,6 +85,20 @@ ContractDefinition: Box<ContractDefinition> = {
     "{" <parts:(<ContractPart>)*> "}" <r:@R> => {
         Box::new(ContractDefinition{loc: Loc::File(file_no, l, r), ty, name,  parts})
     }
+}
+
+EventParameter: EventParameter = {
+    <l:@L> <ty:Precedence0> <i:"indexed"?> <name:Identifier?> <r:@R> => EventParameter{
+        loc: Loc::File(file_no, l, r), ty, indexed: i.is_some(), name
+    }
+}
+
+EventDefinition: Box<EventDefinition> = {
+    <l:@L> "event" <name:IdentifierOrError> "(" <v:Comma<EventParameter>> ")" <a:"anonymous"?> <r:@R> ";" => {
+        Box::new(EventDefinition{
+            loc: Loc::File(file_no, l, r), name, fields: v, anonymous: a.is_some()
+        })
+    },
 }
 
 
@@ -288,9 +303,9 @@ LiteralExpression: Expression = {
 // and as an added bonus we can generate error messages about missing parameters/returns
 // to functions
 Parameter: Parameter = {
-    <l:@L> <ty:Expression> <name:Identifier?> <r:@R> => {
+    <l:@L> <ty:Expression> <storage:StorageLocation?> <name:Identifier?> <r:@R> => {
         let loc = Loc::File(file_no, l, r);
-        Parameter{loc, ty, name}
+        Parameter{loc, ty, storage, name}
     }
 }
 
@@ -400,6 +415,9 @@ NonIfStatement: Statement = {
     },
     <l:@L> "return" <e:Expression> <r:@R> ";" => {
         Statement::Return(Loc::File(file_no, l, r), Some(e))
+    },
+    <l:@L> "emit" <ty:FunctionCall> <r:@R> ";" => {
+        Statement::Emit(Loc::File(file_no, l, r), ty)
     },
 }
 

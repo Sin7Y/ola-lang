@@ -34,6 +34,7 @@ fn test_statement_reachable() {
                     id: None,
                     ty: Type::Bool,
                     ty_loc: None,
+                    indexed: false,
                     infinite_size: false,
                     recursive: false,
                 },
