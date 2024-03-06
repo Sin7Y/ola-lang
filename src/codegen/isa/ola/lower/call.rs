@@ -92,6 +92,19 @@ pub fn lower_call(
         return Ok(());
     }
 
+    if name.as_str() == "emit_event" {
+        let topic = get_vreg_for_val(ctx, tys[1], args[1])?;
+        let data = get_operand_for_val(ctx, tys[2], args[2])?;
+        ctx.inst_seq.push(MachInstruction::new(
+            InstructionData {
+                opcode: Opcode::LOG,
+                operands: vec![MO::input(topic.into()), MO::input(data)],
+            },
+            ctx.block_map[&ctx.cur_block],
+        ));
+        return Ok(());
+    }
+
     if name.as_str() == "get_storage" {
         let src = get_vreg_for_val(ctx, tys[1], args[1])?;
         let dst = get_operand_for_val(ctx, tys[2], args[2])?;

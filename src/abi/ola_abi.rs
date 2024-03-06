@@ -31,7 +31,6 @@ pub struct ABI {
     pub anonymous: Option<bool>,
 }
 
-
 #[allow(clippy::trivially_copy_pass_by_ref)]
 fn is_false(boolean: &bool) -> bool {
     !(*boolean)
@@ -74,7 +73,8 @@ pub fn gen_abi(contract_no: usize, ns: &Namespace) -> Vec<ABI> {
         .filter_map(|function_no| {
             let func = &ns.functions[*function_no];
             return Some(func);
-        }).map(|func| ABI {
+        })
+        .map(|func| ABI {
             name: func.name.to_owned(),
             ty: "function".to_string(),
             inputs: Some(
@@ -90,7 +90,8 @@ pub fn gen_abi(contract_no: usize, ns: &Namespace) -> Vec<ABI> {
                     .collect(),
             ),
             anonymous: None,
-        }).chain(
+        })
+        .chain(
             ns.contracts[contract_no]
                 .emits_events
                 .iter()

@@ -4,6 +4,7 @@ use super::symtable::Symtable;
 use crate::diagnostics::Diagnostics;
 use crate::sema::Recurse;
 use indexmap::IndexMap;
+use mini_goldilocks::poseidon::unsafe_poseidon_bytes_auto_padded;
 use num_bigint::BigInt;
 pub use ola_parser::diagnostics::*;
 use ola_parser::program;
@@ -16,7 +17,6 @@ use std::{
     path::PathBuf,
 };
 use tiny_keccak::{Hasher, Keccak};
-use mini_goldilocks::poseidon::unsafe_poseidon_bytes_auto_padded;
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub enum Type {
@@ -200,7 +200,6 @@ impl EventDecl {
         let hash_bytes: Vec<u8> = hash_result.iter().flat_map(|w| w.to_be_bytes()).collect();
         BigInt::from_bytes_be(num_bigint::Sign::Plus, &hash_bytes)
     }
-
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

@@ -614,9 +614,7 @@ fn emit_event<'a>(
             bin.builder.build_gep(
                 bin.context.i64_type().ptr_type(AddressSpace::default()),
                 topic_data,
-                &[
-                    bin.context.i64_type().const_int(i as u64, false),
-                ],
+                &[bin.context.i64_type().const_int(i as u64, false)],
                 "topic_ptr",
             )
         };
@@ -631,7 +629,6 @@ fn emit_event<'a>(
         &[topic_heap.into(), data.into()],
         "",
     );
-
 }
 
 impl Type {

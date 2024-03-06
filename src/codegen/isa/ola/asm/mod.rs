@@ -457,6 +457,7 @@ impl fmt::Display for Opcode {
                 Self::SSTORE => "sstore",
                 Self::SLOAD => "sload",
                 Self::POSEIDON => "poseidon",
+                Self::LOG => "log",
                 Self::PROPHET => "prophet",
                 Self::MLOADi | Self::MLOADr => "mload",
                 Self::MSTOREi | Self::MSTOREr => "mstore",
