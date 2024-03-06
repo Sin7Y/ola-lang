@@ -256,7 +256,6 @@ pub fn resolve_returns(
                                         .to_string(),
                                 ));
                             success = false;
-                            
 
                             ty_loc.use_end_from(&loc);
 

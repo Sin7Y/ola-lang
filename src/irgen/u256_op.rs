@@ -223,20 +223,21 @@ pub fn define_u256_add<'a>(bin: &Binary<'a>, func_value: FunctionValue<'a>) {
 
         let sum_with_carry = bin.builder.build_int_add(sum, carry, "sum_with_carry");
 
-        // We should ensure that the highest bit does not overflow during the last calculation.
+        // We should ensure that the highest bit does not overflow during the last
+        // calculation.
         if i == 7 {
             bin.range_check(sum_with_carry);
-        } 
+        }
 
         let result = bin.builder.build_and(sum_with_carry, u32_max, "result");
-        carry =
-            bin.builder
-                .build_int_compare(IntPredicate::UGT, sum_with_carry, u32_max, "carry");
-        
         carry = bin
-                .builder
-                .build_int_z_extend(carry, bin.context.i64_type(), "")
-                .into();
+            .builder
+            .build_int_compare(IntPredicate::UGT, sum_with_carry, u32_max, "carry");
+
+        carry = bin
+            .builder
+            .build_int_z_extend(carry, bin.context.i64_type(), "")
+            .into();
 
         let result_ret_ptr = unsafe {
             bin.builder.build_gep(

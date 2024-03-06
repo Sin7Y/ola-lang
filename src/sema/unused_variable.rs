@@ -413,7 +413,6 @@ fn shadowing_events(
     }
 }
 
-
 /// Check for unused events
 pub fn check_unused_events(ns: &mut Namespace) {
     // first we need to calculate which event shadows which
@@ -438,17 +437,14 @@ pub fn check_unused_events(ns: &mut Namespace) {
                 shadowing_events(event_no, event, &mut shadows, events, ns);
             }
 
-
             let file_no = ns.contracts[contract_no].loc.file_no();
 
-            if let Some(ast::Symbol::Event(events)) = ns.variable_symbols.get(&(
-                file_no,
-                Some(contract_no),
-                event.id.name.to_owned(),
-            )) {
+            if let Some(ast::Symbol::Event(events)) =
+                ns.variable_symbols
+                    .get(&(file_no, Some(contract_no), event.id.name.to_owned()))
+            {
                 shadowing_events(event_no, event, &mut shadows, events, ns);
             }
-            
         }
 
         for shadow in shadows {
@@ -460,10 +456,7 @@ pub fn check_unused_events(ns: &mut Namespace) {
         if !event.used {
             if let Some(contract_no) = event.contract {
                 // don't complain about events in interfaces or abstract contracts
-                if matches!(
-                    ns.contracts[contract_no].ty,
-                    ContractTy::Interface(_)
-                ) {
+                if matches!(ns.contracts[contract_no].ty, ContractTy::Interface(_)) {
                     continue;
                 }
             }
