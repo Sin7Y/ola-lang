@@ -408,10 +408,11 @@ pub fn struct_decl(
     fields
 }
 
-/// Resolve a parsed event definition. The return value will be true if the entire
-/// definition is valid; however, whatever could be parsed will be added to the resolved
-/// contract, so that we can continue producing compiler messages for the remainder
-/// of the contract, even if the struct contains an invalid definition.
+/// Resolve a parsed event definition. The return value will be true if the
+/// entire definition is valid; however, whatever could be parsed will be added
+/// to the resolved contract, so that we can continue producing compiler
+/// messages for the remainder of the contract, even if the struct contains an
+/// invalid definition.
 fn event_decl(
     def: &program::EventDefinition,
     file_no: usize,
@@ -424,12 +425,7 @@ fn event_decl(
     for field in &def.fields {
         let mut diagnostics = Diagnostics::default();
 
-        let mut ty = match ns.resolve_type(
-            file_no,
-            contract_no,
-            &field.ty,
-            &mut diagnostics,
-        ) {
+        let mut ty = match ns.resolve_type(file_no, contract_no, &field.ty, &mut diagnostics) {
             Ok(s) => s,
             Err(()) => {
                 ns.diagnostics.extend(diagnostics);
@@ -516,7 +512,6 @@ fn event_decl(
 
     fields
 }
-
 
 /// Find all other structs a given user struct may reach.
 ///

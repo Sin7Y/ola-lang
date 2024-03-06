@@ -54,6 +54,7 @@ pub enum Opcode {
     SLOAD,
     SSTORE,
     POSEIDON,
+    LOG,
 
     MLOADi,
     MLOADr,
