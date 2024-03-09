@@ -1,11 +1,25 @@
-contract NonceHolder {
+contract b {
+    struct user {
+        bool exists;
+        address addr;
+    }
+    mapping(string => user) users;
 
-    mapping(address => mapping(u32 => u32)) nonces;
+    fn add(string name, address addr) {
+        // This construction is not recommended, because it requires two hash calculations.
+        // See the tip below.
+        users[name].exists = true;
+        users[name].addr = addr;
+    }
 
-    fn setNonce(address _address, u32 _nonce) {
-        nonces[_address][_nonce] = 55;
-        u32 _nonceSet = nonces[_address][_nonce];
-        print(_nonceSet);
+    fn get(string name) -> (address) {
+        // assigning to a memory variable creates a copy
+        user s = users[name];
+        assert(s.exists);
+        return s.addr;
+    }
 
+    fn rm(string name) {
+        delete users[name];
     }
 }

@@ -466,7 +466,7 @@ pub fn expression<'a>(
 
         Expression::Variable { ty, var_no, .. } => {
             let ptr = var_table.get(var_no).unwrap().as_basic_value_enum();
-            if ty.is_reference_type(ns) {
+            if ty.is_reference_type(ns) && !ty.is_contract_storage() {
                 return ptr;
             }
 
@@ -980,7 +980,7 @@ pub fn expression<'a>(
                 storage_array_push(bin, args, func_value, var_table, ns)
             } else {
                 // TODO Add memory array push support
-                unimplemented!();
+                unimplemented!("memory array push")
             }
         }
         Expression::LibFunction {
@@ -992,7 +992,7 @@ pub fn expression<'a>(
                 storage_array_pop(bin, args, func_value, var_table, ns)
             } else {
                 // TODO implement memory array pop
-                unimplemented!()
+                unimplemented!("memory array pop")
             }
         }
         Expression::LibFunction {

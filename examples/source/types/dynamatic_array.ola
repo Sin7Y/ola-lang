@@ -1,0 +1,11 @@
+contract dynamicarray {
+    fn test(u32 size) {
+        u32[] a = new u32[](size);
+
+        for (u32 i = 0; i < size; i++) {
+            a[i] = 1 << i;
+        }
+
+        assert(a.length == size);
+    }
+}

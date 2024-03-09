@@ -1,4 +1,4 @@
-; ModuleID = 'DynamicArrayExample'
+; ModuleID = 's'
 source_filename = "storage_array_dyn"
 
 @heap_address = internal global i64 -12884901885
@@ -901,18 +901,20 @@ entry:
   ret ptr %1
 }
 
-define void @addElement(i64 %0) {
+define void @test() {
 entry:
-  %element = alloca i64, align 8
-  store i64 %0, ptr %element, align 4
+  %v = alloca i64, align 8
+  %0 = call ptr @heap_malloc(i64 4)
   %1 = call ptr @heap_malloc(i64 4)
-  %2 = call ptr @heap_malloc(i64 4)
-  %3 = getelementptr i64, ptr %2, i64 0
+  %2 = getelementptr i64, ptr %1, i64 0
+  store i64 0, ptr %2, align 4
+  %3 = getelementptr i64, ptr %1, i64 1
   store i64 0, ptr %3, align 4
-  %4 = getelementptr i64, ptr %2, i64 1
+  %4 = getelementptr i64, ptr %1, i64 2
   store i64 0, ptr %4, align 4
-  %5 = getelementptr i64, ptr %2, i64 2
+  %5 = getelementptr i64, ptr %1, i64 3
   store i64 0, ptr %5, align 4
+<<<<<<< HEAD
   %6 = getelementptr i64, ptr %2, i64 3
   store i64 0, ptr %6, align 4
   call void @get_storage(ptr %2, ptr %1)
@@ -930,11 +932,21 @@ entry:
 >>>>>>> 7998cf0 (fixed llvm type bug.)
   %8 = call ptr @heap_malloc(i64 4)
   %9 = getelementptr i64, ptr %8, i64 0
+=======
+  call void @get_storage(ptr %1, ptr %0)
+  %length = getelementptr i64, ptr %0, i64 3
+  %6 = load i64, ptr %length, align 4
+  %7 = call ptr @heap_malloc(i64 4)
+  %8 = getelementptr i64, ptr %7, i64 0
+  store i64 0, ptr %8, align 4
+  %9 = getelementptr i64, ptr %7, i64 1
+>>>>>>> 483a314 (fix: 🐛 fixed some u256 type bugs)
   store i64 0, ptr %9, align 4
-  %10 = getelementptr i64, ptr %8, i64 1
+  %10 = getelementptr i64, ptr %7, i64 2
   store i64 0, ptr %10, align 4
-  %11 = getelementptr i64, ptr %8, i64 2
+  %11 = getelementptr i64, ptr %7, i64 3
   store i64 0, ptr %11, align 4
+<<<<<<< HEAD
   %12 = getelementptr i64, ptr %8, i64 3
   store i64 0, ptr %12, align 4
   %13 = call ptr @heap_malloc(i64 4)
@@ -951,11 +963,23 @@ entry:
   %15 = mul i64 %7, 1
 >>>>>>> 7998cf0 (fixed llvm type bug.)
   %storage_array_offset = add i64 %14, %15
+=======
+  %12 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %7, ptr %12, i64 4)
+  %hash_value_low = getelementptr i64, ptr %12, i64 3
+  %13 = load i64, ptr %hash_value_low, align 4
+  %14 = mul i64 %6, 1
+  %storage_array_offset = add i64 %13, %14
+>>>>>>> 483a314 (fix: 🐛 fixed some u256 type bugs)
   store i64 %storage_array_offset, ptr %hash_value_low, align 4
-  %16 = load i64, ptr %element, align 4
-  %17 = call ptr @heap_malloc(i64 4)
-  %18 = getelementptr i64, ptr %17, i64 0
+  %15 = call ptr @heap_malloc(i64 4)
+  %16 = getelementptr i64, ptr %15, i64 0
+  store i64 0, ptr %16, align 4
+  %17 = getelementptr i64, ptr %15, i64 1
+  store i64 0, ptr %17, align 4
+  %18 = getelementptr i64, ptr %15, i64 2
   store i64 0, ptr %18, align 4
+<<<<<<< HEAD
   %19 = getelementptr i64, ptr %17, i64 1
   store i64 0, ptr %19, align 4
   %20 = getelementptr i64, ptr %17, i64 2
@@ -974,42 +998,339 @@ entry:
 >>>>>>> 7998cf0 (fixed llvm type bug.)
   %22 = call ptr @heap_malloc(i64 4)
   %23 = getelementptr i64, ptr %22, i64 0
+=======
+  %19 = getelementptr i64, ptr %15, i64 3
+  store i64 128, ptr %19, align 4
+  call void @set_storage(ptr %12, ptr %15)
+  %new_length = add i64 %6, 1
+  %20 = call ptr @heap_malloc(i64 4)
+  %21 = getelementptr i64, ptr %20, i64 0
+  store i64 0, ptr %21, align 4
+  %22 = getelementptr i64, ptr %20, i64 1
+  store i64 0, ptr %22, align 4
+  %23 = getelementptr i64, ptr %20, i64 2
+>>>>>>> 483a314 (fix: 🐛 fixed some u256 type bugs)
   store i64 0, ptr %23, align 4
-  %24 = getelementptr i64, ptr %22, i64 1
+  %24 = getelementptr i64, ptr %20, i64 3
   store i64 0, ptr %24, align 4
-  %25 = getelementptr i64, ptr %22, i64 2
-  store i64 0, ptr %25, align 4
-  %26 = getelementptr i64, ptr %22, i64 3
+  %25 = call ptr @heap_malloc(i64 4)
+  %26 = getelementptr i64, ptr %25, i64 0
   store i64 0, ptr %26, align 4
-  %27 = call ptr @heap_malloc(i64 4)
-  %28 = getelementptr i64, ptr %27, i64 0
+  %27 = getelementptr i64, ptr %25, i64 1
+  store i64 0, ptr %27, align 4
+  %28 = getelementptr i64, ptr %25, i64 2
   store i64 0, ptr %28, align 4
-  %29 = getelementptr i64, ptr %27, i64 1
-  store i64 0, ptr %29, align 4
-  %30 = getelementptr i64, ptr %27, i64 2
-  store i64 0, ptr %30, align 4
-  %31 = getelementptr i64, ptr %27, i64 3
-  store i64 %new_length, ptr %31, align 4
-  call void @set_storage(ptr %22, ptr %27)
+  %29 = getelementptr i64, ptr %25, i64 3
+  store i64 %new_length, ptr %29, align 4
+  call void @set_storage(ptr %20, ptr %25)
+  %30 = call ptr @heap_malloc(i64 4)
+  %31 = call ptr @heap_malloc(i64 4)
+  %32 = getelementptr i64, ptr %31, i64 0
+  store i64 0, ptr %32, align 4
+  %33 = getelementptr i64, ptr %31, i64 1
+  store i64 0, ptr %33, align 4
+  %34 = getelementptr i64, ptr %31, i64 2
+  store i64 0, ptr %34, align 4
+  %35 = getelementptr i64, ptr %31, i64 3
+  store i64 0, ptr %35, align 4
+  call void @get_storage(ptr %31, ptr %30)
+  %length1 = getelementptr i64, ptr %30, i64 3
+  %36 = load i64, ptr %length1, align 4
+  %37 = call ptr @heap_malloc(i64 4)
+  %38 = getelementptr i64, ptr %37, i64 0
+  store i64 0, ptr %38, align 4
+  %39 = getelementptr i64, ptr %37, i64 1
+  store i64 0, ptr %39, align 4
+  %40 = getelementptr i64, ptr %37, i64 2
+  store i64 0, ptr %40, align 4
+  %41 = getelementptr i64, ptr %37, i64 3
+  store i64 0, ptr %41, align 4
+  %42 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %37, ptr %42, i64 4)
+  %hash_value_low2 = getelementptr i64, ptr %42, i64 3
+  %43 = load i64, ptr %hash_value_low2, align 4
+  %44 = mul i64 %36, 1
+  %storage_array_offset3 = add i64 %43, %44
+  store i64 %storage_array_offset3, ptr %hash_value_low2, align 4
+  %new_length4 = add i64 %36, 1
+  %45 = call ptr @heap_malloc(i64 4)
+  %46 = getelementptr i64, ptr %45, i64 0
+  store i64 0, ptr %46, align 4
+  %47 = getelementptr i64, ptr %45, i64 1
+  store i64 0, ptr %47, align 4
+  %48 = getelementptr i64, ptr %45, i64 2
+  store i64 0, ptr %48, align 4
+  %49 = getelementptr i64, ptr %45, i64 3
+  store i64 0, ptr %49, align 4
+  %50 = call ptr @heap_malloc(i64 4)
+  %51 = getelementptr i64, ptr %50, i64 0
+  store i64 0, ptr %51, align 4
+  %52 = getelementptr i64, ptr %50, i64 1
+  store i64 0, ptr %52, align 4
+  %53 = getelementptr i64, ptr %50, i64 2
+  store i64 0, ptr %53, align 4
+  %54 = getelementptr i64, ptr %50, i64 3
+  store i64 %new_length4, ptr %54, align 4
+  call void @set_storage(ptr %45, ptr %50)
+  %55 = call ptr @heap_malloc(i64 4)
+  %56 = call ptr @heap_malloc(i64 4)
+  %57 = getelementptr i64, ptr %56, i64 0
+  store i64 0, ptr %57, align 4
+  %58 = getelementptr i64, ptr %56, i64 1
+  store i64 0, ptr %58, align 4
+  %59 = getelementptr i64, ptr %56, i64 2
+  store i64 0, ptr %59, align 4
+  %60 = getelementptr i64, ptr %56, i64 3
+  store i64 0, ptr %60, align 4
+  call void @get_storage(ptr %56, ptr %55)
+  %61 = getelementptr i64, ptr %55, i64 3
+  %storage_value = load i64, ptr %61, align 4
+  %62 = icmp eq i64 %storage_value, 2
+  %63 = zext i1 %62 to i64
+  call void @builtin_assert(i64 %63)
+  %64 = call ptr @heap_malloc(i64 4)
+  %65 = call ptr @heap_malloc(i64 4)
+  %66 = getelementptr i64, ptr %65, i64 0
+  store i64 0, ptr %66, align 4
+  %67 = getelementptr i64, ptr %65, i64 1
+  store i64 0, ptr %67, align 4
+  %68 = getelementptr i64, ptr %65, i64 2
+  store i64 0, ptr %68, align 4
+  %69 = getelementptr i64, ptr %65, i64 3
+  store i64 0, ptr %69, align 4
+  call void @get_storage(ptr %65, ptr %64)
+  %70 = getelementptr i64, ptr %64, i64 3
+  %storage_value5 = load i64, ptr %70, align 4
+  %71 = sub i64 %storage_value5, 1
+  %72 = sub i64 %71, 0
+  call void @builtin_range_check(i64 %72)
+  %73 = call ptr @heap_malloc(i64 4)
+  %74 = getelementptr i64, ptr %73, i64 0
+  store i64 0, ptr %74, align 4
+  %75 = getelementptr i64, ptr %73, i64 1
+  store i64 0, ptr %75, align 4
+  %76 = getelementptr i64, ptr %73, i64 2
+  store i64 0, ptr %76, align 4
+  %77 = getelementptr i64, ptr %73, i64 3
+  store i64 0, ptr %77, align 4
+  %78 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %73, ptr %78, i64 4)
+  %hash_value_low6 = getelementptr i64, ptr %78, i64 3
+  %79 = load i64, ptr %hash_value_low6, align 4
+  %storage_array_offset7 = add i64 %79, 0
+  store i64 %storage_array_offset7, ptr %hash_value_low6, align 4
+  %80 = call ptr @heap_malloc(i64 4)
+  %81 = call ptr @heap_malloc(i64 4)
+  %82 = getelementptr i64, ptr %81, i64 0
+  store i64 0, ptr %82, align 4
+  %83 = getelementptr i64, ptr %81, i64 1
+  store i64 0, ptr %83, align 4
+  %84 = getelementptr i64, ptr %81, i64 2
+  store i64 0, ptr %84, align 4
+  %85 = getelementptr i64, ptr %81, i64 3
+  store i64 0, ptr %85, align 4
+  call void @get_storage(ptr %81, ptr %80)
+  %86 = getelementptr i64, ptr %80, i64 3
+  %storage_value8 = load i64, ptr %86, align 4
+  %87 = sub i64 %storage_value8, 1
+  %88 = sub i64 %87, 0
+  call void @builtin_range_check(i64 %88)
+  %89 = call ptr @heap_malloc(i64 4)
+  %90 = getelementptr i64, ptr %89, i64 0
+  store i64 0, ptr %90, align 4
+  %91 = getelementptr i64, ptr %89, i64 1
+  store i64 0, ptr %91, align 4
+  %92 = getelementptr i64, ptr %89, i64 2
+  store i64 0, ptr %92, align 4
+  %93 = getelementptr i64, ptr %89, i64 3
+  store i64 0, ptr %93, align 4
+  %94 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %89, ptr %94, i64 4)
+  %hash_value_low9 = getelementptr i64, ptr %94, i64 3
+  %95 = load i64, ptr %hash_value_low9, align 4
+  %storage_array_offset10 = add i64 %95, 0
+  store i64 %storage_array_offset10, ptr %hash_value_low9, align 4
+  %96 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %94, ptr %96)
+  %97 = getelementptr i64, ptr %96, i64 3
+  %storage_value11 = load i64, ptr %97, align 4
+  %98 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %94, ptr %98, i64 4)
+  %last_elem_ptr = getelementptr i64, ptr %98, i64 3
+  %99 = load i64, ptr %last_elem_ptr, align 4
+  %last_elem = add i64 %99, 1
+  store i64 %last_elem, ptr %last_elem_ptr, align 4
+  %100 = or i64 %storage_value11, 64
+  %101 = call ptr @heap_malloc(i64 4)
+  %102 = getelementptr i64, ptr %101, i64 0
+  store i64 0, ptr %102, align 4
+  %103 = getelementptr i64, ptr %101, i64 1
+  store i64 0, ptr %103, align 4
+  %104 = getelementptr i64, ptr %101, i64 2
+  store i64 0, ptr %104, align 4
+  %105 = getelementptr i64, ptr %101, i64 3
+  store i64 %100, ptr %105, align 4
+  call void @set_storage(ptr %78, ptr %101)
+  %106 = call ptr @heap_malloc(i64 4)
+  %107 = call ptr @heap_malloc(i64 4)
+  %108 = getelementptr i64, ptr %107, i64 0
+  store i64 0, ptr %108, align 4
+  %109 = getelementptr i64, ptr %107, i64 1
+  store i64 0, ptr %109, align 4
+  %110 = getelementptr i64, ptr %107, i64 2
+  store i64 0, ptr %110, align 4
+  %111 = getelementptr i64, ptr %107, i64 3
+  store i64 0, ptr %111, align 4
+  call void @get_storage(ptr %107, ptr %106)
+  %length12 = getelementptr i64, ptr %106, i64 3
+  %112 = load i64, ptr %length12, align 4
+  %113 = call ptr @heap_malloc(i64 4)
+  %114 = getelementptr i64, ptr %113, i64 0
+  store i64 0, ptr %114, align 4
+  %115 = getelementptr i64, ptr %113, i64 1
+  store i64 0, ptr %115, align 4
+  %116 = getelementptr i64, ptr %113, i64 2
+  store i64 0, ptr %116, align 4
+  %117 = getelementptr i64, ptr %113, i64 3
+  store i64 0, ptr %117, align 4
+  %118 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %113, ptr %118, i64 4)
+  %hash_value_low13 = getelementptr i64, ptr %118, i64 3
+  %119 = load i64, ptr %hash_value_low13, align 4
+  %120 = mul i64 %112, 1
+  %storage_array_offset14 = add i64 %119, %120
+  store i64 %storage_array_offset14, ptr %hash_value_low13, align 4
+  %121 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %118, ptr %121)
+  %122 = getelementptr i64, ptr %121, i64 3
+  %storage_value15 = load i64, ptr %122, align 4
+  %123 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %118, ptr %123, i64 4)
+  %last_elem_ptr16 = getelementptr i64, ptr %123, i64 3
+  %124 = load i64, ptr %last_elem_ptr16, align 4
+  %last_elem17 = add i64 %124, 1
+  store i64 %last_elem17, ptr %last_elem_ptr16, align 4
+  %125 = call ptr @heap_malloc(i64 4)
+  %storage_zero_ptr = getelementptr i64, ptr %125, i64 0
+  store i64 0, ptr %storage_zero_ptr, align 4
+  %storage_zero_ptr18 = getelementptr i64, ptr %125, i64 1
+  store i64 0, ptr %storage_zero_ptr18, align 4
+  %storage_zero_ptr19 = getelementptr i64, ptr %125, i64 2
+  store i64 0, ptr %storage_zero_ptr19, align 4
+  %storage_zero_ptr20 = getelementptr i64, ptr %125, i64 3
+  store i64 0, ptr %storage_zero_ptr20, align 4
+  call void @set_storage(ptr %118, ptr %125)
+  %new_length21 = sub i64 %112, 1
+  %126 = call ptr @heap_malloc(i64 4)
+  %127 = getelementptr i64, ptr %126, i64 0
+  store i64 0, ptr %127, align 4
+  %128 = getelementptr i64, ptr %126, i64 1
+  store i64 0, ptr %128, align 4
+  %129 = getelementptr i64, ptr %126, i64 2
+  store i64 0, ptr %129, align 4
+  %130 = getelementptr i64, ptr %126, i64 3
+  store i64 0, ptr %130, align 4
+  %131 = call ptr @heap_malloc(i64 4)
+  %132 = getelementptr i64, ptr %131, i64 0
+  store i64 0, ptr %132, align 4
+  %133 = getelementptr i64, ptr %131, i64 1
+  store i64 0, ptr %133, align 4
+  %134 = getelementptr i64, ptr %131, i64 2
+  store i64 0, ptr %134, align 4
+  %135 = getelementptr i64, ptr %131, i64 3
+  store i64 %new_length21, ptr %135, align 4
+  call void @set_storage(ptr %126, ptr %131)
+  %136 = call ptr @heap_malloc(i64 4)
+  %137 = call ptr @heap_malloc(i64 4)
+  %138 = getelementptr i64, ptr %137, i64 0
+  store i64 0, ptr %138, align 4
+  %139 = getelementptr i64, ptr %137, i64 1
+  store i64 0, ptr %139, align 4
+  %140 = getelementptr i64, ptr %137, i64 2
+  store i64 0, ptr %140, align 4
+  %141 = getelementptr i64, ptr %137, i64 3
+  store i64 0, ptr %141, align 4
+  call void @get_storage(ptr %137, ptr %136)
+  %length22 = getelementptr i64, ptr %136, i64 3
+  %142 = load i64, ptr %length22, align 4
+  %143 = call ptr @heap_malloc(i64 4)
+  %144 = getelementptr i64, ptr %143, i64 0
+  store i64 0, ptr %144, align 4
+  %145 = getelementptr i64, ptr %143, i64 1
+  store i64 0, ptr %145, align 4
+  %146 = getelementptr i64, ptr %143, i64 2
+  store i64 0, ptr %146, align 4
+  %147 = getelementptr i64, ptr %143, i64 3
+  store i64 0, ptr %147, align 4
+  %148 = call ptr @heap_malloc(i64 4)
+  call void @poseidon_hash(ptr %143, ptr %148, i64 4)
+  %hash_value_low23 = getelementptr i64, ptr %148, i64 3
+  %149 = load i64, ptr %hash_value_low23, align 4
+  %150 = mul i64 %142, 1
+  %storage_array_offset24 = add i64 %149, %150
+  store i64 %storage_array_offset24, ptr %hash_value_low23, align 4
+  %151 = call ptr @heap_malloc(i64 4)
+  call void @get_storage(ptr %148, ptr %151)
+  %152 = getelementptr i64, ptr %151, i64 3
+  %storage_value25 = load i64, ptr %152, align 4
+  %153 = call ptr @heap_malloc(i64 4)
+  call void @memcpy(ptr %148, ptr %153, i64 4)
+  %last_elem_ptr26 = getelementptr i64, ptr %153, i64 3
+  %154 = load i64, ptr %last_elem_ptr26, align 4
+  %last_elem27 = add i64 %154, 1
+  store i64 %last_elem27, ptr %last_elem_ptr26, align 4
+  %155 = call ptr @heap_malloc(i64 4)
+  %storage_zero_ptr28 = getelementptr i64, ptr %155, i64 0
+  store i64 0, ptr %storage_zero_ptr28, align 4
+  %storage_zero_ptr29 = getelementptr i64, ptr %155, i64 1
+  store i64 0, ptr %storage_zero_ptr29, align 4
+  %storage_zero_ptr30 = getelementptr i64, ptr %155, i64 2
+  store i64 0, ptr %storage_zero_ptr30, align 4
+  %storage_zero_ptr31 = getelementptr i64, ptr %155, i64 3
+  store i64 0, ptr %storage_zero_ptr31, align 4
+  call void @set_storage(ptr %148, ptr %155)
+  %new_length32 = sub i64 %142, 1
+  %156 = call ptr @heap_malloc(i64 4)
+  %157 = getelementptr i64, ptr %156, i64 0
+  store i64 0, ptr %157, align 4
+  %158 = getelementptr i64, ptr %156, i64 1
+  store i64 0, ptr %158, align 4
+  %159 = getelementptr i64, ptr %156, i64 2
+  store i64 0, ptr %159, align 4
+  %160 = getelementptr i64, ptr %156, i64 3
+  store i64 0, ptr %160, align 4
+  %161 = call ptr @heap_malloc(i64 4)
+  %162 = getelementptr i64, ptr %161, i64 0
+  store i64 0, ptr %162, align 4
+  %163 = getelementptr i64, ptr %161, i64 1
+  store i64 0, ptr %163, align 4
+  %164 = getelementptr i64, ptr %161, i64 2
+  store i64 0, ptr %164, align 4
+  %165 = getelementptr i64, ptr %161, i64 3
+  store i64 %new_length32, ptr %165, align 4
+  call void @set_storage(ptr %156, ptr %161)
+  store i64 %storage_value25, ptr %v, align 4
+  %166 = load i64, ptr %v, align 4
+  %167 = icmp eq i64 %166, 192
+  %168 = zext i1 %167 to i64
+  call void @builtin_assert(i64 %168)
   ret void
 }
 
 define void @function_dispatch(i64 %0, i64 %1, ptr %2) {
 entry:
   switch i64 %0, label %missing_function [
-    i64 2685086710, label %func_0_dispatch
+    i64 4171824493, label %func_0_dispatch
   ]
 
 missing_function:                                 ; preds = %entry
   unreachable
 
 func_0_dispatch:                                  ; preds = %entry
-  %3 = getelementptr ptr, ptr %2, i64 0
-  %4 = load i64, ptr %3, align 4
-  call void @addElement(i64 %4)
-  %5 = call ptr @heap_malloc(i64 1)
-  store i64 0, ptr %5, align 4
-  call void @set_tape_data(ptr %5, i64 1)
+  call void @test()
+  %3 = call ptr @heap_malloc(i64 1)
+  store i64 0, ptr %3, align 4
+  call void @set_tape_data(ptr %3, i64 1)
   ret void
 }
 

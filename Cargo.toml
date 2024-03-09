@@ -32,7 +32,7 @@ codespan-reporting = "0.11"
 clap = "4.4.7"
 indexmap = "1.8"
 tiny-keccak = { version = "2.0", features = ["keccak"] }
-mini-goldilocks = { git = "https://github.com/Sin7Y/mini-goldilocks", branch = "main" }
+mini-goldilocks = "0.1.1"
 key-node-list = "0.0.5"
 nom = "^7.1.0"
 rustc-hash = "^1.1.0"
