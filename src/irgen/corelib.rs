@@ -89,7 +89,7 @@ pub fn gen_lib_functions(bin: &mut Binary, ns: &Namespace) {
                 let func = bin.module.add_function("u32_sqrt", ftype, None);
                 define_u32_sqrt(bin, func);
             }
-            "fields_concat" => {
+            "string_concat"| "fields_concat" => {
                 let ptr_type = bin.context.i64_type().ptr_type(AddressSpace::default());
                 let ftype = ptr_type.fn_type(&[ptr_type.into(), ptr_type.into()], false);
                 let func = bin.module.add_function("fields_concat", ftype, None);

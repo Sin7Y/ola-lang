@@ -1,13 +1,13 @@
 contract StringContract {
 
     string bb;
-    // fn string_test() {
-    //    string a = "";
-    //    print(a);
-    //    print(a.length);
-    //    print(bb);
-    //    print(bb.length);
-    // }
+    fn string_test() {
+       string a = "";
+       print(a);
+       print(a.length);
+       print(bb);
+       print(bb.length);
+    }
 
     fn set_string_test() {
        bb = "hello";
@@ -20,6 +20,18 @@ contract StringContract {
 
     fn string_test_return2() -> (string) {
        return bb;
+    }
+
+   fn string_compare_test() -> (bool) {
+      string a = "hello";
+      string b = "world";
+      return a == b;
+   }
+
+    fn string_concat_test() -> (string) {
+       string a = "hello";
+       string b = "world";
+       return string_concat(a, b);
     }
 
 }

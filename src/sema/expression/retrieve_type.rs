@@ -14,8 +14,7 @@ impl RetrieveType for Expression {
             | Expression::NotEqual { .. }
             | Expression::Not { .. }
             | Expression::StringCompare { .. } => Type::Bool,
-            Expression::StringConcat { ty, .. }
-            | Expression::BytesLiteral { ty, .. }
+            Expression::BytesLiteral { ty, .. }
             | Expression::NumberLiteral { ty, .. }
             | Expression::StructLiteral { ty, .. }
             | Expression::ArrayLiteral { ty, .. }
