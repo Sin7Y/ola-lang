@@ -743,12 +743,6 @@ pub enum Expression {
         left: StringLocation<Expression>,
         right: StringLocation<Expression>,
     },
-    StringConcat {
-        loc: program::Loc,
-        ty: Type,
-        left: StringLocation<Expression>,
-        right: StringLocation<Expression>,
-    },
 
     Or {
         loc: program::Loc,
@@ -900,15 +894,6 @@ impl Recurse for Expression {
                 }
                 Expression::AllocDynamicBytes { length, .. } => length.recurse(cx, f),
                 Expression::StorageArrayLength { array, .. } => array.recurse(cx, f),
-                Expression::StringCompare { left, right, .. }
-                | Expression::StringConcat { left, right, .. } => {
-                    if let StringLocation::RunTime(expr) = left {
-                        expr.recurse(cx, f);
-                    }
-                    if let StringLocation::RunTime(expr) = right {
-                        expr.recurse(cx, f);
-                    }
-                }
 
                 Expression::FunctionCall { function, args, .. } => {
                     function.recurse(cx, f);
@@ -985,7 +970,6 @@ impl CodeLocation for Expression {
             | Expression::AllocDynamicBytes { loc, .. }
             | Expression::StorageArrayLength { loc, .. }
             | Expression::StringCompare { loc, .. }
-            | Expression::StringConcat { loc, .. }
             | Expression::Function { loc, .. }
             | Expression::ExternalFunction { loc, .. }
             | Expression::FunctionCall { loc, .. }
@@ -1040,6 +1024,7 @@ pub enum LibFunc {
     AbiEncodeWithSignature,
     PoseidonHash,
     FieldsConcat,
+    StringConcat,
     Print,
     BlockNumber,
     BlockTimestamp,
