@@ -21,7 +21,7 @@ pub struct Prototype {
 }
 
 // A list of all Ola lib functions
-static LIB_FUNCTIONS: Lazy<[Prototype; 25]> = Lazy::new(|| {
+static LIB_FUNCTIONS: Lazy<[Prototype; 26]> = Lazy::new(|| {
     [
         Prototype {
             libfunc: LibFunc::U32Sqrt,
@@ -83,6 +83,13 @@ static LIB_FUNCTIONS: Lazy<[Prototype; 25]> = Lazy::new(|| {
             namespace: None,
             name: "fields_concat",
             params: vec![Type::DynamicBytes, Type::DynamicBytes],
+            ret: vec![Type::DynamicBytes],
+        },
+        Prototype {
+            libfunc: LibFunc::FieldsConcat,
+            namespace: None,
+            name: "string_concat",
+            params: vec![Type::String, Type::String],
             ret: vec![Type::DynamicBytes],
         },
         Prototype {

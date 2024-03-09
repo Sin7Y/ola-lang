@@ -1070,26 +1070,14 @@ pub fn expression<'a>(
             kind: LibFunc::FieldsConcat,
             args,
             ..
+        }
+        | Expression::LibFunction {
+            kind: LibFunc::StringConcat,
+            args,
+            ..
         } => {
             let left = expression(&args[0], bin, func_value, var_table, ns);
             let right = expression(&args[1], bin, func_value, var_table, ns);
-
-            let result = bin
-                .builder
-                .build_call(
-                    bin.module.get_function("fields_concat").unwrap(),
-                    &[left.into(), right.into()],
-                    "",
-                )
-                .try_as_basic_value()
-                .left()
-                .expect("Should have a left return value");
-            result
-        }
-
-        Expression::StringConcat { left, right, .. } => {
-            let left = string_location(bin, left, var_table, func_value, ns);
-            let right = string_location(bin, right, var_table, func_value, ns);
 
             let result = bin
                 .builder

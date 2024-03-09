@@ -4,7 +4,6 @@ use crate::codegen::core::ir::module::{metadata::Metadata, name::Name};
 use crate::codegen::core::ir::types;
 use nom::combinator::opt;
 use nom::{
-    self,
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
