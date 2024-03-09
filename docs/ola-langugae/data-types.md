@@ -1,6 +1,7 @@
 ---
 description: >-
 The Ola language references the syntax implementations of Solidity and Rust, removing some zk-unfriendly operations at the language level, and adding some built-in functions and data types, allowing developers to achieve efficient zkp proofs with minimal changes to their original code.
+
 ---
 
 # Data Type
@@ -13,12 +14,11 @@ Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `ad
 
 ### **Integer Type**
 
-There are several types of integer types: `u32`, `u64`, `u256`, and currently only `u32` integer operations are supported. All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
+There are two types of integer types: `u32 `and `u256`,  All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
 
 ```rust
-u32 a = 2u32; // u32
-u32 b = 43; // u32
-u64 b = 2u64; // u64
+u32 a = 2;
+u256 b = 1000; 
 ```
 
 ### **Field Elements Type**
@@ -28,8 +28,8 @@ Ola supports the `field` type for elements of the base field of the elliptic cur
 The `filed` type is a goldilocks field number, with a maximum value of `2^64 - 2^32 + 1`.
 
 ```rust
-field a = 32field
-field b = 22field
+field a = 32;
+field b = 64;
 field c = a + b;
 ```
 
@@ -67,43 +67,103 @@ Hash and address types are similar, both are arrays of 4 field elements.
 
 Ola supports a variety of complex types such as `Arrays`, `String`, `Fields` ,`Slice`, `Tuples`,`Structs`,`Enumerations`,`Mapping`。
 
-### **Arrays**
+### Arrays
 
-Ola supports statically typed arrays. The data types of array elements must be consistent, and the array size must be determined at compile time.
+Ola supports fixed length and dynamic length array. 
 
 Array elements are numbered from zero and are accessed using`[index]`for addressing.
 
-Array declarations must be initialized, and the array declaration format is为`type`and`[]`(`type []`),and the array size must be specified. Two ways to initialize arrays are provided:
+Arrays are passed by reference. If you modify the array in another function, those changes will be reflected in the current function. For example:
 
-* Split the list of elements by commas,`[array_element1,array_element2,...]`。
-* Array declaration and initialization with consistent array elements,`[array_value; size]`。
+#### Fiexed Length Array
 
-```rust
-field[5] a = [1, 2, 3, 4, 5]; // initialize a field array with field values
-bool[3] b = [true; 3]; // initialize a bool array with value true
+Arrays can be declared by adding [length] to the type name, where length is a constant expression. Any type can be made into an array, including arrays themselves (also known as arrays of arrays). For example:
+
+```solidity
+contract foo {
+    /// In a vote with 11 voters, do the ayes have it?
+    fn f(bool[11] votes) -> (bool) {
+        u32 i;
+        u32 ayes = 0;
+
+        for (i = 0; i < votes.length; i++) {
+            if (votes[i]) {
+                ayes += 1;
+            }
+        }
+
+        // votes.length is odd; integer truncation means that 11 / 2 = 5
+        return ayes > votes.length / 2;
+    }
+}
 ```
 
-Two-dimensional Arrays
+Note the length of the array can be read with the `.length` member. The length is readonly. Arrays can be initialized with an array literal. For example:
 
-Two-dimensional arrays are declared and used similarly to one-dimensional arrays, except that the internal elements of a two-dimensional array are also one-dimensional arrays.
+```
+  fn primenumber(u32 n) -> (u32) {
+      u32[10] primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
 
-Declar`type [row_size][col_size]`, and initializ`[[],[],...]`。
-
-```rust
-// Array of two elements of array of 3 elements
-
-field[2][4] a = [[1, 2, 3, 4],[4, 5, 6, 7]];
-
-field[4] b = a[1]; // should be [4, 5, 6, 7]
+      return primes[n];
+  }
 ```
 
-Array Slicing
+Any array subscript which is out of bounds (either an negative array index, or an index past the last element) will cause a runtime exception. In this example, calling `primenumber(10)` will fail; the first prime number is indexed by 0, and the last by 9.
+
+#### Dynamatic Array
+
+Dynamic length arrays are useful for when you do not know in advance how long your arrays will need to be. They are declared by adding `[]` to your type. How they can be used depends on whether they are contract storage variables or stored in memory.
+
+Memory dynamic arrays must be allocated with `new` before they can be used. The `new` expression requires a single unsigned integer argument. The length can be read using `length` member variable.
+
+```solidity
+contract dynamicarray {
+    fn test(u32 size) {
+        u32[] a = new u32[](size);
+
+        for (u32 i = 0; i < size; i++) {
+            a[i] = 1 << i;
+        }
+
+        assert(a.length == size);
+    }
+}
+```
+
+Storage dynamic memory arrays do not have to be allocated. By default, they have a length of zero and elements can be added and removed using the `push()` and `pop()` methods.
+
+```
+contract s {
+    u32[] a;
+
+    fn test() {
+        // push takes a single argument with the item to be added
+        a.push(128);
+        // push with no arguments adds 0
+        a.push();
+        // now we have two elements in our array, 128 and 0
+        assert(a.length == 2);
+        a[0] |= 64;
+        // pop removes the last element
+        a.pop();
+        // you can assign the return value of pop
+        u32 v = a.pop();
+        assert(v == 192);
+    }
+}
+```
+
+Calling the method `pop()` on an empty array is an error and contract execution will abort, just like when accessing an element beyond the end of an array.
+
+Depending on the array element, `pop()` can be costly. It has to first copy the element to memory, and then clear storage.
+
+####  Array Slicing
 
 Similar to rust, arrays can be created by slicing an array to copy the generated array,`[from_index..to_index]`。
 
 ```rust
 field[5] a = [1, 2, 3, 4, 5];
-field[3] b = a[2..4];   // initialize an array copying a slice from `a`
+field[3] b = a[2:4];   // initialize an array copying a slice from `a`
 // array b is [3, 4, 5]
 ```
 
@@ -114,20 +174,20 @@ u32[] b = new u32[](10);
 assert(b.length == 10);
 ```
 
-## **String**
+### **String**
 
-`String` can be initialized with a string literal Strings can be concatenated and compared equal, no other operations are allowed on strings
+`String` can be initialized with a string literal Strings can be concatenated and compared equal, no other operations are allowed on strings. string types can be converted to fields types and vice versa.
 
 Note: The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
 
 ```rust
 fn test1(string s) -> (bool) {
-  string str = "Hello, " + s + "!";
-  return (str == "Hello, World!");
+  string str = string_concat("Hello", "World!");
+  return (str == "HelloWorld!");
 }
 ```
 
-## **Fields**
+### **Fields**
 
 Fields is a dynamic array representation of the filed type. fields can be concatenated using the system library provided by the ola language.
 
@@ -147,99 +207,137 @@ fn encode_test() -> (fields) {
 }
 ```
 
-## **Tuples**
+If the `fields` variable is a storage variable, there is a `push()` and `pop()` method available to add and remove bytes from the array. Array elements in a memory `fields` can be modified, but no elements can be removed or added, in other words, `push()` and `pop()` are not available when `fields` is stored in memory.
 
-A collection of elements of two types, with each element in the collection accessed through`.`(`t.0`、`t.1`).
+### **Structs**
 
-```rust
-fn main() -> bool {
-    (field[2], bool) v = ([1, 2], true);
-    v.0 = [2, 3];
-    return v.1;
-}
-```
+A combination of multiple data types to form a new custom combination type. Struct members are accessed via`.` (`struct_name.struct_field`).
 
-## **Structs**
-
-A combination of multiple data types to form a new custom combination type. Struct members are accessed via`.` (`struct_name.struct_field`)
+A struct has one or more fields, each with a unique name. Structs can be function arguments and return values. Structs can contain other structs. There is a struct literal syntax to create a struct with all the fields set.
 
 ```rust
-struct Person {
-    age: u32,
-    id: u64,
-}
-
-fn foo() {
-   Person person = Person {
-        age: 18,
-        id: 123456789,
-    };
-    person.age = 25;
-}
-```
-
-## **Enumerations**
-
-The enumeration type is defined by the keyword `enum`.
-
-```rust
-contract Foo {
-    u256 const x = 56;
-    enum ActionChoices {
-        GoLeft,
-        GoRight,
-        GoStraight,
-        Sit
+contract deck {
+    enum suit {
+        club,
+        diamonds,
+        hearts,
+        spades
     }
-    ActionChoices const choices = ActionChoices.GoLeft;
+    enum value {
+        two,
+        three,
+        four,
+        five,
+        six,
+        seven,
+        eight,
+        nine,
+        ten,
+        jack,
+        queen,
+        king,
+        ace
+    }
+    struct card {
+        value v;
+        suit s;
+    }
+
+    fn score_card(card c) -> (u32 score) {
+        if (c.s == suit.hearts) {
+            if (c.v == value.ace) {
+                score = 14;
+            }
+            if (c.v == value.king) {
+                score = 13;
+            }
+            if (c.v == value.queen) {
+                score = 12;
+            }
+            if (c.v == value.jack) {
+                score = 11;
+            }
+        }
+        // all others score 0
+    }
 }
 ```
 
-## **Mapping**
+Note:  that struct variables are references. When contract struct variables or normal struct variables are passed around, just the memory address or storage slot is passed around internally. This makes it very cheap, but it does mean that if a called function modifies the struct, then this is visible in the caller as well.
+
+### **Enumerations**
+
+The enumeration type is defined by the keyword `enum`.  enums types need to have a definition which lists the possible values it can hold. An enum has a type name, and a list of unique values. Enum types can used in functions, but the value is represented as a `u32` in the ABI. Enum are limited to u32 values.
+
+```rust
+contract enum_example {
+    enum Weekday {
+        Monday,
+        Tuesday,
+        Wednesday,
+        Thursday,
+        Friday,
+        Saturday,
+        Sunday
+    }
+
+    fn is_weekend(Weekday day) -> (bool) {
+        return (day == Weekday.Saturday || day == Weekday.Sunday);
+    }
+}
+```
+
+If enum is declared in another contract, the type can be referred to with contractname.typename. The individual enum values are `contractname.typename.value`. 
+
+### **Mapping**
 
 Mappings are a dictionary type, or associative arrays. Mappings have a number of limitations:
 
 * They only work as storage variables
 * They are not iterable
-* The key cannot be a `struct`, array, or another mapping.
+* The key cannot be a `struct`, `array`, or another mapping.
 
 Mappings are declared with `mapping(keytype => valuetype)`, for example:
 
 ```rust
-struct user {
-    bool exists;
-    address addr;
-}
-mapping(string => user) users;
-```
+contract b {
+    struct user {
+        bool exists;
+        address addr;
+    }
+    mapping(string => user) users;
 
-## Type Alias
+    fn add(string name, address addr) {
+        // This construction is not recommended, because it requires two hash calculations.
+        // See the tip below.
+        users[name].exists = true;
+        users[name].addr = addr;
+    }
 
-To increase code readability, defining a type alias for each type is supported. At compile time, the type alias will be replaced with real types.
+    fn get(string name) -> (address) {
+        // assigning to a memory variable creates a copy
+        user s = users[name];
+        assert(s.exists);
+        return s.addr;
+    }
 
-```rust
-type balance = u256;
-
-fn main() -> balance {
-    balance a = 32ll;
-    a -= 2;
-    return a;
-}
-```
-
-## Constant
-
-Constants can only be declared as constant expressions when defined with the `const` keyword.
-
-Compile time determination cannot be redeclared and assigned, that is, once defined, it can only be used within its scope, and it is recommended to declare with all capital letters and `_` concatenation.
-
-```rust
-const field ONE = 1;
-const field TWO = ONE + ONE;
-
-const field HASH_SIZE = 256;
-
-fn hash_size() -> field {
-    return HASH_SIZE;
+    fn rm(string name) {
+        delete users[name];
+    }
 }
 ```
+
+Tips: When assigning multiple members in a struct in a mapping, it is better to create a storage variable as a reference to the struct, and then assign to the reference. The `add()` function above can be optimized like the following. 
+
+```
+fn add(string name, address addr) {
+    // assigning to a storage variable creates a reference
+    user storage s = users[name];
+    s.exists = true;
+    s.addr = addr;
+}
+```
+
+If you access a non-existing field on a mapping, all the fields will read as zero. It is common practise to have a boolean field called `exists`. Since mappings are not iterable, it is not possible to `delete` an entire mapping itself, but individual mapping entries can be deleted.
+
+Note:  Solidity on Ethereum and on Polkadot takes the keccak 256 hash of the key and the storage slot, and simply uses that to find the entry. Ola used the zk-friendly posiedon hash to calculate solt.
