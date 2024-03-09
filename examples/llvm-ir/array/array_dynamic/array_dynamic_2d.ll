@@ -903,6 +903,8 @@ entry:
 
 define ptr @initialize(i64 %0, i64 %1) {
 entry:
+  %index_alloca9 = alloca i64, align 8
+  %i = alloca i64, align 8
   %index_alloca = alloca i64, align 8
   %columns = alloca i64, align 8
   %rows = alloca i64, align 8
@@ -927,7 +929,53 @@ body:                                             ; preds = %cond
   br label %cond
 
 done:                                             ; preds = %cond
+  store i64 0, ptr %i, align 4
+  br label %cond1
+
+cond1:                                            ; preds = %next, %done
+  %4 = load i64, ptr %i, align 4
+  %5 = load i64, ptr %rows, align 4
+  %6 = icmp ult i64 %4, %5
+  br i1 %6, label %body2, label %endfor
+
+body2:                                            ; preds = %cond1
+  %7 = load i64, ptr %i, align 4
+  %vector_length = load i64, ptr %3, align 4
+  %8 = sub i64 %vector_length, 1
+  %9 = sub i64 %8, %7
+  call void @builtin_range_check(i64 %9)
+  %vector_data3 = getelementptr i64, ptr %3, i64 1
+  %index_access4 = getelementptr ptr, ptr %vector_data3, i64 %7
+  %10 = load i64, ptr %columns, align 4
+  %11 = call ptr @vector_new(i64 %10)
+  %vector_data5 = getelementptr i64, ptr %11, i64 1
+  store i64 0, ptr %index_alloca9, align 4
+  br label %cond6
+
+next:                                             ; preds = %done8
+  %12 = load i64, ptr %i, align 4
+  %13 = add i64 %12, 1
+  store i64 %13, ptr %i, align 4
+  br label %cond1
+
+endfor:                                           ; preds = %cond1
   ret ptr %3
+
+cond6:                                            ; preds = %body7, %body2
+  %index_value10 = load i64, ptr %index_alloca9, align 4
+  %loop_cond11 = icmp ult i64 %index_value10, %10
+  br i1 %loop_cond11, label %body7, label %done8
+
+body7:                                            ; preds = %cond6
+  %index_access12 = getelementptr ptr, ptr %vector_data5, i64 %index_value10
+  store i64 0, ptr %index_access12, align 4
+  %next_index13 = add i64 %index_value10, 1
+  store i64 %next_index13, ptr %index_alloca9, align 4
+  br label %cond6
+
+done8:                                            ; preds = %cond6
+  store ptr %11, ptr %index_access4, align 8
+  br label %next
 }
 
 define void @setElement(ptr %0, i64 %1, i64 %2, i64 %3) {

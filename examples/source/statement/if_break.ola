@@ -5,9 +5,7 @@ contract IfStatement {
 
 
     fn ifTest(u32 a) {
-        u32 cc = 1;
         if (a == 1) {
-            cc = 10;
             return;
         } 
     }
