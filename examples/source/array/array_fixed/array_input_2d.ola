@@ -5,9 +5,9 @@ contract ArrayInputExample {
         return a;
     }
 
-    fn array_input(u32[][3] array) {
+    fn array_input(u32[][3] array) -> (u32[]){
         u32[] a = array[0];
-        // return a;
+        return a;
     }
 
 

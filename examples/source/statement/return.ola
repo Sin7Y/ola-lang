@@ -1,0 +1,24 @@
+contract ReturnExample {
+    string name;
+    u32[] dataArray;
+ 
+    struct S {
+        u32 a;
+        u32 b;
+    }
+
+    S s;
+
+    fn return_storage_array() -> (u32[]) {
+        // delete data; // sets data to 0, does not affect x
+        return dataArray;
+
+    }
+    fn return_storage_string() -> (string) {
+        return name;
+    }
+
+    fn return_storage_struct() -> (u32) {
+        return s.a;
+    }
+}

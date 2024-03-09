@@ -1,0 +1,22 @@
+contract DeleteExample {
+    u32[] dataArray;
+
+    fn delete_f_storage() {
+        // delete data; // sets data to 0, does not affect x
+        u32[] storage y = dataArray;
+        delete dataArray; // this sets dataArray.length to zero, but as u32[] is a complex object, also
+        // y is affected which is an alias to the storage object
+        // On the other hand: "delete y" is not valid, as assignments to local variables
+        // referencing storage objects can only be made from existing storage objects.
+        assert(y.length == 0);
+    }
+    fn delete_f_memory() {
+        // delete data; // sets data to 0, does not affect x
+        u32[] memory y = dataArray;
+        delete dataArray; // this sets dataArray.length to zero, but as u32[] is a complex object, also
+        // y is affected which is an alias to the storage object
+        // On the other hand: "delete y" is not valid, as assignments to local variables
+        // referencing storage objects can only be made from existing storage objects.
+        assert(y.length == 0);
+    }
+}
