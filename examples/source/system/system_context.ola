@@ -1,20 +1,20 @@
 contract SystemContextExample {
 
     fn all_test() {
-        u32 block_number = block_number_test();
-        print(block_number);
-        u32 block_timestamp = block_timestamp_test();
-        print(block_timestamp);
+        u32 block_number_value = block_number_test();
+        print(block_number_value);
+        u32 block_timestamp_value = block_timestamp_test();
+        print(block_timestamp_value);
         address sequence = sequence_address_test();
         print(sequence);
-        u32 tx_version = transaction_version_test();
-        print(tx_version);
-        u32 chain_id = chain_id_test();
-        print(chain_id);
-        u32 nonce = nonce_test();
-        print(nonce);
-        fields signature = signautre_test();
-        print(signature);
+        u32 tx_version_value = transaction_version_test();
+        print(tx_version_value);
+        u32 chain_id_value = chain_id_test();
+        print(chain_id_value);
+        u32 nonce_value = nonce_test();
+        print(nonce_value);
+        fields signature_value = signautre_test();
+        print(signature_value);
         hash tx_hash = transaction_hash_test();
         print(tx_hash);
         address caller = caller_address_test();
@@ -74,8 +74,6 @@ contract SystemContextExample {
     fn transaction_hash_test() -> (hash) {
         return tx_hash();
     }
-
-
 
 }
 

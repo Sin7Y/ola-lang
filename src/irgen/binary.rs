@@ -297,10 +297,7 @@ impl<'a> Binary<'a> {
                 .llvm_type(r, ns)
                 .ptr_type(AddressSpace::default())
                 .as_basic_type_enum(),
-            Type::StorageRef(r) => self
-                .llvm_type(r, ns)
-                .ptr_type(AddressSpace::default())
-                .as_basic_type_enum(),
+            Type::StorageRef(..) => self.llvm_type(&Type::Uint(32), ns),
             Type::Function {
                 params, returns, ..
             } => {

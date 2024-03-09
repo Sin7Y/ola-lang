@@ -908,19 +908,19 @@ entry:
   %origin = alloca ptr, align 8
   %caller = alloca ptr, align 8
   %tx_hash = alloca ptr, align 8
-  %nonce = alloca i64, align 8
-  %chain_id = alloca i64, align 8
-  %tx_version = alloca i64, align 8
+  %nonce_value = alloca i64, align 8
+  %chain_id_value = alloca i64, align 8
+  %tx_version_value = alloca i64, align 8
   %sequence = alloca ptr, align 8
-  %block_timestamp = alloca i64, align 8
-  %block_number = alloca i64, align 8
+  %block_timestamp_value = alloca i64, align 8
+  %block_number_value = alloca i64, align 8
   %0 = call i64 @block_number_test()
-  store i64 %0, ptr %block_number, align 4
-  %1 = load i64, ptr %block_number, align 4
+  store i64 %0, ptr %block_number_value, align 4
+  %1 = load i64, ptr %block_number_value, align 4
   call void @prophet_printf(i64 %1, i64 3)
   %2 = call i64 @block_timestamp_test()
-  store i64 %2, ptr %block_timestamp, align 4
-  %3 = load i64, ptr %block_timestamp, align 4
+  store i64 %2, ptr %block_timestamp_value, align 4
+  %3 = load i64, ptr %block_timestamp_value, align 4
   call void @prophet_printf(i64 %3, i64 3)
   %4 = call ptr @sequence_address_test()
   store ptr %4, ptr %sequence, align 8
@@ -928,16 +928,16 @@ entry:
   %address_start = ptrtoint ptr %5 to i64
   call void @prophet_printf(i64 %address_start, i64 2)
   %6 = call i64 @transaction_version_test()
-  store i64 %6, ptr %tx_version, align 4
-  %7 = load i64, ptr %tx_version, align 4
+  store i64 %6, ptr %tx_version_value, align 4
+  %7 = load i64, ptr %tx_version_value, align 4
   call void @prophet_printf(i64 %7, i64 3)
   %8 = call i64 @chain_id_test()
-  store i64 %8, ptr %chain_id, align 4
-  %9 = load i64, ptr %chain_id, align 4
+  store i64 %8, ptr %chain_id_value, align 4
+  %9 = load i64, ptr %chain_id_value, align 4
   call void @prophet_printf(i64 %9, i64 3)
   %10 = call i64 @nonce_test()
-  store i64 %10, ptr %nonce, align 4
-  %11 = load i64, ptr %nonce, align 4
+  store i64 %10, ptr %nonce_value, align 4
+  %11 = load i64, ptr %nonce_value, align 4
   call void @prophet_printf(i64 %11, i64 3)
   %12 = call ptr @signautre_test()
   %fields_start = ptrtoint ptr %12 to i64
