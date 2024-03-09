@@ -888,28 +888,6 @@ impl Dot {
                 self.add_string_location(left, func, ns, node, String::from("left"));
                 self.add_string_location(right, func, ns, node, String::from("right"));
             }
-            Expression::StringConcat {
-                loc,
-                ty,
-                left,
-                right,
-            } => {
-                let node = self.add_node(
-                    Node::new(
-                        "string_concat",
-                        vec![
-                            format!("string concat {}", ty.to_string(ns)),
-                            ns.loc_to_string(loc),
-                        ],
-                    ),
-                    Some(parent),
-                    Some(parent_rel),
-                );
-
-                self.add_string_location(left, func, ns, node, String::from("left"));
-                self.add_string_location(right, func, ns, node, String::from("right"));
-            }
-
             Expression::Or { loc, left, right } => {
                 let labels = vec![String::from("logical or"), ns.loc_to_string(loc)];
                 let node = self.add_node(
