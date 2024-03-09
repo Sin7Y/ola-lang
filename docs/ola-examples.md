@@ -39,36 +39,39 @@ contract Fibonacci {
 
 ## Person
 
-The following shows a simple Person contract that contains a person structure, assigns a value to the person structure and reads the status of the person.
+The following shows a simple book contract that contains a book structure, assigns a value to the book structure and reads the status of the book.
 
 ```rust
 
-contract Person {
 
-    enum Sex {
-        Man,
-        Women
+contract BookExample {
+    struct Book {
+        u32 book_id;
+        string book_name;
+        string author;
     }
 
-    struct Person {
-        Sex s;
-        u32 age;
-        u32 id;
+    event BookCreated(u32 indexed id, string indexe name, string author);
+
+    fn createBook(u32 id, string name) -> (Book) {
+        Book myBook = Book({
+            book_name: name,
+            book_id: id,
+            author: "peter"
+        });
+        emit BookCreated(id, name, "peter");
+        return myBook;
     }
 
-    Person p;
-
-    fn newPerson(Sex s, u32 age, u32 id) {
-        p = Person(s, age, id);
+    fn getBookName(Book _book) -> (string) {
+        return _book.book_name;
     }
 
-    fn getPersonId() -> (u32) {
-        return p.id;
+    fn getBookId(Book _book) -> (u32) {
+        u32 b = _book.book_id + 1;
+        return b;
     }
 
-    fn getAge() -> (u32) {
-        return p.age;
-    }
 }
 
 ```

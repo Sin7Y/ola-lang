@@ -1,10 +1,11 @@
 ---
-description: Ola language Variables can have any name which does not start with a number.
+description: >-
+Ola language Variables can have any name which does not start with a number.
 ---
 
 # Variables
 
-### Identifier
+## Identifier
 
 Variables consist of numbers (`0-9`), ASCII uppercase and lowercase letters (`a-zA-Z`), underscores (`_`). Variables cannot start with a number, and cannot use
 
@@ -16,7 +17,7 @@ fn foo() {
 }
 ```
 
-### Declaration
+## Declaration
 
 Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time.
 
@@ -29,7 +30,7 @@ fn foo() {
 }
 ```
 
-### Scope
+## Scope
 
 For security reasons, variable definitions do not support Shadowing. If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
 
