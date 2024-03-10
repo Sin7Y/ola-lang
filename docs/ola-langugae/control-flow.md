@@ -8,7 +8,7 @@ Control conditional branch and select different branch programs to execute accor
 * Contains multiple branches of`if`and`else`,`if conditional_expression {statements} else {statements}`.
 
 ```rust
-fn foo(field a) -> field {
+fn foo(field a) -> (field) {
     
     // Similar to rust, the result of a conditional expression 
     // can be received directly by the variable
@@ -20,7 +20,7 @@ fn foo(field a) -> field {
 Note: Conditional statements support ternary conditional operators.
 
 ```rust
-fn foo(field a) -> field {
+fn foo(field a) -> (field) {
     field b = a + 1 == 2 ? 1 : 3;
     return b;
 }
@@ -39,9 +39,9 @@ The execution process is:
 * If the result is`false`,`for-loop`statement terminates. Sequential execution starts with the next`statement`.
 
 ```rust
-fn foo() -> u32 {
-    u32 res = 0u;
-    for (u32 i = 0u; i <= 10u; i++) {
+fn foo() -> (u32) {
+    u32 res = 0;
+    for (u32 i = 0; i <= 10; i++) {
         res = res + i;
     }
     return res;
