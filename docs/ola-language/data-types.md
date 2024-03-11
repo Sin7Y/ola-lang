@@ -1,4 +1,4 @@
-# Data Type
+# Data Types
 
 Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. Three basic types and multiple complex types are supported.
 
@@ -8,7 +8,7 @@ Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `ad
 
 ### **Integer Type**
 
-There are two types of integer types: `u32 `and `u256`,  All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
+There are two types of integer types: `u32` and `u256`, All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
 
 ```solidity
 u32 a = 2;
@@ -63,7 +63,7 @@ Ola supports a variety of complex types such as `Arrays`, `String`, `Fields` ,`S
 
 ### Arrays
 
-Ola supports fixed length and dynamic length array. 
+Ola supports fixed length and dynamic length array.
 
 Array elements are numbered from zero and are accessed using`[index]`for addressing.
 
@@ -71,7 +71,7 @@ Arrays are passed by reference. If you modify the array in another function, tho
 
 #### Fiexed Length Array
 
-Arrays can be declared by adding [length] to the type name, where length is a constant expression. Any type can be made into an array, including arrays themselves (also known as arrays of arrays). For example:
+Arrays can be declared by adding \[length] to the type name, where length is a constant expression. Any type can be made into an array, including arrays themselves (also known as arrays of arrays). For example:
 
 ```solidity
 contract foo {
@@ -92,7 +92,11 @@ contract foo {
 }
 ```
 
-Note the length of the array can be read with the `.length` member. The length is readonly. Arrays can be initialized with an array literal. For example:
+{% hint style="info" %}
+The length of the array can be read with the `.length` member. The length is readonly. Arrays can be initialized with an array literal.&#x20;
+{% endhint %}
+
+For example:
 
 ```
   fn primenumber(u32 n) -> (u32) {
@@ -126,7 +130,7 @@ contract dynamicarray {
 
 Storage dynamic memory arrays do not have to be allocated. By default, they have a length of zero and elements can be added and removed using the `push()` and `pop()` methods.
 
-```
+```solidity
 contract s {
     u32[] a;
 
@@ -151,7 +155,7 @@ Calling the method `pop()` on an empty array is an error and contract execution 
 
 Depending on the array element, `pop()` can be costly. It has to first copy the element to memory, and then clear storage.
 
-####  Array Slicing
+#### Array Slicing
 
 Similar to rust, arrays can be created by slicing an array to copy the generated array,`[from_index..to_index]`。
 
@@ -172,7 +176,9 @@ assert(b.length == 10);
 
 `String` can be initialized with a string literal Strings can be concatenated and compared equal, no other operations are allowed on strings. string types can be converted to fields types and vice versa.
 
-Note: The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
+{% hint style="info" %}
+&#x20;The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
+{% endhint %}
 
 ```solidity
 fn test1(string s) -> (bool) {
@@ -257,11 +263,13 @@ contract deck {
 }
 ```
 
-Note:  that struct variables are references. When contract struct variables or normal struct variables are passed around, just the memory address or storage slot is passed around internally. This makes it very cheap, but it does mean that if a called function modifies the struct, then this is visible in the caller as well.
+{% hint style="info" %}
+Struct variables are references. When contract struct variables or normal struct variables are passed around, just the memory address or storage slot is passed around internally. This makes it very cheap, but it does mean that if a called function modifies the struct, then this is visible in the caller as well.
+{% endhint %}
 
 ### **Enumerations**
 
-The enumeration type is defined by the keyword `enum`.  enums types need to have a definition which lists the possible values it can hold. An enum has a type name, and a list of unique values. Enum types can used in functions, but the value is represented as a `u32` in the ABI. Enum are limited to u32 values.
+The enumeration type is defined by the keyword `enum`. enums types need to have a definition which lists the possible values it can hold. An enum has a type name, and a list of unique values. Enum types can used in functions, but the value is represented as a `u32` in the ABI. Enum are limited to u32 values.
 
 ```solidity
 contract enum_example {
@@ -281,7 +289,7 @@ contract enum_example {
 }
 ```
 
-If enum is declared in another contract, the type can be referred to with contractname.typename. The individual enum values are `contractname.typename.value`. 
+If enum is declared in another contract, the type can be referred to with contractname.typename. The individual enum values are `contractname.typename.value`.
 
 ### **Mapping**
 
@@ -321,9 +329,11 @@ contract b {
 }
 ```
 
-Tips: When assigning multiple members in a struct in a mapping, it is better to create a storage variable as a reference to the struct, and then assign to the reference. The `add()` function above can be optimized like the following. 
+{% hint style="info" %}
+When assigning multiple members in a struct in a mapping, it is better to create a storage variable as a reference to the struct, and then assign to the reference. The `add()` function above can be optimized like the following.
+{% endhint %}
 
-```
+```solidity
 fn add(string name, address addr) {
     // assigning to a storage variable creates a reference
     user storage s = users[name];
@@ -334,4 +344,6 @@ fn add(string name, address addr) {
 
 If you access a non-existing field on a mapping, all the fields will read as zero. It is common practise to have a boolean field called `exists`. Since mappings are not iterable, it is not possible to `delete` an entire mapping itself, but individual mapping entries can be deleted.
 
-Note:  Solidity on Ethereum and on Polkadot takes the keccak 256 hash of the key and the storage slot, and simply uses that to find the entry. Ola used the zk-friendly posiedon hash to calculate solt.
+{% hint style="info" %}
+Solidity on Ethereum and on Polkadot takes the keccak 256 hash of the key and the storage slot, and simply uses that to find the entry. Ola used the zk-friendly posiedon hash to calculate solt.
+{% endhint %}

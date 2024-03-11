@@ -1,4 +1,4 @@
-# Interfaces and libraries
+# Interfaces and Librariese
 
 ## Interfaces
 
@@ -22,8 +22,8 @@ contract Ferqu {
 }
 ```
 
-- No contract storage variables can exist (however constants are allowed)
-- No function can have a body or implementation
+* No contract storage variables can exist (however constants are allowed)
+* No function can have a body or implementation
 
 ## Libraries
 
@@ -53,4 +53,6 @@ contract ContractB {
 
 ```
 
-Note: When using the Ethereum Foundation Solidity compiler, libraries are a special contract type and are called using delegatecall.Ola  statically links the library calls into your contract code. This generates larger contract code, however it reduces the call overhead and make it possible to do compiler optimizations across library and contract code.
+{% hint style="info" %}
+When using the Ethereum Foundation Solidity compiler, libraries are a special contract type and are called using delegatecall.Ola statically links the library calls into your contract code. This generates larger contract code, however it reduces the call overhead and make it possible to do compiler optimizations across library and contract code.
+{% endhint %}
