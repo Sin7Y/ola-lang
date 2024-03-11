@@ -7,7 +7,7 @@ Control conditional branch and select different branch programs to execute accor
 * Contains only single branch`if`,`if conditional_expression {statements}`。
 * Contains multiple branches of`if`and`else`,`if conditional_expression {statements} else {statements}`.
 
-```rust
+```solidity
 fn foo(field a) -> (field) {
     
     // Similar to rust, the result of a conditional expression 
@@ -19,7 +19,7 @@ fn foo(field a) -> (field) {
 
 Note: Conditional statements support ternary conditional operators.
 
-```rust
+```solidity
 fn foo(field a) -> (field) {
     field b = a + 1 == 2 ? 1 : 3;
     return b;
@@ -38,7 +38,7 @@ The execution process is:
 * Calculate the`conditional_expression`.If the result is`true`,the loop body`statements`are executed, followed by the`loop_expression`.
 * If the result is`false`,`for-loop`statement terminates. Sequential execution starts with the next`statement`.
 
-```rust
+```solidity
 fn foo() -> (u32) {
     u32 res = 0;
     for (u32 i = 0; i <= 10; i++) {
@@ -52,7 +52,7 @@ fn foo() -> (u32) {
 
 Repeated execution of a block can be achieved using while. It syntax is similar to if, however the block is repeatedly executed until the condition evaluates to false. If the condition is not true on first execution, then the loop body is never executed:
 
-```rust
+```solidity
 contract Foo {
     fn foo(u32 n) {
         while (n >= 10) {
@@ -64,7 +64,7 @@ contract Foo {
 
 It is possible to terminate execution of the while statement by using the `break` statement. Execution will continue to next statement in the function. Alternatively, `continue` will cease execution of the block, but repeat the loop if the condition still holds:
 
-```rust
+```solidity
 
   fn bar(u32 n) -> (bool) {
         return false;
@@ -97,7 +97,7 @@ It is possible to terminate execution of the while statement by using the `break
 
 A `do { ... } while (condition);` statement is much like the `while (condition) { ... }` except that the condition is evaluated after executing the block. This means that the block is always executed at least once, which is not true for `while` statements:
 
-```rust
+```solidity
 fn foo(u32 n) {
         do {
             n--;

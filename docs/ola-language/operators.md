@@ -1,10 +1,6 @@
----
-description: >-
-Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics.
----
-
-
 # Operators
+
+Ola Provides operators such as arithmetic, logic, relational, bits, and so on. Except for the arithmetic operation acting on numerical values, which is Mod p, all others are standard semantics.
 
 ## Arithmetic operators
 

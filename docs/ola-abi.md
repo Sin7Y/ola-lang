@@ -4,7 +4,7 @@ In order to interact programmatically with compiled ola programs, Ola language s
 
 To illustrate this, we'll use the following example program:
 
-```rust
+```solidity
 
 contract BookExample {
     struct Book {

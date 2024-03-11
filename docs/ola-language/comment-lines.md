@@ -6,7 +6,7 @@ ingle-line comments start with `//` and multi-line paragraph comments start with
 
 Single line using`//`:
 
-```rust
+```solidity
 // Using this, we can comment a line.
 fn main(field a) -> field {
     field b = a + 1 == 2 ? 1 : 3;
@@ -16,7 +16,7 @@ fn main(field a) -> field {
 
 Multi-line paragraph comments using`/*` 及 `*/`:
 
-```rust
+```solidity
 fn sum(u32 a, u32 b) -> u32 {
 /* 
  *  Unlike rust, the return value of 

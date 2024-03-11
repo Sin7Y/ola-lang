@@ -6,7 +6,7 @@ Ola contracts allow users to write complex business logic that will be deployed 
 
 The following example shows a recursive and non-recursive ola smart contract implementation of Fibonacci numbers.
 
-```rust
+```solidity
 
 contract Fibonacci {
 
@@ -41,7 +41,7 @@ contract Fibonacci {
 
 The following shows a simple book contract that contains a book structure, assigns a value to the book structure and reads the status of the book.
 
-```rust
+```solidity
 
 
 contract BookExample {
@@ -82,7 +82,7 @@ The following example demonstrates the usage of cross-contract invocation.
 
 **Caller contract**
 
-```rust
+```solidity
 
 contract Caller {
     u32 num;
@@ -108,7 +108,7 @@ contract Caller {
 
 **Callee contract**
 
-```rust
+```solidity
 contract Callee {
     u32 num;
 
@@ -131,7 +131,7 @@ An example of a multi-file contract is shown below.
 
 **Contract RectangularCalculator**
 
-```rust
+```solidity
 
 contract RectangularCalculator {
   
@@ -147,7 +147,7 @@ contract RectangularCalculator {
 
 **Contract ShapeCalculator**
 
-```rust
+```solidity
 
 contract SquareCalculator {
 
@@ -162,7 +162,7 @@ contract SquareCalculator {
 
 **Contract Calculator**
 
-```rust
+```solidity
 
 import "./RectangularCalculator.ola";
 import "./SquareCalculator.ola";

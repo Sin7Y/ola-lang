@@ -10,7 +10,7 @@ If the`fn`keyword is used, the function name must be explicitly provided. parame
 
 The basic syntax is:
 
-```rust
+```solidity
 fn function_name(parameter_declaration_list) -> return_parameter_list {
     // compound-statement
     statements
@@ -20,7 +20,7 @@ fn function_name(parameter_declaration_list) -> return_parameter_list {
 
 e.g.:
 
-```rust
+```solidity
 fn foo() -> u32 {
     return sum(1u, 2u)
 }

@@ -4,7 +4,7 @@ Ola supports the `prophet` function, which utilizes prophet features to make pre
 
 The following demonstrates the usage of the `u32_sqrt` prophet function supported by ola.
 
-```rust
+```solidity
   fn sqrt_test(u32 n) -> (u32) {
       u32 b = u32_sqrt(n);
       return b;
@@ -13,7 +13,7 @@ The following demonstrates the usage of the `u32_sqrt` prophet function supporte
 
 We can also use the Ola language to implement a simplified version of the sqrt function.
 
-```rust
+```solidity
   // native approach
   fn sqrt_test(u32 a) -> (u32) {
       u32 result = 0;

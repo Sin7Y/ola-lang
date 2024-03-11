@@ -1,15 +1,13 @@
----
-description: >-
-Ola language Variables can have any name which does not start with a number.
----
 
 # Variables
+
+Ola language Variables can have any name which does not start with a number.
 
 ## Identifier
 
 Variables consist of numbers (`0-9`), ASCII uppercase and lowercase letters (`a-zA-Z`), underscores (`_`). Variables cannot start with a number, and cannot use
 
-```rust
+```solidity
 fn foo() {
     // declare and ine `_variable`
     u32 _aBC123 = 2;   // identifiers start with "_"
@@ -21,7 +19,7 @@ fn foo() {
 
 Variables need to be declared in order to be used. To avoid variables being undefined, it needs to be initialized at declaration time.
 
-```rust
+```solidity
 fn foo() {
     // declare and define `a`
     u32 a = 2;
@@ -34,7 +32,7 @@ fn foo() {
 
 For security reasons, variable definitions do not support Shadowing. If you need multiple adjacent variables with similar logical meanings, use a variable or type suffix.
 
-```rust
+```solidity
 fn foo() {
     u32 a = 5;
     {        
@@ -48,7 +46,7 @@ fn foo() {
 
 Variables differ from constants in that the scope of a variable is limited to the current function itself and global variables are not supported.
 
-```rust
+```solidity
 fn foo() -> u32 {
     // return a; <- not allowed
     return 2;
@@ -62,7 +60,7 @@ fn bar() -> u32 {
 
 Variables in a `For-Loop` loop are scoped only inside the loop.
 
-```rust
+```solidity
 fn foo() -> u32 {
     u32 a = 0;
     for (u32 i = 0; i < 5; i++) {
