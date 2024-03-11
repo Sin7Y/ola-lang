@@ -51,7 +51,7 @@ contract BookExample {
         string author;
     }
 
-    event BookCreated(u32 indexed id, string indexe name, string author);
+    event BookCreated(u32 indexed id, string indexed name, string author);
 
     fn createBook(u32 id, string name) -> (Book) {
         Book myBook = Book({
@@ -123,7 +123,7 @@ contract Callee {
 
 ```
 
-## Multiple files&#x20;
+## Multiple files
 
 For better project organisation and clearer logic, it is common to split the contents of a file into multiple files. ola language supports the import of another contract within a contract through the `import` keyword.
 

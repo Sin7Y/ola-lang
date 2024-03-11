@@ -79,16 +79,12 @@ contract A {
 
 External functions can also be called using `delegatecall`. The difference to a regular `call` is that `delegatecall` executes the callee code in the context of the caller:
 
-- The callee will read from and write to the caller storage.
-- `caller address` does not change; it stays the same as in the callee.
+* The callee will read from and write to the caller storage.
+* `caller address` does not change; it stays the same as in the callee.
 
 ```solidity
-fn delegate(
-    address callee,
-    fields input
-) -> (fields result) {
+fn delegate(address callee, fields input) -> (fields result) {
     result = callee.delegatecall(input);
-		return result;
+    return result;
 }
 ```
-
