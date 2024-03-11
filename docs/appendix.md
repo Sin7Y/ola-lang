@@ -36,7 +36,7 @@ The following list shows the keywords and reserved words for ola-lang.
 
 ## Reservation keywords
 
-```rust
+```solidity
 pub
 impl
 loop

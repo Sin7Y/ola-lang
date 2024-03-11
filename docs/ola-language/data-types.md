@@ -1,9 +1,3 @@
----
-description: >-
-The Ola language references the syntax implementations of Solidity and Rust, removing some zk-unfriendly operations at the language level, and adding some built-in functions and data types, allowing developers to achieve efficient zkp proofs with minimal changes to their original code.
-
----
-
 # Data Type
 
 Ola is a statically typed language, and variable types must be known at compile time to avoid most runtime exceptions. Three basic types and multiple complex types are supported.
@@ -16,7 +10,7 @@ Ola supports multiple basic types, including `integer` ,`field` , `boolean`, `ad
 
 There are two types of integer types: `u32 `and `u256`,  All types are built on the basis of the `field` type. Ola provides the above-mentioned basic libs of various integer types based on the field implementation, which is convenient for developers to write complex logic. Note: The literal quantity of a number is composed of three parts: base character prefix, corresponding number, and type suffix. The default is a decimal field type literal.
 
-```rust
+```solidity
 u32 a = 2;
 u256 b = 1000; 
 ```
@@ -27,7 +21,7 @@ Ola supports the `field` type for elements of the base field of the elliptic cur
 
 The `filed` type is a goldilocks field number, with a maximum value of `2^64 - 2^32 + 1`.
 
-```rust
+```solidity
 field a = 32;
 field b = 64;
 field c = a + b;
@@ -39,7 +33,7 @@ The `filed` type has limited operations because it is based on elliptic curves i
 
 Bool indicates that the value of `field` is `0` or `1`, which is declared using the keyword `bool`.
 
-```rust
+```solidity
 bool a = true;
 bool b = false;
 ```
@@ -48,7 +42,7 @@ bool b = false;
 
 The address type is an array composed of 4 fields. The address is calculated by Poseidon hash on certain inputs, and the first 4 fields of the hash return value are used as the address.
 
-```rust
+```solidity
 address addr = address(0x0000000001);
 address bar = 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203address
 ```
@@ -57,7 +51,7 @@ address bar = 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203
 
 Hash and address types are similar, both are arrays of 4 field elements.
 
-```rust
+```solidity
  string a = "helloworld";
  hash h = poseidon_hash(a);
  assert(h == 0x01CAA2EA73DF084A017D8B4BF2B046FB96F6BA897E44E3A21A29675BA2872203hash);
@@ -161,7 +155,7 @@ Depending on the array element, `pop()` can be costly. It has to first copy the 
 
 Similar to rust, arrays can be created by slicing an array to copy the generated array,`[from_index..to_index]`。
 
-```rust
+```solidity
 field[5] a = [1, 2, 3, 4, 5];
 field[3] b = a[2:4];   // initialize an array copying a slice from `a`
 // array b is [3, 4, 5]
@@ -169,7 +163,7 @@ field[3] b = a[2:4];   // initialize an array copying a slice from `a`
 
 Memory dynamic arrays must be allocated with `new` before they can be used. The `new` expression requires a single unsigned integer argument. The length can be read using `length` member variable.
 
-```rust
+```solidity
 u32[] b = new u32[](10);
 assert(b.length == 10);
 ```
@@ -180,7 +174,7 @@ assert(b.length == 10);
 
 Note: The string type currently occupies one field for each byte in the underlying virtual machine, and there may be optimizations for this in the future.
 
-```rust
+```solidity
 fn test1(string s) -> (bool) {
   string str = string_concat("Hello", "World!");
   return (str == "HelloWorld!");
@@ -193,7 +187,7 @@ Fields is a dynamic array representation of the filed type. fields can be concat
 
 Fields types can be converted to string types and vice versa.
 
-```rust
+```solidity
 fn fields_concat_test() -> (fields){
    string a = "ola";
    string b = "vm";
@@ -215,7 +209,7 @@ A combination of multiple data types to form a new custom combination type. Stru
 
 A struct has one or more fields, each with a unique name. Structs can be function arguments and return values. Structs can contain other structs. There is a struct literal syntax to create a struct with all the fields set.
 
-```rust
+```solidity
 contract deck {
     enum suit {
         club,
@@ -269,7 +263,7 @@ Note:  that struct variables are references. When contract struct variables or n
 
 The enumeration type is defined by the keyword `enum`.  enums types need to have a definition which lists the possible values it can hold. An enum has a type name, and a list of unique values. Enum types can used in functions, but the value is represented as a `u32` in the ABI. Enum are limited to u32 values.
 
-```rust
+```solidity
 contract enum_example {
     enum Weekday {
         Monday,
@@ -299,7 +293,7 @@ Mappings are a dictionary type, or associative arrays. Mappings have a number of
 
 Mappings are declared with `mapping(keytype => valuetype)`, for example:
 
-```rust
+```solidity
 contract b {
     struct user {
         bool exists;

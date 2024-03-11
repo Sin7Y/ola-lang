@@ -198,7 +198,7 @@ The extension can be found on the [Visual Studio Marketplace](https://marketplac
 
 After configuring the above environment, we can happily write Ola smart contracts named fib.ola on vscode with ola extension. The following is an example of a Fibonacci sequence.
 
-```rust
+```solidity
 contract Fibonacci {
 
     fn fib_recursive(u32 n) -> (u32) {
