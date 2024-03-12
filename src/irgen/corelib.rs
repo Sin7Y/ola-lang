@@ -8,7 +8,9 @@ use super::memory::{
     define_field_mem_compare, define_fields_concat, define_heap_malloc, define_mem_compare,
     define_memcpy, define_split_field, define_vector_new,
 };
-use super::u256_op::{define_u256_add, define_u256_sub};
+use super::u256_op::{
+    define_u256_add, define_u256_bitwise, define_u256_bitwise_not, define_u256_sub,
+};
 use super::u32_op::{define_u32_div_mod, define_u32_power, define_u32_sqrt};
 
 static PROPHET_FUNCTIONS: Lazy<[&str; 15]> = Lazy::new(|| {
@@ -39,7 +41,7 @@ static BUILTIN_FUNCTIONS: Lazy<[&str; 3]> = Lazy::new(|| {
     ]
 });
 
-static CORE_LIB_FUNCTIONS: Lazy<[&str; 18]> = Lazy::new(|| {
+static CORE_LIB_FUNCTIONS: Lazy<[&str; 22]> = Lazy::new(|| {
     [
         "heap_malloc",
         "vector_new",
@@ -59,6 +61,10 @@ static CORE_LIB_FUNCTIONS: Lazy<[&str; 18]> = Lazy::new(|| {
         "u32_power",
         "u256_add",
         "u256_sub",
+        "u256_bitwise_and",
+        "u256_bitwise_or",
+        "u256_bitwise_xor",
+        "u256_bitwise_not",
     ]
 });
 
@@ -318,13 +324,39 @@ fn define_core_lib(bin: &mut Binary) {
             let func = bin.module.add_function(p, ftype, None);
             define_u32_power(bin, func);
         }
-        "u256_add" | "u256_sub" => {
+        "u256_add"
+        | "u256_sub"
+        | "u256_bitwise_and"
+        | "u256_bitwise_not"
+        | "u256_bitwise_or"
+        | "u256_bitwise_xor"
+        | "u256_div"
+        | "u256_mod"
+        | "u256_mul"
+        | "u256_power"
+        | "u256_shift_left"
+        | "
+        u256_shift_right" => {
             let u256_type = bin.context.i64_type().ptr_type(AddressSpace::default());
-            let ftype = u256_type.fn_type(&[u256_type.into(), u256_type.into()], false);
+            let mut param_types = vec![u256_type.into()];
+            if *p != "u256_bitwise_not" {
+                param_types.push(u256_type.into())
+            }
+            let ftype = u256_type.fn_type(&param_types, false);
             let func = bin.module.add_function(p, ftype, None);
             match *p {
                 "u256_add" => define_u256_add(bin, func),
                 "u256_sub" => define_u256_sub(bin, func),
+                "u256_bitwise_and" => define_u256_bitwise(bin, func, "and"),
+                "u256_bitwise_or" => define_u256_bitwise(bin, func, "or"),
+                "u256_bitwise_xor" => define_u256_bitwise(bin, func, "xor"),
+                "u256_bitwise_not" => define_u256_bitwise_not(bin, func),
+                // "u256_mul" => define_u256_mul(bin, func),
+                // "u256_div" => define_u256_div(bin, func),
+                // "u256_mod" => define_u256_mod(bin, func),
+                // "u256_power" => define_u256_power(bin, func),
+                // "u256_shift_left" => define_u256_shift_left(bin, func),
+                // "u256_shift_right" => define_u256_shift_right(bin, func),
                 _ => unreachable!(),
             };
         }

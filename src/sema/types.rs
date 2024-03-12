@@ -1313,7 +1313,6 @@ impl Type {
             self,
             Type::Array(..)
                 | Type::Uint(256)
-                | Type::Array(..)
                 | Type::DynamicBytes
                 | Type::String
                 | Type::Struct(..)
