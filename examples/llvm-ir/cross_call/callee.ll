@@ -459,6 +459,20 @@ exit:                                             ; preds = %loop
 
 define ptr @u256_add(ptr %0, ptr %1) {
 entry:
+  %field_low18 = alloca i64, align 8
+  %field_high17 = alloca i64, align 8
+  %field_low15 = alloca i64, align 8
+  %field_high14 = alloca i64, align 8
+  %field_low12 = alloca i64, align 8
+  %field_high11 = alloca i64, align 8
+  %field_low9 = alloca i64, align 8
+  %field_high8 = alloca i64, align 8
+  %field_low6 = alloca i64, align 8
+  %field_high5 = alloca i64, align 8
+  %field_low3 = alloca i64, align 8
+  %field_high2 = alloca i64, align 8
+  %field_low = alloca i64, align 8
+  %field_high = alloca i64, align 8
   %2 = call ptr @heap_malloc(i64 8)
   %3 = getelementptr i64, ptr %0, i64 7
   %4 = load i64, ptr %3, align 4
@@ -466,93 +480,426 @@ entry:
   %6 = load i64, ptr %5, align 4
   %7 = add i64 %4, %6
   %sum_with_carry = add i64 %7, 0
-  %result = and i64 %sum_with_carry, 4294967295
-  %carry = icmp ugt i64 %sum_with_carry, 4294967295
-  %8 = zext i1 %carry to i64
-  %9 = getelementptr i64, ptr %2, i64 7
-  store i64 %result, ptr %9, align 4
-  %10 = getelementptr i64, ptr %0, i64 6
-  %11 = load i64, ptr %10, align 4
-  %12 = getelementptr i64, ptr %1, i64 6
-  %13 = load i64, ptr %12, align 4
-  %14 = add i64 %11, %13
-  %sum_with_carry1 = add i64 %14, %8
-  %result2 = and i64 %sum_with_carry1, 4294967295
-  %carry3 = icmp ugt i64 %sum_with_carry1, 4294967295
-  %15 = zext i1 %carry3 to i64
-  %16 = getelementptr i64, ptr %2, i64 6
-  store i64 %result2, ptr %16, align 4
-  %17 = getelementptr i64, ptr %0, i64 5
-  %18 = load i64, ptr %17, align 4
-  %19 = getelementptr i64, ptr %1, i64 5
+  call void @split_field(i64 %sum_with_carry, ptr %field_high, ptr %field_low)
+  %8 = load i64, ptr %field_high, align 4
+  %9 = load i64, ptr %field_low, align 4
+  %10 = getelementptr i64, ptr %2, i64 7
+  store i64 %9, ptr %10, align 4
+  %11 = getelementptr i64, ptr %0, i64 6
+  %12 = load i64, ptr %11, align 4
+  %13 = getelementptr i64, ptr %1, i64 6
+  %14 = load i64, ptr %13, align 4
+  %15 = add i64 %12, %14
+  %sum_with_carry1 = add i64 %15, %8
+  call void @split_field(i64 %sum_with_carry1, ptr %field_high2, ptr %field_low3)
+  %16 = load i64, ptr %field_high2, align 4
+  %17 = load i64, ptr %field_low3, align 4
+  %18 = getelementptr i64, ptr %2, i64 6
+  store i64 %17, ptr %18, align 4
+  %19 = getelementptr i64, ptr %0, i64 5
   %20 = load i64, ptr %19, align 4
-  %21 = add i64 %18, %20
-  %sum_with_carry4 = add i64 %21, %15
-  %result5 = and i64 %sum_with_carry4, 4294967295
-  %carry6 = icmp ugt i64 %sum_with_carry4, 4294967295
-  %22 = zext i1 %carry6 to i64
-  %23 = getelementptr i64, ptr %2, i64 5
-  store i64 %result5, ptr %23, align 4
-  %24 = getelementptr i64, ptr %0, i64 4
-  %25 = load i64, ptr %24, align 4
-  %26 = getelementptr i64, ptr %1, i64 4
-  %27 = load i64, ptr %26, align 4
-  %28 = add i64 %25, %27
-  %sum_with_carry7 = add i64 %28, %22
-  %result8 = and i64 %sum_with_carry7, 4294967295
-  %carry9 = icmp ugt i64 %sum_with_carry7, 4294967295
-  %29 = zext i1 %carry9 to i64
-  %30 = getelementptr i64, ptr %2, i64 4
-  store i64 %result8, ptr %30, align 4
-  %31 = getelementptr i64, ptr %0, i64 3
-  %32 = load i64, ptr %31, align 4
-  %33 = getelementptr i64, ptr %1, i64 3
-  %34 = load i64, ptr %33, align 4
-  %35 = add i64 %32, %34
-  %sum_with_carry10 = add i64 %35, %29
-  %result11 = and i64 %sum_with_carry10, 4294967295
-  %carry12 = icmp ugt i64 %sum_with_carry10, 4294967295
-  %36 = zext i1 %carry12 to i64
-  %37 = getelementptr i64, ptr %2, i64 3
-  store i64 %result11, ptr %37, align 4
-  %38 = getelementptr i64, ptr %0, i64 2
-  %39 = load i64, ptr %38, align 4
-  %40 = getelementptr i64, ptr %1, i64 2
-  %41 = load i64, ptr %40, align 4
-  %42 = add i64 %39, %41
-  %sum_with_carry13 = add i64 %42, %36
-  %result14 = and i64 %sum_with_carry13, 4294967295
-  %carry15 = icmp ugt i64 %sum_with_carry13, 4294967295
-  %43 = zext i1 %carry15 to i64
-  %44 = getelementptr i64, ptr %2, i64 2
-  store i64 %result14, ptr %44, align 4
-  %45 = getelementptr i64, ptr %0, i64 1
+  %21 = getelementptr i64, ptr %1, i64 5
+  %22 = load i64, ptr %21, align 4
+  %23 = add i64 %20, %22
+  %sum_with_carry4 = add i64 %23, %16
+  call void @split_field(i64 %sum_with_carry4, ptr %field_high5, ptr %field_low6)
+  %24 = load i64, ptr %field_high5, align 4
+  %25 = load i64, ptr %field_low6, align 4
+  %26 = getelementptr i64, ptr %2, i64 5
+  store i64 %25, ptr %26, align 4
+  %27 = getelementptr i64, ptr %0, i64 4
+  %28 = load i64, ptr %27, align 4
+  %29 = getelementptr i64, ptr %1, i64 4
+  %30 = load i64, ptr %29, align 4
+  %31 = add i64 %28, %30
+  %sum_with_carry7 = add i64 %31, %24
+  call void @split_field(i64 %sum_with_carry7, ptr %field_high8, ptr %field_low9)
+  %32 = load i64, ptr %field_high8, align 4
+  %33 = load i64, ptr %field_low9, align 4
+  %34 = getelementptr i64, ptr %2, i64 4
+  store i64 %33, ptr %34, align 4
+  %35 = getelementptr i64, ptr %0, i64 3
+  %36 = load i64, ptr %35, align 4
+  %37 = getelementptr i64, ptr %1, i64 3
+  %38 = load i64, ptr %37, align 4
+  %39 = add i64 %36, %38
+  %sum_with_carry10 = add i64 %39, %32
+  call void @split_field(i64 %sum_with_carry10, ptr %field_high11, ptr %field_low12)
+  %40 = load i64, ptr %field_high11, align 4
+  %41 = load i64, ptr %field_low12, align 4
+  %42 = getelementptr i64, ptr %2, i64 3
+  store i64 %41, ptr %42, align 4
+  %43 = getelementptr i64, ptr %0, i64 2
+  %44 = load i64, ptr %43, align 4
+  %45 = getelementptr i64, ptr %1, i64 2
   %46 = load i64, ptr %45, align 4
-  %47 = getelementptr i64, ptr %1, i64 1
-  %48 = load i64, ptr %47, align 4
-  %49 = add i64 %46, %48
-  %sum_with_carry16 = add i64 %49, %43
-  %result17 = and i64 %sum_with_carry16, 4294967295
-  %carry18 = icmp ugt i64 %sum_with_carry16, 4294967295
-  %50 = zext i1 %carry18 to i64
-  %51 = getelementptr i64, ptr %2, i64 1
-  store i64 %result17, ptr %51, align 4
-  %52 = getelementptr i64, ptr %0, i64 0
-  %53 = load i64, ptr %52, align 4
-  %54 = getelementptr i64, ptr %1, i64 0
-  %55 = load i64, ptr %54, align 4
-  %56 = add i64 %53, %55
-  %sum_with_carry19 = add i64 %56, %50
+  %47 = add i64 %44, %46
+  %sum_with_carry13 = add i64 %47, %40
+  call void @split_field(i64 %sum_with_carry13, ptr %field_high14, ptr %field_low15)
+  %48 = load i64, ptr %field_high14, align 4
+  %49 = load i64, ptr %field_low15, align 4
+  %50 = getelementptr i64, ptr %2, i64 2
+  store i64 %49, ptr %50, align 4
+  %51 = getelementptr i64, ptr %0, i64 1
+  %52 = load i64, ptr %51, align 4
+  %53 = getelementptr i64, ptr %1, i64 1
+  %54 = load i64, ptr %53, align 4
+  %55 = add i64 %52, %54
+  %sum_with_carry16 = add i64 %55, %48
+  call void @split_field(i64 %sum_with_carry16, ptr %field_high17, ptr %field_low18)
+  %56 = load i64, ptr %field_high17, align 4
+  %57 = load i64, ptr %field_low18, align 4
+  %58 = getelementptr i64, ptr %2, i64 1
+  store i64 %57, ptr %58, align 4
+  %59 = getelementptr i64, ptr %0, i64 0
+  %60 = load i64, ptr %59, align 4
+  %61 = getelementptr i64, ptr %1, i64 0
+  %62 = load i64, ptr %61, align 4
+  %63 = add i64 %60, %62
+  %sum_with_carry19 = add i64 %63, %56
   call void @builtin_range_check(i64 %sum_with_carry19)
-  %result20 = and i64 %sum_with_carry19, 4294967295
-  %carry21 = icmp ugt i64 %sum_with_carry19, 4294967295
-  %57 = zext i1 %carry21 to i64
-  %58 = getelementptr i64, ptr %2, i64 0
-  store i64 %result20, ptr %58, align 4
+  %64 = getelementptr i64, ptr %2, i64 0
+  store i64 %sum_with_carry19, ptr %64, align 4
   ret ptr %2
 }
 
-declare ptr @u256_sub(ptr, ptr)
+define ptr @u256_sub(ptr %0, ptr %1) {
+entry:
+  %2 = call ptr @heap_malloc(i64 8)
+  %3 = getelementptr i64, ptr %0, i64 7
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr i64, ptr %1, i64 7
+  %6 = load i64, ptr %5, align 4
+  %borrow = icmp ugt i64 %6, %4
+  %7 = zext i1 %borrow to i64
+  %8 = mul i64 %7, 4294967296
+  %9 = add i64 %4, %8
+  %10 = sub i64 %9, %6
+  %11 = getelementptr i64, ptr %2, i64 7
+  store i64 %10, ptr %11, align 4
+  %12 = getelementptr i64, ptr %0, i64 6
+  %13 = load i64, ptr %12, align 4
+  %14 = getelementptr i64, ptr %1, i64 6
+  %15 = load i64, ptr %14, align 4
+  %16 = sub i64 %13, %7
+  %borrow1 = icmp ugt i64 %15, %16
+  %17 = zext i1 %borrow1 to i64
+  %18 = mul i64 %17, 4294967296
+  %19 = add i64 %16, %18
+  %20 = sub i64 %19, %15
+  %21 = getelementptr i64, ptr %2, i64 6
+  store i64 %20, ptr %21, align 4
+  %22 = getelementptr i64, ptr %0, i64 5
+  %23 = load i64, ptr %22, align 4
+  %24 = getelementptr i64, ptr %1, i64 5
+  %25 = load i64, ptr %24, align 4
+  %26 = sub i64 %23, %17
+  %borrow2 = icmp ugt i64 %25, %26
+  %27 = zext i1 %borrow2 to i64
+  %28 = mul i64 %27, 4294967296
+  %29 = add i64 %26, %28
+  %30 = sub i64 %29, %25
+  %31 = getelementptr i64, ptr %2, i64 5
+  store i64 %30, ptr %31, align 4
+  %32 = getelementptr i64, ptr %0, i64 4
+  %33 = load i64, ptr %32, align 4
+  %34 = getelementptr i64, ptr %1, i64 4
+  %35 = load i64, ptr %34, align 4
+  %36 = sub i64 %33, %27
+  %borrow3 = icmp ugt i64 %35, %36
+  %37 = zext i1 %borrow3 to i64
+  %38 = mul i64 %37, 4294967296
+  %39 = add i64 %36, %38
+  %40 = sub i64 %39, %35
+  %41 = getelementptr i64, ptr %2, i64 4
+  store i64 %40, ptr %41, align 4
+  %42 = getelementptr i64, ptr %0, i64 3
+  %43 = load i64, ptr %42, align 4
+  %44 = getelementptr i64, ptr %1, i64 3
+  %45 = load i64, ptr %44, align 4
+  %46 = sub i64 %43, %37
+  %borrow4 = icmp ugt i64 %45, %46
+  %47 = zext i1 %borrow4 to i64
+  %48 = mul i64 %47, 4294967296
+  %49 = add i64 %46, %48
+  %50 = sub i64 %49, %45
+  %51 = getelementptr i64, ptr %2, i64 3
+  store i64 %50, ptr %51, align 4
+  %52 = getelementptr i64, ptr %0, i64 2
+  %53 = load i64, ptr %52, align 4
+  %54 = getelementptr i64, ptr %1, i64 2
+  %55 = load i64, ptr %54, align 4
+  %56 = sub i64 %53, %47
+  %borrow5 = icmp ugt i64 %55, %56
+  %57 = zext i1 %borrow5 to i64
+  %58 = mul i64 %57, 4294967296
+  %59 = add i64 %56, %58
+  %60 = sub i64 %59, %55
+  %61 = getelementptr i64, ptr %2, i64 2
+  store i64 %60, ptr %61, align 4
+  %62 = getelementptr i64, ptr %0, i64 1
+  %63 = load i64, ptr %62, align 4
+  %64 = getelementptr i64, ptr %1, i64 1
+  %65 = load i64, ptr %64, align 4
+  %66 = sub i64 %63, %57
+  %borrow6 = icmp ugt i64 %65, %66
+  %67 = zext i1 %borrow6 to i64
+  %68 = mul i64 %67, 4294967296
+  %69 = add i64 %66, %68
+  %70 = sub i64 %69, %65
+  %71 = getelementptr i64, ptr %2, i64 1
+  store i64 %70, ptr %71, align 4
+  %72 = getelementptr i64, ptr %0, i64 0
+  %73 = load i64, ptr %72, align 4
+  %74 = getelementptr i64, ptr %1, i64 0
+  %75 = load i64, ptr %74, align 4
+  %76 = sub i64 %73, %67
+  %77 = sub i64 %76, %75
+  call void @builtin_range_check(i64 %77)
+  %78 = getelementptr i64, ptr %2, i64 0
+  store i64 %77, ptr %78, align 4
+  ret ptr %2
+}
+
+define ptr @u256_bitwise_and(ptr %0, ptr %1) {
+entry:
+  %2 = call ptr @heap_malloc(i64 8)
+  %3 = getelementptr i64, ptr %0, i64 7
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr i64, ptr %1, i64 7
+  %6 = load i64, ptr %5, align 4
+  %7 = and i64 %4, %6
+  %8 = getelementptr i64, ptr %2, i64 7
+  store i64 %7, ptr %8, align 4
+  %9 = getelementptr i64, ptr %0, i64 6
+  %10 = load i64, ptr %9, align 4
+  %11 = getelementptr i64, ptr %1, i64 6
+  %12 = load i64, ptr %11, align 4
+  %13 = and i64 %10, %12
+  %14 = getelementptr i64, ptr %2, i64 6
+  store i64 %13, ptr %14, align 4
+  %15 = getelementptr i64, ptr %0, i64 5
+  %16 = load i64, ptr %15, align 4
+  %17 = getelementptr i64, ptr %1, i64 5
+  %18 = load i64, ptr %17, align 4
+  %19 = and i64 %16, %18
+  %20 = getelementptr i64, ptr %2, i64 5
+  store i64 %19, ptr %20, align 4
+  %21 = getelementptr i64, ptr %0, i64 4
+  %22 = load i64, ptr %21, align 4
+  %23 = getelementptr i64, ptr %1, i64 4
+  %24 = load i64, ptr %23, align 4
+  %25 = and i64 %22, %24
+  %26 = getelementptr i64, ptr %2, i64 4
+  store i64 %25, ptr %26, align 4
+  %27 = getelementptr i64, ptr %0, i64 3
+  %28 = load i64, ptr %27, align 4
+  %29 = getelementptr i64, ptr %1, i64 3
+  %30 = load i64, ptr %29, align 4
+  %31 = and i64 %28, %30
+  %32 = getelementptr i64, ptr %2, i64 3
+  store i64 %31, ptr %32, align 4
+  %33 = getelementptr i64, ptr %0, i64 2
+  %34 = load i64, ptr %33, align 4
+  %35 = getelementptr i64, ptr %1, i64 2
+  %36 = load i64, ptr %35, align 4
+  %37 = and i64 %34, %36
+  %38 = getelementptr i64, ptr %2, i64 2
+  store i64 %37, ptr %38, align 4
+  %39 = getelementptr i64, ptr %0, i64 1
+  %40 = load i64, ptr %39, align 4
+  %41 = getelementptr i64, ptr %1, i64 1
+  %42 = load i64, ptr %41, align 4
+  %43 = and i64 %40, %42
+  %44 = getelementptr i64, ptr %2, i64 1
+  store i64 %43, ptr %44, align 4
+  %45 = getelementptr i64, ptr %0, i64 0
+  %46 = load i64, ptr %45, align 4
+  %47 = getelementptr i64, ptr %1, i64 0
+  %48 = load i64, ptr %47, align 4
+  %49 = and i64 %46, %48
+  %50 = getelementptr i64, ptr %2, i64 0
+  store i64 %49, ptr %50, align 4
+  ret ptr %2
+}
+
+define ptr @u256_bitwise_or(ptr %0, ptr %1) {
+entry:
+  %2 = call ptr @heap_malloc(i64 8)
+  %3 = getelementptr i64, ptr %0, i64 7
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr i64, ptr %1, i64 7
+  %6 = load i64, ptr %5, align 4
+  %7 = or i64 %4, %6
+  %8 = getelementptr i64, ptr %2, i64 7
+  store i64 %7, ptr %8, align 4
+  %9 = getelementptr i64, ptr %0, i64 6
+  %10 = load i64, ptr %9, align 4
+  %11 = getelementptr i64, ptr %1, i64 6
+  %12 = load i64, ptr %11, align 4
+  %13 = or i64 %10, %12
+  %14 = getelementptr i64, ptr %2, i64 6
+  store i64 %13, ptr %14, align 4
+  %15 = getelementptr i64, ptr %0, i64 5
+  %16 = load i64, ptr %15, align 4
+  %17 = getelementptr i64, ptr %1, i64 5
+  %18 = load i64, ptr %17, align 4
+  %19 = or i64 %16, %18
+  %20 = getelementptr i64, ptr %2, i64 5
+  store i64 %19, ptr %20, align 4
+  %21 = getelementptr i64, ptr %0, i64 4
+  %22 = load i64, ptr %21, align 4
+  %23 = getelementptr i64, ptr %1, i64 4
+  %24 = load i64, ptr %23, align 4
+  %25 = or i64 %22, %24
+  %26 = getelementptr i64, ptr %2, i64 4
+  store i64 %25, ptr %26, align 4
+  %27 = getelementptr i64, ptr %0, i64 3
+  %28 = load i64, ptr %27, align 4
+  %29 = getelementptr i64, ptr %1, i64 3
+  %30 = load i64, ptr %29, align 4
+  %31 = or i64 %28, %30
+  %32 = getelementptr i64, ptr %2, i64 3
+  store i64 %31, ptr %32, align 4
+  %33 = getelementptr i64, ptr %0, i64 2
+  %34 = load i64, ptr %33, align 4
+  %35 = getelementptr i64, ptr %1, i64 2
+  %36 = load i64, ptr %35, align 4
+  %37 = or i64 %34, %36
+  %38 = getelementptr i64, ptr %2, i64 2
+  store i64 %37, ptr %38, align 4
+  %39 = getelementptr i64, ptr %0, i64 1
+  %40 = load i64, ptr %39, align 4
+  %41 = getelementptr i64, ptr %1, i64 1
+  %42 = load i64, ptr %41, align 4
+  %43 = or i64 %40, %42
+  %44 = getelementptr i64, ptr %2, i64 1
+  store i64 %43, ptr %44, align 4
+  %45 = getelementptr i64, ptr %0, i64 0
+  %46 = load i64, ptr %45, align 4
+  %47 = getelementptr i64, ptr %1, i64 0
+  %48 = load i64, ptr %47, align 4
+  %49 = or i64 %46, %48
+  %50 = getelementptr i64, ptr %2, i64 0
+  store i64 %49, ptr %50, align 4
+  ret ptr %2
+}
+
+define ptr @u256_bitwise_xor(ptr %0, ptr %1) {
+entry:
+  %2 = call ptr @heap_malloc(i64 8)
+  %3 = getelementptr i64, ptr %0, i64 7
+  %4 = load i64, ptr %3, align 4
+  %5 = getelementptr i64, ptr %1, i64 7
+  %6 = load i64, ptr %5, align 4
+  %7 = xor i64 %4, %6
+  %8 = getelementptr i64, ptr %2, i64 7
+  store i64 %7, ptr %8, align 4
+  %9 = getelementptr i64, ptr %0, i64 6
+  %10 = load i64, ptr %9, align 4
+  %11 = getelementptr i64, ptr %1, i64 6
+  %12 = load i64, ptr %11, align 4
+  %13 = xor i64 %10, %12
+  %14 = getelementptr i64, ptr %2, i64 6
+  store i64 %13, ptr %14, align 4
+  %15 = getelementptr i64, ptr %0, i64 5
+  %16 = load i64, ptr %15, align 4
+  %17 = getelementptr i64, ptr %1, i64 5
+  %18 = load i64, ptr %17, align 4
+  %19 = xor i64 %16, %18
+  %20 = getelementptr i64, ptr %2, i64 5
+  store i64 %19, ptr %20, align 4
+  %21 = getelementptr i64, ptr %0, i64 4
+  %22 = load i64, ptr %21, align 4
+  %23 = getelementptr i64, ptr %1, i64 4
+  %24 = load i64, ptr %23, align 4
+  %25 = xor i64 %22, %24
+  %26 = getelementptr i64, ptr %2, i64 4
+  store i64 %25, ptr %26, align 4
+  %27 = getelementptr i64, ptr %0, i64 3
+  %28 = load i64, ptr %27, align 4
+  %29 = getelementptr i64, ptr %1, i64 3
+  %30 = load i64, ptr %29, align 4
+  %31 = xor i64 %28, %30
+  %32 = getelementptr i64, ptr %2, i64 3
+  store i64 %31, ptr %32, align 4
+  %33 = getelementptr i64, ptr %0, i64 2
+  %34 = load i64, ptr %33, align 4
+  %35 = getelementptr i64, ptr %1, i64 2
+  %36 = load i64, ptr %35, align 4
+  %37 = xor i64 %34, %36
+  %38 = getelementptr i64, ptr %2, i64 2
+  store i64 %37, ptr %38, align 4
+  %39 = getelementptr i64, ptr %0, i64 1
+  %40 = load i64, ptr %39, align 4
+  %41 = getelementptr i64, ptr %1, i64 1
+  %42 = load i64, ptr %41, align 4
+  %43 = xor i64 %40, %42
+  %44 = getelementptr i64, ptr %2, i64 1
+  store i64 %43, ptr %44, align 4
+  %45 = getelementptr i64, ptr %0, i64 0
+  %46 = load i64, ptr %45, align 4
+  %47 = getelementptr i64, ptr %1, i64 0
+  %48 = load i64, ptr %47, align 4
+  %49 = xor i64 %46, %48
+  %50 = getelementptr i64, ptr %2, i64 0
+  store i64 %49, ptr %50, align 4
+  ret ptr %2
+}
+
+define ptr @u256_bitwise_not(ptr %0) {
+entry:
+  %1 = call ptr @heap_malloc(i64 8)
+  %2 = getelementptr i64, ptr %0, i64 7
+  %3 = load i64, ptr %2, align 4
+  %4 = sub i64 4294967295, %3
+  call void @builtin_range_check(i64 %4)
+  %5 = getelementptr i64, ptr %1, i64 7
+  store i64 %4, ptr %5, align 4
+  %6 = getelementptr i64, ptr %0, i64 6
+  %7 = load i64, ptr %6, align 4
+  %8 = sub i64 4294967295, %7
+  call void @builtin_range_check(i64 %8)
+  %9 = getelementptr i64, ptr %1, i64 6
+  store i64 %8, ptr %9, align 4
+  %10 = getelementptr i64, ptr %0, i64 5
+  %11 = load i64, ptr %10, align 4
+  %12 = sub i64 4294967295, %11
+  call void @builtin_range_check(i64 %12)
+  %13 = getelementptr i64, ptr %1, i64 5
+  store i64 %12, ptr %13, align 4
+  %14 = getelementptr i64, ptr %0, i64 4
+  %15 = load i64, ptr %14, align 4
+  %16 = sub i64 4294967295, %15
+  call void @builtin_range_check(i64 %16)
+  %17 = getelementptr i64, ptr %1, i64 4
+  store i64 %16, ptr %17, align 4
+  %18 = getelementptr i64, ptr %0, i64 3
+  %19 = load i64, ptr %18, align 4
+  %20 = sub i64 4294967295, %19
+  call void @builtin_range_check(i64 %20)
+  %21 = getelementptr i64, ptr %1, i64 3
+  store i64 %20, ptr %21, align 4
+  %22 = getelementptr i64, ptr %0, i64 2
+  %23 = load i64, ptr %22, align 4
+  %24 = sub i64 4294967295, %23
+  call void @builtin_range_check(i64 %24)
+  %25 = getelementptr i64, ptr %1, i64 2
+  store i64 %24, ptr %25, align 4
+  %26 = getelementptr i64, ptr %0, i64 1
+  %27 = load i64, ptr %26, align 4
+  %28 = sub i64 4294967295, %27
+  call void @builtin_range_check(i64 %28)
+  %29 = getelementptr i64, ptr %1, i64 1
+  store i64 %28, ptr %29, align 4
+  %30 = getelementptr i64, ptr %0, i64 0
+  %31 = load i64, ptr %30, align 4
+  %32 = sub i64 4294967295, %31
+  call void @builtin_range_check(i64 %32)
+  %33 = getelementptr i64, ptr %1, i64 0
+  store i64 %32, ptr %33, align 4
+  ret ptr %1
+}
 
 define void @setVars(i64 %0) {
 entry:
