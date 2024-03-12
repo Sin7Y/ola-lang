@@ -42,9 +42,9 @@ enum Reg {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct ProgramPoint(pub u32, pub u32);
+pub struct ProgramPoint(pub u64, pub u64);
 
-const STEP: u32 = 16;
+const STEP: u64 = 32;
 
 impl PartialOrd for ProgramPoint {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -209,7 +209,7 @@ impl<T: TargetIsa> Liveness<T> {
     /// Recomputes the instruction indices for each program point that belongs
     /// to the same basic block of `from`.
     pub fn recompute_program_points_after(&mut self, from: ProgramPoint, add_one_more_step: bool) {
-        let base = from.1 + add_one_more_step as u32 * STEP;
+        let base = from.1 + add_one_more_step as u64 * STEP;
         for pp in self
             .inst_to_pp
             .iter_mut()
@@ -238,8 +238,8 @@ impl<T: TargetIsa> Liveness<T> {
 
     pub fn compute_program_points(&mut self, func: &Function<T>) {
         for (block_num, block_id) in func.layout.block_iter().enumerate() {
-            let block_num = block_num as u32;
-            let mut inst_num = 0u32;
+            let block_num = block_num as u64;
+            let mut inst_num = 0u64;
             let mut local_vreg_lr_map = FxHashMap::default();
             let mut local_reg_lr_map = FxHashMap::default();
 
@@ -476,7 +476,7 @@ impl LiveRange {
 
     /// Returns the weight of the live range.
     /// The weight of longer live range is higher.
-    pub fn weight(&self) -> u32 {
+    pub fn weight(&self) -> u64 {
         self.0.iter().fold(0, |a, s| {
             a + (s.end.1 - s.start.1) * (s.end.0 - s.start.0 + 10)
         })
