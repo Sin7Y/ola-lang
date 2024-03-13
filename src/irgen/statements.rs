@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use inkwell::basic_block::BasicBlock;
-use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue, IntValue};
+use inkwell::values::{BasicValue, BasicValueEnum, FunctionValue};
 use inkwell::AddressSpace;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
@@ -410,9 +410,10 @@ fn returns<'a>(
         _ => vec![expression(expr, bin, func_value, var_table, ns)],
     };
 
-    let cast_values: Vec<BasicValueEnum<'_>> = uncast_values.iter()
-    .map(|right| try_load_and_cast(&expr.ty(), *right,bin))
-    .collect();
+    let cast_values: Vec<BasicValueEnum<'_>> = uncast_values
+        .iter()
+        .map(|right| try_load_and_cast(&expr.ty(), *right, bin))
+        .collect();
 
     // TODO Should we do type conversion here?
 
@@ -432,26 +433,23 @@ fn returns<'a>(
     }
 }
 
-/// During a destructure statement, sema only checks if the cast is possible. During codegen, we
-/// perform the real cast and add an instruction to the CFG to load a value from the storage if want it.
-/// The existing codegen cast function does not manage the CFG, so the loads must be done here.
+/// During a destructure statement, sema only checks if the cast is possible.
+/// During codegen, we perform the real cast and add an instruction to the CFG
+/// to load a value from the storage if want it. The existing codegen cast
+/// function does not manage the CFG, so the loads must be done here.
 fn try_load_and_cast<'a>(
     from_ty: &Type,
     from_value: BasicValueEnum<'a>,
     bin: &Binary<'a>,
 ) -> BasicValueEnum<'a> {
     match from_ty {
-        Type::Bool => {
-            bin.builder.build_int_z_extend(
-                from_value.into_int_value(),
-                bin.context.i64_type(),
-                "",
-            ).as_basic_value_enum()
-        },
+        Type::Bool => bin
+            .builder
+            .build_int_z_extend(from_value.into_int_value(), bin.context.i64_type(), "")
+            .as_basic_value_enum(),
         _ => from_value,
     }
 }
-
 
 fn destructure<'a>(
     bin: &mut Binary<'a>,
