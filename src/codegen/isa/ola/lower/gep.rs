@@ -62,8 +62,6 @@ pub fn lower_gep(
     let mut mem_slot = OperandData::None;
     let mut mem_imm = 0.into();
     let mut mem_rbase = OperandData::None;
-    let mem_ridx = OperandData::None;
-    let mem_mul = OperandData::None;
 
     if matches!(base, OperandData::Slot(_)) {
         mem_slot = base
