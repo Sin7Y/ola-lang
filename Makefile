@@ -12,7 +12,7 @@ compile-ast:
 	./compile.sh ast
 
 clean:
-	rm -rf $(DST_DIR)
+	rm -rf ./examples/llvm-ir ./examples/asm ./examples/abi ./examples/ast
 
 help: ## Display this help screen
 	@grep -h \

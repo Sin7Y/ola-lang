@@ -23,3 +23,8 @@ Cargo.lock
 /docs/*/build/
 
 /.idea/
+
+/exmaples/abi/*
+/exmaples/asm/*
+/example/llvm-ir/*
+/exmaples/ast/*
