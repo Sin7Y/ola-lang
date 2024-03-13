@@ -15,26 +15,37 @@ contract U256StorageContract {
 
     fn set_value() {
         value = 100;
-        print(value);
+        assert(value == 100);
+    }
+
+    fn storage_to_meory() -> (u256) {
+        u256 _value = value;
+        print(_value);
+        return _value;
     }
 
     fn get_value() -> (u256) {
+        assert(value == 100);
         return value;
     }
 
     fn set_age(u256 _age) {
         age = _age;
+        print(age);
     }
 
     fn get_age() -> (u256) {
+        print(age);
         return age;
     }
 
     fn set_key(u256 _key) {
+        print(_key);
         keys.push(_key);
     }
 
     fn get_key(u32 _index) -> (u256) {
+        print(keys[_index]);
         return keys[_index];
     }
 
@@ -45,18 +56,23 @@ contract U256StorageContract {
     fn set_person(u256 _age, u256 _height) {
         person.age = _age;
         person.height = _height;
+        print(person);
     }
 
     fn get_person() -> (Person) {
+        print(person);
         return person;
     }
 
     fn set_map(u256 _key, u256 _value) {
         map[_key] = _value;
+        assert(map[_key] == _value);
     }
 
     fn get_map(u256 _key) -> (u256) {
+        print(map[_key]);
         return map[_key];
     }
+
 }
 
