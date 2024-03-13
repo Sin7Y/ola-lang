@@ -37,10 +37,6 @@ impl Diagnostics {
         self.contents.iter_mut()
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<Diagnostic> {
-        self.contents.iter_mut()
-    }
-
     pub fn is_empty(&self) -> bool {
         self.contents.is_empty()
     }
