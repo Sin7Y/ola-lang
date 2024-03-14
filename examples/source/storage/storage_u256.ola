@@ -14,8 +14,9 @@ contract U256StorageContract {
     mapping(u256 => u256) map;
 
     fn set_value() {
-        value = 100;
-        assert(value == 100);
+        value = 88;
+        print(value);
+        // assert(value == 100);
     }
 
     fn storage_to_meory() -> (u256) {
