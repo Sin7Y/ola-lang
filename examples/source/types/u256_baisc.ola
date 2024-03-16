@@ -71,6 +71,7 @@ contract U256BasicTest {
         u256 a = 10;
         // CHECK: %0 = load i64, ptr %a, align 4
         // CHECK: ret i64 %0
+        print(a);
         return a;
     }
 
@@ -82,13 +83,13 @@ contract U256BasicTest {
 
     // // BEGIN-CHECK: define void @testU256AddOperation()
     // fn testU256AddOperation() {
-    //     u256 a = 5;
-    //     u256 b = 10;
+            u256 a = 5;
+            u256 b = 10;
     //     // CHECK: %0 = load i64, ptr %a, align 4
     //     // CHECK: %1 = load i64, ptr %b, align 4
     //     // CHECK: %2 = add i64 %0, %1
-    //     u256 c = a + b;
-    //     print(c);
+            u256 c = a + b;
+            print(c);
     // }
 
     // // BEGIN-CHECK: define void @testU256AddAssignOperation()

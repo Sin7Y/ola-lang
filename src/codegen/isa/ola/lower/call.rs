@@ -112,7 +112,7 @@ pub fn lower_call(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::SLOAD,
-                operands: vec![MO::input(src.into()), MO::output(dst)],
+                operands: vec![MO::input(src.into()), MO::input(dst)],
             },
             ctx.block_map[&ctx.cur_block],
         ));
@@ -126,7 +126,7 @@ pub fn lower_call(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::SSTORE,
-                operands: vec![MO::input(src.into()), MO::output(dst)],
+                operands: vec![MO::input(src.into()), MO::input(dst)],
             },
             ctx.block_map[&ctx.cur_block],
         ));
@@ -142,7 +142,7 @@ pub fn lower_call(
             InstructionData {
                 opcode: Opcode::POSEIDON,
                 operands: vec![
-                    MO::output(dst.into()),
+                    MO::input(dst.into()),
                     MO::input(src.into()),
                     MO::input(len),
                 ],
@@ -198,65 +198,6 @@ pub fn lower_call(
             },
             ctx.block_map[&ctx.cur_block],
         ));
-        return Ok(());
-    }
-
-    if name.as_str() == "set_storage" {
-        pass_str_args_to_regs(ctx, &tys[1..], &args[1..])?;
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode: Opcode::SSTORE,
-                operands: vec![],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
-        return Ok(());
-    }
-
-    if name.as_str() == "get_storage" || name.as_str() == "poseidon_hash" {
-        pass_str_args_to_regs(ctx, &tys[1..], &args[1..])?;
-
-        let ret_reg0: Reg = GR::R1.into();
-        let ret_reg1: Reg = GR::R2.into();
-        let ret_reg2: Reg = GR::R3.into();
-        let ret_reg3: Reg = GR::R4.into();
-
-        let opcode = if name.as_str() == "get_storage" {
-            Opcode::SLOAD
-        } else {
-            Opcode::POSEIDON
-        };
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode,
-                operands: vec![
-                    MO::implicit_output(ret_reg0.into()),
-                    MO::implicit_output(ret_reg1.into()),
-                    MO::implicit_output(ret_reg2.into()),
-                    MO::implicit_output(ret_reg3.into()),
-                ],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
-
-        let sz = ctx.isa.data_layout().get_size_of(ctx.types, tys[0]) / 4;
-        let res_reg: [Reg; 4] = [ret_reg0, ret_reg1, ret_reg2, ret_reg3];
-        let opcode = Opcode::MOVrr;
-        if !ctx.ir_data.users_of(id).is_empty() {
-            let output = new_empty_str_inst_output(ctx, tys[0], id);
-            for idx in 0..sz {
-                ctx.inst_seq.push(MachInstruction::new(
-                    InstructionData {
-                        opcode,
-                        operands: vec![
-                            MO::output(output[idx].into()),
-                            MO::input(res_reg[idx].into()),
-                        ],
-                    },
-                    ctx.block_map[&ctx.cur_block],
-                ));
-            }
-        }
         return Ok(());
     }
 
