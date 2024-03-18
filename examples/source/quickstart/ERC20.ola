@@ -1,0 +1,106 @@
+
+
+contract ERC20 {
+
+    string name_;
+    string symbol_;
+    u32 decimals_;
+    u32 totalSupply_;
+    address owner_;
+    mapping(address => u32) balanceOf_;
+    mapping(address => mapping(address => u32)) allowance_;
+
+    event Approval(address indexed owner, address indexed spender, u32 value);
+    event Transfer(address indexed from, address indexed to, u32 value);
+
+    fn constructor(string _name, string _symbol, u32 _decimals, u32 _totalSupply) {
+        name_ = _name;
+        symbol_ = _symbol;
+        decimals_ = _decimals;
+        totalSupply_ = _totalSupply;
+        address msgSender = origin_address();
+        balanceOf_[msgSender] = _totalSupply;
+        owner_ = msgSender;
+        emit Transfer(address(0), msgSender, _totalSupply);
+    }
+
+    fn name() -> (string) {
+        return name_;
+    }
+
+    fn symbol() -> (string) {
+        return symbol_;
+    }
+
+    fn decimals() -> (u32) {
+        return decimals_;
+    }
+
+    fn totalSupply() -> (u32) {
+        return totalSupply_;
+    }
+
+    fn owner() -> (address) {
+        return owner_;
+    }
+
+    fn balanceOf(address _owner) -> (u32) {
+        return balanceOf_[_owner];
+    }
+
+    fn allowance(address _owner, address spender) -> (u32) {
+        return allowance_[_owner][spender];
+    }
+
+
+    fn transfer(address to, u32 value) -> (bool) {
+        assert(balanceOf_[origin_address()] >= value);
+        _transfer(origin_address(), to, value);
+        return true;
+    }
+
+    fn approve(address spender, u32 value) -> (bool) {
+        _approve(origin_address(), spender, value);
+        return true;
+    }
+
+
+    fn transferFrom(address from, address to, u32 value) -> (bool) {
+        assert(balanceOf_[from] >= value);
+        assert(allowance_[from][origin_address()] >= value);
+        _transfer(from, to, value);
+        allowance_[from][origin_address()] -= value;
+        emit Transfer(from, to, value);
+        return true;
+    }
+
+    fn mint(address to, u32 value) {
+        assert(origin_address() == owner_);
+        assert(to != address(0));
+        assert(value > 0);
+        totalSupply_ += value;
+        balanceOf_[to] += value;
+        emit Transfer(address(0), to, value);
+    }
+
+    fn burn(address from, u32 value) {
+        assert(origin_address() == owner_);
+        assert(value > 0);
+        balanceOf_[from] -= value;
+        totalSupply_ -= value;
+        emit Transfer(from, address(0), value);
+    }
+
+    fn _approve(address _owner, address spender, u32 value) {
+        allowance_[_owner][spender] = value;
+        emit Approval(_owner, spender, value);
+    }
+
+    fn _transfer(address from, address to, u32 value) {
+        balanceOf_[from] = balanceOf_[from] - value;
+        balanceOf_[to] = balanceOf_[to] + value;
+        emit Transfer(from, to, value);
+    }
+
+
+}

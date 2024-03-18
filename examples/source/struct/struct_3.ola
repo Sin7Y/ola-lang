@@ -1,0 +1,12 @@
+contract StructsContract {
+
+    struct StringStruct {
+        string innerName;
+    }
+
+    fn createStruct() -> (StringStruct) {
+        StringStruct s = StringStruct({innerName: "Hello, World!"});
+        return s;
+    }       
+
+}
