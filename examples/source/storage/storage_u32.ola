@@ -1,10 +1,15 @@
-contract SimpleVar {
+contract SimpleStorageVar {
     u32 value;
 
     /// This increments the value by `by`.
-    fn inc_simple() {
+    fn set_u32() {
         value = 100;
         assert(value == 100);
+    }
+
+    fn get_u32() -> (u32) {
+        print(value);
+        return value;
     }
 }
 
