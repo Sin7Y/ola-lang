@@ -68,8 +68,7 @@ pub fn run_on_function<T: TargetIsa>(function: &mut Function<T>) {
                 .csr_list(),
         );
         if function.ir.name() == "function_dispatch" {
-            availables =
-            T::RegClass::for_type(&function.types, function.data.vregs.type_for(vreg))
+            availables = T::RegClass::for_type(&function.types, function.data.vregs.type_for(vreg))
                 .csr_list();
         }
         for block_id in function.layout.block_iter() {
