@@ -112,7 +112,7 @@ pub fn lower_call(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::SLOAD,
-                operands: vec![MO::input(src.into()), MO::input(dst)],
+                operands: vec![MO::input(src.into()), MO::output(dst)],
             },
             ctx.block_map[&ctx.cur_block],
         ));
