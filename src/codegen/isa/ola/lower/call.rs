@@ -141,11 +141,7 @@ pub fn lower_call(
         ctx.inst_seq.push(MachInstruction::new(
             InstructionData {
                 opcode: Opcode::POSEIDON,
-                operands: vec![
-                    MO::input(dst.into()),
-                    MO::input(src.into()),
-                    MO::input(len),
-                ],
+                operands: vec![MO::input(dst.into()), MO::input(src.into()), MO::input(len)],
             },
             ctx.block_map[&ctx.cur_block],
         ));
@@ -362,48 +358,6 @@ fn pass_args_to_regs(ctx: &mut LoweringContext<Ola>, tys: &[Type], args: &[Value
                 ctx.block_map[&ctx.cur_block],
             ));
         }
-    }
-
-    Ok(())
-}
-
-fn pass_str_args_to_regs(
-    ctx: &mut LoweringContext<Ola>,
-    tys: &[Type],
-    args: &[ValueId],
-) -> Result<()> {
-    let gpru = RegInfo::str_arg_reg_list(&ctx.call_conv);
-
-    let mut arg_str = get_operands_for_val(ctx, tys[0], args[0])?;
-    // sstore: [key,value]
-    // sload: [key]
-    // poseidion: [params]
-    if args.len() > 1 {
-        let v = get_operands_for_val(ctx, tys[0], args[1])?;
-        arg_str.extend(v);
-    }
-
-    for (gpr_used, arg) in arg_str.iter().enumerate() {
-        let cur_ty = ctx.types.base().element(tys[0]).unwrap();
-        let out = gpru[gpr_used].apply(&RegClass::for_type(ctx.types, cur_ty));
-
-        let opcode = match &arg {
-            OperandData::Int32(_) | OperandData::Int64(_) => Opcode::MOVri,
-            OperandData::Reg(_) => Opcode::MOVrr,
-            OperandData::VReg(_) => Opcode::MOVrr,
-            e => {
-                return Err(
-                    LoweringError::Todo(format!("Unsupported storage argument: {:?}", e)).into(),
-                )
-            }
-        };
-        ctx.inst_seq.push(MachInstruction::new(
-            InstructionData {
-                opcode,
-                operands: vec![MO::output(out.into()), MO::input(arg.clone())],
-            },
-            ctx.block_map[&ctx.cur_block],
-        ));
     }
 
     Ok(())
