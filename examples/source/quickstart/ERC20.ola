@@ -48,10 +48,27 @@ contract ERC20 {
         return balanceOf_[_owner];
     }
 
-    fn allowance(address _owner, address spender) -> (u32) {
-        return allowance_[_owner][spender];
+    fn mint(address to, u32 value) {
+        assert(origin_address() == owner_);
+        assert(to != address(0));
+        assert(value > 0);
+        totalSupply_ += value;
+        balanceOf_[to] += value;
+        emit Transfer(address(0), to, value);
     }
 
+    fn burn(address from, u32 value) {
+        assert(balanceOf_[from] >= value);
+        assert(value > 0);
+        address origin = origin_address();
+        assert(from == origin || allowance_[from][origin] >= value);
+        balanceOf_[from] -= value;
+        totalSupply_ -= value;
+        if (from != origin) {
+            allowance_[from][origin] -= value;
+        }
+        emit Transfer(from, address(0), value);
+    }
 
     fn transfer(address to, u32 value) -> (bool) {
         assert(balanceOf_[origin_address()] >= value);
@@ -64,31 +81,17 @@ contract ERC20 {
         return true;
     }
 
+    fn allowance(address _owner, address spender) -> (u32) {
+        return allowance_[_owner][spender];
+    }
 
     fn transferFrom(address from, address to, u32 value) -> (bool) {
         assert(balanceOf_[from] >= value);
-        assert(allowance_[from][origin_address()] >= value);
+        address origin = origin_address();
+        assert(allowance_[from][origin] >= value);
         _transfer(from, to, value);
-        allowance_[from][origin_address()] -= value;
-        emit Transfer(from, to, value);
+        _approve(from, origin, allowance_[from][origin] - value);
         return true;
-    }
-
-    fn mint(address to, u32 value) {
-        assert(origin_address() == owner_);
-        assert(to != address(0));
-        assert(value > 0);
-        totalSupply_ += value;
-        balanceOf_[to] += value;
-        emit Transfer(address(0), to, value);
-    }
-
-    fn burn(address from, u32 value) {
-        assert(origin_address() == owner_);
-        assert(value > 0);
-        balanceOf_[from] -= value;
-        totalSupply_ -= value;
-        emit Transfer(from, address(0), value);
     }
 
     fn _approve(address _owner, address spender, u32 value) {
@@ -97,6 +100,7 @@ contract ERC20 {
     }
 
     fn _transfer(address from, address to, u32 value) {
+        assert(to != address(0));
         balanceOf_[from] = balanceOf_[from] - value;
         balanceOf_[to] = balanceOf_[to] + value;
         emit Transfer(from, to, value);
