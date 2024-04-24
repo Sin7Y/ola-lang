@@ -2,7 +2,7 @@
 
  [![CI](https://img.shields.io/github/actions/workflow/status/Sin7y/ola-lang/release.yml)](https://github.com/Sin7Y/ola-lang/actions)
  [![Project license](https://img.shields.io/github/license/Sin7y/ola-lang)](LICENSE)
- [![LoC](https://tokei.rs/b1/github/Sin7y/ola-lang?category=lines)](https://github.com/Sin7y/ola-lang)
+ ![Lines of Code](https://aschey.tech/tokei/github/Sin7y/ola-lang?category=code)
  [![Twitter](https://img.shields.io/twitter/follow/ola_zkzkvm?style=social)](https://twitter.com/ola_zkzkvm)
 
  ## Introduction
