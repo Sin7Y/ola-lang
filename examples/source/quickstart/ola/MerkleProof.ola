@@ -1,0 +1,27 @@
+library MerkleProof {
+
+    fn verify(
+        hash[] proof,
+        hash root,
+        hash leaf
+    ) -> (bool) {
+        return processProof(proof, leaf) == root;
+    }
+
+    fn processProof(hash[] proof, hash leaf) -> (hash) {
+        hash computedHash = leaf;
+        for (u32 i = 0; i < proof.length; i++) {
+            computedHash = _hashPair(computedHash, proof[i]);
+        }
+        return computedHash;
+    }
+
+    // Sorted Pair Hash
+    fn _hashPair(hash a, hash b) -> (hash) {
+        if (a < b) {
+            return poseidon_hash(abi.encode(a, b));
+        } else {
+            return poseidon_hash(abi.encode(b, a));
+        }
+    }
+}

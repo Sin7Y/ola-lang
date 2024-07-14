@@ -1,0 +1,15 @@
+interface IERC20 {
+
+    event Approval(address indexed owner, address indexed spender, u32 value);
+    event Transfer(address indexed from, address indexed to, u32 value);
+    fn name() -> (string);
+    fn symbol() -> (string);
+    fn decimals() -> (u32);
+    fn totalSupply() -> (u32);
+    fn balanceOf(address owner) -> (u32);
+    fn allowance(address owner, address spender) -> (u32);
+
+    fn approve(address spender, u32 value) -> (bool);
+    fn transfer(address to, u32 value) -> (bool);
+    fn transferFrom(address from, address to, u32 value) -> (bool);
+}

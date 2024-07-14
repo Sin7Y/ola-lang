@@ -1,12 +1,11 @@
-
-
-contract ERC20 {
+contract OlaPoints {
 
     string name_;
     string symbol_;
     u32 decimals_;
     u32 totalSupply_;
     address owner_;
+    bool initialized_;
     mapping(address => u32) balanceOf_;
     mapping(address => mapping(address => u32)) allowance_;
 
@@ -14,6 +13,9 @@ contract ERC20 {
     event Transfer(address indexed from, address indexed to, u32 value);
 
     fn constructor(string _name, string _symbol, u32 _decimals, u32 _totalSupply) {
+        assert(!initialized_);
+        initialized_ = true;
+
         name_ = _name;
         symbol_ = _symbol;
         decimals_ = _decimals;
