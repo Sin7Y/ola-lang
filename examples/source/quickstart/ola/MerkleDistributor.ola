@@ -1,0 +1,56 @@
+import "./MerkleProof.ola";
+import "./IERC20.ola";
+
+contract MerkleDistributor {
+    address token;
+    address owner;
+    bool initialized_;
+    mapping(u32 => hash) merkleRoots;
+
+    mapping(u32 => mapping(address => bool)) isClaimed;
+
+    fn constructor(address token_) {
+        assert(!initialized_);
+        initialized_ = true;
+        token = token_;
+        owner = origin_address();
+    }
+
+    fn claim(
+        u32 indexTime,
+        address account,
+        u32 amount,
+        hash[] merkleProof
+    ) {
+        assert(!isClaimed[indexTime][account], "Already claimed.");
+
+        hash node = poseidon_hash(
+            abi.encode(indexTime, account, amount)
+        );
+        hash merkleRoot = merkleRoots[indexTime];
+        bool isValidProof = MerkleProof.verify(
+            merkleProof,
+            merkleRoot,
+            node
+        );
+        assert(isValidProof, "Invalid proof.");
+
+        isClaimed[indexTime][account] = true;
+        assert(
+            IERC20(token).transfer(account, amount),
+            "Transfer failed."
+        );
+    }
+
+    fn transferOwnership(address newOwner) {
+        assert(origin_address() == owner, "Only owner can transfer ownership.");
+        owner = newOwner;
+    }
+
+    fn updateRoot(u32 indexTime, hash newRoot) {
+        assert(origin_address() == owner, "Only owner can update the root.");
+        merkleRoots[indexTime] = newRoot;
+    }
+
+
+}
